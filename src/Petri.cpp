@@ -19,63 +19,168 @@
 //=====================================================================
 
 #include "Petri.hpp"
+#include <iostream>
+
+std::atomic<size_t> Place::s_count{0u};
+std::atomic<size_t> Transition::s_count{0u};
+
+const float TR_WIDTH = 50.0f; // Transition
+const float TR_HEIGHT = 5.0f; // Transition
+const float PL_RADIUS = 25.0f; // Places
+const float TN_RADIUS = 4.0f;  // Token in places
+const float ARC_SHORT = PL_RADIUS + 2.0f;
+const float ARC_TYPE = 2.0f;
+const float DOUBLE_SHIFT = 10.0f;
+const float FONT_SIZE = 24.0f;
 
 //------------------------------------------------------------------------------
-Petri::Petri(Application &application)
-    : GUI("Petri", application)
+PetriGUI::PetriGUI(Application &application)
+    : GUI("PetriGUI", application),
+      m_figure_place(PL_RADIUS),
+      m_figure_token(TN_RADIUS),
+      m_figure_trans(sf::Vector2f(TR_HEIGHT, TR_WIDTH))
 {
-    int r = 50;
-    int x1 = 100;
-    int y1 = 100;
+    // Precompute SFML struct for drawing places
+    m_figure_place.setOrigin(sf::Vector2f(m_figure_place.getRadius(), m_figure_place.getRadius()));
+    m_figure_place.setFillColor(sf::Color::White);
+    m_figure_place.setOutlineThickness(2.0f);
+    m_figure_place.setOutlineColor(sf::Color(244, 125, 66));
 
-    int x2 = 150;
-    int y2 = 150;
+    // Precompute SFML struct for drawing tokens inside places
+    m_figure_token.setOrigin(sf::Vector2f(m_figure_token.getRadius(), m_figure_token.getRadius()));
+    m_figure_token.setFillColor(sf::Color::Black);
 
-    m_arm = new sf::RectangleShape(sf::Vector2f(5, r));
-    m_arm->setOrigin(m_arm->getSize().x / 2, 0);
-    m_arm->setPosition(sf::Vector2f(x1, y1));
-    m_arm->setFillColor(sf::Color(100, 100, 66));
-    //m_arm->setRotation(a * 180 / PI);
+    // Precompute SFML struct for drawing transitions
+    m_figure_trans.setOrigin(m_figure_trans.getSize().x / 2, 0);
+    m_figure_trans.setFillColor(sf::Color(100, 100, 66));
 
-    m_body = new sf::CircleShape(25);
-    m_body->setOrigin(sf::Vector2f(m_body->getRadius(), m_body->getRadius()));
-    m_body->setPosition(sf::Vector2f(x2, y2));
-    m_body->setFillColor(sf::Color(244, 125, 66));
+    // Precompute SFML struct for drawing text (places and transitions)
+    if (!m_font.loadFromFile("OpenSans-Regular.ttf"))
+    {
+        std::cerr << "Could not load font file ..." << std::endl;
+        exit(1);
+    }
+    m_text.setFont(m_font);
+    m_text.setCharacterSize(FONT_SIZE);
+    m_text.setFillColor(sf::Color(244, 125, 66));
 }
 
 //------------------------------------------------------------------------------
-Petri::~Petri()
+PetriGUI::~PetriGUI()
 {
-    delete m_arm;
-    delete m_body;
     window().close();
 }
 
 //------------------------------------------------------------------------------
-void Petri::draw(float const /*dt*/)
+void PetriGUI::draw(size_t const tokens, float const x, float const y)
 {
-    window().draw(sf::RectangleShape(*m_arm));
-    window().draw(sf::CircleShape(*m_body));
+    const float r = TN_RADIUS;
+    const float d = TN_RADIUS + 1;
+
+    if (tokens == 0u)
+        return ;
+
+    if (tokens == 1u)
+    {
+        m_figure_token.setPosition(sf::Vector2f(x, y));
+        window().draw(sf::CircleShape(m_figure_token));
+    }
+    else if (tokens == 2u)
+    {
+        m_figure_token.setPosition(sf::Vector2f(x - d, y));
+        window().draw(sf::CircleShape(m_figure_token));
+
+        m_figure_token.setPosition(sf::Vector2f(x + d, y));
+        window().draw(sf::CircleShape(m_figure_token));
+    }
+    else if (tokens == 3u)
+    {
+        m_figure_token.setPosition(sf::Vector2f(x, y - r));
+        window().draw(sf::CircleShape(m_figure_token));
+
+        m_figure_token.setPosition(sf::Vector2f(x - d, y + d));
+        window().draw(sf::CircleShape(m_figure_token));
+
+        m_figure_token.setPosition(sf::Vector2f(x + d, y + d));
+        window().draw(sf::CircleShape(m_figure_token));
+    }
+    else if (tokens == 4u)
+    {
+        m_figure_token.setPosition(sf::Vector2f(x - d, y - d));
+        window().draw(sf::CircleShape(m_figure_token));
+
+        m_figure_token.setPosition(sf::Vector2f(x + d, y - d));
+        window().draw(sf::CircleShape(m_figure_token));
+
+        m_figure_token.setPosition(sf::Vector2f(x - d, y + d));
+        window().draw(sf::CircleShape(m_figure_token));
+
+        m_figure_token.setPosition(sf::Vector2f(x + d, y + d));
+        window().draw(sf::CircleShape(m_figure_token));
+    }
+}
+
+//------------------------------------------------------------------------------
+void PetriGUI::draw(Place const& place)
+{
+    m_figure_place.setPosition(sf::Vector2f(place.x, place.y));
+    window().draw(sf::CircleShape(m_figure_place));
+
+    draw(place.tokens, place.x, place.y);
+
+    m_text.setString(place.caption);
+    m_text.setPosition(sf::Vector2f(place.x - PL_RADIUS / 2,
+                                    place.y - 2 * PL_RADIUS - 5));
+    window().draw(m_text);
+}
+
+//------------------------------------------------------------------------------
+void PetriGUI::draw(Transition const& transition)
+{
+    m_figure_trans.setPosition(sf::Vector2f(transition.x, transition.y));
+    window().draw(sf::RectangleShape(m_figure_trans));
+
+    m_text.setString(transition.caption);
+    m_text.setPosition(sf::Vector2f(transition.x - 16,
+                                    transition.y - TR_HEIGHT - FONT_SIZE));
+    window().draw(m_text);
+}
+
+//------------------------------------------------------------------------------
+void PetriGUI::draw(float const /*dt*/)
+{
+    window().clear(sf::Color(0u, 0u, 102u, 255u));
+
+    for (auto const& p: m_petri_net.places())
+    {
+        draw(p);
+    }
+
+    for (auto const& t: m_petri_net.transitions())
+    {
+        draw(t);
+    }
 
     // Swap buffer
     window().display();
 }
 
 //------------------------------------------------------------------------------
-void Petri::update(float const /*dt*/)
+void PetriGUI::update(float const /*dt*/)
 {
 }
 
 //------------------------------------------------------------------------------
-bool Petri::isRunning()
+bool PetriGUI::isRunning()
 {
     return m_running;
 }
 
 //------------------------------------------------------------------------------
-void Petri::handleInput()
+void PetriGUI::handleInput()
 {
     sf::Event event;
+    sf::Vector2f mouse = sf::Vector2f(sf::Mouse::getPosition(window()));
 
     while (window().pollEvent(event))
     {
@@ -86,6 +191,10 @@ void Petri::handleInput()
             break;
 
         case sf::Event::MouseButtonPressed:
+            if (event.mouseButton.button == sf::Mouse::Left)
+                m_petri_net.addPlace(mouse.x, mouse.y, 3u); // FIXME TEMPORAIRE
+            else if (event.mouseButton.button == sf::Mouse::Right)
+                m_petri_net.addTransition(mouse.x, mouse.y);
             break;
 
         case sf::Event::KeyPressed:

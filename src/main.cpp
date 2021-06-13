@@ -26,7 +26,7 @@
 int main()
 {
     Application app;
-    Petri gui(app);
+    PetriGUI gui(app);
 
     try
     {
