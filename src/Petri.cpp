@@ -212,7 +212,64 @@ void PetriGUI::draw(size_t const tokens, float const x, float const y)
         m_figure_token.setPosition(sf::Vector2f(x + d, y + d));
         window().draw(m_figure_token);
     }
-    // TODO
+    else if (tokens == 6u)
+    {
+        d = r + 1;
+
+        m_figure_token.setPosition(sf::Vector2f(x - 2 * d, y - d));
+        window().draw(m_figure_token);
+
+        m_figure_token.setPosition(sf::Vector2f(x + 0 + 0, y - d));
+        window().draw(m_figure_token);
+
+        m_figure_token.setPosition(sf::Vector2f(x + 2 * d, y - d));
+        window().draw(m_figure_token);
+
+        m_figure_token.setPosition(sf::Vector2f(x - 2 * d, y + d));
+        window().draw(m_figure_token);
+
+        m_figure_token.setPosition(sf::Vector2f(x + 0 + 0, y + d));
+        window().draw(m_figure_token);
+
+        m_figure_token.setPosition(sf::Vector2f(x + 2 * d, y + d));
+        window().draw(m_figure_token);
+    }
+    else if (tokens == 7u)
+    {
+        d = r + 1;
+
+        m_figure_token.setPosition(sf::Vector2f(x - 2 * d, y - d));
+        window().draw(m_figure_token);
+
+        m_figure_token.setPosition(sf::Vector2f(x + 0 + 0, y - 2 * d));
+        window().draw(m_figure_token);
+
+        m_figure_token.setPosition(sf::Vector2f(x + 2 * d, y - d));
+        window().draw(m_figure_token);
+
+        m_figure_token.setPosition(sf::Vector2f(x - 2 * d, y + d));
+        window().draw(m_figure_token);
+
+        m_figure_token.setPosition(sf::Vector2f(x + 0 + 0, y));
+        window().draw(m_figure_token);
+
+        m_figure_token.setPosition(sf::Vector2f(x + 2 * d, y + d));
+        window().draw(m_figure_token);
+
+        m_figure_token.setPosition(sf::Vector2f(x, y + 2 * d));
+        window().draw(m_figure_token);
+    }
+    else if (tokens >= 8u)
+    {
+        m_text_token.setString(std::to_string(tokens));
+        if (tokens < 10u)
+            m_text_token.setPosition(sf::Vector2f(x - 6, y - 12));
+        else if (tokens < 100u)
+            m_text_token.setPosition(sf::Vector2f(x - 12, y - 12));
+        else
+            m_text_token.setPosition(sf::Vector2f(x - 18, y - 12));
+        window().draw(m_text_token);
+    }
 }
 
 //------------------------------------------------------------------------------
