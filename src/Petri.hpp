@@ -191,6 +191,12 @@ public:
         m_arcs.clear();
     }
 
+    void simulate(float const /*dt*/)
+    {
+        if (!run)
+            return ;
+    }
+
     void addPlace(float const x, float const y, size_t const tokens = 0u)
     {
         m_places.push_back(Place(x, y, tokens));
@@ -247,6 +253,10 @@ public:
     {
         return m_arcs;
     }
+
+public:
+
+    bool run = false;
 
 private:
 

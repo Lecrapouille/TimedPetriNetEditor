@@ -94,6 +94,18 @@ PetriGUI::PetriGUI(Application &application)
       m_figure_token(TN_RADIUS),
       m_figure_trans(sf::Vector2f(TR_HEIGHT, TR_WIDTH))
 {
+    std::cout
+            << "Right click: add a transition" << std::endl
+            << "Left click: add a place" << std::endl
+            << "Left click and Left Control key : add an arc from a place or transition" << std::endl
+            << "Left click and Left Shift key : add an arc from a place or transition" << std::endl
+            << "Middle click: remove a place or a transition or an arc" << std::endl
+            << "+ key: add a token on the place pointed by the mouse cursor" << std::endl
+            << "- key: remove a token on the place pointed by the mouse cursor" << std::endl
+            << "R key: run simulation" << std::endl
+            << "E key: end simulation" << std::endl
+            << "C key: clear the Petri net" << std::endl;
+
     m_mouse = sf::Vector2f(sf::Mouse::getPosition(window()));
 
     // Precompute SFML struct for drawing places
@@ -174,6 +186,7 @@ void PetriGUI::draw(size_t const tokens, float const x, float const y)
         m_figure_token.setPosition(sf::Vector2f(x + d, y + d));
         window().draw(m_figure_token);
     }
+    // TODO
 }
 
 //------------------------------------------------------------------------------
@@ -255,8 +268,9 @@ void PetriGUI::draw(float const /*dt*/)
 }
 
 //------------------------------------------------------------------------------
-void PetriGUI::update(float const /*dt*/)
+void PetriGUI::update(float const dt) // FIXME std::chrono
 {
+    m_petri_net.simulate(dt);
 }
 
 //------------------------------------------------------------------------------
@@ -279,8 +293,8 @@ Node* PetriGUI::getNode(float const x, float const y)
 
     for (auto& t: m_petri_net.transitions())
     {
-        if ((x >= t.x) && (x <= t.x + TR_HEIGHT) &&
-            (y >= t.y) && (y <= t.y + TR_WIDTH))
+        if ((x >= t.x - 15.0) && (x <= t.x + TR_HEIGHT + 15.0) &&
+            (y >= t.y - 15.0) && (y <= t.y + TR_WIDTH + 15.0))
         {
             return &t;
         }
@@ -294,6 +308,7 @@ void PetriGUI::handleInput()
 {
     sf::Event event;
     m_mouse = sf::Vector2f(sf::Mouse::getPosition(window()));
+    static bool ctrl = false;
 
     while (window().pollEvent(event))
     {
@@ -304,23 +319,78 @@ void PetriGUI::handleInput()
             return;
 
         case sf::Event::KeyPressed:
-            m_running = (event.key.code != sf::Keyboard::Escape);
-            if (!m_running) return ;
+            if (event.key.code == sf::Keyboard::Escape)
+            {
+                m_running = false;
+                return ;
+            }
+            else if (event.key.code == sf::Keyboard::LControl)
+            {
+                ctrl = true;
+            }
+            else if (event.key.code == sf::Keyboard::C)
+            {
+                m_petri_net.reset();
+            }
+            else if ((event.key.code == sf::Keyboard::E) ||
+                     (event.key.code == sf::Keyboard::R))
+            {
+                m_petri_net.run = (event.key.code == sf::Keyboard::R);
+            }
+            else if ((event.key.code == sf::Keyboard::Add) ||
+                     (event.key.code == sf::Keyboard::Subtract))
+            {
+                Node* node = getNode(m_mouse.x, m_mouse.y);
+                if ((node != nullptr) && (node->type == Node::Type::Place))
+                {
+                    Token& tokens = reinterpret_cast<Place*>(node)->tokens;
+                    if (event.key.code == sf::Keyboard::Add)
+                    {
+                        ++tokens;
+                    }
+                    else if (tokens > 0u)
+                    {
+                        --tokens;
+                    }
+                }
+            }
+            break;
+
+        case sf::Event::KeyReleased:
+            if (event.key.code == sf::Keyboard::LControl)
+            {
+                ctrl = false;
+            }
             break;
 
         case sf::Event::MouseButtonPressed:
             m_node_from = m_node_to = nullptr;
+            // Left button: Add place
+            // Left button + key ctrl: Add arc
             if (event.mouseButton.button == sf::Mouse::Left)
             {
-                m_petri_net.addPlace(m_mouse.x, m_mouse.y, 0u);
+                if (ctrl)
+                {
+                    m_node_from = getNode(m_mouse.x, m_mouse.y);
+                }
+                else
+                {
+                    m_petri_net.addPlace(m_mouse.x, m_mouse.y, 0u);
+                }
             }
+            // Right button: Add transition
             else if (event.mouseButton.button == sf::Mouse::Right)
             {
                 m_petri_net.addTransition(m_mouse.x, m_mouse.y);
             }
-            else
+            // Middle button: remove place or transition
+            else if (event.mouseButton.button == sf::Mouse::Middle)
             {
-                m_node_from = getNode(m_mouse.x, m_mouse.y);
+                Node* node = getNode(m_mouse.x, m_mouse.y);
+                if (node != nullptr)
+                {
+                    //removeNode(*node);
+                }
             }
             break;
 
