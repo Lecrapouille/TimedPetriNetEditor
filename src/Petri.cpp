@@ -449,31 +449,38 @@ void PetriGUI::handleInput()
         case sf::Event::MouseButtonPressed:
             m_node_from = m_node_to = nullptr;
             // Left button: Add place
-            // Left button + key ctrl: Add arc
+            // Left button + key ctrl: remove place or transition
             if (event.mouseButton.button == sf::Mouse::Left)
             {
+                Node* node = getNode(m_mouse.x, m_mouse.y);
                 if (ctrl)
                 {
-                    m_node_from = getNode(m_mouse.x, m_mouse.y);
+                    if (node != nullptr)
+                    {
+                        //removeNode(*node);
+                    }
                 }
                 else
                 {
-                    m_petri_net.addPlace(m_mouse.x, m_mouse.y, 0u);
+                    if (node == nullptr)
+                    {
+                        m_petri_net.addPlace(m_mouse.x, m_mouse.y, 0u);
+                    }
                 }
             }
             // Right button: Add transition
             else if (event.mouseButton.button == sf::Mouse::Right)
             {
-                m_petri_net.addTransition(m_mouse.x, m_mouse.y);
+                Node* node = getNode(m_mouse.x, m_mouse.y);
+                if (node == nullptr)
+                {
+                    m_petri_net.addTransition(m_mouse.x, m_mouse.y);
+                }
             }
-            // Middle button: remove place or transition
+            // Middle button: Add arc
             else if (event.mouseButton.button == sf::Mouse::Middle)
             {
-                Node* node = getNode(m_mouse.x, m_mouse.y);
-                if (node != nullptr)
-                {
-                    //removeNode(*node);
-                }
+                m_node_from = getNode(m_mouse.x, m_mouse.y);
             }
             break;
 
