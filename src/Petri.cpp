@@ -22,9 +22,11 @@
 #include <iostream>
 #include <math.h>
 
+//------------------------------------------------------------------------------
 std::atomic<size_t> Place::s_count{0u};
 std::atomic<size_t> Transition::s_count{0u};
 
+//------------------------------------------------------------------------------
 const float TR_WIDTH = 50.0f; // Transition
 const float TR_HEIGHT = 5.0f; // Transition
 const float PL_RADIUS = 25.0f; // Places
@@ -34,7 +36,9 @@ const float ARC_TYPE = 2.0f;
 const float DOUBLE_SHIFT = 10.0f;
 const float FONT_SIZE = 24.0f;
 
-//------------------------------------------------------------------------------
+// *****************************************************************************
+//! \brief Allow to draw an arrow needed for drawing Petri arcs.
+// *****************************************************************************
 class Arrow : public sf::Drawable
 {
 public:
@@ -94,6 +98,7 @@ PetriGUI::PetriGUI(Application &application)
       m_figure_token(TN_RADIUS),
       m_figure_trans(sf::Vector2f(TR_HEIGHT, TR_WIDTH))
 {
+    // Display the usage
     std::cout
             << "Right click: add a transition" << std::endl
             << "Left click: add a place" << std::endl
@@ -105,8 +110,6 @@ PetriGUI::PetriGUI(Application &application)
             << "R key: run simulation" << std::endl
             << "E key: end simulation" << std::endl
             << "C key: clear the Petri net" << std::endl;
-
-    m_mouse = sf::Vector2f(sf::Mouse::getPosition(window()));
 
     // Precompute SFML struct for drawing places
     m_figure_place.setOrigin(sf::Vector2f(m_figure_place.getRadius(), m_figure_place.getRadius()));
@@ -128,9 +131,25 @@ PetriGUI::PetriGUI(Application &application)
         std::cerr << "Could not load font file ..." << std::endl;
         exit(1);
     }
-    m_text.setFont(m_font);
-    m_text.setCharacterSize(FONT_SIZE);
-    m_text.setFillColor(sf::Color(244, 125, 66));
+
+    // Caption for Places
+    m_text_place.setFont(m_font);
+    m_text_place.setCharacterSize(FONT_SIZE);
+    m_text_place.setFillColor(sf::Color(244, 125, 66));
+
+    // Number of Tokens
+    m_text_token.setFont(m_font);
+    m_text_token.setCharacterSize(20);
+    m_text_token.setFillColor(sf::Color::Black);
+    m_text_token.setStyle(sf::Text::Bold);
+
+    // Caption for Transitions
+    m_text_trans.setFont(m_font);
+    m_text_trans.setCharacterSize(FONT_SIZE);
+    m_text_trans.setFillColor(sf::Color(100, 100, 66));
+
+    // Init mouse cursor position
+    m_mouse = sf::Vector2f(sf::Mouse::getPosition(window()));
 }
 
 //------------------------------------------------------------------------------
@@ -143,7 +162,7 @@ PetriGUI::~PetriGUI()
 void PetriGUI::draw(size_t const tokens, float const x, float const y)
 {
     const float r = TN_RADIUS;
-    const float d = TN_RADIUS + 1;
+    float d = TN_RADIUS + 1;
 
     if (tokens == 0u)
         return ;
@@ -172,8 +191,15 @@ void PetriGUI::draw(size_t const tokens, float const x, float const y)
         m_figure_token.setPosition(sf::Vector2f(x + d, y + d));
         window().draw(m_figure_token);
     }
-    else if (tokens == 4u)
+    else if ((tokens == 4u) || (tokens == 5u))
     {
+        if (tokens == 5u)
+        {
+            d = r + 3;
+            m_figure_token.setPosition(sf::Vector2f(x, y));
+            window().draw(m_figure_token);
+        }
+
         m_figure_token.setPosition(sf::Vector2f(x - d, y - d));
         window().draw(m_figure_token);
 
@@ -200,10 +226,10 @@ void PetriGUI::draw(Place const& place)
     draw(place.tokens, place.x, place.y);
 
     // Draw the caption
-    m_text.setString(place.caption);
-    m_text.setPosition(sf::Vector2f(place.x - PL_RADIUS / 2,
-                                    place.y - 2 * PL_RADIUS - 5));
-    window().draw(m_text);
+    m_text_place.setString(place.caption);
+    m_text_place.setPosition(sf::Vector2f(place.x - PL_RADIUS / 2,
+                                          place.y - 2 * PL_RADIUS - 5));
+    window().draw(m_text_place);
 }
 
 //------------------------------------------------------------------------------
@@ -214,10 +240,10 @@ void PetriGUI::draw(Transition const& transition)
     window().draw(m_figure_trans);
 
     // Draw the caption
-    m_text.setString(transition.caption);
-    m_text.setPosition(sf::Vector2f(transition.x - 16,
-                                    transition.y - TR_HEIGHT - FONT_SIZE));
-    window().draw(m_text);
+    m_text_trans.setString(transition.caption);
+    m_text_trans.setPosition(sf::Vector2f(transition.x - 16,
+                                          transition.y - TR_HEIGHT - FONT_SIZE));
+    window().draw(m_text_trans);
 }
 
 //------------------------------------------------------------------------------

@@ -26,22 +26,25 @@
 #  include <string>
 
 // *****************************************************************************
-//! \brief
+//! \brief Helper class on Tokens stored in Petri Places. Allow to do operations
+//! such as ++, --, comparaisons. This class is not strictly necessary but just
+//! simplify the syntax.
 // *****************************************************************************
 struct Token
 {
+    //! \brief Set the initial number of tokens.
     Token(size_t const count)
         : m_count(count)
     {}
 
-    // prefix increment
+    //! \brief Prefix increment.
     Token& operator++()
     {
         ++m_count;
         return *this; // return new value by reference
     }
 
-    // postfix increment
+    //! \brief Postfix increment.
     Token operator++(int)
     {
         Token old = *this; // copy old value
@@ -49,7 +52,8 @@ struct Token
         return old;    // return old value
     }
 
-    // prefix decrement
+    //! \brief Prefix decrement. Throw std::range_error if try to decrement
+    //! while the counter is 0.
     Token& operator--()
     {
         if (m_count == 0u)
@@ -58,7 +62,7 @@ struct Token
         return *this; // return new value by reference
     }
 
-    // postfix decrement
+    //! \brief Postfix decrement.
     Token operator--(int)
     {
         Token old = *this; // copy old value
@@ -66,16 +70,19 @@ struct Token
         return old;    // return old value
     }
 
+    //! \brief Return the number of tokens.
     operator size_t const& () const
     {
         return m_count;
     }
 
+    //! \brief Compare number of tokens.
     bool operator==(Token const &other) const
     {
         return m_count == other.m_count;
     }
 
+    //! \brief Compare number of tokens.
     bool operator<(Token const &other) const
     {
         return m_count < other.m_count;
@@ -83,53 +90,71 @@ struct Token
 
 private:
 
+    //! \brief Number of tokens
     size_t m_count;
 };
 
 // *****************************************************************************
-//! \brief
+//! \brief Base class for Petri Place class and Petri Transition. Allow to
+//! factorize the code.
 // *****************************************************************************
 struct Node
 {
+    //! \brief Type of the node (Petri Place or Petri Transition)
     enum Type { Place, Transition };
 
+    //! \brief Constructor. No check is made.
+    //! \param[in] type: Petri Place or Petri Transition
+    //! \param[in] id: unique identifier.
+    //! \param[in] x: X-axis coordinate in the window needed for the display.
+    //! \param[in] y: Y-axis coordinate in the window needed for the display.
     Node(Type const type_, size_t const id_, float const x_, float const y_)
-        : id(id_),
-          type(type_),
-          x(x_),
-          y(y_)
+        : id(id_), type(type_), x(x_), y(y_)
     {
         m_key = (type == Node::Type::Place) ? 'P' : 'T';
         m_key += std::to_string(id);
         caption = m_key;
     }
 
+    //! \brief Return the unique identifier as a string. The first char is 'P'
+    //! for place or 'T' for transiftion, next char is the unique identifier as
+    //! integer.
     std::string const& key() const
     {
         return m_key;
     }
 
+    //! \brief Compare node with another node
     bool operator==(Node const &other) const
     {
         return (type == other.type) && (id == other.id);
     }
 
+    //! \brief Unique identifier (auto-incremented).
     size_t const id;
+    //! \brief Petri Place or Petri Transition.
     Type const type;
+    //! \brief Position in the window needed for the display.
     float x;
+    //! \brief Position in the window needed for the display.
     float y;
+    //! \brief text display near the place (by default == m_key).
     std::string caption;
 
 private:
 
+    //! \brief Unique node identifier as string.
     std::string m_key;
 };
 
 // *****************************************************************************
-//! \brief
+//! \brief Petri Place node. It hold tokens.
 // *****************************************************************************
 struct Place : public Node
 {
+    //! \param[in] x: X-axis coordinate in the window needed for the display.
+    //! \param[in] y: Y-axis coordinate in the window needed for the display.
+    //! \param[in] tok: Initial number of tokens in the place.
     Place(float const x, float const y, size_t const tok = 0u)
         : Node(Node::Type::Place, s_count++, x, y),
           tokens(tok)
@@ -143,10 +168,12 @@ private:
 };
 
 // *****************************************************************************
-//! \brief
+//! \brief Petri Transition node.
 // *****************************************************************************
 struct Transition : public Node
 {
+    //! \param[in] x: X-axis coordinate in the window needed for the display.
+    //! \param[in] y: Y-axis coordinate in the window needed for the display.
     Transition(float const x, float const y)
         : Node(Node::Type::Transition, s_count++, x, y)
     {}
@@ -157,25 +184,35 @@ private:
 };
 
 // *****************************************************************************
-//! \brief
+//! \brief Petri arc. It make the link between two Petri nodes (Place ->
+//! Transition or Transition -> Place). This class does not manage erroneous
+//! case such as if the arc links two places or links two transitions. This
+//! check shall be made by the caller class.
 // *****************************************************************************
 struct Arc
 {
+    //! \param[in] from: Origin node (Place or Transition).
+    //! \param[in] to: Destination node (Place or Transition).
+    //! \note Nodes shall have different types. No check is made here.
     Arc(Node const& from_, Node const& to_)
         : from(from_), to(to_)
     {}
 
+    //! \brief Origin node (Place or Transition).
     Node const& from;
+    //! \brief Destination node (Place or Transition).
     Node const& to;
 };
 
 // *****************************************************************************
-//! \brief
+//! \brief Class holding and managing Places, Transitions and Arcs.
 // *****************************************************************************
 class PetriNet
 {
 public:
 
+    //! \brief Reserve memory for manipulating up to 128 nodes and arcs without
+    //! needed doing intermediate allocations.
     PetriNet()
     {
         m_places.reserve(128u);
@@ -184,6 +221,7 @@ public:
         reset();
     }
 
+    //! \brief Remove all nodes and arcs.
     void reset()
     {
         m_places.clear();
@@ -191,12 +229,14 @@ public:
         m_arcs.clear();
     }
 
+    //! \brief Run the Petri net
     void simulate(float const /*dt*/)
     {
         if (!run)
             return ;
     }
 
+    //! \brief Add a new Petri Place.
     void addPlace(float const x, float const y, size_t const tokens = 0u)
     {
         m_places.push_back(Place(x, y, tokens));
@@ -212,6 +252,7 @@ public:
         return m_places;
     }
 
+    //! \brief Add a new Petri Transition.
     void addTransition(float const x, float const y)
     {
         m_transitions.push_back(Transition(x, y));
@@ -227,6 +268,9 @@ public:
         return m_transitions;
     }
 
+    //! \brief Add a new arc between two Petri nodes (place or transition).
+    //! \return true if the arc is valid and has been added, else return false
+    //! if an arc is already present or nodes have the same type.
     bool addArc(Node const& from, Node const& to)
     {
         if (from.type == to.type)
@@ -239,14 +283,17 @@ public:
         return true;
     }
 
-    bool hasArc(Node const& from, Node const& to)
+    //! \brief Return if the arc linking the two given nodes is present in the
+    //! net.
+    //! \return the address of the arc if found, else return nullptr.
+    Arc* hasArc(Node const& from, Node const& to)
     {
-        for (auto const& it: m_arcs)
+        for (auto& it: m_arcs)
         {
             if ((it.from == from) && (it.to == to))
-                return true;
+                return &it;
         }
-        return false;
+        return nullptr;
     }
 
     std::vector<Arc> const& arcs() const
@@ -266,7 +313,7 @@ private:
 };
 
 // *****************************************************************************
-//! \brief
+//! \brief Graphic representation of the Petri net
 // *****************************************************************************
 class PetriGUI: public GUI
 {
@@ -309,24 +356,41 @@ private:
     //! \brief Draw a Petri arc with arrow
     void draw(Arc const& arc);
 
+    //! \brief Search and return if a place or a transition is present at the
+    //! given coordinates.
+    //! \param[in] x: X-axis coordinate of the mouse cursor.
+    //! \param[in] y: Y-axis coordinate of the mouse cursor.
+    //! \return the address of the place or the transition if present, else
+    //! return nullptr.
     Node* getNode(float const x, float const y);
 
 private:
 
+    //! \brief Set true if the application shall stay alive.
     std::atomic<bool> m_running{true};
 
+    //! \brief SFML shape needed to draw a Petri Place.
     sf::CircleShape m_figure_place;
+    //! \brief SFML shape needed to draw a Petri Token.
     sf::CircleShape m_figure_token;
+    //! \brief SFML shape needed to draw a Petri Transition.
     sf::RectangleShape m_figure_trans;
+    //! \brief SFML loaded font from a ttf file.
     sf::Font m_font;
-    sf::Text m_text;
+    //! \brief SFML structure for rendering a text.
+    sf::Text m_text_place;
+    sf::Text m_text_token;
+    sf::Text m_text_trans;
 
-    // Selected node (place or transition)
+    //! \brief Selected origin node (place or transition) by the user when
+    //! adding an arc.
     Node* m_node_from = nullptr;
+    //! \brief Selected destination node (place or transition) by the user when
+    //! adding an arc.
     Node* m_node_to = nullptr;
-
+    //! \brief Mouse cursor position.
     sf::Vector2f m_mouse;
-
+    //! \brief The Petri net.
     PetriNet m_petri_net;
 };
 
