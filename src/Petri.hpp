@@ -28,82 +28,145 @@
 // *****************************************************************************
 //! \brief
 // *****************************************************************************
-struct Place
+struct Token
 {
-    Place(float const x_, float const y_, size_t const tokens_ = 0u)
-        : m_id(s_count),
-          x(x_),
-          y(y_),
-          tokens(tokens_)
+    Token(size_t const count)
+        : m_count(count)
+    {}
+
+    // prefix increment
+    Token& operator++()
     {
-        s_count += 1u;
-        caption = "P" + std::to_string(m_id);
+        ++m_count;
+        return *this; // return new value by reference
     }
 
-    size_t id() const
+    // postfix increment
+    Token operator++(int)
     {
-        return m_id;
+        Token old = *this; // copy old value
+        operator++();  // prefix increment
+        return old;    // return old value
+    }
+
+    // prefix decrement
+    Token& operator--()
+    {
+        if (m_count == 0u)
+            throw std::range_error("No token to decrement");
+        --m_count;
+        return *this; // return new value by reference
+    }
+
+    // postfix decrement
+    Token operator--(int)
+    {
+        Token old = *this; // copy old value
+        operator--();  // prefix decrement
+        return old;    // return old value
+    }
+
+    operator size_t const& () const
+    {
+        return m_count;
+    }
+
+    bool operator==(Token const &other) const
+    {
+        return m_count == other.m_count;
+    }
+
+    bool operator<(Token const &other) const
+    {
+        return m_count < other.m_count;
     }
 
 private:
 
-    static std::atomic<size_t> s_count;
-    size_t m_id;
-
-public:
-
-    float x;
-    float y;
-    size_t tokens;
-    std::string caption;
+    size_t m_count;
 };
 
 // *****************************************************************************
 //! \brief
 // *****************************************************************************
-struct Transition
+struct Node
 {
-    Transition(float const x_, float const y_)
-        : m_id(s_count),
+    enum Type { Place, Transition };
+
+    Node(Type const type_, size_t const id_, float const x_, float const y_)
+        : id(id_),
+          type(type_),
           x(x_),
           y(y_)
     {
-        s_count += 1u;
-        caption = "T" + std::to_string(m_id);
+        m_key = (type == Node::Type::Place) ? 'P' : 'T';
+        m_key += std::to_string(id);
+        caption = m_key;
     }
 
-    size_t id() const
+    std::string const& key() const
     {
-        return m_id;
+        return m_key;
     }
+
+    bool operator==(Node const &other) const
+    {
+        return (type == other.type) && (id == other.id);
+    }
+
+    size_t const id;
+    Type const type;
+    float x;
+    float y;
+    std::string caption;
+
+private:
+
+    std::string m_key;
+};
+
+// *****************************************************************************
+//! \brief
+// *****************************************************************************
+struct Place : public Node
+{
+    Place(float const x, float const y, size_t const tok = 0u)
+        : Node(Node::Type::Place, s_count++, x, y),
+          tokens(tok)
+    {}
+
+    Token tokens;
 
 private:
 
     static std::atomic<size_t> s_count;
-    size_t m_id;
+};
 
-public:
+// *****************************************************************************
+//! \brief
+// *****************************************************************************
+struct Transition : public Node
+{
+    Transition(float const x, float const y)
+        : Node(Node::Type::Transition, s_count++, x, y)
+    {}
 
-    float x;
-    float y;
-    std::string caption;
+private:
+
+    static std::atomic<size_t> s_count;
 };
 
 // *****************************************************************************
 //! \brief
 // *****************************************************************************
 struct Arc
-{/*
-    Arc(size_t const from_, size_t const to_)
-        : from(_from), to(_to)
-    {
-        keys[0] = from.key;
-        keys[1] = to.key;
-    }
+{
+    Arc(Node const& from_, Node const& to_)
+        : from(from_), to(to_)
+    {}
 
-    size_t from;
-    size_t to;
-    size_t keys[2];*/
+    Node const& from;
+    Node const& to;
 };
 
 // *****************************************************************************
@@ -117,6 +180,7 @@ public:
     {
         m_places.reserve(128u);
         m_transitions.reserve(128u);
+        m_arcs.reserve(128u);
         reset();
     }
 
@@ -124,7 +188,7 @@ public:
     {
         m_places.clear();
         m_transitions.clear();
-        //m_arcs.clear();
+        m_arcs.clear();
     }
 
     void addPlace(float const x, float const y, size_t const tokens = 0u)
@@ -133,6 +197,11 @@ public:
     }
 
     std::vector<Place> const& places() const
+    {
+        return m_places;
+    }
+
+    std::vector<Place>& places()
     {
         return m_places;
     }
@@ -147,10 +216,43 @@ public:
         return m_transitions;
     }
 
+    std::vector<Transition>& transitions()
+    {
+        return m_transitions;
+    }
+
+    bool addArc(Node const& from, Node const& to)
+    {
+        if (from.type == to.type)
+            return false;
+
+        if (hasArc(from, to))
+            return false;
+
+        m_arcs.push_back(Arc(from, to));
+        return true;
+    }
+
+    bool hasArc(Node const& from, Node const& to)
+    {
+        for (auto const& it: m_arcs)
+        {
+            if ((it.from == from) && (it.to == to))
+                return true;
+        }
+        return false;
+    }
+
+    std::vector<Arc> const& arcs() const
+    {
+        return m_arcs;
+    }
+
 private:
 
     std::vector<Place> m_places;
     std::vector<Transition> m_transitions;
+    std::vector<Arc> m_arcs;
 };
 
 // *****************************************************************************
@@ -191,8 +293,13 @@ private:
     //! \brief Draw a transition
     void draw(Transition const& transition);
 
-    //! \brief Draw tokans inside a place
+    //! \brief Draw tokens inside a place
     void draw(size_t const tokens, float const x, float const y);
+
+    //! \brief Draw a Petri arc with arrow
+    void draw(Arc const& arc);
+
+    Node* getNode(float const x, float const y);
 
 private:
 
@@ -203,6 +310,12 @@ private:
     sf::RectangleShape m_figure_trans;
     sf::Font m_font;
     sf::Text m_text;
+
+    // Selected node (place or transition)
+    Node* m_node_from = nullptr;
+    Node* m_node_to = nullptr;
+
+    sf::Vector2f m_mouse;
 
     PetriNet m_petri_net;
 };

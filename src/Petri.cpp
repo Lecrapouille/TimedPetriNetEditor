@@ -20,6 +20,7 @@
 
 #include "Petri.hpp"
 #include <iostream>
+#include <math.h>
 
 std::atomic<size_t> Place::s_count{0u};
 std::atomic<size_t> Transition::s_count{0u};
@@ -34,12 +35,67 @@ const float DOUBLE_SHIFT = 10.0f;
 const float FONT_SIZE = 24.0f;
 
 //------------------------------------------------------------------------------
+class Arrow : public sf::Drawable
+{
+public:
+
+    Arrow(const float xa, const float ya, const float xb, const float yb)
+    {
+        const float arrowLength = sqrtf((xb - xa) * (xb - xa) +
+                                        (yb - ya) * (yb - ya));
+
+        const float teta = (yb - ya) / (xb - xa);
+        float arrowAngle = std::atan(teta) * 180.0f / 3.1415f; // rad -> deg
+        if (xb < xa)
+            arrowAngle += 180.f;
+        else if (yb < ya)
+            arrowAngle += 360.f;
+
+        const sf::Vector2f arrowHeadSize{ 14.f, 14.f };
+        m_arrowHead = sf::ConvexShape{ 3 };
+        m_arrowHead.setPoint(0, { 0.f, 0.f });
+        m_arrowHead.setPoint(1, { arrowHeadSize.x, arrowHeadSize.y / 2.f });
+        m_arrowHead.setPoint(2, { 0.f, arrowHeadSize.y });
+        m_arrowHead.setOrigin(arrowHeadSize.x, arrowHeadSize.y / 2.f);
+        m_arrowHead.setPosition(sf::Vector2f(xb, yb));
+        m_arrowHead.setRotation(arrowAngle);
+        m_arrowHead.setFillColor(sf::Color(244, 125, 66));
+
+        const sf::Vector2f tailSize{ arrowLength - arrowHeadSize.x, 2.f };
+        m_tail = sf::RectangleShape{ tailSize };
+        m_tail.setOrigin(0.f, tailSize.y / 2.f);
+        m_tail.setPosition(sf::Vector2f(xa, ya));
+        m_tail.setRotation(arrowAngle);
+        m_tail.setFillColor(sf::Color(244, 125, 66));
+    }
+
+    Arrow(sf::Vector2f const& startPoint, sf::Vector2f const& endPoint)
+        : Arrow(startPoint.x, startPoint.y, endPoint.x, endPoint.y)
+    {}
+
+private:
+
+    void draw(sf::RenderTarget& target, sf::RenderStates /*states*/) const override final
+    {
+        target.draw(m_tail);
+        target.draw(m_arrowHead);
+    }
+
+private:
+
+    sf::RectangleShape m_tail;
+    sf::ConvexShape m_arrowHead;
+};
+
+//------------------------------------------------------------------------------
 PetriGUI::PetriGUI(Application &application)
-    : GUI("PetriGUI", application),
+    : GUI("Petri Net Editor", application),
       m_figure_place(PL_RADIUS),
       m_figure_token(TN_RADIUS),
       m_figure_trans(sf::Vector2f(TR_HEIGHT, TR_WIDTH))
 {
+    m_mouse = sf::Vector2f(sf::Mouse::getPosition(window()));
+
     // Precompute SFML struct for drawing places
     m_figure_place.setOrigin(sf::Vector2f(m_figure_place.getRadius(), m_figure_place.getRadius()));
     m_figure_place.setFillColor(sf::Color::White);
@@ -83,51 +139,54 @@ void PetriGUI::draw(size_t const tokens, float const x, float const y)
     if (tokens == 1u)
     {
         m_figure_token.setPosition(sf::Vector2f(x, y));
-        window().draw(sf::CircleShape(m_figure_token));
+        window().draw(m_figure_token);
     }
     else if (tokens == 2u)
     {
         m_figure_token.setPosition(sf::Vector2f(x - d, y));
-        window().draw(sf::CircleShape(m_figure_token));
+        window().draw(m_figure_token);
 
         m_figure_token.setPosition(sf::Vector2f(x + d, y));
-        window().draw(sf::CircleShape(m_figure_token));
+        window().draw(m_figure_token);
     }
     else if (tokens == 3u)
     {
         m_figure_token.setPosition(sf::Vector2f(x, y - r));
-        window().draw(sf::CircleShape(m_figure_token));
+        window().draw(m_figure_token);
 
         m_figure_token.setPosition(sf::Vector2f(x - d, y + d));
-        window().draw(sf::CircleShape(m_figure_token));
+        window().draw(m_figure_token);
 
         m_figure_token.setPosition(sf::Vector2f(x + d, y + d));
-        window().draw(sf::CircleShape(m_figure_token));
+        window().draw(m_figure_token);
     }
     else if (tokens == 4u)
     {
         m_figure_token.setPosition(sf::Vector2f(x - d, y - d));
-        window().draw(sf::CircleShape(m_figure_token));
+        window().draw(m_figure_token);
 
         m_figure_token.setPosition(sf::Vector2f(x + d, y - d));
-        window().draw(sf::CircleShape(m_figure_token));
+        window().draw(m_figure_token);
 
         m_figure_token.setPosition(sf::Vector2f(x - d, y + d));
-        window().draw(sf::CircleShape(m_figure_token));
+        window().draw(m_figure_token);
 
         m_figure_token.setPosition(sf::Vector2f(x + d, y + d));
-        window().draw(sf::CircleShape(m_figure_token));
+        window().draw(m_figure_token);
     }
 }
 
 //------------------------------------------------------------------------------
 void PetriGUI::draw(Place const& place)
 {
+    // Draw the place
     m_figure_place.setPosition(sf::Vector2f(place.x, place.y));
-    window().draw(sf::CircleShape(m_figure_place));
+    window().draw(m_figure_place);
 
+    // Draw tokens
     draw(place.tokens, place.x, place.y);
 
+    // Draw the caption
     m_text.setString(place.caption);
     m_text.setPosition(sf::Vector2f(place.x - PL_RADIUS / 2,
                                     place.y - 2 * PL_RADIUS - 5));
@@ -137,13 +196,32 @@ void PetriGUI::draw(Place const& place)
 //------------------------------------------------------------------------------
 void PetriGUI::draw(Transition const& transition)
 {
+    // Draw the transition
     m_figure_trans.setPosition(sf::Vector2f(transition.x, transition.y));
-    window().draw(sf::RectangleShape(m_figure_trans));
+    window().draw(m_figure_trans);
 
+    // Draw the caption
     m_text.setString(transition.caption);
     m_text.setPosition(sf::Vector2f(transition.x - 16,
                                     transition.y - TR_HEIGHT - FONT_SIZE));
     window().draw(m_text);
+}
+
+//------------------------------------------------------------------------------
+void PetriGUI::draw(Arc const& arc)
+{
+    if (arc.from.type == Node::Type::Place)
+    {
+        // Place -> Transition
+        Arrow arrow(arc.from.x, arc.from.y, arc.to.x, arc.to.y + TR_WIDTH / 2.0);
+        window().draw(arrow);
+    }
+    else
+    {
+        // Transition -> Place
+        Arrow arrow(arc.from.x, arc.from.y + TR_WIDTH / 2.0, arc.to.x, arc.to.y);
+        window().draw(arrow);
+    }
 }
 
 //------------------------------------------------------------------------------
@@ -159,6 +237,17 @@ void PetriGUI::draw(float const /*dt*/)
     for (auto const& t: m_petri_net.transitions())
     {
         draw(t);
+    }
+
+    for (auto const& a: m_petri_net.arcs())
+    {
+        draw(a);
+    }
+
+    if (m_node_from != nullptr)
+    {
+        Arrow arrow(m_node_from->x, m_node_from->y, m_mouse.x, m_mouse.y);
+        window().draw(arrow);
     }
 
     // Swap buffer
@@ -177,10 +266,34 @@ bool PetriGUI::isRunning()
 }
 
 //------------------------------------------------------------------------------
+Node* PetriGUI::getNode(float const x, float const y)
+{
+    for (auto& p: m_petri_net.places())
+    {
+        float d2 = (p.x - x) * (p.x - x) + (p.y - y) * (p.y - y);
+        if (d2 < PL_RADIUS * PL_RADIUS)
+        {
+            return &p;
+        }
+    }
+
+    for (auto& t: m_petri_net.transitions())
+    {
+        if ((x >= t.x) && (x <= t.x + TR_HEIGHT) &&
+            (y >= t.y) && (y <= t.y + TR_WIDTH))
+        {
+            return &t;
+        }
+    }
+
+    return nullptr;
+}
+
+//------------------------------------------------------------------------------
 void PetriGUI::handleInput()
 {
     sf::Event event;
-    sf::Vector2f mouse = sf::Vector2f(sf::Mouse::getPosition(window()));
+    m_mouse = sf::Vector2f(sf::Mouse::getPosition(window()));
 
     while (window().pollEvent(event))
     {
@@ -188,20 +301,36 @@ void PetriGUI::handleInput()
         {
         case sf::Event::Closed:
             m_running = false;
+            return;
+
+        case sf::Event::KeyPressed:
+            m_running = (event.key.code != sf::Keyboard::Escape);
+            if (!m_running) return ;
             break;
 
         case sf::Event::MouseButtonPressed:
+            m_node_from = m_node_to = nullptr;
             if (event.mouseButton.button == sf::Mouse::Left)
-                m_petri_net.addPlace(mouse.x, mouse.y, 3u); // FIXME TEMPORAIRE
+            {
+                m_petri_net.addPlace(m_mouse.x, m_mouse.y, 0u);
+            }
             else if (event.mouseButton.button == sf::Mouse::Right)
-                m_petri_net.addTransition(mouse.x, mouse.y);
+            {
+                m_petri_net.addTransition(m_mouse.x, m_mouse.y);
+            }
+            else
+            {
+                m_node_from = getNode(m_mouse.x, m_mouse.y);
+            }
             break;
 
-        case sf::Event::KeyPressed:
-            if (event.key.code == sf::Keyboard::Escape)
+        case sf::Event::MouseButtonReleased:
+            m_node_to = getNode(m_mouse.x, m_mouse.y);
+            if ((m_node_from != nullptr) && (m_node_to != nullptr))
             {
-                m_running = false;
+                m_petri_net.addArc(*m_node_from, *m_node_to);
             }
+            m_node_from = m_node_to = nullptr;
             break;
 
         default:

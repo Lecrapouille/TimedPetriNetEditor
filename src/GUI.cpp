@@ -22,7 +22,7 @@
 
 Application::Application()
 {
-    m_window.create(sf::VideoMode(504, 504), "Graph");
+    m_window.create(sf::VideoMode(504, 504), "Petri Net Editor");
     //m_window.setFramerateLimit(10);
 }
 
