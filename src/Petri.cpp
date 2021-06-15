@@ -351,6 +351,89 @@ void PetriGUI::draw(float const /*dt*/)
 }
 
 //------------------------------------------------------------------------------
+void PetriNet::cacheArcs()
+{
+    for (auto& trans: m_transitions)
+    {
+        trans.arcsIn.clear();
+        trans.arcsOut.clear();
+
+        for (auto& a: m_arcs)
+        {
+            if ((a.from.type == Node::Type::Place) && (a.to.id == trans.id))
+                trans.arcsIn.push_back(&a);
+            else if ((a.to.type == Node::Type::Place) && (a.from.id == trans.id))
+                trans.arcsOut.push_back(&a);
+        }
+    }
+
+    for (auto& trans: m_transitions)
+    {
+        std::cout << "Transition " << trans.id << " degIn: ";
+        for (auto& a: trans.arcsIn)
+            std::cout << "(" << a->from.key() << ", " << a->to.key() << ") ";
+        std::cout << std::endl;
+
+        std::cout << "Transition " << trans.id << " degOut: ";
+        for (auto& a: trans.arcsOut)
+            std::cout << "(" << a->from.key() << ", " << a->to.key() << ") ";
+        std::cout << std::endl;
+    }
+}
+
+
+//------------------------------------------------------------------------------
+static Token& tokenIn(Arc* a)
+{
+    return reinterpret_cast<Place*>(&(a->from))->tokens;
+}
+
+static Token& tokenOut(Arc* a)
+{
+    return reinterpret_cast<Place*>(&(a->to))->tokens;
+}
+
+//------------------------------------------------------------------------------
+static bool canFire(Transition const& trans)
+{
+    for (auto& a: trans.arcsIn)
+    {
+        if (tokenIn(a) == Token(0u))
+            return false;
+    }
+    return true;
+}
+
+//------------------------------------------------------------------------------
+static void fire(Transition const& trans)
+{
+    for (auto& a: trans.arcsIn)
+    {
+        --tokenIn(a);
+    }
+
+    for (auto& a: trans.arcsOut)
+    {
+        ++tokenOut(a);
+    }
+}
+
+//------------------------------------------------------------------------------
+void PetriNet::simulate(float const /*dt*/)
+{
+    if (!run)
+        return ;
+
+    for (auto& trans: m_transitions)
+    {
+        if (canFire(trans))
+        {
+            fire(trans);
+        }
+    }
+}
+
+//------------------------------------------------------------------------------
 void PetriGUI::update(float const dt) // FIXME std::chrono
 {
     m_petri_net.simulate(dt);
@@ -415,10 +498,18 @@ void PetriGUI::handleInput()
             {
                 m_petri_net.reset();
             }
-            else if ((event.key.code == sf::Keyboard::E) ||
-                     (event.key.code == sf::Keyboard::R))
+            else if (event.key.code == sf::Keyboard::R)
             {
-                m_petri_net.run = (event.key.code == sf::Keyboard::R);
+                std::cout << "Simulation running" << std::endl;
+                m_petri_net.cacheArcs();
+                //m_petri_net.saveTokens();
+                m_petri_net.run = true;
+            }
+            else if (event.key.code == sf::Keyboard::E)
+            {
+                std::cout << "Simulation stopped" << std::endl;
+                m_petri_net.run = false;
+                //m_petri_net.restoreTokens();
             }
             else if ((event.key.code == sf::Keyboard::Add) ||
                      (event.key.code == sf::Keyboard::Subtract))

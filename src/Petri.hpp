@@ -82,10 +82,9 @@ struct Token
         return m_count == other.m_count;
     }
 
-    //! \brief Compare number of tokens.
-    bool operator<(Token const &other) const
+    bool operator==(size_t count) const
     {
-        return m_count < other.m_count;
+        return m_count == count;
     }
 
 private:
@@ -148,6 +147,27 @@ private:
 };
 
 // *****************************************************************************
+//! \brief Petri arc. It make the link between two Petri nodes (Place ->
+//! Transition or Transition -> Place). This class does not manage erroneous
+//! case such as if the arc links two places or links two transitions. This
+//! check shall be made by the caller class.
+// *****************************************************************************
+struct Arc
+{
+    //! \param[in] from: Origin node (Place or Transition).
+    //! \param[in] to: Destination node (Place or Transition).
+    //! \note Nodes shall have different types. No check is made here.
+    Arc(Node& from_, Node& to_)
+        : from(from_), to(to_)
+    {}
+
+    //! \brief Origin node (Place or Transition).
+    Node& from;
+    //! \brief Destination node (Place or Transition).
+    Node& to;
+};
+
+// *****************************************************************************
 //! \brief Petri Place node. It hold tokens.
 // *****************************************************************************
 struct Place : public Node
@@ -178,30 +198,12 @@ struct Transition : public Node
         : Node(Node::Type::Transition, s_count++, x, y)
     {}
 
+    std::vector<Arc*> arcsIn;
+    std::vector<Arc*> arcsOut;
+
 private:
 
     static std::atomic<size_t> s_count;
-};
-
-// *****************************************************************************
-//! \brief Petri arc. It make the link between two Petri nodes (Place ->
-//! Transition or Transition -> Place). This class does not manage erroneous
-//! case such as if the arc links two places or links two transitions. This
-//! check shall be made by the caller class.
-// *****************************************************************************
-struct Arc
-{
-    //! \param[in] from: Origin node (Place or Transition).
-    //! \param[in] to: Destination node (Place or Transition).
-    //! \note Nodes shall have different types. No check is made here.
-    Arc(Node const& from_, Node const& to_)
-        : from(from_), to(to_)
-    {}
-
-    //! \brief Origin node (Place or Transition).
-    Node const& from;
-    //! \brief Destination node (Place or Transition).
-    Node const& to;
 };
 
 // *****************************************************************************
@@ -230,11 +232,7 @@ public:
     }
 
     //! \brief Run the Petri net
-    void simulate(float const /*dt*/)
-    {
-        if (!run)
-            return ;
-    }
+    void simulate(float const /*dt*/);
 
     //! \brief Add a new Petri Place.
     void addPlace(float const x, float const y, size_t const tokens = 0u)
@@ -271,7 +269,7 @@ public:
     //! \brief Add a new arc between two Petri nodes (place or transition).
     //! \return true if the arc is valid and has been added, else return false
     //! if an arc is already present or nodes have the same type.
-    bool addArc(Node const& from, Node const& to)
+    bool addArc(Node& from, Node& to)
     {
         if (from.type == to.type)
             return false;
@@ -300,6 +298,8 @@ public:
     {
         return m_arcs;
     }
+
+    void cacheArcs();
 
 public:
 
@@ -363,6 +363,8 @@ private:
     //! \return the address of the place or the transition if present, else
     //! return nullptr.
     Node* getNode(float const x, float const y);
+
+    void foo();
 
 private:
 
