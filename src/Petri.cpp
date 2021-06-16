@@ -35,6 +35,8 @@ const float ARC_SHORT = PL_RADIUS + 2.0f;
 const float ARC_TYPE = 2.0f;
 const float DOUBLE_SHIFT = 10.0f;
 const float FONT_SIZE = 24.0f;
+const float ANIMATED_TOKEN_SPEED = 100.0f;
+const float TICKS_PER_SECOND = 10.0f;
 
 // *****************************************************************************
 //! \brief Allow to draw an arrow needed for drawing Petri arcs.
@@ -107,9 +109,13 @@ PetriGUI::PetriGUI(Application &application)
             << "Middle click: remove a place or a transition or an arc" << std::endl
             << "+ key: add a token on the place pointed by the mouse cursor" << std::endl
             << "- key: remove a token on the place pointed by the mouse cursor" << std::endl
-            << "R key: run simulation" << std::endl
+            << "R key: m_simulating simulation" << std::endl
             << "E key: end simulation" << std::endl
             << "C key: clear the Petri net" << std::endl;
+
+    // Reserve memory
+    m_animation_PT.reserve(128u);
+    m_animation_TP.reserve(128u);
 
     // Precompute SFML struct for drawing places
     m_figure_place.setOrigin(sf::Vector2f(m_figure_place.getRadius(), m_figure_place.getRadius()));
@@ -122,7 +128,7 @@ PetriGUI::PetriGUI(Application &application)
     m_figure_token.setFillColor(sf::Color::Black);
 
     // Precompute SFML struct for drawing transitions
-    m_figure_trans.setOrigin(m_figure_trans.getSize().x / 2, 0);
+    m_figure_trans.setOrigin(m_figure_trans.getSize().x / 2, m_figure_trans.getSize().y / 2);
     m_figure_trans.setFillColor(sf::Color(100, 100, 66));
 
     // Precompute SFML struct for drawing text (places and transitions)
@@ -299,7 +305,7 @@ void PetriGUI::draw(Transition const& transition)
     // Draw the caption
     m_text_trans.setString(transition.caption);
     m_text_trans.setPosition(sf::Vector2f(transition.x - 16,
-                                          transition.y - TR_HEIGHT - FONT_SIZE));
+                                          transition.y - (TR_WIDTH / 2) - FONT_SIZE - 5));
     window().draw(m_text_trans);
 }
 
@@ -309,13 +315,13 @@ void PetriGUI::draw(Arc const& arc)
     if (arc.from.type == Node::Type::Place)
     {
         // Place -> Transition
-        Arrow arrow(arc.from.x, arc.from.y, arc.to.x, arc.to.y + TR_WIDTH / 2.0);
+        Arrow arrow(arc.from.x, arc.from.y, arc.to.x, arc.to.y);
         window().draw(arrow);
     }
     else
     {
         // Transition -> Place
-        Arrow arrow(arc.from.x, arc.from.y + TR_WIDTH / 2.0, arc.to.x, arc.to.y);
+        Arrow arrow(arc.from.x, arc.from.y, arc.to.x, arc.to.y);
         window().draw(arrow);
     }
 }
@@ -325,25 +331,48 @@ void PetriGUI::draw(float const /*dt*/)
 {
     window().clear(sf::Color(0u, 0u, 102u, 255u));
 
+    // Draw all Places
     for (auto const& p: m_petri_net.places())
     {
         draw(p);
     }
 
+    // Draw all Transitions
     for (auto const& t: m_petri_net.transitions())
     {
         draw(t);
     }
 
+    // Draw all Arcs
     for (auto const& a: m_petri_net.arcs())
     {
         draw(a);
     }
 
+    // Draw the arc the user is creating
     if (m_node_from != nullptr)
     {
         Arrow arrow(m_node_from->x, m_node_from->y, m_mouse.x, m_mouse.y);
         window().draw(arrow);
+    }
+
+    if (m_animation_PT.size() > 0u)
+    {
+        // Draw all tokens transiting from Places to Transitions
+        for (auto const& at: m_animation_PT)
+        {
+            m_figure_token.setPosition(sf::Vector2f(at.x, at.y));
+            window().draw(m_figure_token);
+        }
+    }
+    else
+    {
+        // Draw all tokens transiting from Transitions to Places
+        for (auto const& at: m_animation_TP)
+        {
+            m_figure_token.setPosition(sf::Vector2f(at.x, at.y));
+            window().draw(m_figure_token);
+        }
     }
 
     // Swap buffer
@@ -381,7 +410,6 @@ void PetriNet::cacheArcs()
     }
 }
 
-
 //------------------------------------------------------------------------------
 static Token& tokenIn(Arc* a)
 {
@@ -411,32 +439,88 @@ static void fire(Transition const& trans)
     {
         --tokenIn(a);
     }
-
-    for (auto& a: trans.arcsOut)
-    {
-        ++tokenOut(a);
-    }
 }
 
 //------------------------------------------------------------------------------
-void PetriNet::simulate(float const /*dt*/)
+AnimatedToken::AnimatedToken(Arc& arc, bool PT)
+    : x(arc.from.x), y(arc.from.y), currentArc(&arc)
 {
-    if (!run)
-        return ;
+    id = PT ? arc.from.id : arc.to.id;
+    magnitude = sqrtf(x * x + y * y);
+}
 
-    for (auto& trans: m_transitions)
-    {
-        if (canFire(trans))
-        {
-            fire(trans);
-        }
-    }
+//------------------------------------------------------------------------------
+bool AnimatedToken::update(float const dt)
+{
+    offset += dt * ANIMATED_TOKEN_SPEED / magnitude;
+    x = currentArc->from.x + (currentArc->to.x - currentArc->from.x) * offset;
+    y = currentArc->from.y + (currentArc->to.y - currentArc->from.y) * offset;
+
+    return (offset >= 1.0);
 }
 
 //------------------------------------------------------------------------------
 void PetriGUI::update(float const dt) // FIXME std::chrono
 {
-    m_petri_net.simulate(dt);
+    if (!m_simulating)
+        return ;
+
+    if ((m_animation_PT.size() == 0u) && (m_animation_TP.size() == 0u))
+    {
+        for (auto& trans: m_petri_net.transitions())
+        {
+            if (canFire(trans))
+            {
+                for (auto& a: trans.arcsIn)
+                {
+                    m_animation_PT.push_back(AnimatedToken(*a, true));
+                }
+
+                fire(trans);
+
+                for (auto& a: trans.arcsOut)
+                {
+                    m_animation_TP.push_back(AnimatedToken(*a, false));
+                }
+            }
+        }
+
+        // No more firing
+        if (m_animation_PT.size() == 0u)
+        {
+            m_simulating = false;
+        }
+    }
+    else
+    {
+        if (m_animation_PT.size() > 0u)
+        {
+            size_t s = m_animation_PT.size();
+            size_t i = s;
+            while (i--)
+            {
+                if (m_animation_PT[i].update(dt))
+                {
+                    std::swap(m_animation_PT[i], m_animation_PT[s - 1u]);
+                    m_animation_PT.pop_back();
+                }
+            }
+        }
+        else // m_animation_TP.size() > 0u
+        {
+            size_t s = m_animation_TP.size();
+            size_t i = s;
+            while (i--)
+            {
+                if (m_animation_TP[i].update(dt))
+                {
+                    ++tokenOut(m_animation_TP[i].currentArc);
+                    std::swap(m_animation_TP[i], m_animation_TP[s - 1u]);
+                    m_animation_TP.pop_back();
+                }
+            }
+        }
+    }
 }
 
 //------------------------------------------------------------------------------
@@ -503,12 +587,12 @@ void PetriGUI::handleInput()
                 std::cout << "Simulation running" << std::endl;
                 m_petri_net.cacheArcs();
                 //m_petri_net.saveTokens();
-                m_petri_net.run = true;
+                m_simulating = true;
             }
             else if (event.key.code == sf::Keyboard::E)
             {
                 std::cout << "Simulation stopped" << std::endl;
-                m_petri_net.run = false;
+                m_simulating = false;
                 //m_petri_net.restoreTokens();
             }
             else if ((event.key.code == sf::Keyboard::Add) ||

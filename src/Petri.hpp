@@ -207,6 +207,24 @@ private:
 };
 
 // *****************************************************************************
+//! \brief Animated Tokens when transitions are fired
+// *****************************************************************************
+struct AnimatedToken
+{
+    AnimatedToken(Arc& arc, bool PT);
+
+    bool update(float const dt);
+
+    size_t id;
+    float x;
+    float y;
+    float offset = 0.0f;
+    Arc* currentArc;
+    float magnitude;
+};
+
+
+// *****************************************************************************
 //! \brief Class holding and managing Places, Transitions and Arcs.
 // *****************************************************************************
 class PetriNet
@@ -230,9 +248,6 @@ public:
         m_transitions.clear();
         m_arcs.clear();
     }
-
-    //! \brief Run the Petri net
-    void simulate(float const /*dt*/);
 
     //! \brief Add a new Petri Place.
     void addPlace(float const x, float const y, size_t const tokens = 0u)
@@ -301,10 +316,6 @@ public:
 
     void cacheArcs();
 
-public:
-
-    bool run = false;
-
 private:
 
     std::vector<Place> m_places;
@@ -370,6 +381,7 @@ private:
 
     //! \brief Set true if the application shall stay alive.
     std::atomic<bool> m_running{true};
+    std::atomic<bool> m_simulating{false};
 
     //! \brief SFML shape needed to draw a Petri Place.
     sf::CircleShape m_figure_place;
@@ -394,6 +406,9 @@ private:
     sf::Vector2f m_mouse;
     //! \brief The Petri net.
     PetriNet m_petri_net;
+    //! \brief Animation when simulating Petri net
+    std::vector<AnimatedToken> m_animation_PT;
+    std::vector<AnimatedToken> m_animation_TP;
 };
 
 #endif
