@@ -26,74 +26,6 @@
 #  include <string>
 
 // *****************************************************************************
-//! \brief Helper class on Tokens stored in Petri Places. Allow to do operations
-//! such as ++, --, comparaisons. This class is not strictly necessary but just
-//! simplify the syntax.
-// *****************************************************************************
-struct Token
-{
-    //! \brief Set the initial number of tokens.
-    Token(size_t const count)
-        : m_count(count)
-    {}
-
-    //! \brief Prefix increment.
-    Token& operator++()
-    {
-        ++m_count;
-        return *this; // return new value by reference
-    }
-
-    //! \brief Postfix increment.
-    Token operator++(int)
-    {
-        Token old = *this; // copy old value
-        operator++();  // prefix increment
-        return old;    // return old value
-    }
-
-    //! \brief Prefix decrement. Throw std::range_error if try to decrement
-    //! while the counter is 0.
-    Token& operator--()
-    {
-        if (m_count == 0u)
-            throw std::range_error("No token to decrement");
-        --m_count;
-        return *this; // return new value by reference
-    }
-
-    //! \brief Postfix decrement.
-    Token operator--(int)
-    {
-        Token old = *this; // copy old value
-        operator--();  // prefix decrement
-        return old;    // return old value
-    }
-
-    //! \brief Return the number of tokens.
-    operator size_t const& () const
-    {
-        return m_count;
-    }
-
-    //! \brief Compare number of tokens.
-    bool operator==(Token const &other) const
-    {
-        return m_count == other.m_count;
-    }
-
-    bool operator==(size_t count) const
-    {
-        return m_count == count;
-    }
-
-private:
-
-    //! \brief Number of tokens
-    size_t m_count;
-};
-
-// *****************************************************************************
 //! \brief Base class for Petri Place class and Petri Transition. Allow to
 //! factorize the code.
 // *****************************************************************************
@@ -180,7 +112,8 @@ struct Place : public Node
           tokens(tok)
     {}
 
-    Token tokens;
+    //! \brief the number of tokens hold by the Place
+    size_t tokens;
 
 private:
 

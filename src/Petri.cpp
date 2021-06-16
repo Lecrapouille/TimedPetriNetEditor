@@ -411,12 +411,12 @@ void PetriNet::cacheArcs()
 }
 
 //------------------------------------------------------------------------------
-static Token& tokenIn(Arc* a)
+static size_t& tokenIn(Arc* a)
 {
     return reinterpret_cast<Place*>(&(a->from))->tokens;
 }
 
-static Token& tokenOut(Arc* a)
+static size_t& tokenOut(Arc* a)
 {
     return reinterpret_cast<Place*>(&(a->to))->tokens;
 }
@@ -426,7 +426,7 @@ static bool canFire(Transition const& trans)
 {
     for (auto& a: trans.arcsIn)
     {
-        if (tokenIn(a) == Token(0u))
+        if (tokenIn(a) == 0u)
             return false;
     }
     return true;
@@ -601,7 +601,7 @@ void PetriGUI::handleInput()
                 Node* node = getNode(m_mouse.x, m_mouse.y);
                 if ((node != nullptr) && (node->type == Node::Type::Place))
                 {
-                    Token& tokens = reinterpret_cast<Place*>(node)->tokens;
+                    size_t& tokens = reinterpret_cast<Place*>(node)->tokens;
                     if (event.key.code == sf::Keyboard::Add)
                     {
                         ++tokens;
