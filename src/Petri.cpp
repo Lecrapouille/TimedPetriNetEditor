@@ -167,6 +167,19 @@ PetriGUI::~PetriGUI()
 }
 
 //------------------------------------------------------------------------------
+void PetriGUI::displayNumber(size_t const tokens, float const x, float const y)
+{
+    m_text_token.setString(std::to_string(tokens));
+    if (tokens < 10u)
+        m_text_token.setPosition(sf::Vector2f(x - 6, y - 12));
+    else if (tokens < 100u)
+        m_text_token.setPosition(sf::Vector2f(x - 12, y - 12));
+    else
+        m_text_token.setPosition(sf::Vector2f(x - 18, y - 12));
+    window().draw(m_text_token);
+}
+
+//------------------------------------------------------------------------------
 void PetriGUI::draw(size_t const tokens, float const x, float const y)
 {
     const float r = TN_RADIUS;
@@ -269,14 +282,7 @@ void PetriGUI::draw(size_t const tokens, float const x, float const y)
     }
     else if (tokens >= 8u)
     {
-        m_text_token.setString(std::to_string(tokens));
-        if (tokens < 10u)
-            m_text_token.setPosition(sf::Vector2f(x - 6, y - 12));
-        else if (tokens < 100u)
-            m_text_token.setPosition(sf::Vector2f(x - 12, y - 12));
-        else
-            m_text_token.setPosition(sf::Vector2f(x - 18, y - 12));
-        window().draw(m_text_token);
+        displayNumber(tokens, x, y);
     }
 }
 
@@ -363,6 +369,7 @@ void PetriGUI::draw(float const /*dt*/)
         {
             m_figure_token.setPosition(sf::Vector2f(at.x, at.y));
             window().draw(m_figure_token);
+            displayNumber(at.tokens, at.x, at.y - 16);
         }
     }
     else
@@ -372,6 +379,7 @@ void PetriGUI::draw(float const /*dt*/)
         {
             m_figure_token.setPosition(sf::Vector2f(at.x, at.y));
             window().draw(m_figure_token);
+            displayNumber(at.tokens, at.x, at.y - 16);
         }
     }
 }
@@ -454,19 +462,24 @@ static size_t& tokenOut(Arc* a)
 }
 
 //------------------------------------------------------------------------------
-static bool canFire(Transition const& trans)
+static size_t canFire(Transition const& trans)
 {
+    size_t burnt = static_cast<size_t>(-1);
+
     for (auto& a: trans.arcsIn)
     {
-        if (tokenIn(a) == 0u)
-            return false;
+        size_t tokens = tokenIn(a);
+        if (tokens == 0u)
+            return 0u;
+        if (tokens < burnt)
+            burnt = tokens;
     }
-    return true;
+    return burnt;
 }
 
 //------------------------------------------------------------------------------
-AnimatedToken::AnimatedToken(Arc& arc, bool PT)
-    : x(arc.from.x), y(arc.from.y), currentArc(&arc)
+AnimatedToken::AnimatedToken(Arc& arc, size_t tok, bool PT)
+    : x(arc.from.x), y(arc.from.y), tokens(tok), currentArc(&arc)
 {
     id = PT ? arc.from.id : arc.to.id;
     magnitude = sqrtf(x * x + y * y);
@@ -497,15 +510,16 @@ void PetriGUI::update(float const dt) // FIXME std::chrono
         for (auto& trans: m_petri_net.transitions())
         {
             // All Places pointing to this Transition have at least one token.
-            if (canFire(trans))
+            size_t tokens = canFire(trans);
+            if (tokens > 0u)
             {
                 for (auto& a: trans.arcsIn)
                 {
-                    // Burn a token
-                    --tokenIn(a);
+                    // Burn tokens
+                    tokenIn(a) -= tokens;
 
                     // Add an animated tokens Places --> Transition.
-                    m_animation_PT.push_back(AnimatedToken(*a, true));
+                    m_animation_PT.push_back(AnimatedToken(*a, tokens, true));
                 }
 
                 // Add an animated tokens Transition --> Places.
@@ -513,7 +527,7 @@ void PetriGUI::update(float const dt) // FIXME std::chrono
                 // places when the animation will be done.
                 for (auto& a: trans.arcsOut)
                 {
-                    m_animation_TP.push_back(AnimatedToken(*a, false));
+                    m_animation_TP.push_back(AnimatedToken(*a, tokens, false));
                 }
             }
         }
@@ -552,7 +566,7 @@ void PetriGUI::update(float const dt) // FIXME std::chrono
             {
                 if (m_animation_TP[i].update(dt))
                 {
-                    ++tokenOut(m_animation_TP[i].currentArc);
+                    tokenOut(m_animation_TP[i].currentArc) += m_animation_TP[i].tokens;
                     std::swap(m_animation_TP[i], m_animation_TP[s - 1u]);
                     m_animation_TP.pop_back();
                 }

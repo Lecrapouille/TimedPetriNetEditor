@@ -154,7 +154,7 @@ private:
 // *****************************************************************************
 struct AnimatedToken
 {
-    AnimatedToken(Arc& arc, bool PT);
+    AnimatedToken(Arc& arc, size_t tok, bool PT);
 
     bool update(float const dt);
 
@@ -164,6 +164,8 @@ struct AnimatedToken
     float x;
     //! \brief Y-axis coordinate in the window used for the display.
     float y;
+    //! \brief Number of tokens carrying
+    size_t tokens = 1u;
     //! \brief In which arc the token is transitioning.
     Arc* currentArc;
     //! \brief Cache the magnitude of the arc.
@@ -329,6 +331,8 @@ private:
     //! \return the address of the place or the transition if present, else
     //! return nullptr.
     Node* getNode(float const x, float const y);
+
+    void displayNumber(size_t const tokens, float const x, float const y);
 
 private:
 

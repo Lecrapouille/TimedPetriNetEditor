@@ -26,6 +26,7 @@ int main()
 {
     Application app(800, 600, "Petri Net Editor");
     PetriGUI gui(app);
+    gui.bgColor = sf::Color(255,255,255,255);
 
     try
     {
