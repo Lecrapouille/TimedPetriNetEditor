@@ -35,8 +35,7 @@ const float ARC_SHORT = PL_RADIUS + 2.0f;
 const float ARC_TYPE = 2.0f;
 const float DOUBLE_SHIFT = 10.0f;
 const float FONT_SIZE = 24.0f;
-const float ANIMATED_TOKEN_SPEED = 100.0f;
-const float TICKS_PER_SECOND = 10.0f;
+const float TOKEN_ANIMATION_DURATION = 2.0f;
 
 
 // *****************************************************************************
@@ -444,7 +443,8 @@ AnimatedToken::AnimatedToken(Arc& arc, bool PT)
 //------------------------------------------------------------------------------
 bool AnimatedToken::update(float const dt)
 {
-    offset += dt * ANIMATED_TOKEN_SPEED / magnitude;
+    float speed = magnitude / TOKEN_ANIMATION_DURATION;
+    offset += dt * speed / magnitude;
     x = currentArc->from.x + (currentArc->to.x - currentArc->from.x) * offset;
     y = currentArc->from.y + (currentArc->to.y - currentArc->from.y) * offset;
 
