@@ -38,6 +38,7 @@ const float FONT_SIZE = 24.0f;
 const float ANIMATED_TOKEN_SPEED = 100.0f;
 const float TICKS_PER_SECOND = 10.0f;
 
+
 // *****************************************************************************
 //! \brief Allow to draw an arrow needed for drawing Petri arcs.
 // *****************************************************************************
@@ -433,15 +434,6 @@ static bool canFire(Transition const& trans)
 }
 
 //------------------------------------------------------------------------------
-static void fire(Transition const& trans)
-{
-    for (auto& a: trans.arcsIn)
-    {
-        --tokenIn(a);
-    }
-}
-
-//------------------------------------------------------------------------------
 AnimatedToken::AnimatedToken(Arc& arc, bool PT)
     : x(arc.from.x), y(arc.from.y), currentArc(&arc)
 {
@@ -465,19 +457,28 @@ void PetriGUI::update(float const dt) // FIXME std::chrono
     if (!m_simulating)
         return ;
 
+    // Tokens have done their animation ? If yes then fire transitions.
     if ((m_animation_PT.size() == 0u) && (m_animation_TP.size() == 0u))
     {
+        // For each transition check if all Places pointing to it has at least
+        // one token.
         for (auto& trans: m_petri_net.transitions())
         {
+            // All Places pointing to this Transition have at least one token.
             if (canFire(trans))
             {
                 for (auto& a: trans.arcsIn)
                 {
+                    // Burn a token
+                    --tokenIn(a);
+
+                    // Add an animated tokens Places --> Transition.
                     m_animation_PT.push_back(AnimatedToken(*a, true));
                 }
 
-                fire(trans);
-
+                // Add an animated tokens Transition --> Places.
+                // note: the number of tokens will be incremented in destination
+                // places when the animation will be done.
                 for (auto& a: trans.arcsOut)
                 {
                     m_animation_TP.push_back(AnimatedToken(*a, false));
@@ -485,7 +486,7 @@ void PetriGUI::update(float const dt) // FIXME std::chrono
             }
         }
 
-        // No more firing
+        // No more firing ? End of the simulation.
         if (m_animation_PT.size() == 0u)
         {
             m_simulating = false;
@@ -493,19 +494,24 @@ void PetriGUI::update(float const dt) // FIXME std::chrono
     }
     else
     {
+        // Tokens Places --> Transition are transitioning.
         if (m_animation_PT.size() > 0u)
         {
             size_t s = m_animation_PT.size();
             size_t i = s;
             while (i--)
             {
+                // Reach the transition ?
                 if (m_animation_PT[i].update(dt))
                 {
+                    // Remove it from the list
                     std::swap(m_animation_PT[i], m_animation_PT[s - 1u]);
                     m_animation_PT.pop_back();
                 }
             }
         }
+
+        // Tokens Transition --> Places are transitioning.
         else // m_animation_TP.size() > 0u
         {
             size_t s = m_animation_TP.size();
@@ -586,14 +592,14 @@ void PetriGUI::handleInput()
             {
                 std::cout << "Simulation running" << std::endl;
                 m_petri_net.cacheArcs();
-                //m_petri_net.saveTokens();
+                // TODO m_petri_net.saveTokens();
                 m_simulating = true;
             }
             else if (event.key.code == sf::Keyboard::E)
             {
                 std::cout << "Simulation stopped" << std::endl;
                 m_simulating = false;
-                //m_petri_net.restoreTokens();
+                // TODO m_petri_net.restoreTokens();
             }
             else if ((event.key.code == sf::Keyboard::Add) ||
                      (event.key.code == sf::Keyboard::Subtract))
@@ -632,7 +638,7 @@ void PetriGUI::handleInput()
                 {
                     if (node != nullptr)
                     {
-                        //removeNode(*node);
+                        // TODO removeNode(*node);
                     }
                 }
                 else

@@ -108,8 +108,7 @@ struct Place : public Node
     //! \param[in] y: Y-axis coordinate in the window needed for the display.
     //! \param[in] tok: Initial number of tokens in the place.
     Place(float const x, float const y, size_t const tok = 0u)
-        : Node(Node::Type::Place, s_count++, x, y),
-          tokens(tok)
+        : Node(Node::Type::Place, s_count++, x, y), tokens(tok)
     {}
 
     //! \brief the number of tokens hold by the Place
@@ -117,6 +116,7 @@ struct Place : public Node
 
 private:
 
+    //! \brief Auto increment unique identifier.
     static std::atomic<size_t> s_count;
 };
 
@@ -131,16 +131,26 @@ struct Transition : public Node
         : Node(Node::Type::Transition, s_count++, x, y)
     {}
 
+    //! \brief Hold the incoming arcs.
+    //! \note this vector is updated by the method PetriNet::cacheArcs().
+    //! Posible evolution: update dynamicaly this vector when editing the net
+    //! through the GUI.
     std::vector<Arc*> arcsIn;
+
+    //! \brief Hold the outcoming arcs.
+    //! \note this vector is updated by the method PetriNet::cacheArcs().
+    //! Posible evolution: update dynamicaly this vector when editing the net
+    //! through the GUI.
     std::vector<Arc*> arcsOut;
 
 private:
 
+    //! \brief Auto increment unique identifier.
     static std::atomic<size_t> s_count;
 };
 
 // *****************************************************************************
-//! \brief Animated Tokens when transitions are fired
+//! \brief Animated Tokens when transitions are fired.
 // *****************************************************************************
 struct AnimatedToken
 {
@@ -148,14 +158,20 @@ struct AnimatedToken
 
     bool update(float const dt);
 
+    //! \brief Unique identifier (useless but can help for debugging).
     size_t id;
+    //! \brief X-axis coordinate in the window used for the display.
     float x;
+    //! \brief Y-axis coordinate in the window used for the display.
     float y;
-    float offset = 0.0f;
+    //! \brief In which arc the token is transitioning.
     Arc* currentArc;
+    //! \brief Cache the magnitude of the arc.
     float magnitude;
+    //! \brief What ratio the token has transitioned over the arc (0%: origin
+    //! position, 100%: destination position).
+    float offset = 0.0f;
 };
-
 
 // *****************************************************************************
 //! \brief Class holding and managing Places, Transitions and Arcs.
@@ -171,7 +187,6 @@ public:
         m_places.reserve(128u);
         m_transitions.reserve(128u);
         m_arcs.reserve(128u);
-        reset();
     }
 
     //! \brief Remove all nodes and arcs.
@@ -247,12 +262,16 @@ public:
         return m_arcs;
     }
 
+    //! \brief Populate in and out arcs for all transitions.
     void cacheArcs();
 
 private:
 
+    //! \brief List of Places.
     std::vector<Place> m_places;
+    //! \brief List of Transitions.
     std::vector<Transition> m_transitions;
+    //! \brief List of Arcs.
     std::vector<Arc> m_arcs;
 };
 
@@ -308,14 +327,12 @@ private:
     //! return nullptr.
     Node* getNode(float const x, float const y);
 
-    void foo();
-
 private:
 
-    //! \brief Set true if the application shall stay alive.
+    //! \brief Set true if the thread of the application shall stay alive.
     std::atomic<bool> m_running{true};
+    //! \brief Set true when simulating the Petri net.
     std::atomic<bool> m_simulating{false};
-
     //! \brief SFML shape needed to draw a Petri Place.
     sf::CircleShape m_figure_place;
     //! \brief SFML shape needed to draw a Petri Token.
@@ -324,11 +341,12 @@ private:
     sf::RectangleShape m_figure_trans;
     //! \brief SFML loaded font from a ttf file.
     sf::Font m_font;
-    //! \brief SFML structure for rendering a text.
+    //! \brief SFML structure for rendering the caption on Places.
     sf::Text m_text_place;
+    //! \brief SFML structure for rendering the number of tokens in Places.
     sf::Text m_text_token;
+    //! \brief SFML structure for rendering the caption on Transitions.
     sf::Text m_text_trans;
-
     //! \brief Selected origin node (place or transition) by the user when
     //! adding an arc.
     Node* m_node_from = nullptr;
@@ -339,8 +357,9 @@ private:
     sf::Vector2f m_mouse;
     //! \brief The Petri net.
     PetriNet m_petri_net;
-    //! \brief Animation when simulating Petri net
+    //! \brief Animation of tokens when transitioning from Places to Transitions.
     std::vector<AnimatedToken> m_animation_PT;
+    //! \brief Animation of tokens when transitioning from Transitions to Places.
     std::vector<AnimatedToken> m_animation_TP;
 };
 
