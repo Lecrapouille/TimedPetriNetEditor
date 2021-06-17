@@ -48,20 +48,25 @@ class Application
 public:
 
     //! \brief Create a SFML window with an empty stack.
-    Application();
-    //! \brief Release the whole stack (GUIs are released).
-    ~Application();
+    //! \param[in] width: width dimension of the window.
+    //! \param[in] height: height dimension of the window.
+    //! \param[in] title: window title.
+    Application(uint32_t const width, uint32_t const height, std::string const& title);
     //! \brief Push a new GUI which will be draw by SFML.
     void push(GUI& gui);
     //! \brief Drop the current GUI. The new GUI on the top of the stack will be
     //! active and draw by SFML.
     void pop();
     //! \brief Get the GUI placed on the top of the stack.
-    GUI* peek();
+    GUI& peek();
     //! \brief Push a new GUI on the top of the stack and start a loop for
     //! managing its draw and IO events. When the GUI is closed it will be drop
     //! from the stack.
     void loop(GUI& gui);
+    //! \brief Pop the GUI on the top of the stack and start a loop for
+    //! managing its draw and IO events. When the GUI is closed it will be drop
+    //! from the stack.
+    void loop();
 
 private:
 
@@ -84,7 +89,8 @@ public:
     //! after this class.
     GUI(const char* name, Application& application)
         : m_application(application),
-          m_name(name)
+          m_name(name),
+          bgColor(0, 0, 100, 255)
     {}
 
     //! \brief Needed because of virtual methods.
@@ -100,6 +106,7 @@ public:
     std::string const& name() const { return m_name; }
 
 private:
+
     //! \brief Private methods that derived classes have to implement: called
     //! when the GUI is pushed.
     virtual void activate() = 0;
@@ -123,6 +130,7 @@ public:
 
     Application& m_application;
     std::string m_name;
+    sf::Color bgColor;
 };
 
 #endif

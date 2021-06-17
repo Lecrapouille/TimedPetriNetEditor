@@ -20,18 +20,11 @@
 
 #include "GUI.hpp"
 
-Application::Application()
+Application::Application(uint32_t const width, uint32_t const height,
+                         std::string const& title)
 {
-    m_window.create(sf::VideoMode(800, 600), "Petri Net Editor");
+    m_window.create(sf::VideoMode(width, height), title);
     //m_window.setFramerateLimit(10);
-}
-
-Application::~Application()
-{
-    while (!m_guis.empty())
-    {
-        pop();
-    }
 }
 
 void Application::push(GUI& gui)
@@ -47,33 +40,32 @@ void Application::pop()
     m_guis.pop();
 }
 
-GUI* Application::peek()
+GUI& Application::peek()
 {
-    if (m_guis.empty())
-        return nullptr;
-    return m_guis.top();
+    assert(!m_guis.empty());
+    return *m_guis.top();
 }
 
 void Application::loop(GUI& gui)
 {
-    // Push
-    m_guis.push(&gui);
-    gui.activate();
-
-    // Infinite loop
     sf::Clock clock;
+
+    push(gui);
     while (gui.isRunning())
     {
         float dt = clock.restart().asSeconds();
-        GUI* gui = peek();
-        assert(gui != nullptr);
-        gui->handleInput();
-        gui->update(dt);
-        m_window.clear();
-        gui->draw(dt);
+        GUI& gui = peek();
+        gui.handleInput();
+        gui.update(dt);
+        m_window.clear(gui.bgColor);
+        gui.draw(dt);
+        m_window.display();
     }
 
-    // Pop
-    m_guis.top()->deactivate();
-    m_guis.pop();
+    pop();
+}
+
+void Application::loop()
+{
+    loop(peek());
 }

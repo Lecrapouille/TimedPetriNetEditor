@@ -22,16 +22,15 @@
 #include <iostream>
 
 // -----------------------------------------------------------------------------
-// g++ -W -Wall --std=c++11 GUI.cpp Petri.cpp main.cpp -o prog `pkg-config --cflags --libs sfml-graphics`
 int main()
 {
-    Application app;
+    Application app(800, 600, "Petri Net Editor");
     PetriGUI gui(app);
 
     try
     {
         app.push(gui);
-        app.loop(*app.peek());
+        app.loop();
     }
     catch (std::string const& msg)
     {

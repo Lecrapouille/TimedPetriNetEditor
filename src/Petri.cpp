@@ -331,8 +331,6 @@ void PetriGUI::draw(Arc const& arc)
 //------------------------------------------------------------------------------
 void PetriGUI::draw(float const /*dt*/)
 {
-    window().clear(sf::Color(0u, 0u, 102u, 255u));
-
     // Draw all Places
     for (auto const& p: m_petri_net.places())
     {
@@ -376,9 +374,6 @@ void PetriGUI::draw(float const /*dt*/)
             window().draw(m_figure_token);
         }
     }
-
-    // Swap buffer
-    window().display();
 }
 
 //------------------------------------------------------------------------------
