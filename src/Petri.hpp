@@ -265,6 +265,9 @@ public:
     //! \brief Populate in and out arcs for all transitions.
     void cacheArcs();
 
+    //! \brief Save the file to JSON file
+    bool save(std::string const& filename);
+
 private:
 
     //! \brief List of Places.

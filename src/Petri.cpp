@@ -20,6 +20,7 @@
 
 #include "Petri.hpp"
 #include <iostream>
+#include <fstream>
 #include <math.h>
 
 //------------------------------------------------------------------------------
@@ -111,7 +112,8 @@ PetriGUI::PetriGUI(Application &application)
             << "- key: remove a token on the place pointed by the mouse cursor" << std::endl
             << "R key: m_simulating simulation" << std::endl
             << "E key: end simulation" << std::endl
-            << "C key: clear the Petri net" << std::endl;
+            << "C key: clear the Petri net" << std::endl
+            << "S key: to save the Petri net" << std::endl;
 
     // Reserve memory
     m_animation_PT.reserve(128u);
@@ -380,6 +382,41 @@ void PetriGUI::draw(float const /*dt*/)
 }
 
 //------------------------------------------------------------------------------
+bool PetriNet::save(std::string const& filename)
+{
+    std::string separator;
+    std::ofstream file(filename);
+
+    file << "{\n  \"places\": [";
+    for (auto const& p: m_places)
+    {
+        file << separator << '\"' << p.key() << ','
+             << p.x << ',' << p.y << ',' << p.tokens << '\"';
+        separator = ", ";
+    }
+    file << "],\n  \"trans\": [";
+    separator = "";
+    for (auto const& t: m_transitions)
+    {
+        file << separator << '\"' << t.key() << ','
+             << t.x << ',' << t.y << '\"';
+        separator = ", ";
+    }
+    file << "],\n  \"arcs\": [";
+    separator = "";
+    for (auto const& a: m_arcs)
+    {
+        file << separator << '\"' << a.from.key() << ','
+             << a.to.key() << '\"';
+        separator = ", ";
+    }
+    file << "]\n}";
+
+    std::cout << "Petri net saved into file '" << filename << "'" << std::endl;
+    return true;
+}
+
+//------------------------------------------------------------------------------
 void PetriNet::cacheArcs()
 {
     for (auto& trans: m_transitions)
@@ -583,6 +620,10 @@ void PetriGUI::handleInput()
             else if (event.key.code == sf::Keyboard::LControl)
             {
                 ctrl = true;
+            }
+            else if (event.key.code == sf::Keyboard::S)
+            {
+                m_petri_net.save("petri.json");
             }
             else if (event.key.code == sf::Keyboard::C)
             {
