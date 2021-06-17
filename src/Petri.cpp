@@ -48,9 +48,11 @@ public:
 
     Arrow(const float xa, const float ya, const float xb, const float yb)
     {
+        // Arc magnitude
         const float arrowLength = sqrtf((xb - xa) * (xb - xa) +
                                         (yb - ya) * (yb - ya));
 
+        // Orientation
         const float teta = (yb - ya) / (xb - xa);
         float arrowAngle = std::atan(teta) * 180.0f / 3.1415f; // rad -> deg
         if (xb < xa)
@@ -58,20 +60,35 @@ public:
         else if (yb < ya)
             arrowAngle += 360.f;
 
+        // Reduce the arrow magnitude to avoid entering in the place and having
+        // a mush of pixels when multiple arrows are pointing on the same
+        // position. To get full scaled arrow comment this block of code and
+        // uncomment xa, xb, ya, yb and tailSize.
+        float r = arrowLength - PL_RADIUS;
+        float dx = ((xb - xa) * r) / arrowLength;
+        float dy = ((yb - ya) * r) / arrowLength;
+        float a1 = xb - dx;
+        float b1 = yb - dy;
+        float a2 = xa + dx;
+        float b2 = ya + dy;
+
+        // Head of the arrow
         const sf::Vector2f arrowHeadSize{ 14.f, 14.f };
         m_arrowHead = sf::ConvexShape{ 3 };
         m_arrowHead.setPoint(0, { 0.f, 0.f });
         m_arrowHead.setPoint(1, { arrowHeadSize.x, arrowHeadSize.y / 2.f });
         m_arrowHead.setPoint(2, { 0.f, arrowHeadSize.y });
         m_arrowHead.setOrigin(arrowHeadSize.x, arrowHeadSize.y / 2.f);
-        m_arrowHead.setPosition(sf::Vector2f(xb, yb));
+        m_arrowHead.setPosition(sf::Vector2f(a2, b2 /*xb, yb*/));
         m_arrowHead.setRotation(arrowAngle);
         m_arrowHead.setFillColor(sf::Color(244, 125, 66));
 
-        const sf::Vector2f tailSize{ arrowLength - arrowHeadSize.x, 2.f };
+        // Tail of the arrow.
+        //const sf::Vector2f tailSize{ arrowLength - arrowHeadSize.x, 2.f };
+        const sf::Vector2f tailSize{ r - arrowHeadSize.x - 15, 2.f };
         m_tail = sf::RectangleShape{ tailSize };
         m_tail.setOrigin(0.f, tailSize.y / 2.f);
-        m_tail.setPosition(sf::Vector2f(xa, ya));
+        m_tail.setPosition(sf::Vector2f(a1, b1 /*xa, ya*/));
         m_tail.setRotation(arrowAngle);
         m_tail.setFillColor(sf::Color(244, 125, 66));
     }
