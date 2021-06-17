@@ -1,6 +1,6 @@
-# PetriEditor
+# TimedPetriNetEditor
 
-A Petri net editor made in C++11 and displayed with the [SFML](https://www.sfml-dev.org/index-fr.php).
+A timed Petri net editor made in C++11 and displayed with the [SFML](https://www.sfml-dev.org/index-fr.php).
 
 Why another Petri editor ? Because:
 - Many Petri node editors in GitHub are no longer maintained (> 7 years) or made in foreign languages (C#), foreign compiler (Visual Studio) or foreign operating systems (Windows) or are too complex.
@@ -34,12 +34,3 @@ cd PetriEditor/src
 - `e` key: end simulation.
 - `c` key: clear the Petri net.
 - `s` key: save the Petri net as JSON file.
-
-## Work In Progress
-
-- Load json file
-- Move/remove nodes not yet implemented.
-- Fix arrow magnitude.
-- Allow to modify the name of nodes.
-- Timed Petri.
-- Generate implicit dynamic linear max+ system code for https://github.com/Lecrapouille/MaxPlus.jl
