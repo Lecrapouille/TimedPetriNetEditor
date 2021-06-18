@@ -23,14 +23,17 @@ cd PetriEditor/src
 
 ## Usage
 
-- Right click: add a transition.
-- Left click: add a place.
-- Left click and Left Control key : add an arc from a place or transition.
-- Left click and Left Shift key : add an arc from a place or transition.
-- Middle click: remove a place or a transition or an arc.
+- Left mouse button pressed: add a place.
+- Right mouse button pressed: add a transition.
+- Middle mouse button pressed: add an arc with the selected place or transition as origin.
+- Middle mouse button release: end the arc with the selected place or transition as destination.
+- `L` key: add an arc with the selected place or transition as origin.
+- `M` key: move the selected place or transition.
 - `+` key: add a token on the place pointed by the mouse cursor.
 - `-` key: remove a token on the place pointed by the mouse cursor.
-- `r` key: m_simulating simulation.
-- `e` key: end simulation.
-- `c` key: clear the Petri net.
-- `s` key: save the Petri net as JSON file.
+- `R` key: m_simulating simulation.
+- `E` key: end simulation.
+- `S` key: save the Petri net as petri.json file.
+- `O` key: load the Petri net from petri.json file. TODO
+- `Delete` key: remove a place or transition or an arc. TODO
+- `C` key: clear the Petri net.

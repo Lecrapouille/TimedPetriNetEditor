@@ -47,6 +47,15 @@ struct Node
         caption = m_key;
     }
 
+    //! \brief Necessary because of const var member. identifier and type does
+    //! not chnage.
+    Node& operator=(const Node& obj)
+    {
+        this->~Node(); // destroy
+        new (this) Node(obj); // copy construct in place
+        return *this;
+    }
+
     //! \brief Return the unique identifier as a string. The first char is 'P'
     //! for place or 'T' for transiftion, next char is the unique identifier as
     //! integer.
@@ -92,6 +101,14 @@ struct Arc
     Arc(Node& from_, Node& to_)
         : from(from_), to(to_)
     {}
+
+    //! \brief Hack needed because of references
+    Arc& operator=(const Arc& obj)
+    {
+        this->~Arc(); // destroy
+        new (this) Arc(obj); // copy construct in place
+        return *this;
+    }
 
     //! \brief Origin node (Place or Transition).
     Node& from;
@@ -267,8 +284,14 @@ public:
     //! \brief Populate in and out arcs for all transitions.
     void cacheArcs();
 
-    //! \brief Save the file to JSON file
+    //! \brief Save the Petri net in a JSON file
     bool save(std::string const& filename);
+
+    //! \brief Load the Petri net from a JSON file
+    bool load(std::string const& filename);
+
+    //! \brief Remove a Place or a Transition
+    void removeNode(Node& node);
 
 private:
 
@@ -340,6 +363,8 @@ private:
     std::atomic<bool> m_running{true};
     //! \brief Set true when simulating the Petri net.
     std::atomic<bool> m_simulating{false};
+    //! \brief Set true when the user is pressing the Control key.
+    std::atomic<bool> m_ctrl{false};
     //! \brief SFML shape needed to draw a Petri Place.
     sf::CircleShape m_figure_place;
     //! \brief SFML shape needed to draw a Petri Token.
@@ -360,6 +385,8 @@ private:
     //! \brief Selected destination node (place or transition) by the user when
     //! adding an arc.
     Node* m_node_to = nullptr;
+    //! \brief The user has select a node to be displaced.
+    Node* m_moving_node = nullptr;
     //! \brief Mouse cursor position.
     sf::Vector2f m_mouse;
     //! \brief The Petri net.
