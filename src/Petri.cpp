@@ -38,6 +38,11 @@ const float DOUBLE_SHIFT = 10.0f;
 const float FONT_SIZE = 24.0f;
 const float TOKEN_ANIMATION_DURATION = 2.0f;
 
+//------------------------------------------------------------------------------
+static float norm(const float xa, const float ya, const float xb, const float yb)
+{
+    return sqrtf((xb - xa) * (xb - xa) + (yb - ya) * (yb - ya));
+}
 
 // *****************************************************************************
 //! \brief Allow to draw an arrow needed for drawing Petri arcs.
@@ -49,8 +54,7 @@ public:
     Arrow(const float xa, const float ya, const float xb, const float yb)
     {
         // Arc magnitude
-        const float arrowLength = sqrtf((xb - xa) * (xb - xa) +
-                                        (yb - ya) * (yb - ya));
+        const float arrowLength = norm(xa, ya, xb, yb);
 
         // Orientation
         const float teta = (yb - ya) / (xb - xa);
@@ -563,10 +567,10 @@ static size_t canFire(Transition const& trans)
 
 //------------------------------------------------------------------------------
 AnimatedToken::AnimatedToken(Arc& arc, size_t tok, bool PT)
-    : x(arc.from.x), y(arc.from.y), tokens(tok), currentArc(&arc)
+    : x(arc.from.x), y(arc.from.y), tokens(tok), currentArc(&arc),
+      magnitude(norm(arc.from.x, arc.from.y, arc.to.x, arc.to.y))
 {
     id = PT ? arc.from.id : arc.to.id;
-    magnitude = sqrtf(x * x + y * y);
 }
 
 //------------------------------------------------------------------------------
