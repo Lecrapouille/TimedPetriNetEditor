@@ -703,6 +703,50 @@ void PetriGUI::handleInput()
     {
         switch (event.type)
         {
+            // Window close button clicked
+        case sf::Event::Closed:
+            m_running = false;
+            return;
+
+        case sf::Event::KeyPressed:
+            // Escape key: qui the application.
+            if (event.key.code == sf::Keyboard::Escape)
+            {
+                m_running = false;
+                return ;
+            }
+            // 'R' key: Run the animation of the Petri net
+            else if (event.key.code == sf::Keyboard::R)
+            {
+                if (!m_simulating)
+                {
+                    std::cout << "Simulation running" << std::endl;
+                    m_petri_net.cacheArcs();
+                    // TODO m_petri_net.saveTokens();
+                    m_simulating = true;
+                }
+            }
+            // 'E' key: End the animation of the Petri net
+            else if (event.key.code == sf::Keyboard::E)
+            {
+                if (m_simulating)
+                {
+                    std::cout << "Simulation stopped" << std::endl;
+                    m_simulating = false;
+                    // TODO m_petri_net.restoreTokens();
+                }
+            }
+            break;
+        default:
+            break;
+        }
+
+        // No modification allowed during the simulation
+        if (m_simulating)
+            break;
+
+        switch (event.type)
+        {
         // Window close button clicked
         case sf::Event::Closed:
             m_running = false;
@@ -755,27 +799,6 @@ void PetriGUI::handleInput()
                 if (node != nullptr)
                 {
                     m_petri_net.removeNode(*node);
-                }
-            }
-            // 'R' key: Run the animation of the Petri net
-            else if (event.key.code == sf::Keyboard::R)
-            {
-                if (!m_simulating)
-                {
-                    std::cout << "Simulation running" << std::endl;
-                    m_petri_net.cacheArcs();
-                    // TODO m_petri_net.saveTokens();
-                    m_simulating = true;
-                }
-            }
-            // 'E' key: End the animation of the Petri net
-            else if (event.key.code == sf::Keyboard::E)
-            {
-                if (m_simulating)
-                {
-                    std::cout << "Simulation stopped" << std::endl;
-                    m_simulating = false;
-                    // TODO m_petri_net.restoreTokens();
                 }
             }
             // '+' or '-' key: increase or decrease the number of tokens in the
