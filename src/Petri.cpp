@@ -819,7 +819,7 @@ void PetriGUI::handleInput()
                     }
                     else if (event.mouseButton.button == sf::Mouse::Left)
                     {
-                        m_petri_net.addPlace(m_mouse.x, m_mouse.y, 0u);
+                        m_petri_net.addPlace(m_mouse.x, m_mouse.y);
                     }
                     else if (event.mouseButton.button == sf::Mouse::Right)
                     {
@@ -843,10 +843,18 @@ void PetriGUI::handleInput()
             break;
 
         case sf::Event::MouseButtonReleased:
-            // End tracing the arc
-            m_node_to = getNode(m_mouse.x, m_mouse.y);
-            if ((m_node_from != nullptr) && (m_node_to != nullptr))
+            if (m_node_from != nullptr)
             {
+                // Finish the creation of the arc (destination node)
+                m_node_to = getNode(m_mouse.x, m_mouse.y);
+                if (m_node_to == nullptr)
+                {
+                    // No destination node selected ? Create one !
+                    if (m_node_from->type == Node::Type::Place)
+                        m_node_to = &m_petri_net.addTransition(m_mouse.x, m_mouse.y);
+                    else
+                        m_node_to = &m_petri_net.addPlace(m_mouse.x, m_mouse.y);
+                }
                 m_petri_net.addArc(*m_node_from, *m_node_to);
             }
             m_node_from = m_node_to = nullptr;

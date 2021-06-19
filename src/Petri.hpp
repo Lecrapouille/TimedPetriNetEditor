@@ -217,9 +217,14 @@ public:
     }
 
     //! \brief Add a new Petri Place.
-    void addPlace(float const x, float const y, size_t const tokens = 0u)
+    //! \param[in] x: X-axis coordinate in the window needed for the display.
+    //! \param[in] y: Y-axis coordinate in the window needed for the display.
+    //! \param[in] tokens: Initial number of tokens in the place.
+    //! \return the reference of the inserted element.
+    Place& addPlace(float const x, float const y, size_t const tokens = 0u)
     {
         m_places.push_back(Place(x, y, tokens));
+        return m_places.back();
     }
 
     std::vector<Place> const& places() const
@@ -233,9 +238,13 @@ public:
     }
 
     //! \brief Add a new Petri Transition.
-    void addTransition(float const x, float const y)
+    //! \param[in] x: X-axis coordinate in the window needed for the display.
+    //! \param[in] y: Y-axis coordinate in the window needed for the display.
+    //! \return the reference of the inserted element.
+    Transition& addTransition(float const x, float const y)
     {
         m_transitions.push_back(Transition(x, y));
+        return m_transitions.back();
     }
 
     std::vector<Transition> const& transitions() const
