@@ -415,37 +415,6 @@ void PetriNet::removeNode(Node& node)
 }
 
 //------------------------------------------------------------------------------
-void PetriNet::cacheArcs()
-{
-    for (auto& trans: m_transitions)
-    {
-        trans.arcsIn.clear();
-        trans.arcsOut.clear();
-
-        for (auto& a: m_arcs)
-        {
-            if ((a.from.type == Node::Type::Place) && (a.to.id == trans.id))
-                trans.arcsIn.push_back(&a);
-            else if ((a.to.type == Node::Type::Place) && (a.from.id == trans.id))
-                trans.arcsOut.push_back(&a);
-        }
-    }
-
-    for (auto& trans: m_transitions)
-    {
-        std::cout << "Transition " << trans.id << " degIn: ";
-        for (auto& a: trans.arcsIn)
-            std::cout << "(" << a->from.key() << ", " << a->to.key() << ") ";
-        std::cout << std::endl;
-
-        std::cout << "Transition " << trans.id << " degOut: ";
-        for (auto& a: trans.arcsOut)
-            std::cout << "(" << a->from.key() << ", " << a->to.key() << ") ";
-        std::cout << std::endl;
-    }
-}
-
-//------------------------------------------------------------------------------
 static size_t& tokenIn(Arc* a)
 {
     return reinterpret_cast<Place*>(&(a->from))->tokens;
@@ -478,12 +447,15 @@ AnimatedToken::AnimatedToken(Arc& arc, size_t tok, bool PT)
       magnitude(norm(arc.from.x, arc.from.y, arc.to.x, arc.to.y))
 {
     id = PT ? arc.from.id : arc.to.id;
+
+    // Note: we are supposing the norm and duration is never updated by
+    // the user during the simulation.
+    speed = PT ? 10000.0f : ANIMATION_SCALING / arc.duration;
 }
 
 //------------------------------------------------------------------------------
 bool AnimatedToken::update(float const dt)
 {
-    float speed = magnitude / TOKEN_ANIMATION_DURATION;
     offset += dt * speed / magnitude;
     x = currentArc->from.x + (currentArc->to.x - currentArc->from.x) * offset;
     y = currentArc->from.y + (currentArc->to.y - currentArc->from.y) * offset;
@@ -492,19 +464,59 @@ bool AnimatedToken::update(float const dt)
 }
 
 //------------------------------------------------------------------------------
+// TODO: could be nice to separate simulation from animation
 void PetriGUI::update(float const dt) // FIXME std::chrono
 {
-    if (!m_simulating)
-        return ;
-
-    // Tokens have done their animation ? If yes then fire transitions.
-    if ((m_animation_PT.size() == 0u) && (m_animation_TP.size() == 0u))
+    switch (m_state)
     {
+    case STATE_IDLE:
+        m_state = m_simulating ? STATE_STARTING : STATE_IDLE;
+        break;
+
+    case STATE_STARTING:
+        // Backup tokens for each places since the simulation will burn them
+        for (auto& p: m_petri_net.places())
+        {
+            p.backup_tokens = p.tokens;
+        }
+
+        // Populate in and out arcs for all transitions to avoid to look after
+        // them.
+        for (auto& trans: m_petri_net.transitions())
+        {
+            trans.arcsIn.clear();
+            trans.arcsOut.clear();
+
+            for (auto& a: m_petri_net.arcs())
+            {
+                if ((a.from.type == Node::Type::Place) && (a.to.id == trans.id))
+                    trans.arcsIn.push_back(&a);
+                else if ((a.to.type == Node::Type::Place) && (a.from.id == trans.id))
+                    trans.arcsOut.push_back(&a);
+            }
+        }
+
+        m_state = STATE_FIRING;
+        break;
+
+    case STATE_ENDING:
+        // Restore burnt tokens from the simulation
+        for (auto& p: m_petri_net.places())
+        {
+            p.tokens = p.backup_tokens;
+        }
+
+        m_state = STATE_IDLE;
+        break;
+
+    case STATE_FIRING:
         // For each transition check if all Places pointing to it has at least
         // one token.
         for (auto& trans: m_petri_net.transitions())
         {
-            // All Places pointing to this Transition have at least one token.
+            // All Places pointing to this Transition have at least one token:
+            // burn the maximum allowed of tokens and place tokens inside the
+            // container of their animation.
             size_t tokens = canFire(trans);
             if (tokens > 0u)
             {
@@ -527,14 +539,16 @@ void PetriGUI::update(float const dt) // FIXME std::chrono
             }
         }
 
-        // No more firing ? End of the simulation.
+        // No more firing ? End of the simulation, else go to next state.
         if (m_animation_PT.size() == 0u)
         {
             m_simulating = false;
         }
-    }
-    else
-    {
+
+        m_state = m_simulating ? STATE_ANIMATING_PT : STATE_ENDING;
+        break;
+
+    case STATE_ANIMATING_PT:
         // Tokens Places --> Transition are transitioning.
         if (m_animation_PT.size() > 0u)
         {
@@ -551,9 +565,16 @@ void PetriGUI::update(float const dt) // FIXME std::chrono
                 }
             }
         }
+        else
+        {
+            // No more tokens to animate: go to next state.
+            m_state = m_simulating ? STATE_ANIMATING_TP : STATE_ENDING;
+        }
+        break;
 
+    case STATE_ANIMATING_TP:
         // Tokens Transition --> Places are transitioning.
-        else // m_animation_TP.size() > 0u
+        if (m_animation_TP.size() > 0u)
         {
             size_t s = m_animation_TP.size();
             size_t i = s;
@@ -567,13 +588,19 @@ void PetriGUI::update(float const dt) // FIXME std::chrono
                 }
             }
         }
-    }
-}
+        else
+        {
+            // No more tokens to animate: go to the initial state.
+            m_state = m_simulating ? STATE_FIRING : STATE_ENDING;
+        }
+        break;
 
-//------------------------------------------------------------------------------
-bool PetriGUI::isRunning()
-{
-    return m_running;
+    default:
+        std::cerr << "Odd state in the state machine doing the "
+                  << "animation of the Petri net" << std::endl;
+        exit(1);
+        break;
+    }
 }
 
 //------------------------------------------------------------------------------
@@ -627,9 +654,7 @@ void PetriGUI::handleInput()
             {
                 if (!m_simulating)
                 {
-                    std::cout << "Simulation running" << std::endl;
-                    m_petri_net.cacheArcs();
-                    // TODO m_petri_net.saveTokens();
+                    std::cout << "Simulation started" << std::endl;
                     m_simulating = true;
                 }
             }
@@ -640,10 +665,15 @@ void PetriGUI::handleInput()
                 {
                     std::cout << "Simulation stopped" << std::endl;
                     m_simulating = false;
-                    // TODO m_petri_net.restoreTokens();
                 }
             }
+            // 'P' key: Pause the animation of the Petri net
+            else if (event.key.code == sf::Keyboard::P)
+            {
+                m_simulating = m_simulating ^ true;
+            }
             break;
+
         default:
             break;
         }

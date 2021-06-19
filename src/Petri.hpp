@@ -98,8 +98,8 @@ struct Arc
     //! \param[in] from: Origin node (Place or Transition).
     //! \param[in] to: Destination node (Place or Transition).
     //! \note Nodes shall have different types. No check is made here.
-    Arc(Node& from_, Node& to_)
-        : from(from_), to(to_)
+    Arc(Node& from_, Node& to_, float duration_ = 0.0f)
+        : from(from_), to(to_), duration(duration_)
     {}
 
     //! \brief Hack needed because of references
@@ -114,6 +114,8 @@ struct Arc
     Node& from;
     //! \brief Destination node (Place or Transition).
     Node& to;
+    //! \brief Timed Petri.
+    float duration; // TODO unit
 };
 
 // *****************************************************************************
@@ -125,11 +127,13 @@ struct Place : public Node
     //! \param[in] y: Y-axis coordinate in the window needed for the display.
     //! \param[in] tok: Initial number of tokens in the place.
     Place(float const x, float const y, size_t const tok = 0u)
-        : Node(Node::Type::Place, s_count++, x, y), tokens(tok)
+        : Node(Node::Type::Place, s_count++, x, y),
+          tokens(tok), backup_tokens(tok)
     {}
 
     //! \brief the number of tokens hold by the Place
     size_t tokens;
+    size_t backup_tokens; // TODO: to be private ?
 
 private:
 
@@ -187,13 +191,18 @@ struct AnimatedToken
     Arc* currentArc;
     //! \brief Cache the magnitude of the arc.
     float magnitude;
+    //! \brief The speed of the token animated.
+    float speed;
     //! \brief What ratio the token has transitioned over the arc (0%: origin
     //! position, 100%: destination position).
     float offset = 0.0f;
 };
 
 // *****************************************************************************
-//! \brief Class holding and managing Places, Transitions and Arcs.
+//! \brief Container class holding and managing Places, Transitions and
+//! Arcs. This class does not manage simulation. FIXME: to be defined since
+//! currently the PetriGUI is doing the simulation which is mainly animations
+//! with some basic features such as burning tokens ...
 // *****************************************************************************
 class PetriNet
 {
@@ -290,8 +299,10 @@ public:
         return m_arcs;
     }
 
-    //! \brief Populate in and out arcs for all transitions.
-    void cacheArcs();
+    std::vector<Arc>& arcs()
+    {
+        return m_arcs;
+    }
 
     //! \brief Save the Petri net in a JSON file
     bool save(std::string const& filename);
@@ -334,7 +345,10 @@ private: // Derived from GUI
     virtual void handleInput() override;
 
     //! \brief Inherit from GUI class. Return true if GUI is alive.
-    virtual bool isRunning() override;
+    virtual bool isRunning() override
+    {
+        return m_running;
+    }
 
     //! \brief Called when the GUI has been enabled.
     virtual void activate() override {}
@@ -372,10 +386,17 @@ private:
 
 private:
 
+    enum States
+    {
+        STATE_IDLE, STATE_STARTING, STATE_ENDING, STATE_FIRING,
+        STATE_ANIMATING_PT, STATE_ANIMATING_TP
+    };
+
     //! \brief Set true if the thread of the application shall stay alive.
     std::atomic<bool> m_running{true};
     //! \brief Set true when simulating the Petri net.
     std::atomic<bool> m_simulating{false};
+    std::atomic<States> m_state{STATE_IDLE};
     //! \brief Set true when the user is pressing the Control key.
     std::atomic<bool> m_ctrl{false};
     //! \brief SFML shape needed to draw a Petri Place.
