@@ -344,17 +344,23 @@ private: // Derived from GUI
 
 private:
 
-    //! \brief Draw a place
+    //! \brief Draw a place and its tokens
     void draw(Place const& place);
 
     //! \brief Draw a transition
     void draw(Transition const& transition);
 
-    //! \brief Draw tokens inside a place
-    void draw(size_t const tokens, float const x, float const y);
-
     //! \brief Draw a Petri arc with arrow
     void draw(Arc const& arc);
+
+    //! \brief Draw a string centered on x, y coordiantes
+    void draw(std::string const& str, float const x, float const y);
+
+    //! \brief Draw a integer centered on x, y coordiantes
+    void draw(size_t const number, float const x, float const y);
+
+    //! \brief Draw a float centered on x, y coordiantes
+    void draw(float const number, float const x, float const y);
 
     //! \brief Search and return if a place or a transition is present at the
     //! given coordinates.
@@ -363,8 +369,6 @@ private:
     //! \return the address of the place or the transition if present, else
     //! return nullptr.
     Node* getNode(float const x, float const y);
-
-    void displayNumber(size_t const tokens, float const x, float const y);
 
 private:
 

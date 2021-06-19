@@ -19,24 +19,26 @@
 //=====================================================================
 
 #include "Petri.hpp"
+#include <iomanip>
 #include <iostream>
 #include <fstream>
 #include <math.h>
+#include <sstream>
 
 //------------------------------------------------------------------------------
 std::atomic<size_t> Place::s_count{0u};
 std::atomic<size_t> Transition::s_count{0u};
 
 //------------------------------------------------------------------------------
-const float TR_WIDTH = 50.0f; // Transition
-const float TR_HEIGHT = 5.0f; // Transition
-const float PL_RADIUS = 25.0f; // Places
-const float TN_RADIUS = 4.0f;  // Token in places
-const float ARC_SHORT = PL_RADIUS + 2.0f;
-const float ARC_TYPE = 2.0f;
-const float DOUBLE_SHIFT = 10.0f;
-const float FONT_SIZE = 24.0f;
-const float TOKEN_ANIMATION_DURATION = 2.0f;
+// Config for displaying the Petri net
+const float TRANS_WIDTH = 50.0f;  // Transition rectangle width
+const float TRANS_HEIGHT = 5.0f;  // Transition rectangle height
+const float PLACE_RADIUS = 25.0f; // Place circle radius
+const float TOKEN_RADIUS = 4.0f;  // Token circle radius
+const float CAPTION_FONT_SIZE = 12.0f; // Size for text for captions
+const float FONT_Y_OFFSET = 2.0f;
+const float TOKEN_FONT_SIZE = 12.0f; // Size for text for tokens
+const float ANIMATION_SCALING = 1.0f;
 
 //------------------------------------------------------------------------------
 static float norm(const float xa, const float ya, const float xb, const float yb)
@@ -45,7 +47,8 @@ static float norm(const float xa, const float ya, const float xb, const float yb
 }
 
 // *****************************************************************************
-//! \brief Allow to draw an arrow needed for drawing Petri arcs.
+//! \brief Class allowing to draw an arrow. Arrows are needed for drawing Petri
+//! arcs.
 // *****************************************************************************
 class Arrow : public sf::Drawable
 {
@@ -68,7 +71,7 @@ public:
         // a mush of pixels when multiple arrows are pointing on the same
         // position. To get full scaled arrow comment this block of code and
         // uncomment xa, xb, ya, yb and tailSize.
-        float r = arrowLength - PL_RADIUS;
+        float r = arrowLength - PLACE_RADIUS;
         float dx = ((xb - xa) * r) / arrowLength;
         float dy = ((yb - ya) * r) / arrowLength;
         float a1 = xb - dx;
@@ -138,9 +141,9 @@ static void usage()
 //------------------------------------------------------------------------------
 PetriGUI::PetriGUI(Application &application)
     : GUI("Petri Net Editor", application),
-      m_figure_place(PL_RADIUS),
-      m_figure_token(TN_RADIUS),
-      m_figure_trans(sf::Vector2f(TR_HEIGHT, TR_WIDTH))
+      m_figure_place(PLACE_RADIUS),
+      m_figure_token(TOKEN_RADIUS),
+      m_figure_trans(sf::Vector2f(TRANS_HEIGHT, TRANS_WIDTH))
 {
     usage();
 
@@ -163,7 +166,7 @@ PetriGUI::PetriGUI(Application &application)
     m_figure_trans.setFillColor(sf::Color(100, 100, 66));
 
     // Precompute SFML struct for drawing text (places and transitions)
-    if (!m_font.loadFromFile("OpenSans-Regular.ttf"))
+    if (!m_font.loadFromFile("font.ttf"))
     {
         std::cerr << "Could not load font file ..." << std::endl;
         exit(1);
@@ -171,18 +174,17 @@ PetriGUI::PetriGUI(Application &application)
 
     // Caption for Places
     m_text_place.setFont(m_font);
-    m_text_place.setCharacterSize(FONT_SIZE);
+    m_text_place.setCharacterSize(CAPTION_FONT_SIZE);
     m_text_place.setFillColor(sf::Color(244, 125, 66));
 
     // Number of Tokens
     m_text_token.setFont(m_font);
-    m_text_token.setCharacterSize(20);
+    m_text_token.setCharacterSize(TOKEN_FONT_SIZE);
     m_text_token.setFillColor(sf::Color::Black);
-    m_text_token.setStyle(sf::Text::Bold);
 
     // Caption for Transitions
     m_text_trans.setFont(m_font);
-    m_text_trans.setCharacterSize(FONT_SIZE);
+    m_text_trans.setCharacterSize(CAPTION_FONT_SIZE);
     m_text_trans.setFillColor(sf::Color(100, 100, 66));
 
     // Init mouse cursor position
@@ -196,123 +198,26 @@ PetriGUI::~PetriGUI()
 }
 
 //------------------------------------------------------------------------------
-void PetriGUI::displayNumber(size_t const tokens, float const x, float const y)
+void PetriGUI::draw(std::string const& str, float const x, float const y)
 {
-    m_text_token.setString(std::to_string(tokens));
-    if (tokens < 10u)
-        m_text_token.setPosition(sf::Vector2f(x - 6, y - 12));
-    else if (tokens < 100u)
-        m_text_token.setPosition(sf::Vector2f(x - 12, y - 12));
-    else
-        m_text_token.setPosition(sf::Vector2f(x - 18, y - 12));
+    m_text_token.setString(str);
+    m_text_token.setPosition(x - m_text_token.getLocalBounds().width / 2.0,
+                             y - FONT_Y_OFFSET);
     window().draw(m_text_token);
 }
 
 //------------------------------------------------------------------------------
-void PetriGUI::draw(size_t const tokens, float const x, float const y)
+void PetriGUI::draw(size_t const number, float const x, float const y)
 {
-    const float r = TN_RADIUS;
-    float d = TN_RADIUS + 1;
+    PetriGUI::draw(std::to_string(number), x, y);
+}
 
-    if (tokens == 0u)
-        return ;
-
-    if (tokens == 1u)
-    {
-        m_figure_token.setPosition(sf::Vector2f(x, y));
-        window().draw(m_figure_token);
-    }
-    else if (tokens == 2u)
-    {
-        m_figure_token.setPosition(sf::Vector2f(x - d, y));
-        window().draw(m_figure_token);
-
-        m_figure_token.setPosition(sf::Vector2f(x + d, y));
-        window().draw(m_figure_token);
-    }
-    else if (tokens == 3u)
-    {
-        m_figure_token.setPosition(sf::Vector2f(x, y - r));
-        window().draw(m_figure_token);
-
-        m_figure_token.setPosition(sf::Vector2f(x - d, y + d));
-        window().draw(m_figure_token);
-
-        m_figure_token.setPosition(sf::Vector2f(x + d, y + d));
-        window().draw(m_figure_token);
-    }
-    else if ((tokens == 4u) || (tokens == 5u))
-    {
-        if (tokens == 5u)
-        {
-            d = r + 3;
-            m_figure_token.setPosition(sf::Vector2f(x, y));
-            window().draw(m_figure_token);
-        }
-
-        m_figure_token.setPosition(sf::Vector2f(x - d, y - d));
-        window().draw(m_figure_token);
-
-        m_figure_token.setPosition(sf::Vector2f(x + d, y - d));
-        window().draw(m_figure_token);
-
-        m_figure_token.setPosition(sf::Vector2f(x - d, y + d));
-        window().draw(m_figure_token);
-
-        m_figure_token.setPosition(sf::Vector2f(x + d, y + d));
-        window().draw(m_figure_token);
-    }
-    else if (tokens == 6u)
-    {
-        d = r + 1;
-
-        m_figure_token.setPosition(sf::Vector2f(x - 2 * d, y - d));
-        window().draw(m_figure_token);
-
-        m_figure_token.setPosition(sf::Vector2f(x + 0 + 0, y - d));
-        window().draw(m_figure_token);
-
-        m_figure_token.setPosition(sf::Vector2f(x + 2 * d, y - d));
-        window().draw(m_figure_token);
-
-        m_figure_token.setPosition(sf::Vector2f(x - 2 * d, y + d));
-        window().draw(m_figure_token);
-
-        m_figure_token.setPosition(sf::Vector2f(x + 0 + 0, y + d));
-        window().draw(m_figure_token);
-
-        m_figure_token.setPosition(sf::Vector2f(x + 2 * d, y + d));
-        window().draw(m_figure_token);
-    }
-    else if (tokens == 7u)
-    {
-        d = r + 1;
-
-        m_figure_token.setPosition(sf::Vector2f(x - 2 * d, y - d));
-        window().draw(m_figure_token);
-
-        m_figure_token.setPosition(sf::Vector2f(x + 0 + 0, y - 2 * d));
-        window().draw(m_figure_token);
-
-        m_figure_token.setPosition(sf::Vector2f(x + 2 * d, y - d));
-        window().draw(m_figure_token);
-
-        m_figure_token.setPosition(sf::Vector2f(x - 2 * d, y + d));
-        window().draw(m_figure_token);
-
-        m_figure_token.setPosition(sf::Vector2f(x + 0 + 0, y));
-        window().draw(m_figure_token);
-
-        m_figure_token.setPosition(sf::Vector2f(x + 2 * d, y + d));
-        window().draw(m_figure_token);
-
-        m_figure_token.setPosition(sf::Vector2f(x, y + 2 * d));
-        window().draw(m_figure_token);
-    }
-    else if (tokens >= 8u)
-    {
-        displayNumber(tokens, x, y);
-    }
+//------------------------------------------------------------------------------
+void PetriGUI::draw(float const number, float const x, float const y)
+{
+    std::stringstream stream;
+    stream << std::fixed << std::setprecision(2) << number;
+    PetriGUI::draw(stream.str(), x, y);
 }
 
 //------------------------------------------------------------------------------
@@ -322,14 +227,14 @@ void PetriGUI::draw(Place const& place)
     m_figure_place.setPosition(sf::Vector2f(place.x, place.y));
     window().draw(m_figure_place);
 
-    // Draw tokens
-    draw(place.tokens, place.x, place.y);
-
     // Draw the caption
-    m_text_place.setString(place.caption);
-    m_text_place.setPosition(sf::Vector2f(place.x - PL_RADIUS / 2,
-                                          place.y - 2 * PL_RADIUS - 5));
-    window().draw(m_text_place);
+    draw(place.caption, place.x, place.y - PLACE_RADIUS - CAPTION_FONT_SIZE);
+
+    // Draw the number of tokens
+    if (place.tokens > 0u)
+    {
+        draw(place.tokens, place.x, place.y);
+    }
 }
 
 //------------------------------------------------------------------------------
@@ -340,10 +245,7 @@ void PetriGUI::draw(Transition const& transition)
     window().draw(m_figure_trans);
 
     // Draw the caption
-    m_text_trans.setString(transition.caption);
-    m_text_trans.setPosition(sf::Vector2f(transition.x - 16,
-                                          transition.y - (TR_WIDTH / 2) - FONT_SIZE - 5));
-    window().draw(m_text_trans);
+    draw(transition.caption, transition.x, transition.y - PLACE_RADIUS - CAPTION_FONT_SIZE);
 }
 
 //------------------------------------------------------------------------------
@@ -360,6 +262,11 @@ void PetriGUI::draw(Arc const& arc)
         // Transition -> Place
         Arrow arrow(arc.from.x, arc.from.y, arc.to.x, arc.to.y);
         window().draw(arrow);
+
+        // Draw the timing
+        float x = arc.from.x + (arc.to.x - arc.from.x) / 2.0f;
+        float y = arc.from.y + (arc.to.y - arc.from.y) / 2.0f;
+        draw(arc.duration, x, y - 15);
     }
 }
 
@@ -405,7 +312,7 @@ void PetriGUI::draw(float const /*dt*/)
         {
             m_figure_token.setPosition(sf::Vector2f(at.x, at.y));
             window().draw(m_figure_token);
-            displayNumber(at.tokens, at.x, at.y - 16);
+            draw(at.tokens, at.x, at.y - 16);
         }
     }
     else
@@ -415,7 +322,7 @@ void PetriGUI::draw(float const /*dt*/)
         {
             m_figure_token.setPosition(sf::Vector2f(at.x, at.y));
             window().draw(m_figure_token);
-            displayNumber(at.tokens, at.x, at.y - 16);
+            draw(at.tokens, at.x, at.y - 16);
         }
     }
 }
@@ -675,7 +582,7 @@ Node* PetriGUI::getNode(float const x, float const y)
     for (auto& p: m_petri_net.places())
     {
         float d2 = (p.x - x) * (p.x - x) + (p.y - y) * (p.y - y);
-        if (d2 < PL_RADIUS * PL_RADIUS)
+        if (d2 < PLACE_RADIUS * PLACE_RADIUS)
         {
             return &p;
         }
@@ -683,8 +590,8 @@ Node* PetriGUI::getNode(float const x, float const y)
 
     for (auto& t: m_petri_net.transitions())
     {
-        if ((x >= t.x - 15.0) && (x <= t.x + TR_HEIGHT + 15.0) &&
-            (y >= t.y - 15.0) && (y <= t.y + TR_WIDTH + 15.0))
+        if ((x >= t.x - 15.0) && (x <= t.x + TRANS_HEIGHT + 15.0) &&
+            (y >= t.y - 15.0) && (y <= t.y + TRANS_WIDTH + 15.0))
         {
             return &t;
         }
