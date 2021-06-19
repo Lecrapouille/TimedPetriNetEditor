@@ -3,7 +3,7 @@
 A timed Petri net editor made in C++11 and displayed with the [SFML](https://www.sfml-dev.org/index-fr.php).
 
 Why another Petri editor ? Because:
-- Many Petri node editors in GitHub are no longer maintained (> 7 years) or made in foreign languages (C#), foreign compiler (Visual Studio) or foreign operating systems (Windows) or are too complex.
+- Many Petri node editors in GitHub are no longer maintained (> 7 years) or made in foreign languages (C#), foreign compiler (Visual Studio) or foreign operating systems (Windows) or their code is too complex.
 - I will try to make one in Julia language (none exists) and I need one for my [MaxPlus](https://github.com/Lecrapouille/MaxPlus.jl) toolbox.
 
 ## Prerequisite
@@ -20,6 +20,13 @@ cd PetriEditor/src
 ./build.sh
 ./PetriNetEditor
 ```
+
+## Screenshot
+
+The following picture is an overview of the application. Since the project is currently in evolution this
+screenshot may have changed.
+
+![Petri](doc/Petri.png)
 
 ## Usage
 
