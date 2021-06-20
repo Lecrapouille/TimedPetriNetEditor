@@ -135,7 +135,7 @@ struct Place : public Node
         : Node(Node::Type::Place, id, x, y),
           tokens(tok), backup_tokens(tok)
     {
-        s_count += 1u;
+        s_count = std::max(s_count.load(), id) + 1u;
     }
 
     //! \brief the number of tokens hold by the Place
@@ -162,7 +162,7 @@ struct Transition : public Node
     Transition(size_t const id, float const x, float const y)
         : Node(Node::Type::Transition, id, x, y)
     {
-        s_count += 1u;
+        s_count = std::max(s_count.load(), id) + 1u;
     }
 
     //! \brief Hold the incoming arcs.
@@ -323,7 +323,7 @@ public:
     //! \brief Add a new arc between two Petri nodes (place or transition).
     //! \return true if the arc is valid and has been added, else return false
     //! if an arc is already present or nodes have the same type.
-    bool addArc(Node& from, Node& to)
+    bool addArc(Node& from, Node& to, float duration = 0.0f)
     {
         if (from.type == to.type)
             return false;
@@ -331,7 +331,7 @@ public:
         if (hasArc(from, to))
             return false;
 
-        m_arcs.push_back(Arc(from, to));
+        m_arcs.push_back(Arc(from, to, duration));
         return true;
     }
 

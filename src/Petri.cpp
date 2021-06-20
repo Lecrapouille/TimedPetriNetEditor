@@ -47,6 +47,13 @@ static float norm(const float xa, const float ya, const float xb, const float yb
     return sqrtf((xb - xa) * (xb - xa) + (yb - ya) * (yb - ya));
 }
 
+//------------------------------------------------------------------------------
+static float random(int lower, int upper)
+{
+    srand(time(NULL));
+    return (rand() % (upper - lower + 1)) + lower;
+}
+
 // *****************************************************************************
 //! \brief Class allowing to draw an arrow. Arrows are needed for drawing Petri
 //! arcs.
@@ -427,7 +434,7 @@ bool PetriNet::save(std::string const& filename)
     for (auto const& a: m_arcs)
     {
         file << separator << '\"' << a.from.key() << ','
-             << a.to.key() << '\"';
+             << a.to.key() << ',' << a.duration << '\"';
         separator = ", ";
     }
     file << "]\n}";
@@ -505,7 +512,8 @@ bool PetriNet::load(std::string const& filename)
                     return false;
                 }
 
-                addArc(*from, *to);
+                float duration = stof(s.split());
+                addArc(*from, *to, duration);
             }
         }
         else if (s.token() == "}")
@@ -612,7 +620,7 @@ AnimatedToken::AnimatedToken(Arc& arc, size_t tok, bool PT)
 
     // Note: we are supposing the norm and duration is never updated by
     // the user during the simulation.
-    speed = PT ? 10000.0f : ANIMATION_SCALING / arc.duration;
+    speed = PT ? 10000.0f : ANIMATION_SCALING * magnitude / arc.duration;
 }
 
 //------------------------------------------------------------------------------
@@ -972,8 +980,15 @@ void PetriGUI::handleInput()
                 }
                 else if (m_node_to != nullptr)
                 {
-                    //arc_time = getNode(
-                    m_petri_net.addArc(*m_node_from, *m_node_to);
+                    if (m_node_from->type == Node::Type::Transition)
+                    {
+                        float duration = random(1, 5);
+                        m_petri_net.addArc(*m_node_from, *m_node_to, duration);
+                    }
+                    else
+                    {
+                        m_petri_net.addArc(*m_node_from, *m_node_to);
+                    }
                 }
                 m_node_from = m_node_to = m_moving_node = nullptr;
             }
@@ -1000,7 +1015,17 @@ void PetriGUI::handleInput()
                     else
                         m_node_to = &m_petri_net.addPlace(m_mouse.x, m_mouse.y);
                 }
-                m_petri_net.addArc(*m_node_from, *m_node_to);
+
+                // Only duration on arc Transition --> Place are important
+                if (m_node_from->type == Node::Type::Transition)
+                {
+                    float duration = random(1, 5);
+                    m_petri_net.addArc(*m_node_from, *m_node_to, duration);
+                }
+                else
+                {
+                    m_petri_net.addArc(*m_node_from, *m_node_to);
+                }
             }
             m_node_from = m_node_to = nullptr;
             break;
