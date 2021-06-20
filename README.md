@@ -44,3 +44,7 @@ screenshot may have changed.
 - `O` key: load the Petri net from petri.json file. TODO
 - `Delete` key: remove a place or transition or an arc. TODO
 - `C` key: clear the Petri net.
+
+## Related projects
+
+- https://github.com/igorakim/pnet-simulator
