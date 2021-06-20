@@ -24,6 +24,7 @@
 #include <fstream>
 #include <math.h>
 #include <sstream>
+#include <cstring>
 
 //------------------------------------------------------------------------------
 std::atomic<size_t> Place::s_count{0u};
@@ -116,6 +117,79 @@ private:
 
     sf::RectangleShape m_tail;
     sf::ConvexShape m_arrowHead;
+};
+
+// *****************************************************************************
+//! \brief Helper class splitting a string into tokens. Used for parsing JSON
+//! files.
+// *****************************************************************************
+class Split
+{
+public:
+
+    //! \brief Open the given file to tokenize and delimiter chars for char
+    //! separation.
+    Split(std::string const& filepath, std::string const& del)
+        : is(filepath), delimiters(del)
+    {}
+
+    //! \brief Check if the stream state is fine.
+    operator bool() const
+    {
+        return !!is;
+    }
+
+    //! \brief Return the first tokenize else return dummy string.
+    std::string const& split()
+    {
+        while (true)
+        {
+            if (pos == std::string::npos)
+            {
+                if (!std::getline(is, line))
+                {
+                    word.clear();
+                    return word;
+                }
+                prev = 0u;
+            }
+
+            while ((pos = line.find_first_of(delimiters, prev)) != std::string::npos)
+            {
+                if (pos > prev)
+                {
+                    word = line.substr(prev, pos - prev);
+                    prev = pos + 1u;
+                    return word;
+                }
+                prev = pos + 1u;
+            }
+
+            if (prev < line.length())
+            {
+                word = line.substr(prev, std::string::npos);
+                return word;
+            }
+        }
+
+        word.clear();
+        return word;
+    }
+
+    //! \brief Return the last token.
+    std::string const& token() const
+    {
+        return word;
+    }
+
+private:
+
+    std::ifstream is;
+    std::string delimiters;
+    std::string line;
+    std::string word;
+    std::size_t prev = 0u;
+    std::size_t pos = std::string::npos;
 };
 
 //------------------------------------------------------------------------------
@@ -365,7 +439,95 @@ bool PetriNet::save(std::string const& filename)
 //------------------------------------------------------------------------------
 bool PetriNet::load(std::string const& filename)
 {
-    return false; // TODO
+    bool found_places = false;
+    bool found_transitions = false;
+    bool found_arcs = false;
+
+    Split s(filename, " \",");
+
+    if (!s)
+    {
+        std::cerr << "Failed opening '" << filename << "'. Reason was '"
+                  << strerror(errno) << "'" << std::endl;
+        return false;
+    }
+
+    if (s.split() != "{")
+    {
+        std::cerr << "Token { missing. Bad JSON file" << std::endl;
+        return false;
+    }
+
+    reset();
+
+    while (s)
+    {
+        s.split();
+        if ((s.token() == "places") && (s.split() == ":") && (s.split() == "["))
+        {
+            found_places = true;
+            while (s.split() != "]")
+            {
+                size_t id = atoi(s.token().c_str() + 1u);
+                float x = stoi(s.split());
+                float y = stoi(s.split());
+                size_t t = stoi(s.split());
+                addPlace(id, x, y, t);
+            }
+        }
+        else if ((s.token() == "trans") && (s.split() == ":") && (s.split() == "["))
+        {
+            found_transitions = true;
+            while (s.split() != "]")
+            {
+                size_t id = atoi(s.token().c_str() + 1u);
+                float x = stoi(s.split());
+                float y = stoi(s.split());
+                addTransition(id, x, y);
+            }
+        }
+        else if ((s.token() == "arcs") && (s.split() == ":") && (s.split() == "["))
+        {
+            found_arcs = true;
+            while (s.split() != "]")
+            {
+                Node* from = findNode(s.token());
+                if (!from)
+                {
+                    std::cerr << "Origin node " << s.token() << " not found" << std::endl;
+                    return false;
+                }
+
+                Node* to = findNode(s.split());
+                if (!to)
+                {
+                    std::cerr << "Destination node " << s.token() << " not found" << std::endl;
+                    return false;
+                }
+
+                addArc(*from, *to);
+            }
+        }
+        else if (s.token() == "}")
+        {
+            if (!found_places)
+                std::cerr << "The JSON file did not contained Places" << std::endl;
+            if (!found_transitions)
+                std::cerr << "The JSON file did not contained Transitions" << std::endl;
+            if (!found_arcs)
+                std::cerr << "The JSON file did not contained Arcs" << std::endl;
+
+            if (!(found_places && found_transitions && found_arcs))
+                return false;
+        }
+        else if (s.token() != "")
+        {
+            std::cerr << "Key " << s.token() << " is not a valid token" << std::endl;
+            return false;
+        }
+    }
+
+    return true;
 }
 
 void PetriNet::removeNode(Node& node)
@@ -705,12 +867,30 @@ void PetriGUI::handleInput()
             // 'S' key: save the Petri net to a JSON file
             else if (event.key.code == sf::Keyboard::S)
             {
-                m_petri_net.save("petri.json");
+                if (!m_petri_net.save("petri.json"))
+                {
+                    std::cerr << "Could not saved the Petri net"
+                              << std::endl;
+                }
+                else
+                {
+                    std::cerr << "Petri net has been saved"
+                              << std::endl;
+                }
             }
             // 'O' key: load the Petri net to a JSON file
             else if (event.key.code == sf::Keyboard::O)
             {
-                m_petri_net.load("petri.json");
+                if (!m_petri_net.load("petri.json"))
+                {
+                    std::cerr << "Could not load the Petri net"
+                              << std::endl;
+                }
+                else
+                {
+                    std::cerr << "Petri net has been loaded"
+                              << std::endl;
+                }
             }
             // 'C' key: erase the Petri net
             else if (event.key.code == sf::Keyboard::C)
@@ -792,6 +972,7 @@ void PetriGUI::handleInput()
                 }
                 else if (m_node_to != nullptr)
                 {
+                    //arc_time = getNode(
                     m_petri_net.addArc(*m_node_from, *m_node_to);
                 }
                 m_node_from = m_node_to = m_moving_node = nullptr;

@@ -126,10 +126,17 @@ struct Place : public Node
     //! \param[in] x: X-axis coordinate in the window needed for the display.
     //! \param[in] y: Y-axis coordinate in the window needed for the display.
     //! \param[in] tok: Initial number of tokens in the place.
-    Place(float const x, float const y, size_t const tok = 0u)
+    Place(float const x, float const y)
         : Node(Node::Type::Place, s_count++, x, y),
-          tokens(tok), backup_tokens(tok)
+          tokens(0u), backup_tokens(0u)
     {}
+
+    Place(size_t const id, float const x, float const y, size_t const tok)
+        : Node(Node::Type::Place, id, x, y),
+          tokens(tok), backup_tokens(tok)
+    {
+        s_count += 1u;
+    }
 
     //! \brief the number of tokens hold by the Place
     size_t tokens;
@@ -151,6 +158,12 @@ struct Transition : public Node
     Transition(float const x, float const y)
         : Node(Node::Type::Transition, s_count++, x, y)
     {}
+
+    Transition(size_t const id, float const x, float const y)
+        : Node(Node::Type::Transition, id, x, y)
+    {
+        s_count += 1u;
+    }
 
     //! \brief Hold the incoming arcs.
     //! \note this vector is updated by the method PetriNet::cacheArcs().
@@ -230,9 +243,16 @@ public:
     //! \param[in] y: Y-axis coordinate in the window needed for the display.
     //! \param[in] tokens: Initial number of tokens in the place.
     //! \return the reference of the inserted element.
-    Place& addPlace(float const x, float const y, size_t const tokens = 0u)
+    Place& addPlace(float const x, float const y)
     {
-        m_places.push_back(Place(x, y, tokens));
+        m_places.push_back(Place(x, y));
+        return m_places.back();
+    }
+
+    //! \brief From JSON file
+    Place& addPlace(size_t const id, float const x, float const y, size_t const tokens)
+    {
+        m_places.push_back(Place(id, x, y, tokens));
         return m_places.back();
     }
 
@@ -256,6 +276,13 @@ public:
         return m_transitions.back();
     }
 
+    //! \brief From JSON file
+    Transition& addTransition(size_t const id, float const x, float const y)
+    {
+        m_transitions.push_back(Transition(id, x, y));
+        return m_transitions.back();
+    }
+
     std::vector<Transition> const& transitions() const
     {
         return m_transitions;
@@ -264,6 +291,33 @@ public:
     std::vector<Transition>& transitions()
     {
         return m_transitions;
+    }
+
+    //! \brief Search and return a place or a transition by its unique
+    //! identifier. Search is O(n) where n is the number of nodes.
+    Node* findNode(std::string const& key)
+    {
+        if (key[0] == 'P')
+        {
+            for (auto& p: m_places)
+            {
+                if (p.key() == key)
+                    return &p;
+            }
+            return nullptr;
+        }
+
+        if (key[0] == 'T')
+        {
+            for (auto& t: m_transitions)
+            {
+                if (t.key() == key)
+                    return &t;
+            }
+            return nullptr;
+        }
+
+        return nullptr;
     }
 
     //! \brief Add a new arc between two Petri nodes (place or transition).
