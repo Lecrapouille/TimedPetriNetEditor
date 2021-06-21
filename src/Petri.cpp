@@ -130,13 +130,13 @@ private:
 //! \brief Helper class splitting a string into tokens. Used for parsing JSON
 //! files.
 // *****************************************************************************
-class Split
+class Tokenizer
 {
 public:
 
     //! \brief Open the given file to tokenize and delimiter chars for char
     //! separation.
-    Split(std::string const& filepath, std::string const& del)
+    Tokenizer(std::string const& filepath, std::string const& del)
         : is(filepath), delimiters(del)
     {}
 
@@ -450,7 +450,7 @@ bool PetriNet::load(std::string const& filename)
     bool found_transitions = false;
     bool found_arcs = false;
 
-    Split s(filename, " \",");
+    Tokenizer s(filename, " \",");
 
     if (!s)
     {
