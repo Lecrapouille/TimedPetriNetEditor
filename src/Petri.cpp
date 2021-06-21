@@ -871,14 +871,23 @@ void PetriGUI::handleInput()
             // 'S' key: save the Petri net to a JSON file
             else if (event.key.code == sf::Keyboard::S)
             {
-                if (!m_petri_net.save("petri.json"))
+                if ((m_petri_net.places().size() != 0u) &&
+                    (m_petri_net.transitions().size() != 0u))
                 {
-                    std::cerr << "Could not saved the Petri net"
-                              << std::endl;
+                    if (!m_petri_net.save("petri.json"))
+                    {
+                        std::cerr << "Could not saved the Petri net"
+                                  << std::endl;
+                    }
+                    else
+                    {
+                        std::cerr << "Petri net has been saved"
+                                  << std::endl;
+                    }
                 }
                 else
                 {
-                    std::cerr << "Petri net has been saved"
+                    std::cerr << "I'll not save empty net"
                               << std::endl;
                 }
             }
