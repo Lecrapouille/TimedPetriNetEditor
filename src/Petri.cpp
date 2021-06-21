@@ -545,9 +545,9 @@ void PetriNet::removeNode(Node& node)
     size_t i = s;
     while (i--)
     {
-        if ((m_arcs[i].to.id == node.id) || (m_arcs[i].from.id == node.id))
+        if ((m_arcs[i].to == node) || (m_arcs[i].from == node))
         {
-            m_arcs[i] = m_arcs[s - 1u];
+            m_arcs[i] = m_arcs[m_arcs.size() - 1u];
             m_arcs.pop_back();
         }
     }
@@ -555,26 +555,24 @@ void PetriNet::removeNode(Node& node)
     // Search and remove the node
     if (node.type == Node::Type::Place)
     {
-        size_t s = m_places.size();
-        size_t i = s;
+        size_t i = m_places.size();
         while (i--)
         {
             if (m_places[i].id == node.id)
             {
-                m_places[i] = m_places[s - 1u];
+                m_places[i] = m_places[m_places.size() - 1u];
                 m_places.pop_back();
             }
         }
     }
     else
     {
-        size_t s = m_transitions.size();
-        size_t i = s;
+        size_t i = m_transitions.size();
         while (i--)
         {
             if (m_transitions[i].id == node.id)
             {
-                m_transitions[i] = m_transitions[s - 1u];
+                m_transitions[i] = m_transitions[m_transitions.size() - 1u];
                 m_transitions.pop_back();
             }
         }
@@ -722,15 +720,14 @@ void PetriGUI::update(float const dt) // FIXME std::chrono
         // Tokens Places --> Transition are transitioning.
         if (m_animation_PT.size() > 0u)
         {
-            size_t s = m_animation_PT.size();
-            size_t i = s;
+            size_t i = m_animation_PT.size();
             while (i--)
             {
                 // Reach the transition ?
                 if (m_animation_PT[i].update(dt))
                 {
                     // Remove it from the list
-                    m_animation_PT[i] = m_animation_PT[s - 1u];
+                    m_animation_PT[i] = m_animation_PT[m_animation_PT.size() - 1u];
                     m_animation_PT.pop_back();
                 }
             }
@@ -746,14 +743,13 @@ void PetriGUI::update(float const dt) // FIXME std::chrono
         // Tokens Transition --> Places are transitioning.
         if (m_animation_TP.size() > 0u)
         {
-            size_t s = m_animation_TP.size();
-            size_t i = s;
+            size_t i = m_animation_TP.size();
             while (i--)
             {
                 if (m_animation_TP[i].update(dt))
                 {
                     tokenOut(m_animation_TP[i].currentArc) += m_animation_TP[i].tokens;
-                    m_animation_TP[i] = m_animation_TP[s - 1u];
+                    m_animation_TP[i] = m_animation_TP[m_animation_TP.size() - 1u];
                     m_animation_TP.pop_back();
                 }
             }
