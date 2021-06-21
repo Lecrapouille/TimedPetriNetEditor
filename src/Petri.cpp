@@ -229,7 +229,6 @@ PetriGUI::PetriGUI(Application &application)
     usage();
 
     // Reserve memory
-    m_animation_PT.reserve(128u);
     m_animation_TP.reserve(128u);
 
     // Precompute SFML struct for drawing places
@@ -386,25 +385,12 @@ void PetriGUI::draw(float const /*dt*/)
         m_moving_node->y = m_mouse.y;
     }
 
-    if (m_animation_PT.size() > 0u)
+    // Draw all tokens transiting from Transitions to Places
+    for (auto const& at: m_animation_TP)
     {
-        // Draw all tokens transiting from Places to Transitions
-        for (auto const& at: m_animation_PT)
-        {
-            m_figure_token.setPosition(sf::Vector2f(at.x, at.y));
-            window().draw(m_figure_token);
-            draw(at.tokens, at.x, at.y - 16);
-        }
-    }
-    else
-    {
-        // Draw all tokens transiting from Transitions to Places
-        for (auto const& at: m_animation_TP)
-        {
-            m_figure_token.setPosition(sf::Vector2f(at.x, at.y));
-            window().draw(m_figure_token);
-            draw(at.tokens, at.x, at.y - 16);
-        }
+        m_figure_token.setPosition(sf::Vector2f(at.x, at.y));
+        window().draw(m_figure_token);
+        draw(at.tokens, at.x, at.y - 16);
     }
 }
 
@@ -662,9 +648,11 @@ void PetriGUI::update(float const dt) // FIXME std::chrono
                 else if ((a.to.type == Node::Type::Place) && (a.from.id == trans.id))
                     trans.arcsOut.push_back(&a);
             }
+
+            m_candidate_transitions.push_back(&trans); // TODO missing resize
         }
 
-        m_state = STATE_FIRING;
+        m_state = STATE_ANIMATING;
         break;
 
     case STATE_ENDING:
@@ -674,10 +662,13 @@ void PetriGUI::update(float const dt) // FIXME std::chrono
             p.tokens = p.backup_tokens;
         }
 
+        m_animation_TP.clear();
         m_state = STATE_IDLE;
         break;
 
-    case STATE_FIRING:
+    case STATE_ANIMATING:
+        m_state = m_simulating ? STATE_ANIMATING : STATE_ENDING;
+
         // For each transition check if all Places pointing to it has at least
         // one token.
         for (auto& trans: m_petri_net.transitions())
@@ -694,7 +685,7 @@ void PetriGUI::update(float const dt) // FIXME std::chrono
                     tokenIn(a) -= tokens;
 
                     // Add an animated tokens Places --> Transition.
-                    m_animation_PT.push_back(AnimatedToken(*a, tokens, true));
+                    //m_animation_PT.push_back(AnimatedToken(*a, tokens, true));
                 }
 
                 // Add an animated tokens Transition --> Places.
@@ -706,40 +697,8 @@ void PetriGUI::update(float const dt) // FIXME std::chrono
                 }
             }
         }
+        m_candidate_transitions.clear();
 
-        // No more firing ? End of the simulation, else go to next state.
-        if (m_animation_PT.size() == 0u)
-        {
-            m_simulating = false;
-        }
-
-        m_state = m_simulating ? STATE_ANIMATING_PT : STATE_ENDING;
-        break;
-
-    case STATE_ANIMATING_PT:
-        // Tokens Places --> Transition are transitioning.
-        if (m_animation_PT.size() > 0u)
-        {
-            size_t i = m_animation_PT.size();
-            while (i--)
-            {
-                // Reach the transition ?
-                if (m_animation_PT[i].update(dt))
-                {
-                    // Remove it from the list
-                    m_animation_PT[i] = m_animation_PT[m_animation_PT.size() - 1u];
-                    m_animation_PT.pop_back();
-                }
-            }
-        }
-        else
-        {
-            // No more tokens to animate: go to next state.
-            m_state = m_simulating ? STATE_ANIMATING_TP : STATE_ENDING;
-        }
-        break;
-
-    case STATE_ANIMATING_TP:
         // Tokens Transition --> Places are transitioning.
         if (m_animation_TP.size() > 0u)
         {
@@ -753,11 +712,6 @@ void PetriGUI::update(float const dt) // FIXME std::chrono
                     m_animation_TP.pop_back();
                 }
             }
-        }
-        else
-        {
-            // No more tokens to animate: go to the initial state.
-            m_state = m_simulating ? STATE_FIRING : STATE_ENDING;
         }
         break;
 

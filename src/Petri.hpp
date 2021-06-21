@@ -192,6 +192,11 @@ struct AnimatedToken
 
     bool update(float const dt);
 
+    Place& toPlace()
+    {
+        return *reinterpret_cast<Place*>(&currentArc->to);
+    }
+
     //! \brief Unique identifier (useless but can help for debugging).
     size_t id;
     //! \brief X-axis coordinate in the window used for the display.
@@ -442,8 +447,7 @@ private:
 
     enum States
     {
-        STATE_IDLE, STATE_STARTING, STATE_ENDING, STATE_FIRING,
-        STATE_ANIMATING_PT, STATE_ANIMATING_TP
+        STATE_IDLE, STATE_STARTING, STATE_ENDING, STATE_ANIMATING
     };
 
     //! \brief Set true if the thread of the application shall stay alive.
@@ -479,8 +483,8 @@ private:
     sf::Vector2f m_mouse;
     //! \brief The Petri net.
     PetriNet m_petri_net;
-    //! \brief Animation of tokens when transitioning from Places to Transitions.
-    std::vector<AnimatedToken> m_animation_PT;
+    //! \brief
+    std::vector<Transition*> m_candidate_transitions;
     //! \brief Animation of tokens when transitioning from Transitions to Places.
     std::vector<AnimatedToken> m_animation_TP;
 };
