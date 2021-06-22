@@ -427,13 +427,13 @@ private:
     void draw(Arc const& arc);
 
     //! \brief Draw a string centered on x, y coordiantes
-    void draw(std::string const& str, float const x, float const y);
+    void draw(sf::Text&, std::string const& str, float const x, float const y);
 
     //! \brief Draw a integer centered on x, y coordiantes
-    void draw(size_t const number, float const x, float const y);
+    void draw(sf::Text&, size_t const number, float const x, float const y);
 
     //! \brief Draw a float centered on x, y coordiantes
-    void draw(float const number, float const x, float const y);
+    void draw(sf::Text&, float const number, float const x, float const y);
 
     //! \brief Search and return if a place or a transition is present at the
     //! given coordinates.
@@ -443,8 +443,14 @@ private:
     //! return nullptr.
     Node* getNode(float const x, float const y);
 
+    void handleArcOrigin();
+    void handleArcDestination();
+    void handleKeyPressed(sf::Event const& event);
+    void handleMouseButton(sf::Event const& event);
+
 private:
 
+    //! \brief State machine for the animation.
     enum States
     {
         STATE_IDLE, STATE_STARTING, STATE_ENDING, STATE_ANIMATING
@@ -454,6 +460,7 @@ private:
     std::atomic<bool> m_running{true};
     //! \brief Set true when simulating the Petri net.
     std::atomic<bool> m_simulating{false};
+    //! \brief State machine for the animation.
     std::atomic<States> m_state{STATE_IDLE};
     //! \brief Set true when the user is pressing the Control key.
     std::atomic<bool> m_ctrl{false};
@@ -465,12 +472,10 @@ private:
     sf::RectangleShape m_figure_trans;
     //! \brief SFML loaded font from a ttf file.
     sf::Font m_font;
-    //! \brief SFML structure for rendering the caption on Places.
-    sf::Text m_text_place;
+    //! \brief SFML structure for rendering the caption on nodes.
+    sf::Text m_text_caption;
     //! \brief SFML structure for rendering the number of tokens in Places.
     sf::Text m_text_token;
-    //! \brief SFML structure for rendering the caption on Transitions.
-    sf::Text m_text_trans;
     //! \brief Selected origin node (place or transition) by the user when
     //! adding an arc.
     Node* m_node_from = nullptr;
@@ -478,7 +483,8 @@ private:
     //! adding an arc.
     Node* m_node_to = nullptr;
     //! \brief The user has select a node to be displaced.
-    Node* m_moving_node = nullptr;
+    std::vector<Node*> m_selected_modes;
+    float m_x = 0.0f; float m_y = 0.0f; bool m_arc_from_unknown_node = false;
     //! \brief Mouse cursor position.
     sf::Vector2f m_mouse;
     //! \brief The Petri net.

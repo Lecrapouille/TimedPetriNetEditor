@@ -55,9 +55,9 @@ void Application::loop(GUI& gui)
     {
         float dt = clock.restart().asSeconds();
         GUI& gui = peek();
+        m_window.clear(gui.bgColor);
         gui.handleInput();
         gui.update(dt);
-        m_window.clear(gui.bgColor);
         gui.draw(dt);
         m_window.display();
     }

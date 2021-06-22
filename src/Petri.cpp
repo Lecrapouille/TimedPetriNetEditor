@@ -33,12 +33,11 @@ std::atomic<size_t> Transition::s_count{0u};
 //------------------------------------------------------------------------------
 // Config for displaying the Petri net
 const float TRANS_WIDTH = 50.0f;  // Transition rectangle width
-const float TRANS_HEIGHT = 5.0f;  // Transition rectangle height
+const float TRANS_HEIGHT = 10.0f;  // Transition rectangle height
 const float PLACE_RADIUS = 25.0f; // Place circle radius
 const float TOKEN_RADIUS = 4.0f;  // Token circle radius
-const float CAPTION_FONT_SIZE = 12.0f; // Size for text for captions
-const float FONT_Y_OFFSET = 2.0f;
-const float TOKEN_FONT_SIZE = 12.0f; // Size for text for tokens
+const float CAPTION_FONT_SIZE = 24.0f; // Size for text for captions
+const float TOKEN_FONT_SIZE = 20.0f; // Size for text for tokens
 const float ANIMATION_SCALING = 1.0f;
 
 //------------------------------------------------------------------------------
@@ -96,7 +95,7 @@ public:
         m_arrowHead.setOrigin(arrowHeadSize.x, arrowHeadSize.y / 2.f);
         m_arrowHead.setPosition(sf::Vector2f(a2, b2 /*xb, yb*/));
         m_arrowHead.setRotation(arrowAngle);
-        m_arrowHead.setFillColor(sf::Color(244, 125, 66));
+        m_arrowHead.setFillColor(sf::Color(165, 42, 42));
 
         // Tail of the arrow.
         //const sf::Vector2f tailSize{ arrowLength - arrowHeadSize.x, 2.f };
@@ -105,7 +104,7 @@ public:
         m_tail.setOrigin(0.f, tailSize.y / 2.f);
         m_tail.setPosition(sf::Vector2f(a1, b1 /*xa, ya*/));
         m_tail.setRotation(arrowAngle);
-        m_tail.setFillColor(sf::Color(244, 125, 66));
+        m_tail.setFillColor(sf::Color(165, 42, 42));
     }
 
     Arrow(sf::Vector2f const& startPoint, sf::Vector2f const& endPoint)
@@ -235,7 +234,7 @@ PetriGUI::PetriGUI(Application &application)
     m_figure_place.setOrigin(sf::Vector2f(m_figure_place.getRadius(), m_figure_place.getRadius()));
     m_figure_place.setFillColor(sf::Color::White);
     m_figure_place.setOutlineThickness(2.0f);
-    m_figure_place.setOutlineColor(sf::Color(244, 125, 66));
+    m_figure_place.setOutlineColor(sf::Color(165, 42, 42));
 
     // Precompute SFML struct for drawing tokens inside places
     m_figure_token.setOrigin(sf::Vector2f(m_figure_token.getRadius(), m_figure_token.getRadius()));
@@ -243,7 +242,9 @@ PetriGUI::PetriGUI(Application &application)
 
     // Precompute SFML struct for drawing transitions
     m_figure_trans.setOrigin(m_figure_trans.getSize().x / 2, m_figure_trans.getSize().y / 2);
-    m_figure_trans.setFillColor(sf::Color(100, 100, 66));
+    m_figure_trans.setFillColor(sf::Color::White);
+    m_figure_trans.setOutlineThickness(2.0f);
+    m_figure_trans.setOutlineColor(sf::Color(165, 42, 42));
 
     // Precompute SFML struct for drawing text (places and transitions)
     if (!m_font.loadFromFile("font.ttf"))
@@ -252,20 +253,15 @@ PetriGUI::PetriGUI(Application &application)
         exit(1);
     }
 
-    // Caption for Places
-    m_text_place.setFont(m_font);
-    m_text_place.setCharacterSize(CAPTION_FONT_SIZE);
-    m_text_place.setFillColor(sf::Color(244, 125, 66));
+    // Caption for Places and Transitions
+    m_text_caption.setFont(m_font);
+    m_text_caption.setCharacterSize(CAPTION_FONT_SIZE);
+    m_text_caption.setFillColor(sf::Color::Black);
 
     // Number of Tokens
     m_text_token.setFont(m_font);
     m_text_token.setCharacterSize(TOKEN_FONT_SIZE);
     m_text_token.setFillColor(sf::Color::Black);
-
-    // Caption for Transitions
-    m_text_trans.setFont(m_font);
-    m_text_trans.setCharacterSize(CAPTION_FONT_SIZE);
-    m_text_trans.setFillColor(sf::Color(100, 100, 66));
 
     // Init mouse cursor position
     m_mouse = sf::Vector2f(sf::Mouse::getPosition(window()));
@@ -278,26 +274,25 @@ PetriGUI::~PetriGUI()
 }
 
 //------------------------------------------------------------------------------
-void PetriGUI::draw(std::string const& str, float const x, float const y)
+void PetriGUI::draw(sf::Text& t, std::string const& str, float const x, float const y)
 {
-    m_text_token.setString(str);
-    m_text_token.setPosition(x - m_text_token.getLocalBounds().width / 2.0,
-                             y - FONT_Y_OFFSET);
-    window().draw(m_text_token);
+    t.setString(str);
+    t.setPosition(x - t.getLocalBounds().width / 2.0, y - t.getLocalBounds().height);
+    window().draw(t);
 }
 
 //------------------------------------------------------------------------------
-void PetriGUI::draw(size_t const number, float const x, float const y)
+void PetriGUI::draw(sf::Text& t, size_t const number, float const x, float const y)
 {
-    PetriGUI::draw(std::to_string(number), x, y);
+    PetriGUI::draw(t, std::to_string(number), x, y);
 }
 
 //------------------------------------------------------------------------------
-void PetriGUI::draw(float const number, float const x, float const y)
+void PetriGUI::draw(sf::Text& t, float const number, float const x, float const y)
 {
     std::stringstream stream;
     stream << std::fixed << std::setprecision(2) << number;
-    PetriGUI::draw(stream.str(), x, y);
+    PetriGUI::draw(t, stream.str(), x, y);
 }
 
 //------------------------------------------------------------------------------
@@ -308,12 +303,13 @@ void PetriGUI::draw(Place const& place)
     window().draw(m_figure_place);
 
     // Draw the caption
-    draw(place.caption, place.x, place.y - PLACE_RADIUS - CAPTION_FONT_SIZE);
+    draw(m_text_caption, place.caption, place.x,
+         place.y - PLACE_RADIUS - CAPTION_FONT_SIZE / 2.0f - 2.0f);
 
     // Draw the number of tokens
     if (place.tokens > 0u)
     {
-        draw(place.tokens, place.x, place.y);
+        draw(m_text_token, place.tokens, place.x, place.y);
     }
 }
 
@@ -325,7 +321,8 @@ void PetriGUI::draw(Transition const& transition)
     window().draw(m_figure_trans);
 
     // Draw the caption
-    draw(transition.caption, transition.x, transition.y - PLACE_RADIUS - CAPTION_FONT_SIZE);
+    draw(m_text_caption, transition.caption, transition.x,
+         transition.y - PLACE_RADIUS - CAPTION_FONT_SIZE / 2.0f - 2.0f);
 }
 
 //------------------------------------------------------------------------------
@@ -346,7 +343,7 @@ void PetriGUI::draw(Arc const& arc)
         // Draw the timing
         float x = arc.from.x + (arc.to.x - arc.from.x) / 2.0f;
         float y = arc.from.y + (arc.to.y - arc.from.y) / 2.0f;
-        draw(arc.duration, x, y - 15);
+        draw(m_text_token, arc.duration, x, y - 15);
     }
 }
 
@@ -356,6 +353,10 @@ void PetriGUI::draw(float const /*dt*/)
     // Draw all Places
     for (auto const& p: m_petri_net.places())
     {
+        if (p.tokens > 0u)
+            m_figure_place.setFillColor(sf::Color(255, 165, 0));
+        else
+            m_figure_place.setFillColor(sf::Color::White);
         draw(p);
     }
 
@@ -372,25 +373,29 @@ void PetriGUI::draw(float const /*dt*/)
     }
 
     // Draw the arc the user is creating
-    if (m_node_from != nullptr)
+    if ((m_arc_from_unknown_node) || (m_node_from != nullptr))
     {
-        Arrow arrow(m_node_from->x, m_node_from->y, m_mouse.x, m_mouse.y);
+        float x = (m_arc_from_unknown_node) ? m_x : m_node_from->x;
+        float y = (m_arc_from_unknown_node) ? m_y : m_node_from->y;
+        Arrow arrow(x, y, m_mouse.x, m_mouse.y);
         window().draw(arrow);
     }
 
+    // Draw the selection
+
     // Update the node the user is moving
-    if (m_moving_node != nullptr)
+    for (auto& it: m_selected_modes)
     {
-        m_moving_node->x = m_mouse.x;
-        m_moving_node->y = m_mouse.y;
+        it->x = m_mouse.x;
+        it->y = m_mouse.y;
     }
 
     // Draw all tokens transiting from Transitions to Places
     for (auto const& at: m_animation_TP)
     {
-        m_figure_token.setPosition(sf::Vector2f(at.x, at.y));
+        m_figure_token.setPosition(at.x, at.y);
         window().draw(m_figure_token);
-        draw(at.tokens, at.x, at.y - 16);
+        draw(m_text_token, at.tokens, at.x, at.y - 16);
     }
 }
 
@@ -399,6 +404,12 @@ bool PetriNet::save(std::string const& filename)
 {
     std::string separator;
     std::ofstream file(filename);
+
+    if ((m_places.size() == 0u) && (m_transitions.size() == 0u))
+    {
+        std::cerr << "I'll not save empty net" << std::endl;
+        return false;
+    }
 
     file << "{\n  \"places\": [";
     for (auto const& p: m_places)
@@ -737,8 +748,11 @@ Node* PetriGUI::getNode(float const x, float const y)
 
     for (auto& t: m_petri_net.transitions())
     {
-        if ((x >= t.x - 15.0) && (x <= t.x + TRANS_HEIGHT + 15.0) &&
-            (y >= t.y - 15.0) && (y <= t.y + TRANS_WIDTH + 15.0))
+        // Working but sometimes less precise
+        //if ((x >= t.x - 15.0) && (x <= t.x + TRANS_HEIGHT + 15.0) &&
+        //    (y >= t.y - 15.0) && (y <= t.y + TRANS_WIDTH + 15.0))
+        float d2 = (t.x - x) * (t.x - x) + (t.y - y) * (t.y - y);
+        if (d2 < TRANS_WIDTH * TRANS_WIDTH)
         {
             return &t;
         }
@@ -748,247 +762,260 @@ Node* PetriGUI::getNode(float const x, float const y)
 }
 
 //------------------------------------------------------------------------------
+void PetriGUI::handleKeyPressed(sf::Event const& event)
+{
+    // Escape key: quit the application.
+    if (event.key.code == sf::Keyboard::Escape)
+        m_running = false;
+
+    // Left or right Control key pressed: memorize the state
+    else if ((event.key.code == sf::Keyboard::LControl) ||
+             (event.key.code == sf::Keyboard::RControl))
+    {
+        m_ctrl = true;
+    }
+
+    // 'R' key: Run the animation of the Petri net
+    else if (event.key.code == sf::Keyboard::R)
+    {
+        m_simulating = m_simulating ^ true;
+        if (m_simulating)
+        {
+            std::cout << "Simulation started" << std::endl;
+        }
+        else
+        {
+            std::cout << "Simulation ended" << std::endl;
+        }
+    }
+
+    // 'S' key: save the Petri net to a JSON file
+    // 'O' key: load the Petri net to a JSON file
+    else if ((event.key.code == sf::Keyboard::S) ||
+             (event.key.code == sf::Keyboard::O))
+    {
+        m_simulating = false;
+        if (event.key.code == sf::Keyboard::S)
+            m_petri_net.save("petri.json");
+        else
+            m_petri_net.load("petri.json");
+    }
+
+    // 'C' key: erase the Petri net
+    else if (event.key.code == sf::Keyboard::C)
+    {
+        m_petri_net.reset();
+    }
+
+    // 'M' key: Move the selected node
+    else if (event.key.code == sf::Keyboard::M)
+    {
+        Node* node = getNode(m_mouse.x, m_mouse.y);
+        if (node != nullptr)
+            m_selected_modes.push_back(node);
+    }
+
+    // 'L' key: Move the selected node
+    else if (event.key.code == sf::Keyboard::L)
+    {
+        if ((m_node_from == nullptr) && (!m_arc_from_unknown_node))
+            handleArcOrigin();
+        else
+            handleArcDestination();
+    }
+
+    // Delete a node. TODO: implement arc deletion
+    if (event.key.code == sf::Keyboard::Delete)
+    {
+        Node* node = getNode(m_mouse.x, m_mouse.y);
+        if (node != nullptr)
+            m_petri_net.removeNode(*node);
+    }
+
+    // '+' key: increase the number of tokens in the place.
+    // '-' key: decrease the number of tokens in the place.
+    else if ((event.key.code == sf::Keyboard::Add) ||
+             (event.key.code == sf::Keyboard::Subtract))
+    {
+        Node* node = getNode(m_mouse.x, m_mouse.y);
+        if ((node != nullptr) && (node->type == Node::Type::Place))
+        {
+            size_t& tokens = reinterpret_cast<Place*>(node)->tokens;
+            if (event.key.code == sf::Keyboard::Add)
+                ++tokens;
+            else if (tokens > 0u)
+                --tokens;
+        }
+    }
+}
+
+//------------------------------------------------------------------------------
+void PetriGUI::handleArcOrigin()
+{
+    m_node_from = getNode(m_mouse.x, m_mouse.y);
+    if (m_node_from == nullptr)
+    {
+        if ((m_petri_net.places().size() != 0u) ||
+            (m_petri_net.transitions().size() != 0u))
+        {
+            // We do not yet know the type of the destination node so create
+            // intermediate information.
+            m_x = m_mouse.x;
+            m_y = m_mouse.y;
+            m_arc_from_unknown_node = true;
+        }
+    }
+
+    // Reset states
+    m_node_to  = nullptr;
+    m_selected_modes.clear();
+}
+
+//------------------------------------------------------------------------------
+void PetriGUI::handleArcDestination()
+{
+    // Finish the creation of the arc (destination node)
+    m_node_to = getNode(m_mouse.x, m_mouse.y);
+
+    // The user grab no nodes: abort
+    if ((m_node_from == nullptr) && (m_node_to == nullptr))
+        return ;
+
+    // Reached the destination node
+    if (m_node_to != nullptr)
+    {
+        if (m_arc_from_unknown_node)
+        {
+            if (m_node_to->type == Node::Type::Place)
+                m_node_from = &m_petri_net.addTransition(m_x, m_y);
+            else
+                m_node_from = &m_petri_net.addPlace(m_x, m_y);
+        }
+    }
+    else if (m_node_from != nullptr)
+    {
+        float x = m_mouse.x;
+        float y = m_mouse.y;
+        if (m_node_from->type == Node::Type::Place)
+            m_node_to = &m_petri_net.addTransition(x, y);
+        else
+            m_node_to = &m_petri_net.addPlace(x, y);
+    }
+
+    // Create the arc. Note: the duration value is only used
+    // for arc Transition --> Place.
+    float duration = random(1, 5);
+    m_petri_net.addArc(*m_node_from, *m_node_to, duration);
+
+    // Reset states
+    m_node_from = m_node_to = nullptr;
+    m_selected_modes.clear();
+    m_arc_from_unknown_node = false;
+}
+
+//------------------------------------------------------------------------------
+void PetriGUI::handleMouseButton(sf::Event const& event)
+{
+    // The 'M' key was pressed. Reset the state but do not add new node!
+    if ((m_selected_modes.size() != 0u) &&
+        (event.type == sf::Event::MouseButtonPressed))
+    {
+        m_node_from = m_node_to = nullptr;
+        m_selected_modes.clear();
+        return ;
+    }
+
+    if (event.mouseButton.button == sf::Mouse::Middle)
+    {
+        // Add new arc
+        // Middle button: create arcs. On key pressed: define the origin node. On
+        // key released: define the destination node. Several cases are managed:
+        //   - origin and destination nodes exist and are different type (Place ->
+        //     Transition or Transition -> Place): then create directly the arc.
+        //   - the origin node is selected but not the destination node: then create
+        //     the destination node of different type and then create the arc.
+        //   - the origin node is not selected but not the destination node: then
+        //     create the origine node of different type and then create the arc.
+        if (event.type == sf::Event::MouseButtonPressed)
+            handleArcOrigin();
+        else if (event.type == sf::Event::MouseButtonReleased)
+            handleArcDestination();
+    }
+    else if (event.type == sf::Event::MouseButtonPressed)
+    {
+        // Node selection
+        if (m_ctrl)
+        {
+            m_x = m_mouse.x;
+            m_y = m_mouse.y;
+        }
+
+        // End the arc started with the 'L' key
+        else if ((m_node_from != nullptr) || (m_arc_from_unknown_node))
+        {
+            // left mouse button: ends the arc.
+            // right mouse button: abort the arc
+            if (event.mouseButton.button == sf::Mouse::Left)
+                handleArcDestination();
+        }
+
+        // Add a new Place or a new Transition
+        else if (event.mouseButton.button == sf::Mouse::Left)
+            m_petri_net.addPlace(m_mouse.x, m_mouse.y);
+        else if (event.mouseButton.button == sf::Mouse::Right)
+            m_petri_net.addTransition(m_mouse.x, m_mouse.y);
+
+        // Reset states
+        m_node_from = m_node_to = nullptr;
+        m_selected_modes.clear();
+        m_arc_from_unknown_node = false;
+    }
+    else if ((event.type == sf::Event::MouseButtonReleased) && (m_ctrl))
+    {
+        // Node selection
+        for (auto& p: m_petri_net.places())
+        {
+            if ((p.x >= m_x) && (p.x <= m_mouse.x) &&
+                (p.y >= m_y) && (p.y <= m_mouse.y))
+            {
+                m_selected_modes.push_back(&p);
+            }
+        }
+        for (auto& t: m_petri_net.transitions())
+        {
+            if ((t.x >= m_x) && (t.x <= m_mouse.x) &&
+                (t.y >= m_y) && (t.y <= m_mouse.y))
+            {
+                m_selected_modes.push_back(&t);
+            }
+        }
+    }
+}
+
+//------------------------------------------------------------------------------
 void PetriGUI::handleInput()
 {
     sf::Event event;
     m_mouse = sf::Vector2f(sf::Mouse::getPosition(window()));
 
-    while (window().pollEvent(event))
+    while (m_running && window().pollEvent(event))
     {
-        switch (event.type)
-        {
-            // Window close button clicked
-        case sf::Event::Closed:
-            m_running = false;
-            return;
-
-        case sf::Event::KeyPressed:
-            // Escape key: qui the application.
-            if (event.key.code == sf::Keyboard::Escape)
-            {
-                m_running = false;
-                return ;
-            }
-            // 'R' key: Run the animation of the Petri net
-            else if (event.key.code == sf::Keyboard::R)
-            {
-                if (!m_simulating)
-                {
-                    std::cout << "Simulation started" << std::endl;
-                    m_simulating = true;
-                }
-            }
-            // 'E' key: End the animation of the Petri net
-            else if (event.key.code == sf::Keyboard::E)
-            {
-                if (m_simulating)
-                {
-                    std::cout << "Simulation stopped" << std::endl;
-                    m_simulating = false;
-                }
-            }
-            // 'P' key: Pause the animation of the Petri net
-            else if (event.key.code == sf::Keyboard::P)
-            {
-                m_simulating = m_simulating ^ true;
-            }
-            break;
-
-        default:
-            break;
-        }
-
-        // No modification allowed during the simulation
-        if (m_simulating)
-            break;
-
         switch (event.type)
         {
         // Window close button clicked
         case sf::Event::Closed:
             m_running = false;
-            return;
-
+            break;
         case sf::Event::KeyPressed:
-            // Escape key: qui the application.
-            if (event.key.code == sf::Keyboard::Escape)
-            {
-                m_running = false;
-                return ;
-            }
-            // Left or right Control key pressed: memorize the state
-            else if ((event.key.code == sf::Keyboard::LControl) ||
-                     (event.key.code == sf::Keyboard::RControl))
-            {
-                m_ctrl = true;
-            }
-            // 'S' key: save the Petri net to a JSON file
-            else if (event.key.code == sf::Keyboard::S)
-            {
-                if ((m_petri_net.places().size() != 0u) &&
-                    (m_petri_net.transitions().size() != 0u))
-                {
-                    if (!m_petri_net.save("petri.json"))
-                    {
-                        std::cerr << "Could not saved the Petri net"
-                                  << std::endl;
-                    }
-                    else
-                    {
-                        std::cerr << "Petri net has been saved"
-                                  << std::endl;
-                    }
-                }
-                else
-                {
-                    std::cerr << "I'll not save empty net"
-                              << std::endl;
-                }
-            }
-            // 'O' key: load the Petri net to a JSON file
-            else if (event.key.code == sf::Keyboard::O)
-            {
-                if (!m_petri_net.load("petri.json"))
-                {
-                    std::cerr << "Could not load the Petri net"
-                              << std::endl;
-                }
-                else
-                {
-                    std::cerr << "Petri net has been loaded"
-                              << std::endl;
-                }
-            }
-            // 'C' key: erase the Petri net
-            else if (event.key.code == sf::Keyboard::C)
-            {
-                m_petri_net.reset();
-            }
-            // 'M' key: Move the selected node
-            else if (event.key.code == sf::Keyboard::M)
-            {
-                m_moving_node =
-                        (m_moving_node != nullptr) ?
-                        nullptr : getNode(m_mouse.x, m_mouse.y);
-            }
-            // 'L' key: create an arc from the selected node
-            else if (event.key.code == sf::Keyboard::L)
-            {
-                m_node_from = getNode(m_mouse.x, m_mouse.y);
-            }
-            //
-            if (event.key.code == sf::Keyboard::Delete)
-            {
-                Node* node = getNode(m_mouse.x, m_mouse.y);
-                if (node != nullptr)
-                {
-                    m_petri_net.removeNode(*node);
-                }
-            }
-            // '+' or '-' key: increase or decrease the number of tokens in the
-            // place.
-            else if ((event.key.code == sf::Keyboard::Add) ||
-                     (event.key.code == sf::Keyboard::Subtract))
-            {
-                Node* node = getNode(m_mouse.x, m_mouse.y);
-                if ((node != nullptr) && (node->type == Node::Type::Place))
-                {
-                    size_t& tokens = reinterpret_cast<Place*>(node)->tokens;
-                    if (event.key.code == sf::Keyboard::Add)
-                    {
-                        ++tokens;
-                    }
-                    else if (tokens > 0u)
-                    {
-                        --tokens;
-                    }
-                }
-            }
+            handleKeyPressed(event);
             break;
-
         case sf::Event::KeyReleased:
-            // Left or right Control Key released: unmemorize the state
-            if ((event.key.code == sf::Keyboard::LControl) ||
-                (event.key.code == sf::Keyboard::RControl))
-            {
-                m_ctrl = false;
-            }
+            m_ctrl = false;
             break;
-
         case sf::Event::MouseButtonPressed:
-            // Left button: Add a Place node
-            // Right button: Add a Transition node
-            if ((event.mouseButton.button == sf::Mouse::Left) ||
-                (event.mouseButton.button == sf::Mouse::Right))
-            {
-                m_node_to = getNode(m_mouse.x, m_mouse.y);
-                if (m_node_from == nullptr)
-                {
-                    if (m_node_to != nullptr)
-                    {
-                        // Forbid to add a node inside another node
-                    }
-                    else if (event.mouseButton.button == sf::Mouse::Left)
-                    {
-                        m_petri_net.addPlace(m_mouse.x, m_mouse.y);
-                    }
-                    else if (event.mouseButton.button == sf::Mouse::Right)
-                    {
-                        m_petri_net.addTransition(m_mouse.x, m_mouse.y);
-                    }
-                }
-                else if (m_node_to != nullptr)
-                {
-                    if (m_node_from->type == Node::Type::Transition)
-                    {
-                        float duration = random(1, 5);
-                        m_petri_net.addArc(*m_node_from, *m_node_to, duration);
-                    }
-                    else
-                    {
-                        m_petri_net.addArc(*m_node_from, *m_node_to);
-                    }
-                }
-                m_node_from = m_node_to = m_moving_node = nullptr;
-            }
-            // Middle button: Add arc
-            else if (event.mouseButton.button == sf::Mouse::Middle)
-            {
-                m_node_from =
-                        (m_node_from != nullptr) ?
-                        nullptr : getNode(m_mouse.x, m_mouse.y);
-                m_node_to = m_moving_node = nullptr;
-            }
-            break;
-
         case sf::Event::MouseButtonReleased:
-            if (m_node_from != nullptr)
-            {
-                // Finish the creation of the arc (destination node)
-                m_node_to = getNode(m_mouse.x, m_mouse.y);
-                if (m_node_to == nullptr)
-                {
-                    // No destination node selected ? Create one !
-                    if (m_node_from->type == Node::Type::Place)
-                        m_node_to = &m_petri_net.addTransition(m_mouse.x, m_mouse.y);
-                    else
-                        m_node_to = &m_petri_net.addPlace(m_mouse.x, m_mouse.y);
-                }
-
-                // Only duration on arc Transition --> Place are important
-                if (m_node_from->type == Node::Type::Transition)
-                {
-                    float duration = random(1, 5);
-                    m_petri_net.addArc(*m_node_from, *m_node_to, duration);
-                }
-                else
-                {
-                    m_petri_net.addArc(*m_node_from, *m_node_to);
-                }
-            }
-            m_node_from = m_node_to = nullptr;
+            handleMouseButton(event);
             break;
-
         default:
             break;
         }

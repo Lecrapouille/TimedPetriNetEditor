@@ -38,11 +38,9 @@ screenshot may have changed.
 - `M` key: move the selected place or transition.
 - `+` key: add a token on the place pointed by the mouse cursor.
 - `-` key: remove a token on the place pointed by the mouse cursor.
-- `R` key: m_simulating simulation.
-- `E` key: end simulation.
-- `S` key: save the Petri net as petri.json file.
-- `O` key: load the Petri net from petri.json file. TODO
-- `Delete` key: remove a place or transition or an arc. TODO
+- `R` key: run/end simulating simulation.
+- `S`, `O` keys: save/open load a Petri net to/from petri.json file.
+- `Delete` key: remove a place or transition or an arc. FIXME some possible issues
 - `C` key: clear the Petri net.
 
 ## Related projects
