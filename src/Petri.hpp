@@ -369,6 +369,12 @@ public:
     //! \brief Load the Petri net from a JSON file
     bool load(std::string const& filename);
 
+    //! \brief Export the Petri net to C++ code as Grafcet.
+    //! \param[in] filename the path of h++ file.
+    //! \param[in] name the namespace.
+    bool exportToCpp(std::string const& filename,
+                     std::string const& name);
+
     //! \brief Remove a Place or a Transition
     void removeNode(Node& node);
 

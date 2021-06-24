@@ -418,10 +418,195 @@ void PetriNet::generateArcsInArcsOut()
 }
 
 //------------------------------------------------------------------------------
+bool PetriNet::exportToCpp(std::string const& filename, std::string const& name)
+{
+    std::string upper_name(name);
+    std::for_each(upper_name.begin(), upper_name.end(), [](char & c) {
+        c = ::toupper(c);
+    });
+
+    // Update arcs in/out for all transitions to be sure to generate the correct
+    // net.
+    generateArcsInArcsOut();
+
+    std::ofstream file(filename);
+    if (!file)
+    {
+        std::cerr << "Failed to generate the Petri net to '" << filename
+                  << "'. Reason was " << strerror(errno) << std::endl;
+        return false;
+    }
+
+    file << "// This file has been generated and you should avoid editing it." << std::endl;
+    file << "// Note: the code generator is still experimental !" << std::endl;
+    file << "" << std::endl;
+    file << "#ifndef GENERATED_GRAFCET_" << upper_name << "_HPP" << std::endl;
+    file << "#  define GENERATED_GRAFCET_" << upper_name << "_HPP" << std::endl;
+    file << "" << std::endl;
+    file << "#  include <iostream>" << std::endl;
+    file << "" << std::endl;
+    file << "namespace " << name << " {" << std::endl;
+
+    file << R"PN(
+class Grafcet
+{
+public:
+
+    Grafcet()
+    {
+        initIO();
+        reset();
+    }
+
+    void reset()
+    {
+        // Initial states
+)PN";
+
+    for (size_t i = 0; i < m_places.size(); ++i)
+    {
+        file << "        X[" << m_places[i].id << "] = "
+             << (m_places[i].tokens ? "true; " : "false;")
+             << std::endl;
+    }
+
+    file << R"PN(    }
+
+    void update()
+    {
+)PN";
+
+    file << "        // Do actions of enabled steps" << std::endl;
+    for (size_t p = 0u; p < m_places.size(); ++p)
+    {
+        file << "        if (X[" << p << "]) { X" << p << "(); }"
+             << std::endl;
+    }
+
+    file << std::endl;
+    file << "        // Read inputs (TODO)" << std::endl << std::endl;
+    file << "        // Update transitions" << std::endl;
+
+    for (size_t t = 0u; t < m_transitions.size(); ++t)
+    {
+        Transition& trans = m_transitions[t];
+        file << "        T[" << trans.id << "] =";
+        for (size_t a = 0; a < trans.arcsIn.size(); ++a)
+        {
+            Arc& arc = *trans.arcsIn[a];
+            if (a > 0u) {  file << " &&"; }
+            file << " X[" << arc.from.id << "]";
+        }
+        file << " && T"  << trans.id << "();";
+        file << " // " << trans.key() << std::endl;
+                                                         }
+
+    file  << std::endl << "        // Update steps" << std::endl;
+    for (size_t t = 0u; t < m_transitions.size(); ++t)
+    {
+        Transition& trans = m_transitions[t];
+        file << "        if (T[" << t << "]) {" << std::endl;
+        for (size_t a = 0; a < trans.arcsIn.size(); ++a)
+        {
+            Arc& arc = *trans.arcsIn[a];
+            file << "            X[" << arc.from.id
+                 << "] = false; // Disable " << arc.from.key() << std::endl;
+        }
+        for (size_t a = 0; a < trans.arcsOut.size(); ++a)
+        {
+            Arc& arc = *trans.arcsOut[a];
+            file << "            X[" << arc.to.id
+                 << "] = true; // Enable " << arc.to.key() << std::endl;
+        }
+        file << "        }" << std::endl << std::endl;
+    }
+
+    file << "        // Set output values (TODO)" << std::endl;
+
+    file << R"PN(    }
+
+    void debug()
+    {
+       std::cout << "Transitions:" << std::endl;
+       for (size_t i = 0u; i < MAX_TRANSITIONS; ++i)
+          std::cout << "  T[" << i << "] = " << T[i] << std::endl;
+
+       //std::cout << "Inputs:" << std::endl;
+       //for (size_t i = 0u; i < MAX_INPUTS; ++i)
+       //   std::cout << "  I[" << i << "] = " << I[i] << std::endl;
+
+       std::cout << "Steps:" << std::endl;
+       for (size_t i = 0u; i < MAX_STEPS; ++i)
+          std::cout << "  X[" << i << "] = " << X[i] << std::endl;
+
+       //std::cout << "Outputs:" << std::endl;
+       //for (size_t i = 0u; i < MAX_OUTPUTS; ++i)
+       //   std::cout << "  O[" << i << "] = " << O[i] << std::endl;
+    }
+
+private:
+
+    //! \brief Fonction not generated to let the user initializing
+    //! inputs (i.e. TTL gpio, ADC ...) and outputs (i.e. TTL gpio,
+    //! PWM ...)
+    void initIO();
+)PN";
+
+    for (auto const& t: m_transitions)
+    {
+        file << "    //! \\brief Fonction not generated to let the user writting the" << std::endl;
+        file << "    //! transitivity for the Transition " << t.id <<  " depending of the system" << std::endl;
+        file << "    //! inputs I[]." << std::endl;
+        file << "    //! \\return true if the transition is enabled." << std::endl;
+        file << "    bool T" << t.id << "() const;" << std::endl;
+    }
+
+    for (auto const& p: m_places)
+    {
+        file << "    //! \\brief Fonction not generated to let the user writting the" << std::endl;
+        file << "    //! reaction for the Step " << p.id << std::endl;
+        file << "    void X" << p.id << "();" << std::endl;
+    }
+
+    file << R"PN(
+private:
+
+)PN";
+
+    file << "    static const size_t MAX_STEPS = " << m_places.size() << "u;"  << std::endl;
+    file << "    static const size_t MAX_TRANSITIONS = " << m_transitions.size() << "u;" << std::endl;
+    file << "    //static const size_t MAX_INPUTS = X;" << std::endl;
+    file << "    //static const size_t MAX_OUTPUTS = Y;" << std::endl;
+    file << "" << std::endl;
+    file << "    //! \\brief Steps"  << std::endl;
+    file << "    bool X[MAX_STEPS];" << std::endl;
+    file << "    //! \\brief Transitions"  << std::endl;
+    file << "    bool T[MAX_TRANSITIONS];" << std::endl;
+    file << "    //! \\brief Inputs"  << std::endl;
+    file << "    //uint16_t I[MAX_INPUTS];" << std::endl;
+    file << "    //! \\brief Outputs"  << std::endl;
+    file << "    //uint16_t O[MAX_OUTPUTS];" << std::endl;
+    file << "};" << std::endl;
+    file << "" << std::endl;
+    file << "} // namespace " << name << std::endl;
+    file << "#endif // GENERATED_GRAFCET_" << upper_name << "_HPP" << std::endl;
+
+    std::cerr << "Petri net saved into file '" << filename << "'" << std::endl;
+    return true;
+}
+
+//------------------------------------------------------------------------------
 bool PetriNet::save(std::string const& filename)
 {
     std::string separator;
     std::ofstream file(filename);
+
+    if (!file)
+    {
+        std::cerr << "Failed to generate the Petri net to '" << filename
+                  << "'. Reason was " << strerror(errno) << std::endl;
+        return false;
+    }
 
     if ((m_places.size() == 0u) && (m_transitions.size() == 0u))
     {
@@ -454,7 +639,7 @@ bool PetriNet::save(std::string const& filename)
     }
     file << "]\n}";
 
-    std::cout << "Petri net saved into file '" << filename << "'" << std::endl;
+    std::cerr << "Petri net saved into file '" << filename << "'" << std::endl;
     return true;
 }
 
@@ -803,8 +988,14 @@ void PetriGUI::handleKeyPressed(sf::Event const& event)
             m_petri_net.load("petri.json");
     }
 
-    // 'C' key: erase the Petri net
+    // 'C' key: save the Petri net to a JSON file
     else if (event.key.code == sf::Keyboard::C)
+    {
+        m_petri_net.exportToCpp("Grafcet.hpp", "generated");
+    }
+
+    // 'Z' key: erase the Petri net
+    else if (event.key.code == sf::Keyboard::Z)
     {
         m_petri_net.reset();
     }
