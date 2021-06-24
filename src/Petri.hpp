@@ -489,8 +489,6 @@ private:
     sf::Vector2f m_mouse;
     //! \brief The Petri net.
     PetriNet m_petri_net;
-    //! \brief
-    std::vector<Transition*> m_candidate_transitions;
     //! \brief Animation of tokens when transitioning from Transitions to Places.
     std::vector<AnimatedToken> m_animation_TP;
 };

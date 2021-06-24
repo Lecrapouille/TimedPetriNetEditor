@@ -659,8 +659,6 @@ void PetriGUI::update(float const dt) // FIXME std::chrono
                 else if ((a.to.type == Node::Type::Place) && (a.from.id == trans.id))
                     trans.arcsOut.push_back(&a);
             }
-
-            m_candidate_transitions.push_back(&trans); // TODO missing resize
         }
 
         m_state = STATE_ANIMATING;
@@ -708,7 +706,6 @@ void PetriGUI::update(float const dt) // FIXME std::chrono
                 }
             }
         }
-        m_candidate_transitions.clear();
 
         // Tokens Transition --> Places are transitioning.
         if (m_animation_TP.size() > 0u)
