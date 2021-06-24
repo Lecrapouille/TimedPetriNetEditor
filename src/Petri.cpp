@@ -400,6 +400,24 @@ void PetriGUI::draw(float const /*dt*/)
 }
 
 //------------------------------------------------------------------------------
+void PetriNet::generateArcsInArcsOut()
+{
+    for (auto& trans: m_transitions)
+    {
+        trans.arcsIn.clear();
+        trans.arcsOut.clear();
+
+        for (auto& a: m_arcs)
+        {
+            if ((a.from.type == Node::Type::Place) && (a.to.id == trans.id))
+                trans.arcsIn.push_back(&a);
+            else if ((a.to.type == Node::Type::Place) && (a.from.id == trans.id))
+                trans.arcsOut.push_back(&a);
+        }
+    }
+}
+
+//------------------------------------------------------------------------------
 bool PetriNet::save(std::string const& filename)
 {
     std::string separator;
@@ -647,20 +665,7 @@ void PetriGUI::update(float const dt) // FIXME std::chrono
 
         // Populate in and out arcs for all transitions to avoid to look after
         // them.
-        for (auto& trans: m_petri_net.transitions())
-        {
-            trans.arcsIn.clear();
-            trans.arcsOut.clear();
-
-            for (auto& a: m_petri_net.arcs())
-            {
-                if ((a.from.type == Node::Type::Place) && (a.to.id == trans.id))
-                    trans.arcsIn.push_back(&a);
-                else if ((a.to.type == Node::Type::Place) && (a.from.id == trans.id))
-                    trans.arcsOut.push_back(&a);
-            }
-        }
-
+        m_petri_net.generateArcsInArcsOut();
         m_state = STATE_ANIMATING;
         break;
 

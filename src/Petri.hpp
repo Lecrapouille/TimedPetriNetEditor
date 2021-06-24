@@ -166,13 +166,13 @@ struct Transition : public Node
     }
 
     //! \brief Hold the incoming arcs.
-    //! \note this vector is updated by the method PetriNet::cacheArcs().
+    //! \note this vector is updated by the method PetriNet::generateArcsInArcsOut().
     //! Posible evolution: update dynamicaly this vector when editing the net
     //! through the GUI.
     std::vector<Arc*> arcsIn;
 
     //! \brief Hold the outcoming arcs.
-    //! \note this vector is updated by the method PetriNet::cacheArcs().
+    //! \note this vector is updated by the method PetriNet::generateArcsInArcsOut().
     //! Posible evolution: update dynamicaly this vector when editing the net
     //! through the GUI.
     std::vector<Arc*> arcsOut;
@@ -371,6 +371,10 @@ public:
 
     //! \brief Remove a Place or a Transition
     void removeNode(Node& node);
+
+    //! \brief Populate or update Transition::arcsIn and Transition::arcsOut
+    //! for all transitions in the net.
+    void generateArcsInArcsOut();
 
 private:
 
