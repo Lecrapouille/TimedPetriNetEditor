@@ -53,6 +53,16 @@ static float random(int lower, int upper)
     return (rand() % (upper - lower + 1)) + lower;
 }
 
+//------------------------------------------------------------------------------
+static const char* timeFormat()
+{
+    static char buffer[32];
+
+    time_t current_time = ::time(nullptr);
+    strftime(buffer, sizeof (buffer), "[%H:%M:%S] ", localtime(&current_time));
+    return buffer;
+}
+
 // *****************************************************************************
 //! \brief Class allowing to draw an arrow. Arrows are needed for drawing Petri
 //! arcs.
@@ -779,7 +789,7 @@ void PetriNet::removeNode(Node& node)
     }
 
     // Restore arcs
-    // cacheArcs();
+    generateArcsInArcsOut();
 }
 
 //------------------------------------------------------------------------------
@@ -796,6 +806,17 @@ static size_t& tokenOut(Arc* a)
 //------------------------------------------------------------------------------
 static size_t canFire(Transition const& trans)
 {
+#if 1 // Version 1: return 0 or 1 token
+
+    for (auto& a: trans.arcsIn)
+    {
+        if (tokenIn(a) == 0u)
+            return 0u;
+    }
+    return 1u;
+
+#else // Version 2: return the maximum possibe of tokens that can be burnt
+
     size_t burnt = static_cast<size_t>(-1);
 
     for (auto& a: trans.arcsIn)
@@ -803,10 +824,13 @@ static size_t canFire(Transition const& trans)
         size_t tokens = tokenIn(a);
         if (tokens == 0u)
             return 0u;
+
         if (tokens < burnt)
             burnt = tokens;
     }
     return burnt;
+
+#endif
 }
 
 //------------------------------------------------------------------------------
@@ -835,6 +859,9 @@ bool AnimatedToken::update(float const dt)
 // TODO: could be nice to separate simulation from animation
 void PetriGUI::update(float const dt) // FIXME std::chrono
 {
+    bool burnt = false;
+    bool burning = false;
+
     switch (m_state)
     {
     case STATE_IDLE:
@@ -868,31 +895,54 @@ void PetriGUI::update(float const dt) // FIXME std::chrono
     case STATE_ANIMATING:
         m_state = m_simulating ? STATE_ANIMATING : STATE_ENDING;
 
-        // For each transition check if all Places pointing to it has at least
-        // one token.
-        for (auto& trans: m_petri_net.transitions())
+        // For each transition check if it is activated (all incoming Places
+        // have at least one token to burn. Note: since here we care Petri but
+        // not Grafcet the transitivity is always true). If yes, we will burn
+        // the maximum possible of tokens in a single step for the animation.
+        // But in the aim to divide tokens the most kindly over the maximum
+        // transitions possible we have to iterate and burn tokens one by one.
+        do
         {
-            // All Places pointing to this Transition have at least one token:
-            // burn the maximum allowed of tokens and place tokens inside the
-            // container of their animation.
-            size_t tokens = canFire(trans);
-            if (tokens > 0u)
+            burning = false;
+            for (auto& trans: m_petri_net.transitions()) // FIXME: filter the list to speed up
             {
-                for (auto& a: trans.arcsIn)
+                size_t tokens = canFire(trans); // [0 .. 1] tokens
+                if (tokens > 0u)
                 {
-                    // Burn tokens
-                    tokenIn(a) -= tokens;
+                    burning = true; // keep iterating on this loop
+                    burnt = true; // At least one place has been fired
 
-                    // Add an animated tokens Places --> Transition.
-                    //m_animation_PT.push_back(AnimatedToken(*a, tokens, true));
+                    // Burn a single token on each Places above
+                    for (auto& a: trans.arcsIn)
+                    {
+                        tokenIn(a) -= 1u;
+                    }
+
+                    // Count the number of tokens for the animation
+                    for (auto& a: trans.arcsOut)
+                    {
+                        a->count += 1u;
+                        // FIXME: speedup: store trans.arcsOut
+                    }
                 }
+            }
+        } while (burning);
 
-                // Add an animated tokens Transition --> Places.
-                // note: the number of tokens will be incremented in destination
-                // places when the animation will be done.
-                for (auto& a: trans.arcsOut)
+        // Create animeted tokens with the correct number of tokens they are
+        // carrying.
+        if (burnt)
+        {
+            for (auto& a: m_petri_net.arcs()) // FIXME: speedup: trans.arcsOut
+            {
+                if (a.count > 0u)
                 {
-                    m_animation_TP.push_back(AnimatedToken(*a, tokens, false));
+                    std::cout << timeFormat()
+                              << a.from.key() << " burnt "
+                              << a.count << " token"
+                              << (a.count == 1u ? "" : "s")
+                              << std::endl;
+                    m_animation_TP.push_back(AnimatedToken(a, a.count, false));
+                    a.count = 0u;
                 }
             }
         }
@@ -903,9 +953,17 @@ void PetriGUI::update(float const dt) // FIXME std::chrono
             size_t i = m_animation_TP.size();
             while (i--)
             {
-                if (m_animation_TP[i].update(dt))
+                AnimatedToken& an = m_animation_TP[i];
+                if (an.update(dt))
                 {
-                    tokenOut(m_animation_TP[i].currentArc) += m_animation_TP[i].tokens;
+                    std::cout << timeFormat()
+                              << "Place " << an.currentArc->to.key()
+                              << " got " << an.tokens << " token"
+                              << (an.tokens == 1u ? "" : "s")
+                              << std::endl;
+
+                    // Reach their destination: suppress it
+                    tokenOut(an.currentArc) += an.tokens;
                     m_animation_TP[i] = m_animation_TP[m_animation_TP.size() - 1u];
                     m_animation_TP.pop_back();
                 }

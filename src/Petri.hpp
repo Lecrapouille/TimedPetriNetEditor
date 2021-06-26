@@ -116,6 +116,9 @@ struct Arc
     Node& to;
     //! \brief Timed Petri.
     float duration; // TODO unit
+    //! \brief Temporary token counter for creating animated tokens
+    //! displaying the correct tokens number they are carrying.
+    size_t count = 0u;
 };
 
 // *****************************************************************************
@@ -468,6 +471,7 @@ private:
 
     //! \brief Set true if the thread of the application shall stay alive.
     std::atomic<bool> m_running{true};
+    std::atomic<bool> m_pause{false};
     //! \brief Set true when simulating the Petri net.
     std::atomic<bool> m_simulating{false};
     //! \brief State machine for the animation.
