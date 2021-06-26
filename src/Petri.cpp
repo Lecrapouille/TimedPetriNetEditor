@@ -956,14 +956,26 @@ void PetriGUI::update(float const dt) // FIXME std::chrono
                 AnimatedToken& an = m_animation_TP[i];
                 if (an.update(dt))
                 {
+                    // Animated token reached its ddestination: Place
                     std::cout << current_time()
                               << "Place " << an.currentArc->to.key()
                               << " got " << an.tokens << " token"
                               << (an.tokens == 1u ? "" : "s")
                               << std::endl;
 
-                    // Reach their destination: suppress it
+                    // Drop the number of tokens it was carrying.
+                    //
+                    // Note: in GUI.cpp in the Application constructor, I set
+                    // the window to have slower framerate in the aim to have a
+                    // bigger discrete time and therefore AnimatedToken moving
+                    // with a bigger step range and avoid them to overlap when
+                    // i.e. two of them, carying 1 token, are arriving at almost
+                    // the same moment but separated by one call of this method
+                    // update() producing two AnimatedToken carying 1 token that
+                    // will be displayed at the same position instead of a
+                    // single AnimatedToken carying 2 tokens.
                     tokenOut(an.currentArc) += an.tokens;
+                    // Remove it
                     m_animation_TP[i] = m_animation_TP[m_animation_TP.size() - 1u];
                     m_animation_TP.pop_back();
                 }

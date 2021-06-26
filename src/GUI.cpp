@@ -24,7 +24,7 @@ Application::Application(uint32_t const width, uint32_t const height,
                          std::string const& title)
 {
     m_window.create(sf::VideoMode(width, height), title);
-    //m_window.setFramerateLimit(10);
+    m_window.setFramerateLimit(30);
 }
 
 void Application::push(GUI& gui)
