@@ -54,7 +54,7 @@ static float random(int lower, int upper)
 }
 
 //------------------------------------------------------------------------------
-static const char* timeFormat()
+static const char* current_time()
 {
     static char buffer[32];
 
@@ -936,7 +936,7 @@ void PetriGUI::update(float const dt) // FIXME std::chrono
             {
                 if (a.count > 0u)
                 {
-                    std::cout << timeFormat()
+                    std::cout << current_time()
                               << a.from.key() << " burnt "
                               << a.count << " token"
                               << (a.count == 1u ? "" : "s")
@@ -956,7 +956,7 @@ void PetriGUI::update(float const dt) // FIXME std::chrono
                 AnimatedToken& an = m_animation_TP[i];
                 if (an.update(dt))
                 {
-                    std::cout << timeFormat()
+                    std::cout << current_time()
                               << "Place " << an.currentArc->to.key()
                               << " got " << an.tokens << " token"
                               << (an.tokens == 1u ? "" : "s")
