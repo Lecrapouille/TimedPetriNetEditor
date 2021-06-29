@@ -862,6 +862,9 @@ void PetriNet::removeNode(Node& node)
 //------------------------------------------------------------------------------
 static size_t canFire(Transition const& trans)
 {
+    if (trans.arcsIn.size() == 0u)
+        return 0u;
+
 #if 1 // Version 1: return 0 or 1 token
 
     for (auto& a: trans.arcsIn)
