@@ -964,16 +964,6 @@ void PetriGUI::update(float const dt) // FIXME std::chrono
                               << std::endl;
 
                     // Drop the number of tokens it was carrying.
-                    //
-                    // Note: in GUI.cpp in the Application constructor, I set
-                    // the window to have slower framerate in the aim to have a
-                    // bigger discrete time and therefore AnimatedToken moving
-                    // with a bigger step range and avoid them to overlap when
-                    // i.e. two of them, carying 1 token, are arriving at almost
-                    // the same moment but separated by one call of this method
-                    // update() producing two AnimatedToken carying 1 token that
-                    // will be displayed at the same position instead of a
-                    // single AnimatedToken carying 2 tokens.
                     tokenOut(an.currentArc) += an.tokens;
                     // Remove it
                     m_animation_TP[i] = m_animation_TP[m_animation_TP.size() - 1u];
@@ -1036,13 +1026,25 @@ void PetriGUI::handleKeyPressed(sf::Event const& event)
     else if (event.key.code == sf::Keyboard::R)
     {
         m_simulating = m_simulating ^ true;
+
+        // Note: in GUI.cpp in the Application constructor, I set
+        // the window to have slower framerate in the aim to have a
+        // bigger discrete time and therefore AnimatedToken moving
+        // with a bigger step range and avoid them to overlap when
+        // i.e. two of them, carying 1 token, are arriving at almost
+        // the same moment but separated by one call of this method
+        // update() producing two AnimatedToken carying 1 token that
+        // will be displayed at the same position instead of a
+        // single AnimatedToken carying 2 tokens.
         if (m_simulating)
         {
             std::cout << "Simulation started" << std::endl;
+            window().setFramerateLimit(30);
         }
         else
         {
             std::cout << "Simulation ended" << std::endl;
+            window().setFramerateLimit(60);
         }
     }
 
