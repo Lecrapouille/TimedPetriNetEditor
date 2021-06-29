@@ -231,15 +231,16 @@ static void usage()
             << "Middle mouse button pressed: add an arc with the selected place or transition as origin" << std::endl
             << "Middle mouse button release: end the arc with the selected place or transition as destination" << std::endl
             << "L key: add an arc with the selected place or transition as origin" << std::endl
+            << "Delete key: remove a place or transition or an arc" << std::endl
+            << "C key: clear the whole Petri net" << std::endl
             << "M key: move the selected place or transition" << std::endl
             << "+ key: add a token on the place pointed by the mouse cursor" << std::endl
             << "- key: remove a token on the place pointed by the mouse cursor" << std::endl
-            << "R key: m_simulating simulation" << std::endl
-            << "E key: end simulation" << std::endl
-            << "S key: save the Petri net as petri.json file" << std::endl
+            << "R key: run (start) or stop the simulation" << std::endl
+            << "S key: save the Petri net to petri.json file" << std::endl
             << "O key: load the Petri net from petri.json file" << std::endl
-            << "Delete key: remove a place or transition or an arc" << std::endl
-            << "C key: clear the Petri net" << std::endl;
+            << "G key: export the Petri net as Grafcet in a C++ header file" << std::endl
+            << "J key: export the Petri net as Julia code" << std::endl;
 }
 
 //------------------------------------------------------------------------------
@@ -1114,27 +1115,34 @@ void PetriGUI::handleKeyPressed(sf::Event const& event)
     else if ((event.key.code == sf::Keyboard::S) ||
              (event.key.code == sf::Keyboard::O))
     {
-        m_simulating = false;
-        if (event.key.code == sf::Keyboard::S)
-            m_petri_net.save("petri.json");
+        if (!m_simulating)
+        {
+            if (event.key.code == sf::Keyboard::S)
+                m_petri_net.save("petri.json");
+            else
+                m_petri_net.load("petri.json");
+        }
         else
-            m_petri_net.load("petri.json");
+        {
+            std::cerr << "Cannot save during the simulation"
+                      << std::endl;
+        }
     }
 
-    // 'C' key: save the Petri net to a JSON file
-    else if (event.key.code == sf::Keyboard::C)
+    // 'G' key: save the Petri net to a JSON file
+    else if (event.key.code == sf::Keyboard::G)
     {
         m_petri_net.exportToCpp("Grafcet.hpp", "generated");
     }
 
-    // 'Z' key: erase the Petri net
-    else if (event.key.code == sf::Keyboard::Z)
      // 'J' key: save the Petri net to a Julia scriot
     else if (event.key.code == sf::Keyboard::J)
     {
         m_petri_net.exportToJulia("petri.jl");
     }
 
+    // 'C' key: erase the Petri net
+    else if (event.key.code == sf::Keyboard::C)
     {
         m_petri_net.reset();
     }
@@ -1142,9 +1150,16 @@ void PetriGUI::handleKeyPressed(sf::Event const& event)
     // 'M' key: Move the selected node
     else if (event.key.code == sf::Keyboard::M)
     {
-        Node* node = getNode(m_mouse.x, m_mouse.y);
-        if (node != nullptr)
-            m_selected_modes.push_back(node);
+        if (m_selected_modes.size() == 0u)
+        {
+            Node* node = getNode(m_mouse.x, m_mouse.y);
+            if (node != nullptr)
+                m_selected_modes.push_back(node);
+        }
+        else
+        {
+            m_selected_modes.clear();
+        }
     }
 
     // 'L' key: Move the selected node
@@ -1216,12 +1231,37 @@ void PetriGUI::handleArcDestination()
     // Reached the destination node
     if (m_node_to != nullptr)
     {
-        if (m_arc_from_unknown_node)
+        // The user tried to link two nodes of the same type
+        if (m_node_from != nullptr)
         {
-            if (m_node_to->type == Node::Type::Place)
-                m_node_from = &m_petri_net.addTransition(m_x, m_y);
-            else
-                m_node_from = &m_petri_net.addPlace(m_x, m_y);
+            if (m_node_to->type == m_node_from->type)
+            {
+                float x = m_node_to->x +( m_node_from->x - m_node_to->x) / 2.0f;
+                float y = m_node_to->y +( m_node_from->y - m_node_to->y) / 2.0f;
+                float duration = random(1, 5);
+                if (m_node_to->type == Node::Type::Place)
+                {
+                    Transition& n = m_petri_net.addTransition(x, y);
+                    m_petri_net.addArc(*m_node_from, n, duration);
+                    m_node_from = &n;
+                }
+                else
+                {
+                    Place& n = m_petri_net.addPlace(x, y);
+                    m_petri_net.addArc(*m_node_from, n, duration);
+                    m_node_from = &n;
+                }
+            }
+        }
+        else
+        {
+            if (m_arc_from_unknown_node)
+            {
+                if (m_node_to->type == Node::Type::Place)
+                    m_node_from = &m_petri_net.addTransition(m_x, m_y);
+                else
+                    m_node_from = &m_petri_net.addPlace(m_x, m_y);
+            }
         }
     }
     else if (m_node_from != nullptr)
