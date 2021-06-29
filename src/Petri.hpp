@@ -25,6 +25,8 @@
 #  include <atomic>
 #  include <string>
 
+class Arc;
+
 // *****************************************************************************
 //! \brief Base class for Petri Place class and Petri Transition. Allow to
 //! factorize the code.
@@ -80,6 +82,18 @@ struct Node
     float y;
     //! \brief text display near the place (by default == m_key).
     std::string caption;
+
+    //! \brief Hold the incoming arcs.
+    //! \note this vector is updated by the method PetriNet::generateArcsInArcsOut().
+    //! Posible evolution: update dynamicaly this vector when editing the net
+    //! through the GUI.
+    std::vector<Arc*> arcsIn;
+
+    //! \brief Hold the outcoming arcs.
+    //! \note this vector is updated by the method PetriNet::generateArcsInArcsOut().
+    //! Posible evolution: update dynamicaly this vector when editing the net
+    //! through the GUI.
+    std::vector<Arc*> arcsOut;
 
 private:
 
@@ -167,18 +181,6 @@ struct Transition : public Node
     {
         s_count = std::max(s_count.load(), id) + 1u;
     }
-
-    //! \brief Hold the incoming arcs.
-    //! \note this vector is updated by the method PetriNet::generateArcsInArcsOut().
-    //! Posible evolution: update dynamicaly this vector when editing the net
-    //! through the GUI.
-    std::vector<Arc*> arcsIn;
-
-    //! \brief Hold the outcoming arcs.
-    //! \note this vector is updated by the method PetriNet::generateArcsInArcsOut().
-    //! Posible evolution: update dynamicaly this vector when editing the net
-    //! through the GUI.
-    std::vector<Arc*> arcsOut;
 
 private:
 
@@ -377,6 +379,8 @@ public:
     //! \param[in] name the namespace.
     bool exportToCpp(std::string const& filename,
                      std::string const& name);
+
+    bool exportToJulia(std::string const& filename);
 
     //! \brief Remove a Place or a Transition
     void removeNode(Node& node);

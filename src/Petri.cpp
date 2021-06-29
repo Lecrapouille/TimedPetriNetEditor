@@ -63,6 +63,17 @@ static const char* current_time()
     return buffer;
 }
 
+//------------------------------------------------------------------------------
+static size_t& tokensIn(Arc* a)
+{
+    return reinterpret_cast<Place*>(&(a->from))->tokens;
+}
+
+static size_t& tokensOut(Arc* a)
+{
+    return reinterpret_cast<Place*>(&(a->to))->tokens;
+}
+
 // *****************************************************************************
 //! \brief Class allowing to draw an arrow. Arrows are needed for drawing Petri
 //! arcs.
@@ -428,6 +439,64 @@ void PetriNet::generateArcsInArcsOut()
                 trans.arcsOut.push_back(&a);
         }
     }
+
+    // if (true)
+    for (auto& p: m_places)
+    {
+        p.arcsIn.clear();
+        p.arcsOut.clear();
+
+        for (auto& a: m_arcs)
+        {
+            if ((a.from.type == Node::Type::Transition) && (a.to.id == p.id))
+                p.arcsIn.push_back(&a);
+            else if ((a.to.type == Node::Type::Transition) && (a.from.id == p.id))
+                p.arcsOut.push_back(&a);
+        }
+    }
+}
+
+//------------------------------------------------------------------------------
+bool PetriNet::exportToJulia(std::string const& /*filename*/)
+{
+    // Update arcs in/out for all transitions to be sure to generate the correct
+    // net.
+    generateArcsInArcsOut(/*arcs: true*/);
+
+    // Show inputs
+    for (auto& t: m_transitions)
+    {
+        if (t.arcsIn.size() == 0u)
+        {
+            std::cout << t.key() << ": input" << std::endl;
+        }
+    }
+
+    // States
+    for (auto& t: m_transitions)
+    {
+        if (t.arcsIn.size() == 0u)
+            continue;
+
+        std::cout << t.key() << "(t) = min(";
+        std::string separator1;
+        for (auto& ai: t.arcsIn)
+        {
+            std::cout << separator1;
+            std::cout << tokensIn(ai) << " + ";
+            std::string separator2;
+            for (auto& ao: ai->from.arcsIn)
+            {
+                std::cout << separator2;
+                std::cout << ao->from.key() << "(t - " << ao->duration << ")";
+                separator2 = ", ";
+            }
+            separator1 = ", ";
+        }
+        std::cout << ");" << std::endl;
+    }
+
+    return true;
 }
 
 //------------------------------------------------------------------------------
@@ -796,24 +865,13 @@ void PetriNet::removeNode(Node& node)
 }
 
 //------------------------------------------------------------------------------
-static size_t& tokenIn(Arc* a)
-{
-    return reinterpret_cast<Place*>(&(a->from))->tokens;
-}
-
-static size_t& tokenOut(Arc* a)
-{
-    return reinterpret_cast<Place*>(&(a->to))->tokens;
-}
-
-//------------------------------------------------------------------------------
 static size_t canFire(Transition const& trans)
 {
 #if 1 // Version 1: return 0 or 1 token
 
     for (auto& a: trans.arcsIn)
     {
-        if (tokenIn(a) == 0u)
+        if (tokensIn(a) == 0u)
             return 0u;
     }
     return 1u;
@@ -824,7 +882,7 @@ static size_t canFire(Transition const& trans)
 
     for (auto& a: trans.arcsIn)
     {
-        size_t tokens = tokenIn(a);
+        size_t tokens = tokensIn(a);
         if (tokens == 0u)
             return 0u;
 
@@ -918,7 +976,7 @@ void PetriGUI::update(float const dt) // FIXME std::chrono
                     // Burn a single token on each Places above
                     for (auto& a: trans.arcsIn)
                     {
-                        tokenIn(a) -= 1u;
+                        tokensIn(a) -= 1u;
                     }
 
                     // Count the number of tokens for the animation
@@ -967,7 +1025,7 @@ void PetriGUI::update(float const dt) // FIXME std::chrono
                               << std::endl;
 
                     // Drop the number of tokens it was carrying.
-                    tokenOut(an.currentArc) += an.tokens;
+                    tokensOut(an.currentArc) += an.tokens;
                     // Remove it
                     m_animation_TP[i] = m_animation_TP[m_animation_TP.size() - 1u];
                     m_animation_TP.pop_back();
@@ -1071,6 +1129,12 @@ void PetriGUI::handleKeyPressed(sf::Event const& event)
 
     // 'Z' key: erase the Petri net
     else if (event.key.code == sf::Keyboard::Z)
+     // 'J' key: save the Petri net to a Julia scriot
+    else if (event.key.code == sf::Keyboard::J)
+    {
+        m_petri_net.exportToJulia("petri.jl");
+    }
+
     {
         m_petri_net.reset();
     }
