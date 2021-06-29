@@ -136,16 +136,18 @@ private:
 };
 
 // *****************************************************************************
-//! \brief Helper class splitting a string into tokens. Used for parsing JSON
-//! files.
+//! \brief Helper class for splitting a JSON file into sub-strings that can be
+//! parsed. Indeed, we do not use third part JSON library for reading saved file
+//! and load Petri nets but we read it directly since the format is very basic.
 // *****************************************************************************
-class Tokenizer
+class Spliter
 {
 public:
 
-    //! \brief Open the given file to tokenize and delimiter chars for char
-    //! separation.
-    Tokenizer(std::string const& filepath, std::string const& del)
+    //! \brief Open the file to be split and memorize delimiter chars.
+    //! \param[in] filepath Open the file to be split
+    //! \param[in] list of delimiter chars for string separation.
+    Spliter(std::string const& filepath, std::string const& del)
         : is(filepath), delimiters(del)
     {}
 
@@ -155,7 +157,8 @@ public:
         return !!is;
     }
 
-    //! \brief Return the first tokenize else return dummy string.
+    //! \brief Return the first interesting json string element.
+    //! If no element can be split return a dummy string;
     std::string const& split()
     {
         while (true)
@@ -192,8 +195,8 @@ public:
         return word;
     }
 
-    //! \brief Return the last token.
-    std::string const& token() const
+    //! \brief Return the last split string.
+    std::string const& str() const
     {
         return word;
     }
@@ -660,7 +663,7 @@ bool PetriNet::load(std::string const& filename)
     bool found_transitions = false;
     bool found_arcs = false;
 
-    Tokenizer s(filename, " \",");
+    Spliter s(filename, " \",");
 
     if (!s)
     {
@@ -680,45 +683,45 @@ bool PetriNet::load(std::string const& filename)
     while (s)
     {
         s.split();
-        if ((s.token() == "places") && (s.split() == ":") && (s.split() == "["))
+        if ((s.str() == "places") && (s.split() == ":") && (s.split() == "["))
         {
             found_places = true;
             while (s.split() != "]")
             {
-                size_t id = atoi(s.token().c_str() + 1u);
+                size_t id = atoi(s.str().c_str() + 1u);
                 float x = stoi(s.split());
                 float y = stoi(s.split());
                 size_t t = stoi(s.split());
                 addPlace(id, x, y, t);
             }
         }
-        else if ((s.token() == "trans") && (s.split() == ":") && (s.split() == "["))
+        else if ((s.str() == "trans") && (s.split() == ":") && (s.split() == "["))
         {
             found_transitions = true;
             while (s.split() != "]")
             {
-                size_t id = atoi(s.token().c_str() + 1u);
+                size_t id = atoi(s.str().c_str() + 1u);
                 float x = stoi(s.split());
                 float y = stoi(s.split());
                 addTransition(id, x, y);
             }
         }
-        else if ((s.token() == "arcs") && (s.split() == ":") && (s.split() == "["))
+        else if ((s.str() == "arcs") && (s.split() == ":") && (s.split() == "["))
         {
             found_arcs = true;
             while (s.split() != "]")
             {
-                Node* from = findNode(s.token());
+                Node* from = findNode(s.str());
                 if (!from)
                 {
-                    std::cerr << "Origin node " << s.token() << " not found" << std::endl;
+                    std::cerr << "Origin node " << s.str() << " not found" << std::endl;
                     return false;
                 }
 
                 Node* to = findNode(s.split());
                 if (!to)
                 {
-                    std::cerr << "Destination node " << s.token() << " not found" << std::endl;
+                    std::cerr << "Destination node " << s.str() << " not found" << std::endl;
                     return false;
                 }
 
@@ -726,7 +729,7 @@ bool PetriNet::load(std::string const& filename)
                 addArc(*from, *to, duration);
             }
         }
-        else if (s.token() == "}")
+        else if (s.str() == "}")
         {
             if (!found_places)
                 std::cerr << "The JSON file did not contained Places" << std::endl;
@@ -738,9 +741,9 @@ bool PetriNet::load(std::string const& filename)
             if (!(found_places && found_transitions && found_arcs))
                 return false;
         }
-        else if (s.token() != "")
+        else if (s.str() != "")
         {
-            std::cerr << "Key " << s.token() << " is not a valid token" << std::endl;
+            std::cerr << "Key " << s.str() << " is not a valid token" << std::endl;
             return false;
         }
     }
