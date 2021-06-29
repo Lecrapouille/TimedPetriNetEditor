@@ -353,18 +353,12 @@ void PetriGUI::draw(Transition const& transition)
 //------------------------------------------------------------------------------
 void PetriGUI::draw(Arc const& arc)
 {
-    if (arc.from.type == Node::Type::Place)
-    {
-        // Place -> Transition
-        Arrow arrow(arc.from.x, arc.from.y, arc.to.x, arc.to.y);
-        window().draw(arrow);
-    }
-    else
-    {
-        // Transition -> Place
-        Arrow arrow(arc.from.x, arc.from.y, arc.to.x, arc.to.y);
-        window().draw(arrow);
+    // Transition -> Place
+    Arrow arrow(arc.from.x, arc.from.y, arc.to.x, arc.to.y);
+    window().draw(arrow);
 
+    if (arc.from.type == Node::Type::Transition)
+    {
         // Draw the timing
         float x = arc.from.x + (arc.to.x - arc.from.x) / 2.0f;
         float y = arc.from.y + (arc.to.y - arc.from.y) / 2.0f;
