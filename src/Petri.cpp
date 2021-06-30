@@ -454,16 +454,67 @@ void PetriNet::generateArcsInArcsOut()
 //------------------------------------------------------------------------------
 bool PetriNet::exportToJulia(std::string const& /*filename*/)
 {
+    bool is_event_graph = true;
+
     // Update arcs in/out for all transitions to be sure to generate the correct
     // net.
     generateArcsInArcsOut(/*arcs: true*/);
 
+    // Check if Petri net is an event graph
+    for (auto& p: m_places)
+    {
+        is_event_graph = ((p.arcsIn.size() == 1u) && (p.arcsOut.size() == 1u));
+        if (!is_event_graph)
+            break;
+    }
+
+    // Help the user to debug its Petri net. // TODO: could be nice to show
+    // directly odd arcs in red.
+    if (!is_event_graph)
+    {
+        std::cerr << "Your Petri net is not an event graph. Because:" << std::endl;
+        for (auto& p: m_places)
+        {
+            if (p.arcsOut.size() != 1u)
+            {
+                std::cerr << "  " << p.key()
+                          << ((p.arcsOut.size() > 1u)
+                              ? " has more than one output arc:"
+                              : " has no output arc");
+                for (auto const& a: p.arcsOut)
+                    std::cerr << " " << a->to.key();
+                std::cerr << std::endl;
+            }
+
+            if (p.arcsIn.size() != 1u)
+            {
+                std::cerr << "  " << p.key()
+                          << ((p.arcsIn.size() > 1u)
+                              ? " has more than one input arc:"
+                              : " has no input arc");
+                for (auto const& a: p.arcsIn)
+                    std::cerr << " " << a->from.key();
+                std::cerr << std::endl;
+            }
+        }
+        return false;
+    }
+
     // Show inputs
     for (auto& t: m_transitions)
     {
-        if (t.arcsIn.size() == 0u)
+        if ((t.arcsIn.size() == 0u) && (t.arcsOut.size() > 0u))
         {
             std::cout << t.key() << ": input" << std::endl;
+        }
+    }
+
+    // Show outputs
+    for (auto& t: m_transitions)
+    {
+        if ((t.arcsOut.size() == 0u) && (t.arcsIn.size() > 0u))
+        {
+            std::cout << t.key() << ": output" << std::endl;
         }
     }
 
