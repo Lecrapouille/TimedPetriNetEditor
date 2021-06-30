@@ -524,17 +524,16 @@ bool PetriNet::exportToJulia(std::string const& /*filename*/)
         if (t.arcsIn.size() == 0u)
             continue;
 
-        std::cout << t.key() << "(t) = min(";
+        std::cout << t.key() << "(n) = max(";
         std::string separator1;
         for (auto& ai: t.arcsIn)
         {
             std::cout << separator1;
-            std::cout << tokensIn(ai) << " + ";
             std::string separator2;
             for (auto& ao: ai->from.arcsIn)
             {
                 std::cout << separator2;
-                std::cout << ao->from.key() << "(t - " << ao->duration << ")";
+                std::cout << ao->duration << " + " << ao->from.key() << "(n - " << tokensIn(ai) << ")";
                 separator2 = ", ";
             }
             separator1 = ", ";
