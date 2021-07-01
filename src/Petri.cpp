@@ -42,6 +42,66 @@ const float ANIMATION_SCALING = 1.0f;
 const int STEP_ANGLE = 45; // Angle of rotation in degree for turning nodes
 
 //------------------------------------------------------------------------------
+//! \brief Helper structure for building sparse matrix for Julia language.
+//! Julia is a vectorial language mixing Matlab and Python syntax but with a
+//! faster runtime.
+//!
+//! Since we can export the Petri net to Julia code as the form of matrix. We
+//! need a structure to hold elements. In Julia language a sparse matrix of
+//! dimensions m x n is built with the function sparse(I, J, D, n, m) where I, J
+//! are two column vectors indicating coordinates of the non-zero elements, D is
+//! column vector holding values to be stored. Note that in Julia indexes starts
+//! at 1, contrary to C/C++ starting at 0.
+
+//! This class is only used for storing elements not for doing matrix operations.
+//! \brief Since we Non-Zero Element of a Sparse Matrix.
+struct SparseElement
+{
+    SparseElement(size_t i_, size_t j_, float d_)
+        : i(i_ + 1u), j(j_ + 1u), d(d_)
+    {}
+
+    // (I,J) Coordinate
+    size_t i, j;
+    // Non zero element
+    float d;
+};
+
+using SparseMatrix = std::vector<SparseElement>;
+
+// Julia sparse is built as sparse(I, J, D) where I, J and D are 3 vectors
+std::ostream & operator<<(std::ostream &os, std::vector<SparseElement> const& matrix)
+{
+    std::string separator;
+
+    os << "[";
+    for (auto const& e: matrix)
+    {
+        os << separator << e.i;
+        separator = ", ";
+    }
+
+    os << "], [";
+    separator.clear();
+    for (auto const& e: matrix)
+    {
+        os << separator << e.j;
+        separator = ", ";
+    }
+
+    os << "], MP([";
+    separator.clear();
+    for (auto const& e: matrix)
+    {
+        os << separator << e.d;
+        separator = ", ";
+    }
+    os << "])";
+
+    return os;
+}
+
+//------------------------------------------------------------------------------
 static float norm(const float xa, const float ya, const float xb, const float yb)
 {
     return sqrtf((xb - xa) * (xb - xa) + (yb - ya) * (yb - ya));
@@ -502,12 +562,22 @@ bool PetriNet::exportToJulia(std::string const& /*filename*/)
         return false;
     }
 
+    // Julia header
+    std::cout << "using MaxPlus, SparseArrays" << std::endl << std::endl;
+    std::cout << "# Timed event graph represented as its counter form:" << std::endl;
+
+    // Number of nodes for the matrices
+    size_t nodes = m_transitions.size();
+    size_t inputs = 0u;
+    size_t outputs = 0u;
+
     // Show inputs
     for (auto& t: m_transitions)
     {
         if ((t.arcsIn.size() == 0u) && (t.arcsOut.size() > 0u))
         {
-            std::cout << t.key() << ": input" << std::endl;
+            std::cout << "# " << t.key() << ": input" << std::endl;
+            inputs += 1u;
         }
     }
 
@@ -516,17 +586,18 @@ bool PetriNet::exportToJulia(std::string const& /*filename*/)
     {
         if ((t.arcsOut.size() == 0u) && (t.arcsIn.size() > 0u))
         {
-            std::cout << t.key() << ": output" << std::endl;
+            std::cout << "# " << t.key() << ": output" << std::endl;
+            outputs += 1u;
         }
     }
 
-    // States
+    // Show the counter form
     for (auto& t: m_transitions)
     {
         if (t.arcsIn.size() == 0u)
             continue;
 
-        std::cout << t.key() << "(n) = max(";
+        std::cout << "# " << t.key() << "(n) = max(";
         std::string separator1;
         for (auto& ai: t.arcsIn)
         {
@@ -535,13 +606,63 @@ bool PetriNet::exportToJulia(std::string const& /*filename*/)
             for (auto& ao: ai->from.arcsIn)
             {
                 std::cout << separator2;
-                std::cout << ao->duration << " + " << ao->from.key() << "(n - " << tokensIn(ai) << ")";
+                std::cout << ao->duration << " + " << ao->from.key()
+                          << "(n - " << tokensIn(ai) << ")";
                 separator2 = ", ";
             }
             separator1 = ", ";
         }
         std::cout << ");" << std::endl;
     }
+
+    // Compute the syslin
+    SparseMatrix A, D, B, C;
+    size_t in = 0u; size_t out = 0u;
+    for (auto& t: m_transitions)
+    {
+        // System inputs: B U(n)
+        if ((t.arcsIn.size() == 0u) && (t.arcsOut.size() > 0u))
+        {
+            B.push_back(SparseElement(t.id, in++, 0.0f));
+        }
+
+        // System outputs: Y(n) = C X(n)
+        else if ((t.arcsOut.size() == 0u) && (t.arcsIn.size() > 0u))
+        {
+            C.push_back(SparseElement(out++, t.id, 0.0f));
+        }
+
+        // Systems states: X(n) = D X(n) (+) A X(n-1)
+        for (auto& ai: t.arcsIn)
+        {
+            for (auto& ao: ai->from.arcsIn)
+            {
+                SparseElement elt(t.id, ao->from.id, ao->duration);
+                if (tokensIn(ai) == 1u)
+                {
+                    A.push_back(elt);
+                }
+                else
+                {
+                    D.push_back(elt);
+                }
+            }
+        }
+    }
+
+    // Julia Max-Plus Linear system
+    std::cout << std::endl;
+    std::cout << "# Its Max-Plus implicit linear dynamic system form:" << std::endl;
+    std::cout << "# X(n) = D X(n) (+) A X(n-1) + B U(n)" << std::endl;
+    std::cout << "# Y(n) = C X(n)" << std::endl;
+    std::cout << "D = sparse(" << D << ", " << nodes << ", " << nodes << ")" << std::endl;
+    std::cout << "A = sparse(" << A << ", " << nodes << ", " << nodes << ")" << std::endl;
+    std::cout << "B = sparse(" << B << ", " << nodes << ", " << inputs << ")" << std::endl;
+    std::cout << "C = sparse(" << C << ", " << outputs << ", " << nodes << ")" << std::endl;
+    std::cout << "S = MPSysLin(A, B, C, D)" << std::endl << std::endl;
+
+    // Semi-Howard
+    std::cout << "l,v = semihoward(S.D, S.A)" << std::endl;
 
     return true;
 }
@@ -1451,6 +1572,10 @@ void PetriGUI::handleInput()
         case sf::Event::MouseButtonPressed:
         case sf::Event::MouseButtonReleased:
             handleMouseButton(event);
+            break;
+        case sf::Event::Resized:
+            sf::FloatRect(0.0f, 0.0f, event.size.width, event.size.height);
+            window().setView(sf::View(sf::FloatRect(0.0f, 0.0f, event.size.width, event.size.height)));
             break;
         default:
             break;
