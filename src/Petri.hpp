@@ -176,8 +176,9 @@ struct Transition : public Node
         : Node(Node::Type::Transition, s_count++, x, y)
     {}
 
-    Transition(size_t const id, float const x, float const y)
-        : Node(Node::Type::Transition, id, x, y)
+    Transition(size_t const id, float const x, float const y, int const angle_)
+        : Node(Node::Type::Transition, id, x, y),
+          angle(angle_)
     {
         s_count = std::max(s_count.load(), id) + 1u;
     }
@@ -186,6 +187,11 @@ private:
 
     //! \brief Auto increment unique identifier.
     static std::atomic<size_t> s_count;
+
+public:
+
+    //! \brief Apply a rotation angle in degrees when displayed
+    int angle = 0u;
 };
 
 // *****************************************************************************
@@ -287,9 +293,10 @@ public:
     }
 
     //! \brief From JSON file
-    Transition& addTransition(size_t const id, float const x, float const y)
+    Transition& addTransition(size_t const id, float const x,
+                              float const y, int const angle)
     {
-        m_transitions.push_back(Transition(id, x, y));
+        m_transitions.push_back(Transition(id, x, y, angle));
         return m_transitions.back();
     }
 

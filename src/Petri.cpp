@@ -39,6 +39,7 @@ const float TOKEN_RADIUS = 4.0f;  // Token circle radius
 const float CAPTION_FONT_SIZE = 24.0f; // Size for text for captions
 const float TOKEN_FONT_SIZE = 20.0f; // Size for text for tokens
 const float ANIMATION_SCALING = 1.0f;
+const int STEP_ANGLE = 45; // Angle of rotation in degree for turning nodes
 
 //------------------------------------------------------------------------------
 static float norm(const float xa, const float ya, const float xb, const float yb)
@@ -343,6 +344,7 @@ void PetriGUI::draw(Transition const& transition)
 {
     // Draw the transition
     m_figure_trans.setPosition(sf::Vector2f(transition.x, transition.y));
+    m_figure_trans.setRotation(transition.angle);
     window().draw(m_figure_trans);
 
     // Draw the caption
@@ -748,12 +750,12 @@ bool PetriNet::save(std::string const& filename)
              << p.x << ',' << p.y << ',' << p.tokens << '\"';
         separator = ", ";
     }
-    file << "],\n  \"trans\": [";
+    file << "],\n  \"transitions\": [";
     separator = "";
     for (auto const& t: m_transitions)
     {
         file << separator << '\"' << t.key() << ','
-             << t.x << ',' << t.y << '\"';
+             << t.x << ',' << t.y << ',' << t.angle << '\"';
         separator = ", ";
     }
     file << "],\n  \"arcs\": [";
@@ -803,21 +805,22 @@ bool PetriNet::load(std::string const& filename)
             while (s.split() != "]")
             {
                 size_t id = atoi(s.str().c_str() + 1u);
-                float x = stoi(s.split());
-                float y = stoi(s.split());
+                float x = stof(s.split());
+                float y = stof(s.split());
                 size_t t = stoi(s.split());
                 addPlace(id, x, y, t);
             }
         }
-        else if ((s.str() == "trans") && (s.split() == ":") && (s.split() == "["))
+        else if ((s.str() == "transitions") && (s.split() == ":") && (s.split() == "["))
         {
             found_transitions = true;
             while (s.split() != "]")
             {
                 size_t id = atoi(s.str().c_str() + 1u);
-                float x = stoi(s.split());
-                float y = stoi(s.split());
-                addTransition(id, x, y);
+                float x = stof(s.split());
+                float y = stof(s.split());
+                int a = stoi(s.split());
+                addTransition(id, x, y, a);
             }
         }
         else if ((s.str() == "arcs") && (s.split() == ":") && (s.split() == "["))
@@ -1239,6 +1242,20 @@ void PetriGUI::handleKeyPressed(sf::Event const& event)
                 ++tokens;
             else if (tokens > 0u)
                 --tokens;
+        }
+    }
+
+    else if ((event.key.code == sf::Keyboard::PageUp) ||
+             (event.key.code == sf::Keyboard::PageDown))
+    {
+        Node* node = getNode(m_mouse.x, m_mouse.y);
+        if ((node != nullptr) && (node->type == Node::Type::Transition))
+        {
+            Transition& t = *reinterpret_cast<Transition*>(node);
+            t.angle += (event.key.code == sf::Keyboard::PageDown ? STEP_ANGLE : -STEP_ANGLE);
+            t.angle = t.angle % 360;
+            if (t.angle < 0)
+                t.angle += 360;
         }
     }
 }

@@ -65,6 +65,7 @@ of the same type.
 - `Delete` key: remove a place or transition or an arc. FIXME some possible issues.
 - `C` key: clear the whole Petri net.
 - `M` key: move the selected place or transition.
+- `PageUp`, `PageDown` keys: rotate CW or CCW the transition selected by the mouse cursor.
 - `+`, `-` keys: add/remove a token on the place pointed by the mouse cursor.
 - `R` key: run (start) or stop the simulation.
 - `S`, `O` keys: save/open load a Petri net to/from petri.json file.
@@ -114,12 +115,12 @@ to `T2`. If `P1` had a single token, the `T1` will always be choosen.
 
 JSON file format has been choosen for saving Petri net. This was initially made
 to be compatible with [pnet-simulator](https://github.com/igorakim/pnet-simulator)
-but in the future it will be no longer compatible. Here, an example of its content:
+but it is no longer compatible. Here, an example of its content:
 
 ```json
 {
   "places": ["P0,204,135,0", "P1,576,132,2"],
-  "trans": ["T0,376,132"],
+  "transitions": ["T0,376,132,0"],
   "arcs": ["P0,T0,0", "T0,P1,3"]
 }
 ```
@@ -128,7 +129,7 @@ A Petri net is composed of three arrays (the `[ ]`): `Places`, `Transitions` and
 `Arcs`. In this example, is stored in the json file a Petri net made of two
 places, one tranisiton and two arcs. Places are defined as follow `"identifier,
 X-coord, Y-coord, number of tokens"`. Transitions are defined as follow
-`"identifier, X-coord, Y-coord"` and Arcs are defined as follow `"identifier
+`"identifier, X-coord, Y-coord, angle"` and Arcs are defined as follow `"identifier
 origin node, identifier destination node"`.
 
 Places and Transitions:
@@ -136,8 +137,9 @@ Places and Transitions:
   be `P` (for Places) or `T` (Transitions).
 - their X and Y coordinate (float) in the screeen i.e. `T0` is placed at
   `(376,132)`.
-- and for places only: the number of tokens they hold i.e. `P0` has 0 tokens
+- for places only: the number of tokens they hold i.e. `P0` has 0 tokens
   while `P1` has two tokens.
+- for transition only: the angle (in degree) of rotation when displayed.
 
 Arcs:
 - have no unique identifier.
