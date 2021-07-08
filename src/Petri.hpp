@@ -24,6 +24,8 @@
 #  include "GUI.hpp"
 #  include <atomic>
 #  include <string>
+#  include <deque>
+#  include <vector>
 
 class Arc;
 
@@ -140,6 +142,8 @@ struct Arc
 // *****************************************************************************
 struct Place : public Node
 {
+    friend class PetriNet;
+
     //! \param[in] x: X-axis coordinate in the window needed for the display.
     //! \param[in] y: Y-axis coordinate in the window needed for the display.
     //! \param[in] tok: Initial number of tokens in the place.
@@ -170,6 +174,8 @@ private:
 // *****************************************************************************
 struct Transition : public Node
 {
+    friend class PetriNet;
+
     //! \param[in] x: X-axis coordinate in the window needed for the display.
     //! \param[in] y: Y-axis coordinate in the window needed for the display.
     Transition(float const x, float const y)
@@ -237,21 +243,14 @@ class PetriNet
 {
 public:
 
-    //! \brief Reserve memory for manipulating up to 128 nodes and arcs without
-    //! needed doing intermediate allocations.
-    PetriNet()
-    {
-        m_places.reserve(128u);
-        m_transitions.reserve(128u);
-        m_arcs.reserve(128u);
-    }
-
     //! \brief Remove all nodes and arcs.
     void reset()
     {
         m_places.clear();
         m_transitions.clear();
         m_arcs.clear();
+        Place::s_count = 0u;
+        Transition::s_count = 0u;
     }
 
     //! \brief Add a new Petri Place.
@@ -272,12 +271,12 @@ public:
         return m_places.back();
     }
 
-    std::vector<Place> const& places() const
+    std::deque<Place> const& places() const
     {
         return m_places;
     }
 
-    std::vector<Place>& places()
+    std::deque<Place>& places()
     {
         return m_places;
     }
@@ -300,12 +299,12 @@ public:
         return m_transitions.back();
     }
 
-    std::vector<Transition> const& transitions() const
+    std::deque<Transition> const& transitions() const
     {
         return m_transitions;
     }
 
-    std::vector<Transition>& transitions()
+    std::deque<Transition>& transitions()
     {
         return m_transitions;
     }
@@ -365,12 +364,12 @@ public:
         return nullptr;
     }
 
-    std::vector<Arc> const& arcs() const
+    std::deque<Arc> const& arcs() const
     {
         return m_arcs;
     }
 
-    std::vector<Arc>& arcs()
+    std::deque<Arc>& arcs()
     {
         return m_arcs;
     }
@@ -399,11 +398,11 @@ public:
 private:
 
     //! \brief List of Places.
-    std::vector<Place> m_places;
+    std::deque<Place> m_places;
     //! \brief List of Transitions.
-    std::vector<Transition> m_transitions;
+    std::deque<Transition> m_transitions;
     //! \brief List of Arcs.
-    std::vector<Arc> m_arcs;
+    std::deque<Arc> m_arcs;
 };
 
 // *****************************************************************************

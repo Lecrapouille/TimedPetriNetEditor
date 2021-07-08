@@ -472,7 +472,7 @@ void PetriGUI::draw(float const /*dt*/)
     }
 
     // Draw all tokens transiting from Transitions to Places
-    for (auto const& at: m_animation_TP)
+    for (auto const& at: m_animations)
     {
         m_figure_token.setPosition(at.x, at.y);
         window().draw(m_figure_token);
@@ -991,27 +991,52 @@ bool PetriNet::load(std::string const& filename)
 
 void PetriNet::removeNode(Node& node)
 {
-    // Remove all arcs linked to this node
+    // Remove all arcs linked to this node.
+    // Note: For fastest deletion, we simply swap the undesired arc with the
+    // latest arc in the container. To do that, we have to iterate from the end
+    // of the container.
     size_t s = m_arcs.size();
     size_t i = s;
     while (i--)
     {
         if ((m_arcs[i].to == node) || (m_arcs[i].from == node))
         {
+            // Found the undesired arc: make the latest element take its
+            // location in the container.
             m_arcs[i] = m_arcs[m_arcs.size() - 1u];
             m_arcs.pop_back();
         }
     }
 
-    // Search and remove the node
+    // Search and remove the node.
+    // Note: For fastest deletion, we simply swap the undesired node with the
+    // latest node in the container. To do that, we have to iterate from the end
+    // of the container.
     if (node.type == Node::Type::Place)
     {
         size_t i = m_places.size();
         while (i--)
         {
+            // Found the undesired node: make the latest element take its
+            // location in the container. But before doing this we have to
+            // restore references on impacted arcs.
             if (m_places[i].id == node.id)
             {
-                m_places[i] = m_places[m_places.size() - 1u];
+                // Swap element but keep the ID of the removed element
+                Place& pi = m_places[i];
+                Place& pe = m_places[m_places.size() - 1u];
+                m_places[i] = Place(pi.id, pe.x, pe.y, pe.tokens);
+                Place::s_count -= 2u;
+
+                // Update the references to nodes of the arc
+                for (auto& a: m_arcs)
+                {
+                    if (a.to == pe)
+                        a = Arc(a.from, m_places[i], a.duration);
+                    if (a.from == pe)
+                        a = Arc(m_places[i], a.to, a.duration);
+                }
+
                 m_places.pop_back();
             }
         }
@@ -1023,13 +1048,25 @@ void PetriNet::removeNode(Node& node)
         {
             if (m_transitions[i].id == node.id)
             {
-                m_transitions[i] = m_transitions[m_transitions.size() - 1u];
+                Transition& ti = m_transitions[i];
+                Transition& te = m_transitions[m_transitions.size() - 1u];
+                m_transitions[i] = Transition(ti.id, te.x, te.y, te.angle);
+                Transition::s_count -= 2u;
+
+                for (auto& a: m_arcs)
+                {
+                    if (a.to == te)
+                        a = Arc(a.from, m_transitions[i], a.duration);
+                    if (a.from == te)
+                        a = Arc(m_transitions[i], a.to, a.duration);
+                }
+
                 m_transitions.pop_back();
             }
         }
     }
 
-    // Restore arcs
+    // Restore in arcs and out arcs for each node
     generateArcsInArcsOut();
 }
 
