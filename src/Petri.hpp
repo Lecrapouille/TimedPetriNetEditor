@@ -514,7 +514,7 @@ private:
     //! \brief The Petri net.
     PetriNet m_petri_net;
     //! \brief Animation of tokens when transitioning from Transitions to Places.
-    std::vector<AnimatedToken> m_animation_TP;
+    std::vector<AnimatedToken> m_animations;
 };
 
 #endif

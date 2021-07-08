@@ -314,7 +314,7 @@ PetriGUI::PetriGUI(Application &application)
     usage();
 
     // Reserve memory
-    m_animation_TP.reserve(128u);
+    m_animations.reserve(128u);
 
     // Precompute SFML struct for drawing places
     m_figure_place.setOrigin(sf::Vector2f(m_figure_place.getRadius(), m_figure_place.getRadius()));
@@ -1158,7 +1158,7 @@ void PetriGUI::update(float const dt) // FIXME std::chrono
             p.tokens = p.backup_tokens;
         }
 
-        m_animation_TP.clear();
+        m_animations.clear();
         m_state = STATE_IDLE;
         break;
 
@@ -1211,19 +1211,19 @@ void PetriGUI::update(float const dt) // FIXME std::chrono
                               << a.count << " token"
                               << (a.count == 1u ? "" : "s")
                               << std::endl;
-                    m_animation_TP.push_back(AnimatedToken(a, a.count, false));
+                    m_animations.push_back(AnimatedToken(a, a.count, false));
                     a.count = 0u;
                 }
             }
         }
 
         // Tokens Transition --> Places are transitioning.
-        if (m_animation_TP.size() > 0u)
+        if (m_animations.size() > 0u)
         {
-            size_t i = m_animation_TP.size();
+            size_t i = m_animations.size();
             while (i--)
             {
-                AnimatedToken& an = m_animation_TP[i];
+                AnimatedToken& an = m_animations[i];
                 if (an.update(dt))
                 {
                     // Animated token reached its ddestination: Place
@@ -1236,8 +1236,8 @@ void PetriGUI::update(float const dt) // FIXME std::chrono
                     // Drop the number of tokens it was carrying.
                     tokensOut(an.currentArc) += an.tokens;
                     // Remove it
-                    m_animation_TP[i] = m_animation_TP[m_animation_TP.size() - 1u];
-                    m_animation_TP.pop_back();
+                    m_animations[i] = m_animations[m_animations.size() - 1u];
+                    m_animations.pop_back();
                 }
             }
         }
