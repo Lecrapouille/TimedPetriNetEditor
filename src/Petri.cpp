@@ -1139,6 +1139,7 @@ void PetriGUI::update(float const dt) // FIXME std::chrono
         break;
 
     case STATE_STARTING:
+        std::cout << "Simulation has started!" << std::endl;
         // Backup tokens for each places since the simulation will burn them
         for (auto& p: m_petri_net.places())
         {
@@ -1153,6 +1154,7 @@ void PetriGUI::update(float const dt) // FIXME std::chrono
         break;
 
     case STATE_ENDING:
+        std::cout << "Simulation has ended!" << std::endl;
         // Restore burnt tokens from the simulation
         for (auto& p: m_petri_net.places())
         {
@@ -1242,6 +1244,12 @@ void PetriGUI::update(float const dt) // FIXME std::chrono
                 }
             }
         }
+        else
+        {
+            std::cout << "The simulation cannot burn tokens." << std::endl;
+            m_simulating = false;
+            m_state = STATE_ENDING;
+        }
         break;
 
     default:
@@ -1307,16 +1315,7 @@ void PetriGUI::handleKeyPressed(sf::Event const& event)
         // update() producing two AnimatedToken carying 1 token that
         // will be displayed at the same position instead of a
         // single AnimatedToken carying 2 tokens.
-        if (m_simulating)
-        {
-            std::cout << "Simulation started" << std::endl;
-            window().setFramerateLimit(30);
-        }
-        else
-        {
-            std::cout << "Simulation ended" << std::endl;
-            window().setFramerateLimit(60);
-        }
+        window().setFramerateLimit(m_simulating ? 30 : 60); // FPS
     }
 
     // 'S' key: save the Petri net to a JSON file
