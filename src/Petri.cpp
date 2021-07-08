@@ -1029,7 +1029,7 @@ void PetriNet::removeNode(Node& node)
                 Place::s_count -= 2u;
 
                 // Update the references to nodes of the arc
-                for (auto& a: m_arcs)
+                for (auto& a: m_arcs) // TODO optim: use in/out arcs but they may not be generated
                 {
                     if (a.to == pe)
                         a = Arc(a.from, m_places[i], a.duration);
@@ -1053,7 +1053,7 @@ void PetriNet::removeNode(Node& node)
                 m_transitions[i] = Transition(ti.id, te.x, te.y, te.angle);
                 Transition::s_count -= 2u;
 
-                for (auto& a: m_arcs)
+                for (auto& a: m_arcs) // TODO idem
                 {
                     if (a.to == te)
                         a = Arc(a.from, m_transitions[i], a.duration);
@@ -1148,6 +1148,7 @@ void PetriGUI::update(float const dt) // FIXME std::chrono
         // Populate in and out arcs for all transitions to avoid to look after
         // them.
         m_petri_net.generateArcsInArcsOut();
+        m_animations.clear();
         m_state = STATE_ANIMATING;
         break;
 
@@ -1245,7 +1246,7 @@ void PetriGUI::update(float const dt) // FIXME std::chrono
 
     default:
         std::cerr << "Odd state in the state machine doing the "
-                  << "animation of the Petri net" << std::endl;
+                  << "animation of the Petri net." << std::endl;
         exit(1);
         break;
     }
@@ -1453,13 +1454,15 @@ void PetriGUI::handleArcDestination()
     // Reached the destination node
     if (m_node_to != nullptr)
     {
-        // The user tried to link two nodes of the same type
         if (m_node_from != nullptr)
         {
             if (m_node_to->type == m_node_from->type)
             {
-                float x = m_node_to->x +( m_node_from->x - m_node_to->x) / 2.0f;
-                float y = m_node_to->y +( m_node_from->y - m_node_to->y) / 2.0f;
+                // The user tried to link two nodes of the same type: this is
+                // forbidden but we allow it by creating the intermediate node
+                // of oposing type.
+                float x = m_node_to->x + (m_node_from->x - m_node_to->x) / 2.0f;
+                float y = m_node_to->y + (m_node_from->y - m_node_to->y) / 2.0f;
                 float duration = random(1, 5);
                 if (m_node_to->type == Node::Type::Place)
                 {
@@ -1477,6 +1480,8 @@ void PetriGUI::handleArcDestination()
         }
         else
         {
+            // The user did not click on a node but released mouse on a node. We
+            // create the origin node before creating the arc.
             if (m_arc_from_unknown_node)
             {
                 if (m_node_to->type == Node::Type::Place)
@@ -1488,6 +1493,8 @@ void PetriGUI::handleArcDestination()
     }
     else if (m_node_from != nullptr)
     {
+        // The user did not click on a node but released mouse on a node. We
+        // create the origin node before creating the arc.
         float x = m_mouse.x;
         float y = m_mouse.y;
         if (m_node_from->type == Node::Type::Place)
@@ -1596,7 +1603,6 @@ void PetriGUI::handleInput()
     {
         switch (event.type)
         {
-        // Window close button clicked
         case sf::Event::Closed:
             m_running = false;
             break;

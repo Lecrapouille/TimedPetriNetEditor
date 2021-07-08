@@ -71,7 +71,7 @@ of the same type.
 - `S`, `O` keys: save/open load a Petri net to/from petri.json file.
 - `G` key: export the Petri net as Grafcet to C++ header file.
 
-## Limitations / Work in progress
+## Limitations / Work in progress
 
 - Interface has no buttons, all actions are done throught mouse et keyboard.
 - Node captions and time cannot yet be edited (workaround: save the petri net to json file and edit with a text editor).
@@ -95,7 +95,7 @@ Question: In the above screenshot the Place `P1` has two tokens and has two
 leaving arcs `P1 -> T1` and `P1 -> T2`. How transitions `T1` and `T2` will burn
 tokens in `P1` and therefore to which transition tokens will transit ?
 
-Aanswer: This kind of net is badly designed and should be avoided. The execution
+Answer: This kind of net is badly designed and should be avoided. The execution
 of Petri nets is nondeterministic: when multiple transitions are enabled at the
 same time, they will fire in any order. Therefore you should adapt your Petri
 net to make deterministic decision possible i.e. event graph is a sub-category
