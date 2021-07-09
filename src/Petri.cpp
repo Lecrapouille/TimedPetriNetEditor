@@ -27,34 +27,32 @@
 #include <cstring>
 
 //------------------------------------------------------------------------------
-std::atomic<size_t> Place::s_count{0u};
-std::atomic<size_t> Transition::s_count{0u};
+std::atomic<size_t> Place::s_next_id{0u};
+std::atomic<size_t> Transition::s_next_id{0u};
 
 //------------------------------------------------------------------------------
-// Config for displaying the Petri net
-const float TRANS_WIDTH = 50.0f;  // Transition rectangle width
-const float TRANS_HEIGHT = 10.0f;  // Transition rectangle height
-const float PLACE_RADIUS = 25.0f; // Place circle radius
-const float TOKEN_RADIUS = 4.0f;  // Token circle radius
-const float CAPTION_FONT_SIZE = 24.0f; // Size for text for captions
-const float TOKEN_FONT_SIZE = 20.0f; // Size for text for tokens
-const float ANIMATION_SCALING = 1.0f;
-const int STEP_ANGLE = 45; // Angle of rotation in degree for turning nodes
+// Config for rendering the Petri net
+const float TRANS_WIDTH = 50.0f;  // Rectangle width for rendering Transitions
+const float TRANS_HEIGHT = 10.0f;  // Rectangle height for rendering Transitions
+const float PLACE_RADIUS = 25.0f; // Circle radius for rendering Places
+const float TOKEN_RADIUS = 4.0f;  // Circle radius for rendering tokens
+const float CAPTION_FONT_SIZE = 24.0f; // Text size used in node captions
+const float TOKEN_FONT_SIZE = 20.0f; // Text size used for token numbers
+const int STEP_ANGLE = 45; // Angle of rotation in degree for turning Transitions
 
 //------------------------------------------------------------------------------
-//! \brief Helper structure for building sparse matrix for Julia language.
-//! Julia is a vectorial language mixing Matlab and Python syntax but with a
-//! faster runtime.
+//! \brief Helper structure for building sparse matrix for the exportation of
+//! the Petri net to Julia language (Julia is a vectorial language mixing Matlab
+//! and Python syntax but with a faster runtime) as Max-Plus dynamical linear
+//! systems (State space representation).
 //!
-//! Since we can export the Petri net to Julia code as the form of matrix. We
-//! need a structure to hold elements. In Julia language a sparse matrix of
-//! dimensions m x n is built with the function sparse(I, J, D, n, m) where I, J
-//! are two column vectors indicating coordinates of the non-zero elements, D is
-//! column vector holding values to be stored. Note that in Julia indexes starts
-//! at 1, contrary to C/C++ starting at 0.
-
-//! This class is only used for storing elements not for doing matrix operations.
-//! \brief Since we Non-Zero Element of a Sparse Matrix.
+//! This class is only used for storing elements not for doing matrix
+//! operations. In Julia, a sparse matrix of dimensions m x n is built with the
+//! function sparse(I, J, D, n, m) where I, J are two column vectors indicating
+//! coordinates of the non-zero elements, D is column vector holding values to
+//! be stored. Note that in Julia indexes starts at 1, contrary to C/C++
+//! starting at 0.
+//------------------------------------------------------------------------------
 struct SparseElement
 {
     SparseElement(size_t i_, size_t j_, float d_)
@@ -67,10 +65,12 @@ struct SparseElement
     float d;
 };
 
+//! \brief Julia sparse matrix.
 using SparseMatrix = std::vector<SparseElement>;
 
-// Julia sparse is built as sparse(I, J, D) where I, J and D are 3 vectors
-std::ostream & operator<<(std::ostream &os, std::vector<SparseElement> const& matrix)
+//! \brief Julia sparse is built as sparse(I, J, D) where I, J and D are 3
+//! vectors.
+std::ostream & operator<<(std::ostream &os, SparseMatrix const& matrix)
 {
     std::string separator;
 
@@ -125,14 +125,15 @@ static const char* current_time()
 }
 
 //------------------------------------------------------------------------------
-static size_t& tokensIn(Arc* a)
+static size_t& tokensIn(Arc& a)
 {
-    return reinterpret_cast<Place*>(&(a->from))->tokens;
+    return reinterpret_cast<Place*>(&(a.from))->tokens;
 }
 
-static size_t& tokensOut(Arc* a)
+//------------------------------------------------------------------------------
+static size_t& tokensOut(Arc& a)
 {
-    return reinterpret_cast<Place*>(&(a->to))->tokens;
+    return reinterpret_cast<Place*>(&(a.to))->tokens;
 }
 
 // *****************************************************************************
@@ -170,14 +171,14 @@ public:
 
         // Head of the arrow
         const sf::Vector2f arrowHeadSize{ 14.f, 14.f };
-        m_arrowHead = sf::ConvexShape{ 3 };
-        m_arrowHead.setPoint(0, { 0.f, 0.f });
-        m_arrowHead.setPoint(1, { arrowHeadSize.x, arrowHeadSize.y / 2.f });
-        m_arrowHead.setPoint(2, { 0.f, arrowHeadSize.y });
-        m_arrowHead.setOrigin(arrowHeadSize.x, arrowHeadSize.y / 2.f);
-        m_arrowHead.setPosition(sf::Vector2f(a2, b2 /*xb, yb*/));
-        m_arrowHead.setRotation(arrowAngle);
-        m_arrowHead.setFillColor(sf::Color(165, 42, 42));
+        m_head = sf::ConvexShape{ 3 };
+        m_head.setPoint(0, { 0.f, 0.f });
+        m_head.setPoint(1, { arrowHeadSize.x, arrowHeadSize.y / 2.f });
+        m_head.setPoint(2, { 0.f, arrowHeadSize.y });
+        m_head.setOrigin(arrowHeadSize.x, arrowHeadSize.y / 2.f);
+        m_head.setPosition(sf::Vector2f(a2, b2 /*xb, yb*/));
+        m_head.setRotation(arrowAngle);
+        m_head.setFillColor(sf::Color(165, 42, 42));
 
         // Tail of the arrow.
         //const sf::Vector2f tailSize{ arrowLength - arrowHeadSize.x, 2.f };
@@ -198,13 +199,13 @@ private:
     void draw(sf::RenderTarget& target, sf::RenderStates /*states*/) const override final
     {
         target.draw(m_tail);
-        target.draw(m_arrowHead);
+        target.draw(m_head);
     }
 
 private:
 
     sf::RectangleShape m_tail;
-    sf::ConvexShape m_arrowHead;
+    sf::ConvexShape m_head;
 };
 
 // *****************************************************************************
@@ -287,21 +288,21 @@ private:
 static void usage()
 {
     std::cout
-            << "Left mouse button pressed: add a place" << std::endl
-            << "Right mouse button pressed: add a transition" << std::endl
-            << "Middle mouse button pressed: add an arc with the selected place or transition as origin" << std::endl
-            << "Middle mouse button release: end the arc with the selected place or transition as destination" << std::endl
-            << "L key: add an arc with the selected place or transition as origin" << std::endl
-            << "Delete key: remove a place or transition or an arc" << std::endl
-            << "C key: clear the whole Petri net" << std::endl
-            << "M key: move the selected place or transition" << std::endl
-            << "+ key: add a token on the place pointed by the mouse cursor" << std::endl
-            << "- key: remove a token on the place pointed by the mouse cursor" << std::endl
-            << "R key: run (start) or stop the simulation" << std::endl
-            << "S key: save the Petri net to petri.json file" << std::endl
-            << "O key: load the Petri net from petri.json file" << std::endl
-            << "G key: export the Petri net as Grafcet in a C++ header file" << std::endl
-            << "J key: export the Petri net as Julia code" << std::endl;
+      << "Left mouse button pressed: add a place" << std::endl
+      << "Right mouse button pressed: add a transition" << std::endl
+      << "Middle mouse button pressed: add an arc with the selected place or transition as origin" << std::endl
+      << "Middle mouse button release: end the arc with the selected place or transition as destination" << std::endl
+      << "L key: add an arc with the selected place or transition as origin" << std::endl
+      << "Delete key: remove a place or transition or an arc" << std::endl
+      << "C key: clear the whole Petri net" << std::endl
+      << "M key: move the selected place or transition" << std::endl
+      << "+ key: add a token on the place pointed by the mouse cursor" << std::endl
+      << "- key: remove a token on the place pointed by the mouse cursor" << std::endl
+      << "R key: run (start) or stop the simulation" << std::endl
+      << "S key: save the Petri net to petri.json file" << std::endl
+      << "O key: load the Petri net from petri.json file" << std::endl
+      << "G key: export the Petri net as Grafcet in a C++ header file" << std::endl
+      << "J key: export the Petri net as Julia code" << std::endl;
 }
 
 //------------------------------------------------------------------------------
@@ -539,23 +540,23 @@ bool PetriNet::exportToJulia(std::string const& /*filename*/)
         {
             if (p.arcsOut.size() != 1u)
             {
-                std::cerr << "  " << p.key()
+                std::cerr << "  " << p.key
                           << ((p.arcsOut.size() > 1u)
                               ? " has more than one output arc:"
                               : " has no output arc");
                 for (auto const& a: p.arcsOut)
-                    std::cerr << " " << a->to.key();
+                    std::cerr << " " << a->to.key;
                 std::cerr << std::endl;
             }
 
             if (p.arcsIn.size() != 1u)
             {
-                std::cerr << "  " << p.key()
+                std::cerr << "  " << p.key
                           << ((p.arcsIn.size() > 1u)
                               ? " has more than one input arc:"
                               : " has no input arc");
                 for (auto const& a: p.arcsIn)
-                    std::cerr << " " << a->from.key();
+                    std::cerr << " " << a->from.key;
                 std::cerr << std::endl;
             }
         }
@@ -576,7 +577,7 @@ bool PetriNet::exportToJulia(std::string const& /*filename*/)
     {
         if ((t.arcsIn.size() == 0u) && (t.arcsOut.size() > 0u))
         {
-            std::cout << "# " << t.key() << ": input" << std::endl;
+            std::cout << "# " << t.key << ": input" << std::endl;
             inputs += 1u;
         }
     }
@@ -586,7 +587,7 @@ bool PetriNet::exportToJulia(std::string const& /*filename*/)
     {
         if ((t.arcsOut.size() == 0u) && (t.arcsIn.size() > 0u))
         {
-            std::cout << "# " << t.key() << ": output" << std::endl;
+            std::cout << "# " << t.key << ": output" << std::endl;
             outputs += 1u;
         }
     }
@@ -597,7 +598,7 @@ bool PetriNet::exportToJulia(std::string const& /*filename*/)
         if (t.arcsIn.size() == 0u)
             continue;
 
-        std::cout << "# " << t.key() << "(n) = max(";
+        std::cout << "# " << t.key << "(n) = max(";
         std::string separator1;
         for (auto& ai: t.arcsIn)
         {
@@ -606,8 +607,8 @@ bool PetriNet::exportToJulia(std::string const& /*filename*/)
             for (auto& ao: ai->from.arcsIn)
             {
                 std::cout << separator2;
-                std::cout << ao->duration << " + " << ao->from.key()
-                          << "(n - " << tokensIn(ai) << ")";
+                std::cout << ao->duration << " + " << ao->from.key
+                          << "(n - " << tokensIn(*ai) << ")";
                 separator2 = ", ";
             }
             separator1 = ", ";
@@ -638,7 +639,7 @@ bool PetriNet::exportToJulia(std::string const& /*filename*/)
             for (auto& ao: ai->from.arcsIn)
             {
                 SparseElement elt(t.id, ao->from.id, ao->duration);
-                if (tokensIn(ai) == 1u)
+                if (tokensIn(*ai) == 1u)
                 {
                     A.push_back(elt);
                 }
@@ -748,7 +749,7 @@ public:
             file << " X[" << arc.from.id << "]";
         }
         file << " && T"  << trans.id << "();";
-        file << " // " << trans.key() << std::endl;
+        file << " // " << trans.key << std::endl;
                                                          }
 
     file  << std::endl << "        // Update steps" << std::endl;
@@ -760,13 +761,13 @@ public:
         {
             Arc& arc = *trans.arcsIn[a];
             file << "            X[" << arc.from.id
-                 << "] = false; // Disable " << arc.from.key() << std::endl;
+                 << "] = false; // Disable " << arc.from.key << std::endl;
         }
         for (size_t a = 0; a < trans.arcsOut.size(); ++a)
         {
             Arc& arc = *trans.arcsOut[a];
             file << "            X[" << arc.to.id
-                 << "] = true; // Enable " << arc.to.key() << std::endl;
+                 << "] = true; // Enable " << arc.to.key << std::endl;
         }
         file << "        }" << std::endl << std::endl;
     }
@@ -867,7 +868,7 @@ bool PetriNet::save(std::string const& filename)
     file << "{\n  \"places\": [";
     for (auto const& p: m_places)
     {
-        file << separator << '\"' << p.key() << ','
+        file << separator << '\"' << p.key << ','
              << p.x << ',' << p.y << ',' << p.tokens << '\"';
         separator = ", ";
     }
@@ -875,7 +876,7 @@ bool PetriNet::save(std::string const& filename)
     separator = "";
     for (auto const& t: m_transitions)
     {
-        file << separator << '\"' << t.key() << ','
+        file << separator << '\"' << t.key << ','
              << t.x << ',' << t.y << ',' << t.angle << '\"';
         separator = ", ";
     }
@@ -883,8 +884,8 @@ bool PetriNet::save(std::string const& filename)
     separator = "";
     for (auto const& a: m_arcs)
     {
-        file << separator << '\"' << a.from.key() << ','
-             << a.to.key() << ',' << a.duration << '\"';
+        file << separator << '\"' << a.from.key << ','
+             << a.to.key << ',' << a.duration << '\"';
         separator = ", ";
     }
     file << "]\n}";
@@ -989,6 +990,34 @@ bool PetriNet::load(std::string const& filename)
     return true;
 }
 
+//------------------------------------------------------------------------------
+Node* PetriNet::findNode(std::string const& key)
+{
+    if (key[0] == 'P')
+    {
+        for (auto& p: m_places)
+        {
+            if (p.key == key)
+                return &p;
+        }
+        return nullptr;
+    }
+
+    if (key[0] == 'T')
+    {
+        for (auto& t: m_transitions)
+        {
+            if (t.key == key)
+                return &t;
+        }
+        return nullptr;
+    }
+
+    std::cerr << "Node key shall start with 'P' or 'T'" << std::endl;
+    return nullptr;
+}
+
+//------------------------------------------------------------------------------
 void PetriNet::removeNode(Node& node)
 {
     // Remove all arcs linked to this node.
@@ -1026,7 +1055,7 @@ void PetriNet::removeNode(Node& node)
                 Place& pi = m_places[i];
                 Place& pe = m_places[m_places.size() - 1u];
                 m_places[i] = Place(pi.id, pe.x, pe.y, pe.tokens);
-                Place::s_count -= 2u;
+                Place::s_next_id -= 2u;
 
                 // Update the references to nodes of the arc
                 for (auto& a: m_arcs) // TODO optim: use in/out arcs but they may not be generated
@@ -1051,7 +1080,7 @@ void PetriNet::removeNode(Node& node)
                 Transition& ti = m_transitions[i];
                 Transition& te = m_transitions[m_transitions.size() - 1u];
                 m_transitions[i] = Transition(ti.id, te.x, te.y, te.angle);
-                Transition::s_count -= 2u;
+                Transition::s_next_id -= 2u;
 
                 for (auto& a: m_arcs) // TODO idem
                 {
@@ -1080,7 +1109,7 @@ static size_t canFire(Transition const& trans)
 
     for (auto& a: trans.arcsIn)
     {
-        if (tokensIn(a) == 0u)
+        if (tokensIn(*a) == 0u)
             return 0u;
     }
     return 1u;
@@ -1091,7 +1120,7 @@ static size_t canFire(Transition const& trans)
 
     for (auto& a: trans.arcsIn)
     {
-        size_t tokens = tokensIn(a);
+        size_t tokens = tokensIn(*a);
         if (tokens == 0u)
             return 0u;
 
@@ -1104,30 +1133,31 @@ static size_t canFire(Transition const& trans)
 }
 
 //------------------------------------------------------------------------------
-AnimatedToken::AnimatedToken(Arc& arc, size_t tok, bool PT)
-    : x(arc.from.x), y(arc.from.y), tokens(tok), currentArc(&arc),
-      magnitude(norm(arc.from.x, arc.from.y, arc.to.x, arc.to.y))
+AnimatedToken::AnimatedToken(Arc& arc_, size_t tokens_)
+    : x(arc_.from.x), y(arc_.from.y), tokens(tokens_), arc(arc_)
 {
-    id = PT ? arc.from.id : arc.to.id;
+    assert(arc.from.type == Node::Type::Transition);
+    assert(arc.to.type == Node::Type::Place);
 
     // Note: we are supposing the norm and duration is never updated by
     // the user during the simulation.
-    speed = PT ? 10000.0f : ANIMATION_SCALING * magnitude / arc.duration;
+    magnitude = norm(arc.from.x, arc.from.y, arc.to.x, arc.to.y);
+    speed = magnitude / arc.duration;
 }
 
 //------------------------------------------------------------------------------
 bool AnimatedToken::update(float const dt)
 {
     offset += dt * speed / magnitude;
-    x = currentArc->from.x + (currentArc->to.x - currentArc->from.x) * offset;
-    y = currentArc->from.y + (currentArc->to.y - currentArc->from.y) * offset;
+    x = arc.from.x + (arc.to.x - arc.from.x) * offset;
+    y = arc.from.y + (arc.to.y - arc.from.y) * offset;
 
     return (offset >= 1.0);
 }
 
 //------------------------------------------------------------------------------
 // TODO: could be nice to separate simulation from animation
-void PetriGUI::update(float const dt) // FIXME std::chrono
+void PetriGUI::update(float const dt)
 {
     bool burnt = false;
     bool burning = false;
@@ -1143,7 +1173,7 @@ void PetriGUI::update(float const dt) // FIXME std::chrono
         // Backup tokens for each places since the simulation will burn them
         for (auto& p: m_petri_net.places())
         {
-            p.backup_tokens = p.tokens;
+            p.m_backup_tokens = p.tokens;
         }
 
         // Populate in and out arcs for all transitions to avoid to look after
@@ -1158,7 +1188,7 @@ void PetriGUI::update(float const dt) // FIXME std::chrono
         // Restore burnt tokens from the simulation
         for (auto& p: m_petri_net.places())
         {
-            p.tokens = p.backup_tokens;
+            p.tokens = p.m_backup_tokens;
         }
 
         m_animations.clear();
@@ -1188,7 +1218,7 @@ void PetriGUI::update(float const dt) // FIXME std::chrono
                     // Burn a single token on each Places above
                     for (auto& a: trans.arcsIn)
                     {
-                        tokensIn(a) -= 1u;
+                        tokensIn(*a) -= 1u;
                     }
 
                     // Count the number of tokens for the animation
@@ -1210,11 +1240,11 @@ void PetriGUI::update(float const dt) // FIXME std::chrono
                 if (a.count > 0u)
                 {
                     std::cout << current_time()
-                              << a.from.key() << " burnt "
+                              << a.from.key << " burnt "
                               << a.count << " token"
                               << (a.count == 1u ? "" : "s")
                               << std::endl;
-                    m_animations.push_back(AnimatedToken(a, a.count, false));
+                    m_animations.push_back(AnimatedToken(a, a.count));
                     a.count = 0u;
                 }
             }
@@ -1231,13 +1261,13 @@ void PetriGUI::update(float const dt) // FIXME std::chrono
                 {
                     // Animated token reached its ddestination: Place
                     std::cout << current_time()
-                              << "Place " << an.currentArc->to.key()
+                              << "Place " << an.arc.to.key
                               << " got " << an.tokens << " token"
                               << (an.tokens == 1u ? "" : "s")
                               << std::endl;
 
                     // Drop the number of tokens it was carrying.
-                    tokensOut(an.currentArc) += an.tokens;
+                    tokensOut(an.arc) += an.tokens;
                     // Remove it
                     m_animations[i] = m_animations[m_animations.size() - 1u];
                     m_animations.pop_back();
