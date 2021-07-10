@@ -152,6 +152,12 @@ static uint8_t fading(sf::Clock& timer, bool restart)
     return uint8_t(255.0f - (255.0f * period / BLINK_PERIOD));
 }
 
+//--------------------------------------------------------------------------
+static bool isEmpty(PetriNet const& petri)
+{
+    return (petri.places().size() == 0u) && (petri.transitions().size() == 0u);
+}
+
 // *****************************************************************************
 //! \brief Class allowing to draw an arrow. Arrows are needed for drawing Petri
 //! arcs.
@@ -934,16 +940,16 @@ bool PetriNet::save(std::string const& filename)
     std::string separator;
     std::ofstream file(filename);
 
+    if (isEmpty(*this))
+    {
+        std::cerr << "I'll not save empty net" << std::endl;
+        return false;
+    }
+
     if (!file)
     {
         std::cerr << "Failed to generate the Petri net to '" << filename
                   << "'. Reason was " << strerror(errno) << std::endl;
-        return false;
-    }
-
-    if ((m_places.size() == 0u) && (m_transitions.size() == 0u))
-    {
-        std::cerr << "I'll not save empty net" << std::endl;
         return false;
     }
 
@@ -1247,11 +1253,23 @@ void PetriGUI::update(float const dt)
     switch (m_state)
     {
     case STATE_IDLE:
-        m_state = m_simulating ? STATE_STARTING : STATE_IDLE;
+        if (m_simulating)
+        {
+            if (isEmpty(m_petri_net))
+            {
+                std::cerr << "Petri net is empty. Simulation request ignored!"
+                          << std::endl;
+                m_simulating = false;
+            }
+            else
+            {
+                m_state = STATE_STARTING;
+            }
+        }
         break;
 
     case STATE_STARTING:
-        std::cout << "Simulation has started!" << std::endl;
+        std::cout << current_time() << "Simulation has started!" << std::endl;
         // Backup tokens for each places since the simulation will burn them
         for (auto& p: m_petri_net.places())
         {
@@ -1266,7 +1284,8 @@ void PetriGUI::update(float const dt)
         break;
 
     case STATE_ENDING:
-        std::cout << "Simulation has ended!" << std::endl;
+        std::cout << current_time() << "Simulation has ended!"
+                  << std::endl << std::endl;
         // Restore burnt tokens from the simulation
         for (auto& p: m_petri_net.places())
         {
@@ -1362,7 +1381,8 @@ void PetriGUI::update(float const dt)
         }
         else
         {
-            std::cout << "The simulation cannot burn tokens." << std::endl;
+            std::cout << current_time() << "The simulation cannot burn tokens."
+                      << std::endl;
             m_simulating = false;
             m_state = STATE_ENDING;
         }
@@ -1468,7 +1488,9 @@ void PetriGUI::handleKeyPressed(sf::Event const& event)
     // 'C' key: erase the Petri net
     else if (event.key.code == sf::Keyboard::C)
     {
+        m_simulating = false;
         m_petri_net.reset();
+        m_animations.clear();
     }
 
     // 'M' key: Move the selected node
