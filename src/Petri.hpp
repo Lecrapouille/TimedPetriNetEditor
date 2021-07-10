@@ -61,6 +61,8 @@ struct Node
         // Caption is a text that the user can modify. Defaut value is the
         // string unique key.
         caption = key;
+
+        timer.restart();
     }
 
     //--------------------------------------------------------------------------
@@ -98,6 +100,8 @@ struct Node
     //! \brief text display near the place (by default initialized with key
     //! string).
     std::string caption;
+    //! \brief Timer for fading colors.
+    sf::Clock timer;
     //! \brief Hold the incoming arcs.
     //! \note this vector is updated by the method
     //! PetriNet::generateArcsInArcsOut() and posible evolution could be to
@@ -127,6 +131,7 @@ struct Arc
         : from(from_), to(to_), duration(duration_)
     {
         assert(from.type != to.type);
+        timer.restart();
     }
 
     //--------------------------------------------------------------------------
@@ -158,6 +163,8 @@ struct Arc
     //! framerate is suggested to force bigger coordinate steps avoiding
     //! overlapping AnimatedToken.
     size_t count = 0u;
+    //! \brief Timer for fading colors.
+    sf::Clock timer;
 };
 
 // *****************************************************************************
@@ -582,17 +589,17 @@ private:
     //! \brief Draw a Petri Place (as circle), its caption (text) and its tokens
     //! (as back dots or as a number).
     //--------------------------------------------------------------------------
-    void draw(Place const& place);
+    void draw(Place const& place, uint8_t alpha);
 
     //--------------------------------------------------------------------------
     //! \brief Draw a transition as rectangle and its caption.
     //--------------------------------------------------------------------------
-    void draw(Transition const& transition);
+    void draw(Transition const& transition, uint8_t alpha);
 
     //--------------------------------------------------------------------------
     //! \brief Draw a Petri arc as arrow and its duration (text).
     //--------------------------------------------------------------------------
-    void draw(Arc const& arc);
+    void draw(Arc const& arc, uint8_t alpha);
 
     //--------------------------------------------------------------------------
     //! \brief Draw a string centered on x, y coordiates.

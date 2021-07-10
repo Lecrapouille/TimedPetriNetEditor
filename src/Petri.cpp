@@ -39,6 +39,9 @@ const float TOKEN_RADIUS = 4.0f;  // Circle radius for rendering tokens
 const float CAPTION_FONT_SIZE = 24.0f; // Text size used in node captions
 const float TOKEN_FONT_SIZE = 20.0f; // Text size used for token numbers
 const int STEP_ANGLE = 45; // Angle of rotation in degree for turning Transitions
+const float BLINK_PERIOD = 0.5f; // seconds for fading colors
+#define FILL_COLOR(a) sf::Color(255, 165, 0, a) // Place with tokens or fading color
+#define OUTLINE_COLOR sf::Color(165, 42, 42) // Arcs, Places, Transitions
 
 //------------------------------------------------------------------------------
 //! \brief Helper structure for building sparse matrix for the exportation of
@@ -136,6 +139,19 @@ static size_t& tokensOut(Arc& a)
     return reinterpret_cast<Place*>(&(a.to))->tokens;
 }
 
+//------------------------------------------------------------------------------
+static uint8_t fading(sf::Clock& timer, bool restart)
+{
+    if (restart)
+        timer.restart();
+
+    float period = timer.getElapsedTime().asSeconds();
+    if (period >= BLINK_PERIOD)
+        period = BLINK_PERIOD;
+
+    return uint8_t(255.0f - (255.0f * period / BLINK_PERIOD));
+}
+
 // *****************************************************************************
 //! \brief Class allowing to draw an arrow. Arrows are needed for drawing Petri
 //! arcs.
@@ -144,7 +160,8 @@ class Arrow : public sf::Drawable
 {
 public:
 
-    Arrow(const float xa, const float ya, const float xb, const float yb)
+    Arrow(const float xa, const float ya, const float xb, const float yb,
+          const uint8_t alpha)
     {
         // Arc magnitude
         const float arrowLength = norm(xa, ya, xb, yb);
@@ -178,7 +195,6 @@ public:
         m_head.setOrigin(arrowHeadSize.x, arrowHeadSize.y / 2.f);
         m_head.setPosition(sf::Vector2f(a2, b2 /*xb, yb*/));
         m_head.setRotation(arrowAngle);
-        m_head.setFillColor(sf::Color(165, 42, 42));
 
         // Tail of the arrow.
         //const sf::Vector2f tailSize{ arrowLength - arrowHeadSize.x, 2.f };
@@ -187,11 +203,21 @@ public:
         m_tail.setOrigin(0.f, tailSize.y / 2.f);
         m_tail.setPosition(sf::Vector2f(a1, b1 /*xa, ya*/));
         m_tail.setRotation(arrowAngle);
-        m_tail.setFillColor(sf::Color(165, 42, 42));
+
+        if (alpha > 0u)
+        {
+            m_head.setFillColor(FILL_COLOR(alpha));
+            m_tail.setFillColor(FILL_COLOR(alpha));
+        }
+        else
+        {
+            m_head.setFillColor(OUTLINE_COLOR);
+            m_tail.setFillColor(OUTLINE_COLOR);
+        }
     }
 
-    Arrow(sf::Vector2f const& startPoint, sf::Vector2f const& endPoint)
-        : Arrow(startPoint.x, startPoint.y, endPoint.x, endPoint.y)
+    Arrow(sf::Vector2f const& startPoint, sf::Vector2f const& endPoint, const uint8_t alpha)
+        : Arrow(startPoint.x, startPoint.y, endPoint.x, endPoint.y, alpha)
     {}
 
 private:
@@ -302,7 +328,8 @@ static void usage()
       << "S key: save the Petri net to petri.json file" << std::endl
       << "O key: load the Petri net from petri.json file" << std::endl
       << "G key: export the Petri net as Grafcet in a C++ header file" << std::endl
-      << "J key: export the Petri net as Julia code" << std::endl;
+      << "J key: export the Petri net as Julia code" << std::endl
+      << std::endl;
 }
 
 //------------------------------------------------------------------------------
@@ -321,7 +348,7 @@ PetriGUI::PetriGUI(Application &application)
     m_figure_place.setOrigin(sf::Vector2f(m_figure_place.getRadius(), m_figure_place.getRadius()));
     m_figure_place.setFillColor(sf::Color::White);
     m_figure_place.setOutlineThickness(2.0f);
-    m_figure_place.setOutlineColor(sf::Color(165, 42, 42));
+    m_figure_place.setOutlineColor(OUTLINE_COLOR);
 
     // Precompute SFML struct for drawing tokens inside places
     m_figure_token.setOrigin(sf::Vector2f(m_figure_token.getRadius(), m_figure_token.getRadius()));
@@ -331,7 +358,7 @@ PetriGUI::PetriGUI(Application &application)
     m_figure_trans.setOrigin(m_figure_trans.getSize().x / 2, m_figure_trans.getSize().y / 2);
     m_figure_trans.setFillColor(sf::Color::White);
     m_figure_trans.setOutlineThickness(2.0f);
-    m_figure_trans.setOutlineColor(sf::Color(165, 42, 42));
+    m_figure_trans.setOutlineColor(OUTLINE_COLOR);
 
     // Precompute SFML struct for drawing text (places and transitions)
     if (!m_font.loadFromFile("font.ttf"))
@@ -383,29 +410,85 @@ void PetriGUI::draw(sf::Text& t, float const number, float const x, float const 
 }
 
 //------------------------------------------------------------------------------
-void PetriGUI::draw(Place const& place)
+void PetriGUI::draw(Place const& place, uint8_t alpha)
 {
+    const float x = place.x;
+    const float y = place.y;
+
     // Draw the place
-    m_figure_place.setPosition(sf::Vector2f(place.x, place.y));
+    m_figure_place.setPosition(sf::Vector2f(x, y));
+    m_figure_place.setFillColor(FILL_COLOR(alpha));
     window().draw(m_figure_place);
 
     // Draw the caption
-    draw(m_text_caption, place.caption, place.x,
-         place.y - PLACE_RADIUS - CAPTION_FONT_SIZE / 2.0f - 2.0f);
+    draw(m_text_caption, place.caption, x,
+         y - PLACE_RADIUS - CAPTION_FONT_SIZE / 2.0f - 2.0f);
 
     // Draw the number of tokens
     if (place.tokens > 0u)
     {
-        draw(m_text_token, place.tokens, place.x, place.y);
+        float r = TOKEN_RADIUS;
+        float d = TOKEN_RADIUS + 1.0f;
+
+        if (place.tokens == 1u)
+        {
+            m_figure_token.setPosition(sf::Vector2f(x, y));
+            window().draw(sf::CircleShape(m_figure_token));
+        }
+        else if (place.tokens == 2u)
+        {
+            m_figure_token.setPosition(sf::Vector2f(x - d, y));
+            window().draw(sf::CircleShape(m_figure_token));
+
+            m_figure_token.setPosition(sf::Vector2f(x + d, y));
+            window().draw(sf::CircleShape(m_figure_token));
+        }
+        else if (place.tokens == 3u)
+        {
+            m_figure_token.setPosition(sf::Vector2f(x, y - r));
+            window().draw(sf::CircleShape(m_figure_token));
+
+            m_figure_token.setPosition(sf::Vector2f(x - d, y + d));
+            window().draw(sf::CircleShape(m_figure_token));
+
+            m_figure_token.setPosition(sf::Vector2f(x + d, y + d));
+            window().draw(sf::CircleShape(m_figure_token));
+        }
+        else if ((place.tokens == 4u) || (place.tokens == 5u))
+        {
+            if (place.tokens == 5u)
+            {
+                d = r + 3.0f;
+                m_figure_token.setPosition(sf::Vector2f(x, y));
+                window().draw(sf::CircleShape(m_figure_token));
+            }
+
+            m_figure_token.setPosition(sf::Vector2f(x - d, y - d));
+            window().draw(sf::CircleShape(m_figure_token));
+
+            m_figure_token.setPosition(sf::Vector2f(x + d, y - d));
+            window().draw(sf::CircleShape(m_figure_token));
+
+            m_figure_token.setPosition(sf::Vector2f(x - d, y + d));
+            window().draw(sf::CircleShape(m_figure_token));
+
+            m_figure_token.setPosition(sf::Vector2f(x + d, y + d));
+            window().draw(sf::CircleShape(m_figure_token));
+        }
+        else
+        {
+            draw(m_text_token, place.tokens, x, y);
+        }
     }
 }
 
 //------------------------------------------------------------------------------
-void PetriGUI::draw(Transition const& transition)
+void PetriGUI::draw(Transition const& transition, uint8_t alpha)
 {
     // Draw the transition
     m_figure_trans.setPosition(sf::Vector2f(transition.x, transition.y));
     m_figure_trans.setRotation(transition.angle);
+    m_figure_trans.setFillColor(FILL_COLOR(alpha));
     window().draw(m_figure_trans);
 
     // Draw the caption
@@ -414,10 +497,10 @@ void PetriGUI::draw(Transition const& transition)
 }
 
 //------------------------------------------------------------------------------
-void PetriGUI::draw(Arc const& arc)
+void PetriGUI::draw(Arc const& arc, uint8_t alpha)
 {
     // Transition -> Place
-    Arrow arrow(arc.from.x, arc.from.y, arc.to.x, arc.to.y);
+    Arrow arrow(arc.from.x, arc.from.y, arc.to.x, arc.to.y, alpha);
     window().draw(arrow);
 
     if (arc.from.type == Node::Type::Transition)
@@ -433,25 +516,24 @@ void PetriGUI::draw(Arc const& arc)
 void PetriGUI::draw(float const /*dt*/)
 {
     // Draw all Places
-    for (auto const& p: m_petri_net.places())
+    for (auto& p: m_petri_net.places())
     {
-        if (p.tokens > 0u)
-            m_figure_place.setFillColor(sf::Color(255, 165, 0));
-        else
-            m_figure_place.setFillColor(sf::Color::White);
-        draw(p);
+        uint8_t alpha = fading(p.timer, p.tokens > 0u);
+        draw(p, alpha);
     }
 
     // Draw all Transitions
-    for (auto const& t: m_petri_net.transitions())
+    for (auto& t: m_petri_net.transitions())
     {
-        draw(t);
+        uint8_t alpha = fading(t.timer, false);
+        draw(t, alpha);
     }
 
     // Draw all Arcs
-    for (auto const& a: m_petri_net.arcs())
+    for (auto& a: m_petri_net.arcs())
     {
-        draw(a);
+        uint8_t alpha = fading(a.timer, false);
+        draw(a, alpha);
     }
 
     // Draw the arc the user is creating
@@ -459,7 +541,7 @@ void PetriGUI::draw(float const /*dt*/)
     {
         float x = (m_arc_from_unknown_node) ? m_x : m_node_from->x;
         float y = (m_arc_from_unknown_node) ? m_y : m_node_from->y;
-        Arrow arrow(x, y, m_mouse.x, m_mouse.y);
+        Arrow arrow(x, y, m_mouse.x, m_mouse.y, 0u);
         window().draw(arrow);
     }
 
@@ -1212,6 +1294,8 @@ void PetriGUI::update(float const dt)
                 size_t tokens = canFire(trans); // [0 .. 1] tokens
                 if (tokens > 0u)
                 {
+                    trans.timer.restart();
+
                     burning = true; // keep iterating on this loop
                     burnt = true; // At least one place has been fired
 
@@ -1219,6 +1303,7 @@ void PetriGUI::update(float const dt)
                     for (auto& a: trans.arcsIn)
                     {
                         tokensIn(*a) -= 1u;
+                        a->timer.restart();
                     }
 
                     // Count the number of tokens for the animation
@@ -1245,6 +1330,7 @@ void PetriGUI::update(float const dt)
                               << (a.count == 1u ? "" : "s")
                               << std::endl;
                     m_animations.push_back(AnimatedToken(a, a.count));
+                    a.timer.restart();
                     a.count = 0u;
                 }
             }
