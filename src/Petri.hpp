@@ -533,6 +533,69 @@ private:
 };
 
 // *****************************************************************************
+//! \brief A text inside a rectangle
+// *****************************************************************************
+struct MessageBar : public sf::Drawable
+{
+    MessageBar(sf::Font& font)
+    {
+        m_text.setPosition(0, 0);
+        m_text.setFont(font);
+        m_text.setCharacterSize(20);
+        m_text.setFillColor(sf::Color::Black);
+
+        m_shape.setFillColor(sf::Color(100,100,100));
+        m_shape.setOutlineThickness(-1);
+        m_shape.setOutlineColor(sf::Color::Black);
+
+        m_timer.restart();
+    }
+
+    void setText(const std::string& message)
+    {
+        m_message = message;
+        m_text.setString(m_message);
+        m_timer.restart();
+    }
+
+    void setSize(sf::Vector2u const& dimensions)
+    {
+        m_shape.setSize(sf::Vector2f(dimensions.x, 25.0f));
+    }
+
+private:
+
+    void draw(sf::RenderTarget& target, sf::RenderStates /*states*/) const override final
+    {
+        const float BLINK_PERIOD = 2.5f;
+
+        float period = m_timer.getElapsedTime().asSeconds();
+        if (period >= BLINK_PERIOD)
+        {
+            period = BLINK_PERIOD;
+        }
+        else
+        {
+            target.draw(m_shape);
+            target.draw(m_text);
+        }
+    }
+
+private:
+
+    sf::Clock m_timer;
+
+    //! \brief Text displayed on the entry
+    sf::Text m_text;
+
+    //! \brief Handles appearance of the entry
+    sf::RectangleShape m_shape;
+
+    //! \brief String returned when the entry is activated
+    std::string m_message;
+};
+
+// *****************************************************************************
 //! \brief Graphic representation of the Petri net using the SFML library.
 // *****************************************************************************
 class PetriGUI: public GUI
@@ -681,6 +744,8 @@ private:
     sf::Text m_text_caption;
     //! \brief SFML structure for rendering the number of tokens in Places.
     sf::Text m_text_token;
+    //!
+    MessageBar m_message_bar;
     //! \brief Selected origin node (place or transition) by the user when
     //! adding an arc.
     Node* m_node_from = nullptr;

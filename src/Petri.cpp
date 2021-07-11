@@ -343,7 +343,8 @@ PetriGUI::PetriGUI(Application &application)
     : GUI("Petri Net Editor", application),
       m_figure_place(PLACE_RADIUS),
       m_figure_token(TOKEN_RADIUS),
-      m_figure_trans(sf::Vector2f(TRANS_HEIGHT, TRANS_WIDTH))
+      m_figure_trans(sf::Vector2f(TRANS_HEIGHT, TRANS_WIDTH)),
+      m_message_bar(m_font)
 {
     usage();
 
@@ -385,6 +386,8 @@ PetriGUI::PetriGUI(Application &application)
 
     // Init mouse cursor position
     m_mouse = sf::Vector2f(sf::Mouse::getPosition(window()));
+
+    m_message_bar.setText("Welcome to timed Petri net editor");
 }
 
 //------------------------------------------------------------------------------
@@ -567,6 +570,10 @@ void PetriGUI::draw(float const /*dt*/)
         window().draw(m_figure_token);
         draw(m_text_token, at.tokens, at.x, at.y - 16);
     }
+
+    // Draw the entry text
+    m_message_bar.setSize(window().getSize());
+    window().draw(m_message_bar);
 }
 
 //------------------------------------------------------------------------------
@@ -948,7 +955,7 @@ bool PetriNet::save(std::string const& filename)
 
     if (!file)
     {
-        std::cerr << "Failed to generate the Petri net to '" << filename
+        std::cerr << "Failed saving the Petri net in '" << filename
                   << "'. Reason was " << strerror(errno) << std::endl;
         return false;
     }
@@ -1092,8 +1099,7 @@ Node* PetriNet::findNode(std::string const& key)
     }
 
     if (key[0] == 'T')
-    {
-        for (auto& t: m_transitions)
+    {        for (auto& t: m_transitions)
         {
             if (t.key == key)
                 return &t;
@@ -1257,6 +1263,7 @@ void PetriGUI::update(float const dt)
         {
             if (isEmpty(m_petri_net))
             {
+                m_message_bar.setText("Petri net is empty. Simulation request ignored!");
                 std::cerr << "Petri net is empty. Simulation request ignored!"
                           << std::endl;
                 m_simulating = false;
@@ -1269,6 +1276,7 @@ void PetriGUI::update(float const dt)
         break;
 
     case STATE_STARTING:
+        m_message_bar.setText("Simulation has started!");
         std::cout << current_time() << "Simulation has started!" << std::endl;
         // Backup tokens for each places since the simulation will burn them
         for (auto& p: m_petri_net.places())
@@ -1284,6 +1292,7 @@ void PetriGUI::update(float const dt)
         break;
 
     case STATE_ENDING:
+        m_message_bar.setText("Simulation has ended!");
         std::cout << current_time() << "Simulation has ended!"
                   << std::endl << std::endl;
         // Restore burnt tokens from the simulation
@@ -1455,34 +1464,73 @@ void PetriGUI::handleKeyPressed(sf::Event const& event)
     }
 
     // 'S' key: save the Petri net to a JSON file
-    // 'O' key: load the Petri net to a JSON file
-    else if ((event.key.code == sf::Keyboard::S) ||
-             (event.key.code == sf::Keyboard::O))
+    else if (event.key.code == sf::Keyboard::S)
     {
         if (!m_simulating)
         {
-            if (event.key.code == sf::Keyboard::S)
-                m_petri_net.save("petri.json");
+            if (m_petri_net.save("petri.json"))
+            {
+                m_message_bar.setText("Petri net has been saved!");
+            }
             else
-                m_petri_net.load("petri.json");
+            {
+                m_message_bar.setText("Failed saving the Petri net!");
+            }
         }
         else
         {
+            m_message_bar.setText("Cannot save during the simulation!");
             std::cerr << "Cannot save during the simulation"
                       << std::endl;
         }
     }
 
-    // 'G' key: save the Petri net to a JSON file
+    // 'O' key: load the Petri net to a JSON file
+    else if (event.key.code == sf::Keyboard::O)
+    {
+        if (!m_simulating)
+        {
+            if (m_petri_net.load("petri.json"))
+            {
+                m_message_bar.setText("Loaded with success the Petri net!");
+            }
+            else
+            {
+                m_message_bar.setText("Failed loading the Petri net!");
+            }
+        }
+        else
+        {
+            m_message_bar.setText("Cannot save during the simulation!");
+            std::cerr << "Cannot save during the simulation"
+                      << std::endl;
+        }
+    }
+
+    // 'G' key: save the Petri net to a C++ header file
     else if (event.key.code == sf::Keyboard::G)
     {
-        m_petri_net.exportToCpp("Grafcet.hpp", "generated");
+        if (m_petri_net.exportToCpp("Grafcet.hpp", "generated"))
+        {
+            m_message_bar.setText("Exported with success the Petri net as C++ header file!");
+        }
+        else
+        {
+            m_message_bar.setText("Could not export the Petri net to C++ header file!");
+        }
     }
 
      // 'J' key: save the Petri net to a Julia scriot
     else if (event.key.code == sf::Keyboard::J)
     {
-        m_petri_net.exportToJulia("petri.jl");
+        if (m_petri_net.exportToJulia("petri.jl"))
+        {
+            m_message_bar.setText("Exported with success the Petri net as Julia file!");
+        }
+        else
+        {
+            m_message_bar.setText("Could not export the Petri net to Julia file!");
+        }
     }
 
     // 'C' key: erase the Petri net
