@@ -1746,12 +1746,18 @@ void PetriGUI::handleMouseButton(sf::Event const& event)
             if (event.mouseButton.button == sf::Mouse::Left)
                 handleArcDestination();
         }
-
-        // Add a new Place or a new Transition
-        else if (event.mouseButton.button == sf::Mouse::Left)
-            m_petri_net.addPlace(m_mouse.x, m_mouse.y);
-        else if (event.mouseButton.button == sf::Mouse::Right)
-            m_petri_net.addTransition(m_mouse.x, m_mouse.y);
+        else
+        {
+            // Add a new Place or a new Transition only if a node is
+            // not already present
+            if (getNode(m_mouse.x, m_mouse.y) == nullptr)
+            {
+                if (event.mouseButton.button == sf::Mouse::Left)
+                    m_petri_net.addPlace(m_mouse.x, m_mouse.y);
+                else if (event.mouseButton.button == sf::Mouse::Right)
+                    m_petri_net.addTransition(m_mouse.x, m_mouse.y);
+            }
+        }
 
         // Reset states
         m_node_from = m_node_to = nullptr;
