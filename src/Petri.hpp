@@ -28,7 +28,7 @@
 #  include <vector>
 #  include <cassert>
 
-class Arc;
+struct Arc;
 
 // *****************************************************************************
 //! \brief Since Petri nets are bipartite graph there is two kind of nodes:

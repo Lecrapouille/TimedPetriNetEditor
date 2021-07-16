@@ -23,6 +23,7 @@
 #include <iostream>
 #include <fstream>
 #include <math.h>
+#include <cmath>
 #include <sstream>
 #include <cstring>
 
@@ -174,7 +175,7 @@ public:
 
         // Orientation
         const float teta = (yb - ya) / (xb - xa);
-        float arrowAngle = std::atan(teta) * 180.0f / 3.1415f; // rad -> deg
+        float arrowAngle = std::atanf(teta) * 180.0f / 3.1415f; // rad -> deg
         if (xb < xa)
             arrowAngle += 180.f;
         else if (yb < ya)
@@ -1255,8 +1256,9 @@ void PetriGUI::update(float const dt)
 {
     bool burnt = false;
     bool burning = false;
+    States state = m_state;
 
-    switch (m_state)
+    switch (state)
     {
     case STATE_IDLE:
         if (m_simulating)
