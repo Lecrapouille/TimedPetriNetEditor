@@ -1,8 +1,8 @@
 # TimedPetriNetEditor
 
 [This project](https://github.com/Lecrapouille/TimedPetriNetEditor) is a timed
-Petri net editor project made in C++11 and displayed with the
-[SFML](https://www.sfml-dev.org/index-fr.php).
+Petri net and graph event editor. This project made in C++11 and displayed with
+the [SFML](https://www.sfml-dev.org/index-fr.php).
 
 The following picture is an overview of the look of the Petri net editor. Since
 the project is currently in evolution this screenshot may be different. You can
@@ -69,7 +69,8 @@ of the same type.
 - `+`, `-` keys: add/remove a token on the place pointed by the mouse cursor.
 - `R` key: run (start) or stop the simulation.
 - `S`, `O` keys: save/open load a Petri net to/from petri.json file.
-- `G` key: export the Petri net as Grafcet to C++ header file.
+- `G` key: export the Petri net as Grafcet to a C++ header file.
+- `J` key: export the Petri net as graph event into a Julia script file.
 
 ## Limitations / Work in progress
 

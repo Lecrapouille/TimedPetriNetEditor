@@ -116,7 +116,7 @@ struct Node
 
 // *****************************************************************************
 //! \brief Petri nodes of different types are directed by arcs. Therefore arcs
-//! only make the link between Place and Transition.
+//! only make the link between Place to Transition or Transition to Place.
 // *****************************************************************************
 struct Arc
 {
@@ -255,6 +255,9 @@ struct Transition : public Node
     //! displayed this allows to display horizontal or vertical transition.
     int angle = 0u;
 
+    //! \brief Temporary matrix index used when building max-plus system linear.
+    int mi = 0u;
+
 private:
 
     //! \brief Auto increment unique identifier. Start from 0 (code placed in
@@ -273,6 +276,9 @@ private:
 // *****************************************************************************
 struct AnimatedToken
 {
+    //--------------------------------------------------------------------------
+    //! \brief Hack needed because of references
+    //--------------------------------------------------------------------------
     AnimatedToken& operator=(const AnimatedToken& obj)
     {
         this->~AnimatedToken(); // destroy
@@ -288,12 +294,18 @@ struct AnimatedToken
     //--------------------------------------------------------------------------
     AnimatedToken(Arc& arc, size_t tokens);
 
+    //--------------------------------------------------------------------------
     //! \brief Update position on the screen.
     //! \param[in] dt: the delta time (in seconds) from the previous call.
     //! \return true when arriving to the destination node (Place) else false.
+    //--------------------------------------------------------------------------
     bool update(float const dt);
 
+    //--------------------------------------------------------------------------
     //! \brief Return the reference of the destination node casted as a Place.
+    //! \note Since Tokens are animated from Transition to Places there is no
+    //! confusion possible in the type of destination node.
+    //--------------------------------------------------------------------------
     inline Place& toPlace()
     {
         return *reinterpret_cast<Place*>(&(arc.to));
@@ -309,7 +321,7 @@ struct AnimatedToken
     Arc& arc;
     //! \brief The length of the arc.
     float magnitude;
-    //! \brief The speed of the token.
+    //! \brief The speed of the token moving along the arc.
     float speed;
     //! \brief What ratio the token has transitioned over the arc (0%: origin
     //! position, 100%: destination position).
@@ -382,17 +394,28 @@ public:
         return m_places;
     }
 
-    //! \brief Add a new Petri Transition.
+    //--------------------------------------------------------------------------
+    //! \brief Add a new Petri Transition. To be called when the user clicked on
+    //! the GUI.
     //! \param[in] x: X-axis coordinate in the window needed for the display.
     //! \param[in] y: Y-axis coordinate in the window needed for the display.
     //! \return the reference of the inserted element.
+    //--------------------------------------------------------------------------
     Transition& addTransition(float const x, float const y)
     {
         m_transitions.push_back(Transition(x, y));
         return m_transitions.back();
     }
 
-    //! \brief From JSON file
+    //--------------------------------------------------------------------------
+    //! \brief Add a new Petri Transition. To be used when loading a Petri net
+    //! from JSON file.
+    //! \param[in] id: unique node identifier.
+    //! \param[in] x: X-axis coordinate in the window needed for the display.
+    //! \param[in] y: Y-axis coordinate in the window needed for the display.
+    //! \param[in] angle: angle of rotation of the displayed rectangle.
+    //! \return the reference of the inserted element.
+    //--------------------------------------------------------------------------
     Transition& addTransition(size_t const id, float const x, float const y,
                               int const angle)
     {
@@ -489,6 +512,17 @@ public:
     bool load(std::string const& filename);
 
     //--------------------------------------------------------------------------
+    //! \brief Chech if the Petri net is a graph event meaning that eacg places
+    //! have exactly one input arc and one output arc.
+    //! \return true if the Petri net is a graph event.
+    //! \note call generateArcsInArcsOut(/*arcs: true*/); before calling this
+    //! method.
+    //--------------------------------------------------------------------------
+    bool isEventGraph();
+
+    bool showCriticalCycle();
+
+    //--------------------------------------------------------------------------
     //! \brief Export the Petri net as Grafcet in C++ header file.
     //! \param[in] filename the path of h++ file. Should have the .hpp or .h
     //! extension (or any associated to header header files).
@@ -583,6 +617,7 @@ private:
 
 private:
 
+    //! \brief Timer for removing the text
     sf::Clock m_timer;
 
     //! \brief Text displayed on the entry
