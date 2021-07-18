@@ -19,6 +19,7 @@
 //=====================================================================
 
 #include "Petri.hpp"
+#include "Howard.h"
 #include <iomanip>
 #include <iostream>
 #include <fstream>
@@ -884,6 +885,77 @@ bool PetriNet::exportToJulia(std::string const& filename)
     file << "TODO l,v = semihoward(S.D, S.A)" << std::endl;
 
     return true;
+}
+
+//------------------------------------------------------------------------------
+bool PetriNet::showCriticalCycle()
+{
+    // Update arcs in/out for all transitions to be sure to generate the correct
+    // net.
+    generateArcsInArcsOut(/*arcs: true*/);
+
+    if (!isEventGraph())
+        return false;
+
+    // Reserve memory
+    size_t const nnodes = m_transitions.size();
+    size_t const narcs = m_places.size();
+    std::vector<double> N; N.reserve(narcs);
+    std::vector<double> T; T.reserve(narcs);
+    std::vector<int> IJ; IJ.reserve(2u * narcs);
+
+    for (auto& p: m_places)
+    {
+        // Since we are sure we are an event graph: places have a single input
+        // arc and a aingle output arc.
+        assert(p.arcsIn.size() == 1u);
+        assert(p.arcsIn[0]->from.type == Node::Type::Transition);
+        assert(p.arcsOut.size() == 1u);
+        assert(p.arcsOut[0]->to.type == Node::Type::Transition);
+
+        Transition& from = *reinterpret_cast<Transition*>(&(p.arcsIn[0]->from));
+        Transition& to = *reinterpret_cast<Transition*>(&(p.arcsOut[0]->to));
+
+        std::cout << "# Arc " << p.key << ": " << from.key << " -> " << to.key
+                  << " (Duration: " << p.arcsIn[0]->duration << ", Tokens: "
+                  << p.tokens << ")" << std::endl;
+
+        IJ.push_back(to.id); // Transposed is needed
+        IJ.push_back(from.id);
+        T.push_back(p.arcsIn[0]->duration);
+        N.push_back(p.tokens);
+    }
+
+    std::vector<double> V(nnodes); // bias
+    std::vector<double> chi(nnodes); // cycle time vector
+    std::vector<int> policy(nnodes); // optimal policy
+    int ncomponents; //
+    int niterations; // nb of iteration of the algorithm
+    int verbosemode = 0;
+    int res = Semi_Howard(IJ.data(), T.data(), N.data(),
+                          nnodes, narcs,
+                          chi.data(), V.data(), policy.data(), &niterations,
+                          &ncomponents, verbosemode);
+
+    std::cout << "V=";
+    for (auto const& it: V)
+    {
+        std::cout << ' ' << it;
+    }
+    std::cout << std::endl << "CHI=";
+    for (auto const& it: chi)
+    {
+        std::cout << ' ' << it;
+    }
+    std::cout << std::endl << "Nb Policy=" << ncomponents;
+    std::cout << std::endl << "POLICY=";
+    for (auto const& it: policy)
+    {
+        std::cout << ' ' << it;
+    }
+    std::cout << std::endl;
+
+    return res == 0;
 }
 
 //------------------------------------------------------------------------------

@@ -63,11 +63,12 @@ Note: the editor will create the arc and the node if no origin or destination no
 of the same type.
 - `L` key: add an arc with the selected place or transition as origin.
 - `Delete` key: remove a place or transition or an arc. FIXME some possible issues.
-- `C` key: clear the whole Petri net.
+- `Z` key: clear the whole Petri net.
 - `M` key: move the selected place or transition.
 - `PageUp`, `PageDown` keys: rotate CW or CCW the transition selected by the mouse cursor.
 - `+`, `-` keys: add/remove a token on the place pointed by the mouse cursor.
 - `R` key: run (start) or stop the simulation.
+- `C` key: show critical cycles (if and only if the Petri net is a graph event).
 - `S`, `O` keys: save/open load a Petri net to/from petri.json file.
 - `G` key: export the Petri net as Grafcet to a C++ header file.
 - `J` key: export the Petri net as graph event into a Julia script file.
