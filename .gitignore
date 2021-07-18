@@ -1,5 +1,8 @@
 # Project specific
 src/TimedPetriNetEditor
+src/Grafcet-gen.hpp
+src/GraphEvent-gen.jl
+src/petri.json
 
 # Prerequisites
 *.d
@@ -36,3 +39,6 @@ src/TimedPetriNetEditor
 
 # Linux
 *~
+
+# OS X
+.DS_Store

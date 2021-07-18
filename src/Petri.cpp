@@ -1509,10 +1509,10 @@ void PetriGUI::handleKeyPressed(sf::Event const& event)
         }
     }
 
-    // 'G' key: save the Petri net to a C++ header file
+    // 'G' key: save the Petri net as grafcet in a C++ header file
     else if (event.key.code == sf::Keyboard::G)
     {
-        if (m_petri_net.exportToCpp("Grafcet.hpp", "generated"))
+        if (m_petri_net.exportToCpp("Grafcet-gen.hpp", "generated"))
         {
             m_message_bar.setText("Exported with success the Petri net as C++ header file!");
         }
@@ -1522,10 +1522,10 @@ void PetriGUI::handleKeyPressed(sf::Event const& event)
         }
     }
 
-     // 'J' key: save the Petri net to a Julia scriot
+     // 'J' key: save the Petri net as graph event in a Julia script file
     else if (event.key.code == sf::Keyboard::J)
     {
-        if (m_petri_net.exportToJulia("petri.jl"))
+        if (m_petri_net.exportToJulia("GraphEvent-gen.jl"))
         {
             m_message_bar.setText("Exported with success the Petri net as Julia file!");
         }
