@@ -346,6 +346,7 @@ public:
         m_places.clear();
         m_transitions.clear();
         m_arcs.clear();
+        m_critical.clear();
         Place::s_next_id = 0u;
         Transition::s_next_id = 0u;
     }
@@ -564,6 +565,10 @@ private:
     std::deque<Transition> m_transitions;
     //! \brief List of Arcs.
     std::deque<Arc> m_arcs;
+
+public: // FIXME
+    //
+    std::vector<Arc*> m_critical;
 };
 
 // *****************************************************************************

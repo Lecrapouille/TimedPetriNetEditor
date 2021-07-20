@@ -44,6 +44,7 @@ const int STEP_ANGLE = 45; // Angle of rotation in degree for turning Transition
 const float BLINK_PERIOD = 0.5f; // seconds for fading colors
 #define FILL_COLOR(a) sf::Color(255, 165, 0, a) // Place with tokens or fading color
 #define OUTLINE_COLOR sf::Color(165, 42, 42) // Arcs, Places, Transitions
+#define CRITICAL_COLOR sf::Color(255, 0, 0)
 
 //------------------------------------------------------------------------------
 //! \brief Helper structure for building sparse matrix for the exportation of
@@ -235,10 +236,16 @@ public:
             m_head.setFillColor(FILL_COLOR(alpha));
             m_tail.setFillColor(FILL_COLOR(alpha));
         }
-        else
+        else if (alpha == 0u)
         {
             m_head.setFillColor(OUTLINE_COLOR);
             m_tail.setFillColor(OUTLINE_COLOR);
+        }
+        else
+        {
+            // hack to show critical cycles
+            m_head.setFillColor(CRITICAL_COLOR);
+            m_tail.setFillColor(CRITICAL_COLOR);
         }
     }
 
@@ -346,11 +353,12 @@ static void usage()
       << "Middle mouse button release: end the arc with the selected place or transition as destination" << std::endl
       << "L key: add an arc with the selected place or transition as origin" << std::endl
       << "Delete key: remove a place or transition or an arc" << std::endl
-      << "C key: clear the whole Petri net" << std::endl
+      << "Z key: clear the whole Petri net" << std::endl
       << "M key: move the selected place or transition" << std::endl
       << "+ key: add a token on the place pointed by the mouse cursor" << std::endl
       << "- key: remove a token on the place pointed by the mouse cursor" << std::endl
       << "R key: run (start) or stop the simulation" << std::endl
+      << "C key: show critical circuit" << std::endl
       << "S key: save the Petri net to petri.json file" << std::endl
       << "O key: load the Petri net from petri.json file" << std::endl
       << "G key: export the Petri net as Grafcet in a C++ header file" << std::endl
@@ -589,6 +597,12 @@ void PetriGUI::draw(float const /*dt*/)
         m_figure_token.setPosition(at.x, at.y);
         window().draw(m_figure_token);
         draw(m_text_token, at.tokens, at.x, at.y - 16);
+    }
+
+    // Draw critical cycle
+    for (auto& a: m_petri_net.m_critical)
+    {
+        draw(*a, -1);
     }
 
     // Draw the entry text
@@ -931,7 +945,7 @@ bool PetriNet::showCriticalCycle()
     std::vector<int> policy(nnodes); // optimal policy
     int ncomponents; //
     int niterations; // nb of iteration of the algorithm
-    int verbosemode = 0;
+    int verbosemode = 1;
     int res = Semi_Howard(IJ.data(), T.data(), N.data(),
                           nnodes, narcs,
                           chi.data(), V.data(), policy.data(), &niterations,
@@ -947,14 +961,47 @@ bool PetriNet::showCriticalCycle()
     {
         std::cout << ' ' << it;
     }
-    std::cout << std::endl << "Nb Policy=" << ncomponents;
-    std::cout << std::endl << "POLICY=";
-    for (auto const& it: policy)
+    std::cout << std::endl << "Nb Policy=" << ncomponents << std::endl;
+    if (ncomponents > 0)
     {
-        std::cout << ' ' << it;
+        std::cout << "POLICY=";
+        for (auto const& it: policy)
+        {
+            std::cout << ' ' << it;
+        }
+        std::cout << std::endl;
     }
-    std::cout << std::endl;
 
+    if (ncomponents > 0)
+    {
+        size_t to = 0u;
+        m_critical.clear();
+        m_critical.reserve(nnodes);
+        std::cout << "Critical cycle:" << std::endl;
+        for (auto const& from: policy)
+        {
+            std::cout << "T" << from << " -> T" << to << std::endl;
+            for (auto const& it: m_transitions[from].arcsOut)
+            {
+                // Since we are working on an Event Graph we can directly access
+                // Place -> arcsOut[0] -> Transition without checks.
+                assert(it->to.arcsOut[0] != nullptr);
+                assert(it->to.arcsOut[0]->to.type == Node::Type::Transition);
+                if (it->to.arcsOut[0]->to.id == to)
+                {
+                    m_critical.push_back(it);
+                    m_critical.push_back(it->to.arcsOut[0]);
+                    break;
+                }
+            }
+            to += 1u;
+        }
+    }
+    else
+    {
+        std::cerr << "No policy found" << std::endl;
+        return false;
+    }
     return res == 0;
 }
 
@@ -1730,8 +1777,18 @@ void PetriGUI::handleKeyPressed(sf::Event const& event)
         }
     }
 
-    // 'C' key: erase the Petri net
+    // 'C' key: show critical graph (only for event graph)
     else if (event.key.code == sf::Keyboard::C)
+    {
+        m_simulating = false;
+        if (!m_petri_net.showCriticalCycle())
+        {
+            m_message_bar.setText("Failed to show critical cycle");
+        }
+    }
+
+    // 'Z' key: erase the Petri net
+    else if (event.key.code == sf::Keyboard::Z)
     {
         m_simulating = false;
         m_petri_net.reset();
@@ -1995,6 +2052,7 @@ void PetriGUI::handleInput()
             m_running = false;
             break;
         case sf::Event::KeyPressed:
+            m_petri_net.m_critical.clear();
             handleKeyPressed(event);
             break;
         case sf::Event::KeyReleased:
@@ -2002,6 +2060,7 @@ void PetriGUI::handleInput()
             break;
         case sf::Event::MouseButtonPressed:
         case sf::Event::MouseButtonReleased:
+            m_petri_net.m_critical.clear();
             handleMouseButton(event);
             break;
         case sf::Event::Resized:

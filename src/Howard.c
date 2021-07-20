@@ -813,7 +813,7 @@ static int Check_Rows()
         {
             if (verbosemode>0)
             {
-                printf("ERROR : node numbered %d has no sucessor (recall that nodes are internally numbered from 0)\n",i);
+                printf("ERROR : node numbered %d has no predecessor (recall that nodes are internally numbered from 0)\n",i);
             }
             free(u);
             return(1);
