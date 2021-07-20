@@ -1410,6 +1410,7 @@ void PetriGUI::update(float const dt)
 //------------------------------------------------------------------------------
 Node* PetriGUI::getNode(float const x, float const y)
 {
+    // TODO: iterate backward to allowing selecting the last node inserted
     for (auto& p: m_petri_net.places())
     {
         float d2 = (p.x - x) * (p.x - x) + (p.y - y) * (p.y - y);
