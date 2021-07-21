@@ -131,6 +131,17 @@ static const char* current_time()
 }
 
 //------------------------------------------------------------------------------
+template<typename T> T convert_to(const std::string &str)
+{
+    std::istringstream ss(str); T num; ss >> num; return num;
+}
+
+template<typename T> T convert_to(const char* str)
+{
+    std::istringstream ss(str); T num; ss >> num; return num;
+}
+
+//------------------------------------------------------------------------------
 static bool isInput(Transition& t)
 {
     return (t.arcsIn.size() == 0u) && (t.arcsOut.size() > 0u);
@@ -1263,11 +1274,16 @@ bool PetriNet::load(std::string const& filename)
             found_places = true;
             while (s.split() != "]")
             {
-                size_t id = atoi(s.str().c_str() + 1u);
-                float x = stof(s.split());
-                float y = stof(s.split());
-                size_t t = stoi(s.split());
-                addPlace(id, x, y, t);
+                int id = convert_to<size_t>(s.str().c_str() + 1u);
+                float x = convert_to<float>(s.split());
+                float y = convert_to<float>(s.split());
+                int tokens = convert_to<size_t>(s.split());
+                if ((id < 0) || (tokens < 0))
+                {
+                    std::cerr << "Unique identifiers and tokens shall be > 0" << std::endl;
+                    return false;
+                }
+                addPlace(size_t(id), x, y, size_t(tokens));
             }
         }
         else if ((s.str() == "transitions") && (s.split() == ":") && (s.split() == "["))
@@ -1275,11 +1291,16 @@ bool PetriNet::load(std::string const& filename)
             found_transitions = true;
             while (s.split() != "]")
             {
-                size_t id = atoi(s.str().c_str() + 1u);
-                float x = stof(s.split());
-                float y = stof(s.split());
-                int a = stoi(s.split());
-                addTransition(id, x, y, a);
+                size_t id = convert_to<size_t>(s.str().c_str() + 1u);
+                float x = convert_to<float>(s.split());
+                float y = convert_to<float>(s.split());
+                int angle = convert_to<int>(s.split());
+                if (id < 0)
+                {
+                    std::cerr << "Unique identifiers shall be > 0" << std::endl;
+                    return false;
+                }
+                addTransition(size_t(id), x, y, angle);
             }
         }
         else if ((s.str() == "arcs") && (s.split() == ":") && (s.split() == "["))
@@ -1302,7 +1323,17 @@ bool PetriNet::load(std::string const& filename)
                 }
 
                 float duration = stof(s.split());
-                addArc(*from, *to, duration);
+                if (duration < 0.0f)
+                {
+                    std::cout << "Duration " << duration << " shall be > 0" << std::endl;
+                    return false;
+                }
+                if (!addArc(*from, *to, duration))
+                {
+                    std::cerr << "Arc " << from->key << " -> " << to->key
+                              << " is badly formed" << std::endl;
+                    return false;
+                }
             }
         }
         else if (s.str() == "}")
@@ -1741,6 +1772,7 @@ void PetriGUI::handleKeyPressed(sf::Event const& event)
             else
             {
                 m_message_bar.setText("Failed loading the Petri net!");
+                m_petri_net.reset();
             }
         }
         else
