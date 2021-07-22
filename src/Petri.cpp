@@ -556,7 +556,7 @@ void PetriGUI::draw(Arc const& arc, uint8_t alpha)
         // Draw the timing
         float x = arc.from.x + (arc.to.x - arc.from.x) / 2.0f;
         float y = arc.from.y + (arc.to.y - arc.from.y) / 2.0f;
-        draw(m_text_token, arc.duration, x, y - 15);
+        draw(m_text_token, arc.caption, x, y - 15);
     }
 }
 
@@ -1322,13 +1322,13 @@ bool PetriNet::load(std::string const& filename)
                     return false;
                 }
 
-                float duration = stof(s.split());
-                if (duration < 0.0f)
-                {
-                    std::cout << "Duration " << duration << " shall be > 0" << std::endl;
-                    return false;
-                }
-                if (!addArc(*from, *to, duration))
+                //float duration = stof(s.split());
+                //if (duration < 0.0f)
+                //{
+                //    std::cout << "Duration " << duration << " shall be > 0" << std::endl;
+                //    return false;
+                //}
+                if (!addArc(*from, *to, s.split()))
                 {
                     std::cerr << "Arc " << from->key << " -> " << to->key
                               << " is badly formed" << std::endl;

@@ -27,6 +27,7 @@
 #  include <deque>
 #  include <vector>
 #  include <cassert>
+#  include <iostream>
 
 struct Arc;
 
@@ -130,7 +131,14 @@ struct Arc
     Arc(Node& from_, Node& to_, float duration_ = 0.0f)
         : from(from_), to(to_), duration(duration_)
     {
-        assert(from.type != to.type);
+        std::cout << "Arc " << from.type << " " << to.type << std::endl;
+        //assert(from.type != to.type);
+        timer.restart();
+    }
+
+    Arc(Node& from_, Node& to_, std::string const& c)
+        : from(from_), to(to_), caption(c)
+    {
         timer.restart();
     }
 
@@ -154,6 +162,7 @@ struct Arc
     //! \note for the animation of tokens during the simulation, seconds are
     //! used.
     float duration;
+    std::string caption;
     //! \brief Temporary memory used for counting tokens when they arrive to
     //! their destination node (place) and their conversion to an AnimatedToken
     //! instance. This variable is used for avoiding to display on the same
@@ -453,13 +462,25 @@ public:
     //--------------------------------------------------------------------------
     bool addArc(Node& from, Node& to, float duration = 0.0f)
     {
-        if (from.type == to.type)
-            return false;
+        //if (from.type == to.type)
+        //    return false;
 
-        if (hasArc(from, to))
-            return false;
+        //if (hasArc(from, to))
+        //    return false;
 
         m_arcs.push_back(Arc(from, to, duration));
+        return true;
+    }
+
+    bool addArc(Node& from, Node& to, std::string const& c)
+    {
+        //if (from.type == to.type)
+        //    return false;
+
+        //if (hasArc(from, to))
+        //    return false;
+
+        m_arcs.push_back(Arc(from, to, c));
         return true;
     }
 
