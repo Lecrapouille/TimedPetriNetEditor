@@ -20,6 +20,7 @@
 
 #include "Petri.hpp"
 #include "Howard.h"
+#include "FileDialogs.hpp"
 #include <iomanip>
 #include <iostream>
 #include <fstream>
@@ -1741,21 +1742,33 @@ void PetriGUI::handleKeyPressed(sf::Event const& event)
     // 'S' key: save the Petri net to a JSON file
     else if (event.key.code == sf::Keyboard::S)
     {
-        if (!m_simulating)
+        if ((!m_simulating) && (!isEmpty(m_petri_net)))
         {
-            if (m_petri_net.save("petri.json"))
+            pfd::save_file manager("Choose the C++ header file to export as Grafcet", "~/Grafcet-gen.hpp",
+                                   { "C++ Header File", "*.hpp *.h *.hh *.h++" });
+            std::string file = manager.result();
+            if (!file.empty())
             {
-                m_message_bar.setText("Petri net has been saved!");
-            }
-            else
-            {
-                m_message_bar.setText("Failed saving the Petri net!");
+                if (m_petri_net.save("petri.json"))
+                {
+                    m_message_bar.setText("Petri net has been saved!");
+                }
+                else
+                {
+                    m_message_bar.setText("Failed saving the Petri net!");
+                }
             }
         }
-        else
+        else if (m_simulating)
         {
             m_message_bar.setText("Cannot save during the simulation!");
             std::cerr << "Cannot save during the simulation"
+                      << std::endl;
+        }
+        else if (isEmpty(m_petri_net))
+        {
+            m_message_bar.setText("Cannot save empty Petri net!");
+            std::cerr << "Cannot save empty Petri net"
                       << std::endl;
         }
     }
@@ -1765,14 +1778,20 @@ void PetriGUI::handleKeyPressed(sf::Event const& event)
     {
         if (!m_simulating)
         {
-            if (m_petri_net.load("petri.json"))
+            pfd::open_file manager("Choose the Petri file to load", "",
+                                   { "JSON Files (.json)", "*.json" });
+            std::vector<std::string> files = manager.result();
+            if (!files.empty())
             {
-                m_message_bar.setText("Loaded with success the Petri net!");
-            }
-            else
-            {
-                m_message_bar.setText("Failed loading the Petri net!");
-                m_petri_net.reset();
+                if (m_petri_net.load(files[0]))
+                {
+                    m_message_bar.setText("Loaded with success the Petri net!");
+                }
+                else
+                {
+                    m_message_bar.setText("Failed loading the Petri net!");
+                    m_petri_net.reset();
+                }
             }
         }
         else
@@ -1786,26 +1805,68 @@ void PetriGUI::handleKeyPressed(sf::Event const& event)
     // 'G' key: save the Petri net as grafcet in a C++ header file
     else if (event.key.code == sf::Keyboard::G)
     {
-        if (m_petri_net.exportToCpp("Grafcet-gen.hpp", "generated"))
+        if ((!m_simulating) && (!isEmpty(m_petri_net)))
         {
-            m_message_bar.setText("The Petri net has successfully exported as grafcet as C++ header file!");
+            pfd::save_file manager("Choose the C++ header file to export as Grafcet", "~/Grafcet-gen.hpp",
+                                   { "C++ Header File", "*.hpp *.h *.hh *.h++" });
+            std::string file = manager.result();
+            if (!file.empty())
+            {
+                if (m_petri_net.exportToCpp(file, "generated"))
+                {
+                    m_message_bar.setText("The Petri net has successfully exported as grafcet as C++ header file!");
+                }
+                else
+                {
+                    m_message_bar.setText("Could not export the Petri net to C++ header file!");
+                }
+            }
         }
-        else
+        else if (m_simulating)
         {
-            m_message_bar.setText("Could not export the Petri net to C++ header file!");
+            m_message_bar.setText("Cannot export during the simulation!");
+            std::cerr << "Cannot export during the simulation"
+                      << std::endl;
+        }
+        else if (isEmpty(m_petri_net))
+        {
+            m_message_bar.setText("Cannot export empty Petri net!");
+            std::cerr << "Cannot export empty Petri net"
+                      << std::endl;
         }
     }
 
      // 'J' key: save the Petri net as graph event in a Julia script file
     else if (event.key.code == sf::Keyboard::J)
     {
-        if (m_petri_net.exportToJulia("GraphEvent-gen.jl"))
+        if ((!m_simulating) && (!isEmpty(m_petri_net)))
         {
-            m_message_bar.setText("The Petri net has successfully exported as graph event as Julia file!");
+            pfd::save_file manager("Choose the Julia file to export as graph event", "~/GraphEvent-gen.jl",
+                                   { "Julia File", "*.jl" });
+            std::string file = manager.result();
+            if (!file.empty())
+            {
+                if (m_petri_net.exportToJulia(file))
+                {
+                    m_message_bar.setText("The Petri net has successfully exported as graph event as Julia file!");
+                }
+                else
+                {
+                    m_message_bar.setText("Could not export the Petri net to Julia file!");
+                }
+            }
         }
-        else
+        else if (m_simulating)
         {
-            m_message_bar.setText("Could not export the Petri net to Julia file!");
+            m_message_bar.setText("Cannot export during the simulation!");
+            std::cerr << "Cannot export during the simulation"
+                      << std::endl;
+        }
+        else if (isEmpty(m_petri_net))
+        {
+            m_message_bar.setText("Cannot export empty Petri net!");
+            std::cerr << "Cannot export empty Petri net"
+                      << std::endl;
         }
     }
 

@@ -105,7 +105,6 @@ mouse and the keyboard.
   inputs or Places before Transitions outputs shall have no tokens.
 - Not all error messages are displayed on the GUI. Read the logs on your Unix
   console.
-- We cannot control on the file name for saving, loading and exporting the net.
 - Cannot change the color of nodes and arcs.
 - We cannot move or zoom the Petri net or select several nodes.
 
