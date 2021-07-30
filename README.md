@@ -2,9 +2,9 @@
 
 [This project](https://github.com/Lecrapouille/TimedPetriNetEditor) is a timed
 Petri net and graph event editor made in C++11 and displayed with the
-[SFML](https://www.sfml-dev.org/index-fr.php). The following picture is an
-overview of the GUI. You can click on the figure to access to a youtube link
-showing how to edit a basic net.
+[SFML](https://www.sfml-dev.org/index-fr.php) that can be called from Julia.
+The following picture is an overview of the GUI. You can click on the figure to
+access to a youtube link showing how to edit a basic net.
 
 [![TimedPetri](doc/TimedPetri01.png)](https://youtu.be/sKL9lUGeBQs)
 
@@ -22,25 +22,34 @@ Note: this editor does not manage colored Petri net or manage inhibitor arc ...
 but can generates C++ code for GRAFCET (Sequential function chart) while this is
 not currently its goal.
 
-## Compilation
+## How to compile the project?
 
 Prerequisite to compile this project are:
 - g++ or clang++ compiler for C++11.
 - SFML: `sudo apt-get install libsfml-dev`
 
-To download the code source, compile them and launch the binary, follow these
-steps in your Unix console.
+Download the code source, type the following command on a Unix console:
 ```sh
 git clone https://github.com/Lecrapouille/TimedPetriNetEditor --depth=1
-cd TimedPetriNetEditor/src
-./build.sh
-./TimedPetriNetEditor
 ```
 
-No makefile is used to compile this project since of the compactness of the code
-source. Just a `build.sh` file to run is enough. Please, do not copy this binary
-to a root directory such a `/usr/bin` since this application generates files on
-the same folder.
+Compile and install the project, type the following command on a Unix console:
+```sh
+cd TimedPetriNetEditor/
+make
+sudo make install
+```
+
+Run the project, type the following command on a Unix console:
+```sh
+TimedPetriNetEditor
+```
+
+To run the editor from Julia:
+```sh
+cd src/
+julia TimedPetriNetEditor.jl
+```
 
 ## GUI Usage
 

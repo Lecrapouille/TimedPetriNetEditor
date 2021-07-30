@@ -805,4 +805,9 @@ private:
     std::vector<AnimatedToken> m_animations;
 };
 
+// ****************************************************************************
+//! \brief Timed Petri Net Editor entry point. Use this function for shared library
+//! and allow external application (such as Julia lang) to use this application.
+extern "C" int entry_point();
+
 #endif

@@ -407,7 +407,7 @@ PetriGUI::PetriGUI(Application &application)
     m_figure_trans.setOutlineColor(OUTLINE_COLOR);
 
     // Precompute SFML struct for drawing text (places and transitions)
-    if (!m_font.loadFromFile("font.ttf"))
+    if (!m_font.loadFromFile(DATADIR"/font.ttf"))
     {
         std::cerr << "Could not load font file ..." << std::endl;
         exit(1);
@@ -2103,4 +2103,27 @@ void PetriGUI::handleInput()
             break;
         }
     }
+}
+
+// -----------------------------------------------------------------------------
+// Equivalent to the main() but separated to allow to export function and create
+// shared library.
+int entry_point()
+{
+    Application app(800, 600, "Timed Petri Net Editor");
+    PetriGUI gui(app);
+    gui.bgColor = sf::Color(255,255,255,255);
+
+    try
+    {
+        app.push(gui);
+        app.loop();
+    }
+    catch (std::string const& msg)
+    {
+        std::cerr << "Fatal: " << msg << std::endl;
+        return EXIT_FAILURE;
+    }
+
+    return EXIT_SUCCESS;
 }

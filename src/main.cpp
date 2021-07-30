@@ -19,25 +19,8 @@
 //=====================================================================
 
 #include "Petri.hpp"
-#include <iostream>
 
-// -----------------------------------------------------------------------------
 int main()
 {
-    Application app(800, 600, "Timed Petri Net Editor");
-    PetriGUI gui(app);
-    gui.bgColor = sf::Color(255,255,255,255);
-
-    try
-    {
-        app.push(gui);
-        app.loop();
-    }
-    catch (std::string const& msg)
-    {
-        std::cerr << "Fatal: " << msg << std::endl;
-        return EXIT_FAILURE;
-    }
-
-    return EXIT_SUCCESS;
+    return entry_point();
 }

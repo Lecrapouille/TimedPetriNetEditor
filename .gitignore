@@ -3,6 +3,7 @@ src/TimedPetriNetEditor
 src/Grafcet-gen.hpp
 src/GraphEvent-gen.jl
 src/petri.json
+build/
 
 # Prerequisites
 *.d
