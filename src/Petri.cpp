@@ -206,7 +206,7 @@ public:
 
         // Orientation
         const float teta = (yb - ya) / (xb - xa);
-        float arrowAngle = std::atanf(teta) * 180.0f / 3.1415f; // rad -> deg
+        float arrowAngle = std::atan(teta) * 180.0f / 3.1415f; // rad -> deg
         if (xb < xa)
             arrowAngle += 180.f;
         else if (yb < ya)
@@ -1291,7 +1291,7 @@ bool PetriNet::load(std::string const& filename)
             found_transitions = true;
             while (s.split() != "]")
             {
-                size_t id = convert_to<size_t>(s.str().c_str() + 1u);
+                int id = convert_to<size_t>(s.str().c_str() + 1u);
                 float x = convert_to<float>(s.split());
                 float y = convert_to<float>(s.split());
                 int angle = convert_to<int>(s.split());
