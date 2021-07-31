@@ -18,17 +18,18 @@
 // along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.
 //=====================================================================
 
-#ifndef PETRI_HPP
-#  define PETRI_HPP
+#ifndef PETRI_NET_HPP
+#  define PETRI_NET_HPP
 
-#  include "GUI.hpp"
+#  include <SFML/System.hpp>
+#  include <utils/Utils.hpp>
 #  include <atomic>
 #  include <string>
 #  include <deque>
 #  include <vector>
 #  include <cassert>
 
-struct Arc;
+class Arc;
 
 // *****************************************************************************
 //! \brief Since Petri nets are bipartite graph there is two kind of nodes:
@@ -36,8 +37,10 @@ struct Arc;
 //! struct Place and Transition and therefore shall not be used directly as
 //! instance.
 // *****************************************************************************
-struct Node
+class Node
 {
+public:
+
     //--------------------------------------------------------------------------
     //! \brief Petri net is a bipartite graph. So we have to define the type of
     //! the node: Place or Transition.
@@ -62,7 +65,7 @@ struct Node
         // string unique key.
         caption = key;
 
-        timer.restart();
+        fading.restart();
     }
 
     //--------------------------------------------------------------------------
@@ -101,7 +104,7 @@ struct Node
     //! string).
     std::string caption;
     //! \brief Timer for fading colors.
-    sf::Clock timer;
+    sf::Clock fading;
     //! \brief Hold the incoming arcs.
     //! \note this vector is updated by the method
     //! PetriNet::generateArcsInArcsOut() and posible evolution could be to
@@ -115,69 +118,18 @@ struct Node
 };
 
 // *****************************************************************************
-//! \brief Petri nodes of different types are directed by arcs. Therefore arcs
-//! only make the link between Place to Transition or Transition to Place.
-// *****************************************************************************
-struct Arc
-{
-    //--------------------------------------------------------------------------
-    //! \brief Constructor. This method does not check if the two nodes have
-    //! different types. This shall be made by the caller class.
-    //! \param[in] from: Origin node (Place or Transition).
-    //! \param[in] to: Destination node (Place or Transition).
-    //! \note Nodes shall have different types. No check is made here.
-    //--------------------------------------------------------------------------
-    Arc(Node& from_, Node& to_, float duration_ = 0.0f)
-        : from(from_), to(to_), duration(duration_)
-    {
-        assert(from.type != to.type);
-        timer.restart();
-    }
-
-    //--------------------------------------------------------------------------
-    //! \brief Hack needed because of references
-    //--------------------------------------------------------------------------
-    Arc& operator=(const Arc& obj)
-    {
-        this->~Arc(); // destroy
-        new (this) Arc(obj); // copy construct in place
-        return *this;
-    }
-
-    //! \brief Origin node (Place or Transition). Its type shall be different to
-    //! the destination node.
-    Node& from;
-    //! \brief Destination node (Place or Transition). Its type shall be
-    //! different to the origin node.
-    Node& to;
-    //! \brief Timed Petri. The time unit is context dependent.
-    //! \note for the animation of tokens during the simulation, seconds are
-    //! used.
-    float duration;
-    //! \brief Temporary memory used for counting tokens when they arrive to
-    //! their destination node (place) and their conversion to an AnimatedToken
-    //! instance. This variable is used for avoiding to display on the same
-    //! coordinate several AnimatedToken with the same number of tokens as
-    //! caption. Instead, a single AnimatedToken holding the sum of tokens is
-    //! displayed. This sum is sensitive to the animation frame rate, a lower
-    //! framerate is suggested to force bigger coordinate steps avoiding
-    //! overlapping AnimatedToken.
-    size_t count = 0u;
-    //! \brief Timer for fading colors.
-    sf::Clock timer;
-};
-
-// *****************************************************************************
 //! \brief Petri Place node. Places represent system states. Places hold tokens
 //! (resources). In Grafcet, Place has only one token and when they are
 //! activated actions are performed. This class does not managed Grafcet.
 // *****************************************************************************
-struct Place : public Node
+class Place : public Node
 {
+public:
+
     //! \brief to access s_next_id
     friend class PetriNet;
     //! \brief to access m_backup_tokens
-    friend class PetriGUI;
+    friend class PetriEditor;
 
     //--------------------------------------------------------------------------
     //! \brief Constructor. To be used when the user clicked on the GUI.
@@ -223,8 +175,10 @@ private:
 //! tokens. In Grafcet, transitivities are dynamic and usually depends on
 //! systems inputs (sensors). This class does not managed Grafcet.
 // *****************************************************************************
-struct Transition : public Node
+class Transition : public Node
 {
+public:
+
     //! \brief to access s_next_id
     friend class PetriNet;
 
@@ -251,6 +205,27 @@ struct Transition : public Node
         s_next_id = std::max(s_next_id.load(), id) + 1u;
     }
 
+    //--------------------------------------------------------------------------
+    size_t canFire();
+
+    //--------------------------------------------------------------------------
+    inline bool isInput() const
+    {
+        return (arcsIn.size() == 0u) && (arcsOut.size() > 0u);
+    }
+
+    //--------------------------------------------------------------------------
+    inline bool isOutput() const
+    {
+        return (arcsIn.size() > 0u) && (arcsOut.size() == 0u);
+    }
+
+    //--------------------------------------------------------------------------
+    inline bool isState() const
+    {
+        return (arcsIn.size() > 0u) && (arcsOut.size() > 0u);
+    }
+
     //! \brief Transitions are rendered as rectangle. Allow to turn it when
     //! displayed this allows to display horizontal or vertical transition.
     int angle = 0u;
@@ -266,72 +241,76 @@ private:
 };
 
 // *****************************************************************************
-//! \brief Tokens are systems resources. Places indicate how many tokens they
-//! have but in this project, when simulation is run, we want to render them
-//! moving along arcs Transitions -> Places (note there is no animation for arcs
-//! Places -> Transitions: they are teleported). For the rendering, instead of
-//! showing many tokens (dots) at the same position, we "group" them as a dot
-//! with the number of tokens carried as caption. Since we are working on timed
-//! petri nets arcs have a duration which is also constrain their velocity.
+//! \brief Petri nodes of different types are directed by arcs. Therefore arcs
+//! only make the link between Place to Transition or Transition to Place.
 // *****************************************************************************
-struct AnimatedToken
+class Arc
 {
+public:
+
+    //--------------------------------------------------------------------------
+    //! \brief Constructor. This method does not check if the two nodes have
+    //! different types. This shall be made by the caller class.
+    //! \param[in] from: Origin node (Place or Transition).
+    //! \param[in] to: Destination node (Place or Transition).
+    //! \note Nodes shall have different types. No check is made here.
+    //--------------------------------------------------------------------------
+    Arc(Node& from_, Node& to_, float duration_ = 0.0f)
+        : from(from_), to(to_), duration(duration_)
+    {
+        assert(from.type != to.type);
+        fading.restart();
+    }
+
     //--------------------------------------------------------------------------
     //! \brief Hack needed because of references
     //--------------------------------------------------------------------------
-    AnimatedToken& operator=(const AnimatedToken& obj)
+    Arc& operator=(const Arc& obj)
     {
-        this->~AnimatedToken(); // destroy
-        new (this) AnimatedToken(obj); // copy construct in place
+        this->~Arc(); // destroy
+        new (this) Arc(obj); // copy construct in place
         return *this;
     }
 
     //--------------------------------------------------------------------------
-    //! \brief Constructor.
-    //! \param[in] arc: to which arc token are moving along. Shall be an arc
-    //! Transition -> Place. No check is performed here.
-    //! \param[in] tokens: the number of tokens it shall carry.
-    //--------------------------------------------------------------------------
-    AnimatedToken(Arc& arc, size_t tokens);
-
-    //--------------------------------------------------------------------------
-    //! \brief Update position on the screen.
-    //! \param[in] dt: the delta time (in seconds) from the previous call.
-    //! \return true when arriving to the destination node (Place) else false.
-    //--------------------------------------------------------------------------
-    bool update(float const dt);
-
-    //--------------------------------------------------------------------------
-    //! \brief Return the reference of the destination node casted as a Place.
-    //! \note Since Tokens are animated from Transition to Places there is no
-    //! confusion possible in the type of destination node.
-    //--------------------------------------------------------------------------
-    inline Place& toPlace()
+    inline size_t& tokensIn()
     {
-        return *reinterpret_cast<Place*>(&(arc.to));
+        return reinterpret_cast<Place*>(&from)->tokens;
     }
 
-    //! \brief X-axis coordinate in the window used for the display.
-    float x;
-    //! \brief Y-axis coordinate in the window used for the display.
-    float y;
-    //! \brief Number of carried tokens.
-    size_t tokens;
-    //! \brief In which arc the token is moving along.
-    Arc& arc;
-    //! \brief The length of the arc.
-    float magnitude;
-    //! \brief The speed of the token moving along the arc.
-    float speed;
-    //! \brief What ratio the token has transitioned over the arc (0%: origin
-    //! position, 100%: destination position).
-    float offset = 0.0f;
+    //--------------------------------------------------------------------------
+    inline size_t& tokensOut()
+    {
+        return reinterpret_cast<Place*>(&to)->tokens;
+    }
+
+    //! \brief Origin node (Place or Transition). Its type shall be different to
+    //! the destination node.
+    Node& from;
+    //! \brief Destination node (Place or Transition). Its type shall be
+    //! different to the origin node.
+    Node& to;
+    //! \brief Timed Petri. The time unit is context dependent.
+    //! \note for the animation of tokens during the simulation, seconds are
+    //! used.
+    float duration;
+    //! \brief Temporary memory used for counting tokens when they arrive to
+    //! their destination node (place) and their conversion to an AnimatedToken
+    //! instance. This variable is used for avoiding to display on the same
+    //! coordinate several AnimatedToken with the same number of tokens as
+    //! caption. Instead, a single AnimatedToken holding the sum of tokens is
+    //! displayed. This sum is sensitive to the animation frame rate, a lower
+    //! framerate is suggested to force bigger coordinate steps avoiding
+    //! overlapping AnimatedToken.
+    size_t count = 0u;
+    //! \brief Timer for fading colors.
+    sf::Clock fading;
 };
 
 // *****************************************************************************
 //! \brief Container class holding and managing Places, Transitions and
 //! Arcs. This class does not manage simulation. FIXME: to be defined since
-//! currently the PetriGUI is doing the simulation which is mainly animations
+//! currently the PetriEditor is doing the simulation which is mainly animations
 //! with some basic features such as burning tokens ...
 // *****************************************************************************
 class PetriNet
@@ -349,6 +328,12 @@ public:
         m_critical.clear();
         Place::s_next_id = 0u;
         Transition::s_next_id = 0u;
+    }
+
+    //--------------------------------------------------------------------------
+    bool isEmpty()
+    {
+        return (m_places.size() == 0u) && (m_transitions.size() == 0u);
     }
 
     //--------------------------------------------------------------------------
@@ -570,244 +555,5 @@ public: // FIXME
     //
     std::vector<Arc*> m_critical;
 };
-
-// *****************************************************************************
-//! \brief A text inside a rectangle
-// *****************************************************************************
-struct MessageBar : public sf::Drawable
-{
-    MessageBar(sf::Font& font)
-    {
-        m_text.setPosition(0, 0);
-        m_text.setFont(font);
-        m_text.setCharacterSize(20);
-        m_text.setFillColor(sf::Color::Black);
-
-        m_shape.setFillColor(sf::Color(100,100,100));
-        m_shape.setOutlineThickness(-1);
-        m_shape.setOutlineColor(sf::Color::Black);
-
-        m_timer.restart();
-    }
-
-    void setText(const std::string& message)
-    {
-        m_message = message;
-        m_text.setString(m_message);
-        m_timer.restart();
-    }
-
-    void setSize(sf::Vector2u const& dimensions)
-    {
-        m_shape.setSize(sf::Vector2f(dimensions.x, 25.0f));
-    }
-
-private:
-
-    void draw(sf::RenderTarget& target, sf::RenderStates /*states*/) const override final
-    {
-        const float BLINK_PERIOD = 2.5f;
-
-        float period = m_timer.getElapsedTime().asSeconds();
-        if (period >= BLINK_PERIOD)
-        {
-            period = BLINK_PERIOD;
-        }
-        else
-        {
-            target.draw(m_shape);
-            target.draw(m_text);
-        }
-    }
-
-private:
-
-    //! \brief Timer for removing the text
-    sf::Clock m_timer;
-
-    //! \brief Text displayed on the entry
-    sf::Text m_text;
-
-    //! \brief Handles appearance of the entry
-    sf::RectangleShape m_shape;
-
-    //! \brief String returned when the entry is activated
-    std::string m_message;
-};
-
-// *****************************************************************************
-//! \brief Graphic representation of the Petri net using the SFML library.
-// *****************************************************************************
-class PetriGUI: public GUI
-{
-public:
-
-    PetriGUI(Application& application);
-    ~PetriGUI();
-
-private: // Derived from GUI
-
-    //--------------------------------------------------------------------------
-    //! \brief Inherit from GUI class. Draw the chessboard and pieces.
-    //--------------------------------------------------------------------------
-    virtual void draw(const float dt) override;
-
-    //--------------------------------------------------------------------------
-    //! \brief Inherit from GUI class. Update GUI.
-    //--------------------------------------------------------------------------
-    virtual void update(const float dt) override;
-
-    //--------------------------------------------------------------------------
-    //! \brief Inherit from GUI class. Manage mouse and keyboard events.
-    //--------------------------------------------------------------------------
-    virtual void handleInput() override;
-
-    //--------------------------------------------------------------------------
-    //! \brief Inherit from GUI class. Return true if GUI is alive.
-    //--------------------------------------------------------------------------
-    virtual bool isRunning() override
-    {
-        return m_running;
-    }
-
-    //--------------------------------------------------------------------------
-    //! \brief Called when the GUI has been enabled.
-    //--------------------------------------------------------------------------
-    virtual void activate() override
-    {
-        // Do nothing
-    }
-
-    //--------------------------------------------------------------------------
-    //! \brief Called when the GUI has been disabled.
-    //--------------------------------------------------------------------------
-    virtual void deactivate() override
-    {
-        // Do nothing
-    }
-
-private:
-
-    //--------------------------------------------------------------------------
-    //! \brief Draw a Petri Place (as circle), its caption (text) and its tokens
-    //! (as back dots or as a number).
-    //--------------------------------------------------------------------------
-    void draw(Place const& place, uint8_t alpha);
-
-    //--------------------------------------------------------------------------
-    //! \brief Draw a transition as rectangle and its caption.
-    //--------------------------------------------------------------------------
-    void draw(Transition const& transition, uint8_t alpha);
-
-    //--------------------------------------------------------------------------
-    //! \brief Draw a Petri arc as arrow and its duration (text).
-    //--------------------------------------------------------------------------
-    void draw(Arc const& arc, uint8_t alpha);
-
-    //--------------------------------------------------------------------------
-    //! \brief Draw a string centered on x, y coordiates.
-    //--------------------------------------------------------------------------
-    void draw(sf::Text&, std::string const& str, float const x, float const y);
-
-    //--------------------------------------------------------------------------
-    //! \brief Draw a unsigned integer centered on x, y coordiates.
-    //--------------------------------------------------------------------------
-    void draw(sf::Text&, size_t const number, float const x, float const y);
-
-    //--------------------------------------------------------------------------
-    //! \brief Draw a float value centered on x, y coordiates.
-    //--------------------------------------------------------------------------
-    void draw(sf::Text&, float const number, float const x, float const y);
-
-    //--------------------------------------------------------------------------
-    //! \brief Search and return if a place or a transition is present at the
-    //! given coordinates.
-    //! \param[in] x: X-axis coordinate of the mouse cursor.
-    //! \param[in] y: Y-axis coordinate of the mouse cursor.
-    //! \return the address of the place or the transition if present, else
-    //! return nullptr.
-    //--------------------------------------------------------------------------
-    Node* getNode(float const x, float const y);
-
-    //--------------------------------------------------------------------------
-    //! \brief Handle the origin node of the arc when the user is clicking on
-    //! the window.
-    //--------------------------------------------------------------------------
-    void handleArcOrigin();
-
-    //--------------------------------------------------------------------------
-    //! \brief Handle the destination node of the arc when the user is clicking
-    //! on the window.
-    //--------------------------------------------------------------------------
-    void handleArcDestination();
-
-    //--------------------------------------------------------------------------
-    //! \brief Handle the keyboard press event.
-    //--------------------------------------------------------------------------
-    void handleKeyPressed(sf::Event const& event);
-
-    //--------------------------------------------------------------------------
-    //! \brief Handle the mouse click event.
-    //--------------------------------------------------------------------------
-    void handleMouseButton(sf::Event const& event);
-
-private:
-
-    //! \brief State machine for the Petri net simulation.
-    enum States
-    {
-        STATE_IDLE, //! Waiting the user request to start the simulation.
-        STATE_STARTING, //! Init states before the simulation.
-        STATE_ENDING, //! Restore states after the simulation.
-        STATE_ANIMATING //! Simulation on-going: animate tokens.
-    };
-
-    //! \brief Set true if the thread of the application shall stay alive.
-    //! Set false to quit the application.
-    std::atomic<bool> m_running{true};
-    //! \brief Set true for starting the simulation the Petri net and maintain
-    //! it alive. Set false to halt the simulation.
-    std::atomic<bool> m_simulating{false};
-    //! \brief State machine for the simulation.
-    std::atomic<States> m_state{STATE_IDLE};
-    //! \brief Set true when the user is pressing the Control key.
-    std::atomic<bool> m_ctrl{false};
-    //! \brief SFML circle shape needed to draw a Petri Place.
-    sf::CircleShape m_figure_place;
-    //! \brief SFML circle shape needed to draw a Petri Token.
-    sf::CircleShape m_figure_token;
-    //! \brief SFML rectangle shape needed to draw a Petri Transition.
-    sf::RectangleShape m_figure_trans;
-    //! \brief SFML loaded font from a TTF file.
-    sf::Font m_font;
-    //! \brief SFML structure for rendering node captions.
-    sf::Text m_text_caption;
-    //! \brief SFML structure for rendering the number of tokens in Places.
-    sf::Text m_text_token;
-    //!
-    MessageBar m_message_bar;
-    //! \brief Selected origin node (place or transition) by the user when
-    //! adding an arc.
-    Node* m_node_from = nullptr;
-    //! \brief Selected destination node (place or transition) by the user when
-    //! adding an arc.
-    Node* m_node_to = nullptr;
-    //! \brief The user has select a node to be displaced.
-    std::vector<Node*> m_selected_modes;
-    // Ugly stuffs needed when trying to determine which node the user wants to
-    // create.
-    float m_x = 0.0f; float m_y = 0.0f; bool m_arc_from_unknown_node = false;
-    //! \brief Mouse cursor position.
-    sf::Vector2f m_mouse;
-    //! \brief The Petri net.
-    PetriNet m_petri_net;
-    //! \brief Animation of tokens when transitioning from Transitions to Places.
-    std::vector<AnimatedToken> m_animations;
-};
-
-// ****************************************************************************
-//! \brief Timed Petri Net Editor entry point. Use this function for shared library
-//! and allow external application (such as Julia lang) to use this application.
-extern "C" int entry_point();
 
 #endif

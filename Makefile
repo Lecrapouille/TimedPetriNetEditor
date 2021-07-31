@@ -30,20 +30,20 @@ DATADIR := $(DESTDIR)$(PREFIX)/share/$(TARGET_BIN)/data
 
 # Search files
 BUILD = build
-VPATH = $(BUILD) src
-INCLUDES = -DDATADIR=\"$(DATADIR)\"
+VPATH = $(BUILD) src src/utils
+INCLUDES = -Isrc
 
 # Compilation options
 CXXFLAGS = --std=c++11 -W -Wall -Wextra -fPIC `pkg-config --cflags sfml-graphics`
 LDFLAGS = `pkg-config --libs sfml-graphics`
-DEFINES =
+DEFINES = -DDATADIR=\"$(DATADIR)\"
 
 # File dependencies
 DEPFLAGS = -MT $@ -MMD -MP -MF $(BUILD)/$*.Td
 POSTCOMPILE = mv -f $(BUILD)/$*.Td $(BUILD)/$*.d
 
 # Object files
-LIB_OBJS = GUI.o Howard.o Petri.o
+LIB_OBJS = Howard.o PetriNet.o PetriEditor.o
 BIN_OBJS = $(LIB_OBJS) main.o
 
 ifeq ($(VERBOSE),1)
