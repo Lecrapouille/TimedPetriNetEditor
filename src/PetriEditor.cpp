@@ -680,11 +680,19 @@ void PetriEditor::handleKeyPressed(sf::Event const& event)
     }
 
     // Delete a node. TODO: implement arc deletion
-    if (event.key.code == sf::Keyboard::Delete)
+    else if (event.key.code == sf::Keyboard::Delete)
     {
         Node* node = getNode(m_mouse.x, m_mouse.y);
         if (node != nullptr)
             m_petri_net.removeNode(*node);
+    }
+
+    // FIXME TEMPORARY
+    else if (event.key.code == sf::Keyboard::W)
+    {
+        PetriNet pn;
+        m_petri_net.toCanonicalForm(pn);
+        m_petri_net = pn;
     }
 
     // '+' key: increase the number of tokens in the place.

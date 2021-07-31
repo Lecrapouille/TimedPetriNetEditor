@@ -144,163 +144,123 @@ bool PetriNet::isEventGraph()
 }
 
 //------------------------------------------------------------------------------
-// TODO temporary: for the moment we only support Petri nets where Places have
-// 0 or 1 tokens and places linked to inputs and outputs shall have 0 token.
-bool PetriNet::exportToJulia(std::string const& filename)
+// Quick and dirty algorithm.
+// TODO generer des noms plus explicite P4(2tok) => P4_1 et P4_2
+void PetriNet::toCanonicalForm(PetriNet& pn)
 {
-    std::ofstream file(filename);
-    if (!file)
+    pn = *this;
+
+    // Explode Places with more than one tokens and create as many as Places
+    // holding a single token.
     {
-        std::cerr << "Failed to export the Petri net to '" << filename
-                  << "'. Reason was " << strerror(errno) << std::endl;
-        return false;
+        std::deque<Place>& places = pn.places();
+        size_t i = places.size();
+        while (i--)
+        {
+            Place& p = places[i];
+            if (p.tokens > 1u)
+            {
+                // from: Transition
+                Node* from = &(p.arcsIn[0]->from);
+                float duration = p.arcsIn[0]->duration;
+                size_t tokens = p.tokens - 1u;
+                pn.removeArc(*from, p);
+                while (tokens--)
+                {
+                    Node& tmp1 = pn.addPlace(10.0f, 10.0f, 1u);
+                    pn.addArc(*from, tmp1, 0.0f);
+
+                    Node& tmp2 = pn.addTransition(20.0f, 20.0f);
+                    pn.addArc(tmp1, tmp2, 0.0f);
+
+                    from = &tmp2;
+                    p.tokens--;
+
+                    if (p.tokens == 1u)
+                    {
+                        pn.addArc(tmp2, p, duration);
+                    }
+                }
+            }
+        }
     }
 
-    // Generate the Julia header
-    file << "using MaxPlus, SparseArrays" << std::endl << std::endl;
+    // Manage Places with one token that
+    pn.generateArcsInArcsOut(/*arcs: true*/);
+    std::deque<Place>& places = pn.places();
+    size_t i = places.size();
+    while (i--)
+    {
+        Place& p = places[i];
+        if (p.tokens == 1u)
+        {
+            // Inputs
+            Node* from = &(p.arcsIn[0]->from);
+            if (reinterpret_cast<Transition*>(from)->isInput())
+            {
+                float duration = p.arcsIn[0]->duration;
+                pn.removeArc(*from, p);
 
-    // Update arcs in/out for all transitions to be sure to generate the correct
-    // net.
+                Node& tmp1 = pn.addPlace(50.0f, 50.0f, 0u);
+                Node& tmp2 = pn.addTransition(60.0f, 60.0f);
+                pn.addArc(*from, tmp1, 0.0f);
+                pn.addArc(tmp1, tmp2, duration);
+                pn.addArc(tmp2, p, 0.0f);
+            }
+
+            // Outputs
+            Node* to = &(p.arcsOut[0]->to);
+            if (reinterpret_cast<Transition*>(to)->isOutput())
+            {
+                pn.removeArc(p, *to);
+
+                Node& tmp1 = pn.addTransition(60.0f, 60.0f);
+                Node& tmp2 = pn.addPlace(50.0f, 50.0f, 0u);
+                pn.addArc(p, tmp1, 0.0f);
+                pn.addArc(tmp1, tmp2, 0.0f);
+                pn.addArc(tmp2, *to, 0.0f);
+            }
+        }
+    }
+}
+
+//------------------------------------------------------------------------------
+bool PetriNet::toAdjacencyMatrices(SparseMatrix& N, SparseMatrix&T)
+{
     generateArcsInArcsOut(/*arcs: true*/);
+    T.clear(); T.reserve(m_places.size());
+    N.clear(); N.reserve(m_places.size());
 
-    if (!isEventGraph())
-        return false;
-
-    // Count the number of inputs, outputs and states for creating matrices.
-    size_t nb_states = 0u;
-    size_t nb_inputs = 0u;
-    size_t nb_outputs = 0u;
-
-    file << "## Petri Transitions:" << std::endl;
-
-    // Show and count system inputs
-    for (auto& t: m_transitions)
-    {
-        if (t.isInput())
-        {
-            t.mi = nb_inputs;
-            nb_inputs += 1u;
-            file << "# " << t.key << ": input (U"
-                      << nb_inputs << ")" << std::endl;
-        }
-    }
-
-    // Show and count system states
-    for (auto& t: m_transitions)
-    {
-        if (t.isState())
-        {
-            t.mi = nb_states;
-            nb_states += 1u;
-            file << "# " << t.key << ": state (X"
-                      << nb_states << ")" << std::endl;
-        }
-    }
-
-    // Show and count system outputs
-    for (auto& t: m_transitions)
-    {
-        if (t.isOutput())
-        {
-            t.mi = nb_outputs;
-            nb_outputs += 1u;
-            file << "# " << t.key << ": output (Y" << nb_outputs
-                      << ")" << std::endl;
-        }
-    }
-
-    // Graph representation
-    file << std::endl;
-    file << "## Timed graph event depict as two graph adjacency matrices:" << std::endl;
-    file << "# Nodes are Transitions." << std::endl;
-    file << "# Arcs are Places and therefore have tokens and durations" << std::endl;
-    SparseMatrix N, T;
     for (auto& p: m_places)
     {
-        // Since we are sure we are an event graph: places have a single input
-        // arc and a aingle output arc.
-        assert(p.arcsIn.size() == 1u);
-        assert(p.arcsIn[0]->from.type == Node::Type::Transition);
-        assert(p.arcsOut.size() == 1u);
-        assert(p.arcsOut[0]->to.type == Node::Type::Transition);
+        // Since we are sure this Petri net is an event graph: places have a
+        // single input arc and a single output arc. We can merge the place and
+        // its arcs into a single arc.
+        if (p.arcsIn.size() != 1u)
+            return false;
+        if (p.arcsIn[0]->from.type != Node::Type::Transition)
+            return false;
+        if (p.arcsOut.size() != 1u)
+            return false;
+        if (p.arcsOut[0]->to.type != Node::Type::Transition)
+            return false;
 
         Transition& from = *reinterpret_cast<Transition*>(&(p.arcsIn[0]->from));
         Transition& to = *reinterpret_cast<Transition*>(&(p.arcsOut[0]->to));
 
-        file << "# Arc " << p.key << ": " << from.key << " -> " << to.key
-             << " (Duration: " << p.arcsIn[0]->duration
-             << ", Tokens: " << p.tokens << ")" << std::endl;
-
-        // Note origin and destination are inverted because of matrix product:
-        // T * x with x a column vector
+        // Note origin and destination are inverted because we use the following
+        // matrix product convension: M * x where x is a column vector.
         T.push_back(SparseElement(to.id, from.id, p.arcsIn[0]->duration));
         N.push_back(SparseElement(to.id, from.id, p.tokens));
     }
-    size_t const nnodes = m_transitions.size();
-    file << "N = sparse(" << N << ", " << nnodes << ", " << nnodes << ") # Tokens" << std::endl;
-    file << "T = sparse(" << T << ", " << nnodes << ", " << nnodes << ") # Durations" << std::endl;
 
-    // Show the event graph to its Max-Plus counter form
-    file << std::endl;
-    file << "## Timed event graph represented as its counter form:" << std::endl;
-    for (auto& t: m_transitions)
-    {
-        if (t.arcsIn.size() == 0u)
-            continue;
+    return true;
+}
 
-        file << "# " << t.key << "(t) = min(";
-        std::string separator1;
-        for (auto& ai: t.arcsIn)
-        {
-            file << separator1;
-            file << ai->tokensIn() << " + ";
-            std::string separator2;
-            for (auto& ao: ai->from.arcsIn)
-            {
-                file << separator2;
-                file << ao->from.key << "(t - " << ao->duration << ")";
-                separator2 = ", ";
-            }
-            separator1 = ", ";
-        }
-        file << ");" << std::endl;
-    }
-
-    // Show the event graph to its Max-Plus dater form
-    file << std::endl;
-    file << "## Timed event graph represented as its dater form:" << std::endl;
-    for (auto& t: m_transitions)
-    {
-        if (t.arcsIn.size() == 0u)
-            continue;
-
-        file << "# " << t.key << "(n) = max(";
-        std::string separator1;
-        for (auto& ai: t.arcsIn)
-        {
-            file << separator1;
-            std::string separator2;
-            for (auto& ao: ai->from.arcsIn)
-            {
-                file << separator2;
-                file << ao->duration << " + " << ao->from.key
-                          << "(n - " << ai->tokensIn() << ")";
-                separator2 = ", ";
-            }
-            separator1 = ", ";
-        }
-        file << ");" << std::endl;
-    }
-
-    file << std::endl;
-    file << "## Max-Plus implicit linear dynamic system of the dater form:" << std::endl;
-    file << "# X(n) = D X(n) (+) A X(n-1) + B U(n)" << std::endl;
-    file << "# Y(n) = C X(n)" << std::endl;
-
-    // Compute the syslin as Julia code using the Max-Plus package
-    // X(n) = D X(n) (+) A X(n-1) + B U(n)
-    // Y(n) = C X(n)
-    SparseMatrix A, D, B, C;
+//------------------------------------------------------------------------------
+void PetriNet::toSysLin(SparseMatrix& D, SparseMatrix& A, SparseMatrix& B, SparseMatrix& C)
+{
+    A.clear(); B.clear(); C.clear(); D.clear();
     for (auto& arc: m_arcs)
     {
         if (arc.from.type == Node::Type::Place)
@@ -339,8 +299,153 @@ bool PetriNet::exportToJulia(std::string const& filename)
             }
         }
     }
+}
 
-    // Julia Max-Plus Linear system
+//------------------------------------------------------------------------------
+//! \note PetriNet shall be an event graph and to a canonical form (each places
+//! have at most one token and no token at places in inputs or outputs). No
+//! checks are performed and shall be done by the external caller.
+//------------------------------------------------------------------------------
+static bool exportToJulia(PetriNet& original, PetriNet& canonical, std::string const& filename)
+{
+    // Open the file
+    std::ofstream file(filename);
+    if (!file)
+    {
+        std::cerr << "Failed to export the Petri net to '" << filename
+                  << "'. Reason was " << strerror(errno) << std::endl;
+        return false;
+    }
+
+    // Generate the Julia header
+    file << "# This file has been generated" << std::endl << std::endl;
+    file << "using MaxPlus, SparseArrays" << std::endl << std::endl;
+
+    // Count the number of inputs, outputs and states for creating matrices.
+    size_t nb_states = 0u;
+    size_t nb_inputs = 0u;
+    size_t nb_outputs = 0u;
+
+    file << "## Petri Transitions:" << std::endl;
+
+    // Show and count system inputs
+    for (auto& t: canonical.transitions())
+    {
+        if (t.isInput())
+        {
+            t.mi = nb_inputs++;
+            file << "# " << t.key << ": input (U"
+                 << nb_inputs << ")" << std::endl;
+        }
+    }
+
+    // Show and count system states
+    for (auto& t: canonical.transitions())
+    {
+        if (t.isState())
+        {
+            t.mi = nb_states++;
+            file << "# " << t.key << ": state (X"
+                 << nb_states << ")" << std::endl;
+        }
+    }
+
+    // Show and count system outputs
+    for (auto& t: canonical.transitions())
+    {
+        if (t.isOutput())
+        {
+            t.mi = nb_outputs++;
+            file << "# " << t.key << ": output (Y" << nb_outputs
+                 << ")" << std::endl;
+        }
+    }
+
+    // Graph representation. Since an event graph have all its places with a
+    // single input arc and and single output arc. We can merge places and its
+    // arcs into a single arc (still directing Transitions). Therefore we obtain
+    // a graph holding two information: tokens and durations. Since a graph can
+    // be represented by an adjacency matrix, here, we genereate two adjacency
+    // matrices: one for tokens and one for durations.
+    file << std::endl;
+    file << "## Timed graph event depict as two graph adjacency matrices:" << std::endl;
+    file << "# Nodes are Transitions." << std::endl;
+    file << "# Arcs are Places and therefore have tokens and durations" << std::endl;
+    SparseMatrix N, T;
+    bool res = canonical.toAdjacencyMatrices(N, T); assert(res == true);
+    for (auto& p: canonical.places())
+    {
+        Transition& from = *reinterpret_cast<Transition*>(&(p.arcsIn[0]->from));
+        Transition& to = *reinterpret_cast<Transition*>(&(p.arcsOut[0]->to));
+
+        file << "# Arc " << p.key << ": " << from.key << " -> " << to.key
+             << " (Duration: " << p.arcsIn[0]->duration
+             << ", Tokens: " << p.tokens << ")" << std::endl;
+    }
+    size_t const nnodes = canonical.transitions().size();
+    file << "N = sparse(" << N << ", " << nnodes << ", " << nnodes << ") # Tokens" << std::endl;
+    file << "T = sparse(" << T << ", " << nnodes << ", " << nnodes << ") # Durations" << std::endl;
+
+    // Show the event graph to its Max-Plus counter form
+    file << std::endl;
+    file << "## Timed event graph represented as its counter form:" << std::endl;
+    for (auto& t: original.transitions())
+    {
+        if (t.arcsIn.size() == 0u)
+            continue;
+
+        file << "# " << t.key << "(t) = min(";
+        std::string separator1;
+        for (auto& ai: t.arcsIn)
+        {
+            file << separator1;
+            file << ai->tokensIn() << " + ";
+            std::string separator2;
+            for (auto& ao: ai->from.arcsIn)
+            {
+                file << separator2;
+                file << ao->from.key << "(t - " << ao->duration << ")";
+                separator2 = ", ";
+            }
+            separator1 = ", ";
+        }
+        file << ");" << std::endl;
+    }
+
+    // Show the event graph to its Max-Plus dater form
+    file << std::endl;
+    file << "## Timed event graph represented as its dater form:" << std::endl;
+    for (auto& t: original.transitions())
+    {
+        if (t.arcsIn.size() == 0u)
+            continue;
+
+        file << "# " << t.key << "(n) = max(";
+        std::string separator1;
+        for (auto& ai: t.arcsIn)
+        {
+            file << separator1;
+            std::string separator2;
+            for (auto& ao: ai->from.arcsIn)
+            {
+                file << separator2;
+                file << ao->duration << " + " << ao->from.key
+                          << "(n - " << ai->tokensIn() << ")";
+                separator2 = ", ";
+            }
+            separator1 = ", ";
+        }
+        file << ");" << std::endl;
+    }
+
+    // Compute the syslin as Julia code using the Max-Plus package
+    // X(n) = D X(n) ⨁ A X(n-1) ⨁ B U(n)
+    // Y(n) = C X(n)
+    SparseMatrix D, A, B, C; canonical.toSysLin(D, A, B, C);
+    file << std::endl;
+    file << "## Max-Plus implicit linear dynamic system of the dater form:" << std::endl;
+    file << "# X(n) = D X(n) ⨁ A X(n-1) ⨁ B U(n)" << std::endl;
+    file << "# Y(n) = C X(n)" << std::endl;
     file << "D = sparse(" << D << ", " << nb_states << ", " << nb_states << ") # States without tokens" << std::endl;
     file << "A = sparse(" << A << ", " << nb_states << ", " << nb_states << ") # States with 1 token" << std::endl;
     file << "B = sparse(" << B << ", " << nb_inputs << ", " << nb_inputs << ") # Inputs" << std::endl;
@@ -349,10 +454,35 @@ bool PetriNet::exportToJulia(std::string const& filename)
 
     // Semi-Howard
     file << std::endl;
-    file << "#" << std::endl;
-    file << "TODO l,v = semihoward(S.D, S.A)" << std::endl;
+    file << "# TODO" << std::endl;
+    file << "l,v = semihoward(S.D, S.A)" << std::endl;
 
     return true;
+}
+
+//------------------------------------------------------------------------------
+bool PetriNet::exportToJulia(std::string const& filename)
+{
+    generateArcsInArcsOut(/*arcs: true*/);
+
+    // Only Petri net with places having a single input and output arcs are
+    // allowed.
+    if (!isEventGraph(/*cannonical*/))
+        return false;
+
+    // TODO quick test check if we have to do the canonical form, this can avoid
+    // duplicating the Petri net
+    // if (!cannonical) {
+
+    // Duplicate the Petri net since we potentially modify it to transform it to
+    // its canonical form.
+    PetriNet canonical;
+    toCanonicalForm(canonical);
+
+    return ::exportToJulia(*this, canonical, filename);
+
+    // TODO
+    // } else { return ::exportToJulia(*this, filename); }
 }
 
 //------------------------------------------------------------------------------
@@ -825,6 +955,31 @@ Node* PetriNet::findNode(std::string const& key)
 
     std::cerr << "Node key shall start with 'P' or 'T'" << std::endl;
     return nullptr;
+}
+
+//------------------------------------------------------------------------------
+bool PetriNet::removeArc(Arc const& a)
+{
+    size_t s = m_arcs.size();
+    size_t i = s;
+    while (i--)
+    {
+        if ((m_arcs[i].to == a.to) && (m_arcs[i].from == a.from))
+        {
+            // Found the undesired arc: make the latest element take its
+            // location in the container.
+            m_arcs[i] = m_arcs[m_arcs.size() - 1u];
+            m_arcs.pop_back();
+            return true;
+        }
+    }
+    return false;
+}
+
+//------------------------------------------------------------------------------
+bool PetriNet::removeArc(Node& from, Node& to)
+{
+    return removeArc(Arc(from, to));
 }
 
 //------------------------------------------------------------------------------

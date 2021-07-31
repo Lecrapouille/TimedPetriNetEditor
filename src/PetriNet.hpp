@@ -136,9 +136,9 @@ public:
     //! \param[in] x: X-axis coordinate in the window needed for the display.
     //! \param[in] y: Y-axis coordinate in the window needed for the display.
     //--------------------------------------------------------------------------
-    Place(float const x, float const y)
+    Place(float const x, float const y, size_t const tok = 0)
         : Node(Node::Type::Place, s_next_id++, x, y),
-          tokens(0u), m_backup_tokens(0u)
+          tokens(tok), m_backup_tokens(tok)
     {}
 
     //--------------------------------------------------------------------------
@@ -256,7 +256,8 @@ public:
     //! \note Nodes shall have different types. No check is made here.
     //--------------------------------------------------------------------------
     Arc(Node& from_, Node& to_, float duration_ = 0.0f)
-        : from(from_), to(to_), duration(duration_)
+        : from(from_), to(to_),
+          duration(from_.type == Node::Type::Transition ? duration_ : NAN)
     {
         assert(from.type != to.type);
         fading.restart();
@@ -318,6 +319,33 @@ class PetriNet
 public:
 
     //--------------------------------------------------------------------------
+    //! \brief Copy constructors.
+    //--------------------------------------------------------------------------
+    PetriNet& operator=(const PetriNet& other)
+    {
+        assert(this != &other);
+        {
+            m_places = other.m_places;
+            m_transitions = other.m_transitions;
+            m_arcs.clear();
+            for (auto const& it: other.m_arcs)
+            {
+                Node& from = (it.from.type == Node::Type::Place)
+                             ? reinterpret_cast<Node&>(m_places[it.from.id])
+                             : reinterpret_cast<Node&>(m_transitions[it.from.id]);
+                Node& to = (it.to.type == Node::Type::Place)
+                           ? reinterpret_cast<Node&>(m_places[it.to.id])
+                           : reinterpret_cast<Node&>(m_transitions[it.to.id]);
+                m_arcs.push_back(Arc(from, to, it.duration));
+            }
+
+            generateArcsInArcsOut(/*arcs: true*/);
+        }
+
+        return *this;
+    }
+
+    //--------------------------------------------------------------------------
     //! \brief Remove all nodes and arcs. Reset counters for unique identifiers.
     //--------------------------------------------------------------------------
     void reset()
@@ -343,9 +371,9 @@ public:
     //! \param[in] y: Y-axis coordinate in the window needed for the display.
     //! \return the reference of the inserted element.
     //--------------------------------------------------------------------------
-    Place& addPlace(float const x, float const y)
+    Place& addPlace(float const x, float const y, size_t const tokens = 0u)
     {
-        m_places.push_back(Place(x, y));
+        m_places.push_back(Place(x, y, tokens));
         return m_places.back();
     }
 
@@ -441,7 +469,7 @@ public:
         if (from.type == to.type)
             return false;
 
-        if (hasArc(from, to))
+        if (findArc(from, to))
             return false;
 
         m_arcs.push_back(Arc(from, to, duration));
@@ -453,7 +481,7 @@ public:
     //! net.
     //! \return the address of the arc if found, else return nullptr.
     //--------------------------------------------------------------------------
-    Arc* hasArc(Node const& from, Node const& to)
+    Arc* findArc(Node const& from, Node const& to)
     {
         for (auto& it: m_arcs)
         {
@@ -506,6 +534,9 @@ public:
     //--------------------------------------------------------------------------
     bool isEventGraph();
 
+    //--------------------------------------------------------------------------
+    //! \brief
+    //--------------------------------------------------------------------------
     bool showCriticalCycle();
 
     //--------------------------------------------------------------------------
@@ -526,13 +557,45 @@ public:
     //! \return true if the Petri net has been exported with success. Return
     //! false in case of failure.
     //--------------------------------------------------------------------------
-    bool exportToJulia(std::string const& filename);
+    bool exportToJulia(std::string const& filename); //TODO const;
+
+    //--------------------------------------------------------------------------
+    //! \brief Return the event graph as 2 adjacency matrices.
+    //! \param[out] N the adjacency matrix of tokens.
+    //! \param[out] Tthe adjacency matrix of durations.
+    //! \note This will work only if isEventGraph() returned true.
+    //! \return false if the Petri net is not an event graph.
+    //--------------------------------------------------------------------------
+    bool toAdjacencyMatrices(SparseMatrix& N, SparseMatrix&T); //TODO  const;
+
+    //--------------------------------------------------------------------------
+    //! \brief Return the event graph as implicit dynamic linear Max-Plus system.
+    //! X(n) = D X(n) ⨁ A X(n-1) ⨁ B U(n)
+    //! Y(n) = C X(n)
+    //! \note This will work only if isEventGraph() returned true.
+    //! TODO return false if the Petri net is not an event graph.
+    //--------------------------------------------------------------------------
+    void toSysLin(SparseMatrix& D, SparseMatrix& A, SparseMatrix& B, SparseMatrix& C); //TODO const;
+
+    //--------------------------------------------------------------------------
+    //! \brief Transform the Event Graph to canonical form
+    //! \param[out] pn: resulting Petri net in canonical mode
+    //! \note This will work only if isEventGraph() returned true.
+    //! TODO return false if the Petri net is not an event graph.
+    //--------------------------------------------------------------------------
+    void toCanonicalForm(PetriNet& pn); //TODO  const;
 
     //--------------------------------------------------------------------------
     //! \brief Remove an existing Place or a Transition (usually refered by the
     //! mouse cursor).
     //--------------------------------------------------------------------------
     void removeNode(Node& node);
+
+    //--------------------------------------------------------------------------
+    //! \brief Remove an existing arc.
+    //--------------------------------------------------------------------------
+    bool removeArc(Arc const& arc);
+    bool removeArc(Node& from, Node& to);
 
     //--------------------------------------------------------------------------
     //! \brief Populate or update Node::arcsIn and Node::arcsOut for all
