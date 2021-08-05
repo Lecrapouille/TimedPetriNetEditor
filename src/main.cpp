@@ -44,8 +44,27 @@ static void usage()
       << std::endl;
 }
 
+//------------------------------------------------------------------------------
 int main()
 {
     usage();
-    return entry_point();
+
+    PetriNet net;
+
+    Application application(800, 600, "Timed Petri Net Editor");
+    PetriEditor editor(application.renderer(), net);
+    editor.bgColor = sf::Color(255,255,255,255);
+
+    try
+    {
+        application.push(editor);
+        application.loop();
+    }
+    catch (std::string const& msg)
+    {
+        std::cerr << "Fatal: " << msg << std::endl;
+        return EXIT_FAILURE;
+    }
+
+    return EXIT_SUCCESS;
 }

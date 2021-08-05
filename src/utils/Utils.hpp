@@ -86,22 +86,46 @@ inline uint8_t fading(sf::Clock& timer, bool restart, float blink_period)
 //! be stored. Note that in Julia indexes starts at 1, contrary to C/C++
 //! starting at 0.
 //------------------------------------------------------------------------------
-struct SparseElement
+struct SparseMatrix
 {
-    SparseElement(size_t i_, size_t j_, float d_)
-        : i(i_ + 1u), j(j_ + 1u), d(d_)
+    SparseMatrix(size_t const N_ = 0u, size_t const M_ = 0u)
+      : N(N_), M(M_)
     {}
 
-    // (I,J) Coordinate
-    size_t i, j;
-    // Non zero element
-    float d;
-};
+    void dim(size_t const N_, size_t const M_)
+    {
+       N = N_;
+       M = M_;
+    }
 
-//------------------------------------------------------------------------------
-//! \brief Julia sparse matrix.
-//------------------------------------------------------------------------------
-using SparseMatrix = std::vector<SparseElement>;
+    void clear()
+    {
+       i.clear();
+       j.clear();
+       d.clear();
+    }
+
+    void reserve(size_t const size)
+    {
+       i.reserve(size);
+       j.reserve(size);
+       d.reserve(size);
+    }
+
+    void add(size_t i_, size_t j_, float d_)
+    {
+       i.push_back(i_ + 1u);
+       j.push_back(j_ + 1u);
+       d.push_back(d_);
+    }
+
+    // (I,J) Coordinate
+    std::vector<size_t> i, j;
+    // Non zero element (double to be usable by Julia)
+    std::vector<double> d;
+    //
+    size_t N, M;
+};
 
 //------------------------------------------------------------------------------
 //! \brief Julia sparse is built as sparse(I, J, D) where I, J and D are 3
@@ -112,25 +136,25 @@ inline std::ostream & operator<<(std::ostream &os, SparseMatrix const& matrix)
     std::string separator;
 
     os << "[";
-    for (auto const& e: matrix)
+    for (auto const& it: matrix.i)
     {
-        os << separator << e.i;
+        os << separator << it;
         separator = ", ";
     }
 
     os << "], [";
     separator.clear();
-    for (auto const& e: matrix)
+    for (auto const& it: matrix.j)
     {
-        os << separator << e.j;
+        os << separator << it;
         separator = ", ";
     }
 
     os << "], MP([";
     separator.clear();
-    for (auto const& e: matrix)
+    for (auto const& it: matrix.d)
     {
-        os << separator << e.d;
+        os << separator << it;
         separator = ", ";
     }
     os << "])";

@@ -20,7 +20,7 @@
 
 #include "PetriNet.hpp"
 #include "utils/Howard.h"
-#include "utils/Json.hpp"
+#include "utils/Splitter.hpp"
 #include "utils/Utils.hpp"
 #include <iomanip>
 #include <iostream>
@@ -100,6 +100,10 @@ void PetriNet::generateArcsInArcsOut()
 //------------------------------------------------------------------------------
 bool PetriNet::isEventGraph()
 {
+    if (isEmpty())
+        return false;
+    generateArcsInArcsOut();
+
     // The Petri net shall be an event graph: all places shall have a single
     // input arc and a single output arc. Else, we cannot generate the linear
     // system.
@@ -228,8 +232,10 @@ void PetriNet::toCanonicalForm(PetriNet& pn)
 bool PetriNet::toAdjacencyMatrices(SparseMatrix& N, SparseMatrix&T)
 {
     generateArcsInArcsOut(/*arcs: true*/);
-    T.clear(); T.reserve(m_places.size());
-    N.clear(); N.reserve(m_places.size());
+    size_t const nnodes = m_transitions.size();
+
+    T.clear(); T.reserve(m_places.size()); T.dim(nnodes, nnodes);
+    N.clear(); N.reserve(m_places.size()); N.dim(nnodes, nnodes);
 
     for (auto& p: m_places)
     {
@@ -250,17 +256,23 @@ bool PetriNet::toAdjacencyMatrices(SparseMatrix& N, SparseMatrix&T)
 
         // Note origin and destination are inverted because we use the following
         // matrix product convension: M * x where x is a column vector.
-        T.push_back(SparseElement(to.id, from.id, p.arcsIn[0]->duration));
-        N.push_back(SparseElement(to.id, from.id, p.tokens));
+        T.add(to.id, from.id, p.arcsIn[0]->duration);
+        N.add(to.id, from.id, p.tokens);
     }
 
     return true;
 }
 
 //------------------------------------------------------------------------------
-void PetriNet::toSysLin(SparseMatrix& D, SparseMatrix& A, SparseMatrix& B, SparseMatrix& C)
+void PetriNet::toSysLin(SparseMatrix& D, SparseMatrix& A, SparseMatrix& B, SparseMatrix& C,
+                        size_t const nb_inputs, size_t const nb_states, size_t const nb_outputs)
 {
-    A.clear(); B.clear(); C.clear(); D.clear();
+    D.clear(); A.clear(); B.clear(); C.clear();
+    D.dim(nb_states, nb_states);
+    A.dim(nb_states, nb_states);
+    B.dim(nb_inputs, nb_inputs);
+    C.dim(nb_outputs, nb_outputs);
+
     for (auto& arc: m_arcs)
     {
         if (arc.from.type == Node::Type::Place)
@@ -270,7 +282,7 @@ void PetriNet::toSysLin(SparseMatrix& D, SparseMatrix& A, SparseMatrix& B, Spars
         if (t.isInput())
         {
             // System inputs: B U(n)
-            B.push_back(SparseElement(t.mi, t.mi, arc.duration));
+            B.add(t.mi, t.mi, arc.duration);
         }
         else // States or outputs
         {
@@ -284,17 +296,17 @@ void PetriNet::toSysLin(SparseMatrix& D, SparseMatrix& A, SparseMatrix& B, Spars
                     // Systems states: X(n) = D X(n) (+) A X(n-1)
                     if (p.tokens == 1u)
                     {
-                        A.push_back(SparseElement(td.mi, t.mi, arc.duration));
+                        A.add(td.mi, t.mi, arc.duration);
                     }
                     else
                     {
-                        D.push_back(SparseElement(td.mi, t.mi, arc.duration));
+                        D.add(td.mi, t.mi, arc.duration);
                     }
                 }
                 else if (td.isOutput())
                 {
                     // System outputs: Y(n) = C X(n)
-                    C.push_back(SparseElement(t.mi, t.mi, arc.duration));
+                    C.add(t.mi, t.mi, arc.duration);
                 }
             }
         }
@@ -302,12 +314,69 @@ void PetriNet::toSysLin(SparseMatrix& D, SparseMatrix& A, SparseMatrix& B, Spars
 }
 
 //------------------------------------------------------------------------------
+bool PetriNet::toSysLin(SparseMatrix& D, SparseMatrix& A, SparseMatrix& B, SparseMatrix& C)
+{
+    // Only Petri net with places having a single input and output arcs are
+    // allowed.
+    if (!isEventGraph())
+        return false;
+
+    // Duplicate the Petri net since we potentially modify it to transform it to
+    // its canonical form.
+    PetriNet canonical;
+    toCanonicalForm(canonical);
+
+    // Count the number of inputs, outputs and states for creating matrices.
+    size_t nb_states = 0u;
+    size_t nb_inputs = 0u;
+    size_t nb_outputs = 0u;
+
+    for (auto& t: canonical.transitions())
+    {
+        if (t.isInput())
+        {
+            t.mi = nb_inputs++;
+        }
+
+        if (t.isState())
+        {
+            t.mi = nb_states++;
+        }
+
+        if (t.isOutput())
+        {
+            t.mi = nb_outputs++;
+        }
+    }
+
+    canonical.toSysLin(D, A, B, C, nb_inputs, nb_states, nb_outputs);
+    return true;
+}
+
+//------------------------------------------------------------------------------
 //! \note PetriNet shall be an event graph and to a canonical form (each places
 //! have at most one token and no token at places in inputs or outputs). No
 //! checks are performed and shall be done by the external caller.
 //------------------------------------------------------------------------------
-static bool exportToJulia(PetriNet& original, PetriNet& canonical, std::string const& filename)
+bool PetriNet::exportToJulia(std::string const& filename)
 {
+    // Only Petri net with places having a single input and output arcs are
+    // allowed.
+    if (!isEventGraph())
+        return false;
+
+    // TODO quick test check if we have to do the canonical form, this can avoid
+    // duplicating the Petri net
+    // if (!cannonical) {
+
+    // Duplicate the Petri net since we potentially modify it to transform it to
+    // its canonical form.
+    PetriNet canonical;
+    toCanonicalForm(canonical);
+
+    // TODO
+    // } else { return ::exportToJulia(*this, filename); }
+
     // Open the file
     std::ofstream file(filename);
     if (!file)
@@ -371,7 +440,7 @@ static bool exportToJulia(PetriNet& original, PetriNet& canonical, std::string c
     file << "## Timed graph event depict as two graph adjacency matrices:" << std::endl;
     file << "# Nodes are Transitions." << std::endl;
     file << "# Arcs are Places and therefore have tokens and durations" << std::endl;
-    SparseMatrix N, T;
+    SparseMatrix N; SparseMatrix T;
     bool res = canonical.toAdjacencyMatrices(N, T); assert(res == true);
     for (auto& p: canonical.places())
     {
@@ -386,62 +455,18 @@ static bool exportToJulia(PetriNet& original, PetriNet& canonical, std::string c
     file << "N = sparse(" << N << ", " << nnodes << ", " << nnodes << ") # Tokens" << std::endl;
     file << "T = sparse(" << T << ", " << nnodes << ", " << nnodes << ") # Durations" << std::endl;
 
-    // Show the event graph to its Max-Plus counter form
+    // Show the event graph to its Max-Plus counter and dater form
     file << std::endl;
-    file << "## Timed event graph represented as its counter form:" << std::endl;
-    for (auto& t: original.transitions())
-    {
-        if (t.arcsIn.size() == 0u)
-            continue;
-
-        file << "# " << t.key << "(t) = min(";
-        std::string separator1;
-        for (auto& ai: t.arcsIn)
-        {
-            file << separator1;
-            file << ai->tokensIn() << " + ";
-            std::string separator2;
-            for (auto& ao: ai->from.arcsIn)
-            {
-                file << separator2;
-                file << ao->from.key << "(t - " << ao->duration << ")";
-                separator2 = ", ";
-            }
-            separator1 = ", ";
-        }
-        file << ");" << std::endl;
-    }
-
-    // Show the event graph to its Max-Plus dater form
+    file << this->showCounterForm().str();
     file << std::endl;
-    file << "## Timed event graph represented as its dater form:" << std::endl;
-    for (auto& t: original.transitions())
-    {
-        if (t.arcsIn.size() == 0u)
-            continue;
-
-        file << "# " << t.key << "(n) = max(";
-        std::string separator1;
-        for (auto& ai: t.arcsIn)
-        {
-            file << separator1;
-            std::string separator2;
-            for (auto& ao: ai->from.arcsIn)
-            {
-                file << separator2;
-                file << ao->duration << " + " << ao->from.key
-                          << "(n - " << ai->tokensIn() << ")";
-                separator2 = ", ";
-            }
-            separator1 = ", ";
-        }
-        file << ");" << std::endl;
-    }
+    file << this->showDaterForm().str();
 
     // Compute the syslin as Julia code using the Max-Plus package
     // X(n) = D X(n) ⨁ A X(n-1) ⨁ B U(n)
     // Y(n) = C X(n)
-    SparseMatrix D, A, B, C; canonical.toSysLin(D, A, B, C);
+    SparseMatrix D; SparseMatrix A; SparseMatrix B; SparseMatrix C;
+    canonical.toSysLin(D, A, B, C, nb_inputs, nb_states, nb_outputs);
+
     file << std::endl;
     file << "## Max-Plus implicit linear dynamic system of the dater form:" << std::endl;
     file << "# X(n) = D X(n) ⨁ A X(n-1) ⨁ B U(n)" << std::endl;
@@ -461,37 +486,72 @@ static bool exportToJulia(PetriNet& original, PetriNet& canonical, std::string c
 }
 
 //------------------------------------------------------------------------------
-bool PetriNet::exportToJulia(std::string const& filename)
+std::stringstream PetriNet::showCounterForm(std::string const& comment) const
 {
-    generateArcsInArcsOut(/*arcs: true*/);
+    std::stringstream ss;
 
-    // Only Petri net with places having a single input and output arcs are
-    // allowed.
-    if (!isEventGraph(/*cannonical*/))
-        return false;
+    ss << comment << "Timed event graph represented as its counter form:" << std::endl;
+    for (auto const& t: this->transitions())
+    {
+        if (t.arcsIn.size() == 0u)
+            continue;
 
-    // TODO quick test check if we have to do the canonical form, this can avoid
-    // duplicating the Petri net
-    // if (!cannonical) {
+        ss << comment << t.key << "(t) = min(";
+        std::string separator1;
+        for (auto const& ai: t.arcsIn)
+        {
+            ss << separator1;
+            ss << ai->tokensIn() << " + ";
+            std::string separator2;
+            for (auto const& ao: ai->from.arcsIn)
+            {
+                ss << separator2;
+                ss << ao->from.key << "(t - " << ao->duration << ")";
+                separator2 = ", ";
+            }
+            separator1 = ", ";
+        }
+        ss << ");" << std::endl;
+    }
 
-    // Duplicate the Petri net since we potentially modify it to transform it to
-    // its canonical form.
-    PetriNet canonical;
-    toCanonicalForm(canonical);
+    return ss;
+}
 
-    return ::exportToJulia(*this, canonical, filename);
+//------------------------------------------------------------------------------
+std::stringstream PetriNet::showDaterForm(std::string const& comment) const
+{
+    std::stringstream ss;
 
-    // TODO
-    // } else { return ::exportToJulia(*this, filename); }
+    ss << comment << "Timed event graph represented as its dater form:" << std::endl;
+    for (auto const& t: this->transitions())
+    {
+        if (t.arcsIn.size() == 0u)
+            continue;
+
+        ss << comment << t.key << "(n) = max(";
+        std::string separator1;
+        for (auto const& ai: t.arcsIn)
+        {
+            ss << separator1;
+            std::string separator2;
+            for (auto const& ao: ai->from.arcsIn)
+            {
+                ss << separator2;
+                ss << ao->duration << " + " << ao->from.key
+                   << "(n - " << ai->tokensIn() << ")";
+                separator2 = ", ";
+            }
+            separator1 = ", ";
+        }
+        ss << ");" << std::endl;
+    }
+
+    return ss;
 }
 
 //------------------------------------------------------------------------------
 bool PetriNet::showCriticalCycle()
 {
-    // Update arcs in/out for all transitions to be sure to generate the correct
-    // net.
-    generateArcsInArcsOut(/*arcs: true*/);
-
     if (!isEventGraph())
         return false;
 
@@ -818,11 +878,7 @@ bool PetriNet::save(std::string const& filename)
 //------------------------------------------------------------------------------
 bool PetriNet::load(std::string const& filename)
 {
-    bool found_places = false;
-    bool found_transitions = false;
-    bool found_arcs = false;
-
-    Spliter s(filename, " \",");
+    Splitter s(filename, " \",");
 
     if (!s)
     {
@@ -833,7 +889,8 @@ bool PetriNet::load(std::string const& filename)
 
     if (s.split() != "{")
     {
-        std::cerr << "Token { missing. Bad JSON file" << std::endl;
+        std::cerr << "Failed loading " << filename
+                  << ". Token { missing. Bad JSON file" << std::endl;
         return false;
     }
 
@@ -844,7 +901,6 @@ bool PetriNet::load(std::string const& filename)
         s.split();
         if ((s.str() == "places") && (s.split() == ":") && (s.split() == "["))
         {
-            found_places = true;
             while (s.split() != "]")
             {
                 int id = convert_to<size_t>(s.str().c_str() + 1u);
@@ -853,7 +909,9 @@ bool PetriNet::load(std::string const& filename)
                 int tokens = convert_to<size_t>(s.split());
                 if ((id < 0) || (tokens < 0))
                 {
-                    std::cerr << "Unique identifiers and tokens shall be > 0" << std::endl;
+                    std::cerr << "Failed loading " << filename
+                              << ". Unique identifiers and tokens shall be > 0"
+                              << std::endl;
                     return false;
                 }
                 addPlace(size_t(id), x, y, size_t(tokens));
@@ -861,7 +919,6 @@ bool PetriNet::load(std::string const& filename)
         }
         else if ((s.str() == "transitions") && (s.split() == ":") && (s.split() == "["))
         {
-            found_transitions = true;
             while (s.split() != "]")
             {
                 int id = convert_to<size_t>(s.str().c_str() + 1u);
@@ -870,7 +927,9 @@ bool PetriNet::load(std::string const& filename)
                 int angle = convert_to<int>(s.split());
                 if (id < 0)
                 {
-                    std::cerr << "Unique identifiers shall be > 0" << std::endl;
+                    std::cerr << "Failed loading " << filename
+                              << ". Unique identifiers shall be > 0"
+                              << std::endl;
                     return false;
                 }
                 addTransition(size_t(id), x, y, angle);
@@ -878,32 +937,38 @@ bool PetriNet::load(std::string const& filename)
         }
         else if ((s.str() == "arcs") && (s.split() == ":") && (s.split() == "["))
         {
-            found_arcs = true;
             while (s.split() != "]")
             {
                 Node* from = findNode(s.str());
                 if (!from)
                 {
-                    std::cerr << "Origin node " << s.str() << " not found" << std::endl;
+                    std::cerr << "Failed loading " << filename
+                              << ". Origin node " << s.str()
+                              << " not found" << std::endl;
                     return false;
                 }
 
                 Node* to = findNode(s.split());
                 if (!to)
                 {
-                    std::cerr << "Destination node " << s.str() << " not found" << std::endl;
+                    std::cerr << "Failed loading " << filename
+                              << ". Destination node " << s.str()
+                              << " not found" << std::endl;
                     return false;
                 }
 
                 float duration = stof(s.split());
                 if (duration < 0.0f)
                 {
-                    std::cout << "Duration " << duration << " shall be > 0" << std::endl;
+                    std::cout << "Failed loading " << filename
+                              << ". Duration " << duration
+                              << " shall be > 0" << std::endl;
                     return false;
                 }
                 if (!addArc(*from, *to, duration))
                 {
-                    std::cerr << "Arc " << from->key << " -> " << to->key
+                    std::cerr << "Failed loading " << filename
+                              << ". Arc " << from->key << " -> " << to->key
                               << " is badly formed" << std::endl;
                     return false;
                 }
@@ -911,19 +976,17 @@ bool PetriNet::load(std::string const& filename)
         }
         else if (s.str() == "}")
         {
-            if (!found_places)
-                std::cerr << "The JSON file did not contained Places" << std::endl;
-            if (!found_transitions)
-                std::cerr << "The JSON file did not contained Transitions" << std::endl;
-            if (!found_arcs)
-                std::cerr << "The JSON file did not contained Arcs" << std::endl;
-
-            if (!(found_places && found_transitions && found_arcs))
-                return false;
+            // End of the file
+        }
+        else if (s.str() == "[]")
+        {
+            // Do nothing
         }
         else if (s.str() != "")
         {
-            std::cerr << "Key " << s.str() << " is not a valid token" << std::endl;
+            std::cerr << "Failed loading " << filename
+                      << ". Key " << s.str() << " is not a valid token"
+                      << std::endl;
             return false;
         }
     }

@@ -25,32 +25,10 @@
 #include "Settings.hpp"
 #include <iomanip>
 
-// -----------------------------------------------------------------------------
-// Equivalent to the main() but separated to allow to export function and create
-// shared library.
-int entry_point()
-{
-    Application application(800, 600, "Timed Petri Net Editor");
-    PetriEditor editor(application.renderer());
-    editor.bgColor = sf::Color(255,255,255,255);
-
-    try
-    {
-        application.push(editor);
-        application.loop();
-    }
-    catch (std::string const& msg)
-    {
-        std::cerr << "Fatal: " << msg << std::endl;
-        return EXIT_FAILURE;
-    }
-
-    return EXIT_SUCCESS;
-}
-
 //------------------------------------------------------------------------------
-PetriEditor::PetriEditor(sf::RenderWindow& renderer)
+PetriEditor::PetriEditor(sf::RenderWindow& renderer, PetriNet& net)
     : GUIStates("Petri Net Editor", renderer),
+      m_petri_net(net),
       m_figure_place(PLACE_RADIUS),
       m_figure_token(TOKEN_RADIUS),
       m_figure_trans(sf::Vector2f(TRANS_HEIGHT, TRANS_WIDTH)),

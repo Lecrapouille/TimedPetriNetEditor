@@ -28,14 +28,14 @@
 //! parsed. Indeed, we do not use third part JSON library for reading saved file
 //! and load Petri nets but we read it directly since the format is very basic.
 // *****************************************************************************
-class Spliter
+class Splitter
 {
 public:
 
     //! \brief Open the file to be split and memorize delimiter chars.
     //! \param[in] filepath Open the file to be split
     //! \param[in] list of delimiter chars for string separation.
-    Spliter(std::string const& filepath, std::string const& del)
+    Splitter(std::string const& filepath, std::string const& del)
         : is(filepath), delimiters(del)
     {}
 

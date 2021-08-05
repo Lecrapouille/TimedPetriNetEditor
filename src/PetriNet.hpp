@@ -155,6 +155,13 @@ public:
         s_next_id = std::max(s_next_id.load(), id) + 1u;
     }
 
+    static std::string to_str(size_t const id)
+    {
+        std::string strid("P");
+        strid += std::to_string(id);
+        return strid;
+    }
+
     //! \brief the number of tokens hold by the Place
     size_t tokens;
 
@@ -203,6 +210,13 @@ public:
           angle(angle_)
     {
         s_next_id = std::max(s_next_id.load(), id) + 1u;
+    }
+
+    static std::string to_str(size_t const id)
+    {
+        std::string strid("T");
+        strid += std::to_string(id);
+        return strid;
     }
 
     //--------------------------------------------------------------------------
@@ -464,7 +478,7 @@ public:
     //! \return true if the arc is valid and has been added, else return false
     //! if an arc is already present or nodes have the same type.
     //--------------------------------------------------------------------------
-    bool addArc(Node& from, Node& to, float duration = 0.0f)
+    bool addArc(Node& from, Node& to, float const duration = 0.0f)
     {
         if (from.type == to.type)
             return false;
@@ -539,6 +553,9 @@ public:
     //--------------------------------------------------------------------------
     bool showCriticalCycle();
 
+    std::stringstream showCounterForm(std::string const& comment = "# ") const;
+    std::stringstream showDaterForm(std::string const& comment = "# ") const;
+
     //--------------------------------------------------------------------------
     //! \brief Export the Petri net as Grafcet in C++ header file.
     //! \param[in] filename the path of h++ file. Should have the .hpp or .h
@@ -575,7 +592,7 @@ public:
     //! \note This will work only if isEventGraph() returned true.
     //! TODO return false if the Petri net is not an event graph.
     //--------------------------------------------------------------------------
-    void toSysLin(SparseMatrix& D, SparseMatrix& A, SparseMatrix& B, SparseMatrix& C); //TODO const;
+    bool toSysLin(SparseMatrix& D, SparseMatrix& A, SparseMatrix& B, SparseMatrix& C); //TODO const;
 
     //--------------------------------------------------------------------------
     //! \brief Transform the Event Graph to canonical form
@@ -602,6 +619,11 @@ public:
     //! transitions and places in the Petri net.
     //--------------------------------------------------------------------------
     void generateArcsInArcsOut();
+
+private:
+
+    void toSysLin(SparseMatrix& D, SparseMatrix& A, SparseMatrix& B, SparseMatrix& C,
+                  size_t const nb_inputs, size_t const nb_states, size_t const nb_outputs);
 
 private:
 

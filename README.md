@@ -11,17 +11,17 @@ to a YouTube link showing how to edit a basic net.
 *Fig 1 - A timed Petri net (made with this editor).*
 
 Why another Petri editor ? Because many Petri node editors in GitHub are no
-longer maintained (> 7 years) or made in foreign languages (C#, Java), foreign
-compiler (Visual Studio), foreign operating systems (Windows) or their code is
-too complex to add my own extensions. In the future, this editor will complete
-my [MaxPlus](https://github.com/Lecrapouille/MaxPlus.jl) toolbox for Julia
-(still in gestation) by adding a graphical interface (for the moment there is no
-Petri net editors available for Julia).
+longer maintained (> 7 years) or that I cannot personaly compile or use (Windows
+system, Visual Studio compiler, C#, Java ..) or the code is too complex to add
+my own extensions. In the future, this editor will complete my
+[MaxPlus](https://github.com/Lecrapouille/MaxPlus.jl) toolbox for Julia (still
+in gestation) by adding a graphical interface (for the moment there is no Petri
+net editors available for Julia).
 
 ## How to compile the project?
 
 Prerequisites to compile this project are:
-- g++ or clang++ compiler for C++11.
+- g++ or clang++ compiler for C++14 (because of `std::make_unique` is used).
 - SFML: `sudo apt-get install libsfml-dev`
 
 To download the code source, type the following command on a Linux console:
@@ -33,20 +33,22 @@ To compile the project:
 ```sh
 cd TimedPetriNetEditor/
 make
+
+# Or to use all your CPU cores for compiling:
+# make -j`nproc --all`
 ```
 
-To use it, you have to install it on your Linux system:
+To use the application, you have to install it on your Linux system first:
 ```sh
 sudo make install
 ```
 
 This will install the binary `TimedPetriNetEditor` in `/usr/bin`, a shared
-library `libtpne.so` in `/usr/lib` and the folder `data/` in
-`/usr/share/TimedPetriNetEditor/data/`. If you does not desire to call `make
-install` you will have to adapt the `DEFINES` in Makefile to indicate the path
-of the `data/` folder.
+library `libtpne.so` in `/usr/lib` and the folder `TimedPetriNetEditor/data/` in
+`/usr/share`. If you does not desire to call `make install` you will have to adapt
+the `DEFINES` in Makefile to indicate the path of the `data/` folder.
 
-Once installed, to run the apply:
+Once installed, to call the application:
 ```sh
 TimedPetriNetEditor
 ```
@@ -67,8 +69,8 @@ this Julia file to indicate the correct path of the shared library `libtpne.so`.
 
 ## Usage of the Editor
 
-The editor does not offer any buttons, therefore all actions are directly made from
-the mouse and the keyboard.
+The editor does not offer any buttons, therefore all actions are directly made
+from the mouse and the keyboard.
 - `Left mouse button pressed`: add a new place. Note: this action is ignored if
   you are trying to create a node on an already existing node (place or
   transition).
@@ -116,13 +118,14 @@ the mouse and the keyboard.
   the simulation the user can add new token to any desired places selected by
   the mouse cursor and the `+` key.
 - Showing critical cycles for graph event does not support having transitions
-  without predecessor (inputs). For example `T0 -> P0 -> T1`. Workaround: Either
-  modify your net either by removing your inputs or make inputs cycling to
-  themselves with a `-inf` time (which makes duality issues).
+  without predecessor (inputs). For example this Petri net: `T0 -> P0 -> T1`.
+  Workaround: Either modify your net either by removing your inputs or make inputs
+  cycling to themselves with a `-inf` time (which makes duality issues).
 - Not all error messages are displayed on the GUI. Read the logs on your Unix
   console.
 - We cannot move or zoom the Petri net or select several nodes. We cannot change
-  the color of nodes and arcs.
+  the color of nodes and arcs. We cannot merge several nodes into a sub-net for
+  simplifying the net.
 
 ## What are Petri nets, timed Petri nets, timed event graph ?
 
@@ -137,7 +140,7 @@ and transitions, respectively depicted as circles and rectangles. A place can
 contain zero or any positive number of tokens, usually depicted either as black
 circles or as numbers. Arcs, depicted as arrows. An arc allows to direct two
 nodes of different type: either from a place to a transition or from a
-transition to a place. In timed Petri nets, place -> transition arcs are
+transition to a place. In timed Petri nets, "place -> transition" arcs are
 valuated with a strictly positive duration value which simulates the time needed
 by the place to perform the associated action. A transition is activated if all
 places connected to it as inputs contain at least one token. When a transition
@@ -154,26 +157,26 @@ places (`P0, P1, P2, P3`). Places `P0` and `P1` have 1 token each, the place
 `P1` has 2 tokens and the place `P3` has no token. The arc `T0 -> P1` has 3
 units of times to simulate the fact that `P1` will need this duration to perform
 its action. Transitions `T0, T1, T2, T4` are activated but the transition `T3` is
-disabled.
+not activated.
 
 **Note to developers concerning unique identifiers**
 
 In this editor, for a given type (place and transitions), unique identifiers are
 unsigned integers `0 .. N`.  Numbers shall be consecutive and without
-"holes". This is important when generating matrices: indices of the matrix will
-directly match unique identifiers and therefore no lookup table is needed. To
-distinguish the type of node a 'T' and 'P' char is also prepend to the
-number. Arcs have no identifier because their relation of directing nodes is
-unique since we do not manage multi arcs. When deleting a place (or a
-transition) the latest place (or latest transition) in the container gets the
-unique identifier of the deleted element to guarantee consecutive id and without
-"holes".
+"holes". This is important when generating graphes defined by adjacency
+matrices: indices of the matrix will directly match unique identifiers and
+therefore no lookup table is needed. To distinguish the type of node a `T` or
+`P` char is also prepend to the number. Arcs have no identifier because their
+relation of directing nodes is unique since this editor does not manage multi
+arcs. Therefore, when deleting a place (or a transition) the latest place (or
+latest transition) in the container gets the unique identifier of the deleted
+element to guarantee consecutive identifiers without "holes".
 
 ### Dynamic simulation
 
 When running the simulation with this editor, tokens will transit along arcs of
 the net. When transitions are activated, tokens are instantaneously burnt from
-places and directly teleported to transitions. Then, they will move along the
+places and directly "teleported" to transitions. Then, they will move along the
 arc from the transition to the place. This "travel" will hold the number of
 seconds indicated by the arc. This symbolized the time needed to the Place to
 perform its action. A fading effect will help you to show you which arcs and
@@ -269,7 +272,7 @@ and for more information about max-plus algebra, see my
 [MaxPlus](https://github.com/Lecrapouille/MaxPlus.jl) Julia package which
 contains tutorials explaining more deeply this algebra.
 
-The min-plus algebra is in this case less convenient since dater form is more
+The min-plus algebra is, in this case, less convenient since dater form is more
 friendly than the counter form since delays are shorter. Indeed, in a real-time
 system the number of resources (tokens) are reduced compared to duration needed
 to perform tasks (duration on arcs) which can be very long. And, thanks to the
@@ -287,8 +290,8 @@ holding each a single token. For system inputs and system outputs having one
 token in the place, we can simply add an extra empty place.
 
 The graph in figure 2 is not canonical since `P0` has two tokens. The following
-figure is the same event graph but on its canonical form: one token `P0` has been
-transferred to the newly created `P5` place.
+figure is the same event graph but on its canonical form: one token `P0` has
+been transferred to the newly created `P5` place.
 
 ![CanonicalEventGraph](doc/CanoEventGraph01.png)
 
@@ -321,10 +324,10 @@ the observation matrix, `A` the state matrix and `D` the implicit matrix. `U`
 the column vector of system inputs (transitions with no predecessor), `Y` the
 system outputs (transitions with no successor) and `X` the systems states as
 column vector (transitions with successor and predecessor), `n` in `X(n)`,
-`U(n)`, `Y(n)` are places with no token and `n-1` in `X(n-1)` are places
-having a single token. Note: that is why, in the previous section, we said that
+`U(n)`, `Y(n)` are places with no token and `n-1` in `X(n-1)` are places having
+a single token. Note: that is why, in the previous section, we said that
 canonical form has its input and output places with no token. This editor can
-generate these max-plus matrices (for Julia), for example from figure 3:
+generate these max-plus sparse matrices (for Julia), for example from figure 3:
 
 ```
     | .  .  .  .  . |       | .  .  .  .  0 |
@@ -337,10 +340,11 @@ D = | .  3  .  1  . |,  A = | .  .  .  .  . |
 
 Since this particular net has no input and outputs, there is no U, Y, B, C
 matrices. Note: `.` is the compact form of the max-plus number `ε` which is the
-`-∞` in classic algebra and means that there is no existing arc. Let suppose
-that matrix indices start from `0`, then `D[1,0]` holds the duration 5 (unit of
-times) and 0 token (the arc `T0 -> P1 -> T1`).  `A[0,4]` holds the duration 0
-(unit of times) and 1 token (the arc `T4 -> P5 -> T0`).
+`-∞` in classic algebra and means that there is no existing arc (usually, these
+kind of matrices are sparse since they can be huge but with few of elements
+stored).  Let suppose that matrix indices start from `0`, then `D[1,0]` holds
+the duration 5 (unit of times) and 0 token (the arc `T0 -> P1 -> T1`).  `A[0,4]`
+holds the duration 0 (unit of times) and 1 token (the arc `T4 -> P5 -> T0`).
 
 This kind of systems are interesting for real-time systems because they can show
 to the critical circuit of the system (in duration). This editor can show the
@@ -390,14 +394,114 @@ convention is generally the follow: `M . x` with `x` a column vector. This
 editor can generate some Julia script. Note that `ε` in max-plus algebra means
 that there is no existing arc.
 
-## Generate C++ code file (Grafcet)
+## Interface with Julia
+
+This is still a in gestation API. The path of the shared library `libtpne.so`
+(compiled by the Makefile) has to be known to be used by Julia. For the moment
+you need the `dev` branch of [MaxPlus](https://github.com/Lecrapouille/MaxPlus.jl)
+Julia package (WIP).
+
+From your Julia REPL, you can type this kind of code:
+
+```julia
+using SparseArrays, MaxPlus
+
+# Note: soon will included in MaxPlus.jl
+include("src/julia/TimedPetriNetEditor.jl")
+
+# Create an empty Petri net and return its handle. You can create several nets.
+pn = petri_net()
+
+# Or create new Petri net by loading it.
+pn2 = petri_net("/home/qq/petri.json")
+
+# Duplicate the net
+pn3 = petri_net(pn)
+
+# Has no places and no transitions ? Return true in this case.
+is_empty(pn)
+
+# Create places. X-Y coordinate (3.15, 4.15) and 5 tokens for Place 0.
+# Return its identifier.
+p0 = add_place!(pn, 3.15, 4.15, 5)
+p1 = add_place!(pn, 4.0, 5.0, 0)
+
+# Set/Get the number of tokens
+tks = tokens(pn, p0)
+tokens!(pn, p0, 2)
+
+# Create transitions. X-Y coordinate (1.0, 2.0) for Transition 0.
+# Return its identifier.
+t0 = add_transition!(pn, 1.0, 2.0)
+t1 = add_transition!(pn, 3.0, 4.0)
+
+# Remove nodes. Be careful the handle of latest inserted node is invalidated
+remove_place!(pn, p1)
+remove_transition!(pn, t0)
+
+# Get the number of nodes
+count_transitions(pn)
+count_places(pn)
+
+# Get the list of places
+places(pn)
+
+# Get the list of transitions
+transitions(pn)
+
+# TODO arcs
+
+# Clear the Petri net (remove all nodes and arcs)
+clear!(pn)
+
+# Launch the GUI editor to edit the net graphically. Once presed ESCAPE key,
+# the editor will quit and modifications applied on the net.
+editor!(pn)
+
+# Safer version of editor!() the Petri net is not modified but a new one
+# is created.
+pn4 = editor(pn)
+
+# You can save the Petri net to JSON file
+save(pn, "/home/qq/petri.json")
+
+# Or replace it
+load!(pn, "/home/qq/petri.json")
+
+# Check if Petri net is an event graph
+is_event_graph(pn2)
+
+# If the Petri net is an event graph, you can return the canonical form
+pn3 = canonic(pn)
+
+# Show the counter and dater form
+counter(pn)
+dater(pn)
+
+# If the Petri net is an event graph, you can generate the graph the max-plus
+# adjacency matrices (that could be used with SimpleGraphs.jl).
+N,T = to_graph(pn)
+full(N)
+full(T)
+
+# If the Petri net is an event graph, you can generate the implicit dynamic
+# linear Max-Plus system.
+S = to_syslin(pn)
+show(S.D)
+show(S.A)
+show(S.B)
+show(S.C)
+show(S.x0)
+```
+
+## Generate C++ code file (GRAFCET aka sequential function chart)
 
 After watching this nice french YouTube video https://youtu.be/v5FwJvtGaEw, in
-where Grafcet is created manually in C for Arduino, I added my own code
-generator for Grafcet. But since my project mainly concerns Petri net which are
-less general than Grafcet, and therefore does not offer you to edit
-transitivities, you will have to write manually the missing methods in your own
-C++ file:
+where GRAFCET is created manually in C for Arduino, I added my own code
+generating GRAFCET in a single C++ header file. But since my project mainly
+concerns Petri net which are less general than GRAFCET, and therefore does not
+offer you to edit transitivities, you will have to write manually the missing
+methods in your own C++ file:
 - `initIO()` to let you initialize input/output of the system (ADC, PWM,
   GPIO ...)
 - `X0()`, `X1()` ... to let you add the code for actions when places are
@@ -407,7 +511,7 @@ C++ file:
   transition (usually condition depending on system sensors). Return `true` when
   the transition is enabled. There is one method to write by transitions.
 
-Here a small example on how to call your generated Grafcet as
+Here a small example on how to call your generated GRAFCET as
 `Grafcet-gen.hpp`. By default, the C++ namespace is `generated` but this can be
 changed by parameters of the method `PetriNet::exportToCpp(filepath,
 namespace)`.
@@ -422,7 +526,7 @@ void Grafcet::initIO() { std::cout << "Init system, inputs, outputs" << std::end
 bool Grafcet::T0() const { return true; } // Transitivity (bool expression. Here: always true)
 void Grafcet::X0() { std::cout << "Do Place 0 actions" << std::endl; }
 ...
-// Idem for all transitions of the Grafcet
+// Idem for all transitions of the GRAFCET
 
 } // namespace generated
 

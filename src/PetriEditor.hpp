@@ -26,12 +26,6 @@
 #  include "utils/Animation.hpp"
 #  include "PetriNet.hpp"
 
-// ****************************************************************************
-//! \brief Timed Petri Net Editor entry point. Use this function for shared library
-//! and allow external application (such as Julia lang) to use this application.
-// ****************************************************************************
-extern "C" int entry_point();
-
 // *****************************************************************************
 //! \brief Graphic representation of the Petri net using the SFML library.
 // *****************************************************************************
@@ -39,7 +33,7 @@ class PetriEditor: public GUIStates
 {
 public:
 
-    PetriEditor(sf::RenderWindow& render);
+    PetriEditor(sf::RenderWindow& render, PetriNet& net);
     ~PetriEditor();
 
 private: // Derived from GUI
@@ -159,6 +153,8 @@ private:
         STATE_ANIMATING //! Simulation on-going: animate tokens.
     };
 
+    //! \brief The Petri net.
+    PetriNet& m_petri_net;
     //! \brief Set true if the thread of the application shall stay alive.
     //! Set false to quit the application.
     std::atomic<bool> m_running{true};
@@ -196,8 +192,6 @@ private:
     float m_x = 0.0f; float m_y = 0.0f; bool m_arc_from_unknown_node = false;
     //! \brief Mouse cursor position.
     sf::Vector2f m_mouse;
-    //! \brief The Petri net.
-    PetriNet m_petri_net;
     //! \brief Animation of tokens when transitioning from Transitions to Places.
     std::vector<AnimatedToken> m_animations;
 };
