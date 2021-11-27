@@ -45,6 +45,10 @@ struct AnimatedToken
         return *this;
     }
 
+    AnimatedToken(const AnimatedToken&) = default;
+    AnimatedToken(AnimatedToken&&) = default;
+    AnimatedToken& operator=(AnimatedToken&&) = default;
+
     //--------------------------------------------------------------------------
     //! \brief Constructor.
     //! \param[in] arc: to which arc token are moving along. Shall be an arc

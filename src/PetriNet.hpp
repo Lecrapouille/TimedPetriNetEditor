@@ -79,6 +79,10 @@ public:
         return *this;
     }
 
+    Node(const Node&) = default;
+    Node(Node&&) = default;
+    Node& operator=(Node&&) = default;
+
     //--------------------------------------------------------------------------
     //! \brief Compare node with another node. Perform a check ont the type of
     //! node and on the unique identifier.
@@ -286,6 +290,10 @@ public:
         new (this) Arc(obj); // copy construct in place
         return *this;
     }
+
+    Arc(const Arc&) = default;
+    Arc(Arc&&) = default;
+    Arc& operator=(Arc&&) = default;
 
     //--------------------------------------------------------------------------
     inline size_t& tokensIn()
