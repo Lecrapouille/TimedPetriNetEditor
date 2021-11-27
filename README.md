@@ -38,17 +38,18 @@ make
 # make -j`nproc --all`
 ```
 
-To use the application, you have to install it on your Linux system first:
+To use the application, you **have to** install it on your Linux system first:
 ```sh
 sudo make install
 ```
 
-This will install the binary `TimedPetriNetEditor` in `/usr/bin`, a shared
-library `libtpne.so` in `/usr/lib` and the folder `TimedPetriNetEditor/data/` in
-`/usr/share`. If you does not desire to call `make install` you will have to adapt
-the `DEFINES` in Makefile to indicate the path of the `data/` folder.
+Indeed, this will install the binary `TimedPetriNetEditor` in `/usr/bin`, and
+most important, a shared library `libtpne.so` in `/usr/lib` and the folder
+`TimedPetriNetEditor/data/` in `/usr/share`. If you does not desire to call
+`make install` you will have to adapt the `DEFINES` in Makefile to indicate the
+path of the `data/` folder.
 
-Once installed, to call the application:
+Once installed, call the application:
 ```sh
 TimedPetriNetEditor
 ```
