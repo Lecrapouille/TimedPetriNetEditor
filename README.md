@@ -607,6 +607,7 @@ splitter (see the `class Tokenizer` in the code).
   Petri net and discrete time event systems.
 - (en) https://github.com/igorakim/pnet-simulator A online Petri net editor that
   inspired my GUI.
+- (fr) https://youtu.be/l1F2dIA90s0 Programmation d'un Grafcet en C
 - (fr) https://sites.google.com/view/apimou/accueil A Grafcet editor and code
   generation for Arduino.
 - (fr) https://youtu.be/v5FwJvtGaEw A lesson about Grafcet and code for Arduino.
