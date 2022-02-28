@@ -24,6 +24,7 @@
 #  include <SFML/Graphics.hpp>
 #  include "utils/Utils.hpp"
 #  include "Settings.hpp"
+#  include <cmath>
 
 // *****************************************************************************
 //! \brief Class allowing to draw an arrow. Arrows are needed for drawing Petri
