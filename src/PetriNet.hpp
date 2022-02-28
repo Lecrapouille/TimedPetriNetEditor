@@ -32,7 +32,7 @@
 class Arc;
 
 // *****************************************************************************
-//! \brief Since Petri nets are bipartite graph there is two kind of nodes:
+//! \brief Since Petri nets are bipartite graph there are two kind of nodes:
 //! place and transition. This struct allows to factorize the code of derived
 //! struct Place and Transition and therefore shall not be used directly as
 //! instance.
@@ -69,19 +69,39 @@ public:
     }
 
     //--------------------------------------------------------------------------
-    //! \brief Copy constructor needed because this class has constants variable
+    //! \brief Copy operator needed because this class has constants variable
     //! members.
     //--------------------------------------------------------------------------
-    Node& operator=(const Node& obj)
+    Node& operator=(Node const& other)
     {
         this->~Node(); // destroy
-        new (this) Node(obj); // copy construct in place
+        new (this) Node(other); // copy construct in place
         return *this;
     }
 
-    Node(const Node&) = default;
-    Node(Node&&) = default;
-    Node& operator=(Node&&) = default;
+    //--------------------------------------------------------------------------
+    //! \brief Needed to remove compilation warnings
+    //--------------------------------------------------------------------------
+    Node(Node const& other)
+        : Node(other.type, other.id, other.x, other.y)
+    {}
+
+    //--------------------------------------------------------------------------
+    //! \brief Needed to remove compilation warnings
+    //--------------------------------------------------------------------------
+    Node(Node&& other)
+        : Node(other.type, other.id, other.x, other.y)
+    {}
+
+    //--------------------------------------------------------------------------
+    //! \brief Needed to remove compilation warnings
+    //--------------------------------------------------------------------------
+    Node& operator=(Node&& other)
+    {
+        this->~Node(); // destroy
+        new (this) Node(other); // copy construct in place
+        return *this;
+    }
 
     //--------------------------------------------------------------------------
     //! \brief Compare node with another node. Perform a check ont the type of
@@ -92,7 +112,7 @@ public:
         return (type == other.type) && (id == other.id);
     }
 
-    //! \brief Unique identifier (auto-incremented from 0).
+    //! \brief Unique identifier (auto-incremented from 0 by the derived class).
     size_t const id;
     //! \brief Petri Place or Petri Transition.
     Type const type;
@@ -102,9 +122,9 @@ public:
     float y;
     //! \brief Unique node identifier as string. It is formed by the 'P' char
     //! for place or by the 'T' char for transition followed by the unique
-    //! identifier (i.e. P0, P1, T0, T1 ...)
+    //! identifier (i.e. "P0", "P1", "T0", "T1", ...)
     std::string const key;
-    //! \brief text display near the place (by default initialized with key
+    //! \brief Text displayed near the place (by default initialized with \c key
     //! string).
     std::string caption;
     //! \brief Timer for fading colors.
@@ -139,6 +159,7 @@ public:
     //! \brief Constructor. To be used when the user clicked on the GUI.
     //! \param[in] x: X-axis coordinate in the window needed for the display.
     //! \param[in] y: Y-axis coordinate in the window needed for the display.
+    //! \param[in] tok: the number of tokens (not checked ie if > 1 for Grafcet).
     //--------------------------------------------------------------------------
     Place(float const x, float const y, size_t const tok = 0)
         : Node(Node::Type::Place, s_next_id++, x, y),
@@ -147,7 +168,7 @@ public:
 
     //--------------------------------------------------------------------------
     //! \brief Constructor. To be used when loading a Petri net from JSON file.
-    //! \param[in] id: unique node identifier.
+    //! \param[in] id: unique node identifier. Shall be unique.
     //! \param[in] x: X-axis coordinate in the window needed for the display.
     //! \param[in] y: Y-axis coordinate in the window needed for the display.
     //! \param[in] tok: Initial number of tokens in the place.
@@ -159,6 +180,9 @@ public:
         s_next_id = std::max(s_next_id.load(), id) + 1u;
     }
 
+    //--------------------------------------------------------------------------
+    //! \brief Stringify: return "P42" for example.
+    //--------------------------------------------------------------------------
     static std::string to_str(size_t const id)
     {
         std::string strid("P");
@@ -166,25 +190,27 @@ public:
         return strid;
     }
 
-    //! \brief the number of tokens hold by the Place
+    //! \brief the number of tokens hold by the Place. Public access is fine
+    //! since this will facilitate its access during the simulation.
     size_t tokens;
 
 private:
 
-    //! \brief Before starting the simulation on the Petri net we have to
+    //! \brief Before starting the simulation of the Petri net, we have to
     //! save the number of tokens to allow restoring initial states when the
-    //! simulation is done.
+    //! simulation is finished.
     size_t m_backup_tokens;
     //! \brief Auto increment unique identifier. Start from 0 (code placed in
-    //! the cpp file).
+    //! the cpp file). Note: their reset is possible through class friendship.
     static std::atomic<size_t> s_next_id;
 };
 
 // *****************************************************************************
 //! \brief Petri Transition node. In Petri transitivities are always true and
 //! when in each above Places, all of them have at least one token they let pass
-//! tokens. In Grafcet, transitivities are dynamic and usually depends on
-//! systems inputs (sensors). This class does not managed Grafcet.
+//! tokens. In Grafcet, transitivities have guards (boolean expression, usually
+//! depending on external systems events (inputs, sensors, alarm ...).
+//! FIXME This class does not managed Grafcet.
 // *****************************************************************************
 class Transition : public Node
 {
@@ -216,6 +242,9 @@ public:
         s_next_id = std::max(s_next_id.load(), id) + 1u;
     }
 
+    //--------------------------------------------------------------------------
+    //! \brief Stringify: return "T42" for example.
+    //--------------------------------------------------------------------------
     static std::string to_str(size_t const id)
     {
         std::string strid("T");
@@ -224,8 +253,16 @@ public:
     }
 
     //--------------------------------------------------------------------------
+    //! \brief Check if the transitivity is active and return the number of
+    //! tokens burnt (return 0 if the transitiviy is disabled).
+    //!
+    //! \note The theory would return the maximum possibe of tokens that can be
+    //! burnt but for the animation we fire one by one.
+    //--------------------------------------------------------------------------
     size_t canFire();
 
+    //--------------------------------------------------------------------------
+    //! \brief Return true if the transition comes from an input place.
     //--------------------------------------------------------------------------
     inline bool isInput() const
     {
@@ -233,23 +270,28 @@ public:
     }
 
     //--------------------------------------------------------------------------
+    //! \brief Return true if the transition goes to an output place.
+    //--------------------------------------------------------------------------
     inline bool isOutput() const
     {
         return (arcsIn.size() > 0u) && (arcsOut.size() == 0u);
     }
 
     //--------------------------------------------------------------------------
+    //! \brief Return true is the transition is not an input or an output for
+    //! the system.
+    //--------------------------------------------------------------------------
     inline bool isState() const
     {
         return (arcsIn.size() > 0u) && (arcsOut.size() > 0u);
     }
 
-    //! \brief Transitions are rendered as rectangle. Allow to turn it when
-    //! displayed this allows to display horizontal or vertical transition.
+    //! \brief Transitions are depicted by rectangles. We allow to rotate it
+    //! to have horizontal, vertical or diagonal shape transitions.
     int angle = 0u;
 
-    //! \brief Temporary matrix index used when building max-plus system linear.
-    int mi = 0u;
+    //! \brief Temporary matrix index used when building max-plus linear system.
+    int index = 0u;
 
 private:
 
@@ -259,19 +301,20 @@ private:
 };
 
 // *****************************************************************************
-//! \brief Petri nodes of different types are directed by arcs. Therefore arcs
-//! only make the link between Place to Transition or Transition to Place.
+//! \brief Two Petri nodes are directed by arcs. Origin and destination nodes
+//! shall be of different types. Therefore arcs only make the link between Place
+//! to Transition or Transition to Place.
 // *****************************************************************************
 class Arc
 {
 public:
 
     //--------------------------------------------------------------------------
-    //! \brief Constructor. This method does not check if the two nodes have
-    //! different types. This shall be made by the caller class.
+    //! \brief Constructor. This method expects the two nodes have different
+    //! types. The check shall be made by the caller class.
     //! \param[in] from: Origin node (Place or Transition).
     //! \param[in] to: Destination node (Place or Transition).
-    //! \note Nodes shall have different types. No check is made here.
+    //! \note Nodes shall have different types. Assertion is made here.
     //--------------------------------------------------------------------------
     Arc(Node& from_, Node& to_, float duration_ = 0.0f)
         : from(from_), to(to_),
@@ -284,27 +327,53 @@ public:
     //--------------------------------------------------------------------------
     //! \brief Hack needed because of references
     //--------------------------------------------------------------------------
-    Arc& operator=(const Arc& obj)
+    Arc& operator=(Arc const& other)
     {
         this->~Arc(); // destroy
-        new (this) Arc(obj); // copy construct in place
+        new (this) Arc(other); // copy construct in place
         return *this;
     }
 
-    Arc(const Arc&) = default;
-    Arc(Arc&&) = default;
-    Arc& operator=(Arc&&) = default;
+    //--------------------------------------------------------------------------
+    //! \brief Needed to remove compilation warnings
+    //--------------------------------------------------------------------------
+    Arc(Arc const& other)
+        : Arc(other.from, other.to, other.duration)
+    {}
 
     //--------------------------------------------------------------------------
-    inline size_t& tokensIn()
+    //! \brief Needed to remove compilation warnings
+    //--------------------------------------------------------------------------
+    Arc(Arc&& other)
+        : Arc(other.from, other.to, other.duration)
+    {}
+
+    //--------------------------------------------------------------------------
+    //! \brief Needed to remove compilation warnings
+    //--------------------------------------------------------------------------
+    Arc& operator=(Arc&& other)
     {
-        return reinterpret_cast<Place*>(&from)->tokens;
+        this->~Arc(); // destroy
+        new (this) Arc(other); // copy construct in place
+        return *this;
     }
 
     //--------------------------------------------------------------------------
+    //! \brief Return the reference to the number of tokens from the origin
+    //! Place.
+    //--------------------------------------------------------------------------
+    inline size_t& tokensIn()
+    {
+        return reinterpret_cast<Place&>(from).tokens;
+    }
+
+    //--------------------------------------------------------------------------
+    //! \brief Return the reference to the number of tokens from the destination
+    //! Place.
+    //--------------------------------------------------------------------------
     inline size_t& tokensOut()
     {
-        return reinterpret_cast<Place*>(&to)->tokens;
+        return reinterpret_cast<Place&>(to).tokens;
     }
 
     //! \brief Origin node (Place or Transition). Its type shall be different to
@@ -332,7 +401,7 @@ public:
 
 // *****************************************************************************
 //! \brief Container class holding and managing Places, Transitions and
-//! Arcs. This class does not manage simulation. FIXME: to be defined since
+//! Arcs. This class does not manage simulation. FIXME to be defined: since
 //! currently the PetriEditor is doing the simulation which is mainly animations
 //! with some basic features such as burning tokens ...
 // *****************************************************************************
@@ -343,13 +412,13 @@ public:
     //--------------------------------------------------------------------------
     //! \brief Copy constructors.
     //--------------------------------------------------------------------------
-    PetriNet& operator=(const PetriNet& other)
+    PetriNet& operator=(PetriNet const& other)
     {
-        assert(this != &other);
+        if (this != &other)
         {
             m_places = other.m_places;
             m_transitions = other.m_transitions;
-            m_arcs.clear();
+            m_arcs.clear(); // We have to redo references
             for (auto const& it: other.m_arcs)
             {
                 Node& from = (it.from.type == Node::Type::Place)
@@ -368,6 +437,36 @@ public:
     }
 
     //--------------------------------------------------------------------------
+    //! \brief Default constructor
+    //--------------------------------------------------------------------------
+    PetriNet() = default;
+
+    //--------------------------------------------------------------------------
+    //! \brief Needed to remove compilation warnings
+    //--------------------------------------------------------------------------
+    PetriNet(PetriNet const& other)
+    {
+        if (this != &other)
+        {
+            m_places = other.m_places;
+            m_transitions = other.m_transitions;
+            m_arcs.clear(); // We have to redo references
+            for (auto const& it: other.m_arcs)
+            {
+                Node& from = (it.from.type == Node::Type::Place)
+                             ? reinterpret_cast<Node&>(m_places[it.from.id])
+                             : reinterpret_cast<Node&>(m_transitions[it.from.id]);
+                Node& to = (it.to.type == Node::Type::Place)
+                           ? reinterpret_cast<Node&>(m_places[it.to.id])
+                           : reinterpret_cast<Node&>(m_transitions[it.to.id]);
+                m_arcs.push_back(Arc(from, to, it.duration));
+            }
+
+            generateArcsInArcsOut(/*arcs: true*/);
+        }
+    }
+
+    //--------------------------------------------------------------------------
     //! \brief Remove all nodes and arcs. Reset counters for unique identifiers.
     //--------------------------------------------------------------------------
     void reset()
@@ -381,6 +480,9 @@ public:
     }
 
     //--------------------------------------------------------------------------
+    //! \brief Return true if the Petri nets has no nodes (no places and no
+    //! transitions).
+    //--------------------------------------------------------------------------
     bool isEmpty()
     {
         return (m_places.size() == 0u) && (m_transitions.size() == 0u);
@@ -391,7 +493,8 @@ public:
     //! GUI.
     //! \param[in] x: X-axis coordinate in the window needed for the display.
     //! \param[in] y: Y-axis coordinate in the window needed for the display.
-    //! \return the reference of the inserted element.
+    //! \param[in] tokens: Initial number of tokens in the place.
+    //! \return the reference of the inserted place.
     //--------------------------------------------------------------------------
     Place& addPlace(float const x, float const y, size_t const tokens = 0u)
     {
@@ -406,7 +509,7 @@ public:
     //! \param[in] x: X-axis coordinate in the window needed for the display.
     //! \param[in] y: Y-axis coordinate in the window needed for the display.
     //! \param[in] tokens: Initial number of tokens in the place.
-    //! \return the reference of the inserted element.
+    //! \return the reference of the inserted place.
     //--------------------------------------------------------------------------
     Place& addPlace(size_t const id, float const x, float const y, size_t const tokens)
     {
@@ -415,7 +518,7 @@ public:
     }
 
     //--------------------------------------------------------------------------
-    //! \brief Const getter.
+    //! \brief Const getter. Return the reference to the container of Places.
     //--------------------------------------------------------------------------
     std::deque<Place> const& places() const
     {
@@ -460,7 +563,7 @@ public:
     }
 
     //--------------------------------------------------------------------------
-    //! \brief Const getter.
+    //! \brief Const getter. Return the reference to the container of Transitions.
     //--------------------------------------------------------------------------
     std::deque<Transition> const& transitions() const
     {
@@ -477,7 +580,10 @@ public:
 
     //--------------------------------------------------------------------------
     //! \brief Search and return a place or a transition by its unique
-    //! identifier. Search is O(n) where n is the number of nodes.
+    //! identifier. Search is O(n) where n is the number of nodes. Return
+    //! nullptr if not found.
+    //! \param[in] key for example "P42" for the Place 42 or "T0" for the
+    //! transition 0.
     //--------------------------------------------------------------------------
     Node* findNode(std::string const& key);
 

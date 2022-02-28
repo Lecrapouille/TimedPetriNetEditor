@@ -282,7 +282,7 @@ void PetriNet::toSysLin(SparseMatrix& D, SparseMatrix& A, SparseMatrix& B, Spars
         if (t.isInput())
         {
             // System inputs: B U(n)
-            B.add(t.mi, t.mi, arc.duration);
+            B.add(t.index, t.index, arc.duration);
         }
         else // States or outputs
         {
@@ -296,17 +296,17 @@ void PetriNet::toSysLin(SparseMatrix& D, SparseMatrix& A, SparseMatrix& B, Spars
                     // Systems states: X(n) = D X(n) (+) A X(n-1)
                     if (p.tokens == 1u)
                     {
-                        A.add(td.mi, t.mi, arc.duration);
+                        A.add(td.index, t.index, arc.duration);
                     }
                     else
                     {
-                        D.add(td.mi, t.mi, arc.duration);
+                        D.add(td.index, t.index, arc.duration);
                     }
                 }
                 else if (td.isOutput())
                 {
                     // System outputs: Y(n) = C X(n)
-                    C.add(t.mi, t.mi, arc.duration);
+                    C.add(t.index, t.index, arc.duration);
                 }
             }
         }
@@ -335,17 +335,17 @@ bool PetriNet::toSysLin(SparseMatrix& D, SparseMatrix& A, SparseMatrix& B, Spars
     {
         if (t.isInput())
         {
-            t.mi = nb_inputs++;
+            t.index = nb_inputs++;
         }
 
         if (t.isState())
         {
-            t.mi = nb_states++;
+            t.index = nb_states++;
         }
 
         if (t.isOutput())
         {
-            t.mi = nb_outputs++;
+            t.index = nb_outputs++;
         }
     }
 
@@ -402,7 +402,7 @@ bool PetriNet::exportToJulia(std::string const& filename)
     {
         if (t.isInput())
         {
-            t.mi = nb_inputs++;
+            t.index = nb_inputs++;
             file << "# " << t.key << ": input (U"
                  << nb_inputs << ")" << std::endl;
         }
@@ -413,7 +413,7 @@ bool PetriNet::exportToJulia(std::string const& filename)
     {
         if (t.isState())
         {
-            t.mi = nb_states++;
+            t.index = nb_states++;
             file << "# " << t.key << ": state (X"
                  << nb_states << ")" << std::endl;
         }
@@ -424,7 +424,7 @@ bool PetriNet::exportToJulia(std::string const& filename)
     {
         if (t.isOutput())
         {
-            t.mi = nb_outputs++;
+            t.index = nb_outputs++;
             file << "# " << t.key << ": output (Y" << nb_outputs
                  << ")" << std::endl;
         }

@@ -36,20 +36,6 @@
 struct AnimatedToken
 {
     //--------------------------------------------------------------------------
-    //! \brief Hack needed because of references
-    //--------------------------------------------------------------------------
-    AnimatedToken& operator=(const AnimatedToken& obj)
-    {
-        this->~AnimatedToken(); // destroy
-        new (this) AnimatedToken(obj); // copy construct in place
-        return *this;
-    }
-
-    AnimatedToken(const AnimatedToken&) = default;
-    AnimatedToken(AnimatedToken&&) = default;
-    AnimatedToken& operator=(AnimatedToken&&) = default;
-
-    //--------------------------------------------------------------------------
     //! \brief Constructor.
     //! \param[in] arc: to which arc token are moving along. Shall be an arc
     //! Transition -> Place. No check is performed here.
@@ -65,6 +51,40 @@ struct AnimatedToken
         // the user during the simulation.
         magnitude = norm(arc.from.x, arc.from.y, arc.to.x, arc.to.y);
         speed = magnitude / arc.duration;
+    }
+
+    //--------------------------------------------------------------------------
+    //! \brief Hack needed because of references
+    //--------------------------------------------------------------------------
+    AnimatedToken& operator=(AnimatedToken const& other)
+    {
+        this->~AnimatedToken(); // destroy
+        new (this) AnimatedToken(other); // copy construct in place
+        return *this;
+    }
+
+    //--------------------------------------------------------------------------
+    //! \brief Needed to remove compilation warnings
+    //--------------------------------------------------------------------------
+    AnimatedToken(AnimatedToken const& other)
+        : AnimatedToken(other.arc, other.tokens)
+    {}
+
+    //--------------------------------------------------------------------------
+    //! \brief Needed to remove compilation warnings
+    //--------------------------------------------------------------------------
+    AnimatedToken(AnimatedToken&& other)
+        : AnimatedToken(other.arc, other.tokens)
+    {}
+
+    //--------------------------------------------------------------------------
+    //! \brief Needed to remove compilation warnings
+    //--------------------------------------------------------------------------
+    AnimatedToken& operator=(AnimatedToken&& other)
+    {
+        this->~AnimatedToken(); // destroy
+        new (this) AnimatedToken(other); // copy construct in place
+        return *this;
     }
 
     //--------------------------------------------------------------------------
