@@ -32,9 +32,6 @@
 #include <math.h>
 #include "Howard.h"
 
-extern "C"
-{
-
 #define EPSILON -HUGE_VAL
 /*#define EPSILON  -1.79769313486231570e308*/
 
@@ -1072,5 +1069,3 @@ int Semi_Howard(int *IJ, double *A,double *T,int NNODES,int NARCS,double *CHI,do
     ERRORTYPE=End_Message();
     return(ERRORTYPE);
 }
-
-} // extern C

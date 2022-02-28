@@ -34,7 +34,8 @@ VPATH = $(BUILD) src src/utils src/julia
 INCLUDES = -Isrc
 
 # Compilation options (c++14 only because of std::make_unique not present in C++11)
-CXXFLAGS = --std=c++14 -W -Wall -Wextra -fPIC `pkg-config --cflags sfml-graphics`
+FLAGS = -Wall -Wextra -fPIC `pkg-config --cflags sfml-graphics`
+CXXFLAGS = --std=c++14 $(FLAGS)
 LDFLAGS = `pkg-config --libs sfml-graphics` -lpthread
 DEFINES = -DDATADIR=\"$(DATADIR)\"
 
@@ -73,7 +74,7 @@ $(TARGET_LIB): $(LIB_OBJS)
 # Compile C source files
 %.o : %.c $(BUILD)/%.d Makefile
 	@echo "Compiling $<"
-	$(Q)$(CXX) $(DEPFLAGS) $(CXXFLAGS) $(INCLUDES) $(DEFINES) -c $(abspath $<) -o $(abspath $(BUILD)/$@)
+	$(Q)$(CC) $(DEPFLAGS) $(FLAGS) $(INCLUDES) $(DEFINES) -c $(abspath $<) -o $(abspath $(BUILD)/$@)
 	@$(POSTCOMPILE)
 
 # Install
