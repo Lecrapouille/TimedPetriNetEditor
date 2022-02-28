@@ -56,8 +56,14 @@ PetriEditor::PetriEditor(sf::RenderWindow& renderer, PetriNet& net)
     // Precompute SFML struct for drawing text (places and transitions)
     if (!m_font.loadFromFile(DATADIR"/font.ttf"))
     {
-        std::cerr << "Could not load font file ..." << std::endl;
-        exit(1);
+        if (!m_font.loadFromFile("data/font.ttf"))
+        {
+            if (!m_font.loadFromFile("font.ttf"))
+            {
+                std::cerr << "Could not load font file ..." << std::endl;
+                exit(1);
+            }
+        }
     }
 
     // Caption for Places and Transitions
