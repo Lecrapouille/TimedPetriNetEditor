@@ -22,7 +22,7 @@
 #  define PETRI_NET_HPP
 
 #  include <SFML/System.hpp>
-#  include <utils/Utils.hpp>
+#  include <math.h>
 #  include <atomic>
 #  include <string>
 #  include <deque>
@@ -30,6 +30,7 @@
 #  include <cassert>
 
 class Arc;
+struct SparseMatrix;
 
 // *****************************************************************************
 //! \brief Since Petri nets are bipartite graph there are two kind of nodes:
