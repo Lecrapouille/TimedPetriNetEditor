@@ -113,6 +113,15 @@ public:
         return (type == other.type) && (id == other.id);
     }
 
+    //--------------------------------------------------------------------------
+    //! \brief Compare node with another node. Perform a check ont the type of
+    //! node and on the unique identifier.
+    //--------------------------------------------------------------------------
+    inline bool operator!=(Node const &other) const
+    {
+        return !(*this == other);
+    }
+
     //! \brief Unique identifier (auto-incremented from 0 by the derived class).
     size_t const id;
     //! \brief Petri Place or Petri Transition.
