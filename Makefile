@@ -18,87 +18,26 @@
 ## along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.
 ##=====================================================================
 
-TARGET_BIN = TimedPetriNetEditor
-TARGET_LIB = libtpne.so
+PROJECT = TimedPetriNetEditor
+TARGET = $(PROJECT)
+STANDARD = --std=c++14
+DESCRIPTION = Timed Petri Net Editor
+BUILD_TYPE = debug
 
-# make install
-DESTDIR ?=
-PREFIX ?= /usr
-BINDIR := $(DESTDIR)$(PREFIX)/bin
-LIBDIR := $(DESTDIR)$(PREFIX)/lib
-DATADIR := $(DESTDIR)$(PREFIX)/share/$(TARGET_BIN)/data
+P := .
+M := $(P)/.makefile
+include $(M)/Makefile.header
 
-# Search files
-BUILD = build
-VPATH = $(BUILD) src src/utils src/julia
-INCLUDES = -Isrc
-
-# Compilation options (c++14 only because of std::make_unique not present in C++11)
-FLAGS = -Wall -Wextra -fPIC `pkg-config --cflags sfml-graphics`
-CXXFLAGS = --std=c++14 $(FLAGS)
-LDFLAGS = `pkg-config --libs sfml-graphics` -lpthread
+VPATH += $(P)/src $(P)/src/utils $(P)/src/julia
+INCLUDES += -I$(P)/src -I$(P)/src/utils -I$(P)
 DEFINES = -DDATADIR=\"$(DATADIR)\"
+DEFINES += -Wno-undef -Wno-switch-enum
 
-# File dependencies
-DEPFLAGS = -MT $@ -MMD -MP -MF $(BUILD)/$*.Td
-POSTCOMPILE = mv -f $(BUILD)/$*.Td $(BUILD)/$*.d
+LIB_OBJS += Howard.o PetriNet.o PetriEditor.o Julia.o
+OBJS += $(LIB_OBJS) main.o
 
-# Object files
-LIB_OBJS = Howard.o PetriNet.o PetriEditor.o Julia.o
-BIN_OBJS = $(LIB_OBJS) main.o
+PKG_LIBS = sfml-graphics
 
-ifeq ($(VERBOSE),1)
-Q :=
-else
-Q := @
-endif
+all: $(TARGET)
 
-all: $(TARGET_BIN) $(TARGET_LIB)
-
-# Link the target
-$(TARGET_BIN): $(BIN_OBJS)
-	@echo "Linking $@"
-	$(Q)cd $(BUILD) && $(CXX) $(INCLUDES) -o $(TARGET_BIN) $(BIN_OBJS) $(LDFLAGS)
-
-# Create the shared library
-$(TARGET_LIB): $(LIB_OBJS)
-	@echo "Library $@"
-	$(Q)cd $(BUILD) && $(CXX) -shared -o $(TARGET_LIB) $(LIB_OBJS) $(LDFLAGS)
-
-# Compile C++ source files
-%.o : %.cpp $(BUILD)/%.d Makefile
-	@echo "Compiling $<"
-	$(Q)$(CXX) $(DEPFLAGS) $(CXXFLAGS) $(INCLUDES) $(DEFINES) -c $(abspath $<) -o $(abspath $(BUILD)/$@)
-	@$(POSTCOMPILE)
-
-# Compile C source files
-%.o : %.c $(BUILD)/%.d Makefile
-	@echo "Compiling $<"
-	$(Q)$(CC) $(DEPFLAGS) $(FLAGS) $(INCLUDES) $(DEFINES) -c $(abspath $<) -o $(abspath $(BUILD)/$@)
-	@$(POSTCOMPILE)
-
-# Install
-install: $(TARGET_BIN) $(TARGET_LIB)
-	@echo "Installing $(TARGET_BIN)"
-	$(Q)mkdir -p $(BINDIR)
-	$(Q)mkdir -p $(LIBDIR)
-	$(Q)mkdir -p $(DATADIR)
-	cp $(BUILD)/$(TARGET_BIN) $(BINDIR)
-	cp $(BUILD)/$(TARGET_LIB) $(LIBDIR)
-	cp -r data $(DATADIR)/..
-
-# Delete compiled files
-.PHONY: clean
-clean:
-	-rm -fr $(BUILD)
-
-# Create the directory before compiling sources
-$(BIN_OBJS): | $(BUILD)
-$(BUILD):
-	@mkdir -p $(BUILD)
-
-# Create the dependency files
-$(BUILD)/%.d: ;
-.PRECIOUS: $(BUILD)/%.d
-
--include $(patsubst %,$(BUILD)/%.d,$(basename $(BIN_OBJS)))
+include $(M)/Makefile.footer

@@ -26,7 +26,7 @@ Prerequisites to compile this project are:
 
 To download the code source, type the following command on a Linux console:
 ```sh
-git clone https://github.com/Lecrapouille/TimedPetriNetEditor --depth=1
+git clone https://github.com/Lecrapouille/TimedPetriNetEditor --depth=1 --recursive
 ```
 
 To compile the project:
