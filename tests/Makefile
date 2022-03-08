@@ -60,7 +60,7 @@ OBJS += main.o
 # Set Libraries. For knowing which libraries
 # is needed please read the external/README.md file.
 #
-PKG_LIBS += gtest gmock
+PKG_LIBS += sfml-graphics gtest gmock
 
 ###################################################
 # Compile the project
