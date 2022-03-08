@@ -1,8 +1,7 @@
 # Project specific
-src/TimedPetriNetEditor
-src/Grafcet-gen.hpp
-src/GraphEvent-gen.jl
-src/petri.json
+Grafcet-gen.hpp
+GraphEvent-gen.jl
+petri.json
 build/
 
 # Prerequisites
