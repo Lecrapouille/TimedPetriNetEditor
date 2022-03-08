@@ -257,7 +257,7 @@ bool PetriNet::toAdjacencyMatrices(SparseMatrix& N, SparseMatrix&T)
         // Note origin and destination are inverted because we use the following
         // matrix product convension: M * x where x is a column vector.
         T.add(to.id, from.id, p.arcsIn[0]->duration);
-        N.add(to.id, from.id, p.tokens);
+        N.add(to.id, from.id, float(p.tokens));
     }
 
     return true;
@@ -282,7 +282,7 @@ void PetriNet::toSysLin(SparseMatrix& D, SparseMatrix& A, SparseMatrix& B, Spars
         if (t.isInput())
         {
             // System inputs: B U(n)
-            B.add(t.index, t.index, arc.duration);
+            B.add(t.index, t.index, float(arc.duration));
         }
         else // States or outputs
         {
@@ -560,8 +560,9 @@ bool PetriNet::showCriticalCycle()
     size_t const narcs = m_places.size();
     std::vector<double> N; N.reserve(narcs);
     std::vector<double> T; T.reserve(narcs);
-    std::vector<int> IJ; IJ.reserve(2u * narcs);
+    std::vector<int> IJ; // FIXME should be std::vector<size_t> but Howard wants int*
 
+    IJ.reserve(2u * narcs);
     for (auto& p: m_places)
     {
         // Since we are sure we are an event graph: places have a single input
@@ -578,10 +579,10 @@ bool PetriNet::showCriticalCycle()
                   << " (Duration: " << p.arcsIn[0]->duration << ", Tokens: "
                   << p.tokens << ")" << std::endl;
 
-        IJ.push_back(to.id); // Transposed is needed
-        IJ.push_back(from.id);
+        IJ.push_back(int(to.id)); // Transposed is needed
+        IJ.push_back(int(from.id));
         T.push_back(p.arcsIn[0]->duration);
-        N.push_back(p.tokens);
+        N.push_back(double(p.tokens));
     }
 
     std::vector<double> V(nnodes); // bias
@@ -591,7 +592,7 @@ bool PetriNet::showCriticalCycle()
     int niterations; // nb of iteration of the algorithm
     int verbosemode = 1;
     int res = Semi_Howard(IJ.data(), T.data(), N.data(),
-                          nnodes, narcs,
+                          int(nnodes), int(narcs),
                           chi.data(), V.data(), policy.data(), &niterations,
                           &ncomponents, verbosemode);
 
@@ -625,7 +626,7 @@ bool PetriNet::showCriticalCycle()
         for (auto const& from: policy)
         {
             std::cout << "T" << from << " -> T" << to << std::endl;
-            for (auto const& it: m_transitions[from].arcsOut)
+            for (auto const& it: m_transitions[size_t(from)].arcsOut)
             {
                 // Since we are working on an Event Graph we can directly access
                 // Place -> arcsOut[0] -> Transition without checks.
@@ -662,7 +663,7 @@ bool PetriNet::exportToCpp(std::string const& filename, std::string const& name)
 
     std::string upper_name(name);
     std::for_each(upper_name.begin(), upper_name.end(), [](char & c) {
-        c = ::toupper(c);
+        c = char(::toupper(int(c)));
     });
 
     // Update arcs in/out for all transitions to be sure to generate the correct
@@ -903,10 +904,10 @@ bool PetriNet::load(std::string const& filename)
         {
             while (s.split() != "]")
             {
-                int id = convert_to<size_t>(s.str().c_str() + 1u);
+                int id = convert_to<int>(s.str().c_str() + 1u);
                 float x = convert_to<float>(s.split());
                 float y = convert_to<float>(s.split());
-                int tokens = convert_to<size_t>(s.split());
+                int tokens = convert_to<int>(s.split());
                 if ((id < 0) || (tokens < 0))
                 {
                     std::cerr << "Failed loading " << filename
@@ -921,7 +922,7 @@ bool PetriNet::load(std::string const& filename)
         {
             while (s.split() != "]")
             {
-                int id = convert_to<size_t>(s.str().c_str() + 1u);
+                int id = convert_to<int>(s.str().c_str() + 1u);
                 float x = convert_to<float>(s.split());
                 float y = convert_to<float>(s.split());
                 int angle = convert_to<int>(s.split());

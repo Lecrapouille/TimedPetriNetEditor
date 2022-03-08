@@ -49,7 +49,7 @@ struct MessageBar : public sf::Drawable
 
     void setSize(sf::Vector2u const& dimensions)
     {
-        m_shape.setSize(sf::Vector2f(dimensions.x, 25.0f));
+        m_shape.setSize(sf::Vector2f(float(dimensions.x), 25.0f));
     }
 
 private:

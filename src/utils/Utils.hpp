@@ -35,8 +35,9 @@ inline float norm(const float xa, const float ya, const float xb, const float yb
 //------------------------------------------------------------------------------
 inline float random(int lower, int upper)
 {
-    srand(time(NULL));
-    return (rand() % (upper - lower + 1)) + lower;
+    auto const t = static_cast<unsigned int>(time(NULL));
+    srand(t);
+    return float(rand() % (upper - lower + 1)) + float(lower);
 }
 
 //------------------------------------------------------------------------------

@@ -92,7 +92,7 @@ PetriEditor::~PetriEditor()
 void PetriEditor::draw(sf::Text& t, std::string const& str, float const x, float const y)
 {
     t.setString(str);
-    t.setPosition(x - t.getLocalBounds().width / 2.0, y - t.getLocalBounds().height);
+    t.setPosition(x - t.getLocalBounds().width / 2.0f, y - t.getLocalBounds().height);
     m_render.draw(t);
 }
 
@@ -188,7 +188,7 @@ void PetriEditor::draw(Transition const& transition, uint8_t alpha)
 {
     // Draw the transition
     m_figure_trans.setPosition(sf::Vector2f(transition.x, transition.y));
-    m_figure_trans.setRotation(transition.angle);
+    m_figure_trans.setRotation(float(transition.angle));
     m_figure_trans.setFillColor(FILL_COLOR(alpha));
     m_render.draw(m_figure_trans);
 
@@ -266,7 +266,7 @@ void PetriEditor::draw(float const /*dt*/)
     // Draw critical cycle
     for (auto& a: m_petri_net.m_critical)
     {
-        draw(*a, -1);
+        draw(*a, 255);
     }
 
     // Draw the entry text
@@ -916,8 +916,8 @@ void PetriEditor::handleInput()
             handleMouseButton(event);
             break;
         case sf::Event::Resized:
-            sf::FloatRect(0.0f, 0.0f, event.size.width, event.size.height);
-            m_render.setView(sf::View(sf::FloatRect(0.0f, 0.0f, event.size.width, event.size.height)));
+            sf::FloatRect(0.0f, 0.0f, float(event.size.width), float(event.size.height));
+            m_render.setView(sf::View(sf::FloatRect(0.0f, 0.0f, float(event.size.width), float(event.size.height))));
             break;
         default:
             break;

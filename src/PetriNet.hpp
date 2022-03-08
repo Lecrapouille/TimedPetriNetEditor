@@ -291,7 +291,7 @@ public:
     int angle = 0u;
 
     //! \brief Temporary matrix index used when building max-plus linear system.
-    int index = 0u;
+    size_t index = 0u;
 
 private:
 
