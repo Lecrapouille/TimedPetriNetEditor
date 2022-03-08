@@ -18,26 +18,92 @@
 ## along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.
 ##=====================================================================
 
+###################################################
+# Project definition
+#
 PROJECT = TimedPetriNetEditor
 TARGET = $(PROJECT)
-STANDARD = --std=c++14
 DESCRIPTION = Timed Petri Net Editor
+STANDARD = --std=c++14
 BUILD_TYPE = debug
 
+###################################################
+# Location of the project directory and Makefiles
+#
 P := .
 M := $(P)/.makefile
 include $(M)/Makefile.header
 
-VPATH += $(P)/src $(P)/src/utils $(P)/src/julia
+###################################################
+# Inform Makefile where to find header files
+#
 INCLUDES += -I$(P)/src -I$(P)/src/utils -I$(P)
+
+###################################################
+# Inform Makefile where to find *.cpp and *.o files
+#
+VPATH += $(P)/src $(P)/src/utils $(P)/src/julia
+
+###################################################
+# Project defines
+#
 DEFINES = -DDATADIR=\"$(DATADIR)\"
+
+###################################################
+# Reduce warnings
+#
 DEFINES += -Wno-undef -Wno-switch-enum -Wno-sign-conversion -Wno-float-equal -Wno-shadow
 
+###################################################
+# Make the list of compiled files for the library
+#
 LIB_OBJS += Howard.o PetriNet.o PetriEditor.o Julia.o
+
+###################################################
+# Make the list of compiled files for the application
+#
 OBJS += $(LIB_OBJS) main.o
 
+###################################################
+# Set Libraries. For knowing which libraries
+# is needed please read the external/README.md file.
+#
 PKG_LIBS = sfml-graphics
 
+###################################################
+# Compile the project, the static and shared libraries
+.PHONY: all
 all: $(TARGET) $(STATIC_LIB_TARGET) $(SHARED_LIB_TARGET) $(PKG_FILE)
 
+###################################################
+# Compile and launch unit tests and generate the code coverage html report.
+.PHONY: unit-tests
+unit-tests:
+	@$(call print-simple,"Compiling unit tests")
+	@$(MAKE) -C tests coverage
+
+###################################################
+# Compile and launch unit tests and generate the code coverage html report.
+.PHONY: check
+check: unit-tests
+
+###################################################
+# Install project. You need to be root.
+.PHONY: install
+install: $(TARGET) $(STATIC_LIB_TARGET) $(SHARED_LIB_TARGET) $(PKG_FILE)
+	@$(call INSTALL_DOCUMENTATION)
+	@$(call INSTALL_PROJECT_LIBRARIES)
+	@$(call INSTALL_PROJECT_HEADERS)
+
+###################################################
+# Clean the whole project.
+.PHONY: veryclean
+veryclean: clean
+	@rm -fr cov-int $(PROJECT).tgz *.log foo 2> /dev/null
+	@(cd tests && $(MAKE) -s clean)
+	@$(call print-simple,"Cleaning","$(PWD)/doc/html")
+	@rm -fr $(THIRDPART)/*/ doc/html 2> /dev/null
+
+###################################################
+# Sharable informations between all Makefiles
 include $(M)/Makefile.footer

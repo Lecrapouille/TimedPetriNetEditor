@@ -1,0 +1,8 @@
+March 2022: version 0.1.0
+        * Use MyMakefile
+        * Fixing compilation warnings
+        * Adding unit tests
+
+August 2021: version 0.1.0
+        * Adding API for Julia
+        * Minimal valid product
