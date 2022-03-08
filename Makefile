@@ -62,7 +62,7 @@ LIB_OBJS += Howard.o PetriNet.o PetriEditor.o Julia.o
 ###################################################
 # Make the list of compiled files for the application
 #
-OBJS += $(LIB_OBJS) main.o
+OBJS += Howard.o PetriNet.o PetriEditor.o main.o
 
 ###################################################
 # Set Libraries. For knowing which libraries
