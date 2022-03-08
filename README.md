@@ -44,7 +44,7 @@ sudo make install
 ```
 
 Indeed, this will install the binary `TimedPetriNetEditor` in `/usr/bin`, and
-most important, a shared library `libtpne.so` in `/usr/lib` and the folder
+most important, a shared library `libtimedpetrineteditor.so` in `/usr/lib` and the folder
 `TimedPetriNetEditor/data/` in `/usr/share`. If you does not desire to call
 `make install` you will have to adapt the `DEFINES` in Makefile to indicate the
 path of the `data/` folder.
@@ -66,7 +66,7 @@ julia TimedPetriNetEditor.jl
 ```
 
 Again, if `make install` has not been called, you will have to manually modify
-this Julia file to indicate the correct path of the shared library `libtpne.so`.
+this Julia file to indicate the correct path of the shared library `libtimedpetrineteditor.so`.
 
 ## Usage of the Editor
 
@@ -397,7 +397,7 @@ that there is no existing arc.
 
 ## Interface with Julia
 
-This is still a in gestation API. The path of the shared library `libtpne.so`
+This is still a in gestation API. The path of the shared library `libtimedpetrineteditor.so`
 (compiled by the Makefile) has to be known to be used by Julia. For the moment
 you need the `dev` branch of [MaxPlus](https://github.com/Lecrapouille/MaxPlus.jl)
 Julia package (WIP).

@@ -31,13 +31,13 @@ include $(M)/Makefile.header
 VPATH += $(P)/src $(P)/src/utils $(P)/src/julia
 INCLUDES += -I$(P)/src -I$(P)/src/utils -I$(P)
 DEFINES = -DDATADIR=\"$(DATADIR)\"
-DEFINES += -Wno-undef -Wno-switch-enum
+DEFINES += -Wno-undef -Wno-switch-enum -Wno-sign-conversion -Wno-float-equal -Wno-shadow
 
 LIB_OBJS += Howard.o PetriNet.o PetriEditor.o Julia.o
 OBJS += $(LIB_OBJS) main.o
 
 PKG_LIBS = sfml-graphics
 
-all: $(TARGET)
+all: $(TARGET) $(STATIC_LIB_TARGET) $(SHARED_LIB_TARGET) $(PKG_FILE)
 
 include $(M)/Makefile.footer

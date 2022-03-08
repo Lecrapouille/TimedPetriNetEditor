@@ -33,7 +33,7 @@ using MaxPlus, SparseArrays
 
 # https://github.com/Lecrapouille/TimedPetriNetEditor
 # make && make install
-const libtpne = "/usr/lib/libtpne.so"
+const libtpne = "/usr/lib/libtimedpetrineteditor.so"
 
 """
     PetriNet
