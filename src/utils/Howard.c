@@ -190,7 +190,7 @@ static void Epsilon(double *a,int narcs,double *epsilon)
    to cut the number of iterations by a factor 1.5, by comparison
    with a random initial policy */
 
-static void Initial_Policy()
+static void Initial_Policy(void)
 {
     int i;
 
@@ -213,7 +213,7 @@ static void Initial_Policy()
 
 /* idem : semi Markov case */
 
-static void Semi_Initial_Policy()
+static void Semi_Initial_Policy(void)
 {
     int i;
 
@@ -248,7 +248,7 @@ static void Semi_Initial_Policy()
     }
 }
 
-static void New_Display_Inverse()
+static void New_Display_Inverse(void)
 {
     int i,a;
     printf("DISPLAYING INVERSE nnodes=%d\n",nnodes);
@@ -262,7 +262,7 @@ static void New_Display_Inverse()
     }
 }
 
-static void New_Build_Inverse()
+static void New_Build_Inverse(void)
 {
     int i,j,locus;
     int ptr=0;
@@ -303,7 +303,7 @@ static void New_Build_Inverse()
     }
 }
 
-static void Init_Depth_First()
+static void Init_Depth_First(void)
 {
     int j;
     for (j=0;j<nnodes;j++)
@@ -438,7 +438,7 @@ static int Semi_Visit_From(int initialpoint,int color)
 /*       Value() */
 /* Computes the value (v,chi) associated with a policy pi */
 
-static void Value()
+static void Value(void)
 {
     int initialpoint;
     color=1;
@@ -469,7 +469,7 @@ static void Value()
 /*       Value()  (Semi-Markov case) */
 /* Computes the value (v,chi) associated with a policy pi */
 
-static int Semi_Value()
+static int Semi_Value(void)
 {
     int initialpoint;
     color=1;
@@ -540,7 +540,7 @@ static void Semi_Show_Info_Improve_Bias(int i)
     }
 }
 
-static void Init_Improve()
+static void Init_Improve(void)
 {
     int i;
     for (i=0;i<nnodes; i++)
@@ -552,7 +552,7 @@ static void Init_Improve()
     }
 }
 
-static void Semi_Init_Improve()
+static void Semi_Init_Improve(void)
 {
     int i;
     for (i=0;i<nnodes; i++)
@@ -706,7 +706,7 @@ static void Semi_Improve(int *improved)
     }
 }
 
-static void Allocate_Memory()
+static void Allocate_Memory(void)
 {
     newpi=(int *)calloc(nnodes, sizeof(int));
     piinv_idx=(int *)calloc(nnodes, sizeof(int));
@@ -726,7 +726,7 @@ static void Allocate_Memory()
     }
 }
 
-static void Semi_Allocate_Memory()
+static void Semi_Allocate_Memory(void)
 {
     Allocate_Memory();
     tau=(double *)calloc(nnodes, sizeof(double));
@@ -738,7 +738,7 @@ static void Semi_Allocate_Memory()
     }
 }
 
-static void Free_Memory()
+static void Free_Memory(void)
 {
     free(newpi);
     free(piinv_idx);
@@ -753,14 +753,14 @@ static void Free_Memory()
     free(newchi);
 }
 
-static void Semi_Free_Memory()
+static void Semi_Free_Memory(void)
 {
     free(tau);
     free(newtau);
     Free_Memory();
 }
 
-static void Show_Info()
+static void Show_Info(void)
 {
     if (verbosemode >0)
     {
@@ -774,7 +774,7 @@ static void Show_Info()
     }
 }
 
-static void Semi_Show_Info()
+static void Semi_Show_Info(void)
 {
     if (verbosemode >0)
     {
@@ -788,7 +788,7 @@ static void Semi_Show_Info()
     }
 }
 
-static int Check_Rows()
+static int Check_Rows(void)
 {
     int i;
     int *u=NULL;
@@ -820,7 +820,7 @@ static int Check_Rows()
     return(0);
 }
 
-static int Universal_Security_Check()
+static int Universal_Security_Check(void)
 {
     if (nnodes<1)
     {
@@ -848,7 +848,7 @@ static int Universal_Security_Check()
     }
 }
 
-static int Security_Check()
+static int Security_Check(void)
 {
     int errorflag;
     errorflag=Universal_Security_Check();
@@ -860,7 +860,7 @@ static int Security_Check()
     return(errorflag);
 }
 
-static int Semi_Security_Check()
+static int Semi_Security_Check(void)
 {
     int errorflag;
     errorflag=Universal_Security_Check();
@@ -900,7 +900,7 @@ void Semi_Import_Arguments(int *IJ, double *A,double *T,int NNODES, int NARCS, d
     verbosemode=VERBOSEMODE;
 }
 
-static void Update_Policy()
+static void Update_Policy(void)
 {
     int i;
     for (i=0;i<nnodes;i++)
@@ -911,7 +911,7 @@ static void Update_Policy()
     }
 }
 
-static void Semi_Update_Policy()
+static void Semi_Update_Policy(void)
 {
     int i;
     for (i=0;i<nnodes;i++)
@@ -923,7 +923,7 @@ static void Semi_Update_Policy()
     }
 }
 
-static int End_Message()
+static int End_Message(void)
 {
     if (*NIterations ==MAX_NIterations)
     {
