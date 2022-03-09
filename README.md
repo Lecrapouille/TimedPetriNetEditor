@@ -1,5 +1,7 @@
 # Timed Petri Net Editor
 
+[![CI testing](https://github.com/Lecrapouille/TimedPetriNetEditor/actions/workflows/ci.yml/badge.svg)](https://github.com/Lecrapouille/TimedPetriNetEditor/actions/workflows/ci.yml)
+
 [This project](https://github.com/Lecrapouille/TimedPetriNetEditor) is a timed
 Petri net editor made in C++11 and displayed with the
 [SFML](https://www.sfml-dev.org/index-fr.php). The following picture is an
