@@ -97,6 +97,36 @@ TEST(TestPetriNet, TestPlaceCreation)
     ASSERT_STREQ(p1.caption.c_str(), "P42");
     ASSERT_EQ(p1.arcsIn.size(), 0u);
     ASSERT_EQ(p1.arcsOut.size(), 0u);
+
+    Place p2(p1);
+    ASSERT_EQ(p2.id, 42u);
+    ASSERT_EQ(p2.type, Node::Place);
+    ASSERT_EQ(p2.tokens, 12u);
+    ASSERT_EQ(p2.x, 3.5f);
+    ASSERT_EQ(p2.y, 4.0f);
+    ASSERT_STREQ(p2.key.c_str(), "P42");
+    ASSERT_STREQ(p2.caption.c_str(), "P42");
+    ASSERT_EQ(p2.arcsIn.size(), 0u);
+    ASSERT_EQ(p2.arcsOut.size(), 0u);
+    ASSERT_EQ(p1 == p2, true);
+    ASSERT_EQ(p1 != p2, false);
+
+    Place p3(0u, 0.0f, 0.0f, 0u);
+    ASSERT_EQ(p1 == p3, false);
+    ASSERT_EQ(p1 != p3, true);
+
+    p3 = p1;
+    ASSERT_EQ(p3.id, 42u);
+    ASSERT_EQ(p3.type, Node::Place);
+    ASSERT_EQ(p3.tokens, 12u);
+    ASSERT_EQ(p3.x, 3.5f);
+    ASSERT_EQ(p3.y, 4.0f);
+    ASSERT_STREQ(p3.key.c_str(), "P42");
+    ASSERT_STREQ(p3.caption.c_str(), "P42");
+    ASSERT_EQ(p3.arcsIn.size(), 0u);
+    ASSERT_EQ(p3.arcsOut.size(), 0u);
+    ASSERT_EQ(p1 == p3, true);
+    ASSERT_EQ(p1 != p3, false);
 }
 
 //------------------------------------------------------------------------------
@@ -112,6 +142,149 @@ TEST(TestPetriNet, TestTransitionCreation)
     ASSERT_STREQ(t1.caption.c_str(), "T42");
     ASSERT_EQ(t1.arcsIn.size(), 0u);
     ASSERT_EQ(t1.arcsOut.size(), 0u);
+    ASSERT_EQ(t1.canFire(), false);
+    ASSERT_EQ(t1.isInput(), false);
+    ASSERT_EQ(t1.isOutput(), false);
+    ASSERT_EQ(t1.isState(), false);
+
+    Transition t2(t1);
+    ASSERT_EQ(t2.id, 42u);
+    ASSERT_EQ(t2.type, Node::Transition);
+    ASSERT_EQ(t2.angle, 45u);
+    ASSERT_EQ(t2.x, 3.5f);
+    ASSERT_EQ(t2.y, 4.0f);
+    ASSERT_STREQ(t2.key.c_str(), "T42");
+    ASSERT_STREQ(t2.caption.c_str(), "T42");
+    ASSERT_EQ(t2.arcsIn.size(), 0u);
+    ASSERT_EQ(t2.arcsOut.size(), 0u);
+    ASSERT_EQ(t2.canFire(), false);
+    ASSERT_EQ(t2.isInput(), false);
+    ASSERT_EQ(t2.isOutput(), false);
+    ASSERT_EQ(t2.isState(), false);
+    ASSERT_EQ(t1 == t2, true);
+    ASSERT_EQ(t1 != t2, false);
+
+    Transition t3(0u, 0.0f, 0.0f, 0u);
+    ASSERT_EQ(t1 == t3, false);
+    ASSERT_EQ(t1 != t3, true);
+
+    t3 = t1;
+    ASSERT_EQ(t3.id, 42u);
+    ASSERT_EQ(t3.type, Node::Transition);
+    ASSERT_EQ(t3.angle, 45u);
+    ASSERT_EQ(t3.x, 3.5f);
+    ASSERT_EQ(t3.y, 4.0f);
+    ASSERT_STREQ(t3.key.c_str(), "T42");
+    ASSERT_STREQ(t3.caption.c_str(), "T42");
+    ASSERT_EQ(t3.arcsIn.size(), 0u);
+    ASSERT_EQ(t3.arcsOut.size(), 0u);
+    ASSERT_EQ(t3.canFire(), false);
+    ASSERT_EQ(t3.isInput(), false);
+    ASSERT_EQ(t3.isOutput(), false);
+    ASSERT_EQ(t3.isState(), false);
+    ASSERT_EQ(t1 == t3, true);
+    ASSERT_EQ(t1 != t3, false);
+}
+
+//------------------------------------------------------------------------------
+TEST(TestPetriNet, TestArcCreation)
+{
+    Transition t1(42u, 3.5f, 4.0f, 45u);
+    Place p1(43u, 4.6f, 5.1f, 13u);
+
+    Arc a1(t1, p1, 10.0f);
+    ASSERT_EQ(a1.duration, 10.0f);
+    ASSERT_EQ(a1.from.id, 42u);
+    ASSERT_EQ(a1.from.type, Node::Transition);
+    ASSERT_EQ(a1.from.x, 3.5f);
+    ASSERT_EQ(a1.from.y, 4.0f);
+    ASSERT_STREQ(a1.from.key.c_str(), "T42");
+    ASSERT_STREQ(a1.from.caption.c_str(), "T42");
+    ASSERT_EQ(a1.from.arcsIn.size(), 0u);
+    ASSERT_EQ(a1.from.arcsOut.size(), 0u);
+    ASSERT_EQ(a1.to.id, 43u);
+    ASSERT_EQ(a1.to.type, Node::Place);
+    ASSERT_EQ(a1.to.x, 4.6f);
+    ASSERT_EQ(a1.to.y, 5.1f);
+    ASSERT_STREQ(a1.to.key.c_str(), "P43");
+    ASSERT_STREQ(a1.to.caption.c_str(), "P43");
+    ASSERT_EQ(a1.to.arcsIn.size(), 0u);
+    ASSERT_EQ(a1.to.arcsOut.size(), 0u);
+    ASSERT_EQ(reinterpret_cast<Transition&>(a1.from).angle, 45u);
+    ASSERT_EQ(reinterpret_cast<Place&>(a1.to).tokens, 13u);
+    ASSERT_EQ(a1.tokensOut(), 13u);
+
+    Arc a2(p1, t1, 15.0f);
+    ASSERT_EQ(isnan(a2.duration), true);
+    ASSERT_EQ(a2.to.id, 42u);
+    ASSERT_EQ(a2.to.type, Node::Transition);
+    ASSERT_EQ(a2.to.x, 3.5f);
+    ASSERT_EQ(a2.to.y, 4.0f);
+    ASSERT_STREQ(a2.to.key.c_str(), "T42");
+    ASSERT_STREQ(a2.to.caption.c_str(), "T42");
+    ASSERT_EQ(a2.to.arcsIn.size(), 0u);
+    ASSERT_EQ(a2.to.arcsOut.size(), 0u);
+    ASSERT_EQ(a2.from.id, 43u);
+    ASSERT_EQ(a2.from.type, Node::Place);
+    ASSERT_EQ(a2.from.x, 4.6f);
+    ASSERT_EQ(a2.from.y, 5.1f);
+    ASSERT_STREQ(a2.from.key.c_str(), "P43");
+    ASSERT_STREQ(a2.from.caption.c_str(), "P43");
+    ASSERT_EQ(a2.from.arcsIn.size(), 0u);
+    ASSERT_EQ(a2.from.arcsOut.size(), 0u);
+    ASSERT_EQ(reinterpret_cast<Transition&>(a2.to).angle, 45u);
+    ASSERT_EQ(reinterpret_cast<Place&>(a2.from).tokens, 13u);
+    ASSERT_EQ(a2.tokensIn(), 13u);
+
+    Arc a3(a1);
+    ASSERT_EQ(a3.duration, 10.0f);
+    ASSERT_EQ(a3.from.id, 42u);
+    ASSERT_EQ(a3.from.type, Node::Transition);
+    ASSERT_EQ(a3.from.x, 3.5f);
+    ASSERT_EQ(a3.from.y, 4.0f);
+    ASSERT_STREQ(a3.from.key.c_str(), "T42");
+    ASSERT_STREQ(a3.from.caption.c_str(), "T42");
+    ASSERT_EQ(a3.from.arcsIn.size(), 0u);
+    ASSERT_EQ(a3.from.arcsOut.size(), 0u);
+    ASSERT_EQ(a3.to.id, 43u);
+    ASSERT_EQ(a3.to.type, Node::Place);
+    ASSERT_EQ(a3.to.x, 4.6f);
+    ASSERT_EQ(a3.to.y, 5.1f);
+    ASSERT_STREQ(a3.to.key.c_str(), "P43");
+    ASSERT_STREQ(a3.to.caption.c_str(), "P43");
+    ASSERT_EQ(a3.to.arcsIn.size(), 0u);
+    ASSERT_EQ(a3.to.arcsOut.size(), 0u);
+    ASSERT_EQ(reinterpret_cast<Transition&>(a3.from).angle, 45u);
+    ASSERT_EQ(reinterpret_cast<Place&>(a3.to).tokens, 13u);
+    ASSERT_EQ(a3.tokensOut(), 13u);
+
+    Arc a4(p1, t1, 15.0f);
+    a4 = a1;
+    ASSERT_EQ(a4.duration, 10.0f);
+    ASSERT_EQ(a4.from.id, 42u);
+    ASSERT_EQ(a4.from.type, Node::Transition);
+    ASSERT_EQ(a4.from.x, 3.5f);
+    ASSERT_EQ(a4.from.y, 4.0f);
+    ASSERT_STREQ(a4.from.key.c_str(), "T42");
+    ASSERT_STREQ(a4.from.caption.c_str(), "T42");
+    ASSERT_EQ(a4.from.arcsIn.size(), 0u);
+    ASSERT_EQ(a4.from.arcsOut.size(), 0u);
+    ASSERT_EQ(a4.to.id, 43u);
+    ASSERT_EQ(a4.to.type, Node::Place);
+    ASSERT_EQ(a4.to.x, 4.6f);
+    ASSERT_EQ(a4.to.y, 5.1f);
+    ASSERT_STREQ(a4.to.key.c_str(), "P43");
+    ASSERT_STREQ(a4.to.caption.c_str(), "P43");
+    ASSERT_EQ(a4.to.arcsIn.size(), 0u);
+    ASSERT_EQ(a4.to.arcsOut.size(), 0u);
+    ASSERT_EQ(reinterpret_cast<Transition&>(a4.from).angle, 45u);
+    ASSERT_EQ(reinterpret_cast<Place&>(a4.to).tokens, 13u);
+    ASSERT_EQ(a4.tokensOut(), 13u);
+
+    ASSERT_EQ(a1 == a4, true);
+    ASSERT_EQ(a1 != a4, false);
+    ASSERT_EQ(a1 == a2, false);
+    ASSERT_EQ(a1 != a2, true);
 }
 
 //------------------------------------------------------------------------------
@@ -140,6 +313,128 @@ TEST(TestPetriNet, PetriNetDummy)
    ASSERT_EQ(net.findNode("T0"), nullptr);
    ASSERT_EQ(net.findNode("pouet"), nullptr);
    ASSERT_EQ(net.findNode(""), nullptr);
+}
+
+//------------------------------------------------------------------------------
+TEST(TestPetriNet, TestAddInNet)
+{
+   PetriNet net;
+   ASSERT_EQ(net.isEmpty(), true);
+   ASSERT_EQ(net.m_next_place_id, 0u);
+   ASSERT_EQ(net.m_next_transition_id, 0u);
+
+   // Add Place 0: net = P0
+   Place& p0 = net.addPlace(3.14f, 2.16f, 10u);
+   ASSERT_EQ(net.m_next_place_id, 1u);
+   ASSERT_EQ(p0.id, 0u);
+   ASSERT_STREQ(p0.key.c_str(), "P0");
+   ASSERT_EQ(net.isEmpty(), false);
+   ASSERT_EQ(net.isEventGraph(), false);
+   ASSERT_EQ(net.findNode("P0"), &p0);
+   ASSERT_EQ(net.m_places.size(), 1u);
+   ASSERT_STREQ(net.m_places[0].key.c_str(), "P0");
+
+   // Add Transition 0: net = P0 T0
+   Transition* t0 = &net.addTransition(3.14f, 2.16f);
+   ASSERT_EQ(net.m_next_transition_id, 1u);
+   ASSERT_EQ(t0->id, 0u);
+   ASSERT_STREQ(t0->key.c_str(), "T0");
+   ASSERT_EQ(net.isEmpty(), false);
+   ASSERT_EQ(net.isEventGraph(), false);
+   ASSERT_EQ(net.findNode("T0"), t0);
+   ASSERT_EQ(net.m_transitions.size(), 1u);
+   ASSERT_STREQ(net.m_transitions[0].key.c_str(), "T0");
+
+   // Add Place 1: net = P0 T0 P1
+   Place& p1 = net.addPlace(3.14f, 2.16f, 10u);
+   ASSERT_EQ(net.m_next_place_id, 2u);
+   ASSERT_EQ(p1.id, 1u);
+   ASSERT_STREQ(p1.key.c_str(), "P1");
+   ASSERT_EQ(net.findNode("P1"), &p1);
+   ASSERT_STREQ(net.m_places[0].key.c_str(), "P0");
+   ASSERT_STREQ(net.m_places[1].key.c_str(), "P1");
+
+   // Add arcs: net = P0--T0--P1
+   ASSERT_EQ(net.addArc(p0, *t0), true);
+   ASSERT_EQ(net.addArc(*t0, p1), true);
+   Arc* a1 = net.findArc(p0, *t0);
+   ASSERT_NE(a1, nullptr);
+   Arc* a2 = net.findArc(*t0, p1);
+   ASSERT_NE(a2, nullptr);
+   ASSERT_EQ(net.m_next_place_id, 2u);
+   ASSERT_EQ(net.m_next_transition_id, 1u);
+   ASSERT_EQ(net.m_arcs.size(), 2u);
+   ASSERT_EQ(&net.m_arcs[0], a1);
+   ASSERT_EQ(&net.m_arcs[1], a2);
+
+   // Remove T0: net = P0  P1
+   net.removeNode(*t0);
+   ASSERT_EQ(net.m_next_place_id, 2u);
+   ASSERT_EQ(net.m_next_transition_id, 0u);
+   ASSERT_EQ(net.m_transitions.size(), 0u);
+   ASSERT_EQ(net.m_places.size(), 2u);
+   ASSERT_EQ(net.m_arcs.size(), 0u);
+
+   // Add T0 back: net = P0 T0 P1
+   t0 = &net.addTransition(3.14f, 2.16f);
+   ASSERT_EQ(net.m_next_transition_id, 1u);
+   ASSERT_EQ(t0->id, 0u);
+   ASSERT_STREQ(t0->key.c_str(), "T0");
+   ASSERT_EQ(net.isEmpty(), false);
+   ASSERT_EQ(net.isEventGraph(), false);
+   ASSERT_EQ(net.findNode("T0"), t0);
+   ASSERT_EQ(net.m_transitions.size(), 1u);
+   ASSERT_STREQ(net.m_transitions[0].key.c_str(), "T0");
+
+   // Add arcs back: net = P0--T0--P1
+   ASSERT_EQ(net.addArc(p0, *t0), true);
+   ASSERT_EQ(net.addArc(*t0, p1), true);
+   a1 = net.findArc(p0, *t0);
+   ASSERT_NE(a1, nullptr);
+   a2 = net.findArc(*t0, p1);
+   ASSERT_NE(a2, nullptr);
+   ASSERT_EQ(net.m_next_place_id, 2u);
+   ASSERT_EQ(net.m_next_transition_id, 1u);
+   ASSERT_EQ(net.m_arcs.size(), 2u);
+   ASSERT_EQ(&net.m_arcs[0], a1);
+   ASSERT_EQ(&net.m_arcs[1], a2);
+
+   // Remove arc P0--T0: net = P0 T0--P1
+   ASSERT_EQ(net.removeArc(p0, *t0), true);
+   ASSERT_EQ(net.m_next_place_id, 2u);
+   ASSERT_EQ(net.m_next_transition_id, 1u);
+   ASSERT_EQ(net.m_arcs.size(), 1u);
+   ASSERT_EQ(&net.m_arcs[0], a1); // a2 has been merged into a1
+   ASSERT_STREQ(net.m_arcs[0].from.key.c_str(), "T0");
+   ASSERT_STREQ(net.m_arcs[0].to.key.c_str(), "P1");
+
+   // Remove P1: net = P0 T0
+   net.removeNode(p1);
+   ASSERT_EQ(net.m_next_place_id, 1u);
+   ASSERT_EQ(net.m_next_transition_id, 1u);
+   ASSERT_EQ(net.m_arcs.size(), 0u);
+   ASSERT_EQ(net.m_places.size(), 1u);
+   ASSERT_EQ(net.m_transitions.size(), 1u);
+   ASSERT_STREQ(net.m_places[0].key.c_str(), "P0");
+   ASSERT_STREQ(net.m_transitions[0].key.c_str(), "T0");
+
+   // Remove P0: net = T0
+   net.removeNode(p0);
+   ASSERT_EQ(net.m_next_place_id, 0u);
+   ASSERT_EQ(net.m_next_transition_id, 1u);
+   ASSERT_EQ(net.m_arcs.size(), 0u);
+   ASSERT_EQ(net.m_places.size(), 0u);
+   ASSERT_EQ(net.m_transitions.size(), 1u);
+   ASSERT_STREQ(net.m_transitions[0].key.c_str(), "T0");
+
+   // Remove T0: net
+   net.removeNode(*t0);
+   ASSERT_EQ(net.m_next_place_id, 0u);
+   ASSERT_EQ(net.m_next_transition_id, 0u);
+   ASSERT_EQ(net.m_arcs.size(), 0u);
+   ASSERT_EQ(net.m_places.size(), 0u);
+   ASSERT_EQ(net.m_transitions.size(), 0u);
+   ASSERT_EQ(net.isEmpty(), true);
 }
 
 //------------------------------------------------------------------------------

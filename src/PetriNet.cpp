@@ -145,7 +145,6 @@ bool PetriNet::isEventGraph()
 
 //------------------------------------------------------------------------------
 // Quick and dirty algorithm.
-// TODO generer des noms plus explicite P4(2tok) => P4_1 et P4_2
 void PetriNet::toCanonicalForm(PetriNet& canonic)
 {
     // Copy the whole net
@@ -1020,11 +1019,10 @@ Node* PetriNet::findNode(std::string const& key)
 //------------------------------------------------------------------------------
 bool PetriNet::removeArc(Arc const& a)
 {
-    size_t s = m_arcs.size();
-    size_t i = s;
+    size_t i = m_arcs.size();
     while (i--)
     {
-        if ((m_arcs[i].to == a.to) && (m_arcs[i].from == a.from))
+        if ((m_arcs[i].from == a.from) && (m_arcs[i].to == a.to))
         {
             // Found the undesired arc: make the latest element take its
             // location in the container.
@@ -1080,8 +1078,8 @@ void PetriNet::removeNode(Node& node)
                 Place& pi = m_places[i];
                 Place& pe = m_places[m_places.size() - 1u];
                 m_places[i] = Place(pi.id, pe.x, pe.y, pe.tokens);
-                assert(m_next_place_id >= 2u);
-                m_next_place_id -= 2u;
+                assert(m_next_place_id >= 1u);
+                m_next_place_id -= 1u;
 
                 // Update the references to nodes of the arc
                 for (auto& a: m_arcs) // TODO optim: use in/out arcs but they may not be generated
@@ -1106,8 +1104,8 @@ void PetriNet::removeNode(Node& node)
                 Transition& ti = m_transitions[i];
                 Transition& te = m_transitions[m_transitions.size() - 1u];
                 m_transitions[i] = Transition(ti.id, te.x, te.y, te.angle);
-                assert(m_next_transition_id >= 2u);
-                m_next_transition_id -= 2u;
+                assert(m_next_transition_id >= 1u);
+                m_next_transition_id -= 1u;
 
                 for (auto& a: m_arcs) // TODO idem
                 {

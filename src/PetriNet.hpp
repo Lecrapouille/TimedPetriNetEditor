@@ -339,6 +339,7 @@ public:
     //--------------------------------------------------------------------------
     inline size_t& tokensIn()
     {
+        assert(from.type == Node::Place);
         return reinterpret_cast<Place&>(from).tokens;
     }
 
@@ -348,7 +349,26 @@ public:
     //--------------------------------------------------------------------------
     inline size_t& tokensOut()
     {
+        assert(to.type == Node::Place);
         return reinterpret_cast<Place&>(to).tokens;
+    }
+
+    //--------------------------------------------------------------------------
+    //! \brief Compare node with another node. Perform a check ont the type of
+    //! node and on the unique identifier.
+    //--------------------------------------------------------------------------
+    inline bool operator==(Arc const &other) const
+    {
+        return (from == other.from) && (to == other.to);
+    }
+
+    //--------------------------------------------------------------------------
+    //! \brief Compare node with another node. Perform a check ont the type of
+    //! node and on the unique identifier.
+    //--------------------------------------------------------------------------
+    inline bool operator!=(Arc const &other) const
+    {
+        return !(*this == other);
     }
 
     //! \brief Origin node (Place or Transition). Its type shall be different to
