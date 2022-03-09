@@ -41,7 +41,7 @@ private: // Derived from GUI
     //--------------------------------------------------------------------------
     //! \brief Inherit from GUI class. Draw the chessboard and pieces.
     //--------------------------------------------------------------------------
-    virtual void draw(const float dt) override;
+    virtual void draw() override;
 
     //--------------------------------------------------------------------------
     //! \brief Inherit from GUI class. Update GUI.

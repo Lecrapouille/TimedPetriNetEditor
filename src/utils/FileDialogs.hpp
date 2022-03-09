@@ -1605,13 +1605,13 @@ inline message::message(std::string const &title,
         }
         else
         {
-            std::string flag = "--";
+            std::string flag_ = "--";
             if (_icon == icon::warning || _icon == icon::error)
-                flag += "warning";
-            flag += "yesno";
+                flag_ += "warning";
+            flag_ += "yesno";
             if (_choice == choice::yes_no_cancel)
-                flag += "cancel";
-            command.push_back(flag);
+                flag_ += "cancel";
+            command.push_back(flag_);
             if (_choice == choice::yes_no || _choice == choice::yes_no_cancel)
             {
                 m_mappings[0] = button::yes;

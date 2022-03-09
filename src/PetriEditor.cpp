@@ -214,7 +214,7 @@ void PetriEditor::draw(Arc const& arc, uint8_t alpha)
 }
 
 //------------------------------------------------------------------------------
-void PetriEditor::draw(float const /*dt*/)
+void PetriEditor::draw()
 {
     // Draw all Places
     for (auto& p: m_petri_net.places())

@@ -166,37 +166,23 @@ public:
     friend class PetriEditor;
 
     //--------------------------------------------------------------------------
-    //! \brief Constructor. To be used when the user clicked on the GUI.
-    //! \param[in] x: X-axis coordinate in the window needed for the display.
-    //! \param[in] y: Y-axis coordinate in the window needed for the display.
-    //! \param[in] tok: the number of tokens (not checked ie if > 1 for Grafcet).
-    //--------------------------------------------------------------------------
-    Place(float const x, float const y, size_t const tok = 0)
-        : Node(Node::Type::Place, s_next_id++, x, y),
-          tokens(tok), m_backup_tokens(tok)
-    {}
-
-    //--------------------------------------------------------------------------
     //! \brief Constructor. To be used when loading a Petri net from JSON file.
     //! \param[in] id: unique node identifier. Shall be unique.
     //! \param[in] x: X-axis coordinate in the window needed for the display.
     //! \param[in] y: Y-axis coordinate in the window needed for the display.
     //! \param[in] tok: Initial number of tokens in the place.
     //--------------------------------------------------------------------------
-    Place(size_t const id, float const x, float const y, size_t const tok)
-        : Node(Node::Type::Place, id, x, y),
-          tokens(tok), m_backup_tokens(tok)
-    {
-        s_next_id = std::max(s_next_id.load(), id) + 1u;
-    }
+    Place(size_t const id_, float const x_, float const y_, size_t const tok_)
+        : Node(Node::Type::Place, id_, x_, y_), tokens(tok_), m_backup_tokens(tok_)
+    {}
 
     //--------------------------------------------------------------------------
     //! \brief Stringify: return "P42" for example.
     //--------------------------------------------------------------------------
-    static std::string to_str(size_t const id)
+    static std::string to_str(size_t const id_)
     {
         std::string strid("P");
-        strid += std::to_string(id);
+        strid += std::to_string(id_);
         return strid;
     }
 
@@ -210,9 +196,6 @@ private:
     //! save the number of tokens to allow restoring initial states when the
     //! simulation is finished.
     size_t m_backup_tokens;
-    //! \brief Auto increment unique identifier. Start from 0 (code placed in
-    //! the cpp file). Note: their reset is possible through class friendship.
-    static std::atomic<size_t> s_next_id;
 };
 
 // *****************************************************************************
@@ -230,35 +213,23 @@ public:
     friend class PetriNet;
 
     //--------------------------------------------------------------------------
-    //! \brief Constructor. To be used when the user clicked on the GUI.
-    //! \param[in] x: X-axis coordinate in the window needed for the display.
-    //! \param[in] y: Y-axis coordinate in the window needed for the display.
-    //--------------------------------------------------------------------------
-    Transition(float const x, float const y)
-        : Node(Node::Type::Transition, s_next_id++, x, y)
-    {}
-
-    //--------------------------------------------------------------------------
     //! \brief Constructor. To be used when loading a Petri net from JSON file.
     //! \param[in] id: unique node identifier.
     //! \param[in] x: X-axis coordinate in the window needed for the display.
     //! \param[in] y: Y-axis coordinate in the window needed for the display.
     //! \param[in] angle_: angle in degree of rotation for the display.
     //--------------------------------------------------------------------------
-    Transition(size_t const id, float const x, float const y, int const angle_)
-        : Node(Node::Type::Transition, id, x, y),
-          angle(angle_)
-    {
-        s_next_id = std::max(s_next_id.load(), id) + 1u;
-    }
+    Transition(size_t const id_, float const x_, float const y_, int const angle_)
+        : Node(Node::Type::Transition, id_, x_, y_), angle(angle_)
+    {}
 
     //--------------------------------------------------------------------------
     //! \brief Stringify: return "T42" for example.
     //--------------------------------------------------------------------------
-    static std::string to_str(size_t const id)
+    static std::string to_str(size_t const id_)
     {
         std::string strid("T");
-        strid += std::to_string(id);
+        strid += std::to_string(id_);
         return strid;
     }
 
@@ -302,12 +273,6 @@ public:
 
     //! \brief Temporary matrix index used when building max-plus linear system.
     size_t index = 0u;
-
-private:
-
-    //! \brief Auto increment unique identifier. Start from 0 (code placed in
-    //! the cpp file).
-    static std::atomic<size_t> s_next_id;
 };
 
 // *****************************************************************************
@@ -440,6 +405,8 @@ public:
                 m_arcs.push_back(Arc(from, to, it.duration));
             }
 
+            m_next_place_id = other.m_next_place_id;
+            m_next_transition_id = other.m_next_transition_id;
             generateArcsInArcsOut(/*arcs: true*/);
         }
 
@@ -472,6 +439,8 @@ public:
                 m_arcs.push_back(Arc(from, to, it.duration));
             }
 
+            m_next_place_id = other.m_next_place_id;
+            m_next_transition_id = other.m_next_transition_id;
             generateArcsInArcsOut(/*arcs: true*/);
         }
     }
@@ -485,8 +454,8 @@ public:
         m_transitions.clear();
         m_arcs.clear();
         m_critical.clear();
-        Place::s_next_id = 0u;
-        Transition::s_next_id = 0u;
+        m_next_place_id = 0u;
+        m_next_transition_id = 0u;
     }
 
     //--------------------------------------------------------------------------
@@ -508,7 +477,7 @@ public:
     //--------------------------------------------------------------------------
     Place& addPlace(float const x, float const y, size_t const tokens = 0u)
     {
-        m_places.push_back(Place(x, y, tokens));
+        m_places.push_back(Place(m_next_place_id++, x, y, tokens));
         return m_places.back();
     }
 
@@ -524,6 +493,7 @@ public:
     Place& addPlace(size_t const id, float const x, float const y, size_t const tokens)
     {
         m_places.push_back(Place(id, x, y, tokens));
+        m_next_place_id = std::max(m_next_place_id, id) + 1u;
         return m_places.back();
     }
 
@@ -552,7 +522,7 @@ public:
     //--------------------------------------------------------------------------
     Transition& addTransition(float const x, float const y)
     {
-        m_transitions.push_back(Transition(x, y));
+        m_transitions.push_back(Transition(m_next_transition_id++, x, y, 0u));
         return m_transitions.back();
     }
 
@@ -569,6 +539,7 @@ public:
                               int const angle)
     {
         m_transitions.push_back(Transition(id, x, y, angle));
+        m_next_transition_id = std::max(m_next_transition_id, id) + 1u;
         return m_transitions.back();
     }
 
@@ -759,6 +730,12 @@ private:
     std::deque<Transition> m_transitions;
     //! \brief List of Arcs.
     std::deque<Arc> m_arcs;
+    //! \brief Auto increment unique identifier. Start from 0 (code placed in
+    //! the cpp file).
+    size_t m_next_place_id = 0u;
+    //! \brief Auto increment unique identifier. Start from 0 (code placed in
+    //! the cpp file). Note: their reset is possible through class friendship.
+    size_t m_next_transition_id = 0u;
 
 public: // FIXME
     //

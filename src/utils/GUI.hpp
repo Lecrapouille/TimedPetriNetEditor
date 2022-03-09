@@ -76,7 +76,7 @@ private:
     virtual bool isRunning() = 0;
     //! \brief Private methods that derived classes have to implement: draw the
     //! GUI.
-    virtual void draw(const float dt) = 0;
+    virtual void draw() = 0;
     //! \brief Private methods that derived classes have to implement: manage
     //! the logic of the GUI.
     virtual void update(const float dt) = 0;
@@ -137,31 +137,32 @@ public:
     }
 
     //! \brief Get the GUI placed on the top of the stack.
-    inline GUIStates& peek()
+    inline GUIStates* peek()
     {
-        assert(!m_guis.empty());
-        return *m_guis.top();
+        return m_guis.empty() ? nullptr : m_guis.top();
     }
 
     //! \brief Push a new GUI on the top of the stack and start a loop for
     //! managing its draw and IO events. When the GUI is closed it will be drop
     //! from the stack.
-    void loop(GUIStates& gui)
+    void loop(GUIStates& starting_gui)
     {
         sf::Clock clock;
+        GUIStates* gui;
 
-        push(gui);
-        while (gui.isRunning())
+        push(starting_gui);
+        do
         {
             float dt = clock.restart().asSeconds();
-            GUIStates& gui = peek();
-            m_renderer.clear(gui.bgColor);
-            gui.handleInput();
-            gui.update(dt);
-            gui.draw(dt);
+            gui = peek();
+            assert(gui != nullptr);
+            m_renderer.clear(gui->bgColor);
+            gui->handleInput();
+            gui->update(dt);
+            gui->draw();
             m_renderer.display();
         }
-
+        while (gui->isRunning());
         pop();
     }
 
@@ -170,7 +171,7 @@ public:
     //! from the stack.
     inline void loop()
     {
-        loop(peek());
+        loop(*peek());
     }
 
     inline sf::RenderWindow& renderer()

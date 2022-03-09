@@ -3,6 +3,7 @@ Grafcet-gen.hpp
 GraphEvent-gen.jl
 petri.json
 build/
+doc/coverage/
 
 # Prerequisites
 *.d

@@ -52,7 +52,7 @@ DEFINES = -DDATADIR=\"$(DATADIR)\"
 ###################################################
 # Reduce warnings
 #
-DEFINES += -Wno-undef -Wno-switch-enum -Wno-sign-conversion -Wno-float-equal -Wno-shadow
+DEFINES += -Wno-undef -Wno-switch-enum -Wno-sign-conversion -Wno-float-equal
 
 ###################################################
 # Make the list of compiled files for the library

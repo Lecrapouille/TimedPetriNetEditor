@@ -22,9 +22,10 @@
 #include <iostream>
 
 //------------------------------------------------------------------------------
-static void usage()
+static void usage(const char* name)
 {
     std::cout
+      << name << " [petri.json]" << std::endl
       << "Left mouse button pressed: add a place" << std::endl
       << "Right mouse button pressed: add a transition" << std::endl
       << "Middle mouse button pressed: add an arc with the selected place or transition as origin" << std::endl
@@ -45,11 +46,25 @@ static void usage()
 }
 
 //------------------------------------------------------------------------------
-int main()
+int main(int argc, char* argv[])
 {
-    usage();
+    usage(argv[0]);
 
     PetriNet net;
+    if (argc > 2)
+    {
+        std::cerr << argv[0] << ": Failed needs zero or one parameter" << std::endl;
+        return EXIT_FAILURE;
+    }
+    else if ((argc == 2) && (argv[1][0] != '-'))
+    {
+        if (!net.load(argv[1]))
+        {
+            std::cerr << argv[0] << ": Failed loading file '" << argv[1] << "'"
+                      << std::endl;
+            //return EXIT_FAILURE;
+        }
+    }
 
     Application application(800, 600, "Timed Petri Net Editor");
     PetriEditor editor(application.renderer(), net);
@@ -62,7 +77,7 @@ int main()
     }
     catch (std::string const& msg)
     {
-        std::cerr << "Fatal: " << msg << std::endl;
+        std::cerr << argv[0] << ": Fatal: " << msg << std::endl;
         return EXIT_FAILURE;
     }
 

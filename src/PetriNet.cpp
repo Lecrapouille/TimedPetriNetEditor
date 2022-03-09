@@ -28,10 +28,6 @@
 #include <cstring>
 
 //------------------------------------------------------------------------------
-std::atomic<size_t> Place::s_next_id{0u};
-std::atomic<size_t> Transition::s_next_id{0u};
-
-//------------------------------------------------------------------------------
 size_t Transition::canFire()
 {
     if (arcsIn.size() == 0u)
@@ -116,8 +112,8 @@ bool PetriNet::isEventGraph()
             // the console.
             std::cerr << "Your Petri net is not an event graph. Because:"
                       << std::endl;
-            for (auto& p: m_places)
-            {
+            //for (auto& p: m_places) // FIXME !!!
+            //{
                 if (p.arcsOut.size() != 1u)
                 {
                     std::cerr << "  " << p.key
@@ -139,7 +135,7 @@ bool PetriNet::isEventGraph()
                         std::cerr << " " << a->from.key;
                     std::cerr << std::endl;
                 }
-            }
+            //}
             return false;
         }
     }
@@ -150,14 +146,15 @@ bool PetriNet::isEventGraph()
 //------------------------------------------------------------------------------
 // Quick and dirty algorithm.
 // TODO generer des noms plus explicite P4(2tok) => P4_1 et P4_2
-void PetriNet::toCanonicalForm(PetriNet& pn)
+void PetriNet::toCanonicalForm(PetriNet& canonic)
 {
-    pn = *this;
+    // Copy the whole net
+    canonic = *this;
 
     // Explode Places with more than one tokens and create as many as Places
-    // holding a single token.
+    // holding a single token. Redo arcs.
     {
-        std::deque<Place>& places = pn.places();
+        std::deque<Place>& places = canonic.places();
         size_t i = places.size();
         while (i--)
         {
@@ -168,30 +165,29 @@ void PetriNet::toCanonicalForm(PetriNet& pn)
                 Node* from = &(p.arcsIn[0]->from);
                 float duration = p.arcsIn[0]->duration;
                 size_t tokens = p.tokens - 1u;
-                pn.removeArc(*from, p);
+                canonic.removeArc(*from, p);
                 while (tokens--)
                 {
-                    Node& tmp1 = pn.addPlace(10.0f, 10.0f, 1u);
-                    pn.addArc(*from, tmp1, 0.0f);
-
-                    Node& tmp2 = pn.addTransition(20.0f, 20.0f);
-                    pn.addArc(tmp1, tmp2, 0.0f);
+                    Node& tmp1 = canonic.addPlace(10.0f, 10.0f, 1u);
+                    canonic.addArc(*from, tmp1, 0.0f);
+                    Node& tmp2 = canonic.addTransition(20.0f, 20.0f);
+                    canonic.addArc(tmp1, tmp2, 0.0f);
 
                     from = &tmp2;
                     p.tokens--;
 
                     if (p.tokens == 1u)
                     {
-                        pn.addArc(tmp2, p, duration);
+                        canonic.addArc(tmp2, p, duration);
                     }
                 }
             }
         }
     }
 
-    // Manage Places with one token that
-    pn.generateArcsInArcsOut(/*arcs: true*/);
-    std::deque<Place>& places = pn.places();
+    // Manage Places with one token that inputs or outputs
+    canonic.generateArcsInArcsOut(/*arcs: true*/);
+    std::deque<Place>& places = canonic.places();
     size_t i = places.size();
     while (i--)
     {
@@ -203,26 +199,26 @@ void PetriNet::toCanonicalForm(PetriNet& pn)
             if (reinterpret_cast<Transition*>(from)->isInput())
             {
                 float duration = p.arcsIn[0]->duration;
-                pn.removeArc(*from, p);
+                canonic.removeArc(*from, p);
 
-                Node& tmp1 = pn.addPlace(50.0f, 50.0f, 0u);
-                Node& tmp2 = pn.addTransition(60.0f, 60.0f);
-                pn.addArc(*from, tmp1, 0.0f);
-                pn.addArc(tmp1, tmp2, duration);
-                pn.addArc(tmp2, p, 0.0f);
+                Node& tmp1 = canonic.addPlace(50.0f, 50.0f, 0u);
+                Node& tmp2 = canonic.addTransition(60.0f, 60.0f);
+                canonic.addArc(*from, tmp1, 0.0f);
+                canonic.addArc(tmp1, tmp2, duration);
+                canonic.addArc(tmp2, p, 0.0f);
             }
 
             // Outputs
             Node* to = &(p.arcsOut[0]->to);
             if (reinterpret_cast<Transition*>(to)->isOutput())
             {
-                pn.removeArc(p, *to);
+                canonic.removeArc(p, *to);
 
-                Node& tmp1 = pn.addTransition(60.0f, 60.0f);
-                Node& tmp2 = pn.addPlace(50.0f, 50.0f, 0u);
-                pn.addArc(p, tmp1, 0.0f);
-                pn.addArc(tmp1, tmp2, 0.0f);
-                pn.addArc(tmp2, *to, 0.0f);
+                Node& tmp1 = canonic.addTransition(60.0f, 60.0f);
+                Node& tmp2 = canonic.addPlace(50.0f, 50.0f, 0u);
+                canonic.addArc(p, tmp1, 0.0f);
+                canonic.addArc(tmp1, tmp2, 0.0f);
+                canonic.addArc(tmp2, *to, 0.0f);
             }
         }
     }
@@ -1072,7 +1068,7 @@ void PetriNet::removeNode(Node& node)
     // of the container.
     if (node.type == Node::Type::Place)
     {
-        size_t i = m_places.size();
+        i = m_places.size();
         while (i--)
         {
             // Found the undesired node: make the latest element take its
@@ -1084,7 +1080,8 @@ void PetriNet::removeNode(Node& node)
                 Place& pi = m_places[i];
                 Place& pe = m_places[m_places.size() - 1u];
                 m_places[i] = Place(pi.id, pe.x, pe.y, pe.tokens);
-                Place::s_next_id -= 2u;
+                assert(m_next_place_id >= 2u);
+                m_next_place_id -= 2u;
 
                 // Update the references to nodes of the arc
                 for (auto& a: m_arcs) // TODO optim: use in/out arcs but they may not be generated
@@ -1101,7 +1098,7 @@ void PetriNet::removeNode(Node& node)
     }
     else
     {
-        size_t i = m_transitions.size();
+        i = m_transitions.size();
         while (i--)
         {
             if (m_transitions[i].id == node.id)
@@ -1109,7 +1106,8 @@ void PetriNet::removeNode(Node& node)
                 Transition& ti = m_transitions[i];
                 Transition& te = m_transitions[m_transitions.size() - 1u];
                 m_transitions[i] = Transition(ti.id, te.x, te.y, te.angle);
-                Transition::s_next_id -= 2u;
+                assert(m_next_transition_id >= 2u);
+                m_next_transition_id -= 2u;
 
                 for (auto& a: m_arcs) // TODO idem
                 {
