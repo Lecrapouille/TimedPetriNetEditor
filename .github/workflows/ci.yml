@@ -1,0 +1,41 @@
+name: Non regression tests for TimedPetriNetEditor
+on:
+  workflow_dispatch:
+    branches:
+      - master
+  push:
+    branches:
+      - master
+  pull_request:
+    branches:
+      - master
+
+jobs:
+  non_regression_linux:
+    name: Non regression tests on Linux
+    runs-on: ubuntu-20.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          submodules: true
+      - name: Install packages
+        run: |
+          sudo apt-get update
+          sudo apt-get install pkg-config lcov libdw-dev libsfml-dev
+      - name: Download, configure and install Google test
+        run: |
+          wget https://github.com/google/googletest/archive/release-1.11.0.tar.gz
+          tar xf release-1.11.0.tar.gz
+          cd googletest-release-1.11.0
+          cmake -DBUILD_SHARED_LIBS=OFF -DCMAKE_POSITION_INDEPENDENT_CODE=ON .
+          sudo make install
+      - name: Compile TimedPetriNetEditor
+        run: |
+          make -j`nproc --all`
+      - name: Do non regression tests
+        run: |
+          cd tests
+          make -j`nproc --all`
+          ./build/TimedPetriNetEditor-UnitTest
+
