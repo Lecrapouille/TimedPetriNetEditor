@@ -513,7 +513,8 @@ public:
     Place& addPlace(size_t const id, float const x, float const y, size_t const tokens)
     {
         m_places.push_back(Place(id, x, y, tokens));
-        m_next_place_id = std::max(m_next_place_id, id) + 1u;
+        if (id + 1u > m_next_place_id)
+            m_next_place_id = id + 1u;
         return m_places.back();
     }
 
@@ -559,7 +560,8 @@ public:
                               int const angle)
     {
         m_transitions.push_back(Transition(id, x, y, angle));
-        m_next_transition_id = std::max(m_next_transition_id, id) + 1u;
+        if (id + 1u > m_next_transition_id)
+            m_next_transition_id = id + 1u;
         return m_transitions.back();
     }
 
@@ -593,17 +595,7 @@ public:
     //! \return true if the arc is valid and has been added, else return false
     //! if an arc is already present or nodes have the same type.
     //--------------------------------------------------------------------------
-    bool addArc(Node& from, Node& to, float const duration = 0.0f)
-    {
-        if (from.type == to.type)
-            return false;
-
-        if (findArc(from, to))
-            return false;
-
-        m_arcs.push_back(Arc(from, to, duration));
-        return true;
-    }
+    bool addArc(Node& from, Node& to, float const duration = 0.0f);
 
     //--------------------------------------------------------------------------
     //! \brief Return if the arc linking the two given nodes is present in the

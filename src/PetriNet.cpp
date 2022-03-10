@@ -61,6 +61,51 @@ size_t Transition::canFire()
 }
 
 //------------------------------------------------------------------------------
+bool PetriNet::addArc(Node& from, Node& to, float const duration)
+{
+    if (from.type == to.type)
+    {
+        std::cerr << "Failed adding arc " << from.key
+                  << " --> " << to.key
+                  << ": nodes type shall not be the same"
+                  << std::endl;
+        return false;
+    }
+
+    if (findArc(from, to) != nullptr)
+    {
+        std::cerr << "Failed adding arc " << from.key
+                  << " --> " << to.key
+                  << ": Arc already exist"
+                  << std::endl;
+        return false;
+    }
+
+    if (findNode(from.key) == nullptr)
+    {
+        std::cerr << "Failed adding arc " << from.key
+                  << " --> " << to.key
+                  << ": The node " << from.key
+                  << " does not exist"
+                  << std::endl;
+        return false;
+    }
+
+    if (findNode(to.key) == nullptr)
+    {
+        std::cerr << "Failed adding arc " << from.key
+                  << " --> " << to.key
+                  << ": The node " << to.key
+                  << " does not exist"
+                  << std::endl;
+        return false;
+    }
+
+    m_arcs.push_back(Arc(from, to, duration));
+    return true;
+}
+
+//------------------------------------------------------------------------------
 void PetriNet::generateArcsInArcsOut()
 {
     for (auto& trans: m_transitions)
