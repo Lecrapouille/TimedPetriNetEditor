@@ -37,6 +37,7 @@ static void usage(const char* name)
       << "+ key: add a token on the place pointed by the mouse cursor" << std::endl
       << "- key: remove a token on the place pointed by the mouse cursor" << std::endl
       << "R key: run (start) or stop the simulation" << std::endl
+      << "SPACE key: run (start) or stop the simulation" << std::endl
       << "C key: show critical circuit" << std::endl
       << "S key: save the Petri net to petri.json file" << std::endl
       << "O key: load the Petri net from petri.json file" << std::endl

@@ -100,8 +100,8 @@ from the mouse and the keyboard.
 - `+`, `-` keys: add/remove a token on the place selected by the mouse cursor.
 - `PageUp`, `PageDown` keys: rotate CW or CCW the transition selected by the
   mouse cursor.
-- `R` key: start (run) or stop the simulation. Note: if the simulation is
-  stalled (no possible burning tokens), then the simulation will automatically
+- `R` or `SPACE`key: start (run) or stop the simulation. Note: if the simulation
+  is stalled (no possible burning tokens), then the simulation will automatically
   stops and return to the edition mode.
 - `C` key: show the first critical circuit if and only if the Petri net is a
   graph event.

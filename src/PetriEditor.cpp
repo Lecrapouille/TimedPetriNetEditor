@@ -473,8 +473,9 @@ void PetriEditor::handleKeyPressed(sf::Event const& event)
         m_ctrl = true;
     }
 
-    // 'R' key: Run the animation of the Petri net
-    else if (event.key.code == sf::Keyboard::R)
+    // 'R' or SPACE key: Run the animation of the Petri net
+    else if ((event.key.code == sf::Keyboard::R) ||
+             (event.key.code == sf::Keyboard::Space))
     {
         m_simulating = m_simulating ^ true;
 
