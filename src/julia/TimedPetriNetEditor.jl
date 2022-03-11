@@ -1,6 +1,6 @@
 ##=====================================================================
 ## TimedPetriNetEditor: A timed Petri net editor.
-## Copyright 2021 Quentin Quadrat <lecrapouille@gmail.com>
+## Copyright 2021 -- 2022 Quentin Quadrat <lecrapouille@gmail.com>
 ##
 ## This file is part of TimedPetriNetEditor.
 ##
