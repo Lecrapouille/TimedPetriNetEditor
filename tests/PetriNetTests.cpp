@@ -571,9 +571,7 @@ TEST(TestPetriNet, TestLoadJSON)
 {
     PetriNet net;
 
-    ASSERT_EQ(net.load("../examples/Howard2.json"), true); // FIXME shall call generateArcsInArcsOut ?
-    net.generateArcsInArcsOut(); // FIXME
-
+    ASSERT_EQ(net.load("../examples/Howard2.json"), true);
     ASSERT_EQ(net.isEmpty(), false);
     ASSERT_EQ(net.isEventGraph(), true);
     ASSERT_EQ(net.m_next_place_id, 5u);
