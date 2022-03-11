@@ -53,7 +53,7 @@ DEFINES += -Wno-undef -Wno-switch-enum -Wno-sign-conversion -Wno-float-equal -Wn
 # Make the list of compiled files for tests
 #
 OBJS += PetriNet.o Howard.o
-OBJS += PetriNetTests.o
+OBJS += PetriNetTests.o AnimationTests.o
 OBJS += main.o
 
 ###################################################
