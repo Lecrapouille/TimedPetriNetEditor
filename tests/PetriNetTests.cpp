@@ -868,6 +868,7 @@ TEST(TestPetriNet, TestRemoveNode)
     ASSERT_EQ(net.m_transitions.size(), 4u);
     ASSERT_EQ(net.m_arcs.size(), 10u);
 
+    // Delete Transition 0
     net.removeNode(*net.findNode("T0"));
     ASSERT_EQ(net.m_next_place_id, 5u);
     ASSERT_EQ(net.m_next_transition_id, 3u);
@@ -988,4 +989,179 @@ TEST(TestPetriNet, TestRemoveNode)
         ASSERT_STREQ(arcsIn[0]->from.key.c_str(), "T0");
         ASSERT_STREQ(arcsIn[0]->to.key.c_str(), "P4");
     }
+
+    // Delete Transition 2
+    net.removeNode(*net.findNode("T2"));
+    ASSERT_EQ(net.m_next_place_id, 5u);
+    ASSERT_EQ(net.m_next_transition_id, 2u);
+    ASSERT_EQ(net.m_places.size(), 5u);
+    ASSERT_EQ(net.m_transitions.size(), 2u);
+    ASSERT_EQ(net.m_arcs.size(), 4u);
+
+    // T0
+    {
+        auto const& arcsIn = net.findTransition(0u)->arcsIn;
+        auto const& arcsOut = net.findTransition(0u)->arcsOut;
+        ASSERT_EQ(arcsIn.size(), 1u);
+        ASSERT_EQ(arcsOut.size(), 1u);
+        ASSERT_STREQ(arcsIn[0]->from.key.c_str(), "P3");
+        ASSERT_STREQ(arcsIn[0]->to.key.c_str(), "T0");
+        ASSERT_STREQ(arcsOut[0]->from.key.c_str(), "T0");
+        ASSERT_STREQ(arcsOut[0]->to.key.c_str(), "P4");
+        ASSERT_EQ(arcsOut[0]->duration, 1.0f);
+    }
+    // T1
+    {
+        auto const& arcsIn = net.findTransition(1u)->arcsIn;
+        auto const& arcsOut = net.findTransition(1u)->arcsOut;
+        ASSERT_EQ(arcsIn.size(), 1u);
+        ASSERT_EQ(arcsOut.size(), 1u);
+        ASSERT_STREQ(arcsIn[0]->from.key.c_str(), "P1");
+        ASSERT_STREQ(arcsIn[0]->to.key.c_str(), "T1");
+        ASSERT_STREQ(arcsOut[0]->from.key.c_str(), "T1");
+        ASSERT_STREQ(arcsOut[0]->to.key.c_str(), "P2");
+        ASSERT_EQ(arcsOut[0]->duration, 3.0f);
+    }
+    // P0
+    {
+        auto const& arcsIn = net.findPlace(0u)->arcsIn;
+        auto const& arcsOut = net.findPlace(0u)->arcsOut;
+        ASSERT_EQ(arcsIn.size(), 0u);
+        ASSERT_EQ(arcsOut.size(), 0u);
+    }
+    // P1
+    {
+        auto const& arcsIn = net.findPlace(1u)->arcsIn;
+        auto const& arcsOut = net.findPlace(1u)->arcsOut;
+        ASSERT_EQ(arcsIn.size(), 0u);
+        ASSERT_EQ(arcsOut.size(), 1u);
+        ASSERT_STREQ(arcsOut[0]->from.key.c_str(), "P1");
+        ASSERT_STREQ(arcsOut[0]->to.key.c_str(), "T1");
+    }
+    // P2
+    {
+        auto const& arcsIn = net.findPlace(2u)->arcsIn;
+        auto const& arcsOut = net.findPlace(2u)->arcsOut;
+        ASSERT_EQ(arcsIn.size(), 1u);
+        ASSERT_EQ(arcsOut.size(), 0u);
+        ASSERT_STREQ(arcsIn[0]->from.key.c_str(), "T1");
+        ASSERT_STREQ(arcsIn[0]->to.key.c_str(), "P2");
+    }
+    // P3
+    {
+        auto const& arcsIn = net.findPlace(3u)->arcsIn;
+        auto const& arcsOut = net.findPlace(3u)->arcsOut;
+        ASSERT_EQ(arcsIn.size(), 0u);
+        ASSERT_EQ(arcsOut.size(), 1u);
+        ASSERT_STREQ(arcsOut[0]->from.key.c_str(), "P3");
+        ASSERT_STREQ(arcsOut[0]->to.key.c_str(), "T0");
+    }
+    // P4
+    {
+        auto const& arcsIn = net.findPlace(4u)->arcsIn;
+        auto const& arcsOut = net.findPlace(4u)->arcsOut;
+        ASSERT_EQ(arcsIn.size(), 1u);
+        ASSERT_EQ(arcsOut.size(), 0u);
+        ASSERT_STREQ(arcsIn[0]->from.key.c_str(), "T0");
+        ASSERT_STREQ(arcsIn[0]->to.key.c_str(), "P4");
+    }
+
+    // Delete Place 0: Place 4 becomes Place 0
+    net.removeNode(*net.findNode("P0"));
+    ASSERT_EQ(net.m_next_place_id, 4u);
+    ASSERT_EQ(net.m_next_transition_id, 2u);
+    ASSERT_EQ(net.m_places.size(), 4u);
+    ASSERT_EQ(net.m_transitions.size(), 2u);
+    ASSERT_EQ(net.m_arcs.size(), 4u);
+
+    // P0
+    {
+        auto const& arcsIn = net.findPlace(0u)->arcsIn;
+        auto const& arcsOut = net.findPlace(0u)->arcsOut;
+        ASSERT_EQ(arcsIn.size(), 1u);
+        ASSERT_EQ(arcsOut.size(), 0u);
+        ASSERT_STREQ(arcsIn[0]->from.key.c_str(), "T0");
+        ASSERT_STREQ(arcsIn[0]->to.key.c_str(), "P0");
+    }
+    // T0
+    {
+        auto const& arcsIn = net.findTransition(0u)->arcsIn;
+        auto const& arcsOut = net.findTransition(0u)->arcsOut;
+        ASSERT_EQ(arcsIn.size(), 1u);
+        ASSERT_EQ(arcsOut.size(), 1u);
+        ASSERT_STREQ(arcsIn[0]->from.key.c_str(), "P3");
+        ASSERT_STREQ(arcsIn[0]->to.key.c_str(), "T0");
+        ASSERT_STREQ(arcsOut[0]->from.key.c_str(), "T0");
+        ASSERT_STREQ(arcsOut[0]->to.key.c_str(), "P0");
+        ASSERT_EQ(arcsOut[0]->duration, 1.0f);
+    }
+
+    // Delete Place 0: Place 3 becomes Place 0
+    net.removeNode(*net.findNode("P0"));
+
+    // P0
+    {
+        auto const& arcsIn = net.findPlace(0u)->arcsIn;
+        auto const& arcsOut = net.findPlace(0u)->arcsOut;
+        ASSERT_EQ(arcsIn.size(), 0u);
+        ASSERT_EQ(arcsOut.size(), 1u);
+        ASSERT_STREQ(arcsOut[0]->from.key.c_str(), "P0");
+        ASSERT_STREQ(arcsOut[0]->to.key.c_str(), "T0");
+    }
+    // T0
+    {
+        auto const& arcsIn = net.findTransition(0u)->arcsIn;
+        auto const& arcsOut = net.findTransition(0u)->arcsOut;
+        ASSERT_EQ(arcsIn.size(), 1u);
+        ASSERT_EQ(arcsOut.size(), 0u);
+        ASSERT_STREQ(arcsIn[0]->from.key.c_str(), "P0");
+        ASSERT_STREQ(arcsIn[0]->to.key.c_str(), "T0");
+    }
+
+    // Delete Transition 0: Transition 1 becomes Place 0
+    net.removeNode(*net.findNode("T0"));
+
+    // P0
+    {
+        auto const& arcsIn = net.findPlace(0u)->arcsIn;
+        auto const& arcsOut = net.findPlace(0u)->arcsOut;
+        ASSERT_EQ(arcsIn.size(), 0u);
+        ASSERT_EQ(arcsOut.size(), 0u);
+    }
+    // P1
+    {
+        auto const& arcsIn = net.findPlace(1u)->arcsIn;
+        auto const& arcsOut = net.findPlace(1u)->arcsOut;
+        ASSERT_EQ(arcsIn.size(), 0u);
+        ASSERT_EQ(arcsOut.size(), 1u);
+        ASSERT_STREQ(arcsOut[0]->from.key.c_str(), "P1");
+        ASSERT_STREQ(arcsOut[0]->to.key.c_str(), "T0");
+    }
+    // P2
+    {
+        auto const& arcsIn = net.findPlace(2u)->arcsIn;
+        auto const& arcsOut = net.findPlace(2u)->arcsOut;
+        ASSERT_EQ(arcsIn.size(), 1u);
+        ASSERT_EQ(arcsOut.size(), 0u);
+        ASSERT_STREQ(arcsIn[0]->from.key.c_str(), "T0");
+        ASSERT_STREQ(arcsIn[0]->to.key.c_str(), "P2");
+        ASSERT_EQ(arcsIn[0]->duration, 3.0f);
+    }
+    // T0
+    {
+        auto const& arcsIn = net.findTransition(0u)->arcsIn;
+        auto const& arcsOut = net.findTransition(0u)->arcsOut;
+        ASSERT_EQ(arcsIn.size(), 1u);
+        ASSERT_EQ(arcsOut.size(), 1u);
+        ASSERT_STREQ(arcsIn[0]->from.key.c_str(), "P1");
+        ASSERT_STREQ(arcsIn[0]->to.key.c_str(), "T0");
+        ASSERT_STREQ(arcsOut[0]->from.key.c_str(), "T0");
+        ASSERT_STREQ(arcsOut[0]->to.key.c_str(), "P2");
+    }
+
+    net.removeNode(*net.findNode("T0"));
+    net.removeNode(*net.findNode("P2"));
+    net.removeNode(*net.findNode("P1"));
+    net.removeNode(*net.findNode("P0"));
+    ASSERT_EQ(net.isEmpty(), true);
 }
