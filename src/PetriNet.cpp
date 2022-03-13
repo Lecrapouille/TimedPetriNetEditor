@@ -1051,7 +1051,8 @@ Node* PetriNet::findNode(std::string const& key)
     }
 
     if (key[0] == 'T')
-    {        for (auto& t: m_transitions)
+    {
+        for (auto& t: m_transitions)
         {
             if (t.key == key)
                 return &t;
@@ -1060,6 +1061,28 @@ Node* PetriNet::findNode(std::string const& key)
     }
 
     std::cerr << "Node key shall start with 'P' or 'T'" << std::endl;
+    return nullptr;
+}
+
+//------------------------------------------------------------------------------
+Transition* PetriNet::findTransition(size_t const id)
+{
+    for (auto& t: m_transitions)
+    {
+        if (t.id == id)
+            return &t;
+    }
+    return nullptr;
+}
+
+//------------------------------------------------------------------------------
+Place* PetriNet::findPlace(size_t const id)
+{
+    for (auto& p: m_places)
+    {
+        if (p.id == id)
+            return &p;
+    }
     return nullptr;
 }
 

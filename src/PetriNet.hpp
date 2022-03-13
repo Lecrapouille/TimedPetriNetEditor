@@ -591,6 +591,20 @@ public:
     Node* findNode(std::string const& key);
 
     //--------------------------------------------------------------------------
+    //! \brief Search and return a Transition by its unique identifier. Search
+    //! is O(n) where n is the number of nodes. Return nullptr if not found.
+    //! \param[in] key for example "42" for the Transition 42.
+    //--------------------------------------------------------------------------
+    Transition* findTransition(size_t const id);
+
+    //--------------------------------------------------------------------------
+    //! \brief Search and return a Place by its unique identifier. Search
+    //! is O(n) where n is the number of nodes. Return nullptr if not found.
+    //! \param[in] key for example "42" for the Place 42.
+    //--------------------------------------------------------------------------
+    Place* findPlace(size_t const id);
+
+    //--------------------------------------------------------------------------
     //! \brief Add a new arc between two Petri nodes (place or transition).
     //! \return true if the arc is valid and has been added, else return false
     //! if an arc is already present or nodes have the same type.

@@ -567,13 +567,12 @@ TEST(TestPetriNet, TestBadAddRemoveArc)
 }
 
 //------------------------------------------------------------------------------
-TEST(TestPetriNet, TestLoadJSON)
+TEST(TestPetriNet, TestLoadedNet)
 {
     PetriNet net;
 
     ASSERT_EQ(net.load("../examples/Howard2.json"), true);
     ASSERT_EQ(net.isEmpty(), false);
-    ASSERT_EQ(net.isEventGraph(), true);
     ASSERT_EQ(net.m_next_place_id, 5u);
     ASSERT_EQ(net.m_next_transition_id, 4u);
     ASSERT_EQ(net.m_places.size(), 5u);
@@ -779,39 +778,214 @@ TEST(TestPetriNet, TestLoadJSON)
     ASSERT_EQ(net.findNode("P3"), &net.m_places[3]);
     ASSERT_EQ(net.findNode("P4"), &net.m_places[4]);
     ASSERT_EQ(net.findNode("P5"), nullptr);
+    ASSERT_EQ(net.findPlace(0u), &net.m_places[0]);
+    ASSERT_EQ(net.findPlace(1u), &net.m_places[1]);
+    ASSERT_EQ(net.findPlace(2u), &net.m_places[2]);
+    ASSERT_EQ(net.findPlace(3u), &net.m_places[3]);
+    ASSERT_EQ(net.findPlace(4u), &net.m_places[4]);
+    ASSERT_EQ(net.findPlace(5u), nullptr);
     ASSERT_EQ(net.findNode("T0"), &net.m_transitions[0]);
     ASSERT_EQ(net.findNode("T1"), &net.m_transitions[1]);
     ASSERT_EQ(net.findNode("T2"), &net.m_transitions[2]);
     ASSERT_EQ(net.findNode("T3"), &net.m_transitions[3]);
     ASSERT_EQ(net.findNode("T4"), nullptr);
+    ASSERT_EQ(net.findTransition(1u), &net.m_transitions[1]);
+    ASSERT_EQ(net.findTransition(2u), &net.m_transitions[2]);
+    ASSERT_EQ(net.findTransition(3u), &net.m_transitions[3]);
+    ASSERT_EQ(net.findTransition(4u), nullptr);
     ASSERT_EQ(net.findNode("pouet"), nullptr);
     ASSERT_EQ(net.findNode(""), nullptr);
 
     // Can we access to arcs ?
+    Arc* arc;
+
+    arc = net.findArc(*net.findNode("T0"), *net.findNode("P1"));
+    ASSERT_NE(arc, nullptr);
+    ASSERT_STREQ(arc->from.key.c_str(), "T0");
+    ASSERT_STREQ(arc->to.key.c_str(), "P1");
+
+    arc = net.findArc(*net.findNode("T0"), *net.findNode("P3"));
+    ASSERT_NE(arc, nullptr);
+    ASSERT_STREQ(arc->from.key.c_str(), "T0");
+    ASSERT_STREQ(arc->to.key.c_str(), "P3");
+
+    arc = net.findArc(*net.findNode("T1"), *net.findNode("P2"));
+    ASSERT_NE(arc, nullptr);
+    ASSERT_STREQ(arc->from.key.c_str(), "T1");
+    ASSERT_STREQ(arc->to.key.c_str(), "P2");
+
+    arc = net.findArc(*net.findNode("T2"), *net.findNode("P0"));
+    ASSERT_NE(arc, nullptr);
+    ASSERT_STREQ(arc->from.key.c_str(), "T2");
+    ASSERT_STREQ(arc->to.key.c_str(), "P0");
+
+    arc = net.findArc(*net.findNode("T3"), *net.findNode("P4"));
+    ASSERT_NE(arc, nullptr);
+    ASSERT_STREQ(arc->from.key.c_str(), "T3");
+    ASSERT_STREQ(arc->to.key.c_str(), "P4");
+
+    arc = net.findArc(*net.findNode("P0"), *net.findNode("T0"));
+    ASSERT_NE(arc, nullptr);
+    ASSERT_STREQ(arc->from.key.c_str(), "P0");
+    ASSERT_STREQ(arc->to.key.c_str(), "T0");
+
+    arc = net.findArc(*net.findNode("P1"), *net.findNode("T1"));
+    ASSERT_NE(arc, nullptr);
+    ASSERT_STREQ(arc->from.key.c_str(), "P1");
+    ASSERT_STREQ(arc->to.key.c_str(), "T1");
+
+    arc = net.findArc(*net.findNode("P2"), *net.findNode("T2"));
+    ASSERT_NE(arc, nullptr);
+    ASSERT_STREQ(arc->from.key.c_str(), "P2");
+    ASSERT_STREQ(arc->to.key.c_str(), "T2");
+
+    arc = net.findArc(*net.findNode("P3"), *net.findNode("T3"));
+    ASSERT_NE(arc, nullptr);
+    ASSERT_STREQ(arc->from.key.c_str(), "P3");
+    ASSERT_STREQ(arc->to.key.c_str(), "T3");
+
+    arc = net.findArc(*net.findNode("P4"), *net.findNode("T2"));
+    ASSERT_NE(arc, nullptr);
+    ASSERT_STREQ(arc->from.key.c_str(), "P4");
+    ASSERT_STREQ(arc->to.key.c_str(), "T2");
 
     // Can fire ? (Version 1)
     ASSERT_EQ(net.m_transitions[0].canFire(), 1u);
     ASSERT_EQ(net.m_transitions[1].canFire(), 0u);
     ASSERT_EQ(net.m_transitions[2].canFire(), 0u);
     ASSERT_EQ(net.m_transitions[3].canFire(), 0u);
+}
 
-    PetriNet canonic;
-    net.toCanonicalForm(canonic); // FIXME shall return bool isEventGraph() ?
-    canonic.generateArcsInArcsOut(); // FIXME
+//------------------------------------------------------------------------------
+TEST(TestPetriNet, TestRemoveNode)
+{
+    PetriNet net;
 
-    ASSERT_EQ(canonic.isEmpty(), false);
-    ASSERT_EQ(canonic.isEventGraph(), true);
-    ASSERT_EQ(canonic.save("/tmp/canonic.json"), true);
-    ASSERT_EQ(canonic.m_next_place_id, 6u);
-    ASSERT_EQ(canonic.m_next_transition_id, 5u);
-    ASSERT_EQ(canonic.m_places.size(), 6u);
-    ASSERT_EQ(canonic.m_transitions.size(), 5u);
-    ASSERT_EQ(canonic.m_arcs.size(), 12u);
+    ASSERT_EQ(net.load("../examples/Howard2.json"), true);
+    ASSERT_EQ(net.m_next_place_id, 5u);
+    ASSERT_EQ(net.m_next_transition_id, 4u);
+    ASSERT_EQ(net.m_places.size(), 5u);
+    ASSERT_EQ(net.m_transitions.size(), 4u);
+    ASSERT_EQ(net.m_arcs.size(), 10u);
 
-    ASSERT_EQ(canonic.m_places[0].tokens, 1u);
-    ASSERT_EQ(canonic.m_places[1].tokens, 0u);
-    ASSERT_EQ(canonic.m_places[2].tokens, 0u);
-    ASSERT_EQ(canonic.m_places[3].tokens, 0u);
-    ASSERT_EQ(canonic.m_places[4].tokens, 0u);
-    ASSERT_EQ(canonic.m_places[5].tokens, 1u);
+    net.removeNode(*net.findNode("T0"));
+    ASSERT_EQ(net.m_next_place_id, 5u);
+    ASSERT_EQ(net.m_next_transition_id, 3u);
+    ASSERT_EQ(net.m_places.size(), 5u);
+    ASSERT_EQ(net.m_transitions.size(), 3u);
+    ASSERT_EQ(net.m_arcs.size(), 7u);
+
+    // Check Places
+    ASSERT_NE(net.findPlace(0u), nullptr);
+    ASSERT_NE(net.findPlace(1u), nullptr);
+    ASSERT_NE(net.findPlace(2u), nullptr);
+    ASSERT_NE(net.findPlace(3u), nullptr);
+    ASSERT_NE(net.findPlace(4u), nullptr);
+    ASSERT_EQ(net.findPlace(5u), nullptr);
+
+    // Check Transitions
+    ASSERT_NE(net.findTransition(0u), nullptr);
+    ASSERT_NE(net.findTransition(1u), nullptr);
+    ASSERT_NE(net.findTransition(2u), nullptr);
+    ASSERT_EQ(net.findTransition(3u), nullptr);
+
+    // Check arcs
+    ASSERT_NE(net.findArc(*net.findTransition(2u), *net.findPlace(0u)), nullptr);
+    ASSERT_NE(net.findArc(*net.findTransition(1u), *net.findPlace(2u)), nullptr);
+    ASSERT_NE(net.findArc(*net.findTransition(0u), *net.findPlace(4u)), nullptr);
+    ASSERT_NE(net.findArc(*net.findPlace(1u), *net.findTransition(1u)), nullptr);
+    ASSERT_NE(net.findArc(*net.findPlace(2u), *net.findTransition(2u)), nullptr);
+    ASSERT_NE(net.findArc(*net.findPlace(3u), *net.findTransition(0u)), nullptr);
+    ASSERT_NE(net.findArc(*net.findPlace(4u), *net.findTransition(2u)), nullptr);
+
+    // In/out arcs Transition
+    // T0 (previously T3)
+    {
+        auto const& arcsIn = net.findTransition(0u)->arcsIn;
+        auto const& arcsOut = net.findTransition(0u)->arcsOut;
+        ASSERT_EQ(arcsIn.size(), 1u);
+        ASSERT_EQ(arcsOut.size(), 1u);
+        ASSERT_STREQ(arcsIn[0]->from.key.c_str(), "P3");
+        ASSERT_STREQ(arcsIn[0]->to.key.c_str(), "T0");
+        ASSERT_STREQ(arcsOut[0]->from.key.c_str(), "T0");
+        ASSERT_STREQ(arcsOut[0]->to.key.c_str(), "P4");
+        ASSERT_EQ(arcsOut[0]->duration, 1.0f);
+    }
+    // T1
+    {
+        auto const& arcsIn = net.findTransition(1u)->arcsIn;
+        auto const& arcsOut = net.findTransition(1u)->arcsOut;
+        ASSERT_EQ(arcsIn.size(), 1u);
+        ASSERT_EQ(arcsOut.size(), 1u);
+        ASSERT_STREQ(arcsIn[0]->from.key.c_str(), "P1");
+        ASSERT_STREQ(arcsIn[0]->to.key.c_str(), "T1");
+        ASSERT_STREQ(arcsOut[0]->from.key.c_str(), "T1");
+        ASSERT_STREQ(arcsOut[0]->to.key.c_str(), "P2");
+        ASSERT_EQ(arcsOut[0]->duration, 3.0f);
+    }
+    // T2
+    {
+        auto const& arcsIn = net.findTransition(2u)->arcsIn;
+        auto const& arcsOut = net.findTransition(2u)->arcsOut;
+        ASSERT_EQ(arcsIn.size(), 2u);
+        ASSERT_EQ(arcsOut.size(), 1u);
+        ASSERT_STREQ(arcsIn[0]->from.key.c_str(), "P2");
+        ASSERT_STREQ(arcsIn[0]->to.key.c_str(), "T2");
+        ASSERT_STREQ(arcsIn[1]->from.key.c_str(), "P4");
+        ASSERT_STREQ(arcsIn[1]->to.key.c_str(), "T2");
+        ASSERT_STREQ(arcsOut[0]->from.key.c_str(), "T2");
+        ASSERT_STREQ(arcsOut[0]->to.key.c_str(), "P0");
+        ASSERT_EQ(arcsOut[0]->duration, 5.0f);
+    }
+
+    // In/out arcs Place
+    // P0
+    {
+        auto const& arcsIn = net.findPlace(0u)->arcsIn;
+        auto const& arcsOut = net.findPlace(0u)->arcsOut;
+        ASSERT_EQ(arcsIn.size(), 1u);
+        ASSERT_EQ(arcsOut.size(), 0u);
+        ASSERT_STREQ(arcsIn[0]->from.key.c_str(), "T2");
+        ASSERT_STREQ(arcsIn[0]->to.key.c_str(), "P0");
+    }
+    // P1
+    {
+        auto const& arcsIn = net.findPlace(1u)->arcsIn;
+        auto const& arcsOut = net.findPlace(1u)->arcsOut;
+        ASSERT_EQ(arcsIn.size(), 0u);
+        ASSERT_EQ(arcsOut.size(), 1u);
+        ASSERT_STREQ(arcsOut[0]->from.key.c_str(), "P1");
+        ASSERT_STREQ(arcsOut[0]->to.key.c_str(), "T1");
+    }
+    // P2
+    {
+        auto const& arcsIn = net.findPlace(2u)->arcsIn;
+        auto const& arcsOut = net.findPlace(2u)->arcsOut;
+        ASSERT_EQ(arcsIn.size(), 1u);
+        ASSERT_EQ(arcsOut.size(), 1u);
+        ASSERT_STREQ(arcsOut[0]->from.key.c_str(), "P2");
+        ASSERT_STREQ(arcsOut[0]->to.key.c_str(), "T2");
+        ASSERT_STREQ(arcsIn[0]->from.key.c_str(), "T1");
+        ASSERT_STREQ(arcsIn[0]->to.key.c_str(), "P2");
+    }
+    // P3
+    {
+        auto const& arcsIn = net.findPlace(3u)->arcsIn;
+        auto const& arcsOut = net.findPlace(3u)->arcsOut;
+        ASSERT_EQ(arcsIn.size(), 0u);
+        ASSERT_EQ(arcsOut.size(), 1u);
+        ASSERT_STREQ(arcsOut[0]->from.key.c_str(), "P3");
+        ASSERT_STREQ(arcsOut[0]->to.key.c_str(), "T0");
+    }
+    // P4
+    {
+        auto const& arcsIn = net.findPlace(4u)->arcsIn;
+        auto const& arcsOut = net.findPlace(4u)->arcsOut;
+        ASSERT_EQ(arcsIn.size(), 1u);
+        ASSERT_EQ(arcsOut.size(), 1u);
+        ASSERT_STREQ(arcsOut[0]->from.key.c_str(), "P4");
+        ASSERT_STREQ(arcsOut[0]->to.key.c_str(), "T2");
+        ASSERT_STREQ(arcsIn[0]->from.key.c_str(), "T0");
+        ASSERT_STREQ(arcsIn[0]->to.key.c_str(), "P4");
+    }
 }
