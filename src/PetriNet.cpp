@@ -276,8 +276,8 @@ bool PetriNet::toAdjacencyMatrices(SparseMatrix& N, SparseMatrix&T)
     generateArcsInArcsOut(/*arcs: true*/);
     size_t const nnodes = m_transitions.size();
 
-    T.clear(); T.reserve(m_places.size()); T.dim(nnodes, nnodes);
-    N.clear(); N.reserve(m_places.size()); N.dim(nnodes, nnodes);
+    T.clear(); T.dim(nnodes, nnodes);
+    N.clear(); N.dim(nnodes, nnodes);
 
     for (auto& p: m_places)
     {

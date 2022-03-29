@@ -106,13 +106,7 @@ struct SparseMatrix
        d.clear();
     }
 
-    void reserve(size_t const size)
-    {
-       i.reserve(size);
-       j.reserve(size);
-       d.reserve(size);
-    }
-
+    //! \brief Beware double inclusions are not checked
     void add(size_t i_, size_t j_, float d_)
     {
        i.push_back(i_ + 1u);
@@ -120,11 +114,11 @@ struct SparseMatrix
        d.push_back(d_);
     }
 
-    // (I,J) Coordinate
+    //! \brief (I,J) Coordinates
     std::vector<size_t> i, j;
-    // Non zero element (double to be usable by Julia)
+    //! \brief Non zero element (double to be usable by Julia)
     std::vector<double> d;
-    //
+    //! \brief Matrix dimension
     size_t N, M;
 };
 
