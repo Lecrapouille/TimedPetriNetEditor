@@ -53,6 +53,27 @@ struct AnimatedToken
         speed = magnitude / arc.duration;
     }
 
+// I dunno why the code in the #else branch seems to make buggy animations with
+// tokens that disapear. Cannot catch it by unit tests.
+// https://github.com/Lecrapouille/TimedPetriNetEditor/issues/2
+# if 1
+
+    //--------------------------------------------------------------------------
+    //! \brief Hack needed because of references
+    //--------------------------------------------------------------------------
+    AnimatedToken& operator=(const AnimatedToken& obj)
+    {
+        this->~AnimatedToken(); // destroy
+        new (this) AnimatedToken(obj); // copy construct in place
+        return *this;
+    }
+
+    AnimatedToken(const AnimatedToken&) = default;
+    AnimatedToken(AnimatedToken&&) = default;
+    AnimatedToken& operator=(AnimatedToken&&) = default;
+
+#else
+
     //--------------------------------------------------------------------------
     //! \brief Hack needed because of references
     //--------------------------------------------------------------------------
@@ -86,6 +107,7 @@ struct AnimatedToken
         new (this) AnimatedToken(other); // copy construct in place
         return *this;
     }
+#endif
 
     //--------------------------------------------------------------------------
     //! \brief Update position on the screen.
