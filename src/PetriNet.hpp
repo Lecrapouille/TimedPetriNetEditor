@@ -28,6 +28,7 @@
 #  include <deque>
 #  include <vector>
 #  include <cassert>
+#  include <random>
 
 class Arc;
 struct SparseMatrix;
@@ -568,6 +569,20 @@ public:
     //--------------------------------------------------------------------------
     //! \brief Const getter. Return the reference to the container of Transitions.
     //--------------------------------------------------------------------------
+    std::vector<Transition*> const& shuffle_transitions()
+    {
+        m_shuffled_transitions.clear();
+        m_shuffled_transitions.reserve(m_transitions.size());
+        for (auto& trans: m_transitions)
+            m_shuffled_transitions.push_back(&trans);
+        std::random_shuffle(std::begin(m_shuffled_transitions),
+                            std::end(m_shuffled_transitions));
+        return m_shuffled_transitions;
+    }
+
+    //--------------------------------------------------------------------------
+    //! \brief Const getter. Return the reference to the container of Transitions.
+    //--------------------------------------------------------------------------
     std::deque<Transition> const& transitions() const
     {
         return m_transitions;
@@ -754,6 +769,8 @@ private:
     //! \brief List of Transitions. We do not use std::vector to avoid
     //! invalidating node references for arcs after a possible resizing.
     std::deque<Transition> m_transitions;
+    //! \brief List of shuffled Transitions.
+    std::vector<Transition*> m_shuffled_transitions;
     //! \brief List of Arcs.
     std::deque<Arc> m_arcs;
     //! \brief Auto increment unique identifier. Start from 0 (code placed in

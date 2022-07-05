@@ -342,29 +342,34 @@ void PetriEditor::update(float const dt)
         // transitions possible we have to iterate and burn tokens one by one.
         do
         {
+            // Randomize the order of fired transition.
+            // FIXME: filter the list to speed up
+            std::vector<Transition*> const& transitions =
+                    m_petri_net.shuffle_transitions();
+
             burning = false;
-            for (auto& trans: m_petri_net.transitions()) // FIXME: filter the list to speed up
+            for (auto& trans: transitions)
             {
-                size_t tokens = trans.canFire(); // [0 .. 1] tokens
+                size_t tokens = trans->canFire(); // [0 .. 1] tokens
                 if (tokens > 0u)
                 {
-                    trans.fading.restart();
+                    trans->fading.restart();
 
                     burning = true; // keep iterating on this loop
                     burnt = true; // At least one place has been fired
 
                     // Burn a single token on each Places above
-                    for (auto& a: trans.arcsIn)
+                    for (auto& a: trans->arcsIn)
                     {
                         a->tokensIn() -= 1u;
                         a->fading.restart();
                     }
 
                     // Count the number of tokens for the animation
-                    for (auto& a: trans.arcsOut)
+                    for (auto& a: trans->arcsOut)
                     {
                         a->count += 1u;
-                        // FIXME: speedup: store trans.arcsOut
+                        // FIXME: speedup: store trans->arcsOut
                     }
                 }
             }
