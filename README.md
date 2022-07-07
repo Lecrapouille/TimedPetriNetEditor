@@ -13,14 +13,14 @@ to a YouTube link showing how to edit a basic net.
 *Fig 1 - A timed Petri net (made with this editor).*
 
 Why another Petri editor ? Because many Petri node editors in GitHub are no
-longer maintained (> 7 years) or that I cannot personaly compile or use (Windows
+longer maintained (> 7 years) or that I cannot personally compile or use (Windows
 system, Visual Studio compiler, C#, Java ..) or the code is too complex to add
 my own extensions. In the future, this editor will complete my
-[MaxPlus](https://github.com/Lecrapouille/MaxPlus.jl) toolbox for Julia (still
-in gestation) by adding a graphical interface (for the moment there is no Petri
-net editors available for Julia).
+[(max,+)](https://github.com/Lecrapouille/MaxPlus.jl) toolbox for
+[Julia](https://julialang.org/) (still in gestation) by adding a graphical
+interface (for the moment there is no Petri net editors available for Julia).
 
-## How to compile the project?
+## How to compile and install the project?
 
 Prerequisites to compile this project are:
 - g++ or clang++ compiler for C++14 (because of `std::make_unique` is used).
@@ -36,39 +36,54 @@ To compile the project:
 cd TimedPetriNetEditor/
 make
 
-# Or to use all your CPU cores for compiling:
-# make -j`nproc --all`
+# Or to compile using all your CPU cores (8 cores in my case):
+# make -j8
 ```
 
-To use the application, you **have to** install it on your Linux system first:
+To use the application, you can:
+```sh
+./build/TimedPetriNetEditor
+```
+
+For Julia developers, you can use this editor in synergy with my Julia
+[(max,+)](https://github.com/Lecrapouille/MaxPlus.jl) toolbox.  The easier way
+to achieve it is to you install TimedPetriNetEditor on your operating system
+(this will install a shared library needed that can be found by Julia):
+
 ```sh
 sudo make install
+
+*** Installing: doc => /usr/share/TimedPetriNetEditor/0.1.0/doc
+*** Installing: examples => /usr/share/TimedPetriNetEditor/0.1.0/examples
+*** Installing: data => /usr/share/TimedPetriNetEditor/0.1.0/data
+*** Installing: libs => /usr/lib
+*** Installing: pkg-config => /usr/lib/pkgconfig
+*** Installing: headers => /usr/include/TimedPetriNetEditor-0.1.0
+*** Installing: src => /usr/include/TimedPetriNetEditor-0.1.0
 ```
 
-Indeed, this will install the binary `TimedPetriNetEditor` in `/usr/bin`, and
-most important, a shared library `libtimedpetrineteditor.so` in `/usr/lib` and the folder
-`TimedPetriNetEditor/data/` in `/usr/share`. If you does not desire to call
-`make install` you will have to adapt the `DEFINES` in Makefile to indicate the
-path of the `data/` folder.
-
-Once installed, call the application:
+Once installed, you can call directly the Petri net editor:
 ```sh
 TimedPetriNetEditor
 ```
 
-Optionally, you can run this editor from
-[Julia](https://github.com/JuliaLang/julia) while a better integration with the
-Julia REPL and the [MaxPlus](https://github.com/Lecrapouille/MaxPlus.jl) Julia
-package will have to be done in the future. Type the following command on a Unix
-console:
-
+Or from the [Julia](https://github.com/JuliaLang/julia) REPL (this part is described in details
+in the dedicated section of this document):
 ```sh
-cd src/julia
-julia TimedPetriNetEditor.jl
+julia> include("src/julia/TimedPetriNetEditor.jl")
+counter (generic function with 1 method)
+
+julia> pn = petri_net()
+PetriNet(0)
+
+julia> editor!(pn)
 ```
 
-Again, if `make install` has not been called, you will have to manually modify
-this Julia file to indicate the correct path of the shared library `libtimedpetrineteditor.so`.
+If you does not desire install TimedPetriNetEditor on your operating system, you
+will have to adapt the `DEFINES` in Makefile to indicate the path of the `data/`
+folder (for the find the fonts). You will also have to manually modify this
+Julia file to indicate the correct path of the shared library
+`libtimedpetrineteditor.so`.
 
 ## Usage of the Editor
 
@@ -114,16 +129,18 @@ from the mouse and the keyboard.
 
 ## Limitations / Work in progress
 
-- Adding an arc will generate a random duration (between 1 and 5).
-- Node captions and time duration cannot yet be edited. Workaround: save the
+- Adding an arc will generate a random duration (between 1 and 5). *Workaround:*
+  save the Petri net to JSON file and edit with a text editor, then reload the
+  file.
+- Node captions and time duration cannot yet be edited. *Workaround:* save the
   Petri net to JSON file and edit with a text editor, then reload the file.
-- No input node generating periodically tokens is yet made. Workaround: during
+- No input node generating periodically tokens is yet made. *Workaround:* during
   the simulation the user can add new token to any desired places selected by
   the mouse cursor and the `+` key.
 - Showing critical cycles for graph event does not support having transitions
   without predecessor (inputs). For example this Petri net: `T0 -> P0 -> T1`.
-  Workaround: Either modify your net either by removing your inputs or make inputs
-  cycling to themselves with a `-inf` time (which makes duality issues).
+  *Workaround:* Either modify your net either by removing your inputs or make
+  inputs cycling to themselves with a `-inf` time (which makes duality issues).
 - Not all error messages are displayed on the GUI. Read the logs on your Unix
   console.
 - We cannot move or zoom the Petri net or select several nodes. We cannot change
@@ -202,7 +219,7 @@ leaving arcs `P1 -> T1` and `P1 -> T2`. How transitions `T1` and `T2` will burn
 tokens in `P1` and therefore in which arc tokens will transit to ?
 
 Answer: Unless you want to simulate system with concurrences between resources,
-this kind of net is a bad design and should be avoided for architecture real
+this kind of net is a bad design and should be avoided when architecturing real
 systems since the execution of this kind of Petri nets is nondeterministic: when
 multiple transitions are enabled at the same time, they will fire in any
 order. Therefore you should adapt your Petri net to define uniquely the
@@ -210,15 +227,15 @@ trajectory of the token.
 
 Nondeterministic execution policy is made at the discretion of the developer of
 the editor and you will have different behavior depending on how the editor has
-been developed. Currently in our case, the order when iterating on transitions
-and arcs only depends of their order of creation (in the future we may randomize
-the order of iteration along transitions). When several places are fired, the
-maximum possible of tokens will be burn within a single step of the animation
-cycle but, internally, we iterate over tokens one by one to help dispatching
-them over the maximum number of arcs.  Therefore, in this particular example,
-since `T1` has been created before `T2` (unique identifiers are incremented by
-one from zero and there is no gap), the 1st token will go to `T1` and the second
-will go to `T2`. If `P1` had a single token, the `T1` will always be chosen.
+been developed. Currently in our case, initially, the order when iterating on
+transitions and arcs only depends of their order of creation but now we
+randomize.  When several places are fired, the maximum possible of tokens will
+be burn within a single step of the animation cycle but, internally, we iterate
+over tokens one by one to help dispatching them over the maximum number of arcs.
+Therefore, in this particular example, since `T1` has been created before `T2`
+(unique identifiers are incremented by one from zero and there is no gap), the
+1st token will go to `T1` and the second will go to `T2`. If `P1` had a single
+token, in early `T1` will always be chosen but in latest version we randomize.
 
 ## What are Timed Graph Events ?
 
@@ -229,7 +246,8 @@ concurrency is never occurring. Transitions still may have several arcs because
 they simulate synchronisation between resources. Places can have zero or several
 tokens. In the above figure 1, the net is not an event graph since `P0` has 3
 incoming arcs and `P2` has two output arcs but the following figure 2 is an
-event graph.
+event graph. Timed Graph Events are an interesting for designing real time
+systems as explained in the next sections.
 
 ![EventGraph](doc/EventGraph01.png)
 
@@ -241,8 +259,8 @@ and no outputs.
 
 ### Dater and Counter Form
 
-Event graphs represent when system event are occurring. We have two different way
-to represent them: -- the counter form -- and the dater form.
+Event graphs represent when system event are occurring. We have two different
+way to represent them: the counter form, and the dater form.
 
 - Counter form of the event graph in the figure 2 is:
 ```
@@ -266,21 +284,24 @@ T3(n) = max(1 + T0(n - 0));
 where `n - 0` and `n - 2` are delays implied by tokens from incoming places and
 `max(5 +`, `max(3 + ` and `max(1 +` are implied by duration from incoming arcs.
 
-In both case, these kinds of formula are not easy to manipulate and the max-plus
+In both case, these kinds of formula are not easy to manipulate and the (max,+)
 algebra is here to simplify them. This algebra introduces the operator ⨁ instead
 of the usual multiplication in classic algebra, and the operator ⨂ (usually
-simply noted as `.`) instead of the usual max function in the classic
-algebra. The min-plus algebra also exists (the operator ⨂ is the min function)
-and for more information about max-plus algebra, see my
+simply noted as `.`) instead of the usual `max()` function in the classic
+algebra. The (min,+) algebra also exists (the operator ⨂ is the `min()`
+function) and for more information about (max,+) algebra, see my
 [MaxPlus](https://github.com/Lecrapouille/MaxPlus.jl) Julia package which
 contains tutorials explaining more deeply this algebra.
 
-The min-plus algebra is, in this case, less convenient since dater form is more
-friendly than the counter form since delays are shorter. Indeed, in a real-time
-system the number of resources (tokens) are reduced compared to duration needed
-to perform tasks (duration on arcs) which can be very long. And, thanks to the
-canonical form (explained in the next section) delays can simplify be either 0
-or 1.
+The (min,+) algebra, for event graphs, is less convenient since dater form is
+more friendly than the counter form for two reasons:
+- on a real-time system the number of resources (tokens) are reduced compared to
+  duration needed to perform tasks (duration on arcs) which can be arbitrary
+  long (for example 2 resources versus 2 hours delay when your system is
+  scheduled at 1 Hz).  Remember that in discrete time system each delay costs
+  one variable (memory) to hold the value.
+- thanks to the canonical form (explained in the next section) delays can
+  simplify be either 0 or 1.
 
 ### Canonical Event Graph
 
@@ -301,14 +322,14 @@ been transferred to the newly created `P5` place.
 *Fig 3 - Canonical Event Graph (made with this editor).*
 
 This kind of event graph can directly be converted into an implicit dynamic
-linear systems in the max-plus algebra (see section after) but since editing
+linear systems in the (max,+) algebra (see section after) but since editing
 canonical net is fastidious and therefore it is hidden to the user and the user
 can directly manipulate the compact form.
 
-### Implicit Max-Plus Dynamic Linear Systems
+### Implicit max-plus Dynamic Linear Systems
 
-Canonical event graphs are interesting since their dater form can be modeled
-by an implicit dynamic linear systems with the max-plus algebra, which have the
+Canonical event graphs are interesting since their dater form can be modeled by
+an implicit dynamic linear systems with the (max,+) algebra, which have the
 following form:
 
 ```
@@ -316,13 +337,13 @@ following form:
     Y(n) = C ⨂ X(n)
 ```
 
-Or simply:
+Or using compact syntax:
 ```
     X(n) = D X(n) ⨁ A X(n-1) ⨁ B U(n)
     Y(n) = C X(n)
 ```
 
-In where `A, B, C, D` are max-plus matrices: `B` is named controlled matrix, `C`
+In where `A, B, C, D` are (max,+) matrices: `B` is named controlled matrix, `C`
 the observation matrix, `A` the state matrix and `D` the implicit matrix. `U`
 the column vector of system inputs (transitions with no predecessor), `Y` the
 system outputs (transitions with no successor) and `X` the systems states as
@@ -330,7 +351,7 @@ column vector (transitions with successor and predecessor), `n` in `X(n)`,
 `U(n)`, `Y(n)` are places with no token and `n-1` in `X(n-1)` are places having
 a single token. Note: that is why, in the previous section, we said that
 canonical form has its input and output places with no token. This editor can
-generate these max-plus sparse matrices (for Julia), for example from figure 3:
+generate these (max,+) sparse matrices (for Julia), for example from figure 3:
 
 ```
     | .  .  .  .  . |       | .  .  .  .  0 |
@@ -342,7 +363,7 @@ D = | .  3  .  1  . |,  A = | .  .  .  .  . |
 ```
 
 Since this particular net has no input and outputs, there is no U, Y, B, C
-matrices. Note: `.` is the compact form of the max-plus number `ε` which is the
+matrices. Note: `.` is the compact form of the (max,+) number `ε` which is the
 `-∞` in classic algebra and means that there is no existing arc (usually, these
 kind of matrices are sparse since they can be huge but with few of elements
 stored).  Let suppose that matrix indices start from `0`, then `D[1,0]` holds
@@ -368,19 +389,20 @@ to merge places with their unique incoming and unique out-coming arcs. From the
 figure 2, we obtain the following figure 3, which is a more compact graph but
 equivalent. For example, the arc `P0/5/2` means the place `P0` with the duration
 5 and 2 tokens. Note: this editor does not yet manipulate or show this compact
-form and a prototype is made in the git branch dev-compact-event-graph-disp.
+form while a prototype is made in the git branch
+[dev-compact-event-graph-disp](https://github.com/Lecrapouille/TimedPetriNetEditor/tree/dev-compact-event-graph-disp).
 
 ![Graph](doc/Graph01.png)
 
 *Fig 3 - Compact form of figure 2 (made with a modified version of the editor).*
 
-Since, graphs can be represented by adjacency matrices, and since, timed Petri
-arcs hold two information (duration and tokens), event graphs can be represented
-by two matrices (generally sparse): one matrix for duration `N` and the second
-matrix for tokens `T`. And since, event graph have good properties with the
-max-plus algebra, this editor can generate this kind of matrix directly in this
-algebra which can be used by the
-[MaxPlus](https://github.com/Lecrapouille/MaxPlus.jl) Julia package.
+Since, graphs can be represented by adjacency matrices, and since, arcs hold two
+information (duration and tokens), event graphs can be represented by two
+matrices (generally sparse): one matrix for duration `N` and the second matrix
+for tokens `T`. And since, event graph have good properties with the (max,+)
+algebra, this editor can generate this kind of matrix directly in this algebra
+which can be used by the [MaxPlus](https://github.com/Lecrapouille/MaxPlus.jl)
+Julia package.
 
 ```
     | .  .  2  . |       | .  .  5  . |
@@ -394,17 +416,30 @@ token and `T[0,2]` holds the duration 5. The `[0,2]` means the arc `T2 -> T0` in
 the compact form (or arcs `T2 -> P0` and `P0 -> T0` in the classic Petri form).
 Note that origin and destination is inverse, this is because the matrix
 convention is generally the follow: `M . x` with `x` a column vector. This
-editor can generate some Julia script. Note that `ε` in max-plus algebra means
+editor can generate some Julia script. Note that `ε` in (max,+) algebra means
 that there is no existing arc.
 
 ## Interface with Julia
 
-This is still a in gestation API. The path of the shared library `libtimedpetrineteditor.so`
-(compiled by the Makefile) has to be known to be used by Julia. For the moment
-you need the `dev` branch of [MaxPlus](https://github.com/Lecrapouille/MaxPlus.jl)
-Julia package (WIP).
+*(The Julia API is still a in gestation).*
 
-From your Julia REPL, you can type this kind of code:
+For [Julia](https://github.com/JuliaLang/julia) developers, I made an API, to
+allows editing Petri nets either from function or allow to launch the graphical
+editor.
+
+To achieve it, first [MaxPlus](https://github.com/Lecrapouille/MaxPlus.jl) Julia
+package (for the moment you need the `dev` branch still in gestation).
+
+```julia
+import Pkg; Pkg.add("MaxPlus")
+```
+
+Then install the TimedPetriNetEditor with `make install` (need sudo rights)
+because the path of the shared library `libtimedpetrineteditor.so` has to be
+known to be used by Julia.
+
+From your Julia REPL (call Julia at the root of the TimedPetriNetEditor
+repository), you can type this kind of code (consider this code as cheatsheet):
 
 ```julia
 using SparseArrays, MaxPlus
@@ -452,7 +487,7 @@ places(pn)
 # Get the list of transitions
 transitions(pn)
 
-# TODO arcs
+# TODO missing API for arcs :(
 
 # Clear the Petri net (remove all nodes and arcs)
 clear!(pn)
@@ -481,29 +516,36 @@ pn3 = canonic(pn)
 counter(pn)
 dater(pn)
 
-# If the Petri net is an event graph, you can generate the graph the max-plus
-# adjacency matrices (that could be used with SimpleGraphs.jl).
+# If the Petri net is an event graph, you can generate the graph the (max,+)
+# adjacency sparse matrices (that could be used with SimpleGraphs.jl).
 N,T = to_graph(pn)
+
+# Sparse to full (max,+) matrices
 full(N)
 full(T)
 
 # If the Petri net is an event graph, you can generate the implicit dynamic
-# linear Max-Plus system.
+# linear (max,+) system.
 S = to_syslin(pn)
 show(S.D)
 show(S.A)
 show(S.B)
 show(S.C)
 show(S.x0)
+
+# For more interaction with the (max,+) algebra see tutorials on the repository
+# of the MaxPlus package. For example: MP(3) * MP(2) will return MP(5).
 ```
 
 ## Generate C++ code file (GRAFCET aka sequential function chart)
 
-After watching this nice french YouTube video https://youtu.be/v5FwJvtGaEw, in
-where GRAFCET is created manually in C for Arduino, I added my own code
+*(Consider this part as a bonus)*
+
+After watching this nice French YouTube video https://youtu.be/v5FwJvtGaEw, in
+where GRAFCET is created manually in C for Arduino, I extended the editor for
 generating GRAFCET in a single C++ header file. But since my project mainly
-concerns Petri net which are less general than GRAFCET, and therefore does not
-offer you to edit transitivities, you will have to write manually the missing
+concerns Petri net which are less general than GRAFCET, the editor does not
+offer you to edit transitivities, therefore, you will have to write manually the missing
 methods in your own C++ file:
 - `initIO()` to let you initialize input/output of the system (ADC, PWM,
   GPIO ...)
@@ -568,7 +610,7 @@ compatible. Here, an example of its content:
 ```
 
 A Petri net is composed of three arrays (the `[ ]`): `Places`, `Transitions` and
-`Arcs`. In this example, is stored in the json file a Petri net made of two
+`Arcs`. In this example, is stored in the JSON file a Petri net made of two
 places, one transition and two arcs. Places are defined as follow `"identifier,
 X-coord, Y-coord, number of tokens"`. Transitions are defined as follow
 `"identifier, X-coord, Y-coord, angle"` and Arcs are defined as follow
@@ -592,9 +634,9 @@ Arcs:
 - has unit of time (positive value) i.e. the arc `T0 --> P1` has 3 units of
   times (float). This time is only used for arc `Transition` to `Place` this
   means that for arc `Place` to `Transition` this value is not used but given
-  in the json file to make easy its parsing.
+  in the JSON file to make easy its parsing.
 
-Note: this project does not use third part json library for a home made token
+Note: this project does not use third part JSON library for a home made token
 splitter (see the `class Tokenizer` in the code).
 
 ## Related projects
