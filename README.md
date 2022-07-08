@@ -449,72 +449,104 @@ include("src/julia/TimedPetriNetEditor.jl")
 
 # Create an empty Petri net and return its handle. You can create several nets.
 pn = petri_net()
+@assert pn.handle == 0
 
 # Or create new Petri net by loading it.
-pn2 = petri_net("/home/qq/petri.json")
+pn1 = petri_net("examples/TrafficLight.json")
+@assert pn1.handle == 1
 
 # Duplicate the net
-pn3 = petri_net(pn)
+pn2 = petri_net(pn)
+@assert pn2.handle == 2
 
 # Has no places and no transitions ? Return true in this case.
-is_empty(pn)
+is_empty(pn1)
+@assert ans == false
+is_empty(pn2)
+@assert ans == true
 
 # Create places. X-Y coordinate (3.15, 4.15) and 5 tokens for Place 0.
 # Return its identifier.
-p0 = add_place!(pn, 3.15, 4.15, 5)
-p1 = add_place!(pn, 4.0, 5.0, 0)
+p0 = add_place!(pn, 100.0, 100.0, 5)
+@assert ans == 0
+p1 = add_place!(pn, 200.0, 200.0, 0)
+@assert ans == 1
 
 # Set/Get the number of tokens
-tks = tokens(pn, p0)
+tokens(pn, p0)
+@assert ans == 5
 tokens!(pn, p0, 2)
+@assert ans == true
+tokens(pn, p0)
+@assert ans == 2
 
 # Create transitions. X-Y coordinate (1.0, 2.0) for Transition 0.
 # Return its identifier.
-t0 = add_transition!(pn, 1.0, 2.0)
-t1 = add_transition!(pn, 3.0, 4.0)
+t0 = add_transition!(pn, 150.0, 150.0)
+@assert ans == 0
+t1 = add_transition!(pn, 250.0, 250.0)
+@assert ans == 1
 
 # Remove nodes. Be careful the handle of latest inserted node is invalidated
 remove_place!(pn, p1)
+@assert ans == true
 remove_transition!(pn, t0)
+@assert ans == true
 
 # Get the number of nodes
 count_transitions(pn)
+@assert ans == 1
 count_places(pn)
 
 # Get the list of places
 places(pn)
+@assert size(ans) == (1,)
 
 # Get the list of transitions
 transitions(pn)
+@assert size(ans) == (1,)
 
 # TODO missing API for arcs :(
-
-# Clear the Petri net (remove all nodes and arcs)
-clear!(pn)
 
 # Launch the GUI editor to edit the net graphically. Once presed ESCAPE key,
 # the editor will quit and modifications applied on the net.
 editor!(pn)
+@assert ans == true
 
-# Safer version of editor!() the Petri net is not modified but a new one
-# is created.
-pn4 = editor(pn)
+# Clear the Petri net (remove all nodes and arcs)
+clear!(pn)
+@assert is_empty(pn) == true
+
+# Safer version of editor!() because the Petri net is not modified but a new one
+# is created based on the original net.
+pn3 = editor(pn)
+@assert pn3.handle == 3
 
 # You can save the Petri net to JSON file
-save(pn, "/home/qq/petri.json")
+save(pn3, "/home/qq/petri.json")
+@assert ans == true
 
-# Or replace it
-load!(pn, "/home/qq/petri.json")
+# Or load it (old net is deleted)
+load!(pn, "examples/Howard2.json")
+@assert ans == true
+
+# Or create one
+pn4 = load("examples/Howard2.json")
+@assert pn4.handle == 4
 
 # Check if Petri net is an event graph
-is_event_graph(pn2)
+is_event_graph(pn)
+@assert ans == true
 
 # If the Petri net is an event graph, you can return the canonical form
-pn3 = canonic(pn)
+pn5 = canonic(pn)
+@assert pn5.handle == 5
 
 # Show the counter and dater form
-counter(pn)
-dater(pn)
+counter(pn5)
+@assert ans == true
+dater(pn5)
+@assert ans == true
 
 # If the Petri net is an event graph, you can generate the graph the (max,+)
 # adjacency sparse matrices (that could be used with SimpleGraphs.jl).
@@ -526,7 +558,7 @@ full(T)
 
 # If the Petri net is an event graph, you can generate the implicit dynamic
 # linear (max,+) system.
-S = to_syslin(pn)
+S = to_syslin(pn5)
 show(S.D)
 show(S.A)
 show(S.B)

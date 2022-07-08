@@ -144,7 +144,10 @@ void PetriNet::generateArcsInArcsOut()
 bool PetriNet::isEventGraph()
 {
     if (isEmpty())
+    {
+        std::cerr << "ERROR: Empty Petri net is not an event graph" << std::endl;
         return false;
+    }
     generateArcsInArcsOut();
 
     // The Petri net shall be an event graph: all places shall have a single
@@ -157,7 +160,7 @@ bool PetriNet::isEventGraph()
             // Help the user to debug the Petri net. // TODO: could be nice to
             // show directly odd arcs in red but for the moment we display on
             // the console.
-            std::cerr << "Your Petri net is not an event graph. Because:"
+            std::cerr << "ERROR: Your Petri net is not an event graph. Because:"
                       << std::endl;
             //for (auto& p: m_places) // FIXME !!!
             //{

@@ -280,7 +280,10 @@ bool petri_is_event_graph(int const handle, bool* res)
 {
     SANITY_HANDLE(handle, false);
     if (res == nullptr)
+    {
+        std::cerr << "Sanity check: NULL param" << std::endl;
         return false;
+    }
 
     *res = g_petri_nets[size_t(handle)]->isEventGraph();
     return true;

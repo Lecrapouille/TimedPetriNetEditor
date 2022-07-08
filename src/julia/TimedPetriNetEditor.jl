@@ -103,7 +103,7 @@ PetriNet
 ```
 """
 function petri_net()
-    PetriNet(ccall((:petri_create, libtpne), Cssize_t, ()))
+    PetriNet(ccall((:petri_create, libtpne), Clonglong, ()))
 end
 
 """
@@ -133,7 +133,7 @@ end
 Duplicate the Petri net. Return the new handle.
 """
 function petri_net(pn::PetriNet)
-    pn1 = ccall((:petri_copy, libtpne), Cssize_t, (Int,), pn.handle)
+    pn1 = ccall((:petri_copy, libtpne), Clonglong, (Clonglong,), pn.handle)
     (pn1 < 0) && throw_error()
     PetriNet(pn1)
 end
@@ -156,7 +156,7 @@ true
 """
 function is_empty(pn::PetriNet)
     empty = Ref{Bool}(false)
-    ccall((:petri_is_empty, libtpne), Bool, (Int, Ref{Bool}),
+    ccall((:petri_is_empty, libtpne), Bool, (Clonglong, Ref{Bool}),
           pn.handle, empty) || throw_error()
     return empty[]
 end
@@ -180,7 +180,7 @@ true
 ```
 """
 function clear!(pn::PetriNet)
-    ccall((:petri_reset, libtpne), Bool, (Int,), pn.handle) || throw_error()
+    ccall((:petri_reset, libtpne), Bool, (Clonglong,), pn.handle) || throw_error()
 end
 
 """
@@ -206,7 +206,7 @@ julia> places(pn)
 ```
 """
 function editor!(pn::PetriNet)
-    ccall((:petri_editor, libtpne), Bool, (Int,), pn.handle) || throw_error()
+    ccall((:petri_editor, libtpne), Bool, (Clonglong,), pn.handle) || throw_error()
 end
 
 """
@@ -219,7 +219,7 @@ Throw an exception if the Petri net handle is invalid.
 """
 function editor(pn::PetriNet)
     pn1 = petri_net(pn)
-    ccall((:petri_editor, libtpne), Bool, (Int,), pn1.handle) || throw_error()
+    ccall((:petri_editor, libtpne), Bool, (Clonglong,), pn1.handle) || throw_error()
     return pn1
 end
 
@@ -249,7 +249,7 @@ julia> places(pn)
 """
 function add_place!(pn::PetriNet, x::Float64, y::Float64, tokens::Int)
     (tokens < 0) && error("Number of tokens shall be >= 0")
-    id = ccall((:petri_add_place, libtpne), Cssize_t, (Int, Float32, Float32, Int),
+    id = ccall((:petri_add_place, libtpne), Clonglong, (Clonglong, Cfloat, Cfloat, Clonglong),
                 pn.handle, x, y, tokens)
     (id < 0) && throw_error()
     return id
@@ -301,7 +301,7 @@ Place[]
 ```
 """
 function remove_place!(pn::PetriNet, id::Int)
-    ccall((:petri_remove_place, libtpne), Bool, (Int, Int), pn.handle, id) ||
+    ccall((:petri_remove_place, libtpne), Bool, (Clonglong, Clonglong), pn.handle, id) ||
     error("Invalid Petri net handle or invalid Place identifier")
 end
 
@@ -321,7 +321,7 @@ julia> count_places(pn)
 ```
 """
 function count_places(pn::PetriNet)
-    count = ccall((:petri_count_places, libtpne), Cssize_t, (Int,), pn.handle)
+    count = ccall((:petri_count_places, libtpne), Clonglong, (Clonglong,), pn.handle)
     if (count < 0) throw_error() end
     return count
 end
@@ -352,7 +352,7 @@ function places(pn::PetriNet)
     end
 
     list = Vector{Place}(undef, size)
-    ccall((:petri_get_places, libtpne), Bool, (Int, Ptr{Place}),
+    ccall((:petri_get_places, libtpne), Bool, (Clonglong, Ptr{Place}),
           pn.handle, list)
     list
 end
@@ -376,10 +376,13 @@ julia> tokens(pn, p0)
 ```
 """
 function tokens(pn::PetriNet, place::Int)
-    count = ccall((:petri_get_tokens, libtpne), Cint, (Int, Int), pn.handle, place)
+    count = ccall((:petri_get_tokens, libtpne), Clonglong, (Clonglong, Clonglong), pn.handle, Clonglong(place))
     (count < 0) && error("Invalid Petri net handle or invalid Place identifier")
     return count
 end
+
+# TODO retourner les marquages https://youtu.be/F0tImMHObv0
+# TODO retourner successeurs https://youtu.be/mN8XWiXyHyk
 
 """
     tokens!
@@ -407,8 +410,8 @@ julia> tokens(pn, p0)
 """
 function tokens!(pn::PetriNet, place::Int, tokens::Int)
     (tokens < 0) && error("Number of tokens shall be >= 0")
-    ccall((:petri_set_tokens, libtpne), Bool, (Int, Int, Int),
-          pn.handle, place, tokens) || throw_error()
+    ccall((:petri_set_tokens, libtpne), Bool, (Clonglong, Clonglong, Clonglong),
+          pn.handle, Clonglong(place), Clonglong(tokens)) || throw_error()
 end
 
 """
@@ -436,8 +439,8 @@ julia> transitions(pn)
 ```
 """
 function add_transition!(pn::PetriNet, x::Float64, y::Float64)
-    id = ccall((:petri_add_transition, libtpne), Cssize_t, (Int, Float32, Float32),
-                pn.handle, Float32(x), Float32(y))
+    id = ccall((:petri_add_transition, libtpne), Clonglong, (Clonglong, Cfloat, Cfloat),
+                pn.handle, Cfloat(x), Cfloat(y))
     (id < 0) && throw_error()
     return id
 end
@@ -488,7 +491,7 @@ Transition[]
 ```
 """
 function remove_transition!(pn::PetriNet, id::Int)
-    ccall((:petri_remove_transition, libtpne), Bool, (Int, Int), pn.handle, id) ||
+    ccall((:petri_remove_transition, libtpne), Bool, (Clonglong, Clonglong), pn.handle, id) ||
     error("Invalid Petri net handle")
 end
 
@@ -508,7 +511,7 @@ julia> count_transitions(pn)
 ```
 """
 function count_transitions(pn::PetriNet)
-    count = ccall((:petri_count_transitions, libtpne), Cssize_t, (Int,), pn.handle)
+    count = ccall((:petri_count_transitions, libtpne), Clonglong, (Clonglong,), pn.handle)
     (count < 0) && error("Invalid Petri net handle")
     return count
 end
@@ -539,7 +542,7 @@ function transitions(pn::PetriNet)
     end
 
     list = Vector{Transition}(undef, size)
-    ccall((:petri_get_transitions, libtpne), Bool, (Int, Ptr{Transition}),
+    ccall((:petri_get_transitions, libtpne), Bool, (Clonglong, Ptr{Transition}),
           pn.handle, list)
     list
 end
@@ -563,7 +566,7 @@ true
 ```
 """
 function save(pn::PetriNet, file::String)
-    ccall((:petri_save, libtpne), Bool, (Int, Cstring), pn.handle, file) ||
+    ccall((:petri_save, libtpne), Bool, (Clonglong, Cstring), pn.handle, file) ||
     error("Invalid Petri net handle or failed saving in file")
 end
 
@@ -584,8 +587,28 @@ true
 ```
 """
 function load!(pn::PetriNet, file::String)
-    ccall((:petri_load, libtpne), Bool, (Int, Cstring), pn.handle, file) ||
-    error("Invalid Petri net handle or failed loading from file")
+    ccall((:petri_load, libtpne), Bool, (Clonglong, Cstring), pn.handle, file) ||
+    error("Invalid Petri net handle or failed loading petri net from file")
+end
+
+"""
+    load
+
+Load the Petri net from a json file.
+Throw an exception if the Petri net handle is invalid or a failure occured during
+the loading.
+
+# Examples
+```julia-repl
+julia> pn = load("/home/qq/petri.json")
+PetriNet(0)
+```
+"""
+function load(file::String)
+    pn = petri_net()
+    ccall((:petri_load, libtpne), Bool, (Clonglong, Cstring), pn.handle, file) ||
+    error("Failed loading Petri net from file")
+    pn
 end
 
 """
@@ -606,7 +629,7 @@ false
 """
 function is_event_graph(pn::PetriNet)
     event_graph = Ref{Bool}(false)
-    ccall((:petri_is_event_graph, libtpne), Bool, (Int, Ref{Bool}),
+    ccall((:petri_is_event_graph, libtpne), Bool, (Clonglong, Ref{Bool}),
           pn.handle, event_graph) || throw_error()
     return event_graph[]
 end
@@ -630,8 +653,8 @@ PetriNet(1)
 ```
 """
 function canonic(pn::PetriNet)
-    id = ccall((:petri_to_canonical, libtpne), Cssize_t, (Int,), pn.handle) ||
-    error("Invalid Petri net handle")
+    id = ccall((:petri_to_canonical, libtpne), Clonglong, (Clonglong,), pn.handle)
+    (id < 0) && throw_error()
     PetriNet(id)
 end
 
@@ -694,7 +717,7 @@ function to_graph(pn::PetriNet)
     N = Ref(CSparse())
     T = Ref(CSparse())
 
-    ccall((:petri_to_adjacency_matrices, libtpne), Bool, (Int, Ptr{CSparse}, Ptr{CSparse}),
+    ccall((:petri_to_adjacency_matrices, libtpne), Bool, (Clonglong, Ptr{CSparse}, Ptr{CSparse}),
            pn.handle, N, T) || error("Invalid Petri net handle")
 
     ns = N[].size
@@ -719,7 +742,7 @@ function to_syslin(pn::PetriNet)
     C = Ref(CSparse())
     D = Ref(CSparse())
 
-    ccall((:petri_to_sys_lin, libtpne), Bool, (Int, Ptr{CSparse}, Ptr{CSparse}, Ptr{CSparse}, Ptr{CSparse}),
+    ccall((:petri_to_sys_lin, libtpne), Bool, (Clonglong, Ptr{CSparse}, Ptr{CSparse}, Ptr{CSparse}, Ptr{CSparse}),
            pn.handle, D, A, B, C) || error("Invalid Petri net handle")
 
     as = A[].size; bs = B[].size; cs = C[].size; ds = D[].size;
@@ -732,11 +755,11 @@ function to_syslin(pn::PetriNet)
 end
 
 function dater(pn::PetriNet)
-    ccall((:petri_dater_form, libtpne), Bool, (Int,), pn.handle) || error("Invalid Petri net handle")
+    ccall((:petri_dater_form, libtpne), Bool, (Clonglong,), pn.handle) || error("Invalid Petri net handle")
 end
 
 function counter(pn::PetriNet)
-    ccall((:petri_counter_form, libtpne), Bool, (Int,), pn.handle) || error("Invalid Petri net handle")
+    ccall((:petri_counter_form, libtpne), Bool, (Clonglong,), pn.handle) || error("Invalid Petri net handle")
 end
 
 #end # TimedPetriNetEditor module
