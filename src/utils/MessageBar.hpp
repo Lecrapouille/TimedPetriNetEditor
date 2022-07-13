@@ -24,8 +24,10 @@
 // *****************************************************************************
 //! \brief A text inside a rectangle
 // *****************************************************************************
-struct MessageBar : public sf::Drawable
+class MessageBar : public sf::Drawable
 {
+public:
+
     MessageBar(sf::Font& font)
     {
         m_text.setPosition(0, 0);
