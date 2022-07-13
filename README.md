@@ -132,7 +132,7 @@ from the mouse and the keyboard.
 - Adding an arc will generate a random duration (between 1 and 5). *Workaround:*
   save the Petri net to JSON file and edit with a text editor, then reload the
   file.
-- Node captions and time duration cannot yet be edited. *Workaround:* save the
+- Time durations cannot yet be edited. *Workaround:* save the
   Petri net to JSON file and edit with a text editor, then reload the file.
 - No input node generating periodically tokens is yet made. *Workaround:* during
   the simulation the user can add new token to any desired places selected by

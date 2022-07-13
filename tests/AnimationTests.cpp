@@ -29,8 +29,8 @@
 TEST(TestPetriNet, TestAnimatedTokenCreation)
 {
     // Reminder: AnimatedToken not made for Place -> Transition
-    Transition t1(42u, 3.5f, 4.0f, 45u);
-    Place p1(43u, 4.6f, 5.1f, 13u);
+    Transition t1(42u, "", 3.5f, 4.0f, 45u);
+    Place p1(43u, "", 4.6f, 5.1f, 13u);
     Arc a1(t1, p1, 10.0f);
     AnimatedToken at1(a1, 3u);
     float norm = sqrtf((3.5f - 4.6f) * (3.5f - 4.6f) + (4.0f - 5.1f) * (4.0f - 5.1f));
@@ -64,8 +64,8 @@ TEST(TestPetriNet, TestAnimatedTokenCreation)
     ASSERT_EQ(at2.offset, 0.0f);
     ASSERT_EQ(&at2.toPlace(), &p1);
 
-    Transition t2(45u, 13.5f, 14.0f, 145u);
-    Place p2(46u, 14.6f, 15.1f, 113u);
+    Transition t2(45u, "", 13.5f, 14.0f, 145u);
+    Place p2(46u, "", 14.6f, 15.1f, 113u);
     Arc a2(t2, p2, 110.0f);
     AnimatedToken at3(a2, 13u);
     ASSERT_EQ(at3.x, 13.5f);
@@ -99,8 +99,8 @@ TEST(TestPetriNet, TestAnimatedTokenCreation)
 TEST(TestPetriNet, TestAnimatedTokenUpdate)
 {
     // T1 --> P1 is 20 unit of distance along the X-axis
-    Transition t1(42u, 0.0f, 0.0f, 45u);
-    Place p1(43u, 20.0f, 0.0f, 13u);
+    Transition t1(42u, "", 0.0f, 0.0f, 45u);
+    Place p1(43u, "", 20.0f, 0.0f, 13u);
     Arc a1(t1, p1, 10.0f); // Duration: 10 units of time
     AnimatedToken at1(a1, 3u);
     ASSERT_EQ(at1.magnitude, 20.0f);

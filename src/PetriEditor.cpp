@@ -32,7 +32,8 @@ PetriEditor::PetriEditor(sf::RenderWindow& renderer, PetriNet& net)
       m_figure_place(PLACE_RADIUS),
       m_figure_token(TOKEN_RADIUS),
       m_figure_trans(sf::Vector2f(TRANS_HEIGHT, TRANS_WIDTH)),
-      m_message_bar(m_font)
+      m_message_bar(m_font),
+      m_entry_box(m_font)
 {
     // Reserve memory
     m_animations.reserve(128u);
@@ -269,9 +270,10 @@ void PetriEditor::draw()
         draw(*a, 255);
     }
 
-    // Draw the entry text
+    // Draw the GUI
     m_message_bar.setSize(m_render.getSize());
     m_render.draw(m_message_bar);
+    m_render.draw(m_entry_box);
 }
 
 
@@ -384,7 +386,7 @@ void PetriEditor::update(float const dt)
                 if (a.count > 0u)
                 {
                     std::cout << current_time()
-                              << a.from.key << " burnt "
+                              << "Transition " << a.from.caption << " burnt "
                               << a.count << " token"
                               << (a.count == 1u ? "" : "s")
                               << std::endl;
@@ -406,7 +408,7 @@ void PetriEditor::update(float const dt)
                 {
                     // Animated token reached its ddestination: Place
                     std::cout << current_time()
-                              << "Place " << an.arc.to.key
+                              << "Place " << an.arc.to.caption
                               << " got " << an.tokens << " token"
                               << (an.tokens == 1u ? "" : "s")
                               << std::endl;
@@ -467,13 +469,23 @@ Node* PetriEditor::getNode(float const x, float const y)
 //------------------------------------------------------------------------------
 void PetriEditor::handleKeyPressed(sf::Event const& event)
 {
+    if (m_entry_box.focus())
+    {
+       m_entry_box.onKeyPressed(event.key);
+       return ;
+    }
+    m_entry_box.unfocus();
+
     // Escape key: quit the application.
     if (event.key.code == sf::Keyboard::Escape)
+    {
         m_running = false;
+        return ;
+    }
 
     // Left or right Control key pressed: memorize the state
-    else if ((event.key.code == sf::Keyboard::LControl) ||
-             (event.key.code == sf::Keyboard::RControl))
+    if ((event.key.code == sf::Keyboard::LControl) ||
+        (event.key.code == sf::Keyboard::RControl))
     {
         m_ctrl = true;
     }
@@ -816,6 +828,30 @@ void PetriEditor::handleArcDestination()
 }
 
 //------------------------------------------------------------------------------
+bool PetriEditor::clickedOnCaption()
+{
+    for (auto& place: m_petri_net.places())
+    {
+        if (m_entry_box.focus(place, m_mouse))
+        {
+           return true;
+        }
+    }
+
+    for (auto& transition: m_petri_net.transitions())
+    {
+        if (m_entry_box.focus(transition, m_mouse))
+        {
+           return true;
+        }
+
+        // TODO time
+    }
+
+    return false;
+}
+
+//------------------------------------------------------------------------------
 void PetriEditor::handleMouseButton(sf::Event const& event)
 {
     // The 'M' key was pressed. Reset the state but do not add new node!
@@ -859,6 +895,10 @@ void PetriEditor::handleMouseButton(sf::Event const& event)
             // right mouse button: abort the arc
             if (event.mouseButton.button == sf::Mouse::Left)
                 handleArcDestination();
+        }
+        else if (clickedOnCaption())
+        {
+            // Nothing to do
         }
         else
         {
@@ -917,10 +957,23 @@ void PetriEditor::handleInput()
             m_petri_net.m_critical.clear();
             handleKeyPressed(event);
             break;
+        case sf::Event::TextEntered:
+            m_entry_box.onTextEntered(event.text.unicode);
+            break;
         case sf::Event::KeyReleased:
             m_ctrl = false;
             break;
         case sf::Event::MouseButtonPressed:
+            if (m_entry_box.focus())
+            {
+                m_entry_box.unfocus();
+            }
+            else
+            {
+                m_petri_net.m_critical.clear();
+                handleMouseButton(event);
+            }
+            break;
         case sf::Event::MouseButtonReleased:
             m_petri_net.m_critical.clear();
             handleMouseButton(event);

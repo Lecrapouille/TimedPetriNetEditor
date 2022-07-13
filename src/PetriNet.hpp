@@ -56,7 +56,7 @@ public:
     //! \param[in] x: X-axis coordinate in the window needed for the display.
     //! \param[in] y: Y-axis coordinate in the window needed for the display.
     //--------------------------------------------------------------------------
-    Node(Type const type_, size_t const id_, float const x_, float const y_)
+    Node(Type const type_, size_t const id_, std::string const& caption_, float const x_, float const y_)
         : id(id_), type(type_), x(x_), y(y_),
         // Unique string identifier: "P0", "P1" ... for places and "T0",
         // "T1" ... for transitions. Once created it is not supposed to be
@@ -65,7 +65,14 @@ public:
     {
         // Caption is a text that the user can modify. Defaut value is the
         // string unique key.
-        caption = key;
+        if (caption_ == "")
+        {
+           caption = key;
+        }
+        else
+        {
+           caption = caption_;
+        }
 
         fading.restart();
     }
@@ -85,14 +92,14 @@ public:
     //! \brief Needed to remove compilation warnings
     //--------------------------------------------------------------------------
     Node(Node const& other)
-        : Node(other.type, other.id, other.x, other.y)
+        : Node(other.type, other.id, other.caption, other.x, other.y)
     {}
 
     //--------------------------------------------------------------------------
     //! \brief Needed to remove compilation warnings
     //--------------------------------------------------------------------------
     Node(Node&& other)
-        : Node(other.type, other.id, other.x, other.y)
+        : Node(other.type, other.id, other.caption, other.x, other.y)
     {}
 
     //--------------------------------------------------------------------------
@@ -173,8 +180,8 @@ public:
     //! \param[in] y: Y-axis coordinate in the window needed for the display.
     //! \param[in] tok: Initial number of tokens in the place.
     //--------------------------------------------------------------------------
-    Place(size_t const id_, float const x_, float const y_, size_t const tok_)
-        : Node(Node::Type::Place, id_, x_, y_), tokens(tok_), m_backup_tokens(tok_)
+    Place(size_t const id_, std::string const& caption_, float const x_, float const y_, size_t const tok_)
+        : Node(Node::Type::Place, id_, caption_, x_, y_), tokens(tok_), m_backup_tokens(tok_)
     {}
 
     //--------------------------------------------------------------------------
@@ -220,8 +227,8 @@ public:
     //! \param[in] y: Y-axis coordinate in the window needed for the display.
     //! \param[in] angle_: angle in degree of rotation for the display.
     //--------------------------------------------------------------------------
-    Transition(size_t const id_, float const x_, float const y_, int const angle_)
-        : Node(Node::Type::Transition, id_, x_, y_), angle(angle_)
+    Transition(size_t const id_, std::string const& caption_, float const x_, float const y_, int const angle_)
+        : Node(Node::Type::Transition, id_, caption_, x_, y_), angle(angle_)
     {}
 
     //--------------------------------------------------------------------------
@@ -498,7 +505,7 @@ public:
     //--------------------------------------------------------------------------
     Place& addPlace(float const x, float const y, size_t const tokens = 0u)
     {
-        m_places.push_back(Place(m_next_place_id++, x, y, tokens));
+        m_places.push_back(Place(m_next_place_id++, "", x, y, tokens));
         return m_places.back();
     }
 
@@ -511,9 +518,10 @@ public:
     //! \param[in] tokens: Initial number of tokens in the place.
     //! \return the reference of the inserted place.
     //--------------------------------------------------------------------------
-    Place& addPlace(size_t const id, float const x, float const y, size_t const tokens)
+    Place& addPlace(size_t const id, std::string const& caption, float const x,
+                    float const y, size_t const tokens)
     {
-        m_places.push_back(Place(id, x, y, tokens));
+        m_places.push_back(Place(id, caption, x, y, tokens));
         if (id + 1u > m_next_place_id)
             m_next_place_id = id + 1u;
         return m_places.back();
@@ -544,7 +552,7 @@ public:
     //--------------------------------------------------------------------------
     Transition& addTransition(float const x, float const y)
     {
-        m_transitions.push_back(Transition(m_next_transition_id++, x, y, 0u));
+        m_transitions.push_back(Transition(m_next_transition_id++, "", x, y, 0u));
         return m_transitions.back();
     }
 
@@ -552,15 +560,16 @@ public:
     //! \brief Add a new Petri Transition. To be used when loading a Petri net
     //! from JSON file.
     //! \param[in] id: unique node identifier.
+    //! \param[in] caption: node description.
     //! \param[in] x: X-axis coordinate in the window needed for the display.
     //! \param[in] y: Y-axis coordinate in the window needed for the display.
     //! \param[in] angle: angle of rotation of the displayed rectangle.
     //! \return the reference of the inserted element.
     //--------------------------------------------------------------------------
-    Transition& addTransition(size_t const id, float const x, float const y,
-                              int const angle)
+    Transition& addTransition(size_t const id, std::string const& caption,
+                              float const x, float const y, int const angle)
     {
-        m_transitions.push_back(Transition(id, x, y, angle));
+        m_transitions.push_back(Transition(id, caption, x, y, angle));
         if (id + 1u > m_next_transition_id)
             m_next_transition_id = id + 1u;
         return m_transitions.back();

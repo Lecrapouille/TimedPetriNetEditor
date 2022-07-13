@@ -895,7 +895,7 @@ bool PetriNet::save(std::string const& filename)
     file << "{\n  \"places\": [";
     for (auto const& p: m_places)
     {
-        file << separator << '\"' << p.key << ','
+        file << separator << '\"' << p.key << ',' << p.caption << ','
              << p.x << ',' << p.y << ',' << p.tokens << '\"';
         separator = ", ";
     }
@@ -903,7 +903,7 @@ bool PetriNet::save(std::string const& filename)
     separator = "";
     for (auto const& t: m_transitions)
     {
-        file << separator << '\"' << t.key << ','
+        file << separator << '\"' << t.key << ',' << t.caption << ','
              << t.x << ',' << t.y << ',' << t.angle << '\"';
         separator = ", ";
     }
@@ -950,6 +950,7 @@ bool PetriNet::load(std::string const& filename)
             while (s.split() != "]")
             {
                 int id = convert_to<int>(s.str().c_str() + 1u);
+                std::string caption = s.split();
                 float x = convert_to<float>(s.split());
                 float y = convert_to<float>(s.split());
                 int tokens = convert_to<int>(s.split());
@@ -960,7 +961,7 @@ bool PetriNet::load(std::string const& filename)
                               << std::endl;
                     return false;
                 }
-                addPlace(size_t(id), x, y, size_t(tokens));
+                addPlace(size_t(id), caption, x, y, size_t(tokens));
             }
         }
         else if ((s.str() == "transitions") && (s.split() == ":") && (s.split() == "["))
@@ -968,6 +969,7 @@ bool PetriNet::load(std::string const& filename)
             while (s.split() != "]")
             {
                 int id = convert_to<int>(s.str().c_str() + 1u);
+                std::string caption = s.split();
                 float x = convert_to<float>(s.split());
                 float y = convert_to<float>(s.split());
                 int angle = convert_to<int>(s.split());
@@ -978,7 +980,7 @@ bool PetriNet::load(std::string const& filename)
                               << std::endl;
                     return false;
                 }
-                addTransition(size_t(id), x, y, angle);
+                addTransition(size_t(id), caption, x, y, angle);
             }
         }
         else if ((s.str() == "arcs") && (s.split() == ":") && (s.split() == "["))
@@ -1150,7 +1152,7 @@ void PetriNet::removeNode(Node& node)
                 // Swap element but keep the ID of the removed element
                 Place& pi = m_places[i];
                 Place& pe = m_places[m_places.size() - 1u];
-                m_places[i] = Place(pi.id, pe.x, pe.y, pe.tokens);
+                m_places[i] = Place(pi.id, pe.caption, pe.x, pe.y, pe.tokens);
                 assert(m_next_place_id >= 1u);
                 m_next_place_id -= 1u;
 
@@ -1176,7 +1178,7 @@ void PetriNet::removeNode(Node& node)
             {
                 Transition& ti = m_transitions[i];
                 Transition& te = m_transitions[m_transitions.size() - 1u];
-                m_transitions[i] = Transition(ti.id, te.x, te.y, te.angle);
+                m_transitions[i] = Transition(ti.id, te.caption, te.x, te.y, te.angle);
                 assert(m_next_transition_id >= 1u);
                 m_next_transition_id -= 1u;
 
