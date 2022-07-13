@@ -155,6 +155,8 @@ private:
 
     //! \brief The Petri net.
     PetriNet& m_petri_net;
+    //! \brief Path of the loaded file.
+    std::string m_filename;
     //! \brief Set true if the thread of the application shall stay alive.
     //! Set false to quit the application.
     std::atomic<bool> m_running{true};

@@ -501,12 +501,15 @@ void PetriEditor::handleKeyPressed(sf::Event const& event)
     {
         if ((!m_simulating) && (!m_petri_net.isEmpty()))
         {
-            pfd::save_file manager("Choose the JSON file to save the Petri net", "~/petri.json",
-                                   { "JSON File", "*.json" });
-            std::string file = manager.result();
-            if (!file.empty())
+            if (m_filename.empty())
             {
-                if (m_petri_net.save(file))
+                pfd::save_file manager("Choose the JSON file to save the Petri net", "~/petri.json",
+                                       { "JSON File", "*.json" });
+                m_filename = manager.result();
+            }
+            if (!m_filename.empty())
+            {
+                if (m_petri_net.save(m_filename))
                 {
                     m_message_bar.setText("Petri net has been saved!");
                 }
@@ -540,7 +543,8 @@ void PetriEditor::handleKeyPressed(sf::Event const& event)
             std::vector<std::string> files = manager.result();
             if (!files.empty())
             {
-                if (m_petri_net.load(files[0]))
+                m_filename = files[0];
+                if (m_petri_net.load(m_filename))
                 {
                     m_message_bar.setText("Loaded with success the Petri net!");
                 }

@@ -59,7 +59,7 @@ int main(int argc, char* argv[])
     }
     else if ((argc == 2) && (argv[1][0] != '-'))
     {
-        if (!net.load(argv[1]))
+        if (!net.load(argv[1])) // FIXME: editor.m_file = argv[1]
         {
             std::cerr << argv[0] << ": Failed loading file '" << argv[1] << "'"
                       << std::endl;
