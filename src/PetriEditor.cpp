@@ -32,7 +32,8 @@ PetriEditor::PetriEditor(sf::RenderWindow& renderer, PetriNet& net)
       m_figure_place(PLACE_RADIUS),
       m_figure_token(TOKEN_RADIUS),
       m_figure_trans(sf::Vector2f(TRANS_HEIGHT, TRANS_WIDTH)),
-      m_message_bar(m_font)
+      m_message_bar(m_font)//,
+      //m_entry(m_font, 200.0f)
 {
     // Reserve memory
     m_animations.reserve(128u);
@@ -94,6 +95,19 @@ void PetriEditor::draw(sf::Text& t, std::string const& str, float const x, float
     t.setString(str);
     t.setPosition(x - t.getLocalBounds().width / 2.0f, y - t.getLocalBounds().height);
     m_render.draw(t);
+
+// DEBUG
+/*
+    sf::RectangleShape rec;
+    rec.setFillColor({255,255,255,0});
+    rec.setOutlineThickness(1.0f);
+    rec.setOutlineColor(OUTLINE_COLOR);
+    sf::FloatRect textBounds = t.getGlobalBounds();
+    rec.setPosition(textBounds.left, textBounds.top);
+    sf::Vector2f recSize(textBounds.width, textBounds.height);
+    rec.setSize(recSize);
+    m_render.draw(rec);
+*/
 }
 
 //------------------------------------------------------------------------------
@@ -854,7 +868,16 @@ void PetriEditor::handleMouseButton(sf::Event const& event)
             // left mouse button: ends the arc.
             // right mouse button: abort the arc
             if (event.mouseButton.button == sf::Mouse::Left)
-                handleArcDestination();
+            {
+                if (clickedOnCaption())
+                {
+                    std::cout << "YES\n";
+                }
+                else
+                {
+                    handleArcDestination();
+                }
+            }
         }
         else
         {
@@ -894,6 +917,35 @@ void PetriEditor::handleMouseButton(sf::Event const& event)
             }
         }
     }
+}
+
+//------------------------------------------------------------------------------
+bool PetriEditor::clickedOnCaption()
+{
+    //sf::RectangleShape rec;
+    //sf::Rect<float> textBounds = t.getGlobalBounds();
+    //rec.setPosition(textBounds.left, textBounds.top);
+    //sf::Vector2f recSize(textBounds.width, textBounds.height);
+    //rec.setSize(recSize);
+    //m_render.draw(rec);
+
+    for (auto& p: m_petri_net.places())
+    {
+sf::Text t; t.setString(p.caption);
+t.setPosition(p.x - t.getLocalBounds().width / 2.0f, p.y - t.getLocalBounds().height);
+
+
+
+       sf::Rect<float> textBounds = t.getGlobalBounds();
+       if (textBounds.contains(m_mouse.x, m_mouse.y))
+         return true;
+       //entry.setText(p.caption);
+       //if (entry.contains(m_mouse.x, m_mouse.y))
+       //{
+       //   m_entry.focus(&p.caption);
+       //}
+    }
+    return false;
 }
 
 //------------------------------------------------------------------------------

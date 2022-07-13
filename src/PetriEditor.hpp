@@ -23,6 +23,7 @@
 
 #  include "utils/GUI.hpp"
 #  include "utils/MessageBar.hpp"
+#  include "utils/EntryBox.hpp"
 #  include "utils/Animation.hpp"
 #  include "PetriNet.hpp"
 
@@ -142,6 +143,8 @@ private:
     //--------------------------------------------------------------------------
     void handleMouseButton(sf::Event const& event);
 
+bool clickedOnCaption();
+
 private:
 
     //! \brief State machine for the Petri net simulation.
@@ -194,6 +197,8 @@ private:
     sf::Vector2f m_mouse;
     //! \brief Animation of tokens when transitioning from Transitions to Places.
     std::vector<AnimatedToken> m_animations;
+    //! \brief For editing captions
+    //EntryBox m_entry;
 };
 
 #endif
