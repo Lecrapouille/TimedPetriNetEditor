@@ -56,7 +56,7 @@ public:
 
 private:
 
-    void draw(sf::RenderTarget& target, sf::RenderStates /*states*/) const override final
+    virtual void draw(sf::RenderTarget& target, sf::RenderStates /*states*/) const override final
     {
         const float BLINK_PERIOD = 2.5f;
 
