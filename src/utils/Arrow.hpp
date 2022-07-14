@@ -23,7 +23,7 @@
 
 #  include <SFML/Graphics.hpp>
 #  include "utils/Utils.hpp"
-#  include "Settings.hpp"
+#  include "utils/Settings.hpp"
 #  include <cmath>
 
 // *****************************************************************************

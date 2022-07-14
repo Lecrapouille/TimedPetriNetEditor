@@ -21,7 +21,7 @@
 #ifndef ENTRY_BOX_HPP
 #  define ENTRY_BOX_HPP
 
-#  include "Settings.hpp"
+#  include "utils/Settings.hpp"
 #  include "PetriNet.hpp"
 
 // *****************************************************************************
