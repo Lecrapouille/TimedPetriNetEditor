@@ -23,12 +23,12 @@
 
 //------------------------------------------------------------------------------
 // Config for rendering the Petri net
-const float TRANS_WIDTH = 50.0f;  // Rectangle width for rendering Transitions
-const float TRANS_HEIGHT = 10.0f;  // Rectangle height for rendering Transitions
-const float PLACE_RADIUS = 25.0f; // Circle radius for rendering Places
-const float TOKEN_RADIUS = 4.0f;  // Circle radius for rendering tokens
-const unsigned int CAPTION_FONT_SIZE = 24; // Text size used in node captions
-const unsigned int TOKEN_FONT_SIZE = 20; // Text size used for token numbers
+const float TRANS_WIDTH = 25.0f;  // Rectangle width for rendering Transitions
+const float TRANS_HEIGHT = 5.0f;  // Rectangle height for rendering Transitions
+const float PLACE_RADIUS = 12.5f; // Circle radius for rendering Places
+const float TOKEN_RADIUS = 2.0f;  // Circle radius for rendering tokens
+const unsigned int CAPTION_FONT_SIZE = 12; // Text size used in node captions
+const unsigned int TOKEN_FONT_SIZE = 10; // Text size used for token numbers
 const int STEP_ANGLE = 45; // Angle of rotation in degree for turning Transitions
 const float FADING_PERIOD = 0.5f; // seconds for fading colors
 #define FILL_COLOR(a) sf::Color(255, 165, 0, a) // Place with tokens or fading color
