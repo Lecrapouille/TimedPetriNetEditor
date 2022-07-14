@@ -5,12 +5,12 @@
 [This project](https://github.com/Lecrapouille/TimedPetriNetEditor) is a timed
 Petri net editor made in C++11 and displayed with the
 [SFML](https://www.sfml-dev.org/index-fr.php). The following picture is an
-overview of the look of the application. You can click on the figure to access
-to a YouTube link showing how to edit a basic net.
+overview of the look of the application.
 
-[![TimedPetri](doc/TimedPetri01.png)](https://youtu.be/sKL9lUGeBQs)
+[![TimedPetri](doc/TimedPetri01.png)](https://youtu.be/hOhunzgFpcA)
 
-*Fig 1 - A timed Petri net (made with this editor).*
+*Fig 1 - A timed Petri net (made with this editor). Click on the figure to watch
+a YouTube showing a timed petri net running.*
 
 Why another Petri editor ? Because many Petri node editors in GitHub are no
 longer maintained (> 7 years) or that I cannot personally compile or use (Windows
@@ -21,6 +21,9 @@ my own extensions. In the future, this editor will complete my
 interface (for the moment there is no Petri net editors available for Julia).
 
 ## How to compile and install the project?
+
+The following [YouTube video](https://youtu.be/wsiF6u7DNVQ) summarizes the whole
+document: compilation, installation, common usage ...
 
 Prerequisites to compile this project are:
 - g++ or clang++ compiler for C++14 (because of `std::make_unique` is used).
