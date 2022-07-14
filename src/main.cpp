@@ -68,13 +68,11 @@ int main(int argc, char* argv[])
     }
 
     Application application(800, 600, "Timed Petri Net Editor");
-    PetriEditor editor(application.renderer(), net);
-    editor.bgColor = sf::Color(255,255,255,255);
+    PetriEditor editor(application, net);
 
     try
     {
-        application.push(editor);
-        application.loop();
+        application.loop(editor);
     }
     catch (std::string const& msg)
     {

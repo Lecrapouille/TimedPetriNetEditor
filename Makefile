@@ -55,14 +55,20 @@ DEFINES = -DDATADIR=\"$(DATADIR)\"
 DEFINES += -Wno-undef -Wno-switch-enum -Wno-sign-conversion -Wno-float-equal
 
 ###################################################
+# Make the list of compiled files used both by the
+# library and application
+#
+COMMON_OBJS = Howard.o Application.o PetriNet.o PetriEditor.o
+
+###################################################
 # Make the list of compiled files for the library
 #
-LIB_OBJS += Howard.o PetriNet.o PetriEditor.o Julia.o
+LIB_OBJS += $(COMMON_OBJS) Julia.o
 
 ###################################################
 # Make the list of compiled files for the application
 #
-OBJS += Howard.o PetriNet.o PetriEditor.o main.o
+OBJS += $(COMMON_OBJS) main.o
 
 ###################################################
 # Set Libraries. For knowing which libraries

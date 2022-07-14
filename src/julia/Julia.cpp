@@ -82,13 +82,11 @@ bool petri_editor(int const handle)
     SANITY_HANDLE(handle, false);
 
     Application application(800, 600, "Timed Petri Net Editor");
-    PetriEditor editor(application.renderer(), *g_petri_nets[size_t(handle)]);
-    editor.bgColor = sf::Color(255,255,255,255);
+    PetriEditor editor(application, *g_petri_nets[size_t(handle)]);
 
     try
     {
-        application.push(editor);
-        application.loop();
+        application.loop(editor);
     }
     catch (std::string const& msg)
     {

@@ -21,7 +21,7 @@
 #ifndef PETRIEDITOR_HPP
 #  define PETRIEDITOR_HPP
 
-#  include "utils/GUI.hpp"
+#  include "utils/Application.hpp"
 #  include "utils/MessageBar.hpp"
 #  include "utils/EntryBox.hpp"
 #  include "utils/Animation.hpp"
@@ -30,14 +30,14 @@
 // *****************************************************************************
 //! \brief Graphic representation of the Petri net using the SFML library.
 // *****************************************************************************
-class PetriEditor: public GUIStates
+class PetriEditor: public Application::GUI
 {
 public:
 
-    PetriEditor(sf::RenderWindow& render, PetriNet& net);
+    PetriEditor(Application& application, PetriNet& net);
     ~PetriEditor();
 
-private: // Derived from GUI
+private: // Derived from Application::GUI
 
     //--------------------------------------------------------------------------
     //! \brief Inherit from GUI class. Draw the chessboard and pieces.
@@ -57,23 +57,39 @@ private: // Derived from GUI
     //--------------------------------------------------------------------------
     //! \brief Inherit from GUI class. Return true if GUI is alive.
     //--------------------------------------------------------------------------
-    virtual bool isRunning() override
+    virtual bool running() const override
     {
         return m_running;
     }
 
-    //--------------------------------------------------------------------------
-    //! \brief Called when the GUI has been enabled.
-    //--------------------------------------------------------------------------
+    //-------------------------------------------------------------------------
+    //! \brief Pause the GUI.
+    //-------------------------------------------------------------------------
     virtual void activate() override
     {
         // Do nothing
     }
 
-    //--------------------------------------------------------------------------
-    //! \brief Called when the GUI has been disabled.
-    //--------------------------------------------------------------------------
+    //-------------------------------------------------------------------------
+    //! \brief Unpause the GUI.
+    //-------------------------------------------------------------------------
     virtual void deactivate() override
+    {
+        // Do nothing
+    }
+
+    //-------------------------------------------------------------------------
+    //! \brief Create the GUI.
+    //-------------------------------------------------------------------------
+    virtual void create() override
+    {
+        // Do nothing
+    }
+
+    //-------------------------------------------------------------------------
+    //! \brief Release the GUI.
+    //-------------------------------------------------------------------------
+    virtual void release() override
     {
         // Do nothing
     }

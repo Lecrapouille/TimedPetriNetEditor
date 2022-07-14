@@ -21,14 +21,14 @@
 #ifndef PETRI_NET_HPP
 #  define PETRI_NET_HPP
 
-#  include <SFML/System.hpp>
-#  include <math.h>
+#  include <SFML/System/Clock.hpp> // For fading
+#  include <math.h> // Nan
 #  include <atomic>
 #  include <string>
 #  include <deque>
 #  include <vector>
 #  include <cassert>
-#  include <random>
+#  include <algorithm> // std::random_shuffle
 
 class Arc;
 struct SparseMatrix;
@@ -36,8 +36,8 @@ struct SparseMatrix;
 // *****************************************************************************
 //! \brief Since Petri nets are bipartite graph there are two kind of nodes:
 //! place and transition. This struct allows to factorize the code of derived
-//! struct Place and Transition and therefore shall not be used directly as
-//! instance.
+//! struct Place and Transition and therefore this class shall not be used
+//! directly as instance.
 // *****************************************************************************
 class Node
 {
@@ -56,24 +56,17 @@ public:
     //! \param[in] x: X-axis coordinate in the window needed for the display.
     //! \param[in] y: Y-axis coordinate in the window needed for the display.
     //--------------------------------------------------------------------------
-    Node(Type const type_, size_t const id_, std::string const& caption_, float const x_, float const y_)
+    Node(Type const type_, size_t const id_, std::string const& caption_,
+         float const x_, float const y_)
         : id(id_), type(type_), x(x_), y(y_),
         // Unique string identifier: "P0", "P1" ... for places and "T0",
         // "T1" ... for transitions. Once created it is not supposed to be
         // changed.
-        key((type == Node::Type::Place ? 'P' : 'T') + std::to_string(id))
-    {
+        key((type == Node::Type::Place ? 'P' : 'T') + std::to_string(id)),
         // Caption is a text that the user can modify. Defaut value is the
         // string unique key.
-        if (caption_ == "")
-        {
-           caption = key;
-        }
-        else
-        {
-           caption = caption_;
-        }
-
+        caption(caption_.empty() ? key : caption_)
+    {
         fading.restart();
     }
 

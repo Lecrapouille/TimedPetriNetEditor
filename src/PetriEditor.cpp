@@ -22,12 +22,11 @@
 #include "utils/FileDialogs.hpp"
 #include "utils/Arrow.hpp"
 #include "utils/Utils.hpp"
-#include "Settings.hpp"
 #include <iomanip>
 
 //------------------------------------------------------------------------------
-PetriEditor::PetriEditor(sf::RenderWindow& renderer, PetriNet& net)
-    : GUIStates("Petri Net Editor", renderer),
+PetriEditor::PetriEditor(Application& application, PetriNet& net)
+    : Application::GUI(application, "Editor", sf::Color::White),
       m_petri_net(net),
       m_figure_place(PLACE_RADIUS),
       m_figure_token(TOKEN_RADIUS),
@@ -78,7 +77,7 @@ PetriEditor::PetriEditor(sf::RenderWindow& renderer, PetriNet& net)
     m_text_token.setFillColor(sf::Color::Black);
 
     // Init mouse cursor position
-    m_mouse = sf::Vector2f(sf::Mouse::getPosition(m_render));
+    m_mouse = sf::Vector2f(sf::Mouse::getPosition(m_renderer));
 
     m_message_bar.setText("Welcome to timed Petri net editor");
 }
@@ -86,7 +85,7 @@ PetriEditor::PetriEditor(sf::RenderWindow& renderer, PetriNet& net)
 //------------------------------------------------------------------------------
 PetriEditor::~PetriEditor()
 {
-    m_render.close();
+    m_renderer.close();
 }
 
 //------------------------------------------------------------------------------
@@ -94,7 +93,7 @@ void PetriEditor::draw(sf::Text& t, std::string const& str, float const x, float
 {
     t.setString(str);
     t.setPosition(x - t.getLocalBounds().width / 2.0f, y - t.getLocalBounds().height);
-    m_render.draw(t);
+    m_renderer.draw(t);
 }
 
 //------------------------------------------------------------------------------
@@ -120,7 +119,7 @@ void PetriEditor::draw(Place const& place, uint8_t alpha)
     // Draw the place
     m_figure_place.setPosition(sf::Vector2f(x, y));
     m_figure_place.setFillColor(FILL_COLOR(alpha));
-    m_render.draw(m_figure_place);
+    m_renderer.draw(m_figure_place);
 
     // Draw the caption
     draw(m_text_caption, place.caption, x,
@@ -135,26 +134,26 @@ void PetriEditor::draw(Place const& place, uint8_t alpha)
         if (place.tokens == 1u)
         {
             m_figure_token.setPosition(sf::Vector2f(x, y));
-            m_render.draw(sf::CircleShape(m_figure_token));
+            m_renderer.draw(sf::CircleShape(m_figure_token));
         }
         else if (place.tokens == 2u)
         {
             m_figure_token.setPosition(sf::Vector2f(x - d, y));
-            m_render.draw(sf::CircleShape(m_figure_token));
+            m_renderer.draw(sf::CircleShape(m_figure_token));
 
             m_figure_token.setPosition(sf::Vector2f(x + d, y));
-            m_render.draw(sf::CircleShape(m_figure_token));
+            m_renderer.draw(sf::CircleShape(m_figure_token));
         }
         else if (place.tokens == 3u)
         {
             m_figure_token.setPosition(sf::Vector2f(x, y - r));
-            m_render.draw(sf::CircleShape(m_figure_token));
+            m_renderer.draw(sf::CircleShape(m_figure_token));
 
             m_figure_token.setPosition(sf::Vector2f(x - d, y + d));
-            m_render.draw(sf::CircleShape(m_figure_token));
+            m_renderer.draw(sf::CircleShape(m_figure_token));
 
             m_figure_token.setPosition(sf::Vector2f(x + d, y + d));
-            m_render.draw(sf::CircleShape(m_figure_token));
+            m_renderer.draw(sf::CircleShape(m_figure_token));
         }
         else if ((place.tokens == 4u) || (place.tokens == 5u))
         {
@@ -162,20 +161,20 @@ void PetriEditor::draw(Place const& place, uint8_t alpha)
             {
                 d = r + 3.0f;
                 m_figure_token.setPosition(sf::Vector2f(x, y));
-                m_render.draw(sf::CircleShape(m_figure_token));
+                m_renderer.draw(sf::CircleShape(m_figure_token));
             }
 
             m_figure_token.setPosition(sf::Vector2f(x - d, y - d));
-            m_render.draw(sf::CircleShape(m_figure_token));
+            m_renderer.draw(sf::CircleShape(m_figure_token));
 
             m_figure_token.setPosition(sf::Vector2f(x + d, y - d));
-            m_render.draw(sf::CircleShape(m_figure_token));
+            m_renderer.draw(sf::CircleShape(m_figure_token));
 
             m_figure_token.setPosition(sf::Vector2f(x - d, y + d));
-            m_render.draw(sf::CircleShape(m_figure_token));
+            m_renderer.draw(sf::CircleShape(m_figure_token));
 
             m_figure_token.setPosition(sf::Vector2f(x + d, y + d));
-            m_render.draw(sf::CircleShape(m_figure_token));
+            m_renderer.draw(sf::CircleShape(m_figure_token));
         }
         else
         {
@@ -191,7 +190,7 @@ void PetriEditor::draw(Transition const& transition, uint8_t alpha)
     m_figure_trans.setPosition(sf::Vector2f(transition.x, transition.y));
     m_figure_trans.setRotation(float(transition.angle));
     m_figure_trans.setFillColor(FILL_COLOR(alpha));
-    m_render.draw(m_figure_trans);
+    m_renderer.draw(m_figure_trans);
 
     // Draw the caption
     draw(m_text_caption, transition.caption, transition.x,
@@ -203,7 +202,7 @@ void PetriEditor::draw(Arc const& arc, uint8_t alpha)
 {
     // Transition -> Place
     Arrow arrow(arc.from.x, arc.from.y, arc.to.x, arc.to.y, alpha);
-    m_render.draw(arrow);
+    m_renderer.draw(arrow);
 
     if (arc.from.type == Node::Type::Transition)
     {
@@ -244,7 +243,7 @@ void PetriEditor::draw()
         float x = (m_arc_from_unknown_node) ? m_x : m_node_from->x;
         float y = (m_arc_from_unknown_node) ? m_y : m_node_from->y;
         Arrow arrow(x, y, m_mouse.x, m_mouse.y, 0u);
-        m_render.draw(arrow);
+        m_renderer.draw(arrow);
     }
 
     // Draw the selection
@@ -260,7 +259,7 @@ void PetriEditor::draw()
     for (auto const& at: m_animations)
     {
         m_figure_token.setPosition(at.x, at.y);
-        m_render.draw(m_figure_token);
+        m_renderer.draw(m_figure_token);
         draw(m_text_token, at.tokens, at.x, at.y - 16);
     }
 
@@ -271,9 +270,9 @@ void PetriEditor::draw()
     }
 
     // Draw the GUI
-    m_message_bar.setSize(m_render.getSize());
-    m_render.draw(m_message_bar);
-    m_render.draw(m_entry_box);
+    m_message_bar.setSize(m_renderer.getSize());
+    m_renderer.draw(m_message_bar);
+    m_renderer.draw(m_entry_box);
 }
 
 
@@ -505,7 +504,7 @@ void PetriEditor::handleKeyPressed(sf::Event const& event)
         // update() producing two AnimatedToken carying 1 token that
         // will be displayed at the same position instead of a
         // single AnimatedToken carying 2 tokens.
-        m_render.setFramerateLimit(m_simulating ? 30 : 60); // FPS
+        m_renderer.setFramerateLimit(m_simulating ? 30 : 60); // FPS
     }
 
     // 'S' key: save the Petri net to a JSON file
@@ -944,14 +943,14 @@ void PetriEditor::handleMouseButton(sf::Event const& event)
 void PetriEditor::handleInput()
 {
     sf::Event event;
-    m_mouse = sf::Vector2f(sf::Mouse::getPosition(m_render));
+    m_mouse = sf::Vector2f(sf::Mouse::getPosition(m_renderer));
 
-    while (m_running && m_render.pollEvent(event))
+    while (m_renderer.pollEvent(event))
     {
         switch (event.type)
         {
         case sf::Event::Closed:
-            m_running = false;
+            m_renderer.close();
             break;
         case sf::Event::KeyPressed:
             m_petri_net.m_critical.clear();
@@ -978,9 +977,13 @@ void PetriEditor::handleInput()
             m_petri_net.m_critical.clear();
             handleMouseButton(event);
             break;
+        case sf::Event::MouseWheelMoved:
+            //zoom += (float(event.mouseWheel.delta) / 10.0f);
+            //std::cout << "Zoom: " << zoom << "\n";
+            break;
         case sf::Event::Resized:
             sf::FloatRect(0.0f, 0.0f, float(event.size.width), float(event.size.height));
-            m_render.setView(sf::View(sf::FloatRect(0.0f, 0.0f, float(event.size.width), float(event.size.height))));
+            m_renderer.setView(sf::View(sf::FloatRect(0.0f, 0.0f, float(event.size.width), float(event.size.height))));
             break;
         default:
             break;
