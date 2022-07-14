@@ -82,21 +82,21 @@ public:
     }
 
     //--------------------------------------------------------------------------
-    //! \brief Needed to remove compilation warnings
+    //! \brief Needed to remove compilation warnings.
     //--------------------------------------------------------------------------
     Node(Node const& other)
         : Node(other.type, other.id, other.caption, other.x, other.y)
     {}
 
     //--------------------------------------------------------------------------
-    //! \brief Needed to remove compilation warnings
+    //! \brief Needed to remove compilation warnings.
     //--------------------------------------------------------------------------
     Node(Node&& other)
         : Node(other.type, other.id, other.caption, other.x, other.y)
     {}
 
     //--------------------------------------------------------------------------
-    //! \brief Needed to remove compilation warnings
+    //! \brief Needed to remove compilation warnings.
     //--------------------------------------------------------------------------
     Node& operator=(Node&& other)
     {
@@ -703,7 +703,14 @@ public:
     //--------------------------------------------------------------------------
     bool showCriticalCycle();
 
+    //--------------------------------------------------------------------------
+    //! \brief
+    //--------------------------------------------------------------------------
     std::stringstream showCounterForm(std::string const& comment = "# ") const;
+
+    //--------------------------------------------------------------------------
+    //! \brief
+    //--------------------------------------------------------------------------
     std::stringstream showDaterForm(std::string const& comment = "# ") const;
 
     //--------------------------------------------------------------------------
@@ -762,6 +769,10 @@ public:
     //! \brief Remove an existing arc.
     //--------------------------------------------------------------------------
     bool removeArc(Arc const& arc);
+
+    //--------------------------------------------------------------------------
+    //! \brief Remove an existing arc.
+    //--------------------------------------------------------------------------
     bool removeArc(Node& from, Node& to);
 
     //--------------------------------------------------------------------------
@@ -772,6 +783,9 @@ public:
 
 private:
 
+    //--------------------------------------------------------------------------
+    //! \brief Inner method for the public toSysLin() method.
+    //--------------------------------------------------------------------------
     void toSysLin(SparseMatrix& D, SparseMatrix& A, SparseMatrix& B, SparseMatrix& C,
                   size_t const nb_inputs, size_t const nb_states, size_t const nb_outputs);
 
