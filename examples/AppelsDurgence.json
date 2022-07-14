@@ -1,0 +1,5 @@
+{
+  "places": ["P0,P0,403,136,0", "P1,P1,269,217,0", "P2,ConferenceATrois,269,363,0", "P3,InstructionsAvecOpNiv2,269,522,0", "P4,OperateurNiveau2,552,488,4", "P5,InstructionsAvecOpNiv1,403,271,0", "P6,MusiqueAttente,405,411,0", "P7,InstructionsAvecOpNiv2,405,583,0", "P8,InstructionsAvecOpNiv1,539,213,0", "P9,OperateursNiveau1,550,437,4", "P10,Victimes,262,70,7", "P11,ActionsUrgentes,181,666,0", "P12,ActionsCritiques,179,625,0"],
+  "transitions": ["T0,Critique,267,136,315", "T1,T1,269,288,270", "T2,T2,269,435,90", "T3,T3,268,587,90", "T4,Urgent,403,206,270", "T5,AppelDurgences,403,70,90", "T6,T6,404,329,270", "T7,T7,405,494,270", "T8,Conseil,539,136,225", "T9,T9,539,285,270", "T10,T10,406,666,270"],
+  "arcs": ["P0,T0,nan", "T0,P1,3", "P1,T1,nan", "T1,P2,5", "P2,T2,nan", "T2,P3,3", "P3,T3,nan", "P0,T4,nan", "T3,P4,3", "T5,P0,2", "P4,T1,nan", "T4,P5,2", "P5,T6,nan", "T6,P6,3", "P6,T7,nan", "T7,P7,2", "P0,T8,nan", "T8,P8,4", "P8,T9,nan", "T9,P9,4", "P9,T5,nan", "T6,P9,4", "T2,P9,1", "P7,T10,nan", "T10,P4,1", "P10,T5,nan", "T10,P11,4", "T3,P12,5", "P4,T7,nan"]
+}
