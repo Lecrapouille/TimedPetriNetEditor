@@ -109,7 +109,7 @@ bool petri_get_places(int const handle, CPlace_t* places)
 {
     SANITY_HANDLE(handle, false);
 
-    std::deque<Place> const& p = g_petri_nets[size_t(handle)]->places();
+    PetriNet::Places const& p = g_petri_nets[size_t(handle)]->places();
     size_t i = 0;
     for (auto const& it: p)
     {
@@ -152,7 +152,7 @@ bool petri_get_transitions(int const handle, CTransition_t* transitions)
 {
     SANITY_HANDLE(handle, false);
 
-    std::deque<Transition> const& t = g_petri_nets[size_t(handle)]->transitions();
+    PetriNet::Transitions const& t = g_petri_nets[size_t(handle)]->transitions();
     size_t i = 0;
     for (auto const& it: t)
     {

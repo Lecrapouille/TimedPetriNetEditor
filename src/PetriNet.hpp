@@ -405,6 +405,10 @@ class PetriNet
 {
 public:
 
+    using Places = std::deque<Place>;
+    using Transitions = std::deque<Transition>;
+    using Arcs = std::deque<Arc>;
+
     //--------------------------------------------------------------------------
     //! \brief Copy constructors.
     //--------------------------------------------------------------------------
@@ -523,7 +527,7 @@ public:
     //--------------------------------------------------------------------------
     //! \brief Const getter. Return the reference to the container of Places.
     //--------------------------------------------------------------------------
-    std::deque<Place> const& places() const
+    Places const& places() const
     {
         return m_places;
     }
@@ -531,7 +535,7 @@ public:
     //--------------------------------------------------------------------------
     //! \brief Non const getter. TODO: to be removed (ideally).
     //--------------------------------------------------------------------------
-    std::deque<Place>& places()
+    Places& places()
     {
         return m_places;
     }
@@ -585,7 +589,7 @@ public:
     //--------------------------------------------------------------------------
     //! \brief Const getter. Return the reference to the container of Transitions.
     //--------------------------------------------------------------------------
-    std::deque<Transition> const& transitions() const
+    Transitions const& transitions() const
     {
         return m_transitions;
     }
@@ -593,7 +597,7 @@ public:
     //--------------------------------------------------------------------------
     //! \brief Non const getter. TODO: to be removed (ideally).
     //--------------------------------------------------------------------------
-    std::deque<Transition>& transitions()
+    Transitions& transitions()
     {
         return m_transitions;
     }
@@ -646,7 +650,7 @@ public:
     //--------------------------------------------------------------------------
     //! \brief Const getter.
     //--------------------------------------------------------------------------
-    std::deque<Arc> const& arcs() const
+    Arcs const& arcs() const
     {
         return m_arcs;
     }
@@ -654,7 +658,7 @@ public:
     //--------------------------------------------------------------------------
     //! \brief Non const getter. TODO: to be removed (ideally).
     //--------------------------------------------------------------------------
-    std::deque<Arc>& arcs()
+    Arcs& arcs()
     {
         return m_arcs;
     }
@@ -767,14 +771,14 @@ private:
 
     //! \brief List of Places. We do not use std::vector to avoid invalidating
     //! node references for arcs after a possible resizing.
-    std::deque<Place> m_places;
+    Places m_places;
     //! \brief List of Transitions. We do not use std::vector to avoid
     //! invalidating node references for arcs after a possible resizing.
-    std::deque<Transition> m_transitions;
+    Transitions m_transitions;
     //! \brief List of shuffled Transitions.
     std::vector<Transition*> m_shuffled_transitions;
     //! \brief List of Arcs.
-    std::deque<Arc> m_arcs;
+    Arcs m_arcs;
     //! \brief Auto increment unique identifier. Start from 0 (code placed in
     //! the cpp file).
     size_t m_next_place_id = 0u;
