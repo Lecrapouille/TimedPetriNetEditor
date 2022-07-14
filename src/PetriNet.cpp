@@ -61,6 +61,36 @@ size_t Transition::canFire()
 }
 
 //------------------------------------------------------------------------------
+void PetriNet::backupMarks()
+{
+    m_marks.resize(m_places.size());
+    for (auto& place: m_places)
+    {
+        m_marks[place.id] = place.tokens;
+    }
+}
+
+//------------------------------------------------------------------------------
+bool PetriNet::setMarks(std::vector<size_t> const& marks)
+{
+    if (m_places.size() != marks.size())
+    {
+        std::cerr << current_time()
+                  << "the container dimension holding marks does not match the number of places"
+                  << std::endl;
+        return false;
+    }
+
+    size_t i = m_marks.size();
+    while (i--)
+    {
+        m_places[i].tokens = m_marks[i];
+    }
+
+    return true;
+}
+
+//------------------------------------------------------------------------------
 bool PetriNet::addArc(Node& from, Node& to, float const duration)
 {
     if (from.type == to.type)

@@ -534,6 +534,14 @@ load!(pn, "examples/Howard2.json")
 pn4 = load("examples/Howard2.json")
 @assert pn4.handle == 4
 
+# Get the list of marks (number of token for each places P0, P1 .. Pn)
+tokens(pn)
+@assert ans == [2; 0; 0; 0; 0]
+
+# Modify number of tokens for each places
+tokens!(pn, [0; 1; 2; 3; 4])
+@assert ans == true
+
 # Check if Petri net is an event graph
 is_event_graph(pn)
 @assert ans == true

@@ -163,8 +163,6 @@ public:
 
     //! \brief to access s_next_id
     friend class PetriNet;
-    //! \brief to access m_backup_tokens
-    friend class PetriEditor;
 
     //--------------------------------------------------------------------------
     //! \brief Constructor. To be used when loading a Petri net from JSON file.
@@ -174,7 +172,7 @@ public:
     //! \param[in] tok: Initial number of tokens in the place.
     //--------------------------------------------------------------------------
     Place(size_t const id_, std::string const& caption_, float const x_, float const y_, size_t const tok_)
-        : Node(Node::Type::Place, id_, caption_, x_, y_), tokens(tok_), m_backup_tokens(tok_)
+        : Node(Node::Type::Place, id_, caption_, x_, y_), tokens(tok_)
     {}
 
     //--------------------------------------------------------------------------
@@ -190,13 +188,6 @@ public:
     //! \brief the number of tokens hold by the Place. Public access is fine
     //! since this will facilitate its access during the simulation.
     size_t tokens;
-
-private:
-
-    //! \brief Before starting the simulation of the Petri net, we have to
-    //! save the number of tokens to allow restoring initial states when the
-    //! simulation is finished.
-    size_t m_backup_tokens;
 };
 
 // *****************************************************************************
@@ -682,6 +673,23 @@ public:
     bool load(std::string const& filename);
 
     //--------------------------------------------------------------------------
+    //! \brief Set initial number of tokens in places.
+    //--------------------------------------------------------------------------
+    bool setMarks(std::vector<size_t> const& marks);
+
+    //--------------------------------------------------------------------------
+    //! \brief Since the simulation modifies the number of tokens we have to
+    //! backup them before the simulation.
+    //--------------------------------------------------------------------------
+    void backupMarks();
+
+    //--------------------------------------------------------------------------
+    //! \brief Since the simulation modifies the number of tokens we have to
+    //! restore them after the simulation.
+    //--------------------------------------------------------------------------
+    inline void restoreMarks() { setMarks(m_marks); }
+
+    //--------------------------------------------------------------------------
     //! \brief Chech if the Petri net is a graph event meaning that eacg places
     //! have exactly one input arc and one output arc.
     //! \return true if the Petri net is a graph event.
@@ -779,6 +787,8 @@ private:
     std::vector<Transition*> m_shuffled_transitions;
     //! \brief List of Arcs.
     Arcs m_arcs;
+    //! \brief Memorize initial number of tokens in places.
+    std::vector<size_t> m_marks;
     //! \brief Auto increment unique identifier. Start from 0 (code placed in
     //! the cpp file).
     size_t m_next_place_id = 0u;

@@ -381,7 +381,41 @@ function tokens(pn::PetriNet, place::Int)
     return count
 end
 
-# TODO retourner les marquages https://youtu.be/F0tImMHObv0
+"""
+    tokens
+
+Return the list of number of tokens for each Place.
+Throw an exception if the Petri net handle is invalid.
+
+# Examples
+```julia-repl
+julia> pn = petri_net()
+PetriNet(0)
+
+julia> tokens(pn)
+Int64[]
+
+julia> add_place!(pn, 3.15, 4.15, 5)
+julia> add_place!(pn, 3.15, 4.15, 2)
+
+julia> tokens(pn)
+2-element Vector{Int64}:
+ 5
+ 2
+```
+"""
+function tokens(pn::PetriNet)
+    size = count_places(pn)
+    if (size <= 0)
+        return Vector{Int}(undef, 0)
+    end
+
+    list = Vector{Int}(undef, size)
+    ccall((:petri_get_marks, libtpne), Bool, (Clonglong, Ptr{Int}),
+          pn.handle, list)
+    list
+end
+
 # TODO retourner successeurs https://youtu.be/mN8XWiXyHyk
 
 """
@@ -412,6 +446,47 @@ function tokens!(pn::PetriNet, place::Int, tokens::Int)
     (tokens < 0) && error("Number of tokens shall be >= 0")
     ccall((:petri_set_tokens, libtpne), Bool, (Clonglong, Clonglong, Clonglong),
           pn.handle, Clonglong(place), Clonglong(tokens)) || throw_error()
+end
+
+"""
+    tokens!
+
+Set the number of tokens for each Place.
+Throw an exception if the Petri net handle or the vector dimension are invalid.
+
+# Examples
+```julia-repl
+julia> pn = petri_net()
+PetriNet(0)
+
+julia> tokens!(pn, [5, 2])
+ERROR: the container dimension holding marks does not match the number of places
+
+julia> add_place!(pn, 3.15, 4.15, 5)
+julia> add_place!(pn, 3.15, 4.15, 2)
+
+julia> tokens(pn)
+2-element Vector{Int64}:
+ 5
+ 2
+
+julia> tokens!(pn, [6; 3])
+true
+
+julia> tokens(pn)
+2-element Vector{Int64}:
+ 6
+ 3
+```
+"""
+function tokens!(pn::PetriNet, tokens::Vector{Int})
+    if (count_places(pn) != size(tokens, 1))
+        return error("the container dimension holding marks does not match the number of places")
+    end
+
+    ccall((:petri_set_marks, libtpne), Bool, (Clonglong, Ptr{Int}),
+          pn.handle, tokens)
+    return true
 end
 
 """

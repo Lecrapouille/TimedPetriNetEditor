@@ -82,6 +82,24 @@ extern "C" bool petri_is_empty(int const handle, bool* empty);
 extern "C" bool petri_editor(int const handle);
 
 // ****************************************************************************
+//! \brief Set the number of tokens for each places.
+//! \param[in] tokens the list of tokens for each places (#P0, #P1 .. #Pn).
+//! \note the size of list of tokens is not checked and shall be made by the
+//! caller function.
+//! \return true if the net is valid.
+// ****************************************************************************
+extern "C" bool petri_set_marks(int const handle, size_t const* tokens);
+
+// ****************************************************************************
+//! \brief Get the number of tokens for each places.
+//! \param[out] tokens the list of tokens for each places (#P0, #P1 .. #Pn).
+//! \note the size of list of tokens is not checked and shall be made by the
+//! caller function.
+//! \return true if the net is valid.
+// ****************************************************************************
+extern "C" bool petri_get_marks(int const handle, size_t* tokens);
+
+// ****************************************************************************
 //! \brief Add a new Place node at position (X,Y) and holding N tokens.
 //! \param[in] pn: the handle of the petri net created by create_petri_net().
 //! \param[in] x: the X coordinate in the window.

@@ -148,6 +148,32 @@ int petri_count_transitions(int const handle)
 }
 
 //------------------------------------------------------------------------------
+bool petri_set_marks(int const handle, size_t const* tokens)
+{
+    SANITY_HANDLE(handle, false);
+    PetriNet::Places& places = g_petri_nets[size_t(handle)]->places();
+    size_t i = places.size();
+    while (i--)
+    {
+        places[i].tokens = tokens[i];
+    }
+    return true;
+}
+
+//------------------------------------------------------------------------------
+bool petri_get_marks(int const handle, size_t* tokens)
+{
+    SANITY_HANDLE(handle, false);
+    PetriNet::Places const& places = g_petri_nets[size_t(handle)]->places();
+    size_t i = places.size();
+    while (i--)
+    {
+        tokens[i] = places[i].tokens;
+    }
+    return true;
+}
+
+//------------------------------------------------------------------------------
 bool petri_get_transitions(int const handle, CTransition_t* transitions)
 {
     SANITY_HANDLE(handle, false);
