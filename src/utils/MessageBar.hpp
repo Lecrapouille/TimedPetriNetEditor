@@ -21,6 +21,7 @@
 #ifndef MESSAGEBAR_HPP
 #define MESSAGEBAR_HPP
 
+
 // *****************************************************************************
 //! \brief A text inside a rectangle
 // *****************************************************************************
@@ -28,6 +29,9 @@ class MessageBar : public sf::Drawable
 {
 public:
 
+    //--------------------------------------------------------------------------
+    //! \brief
+    //--------------------------------------------------------------------------
     MessageBar(sf::Font& font)
     {
         m_text.setPosition(0, 0);
@@ -42,13 +46,46 @@ public:
         m_timer.restart();
     }
 
-    void setText(const std::string& message)
+    //--------------------------------------------------------------------------
+    //! \brief
+    //--------------------------------------------------------------------------
+    void setText(const std::string& message, sf::Color const& color)
     {
         m_message = message;
+        m_shape.setFillColor(color);
         m_text.setString(m_message);
         m_timer.restart();
     }
 
+    //--------------------------------------------------------------------------
+    //! \brief
+    //--------------------------------------------------------------------------
+    inline void setInfo(const std::string& message)
+    {
+        setText(message, sf::Color::Green);
+    }
+
+    //--------------------------------------------------------------------------
+    //! \brief
+    //--------------------------------------------------------------------------
+    inline void setWarning(const std::string& message)
+    {
+        setText(message, sf::Color(255, 126, 0));
+        std::cerr << message << std::endl;
+    }
+
+    //--------------------------------------------------------------------------
+    //! \brief
+    //--------------------------------------------------------------------------
+    inline void setError(const std::string& message)
+    {
+        setText(message, sf::Color::Red);
+        std::cerr << message << std::endl;
+    }
+
+    //--------------------------------------------------------------------------
+    //! \brief
+    //--------------------------------------------------------------------------
     void setSize(sf::Vector2u const& dimensions)
     {
         m_shape.setSize(sf::Vector2f(float(dimensions.x), 25.0f));
@@ -56,6 +93,9 @@ public:
 
 private:
 
+    //--------------------------------------------------------------------------
+    //! \brief
+    //--------------------------------------------------------------------------
     virtual void draw(sf::RenderTarget& target, sf::RenderStates /*states*/) const override final
     {
         const float BLINK_PERIOD = 2.5f;

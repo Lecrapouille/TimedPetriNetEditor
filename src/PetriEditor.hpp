@@ -35,6 +35,7 @@ class PetriEditor: public Application::GUI
 public:
 
     PetriEditor(Application& application, PetriNet& net);
+    PetriEditor(Application& application, PetriNet& net, std::string const& file);
     ~PetriEditor();
 
 private: // Derived from Application::GUI
@@ -95,6 +96,11 @@ private: // Derived from Application::GUI
     }
 
 private:
+
+    //--------------------------------------------------------------------------
+    //! \brief Inherit from GUI class. Draw the chessboard and pieces.
+    //--------------------------------------------------------------------------
+    bool load(std::string const& file);
 
     //--------------------------------------------------------------------------
     //! \brief Draw a Petri Place (as circle), its caption (text) and its tokens

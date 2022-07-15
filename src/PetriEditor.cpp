@@ -79,13 +79,37 @@ PetriEditor::PetriEditor(Application& application, PetriNet& net)
     // Init mouse cursor position
     m_mouse = sf::Vector2f(sf::Mouse::getPosition(m_renderer));
 
-    m_message_bar.setText("Welcome to timed Petri net editor");
+    m_message_bar.setInfo("Welcome to timed Petri net editor");
+}
+
+//------------------------------------------------------------------------------
+PetriEditor::PetriEditor(Application& application, PetriNet& net, std::string const& file)
+  : PetriEditor(application, net)
+{
+    load(file);
 }
 
 //------------------------------------------------------------------------------
 PetriEditor::~PetriEditor()
 {
     m_renderer.close();
+}
+
+//------------------------------------------------------------------------------
+bool PetriEditor::load(std::string const& file)
+{
+    m_filename = file;
+    if (m_petri_net.load(m_filename))
+    {
+        m_message_bar.setInfo("Loaded with success the Petri net!");
+        return true;
+    }
+    else
+    {
+        m_message_bar.setError("Failed loading the Petri net!");
+        m_petri_net.reset();
+        return false;
+    }
 }
 
 //------------------------------------------------------------------------------
@@ -289,9 +313,7 @@ void PetriEditor::update(float const dt)
         {
             if (m_petri_net.isEmpty())
             {
-                m_message_bar.setText("Petri net is empty. Simulation request ignored!");
-                std::cerr << "Petri net is empty. Simulation request ignored!"
-                          << std::endl;
+                m_message_bar.setWarning("Petri net is empty. Simulation request ignored!");
                 m_simulating = false;
             }
             else
@@ -302,7 +324,7 @@ void PetriEditor::update(float const dt)
         break;
 
     case STATE_STARTING:
-        m_message_bar.setText("Simulation has started!");
+        m_message_bar.setInfo("Simulation has started!");
         std::cout << current_time() << "Simulation has started!" << std::endl;
         // Backup tokens for each places since the simulation will burn them
         m_petri_net.backupMarks();
@@ -314,7 +336,7 @@ void PetriEditor::update(float const dt)
         break;
 
     case STATE_ENDING:
-        m_message_bar.setText("Simulation has ended!");
+        m_message_bar.setInfo("Simulation has ended!");
         std::cout << current_time() << "Simulation has ended!"
                   << std::endl << std::endl;
 
@@ -514,25 +536,21 @@ void PetriEditor::handleKeyPressed(sf::Event const& event)
             {
                 if (m_petri_net.save(m_filename))
                 {
-                    m_message_bar.setText("Petri net has been saved!");
+                    m_message_bar.setInfo("Petri net has been saved!");
                 }
                 else
                 {
-                    m_message_bar.setText("Failed saving the Petri net!");
+                    m_message_bar.setError("Failed saving the Petri net!");
                 }
             }
         }
         else if (m_simulating)
         {
-            m_message_bar.setText("Cannot save during the simulation!");
-            std::cerr << "Cannot save during the simulation"
-                      << std::endl;
+            m_message_bar.setError("Cannot save during the simulation!");
         }
         else if (m_petri_net.isEmpty())
         {
-            m_message_bar.setText("Cannot save empty Petri net!");
-            std::cerr << "Cannot save empty Petri net"
-                      << std::endl;
+            m_message_bar.setError("Cannot save empty Petri net!");
         }
     }
 
@@ -546,23 +564,12 @@ void PetriEditor::handleKeyPressed(sf::Event const& event)
             std::vector<std::string> files = manager.result();
             if (!files.empty())
             {
-                m_filename = files[0];
-                if (m_petri_net.load(m_filename))
-                {
-                    m_message_bar.setText("Loaded with success the Petri net!");
-                }
-                else
-                {
-                    m_message_bar.setText("Failed loading the Petri net!");
-                    m_petri_net.reset();
-                }
+                load(files[0]);
             }
         }
         else
         {
-            m_message_bar.setText("Cannot save during the simulation!");
-            std::cerr << "Cannot save during the simulation"
-                      << std::endl;
+            m_message_bar.setError("Cannot save during the simulation!");
         }
     }
 
@@ -578,25 +585,21 @@ void PetriEditor::handleKeyPressed(sf::Event const& event)
             {
                 if (m_petri_net.exportToCpp(file, "generated"))
                 {
-                    m_message_bar.setText("The Petri net has successfully exported as grafcet as C++ header file!");
+                    m_message_bar.setInfo("The Petri net has successfully exported as grafcet as C++ header file!");
                 }
                 else
                 {
-                    m_message_bar.setText("Could not export the Petri net to C++ header file!");
+                    m_message_bar.setError("Could not export the Petri net to C++ header file!");
                 }
             }
         }
         else if (m_simulating)
         {
-            m_message_bar.setText("Cannot export during the simulation!");
-            std::cerr << "Cannot export during the simulation"
-                      << std::endl;
+            m_message_bar.setError("Cannot export during the simulation!");
         }
         else if (m_petri_net.isEmpty())
         {
-            m_message_bar.setText("Cannot export empty Petri net!");
-            std::cerr << "Cannot export empty Petri net"
-                      << std::endl;
+            m_message_bar.setWarning("Cannot export empty Petri net!");
         }
     }
 
@@ -612,25 +615,21 @@ void PetriEditor::handleKeyPressed(sf::Event const& event)
             {
                 if (m_petri_net.exportToJulia(file))
                 {
-                    m_message_bar.setText("The Petri net has successfully exported as graph event as Julia file!");
+                    m_message_bar.setInfo("The Petri net has successfully exported as graph event as Julia file!");
                 }
                 else
                 {
-                    m_message_bar.setText("Could not export the Petri net to Julia file!");
+                    m_message_bar.setError("Could not export the Petri net to Julia file!");
                 }
             }
         }
         else if (m_simulating)
         {
-            m_message_bar.setText("Cannot export during the simulation!");
-            std::cerr << "Cannot export during the simulation"
-                      << std::endl;
+            m_message_bar.setWarning("Cannot export during the simulation!");
         }
         else if (m_petri_net.isEmpty())
         {
-            m_message_bar.setText("Cannot export empty Petri net!");
-            std::cerr << "Cannot export empty Petri net"
-                      << std::endl;
+            m_message_bar.setWarning("Cannot export empty Petri net!");
         }
     }
 
@@ -640,7 +639,7 @@ void PetriEditor::handleKeyPressed(sf::Event const& event)
         m_simulating = false;
         if (!m_petri_net.showCriticalCycle())
         {
-            m_message_bar.setText("Failed to show critical cycle");
+            m_message_bar.setError("Failed to show critical cycle");
         }
     }
 

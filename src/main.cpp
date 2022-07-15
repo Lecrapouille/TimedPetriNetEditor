@@ -26,6 +26,16 @@ static void usage(const char* name)
 {
     std::cout
       << name << " [petri.json]" << std::endl
+      << "  Where:" << std::endl
+      << "    [petri.json] is an optional Petri net file to load" << std::endl
+      << std::endl;
+}
+
+//------------------------------------------------------------------------------
+static void help(const char* name)
+{
+    std::cout
+      << "GUI commands for " << name << ":" << std::endl
       << "Left mouse button pressed: add a place" << std::endl
       << "Right mouse button pressed: add a transition" << std::endl
       << "Middle mouse button pressed: add an arc with the selected place or transition as origin" << std::endl
@@ -49,30 +59,30 @@ static void usage(const char* name)
 //------------------------------------------------------------------------------
 int main(int argc, char* argv[])
 {
-    usage(argv[0]);
+    help(argv[0]);
 
-    PetriNet net;
     if (argc > 2)
     {
         std::cerr << argv[0] << ": Failed needs zero or one parameter" << std::endl;
+        usage(argv[0]);
         return EXIT_FAILURE;
-    }
-    else if ((argc == 2) && (argv[1][0] != '-'))
-    {
-        if (!net.load(argv[1])) // FIXME: editor.m_file = argv[1]
-        {
-            std::cerr << argv[0] << ": Failed loading file '" << argv[1] << "'"
-                      << std::endl;
-            //return EXIT_FAILURE;
-        }
     }
 
     Application application(800, 600, "Timed Petri Net Editor");
-    PetriEditor editor(application, net);
 
     try
     {
-        application.loop(editor);
+        PetriNet net;
+        if ((argc == 2) && (argv[1][0] != '-'))
+        {
+            PetriEditor editor(application, net, argv[1]);
+            application.loop(editor);
+        }
+        else
+        {
+            PetriEditor editor(application, net);
+            application.loop(editor);
+        }
     }
     catch (std::string const& msg)
     {
