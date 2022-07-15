@@ -22,6 +22,8 @@
 #  define JSON_HPP
 
 #  include <fstream>
+#  include <iostream>
+#  include <sstream>
 
 // *****************************************************************************
 //! \brief Helper class for splitting a JSON file into sub-strings that can be
@@ -32,58 +34,60 @@ class Splitter
 {
 public:
 
+    //--------------------------------------------------------------------------
     //! \brief Open the file to be split and memorize delimiter chars.
     //! \param[in] filepath Open the file to be split
     //! \param[in] list of delimiter chars for string separation.
-    Splitter(std::string const& filepath, std::string const& del)
-        : is(filepath), delimiters(del)
-    {}
+    //--------------------------------------------------------------------------
+    Splitter(std::string const& filepath)
+        : is(filepath)
+    {
+        // Copy the whole file as a string
+        std::stringstream b;
+        b << is.rdbuf();
+        buffer = b.str();
+    }
 
+    //--------------------------------------------------------------------------
     //! \brief Check if the stream state is fine.
+    //--------------------------------------------------------------------------
     operator bool() const
     {
         return !!is;
     }
 
+    //--------------------------------------------------------------------------
     //! \brief Return the first interesting json string element.
     //! If no element can be split return a dummy string;
-    std::string const& split()
+    //! \param[in] d1 delimiters for find_first_not_of()
+    //! \param[in] d2 delimiters for find_first_of()
+    //--------------------------------------------------------------------------
+    std::string const& split(std::string const& d1, std::string const& d2)
     {
-        while (true)
+        prev = buffer.find_first_not_of(d1, prev);
+        if (prev == std::string::npos)
         {
-            if (pos == std::string::npos)
-            {
-                if (!std::getline(is, line))
-                {
-                    word.clear();
-                    return word;
-                }
-                prev = 0u;
-            }
-
-            while ((pos = line.find_first_of(delimiters, prev)) != std::string::npos)
-            {
-                if (pos > prev)
-                {
-                    word = line.substr(prev, pos - prev);
-                    prev = pos + 1u;
-                    return word;
-                }
-                prev = pos + 1u;
-            }
-
-            if (prev < line.length())
-            {
-                word = line.substr(prev, std::string::npos);
-                return word;
-            }
+            is.close();
+            word.clear();
+            return word;
         }
 
-        word.clear();
+        pos = buffer.find_first_of(d2, prev);
+        if (pos == std::string::npos)
+        {
+            is.close();
+            word.clear();
+            return word;
+        }
+
+        word = buffer.substr(prev, pos - prev);
+        prev = pos;
         return word;
     }
 
+    //--------------------------------------------------------------------------
     //! \brief Return the last split string.
+    //--------------------------------------------------------------------------
     std::string const& str() const
     {
         return word;
@@ -92,8 +96,7 @@ public:
 private:
 
     std::ifstream is;
-    std::string delimiters;
-    std::string line;
+    std::string buffer;
     std::string word;
     std::size_t prev = 0u;
     std::size_t pos = std::string::npos;

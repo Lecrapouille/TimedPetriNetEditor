@@ -62,6 +62,21 @@ template<typename T> T convert_to(const char* str)
 }
 
 //------------------------------------------------------------------------------
+inline size_t token2vector(std::string const& s, std::vector<std::string>& words)
+{
+    std::stringstream ss(s);
+    std::string tmp;
+
+    words.clear();
+    while (getline(ss, tmp, ','))
+    {
+        words.push_back(tmp);
+    }
+
+    return words.size();
+}
+
+//------------------------------------------------------------------------------
 inline uint8_t fading(sf::Clock& timer, bool restart, float blink_period)
 {
     if (restart)

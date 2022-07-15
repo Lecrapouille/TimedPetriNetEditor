@@ -26,6 +26,7 @@
 #include <iostream>
 #include <fstream>
 #include <cstring>
+#include <ctype.h>
 
 //------------------------------------------------------------------------------
 size_t Transition::canFire()
@@ -925,25 +926,25 @@ bool PetriNet::save(std::string const& filename)
     file << "{\n  \"places\": [";
     for (auto const& p: m_places)
     {
-        file << separator << '\"' << p.key << ',' << p.caption << ','
+        file << separator << "\n    " << '\"' << p.key << ',' << p.caption << ','
              << p.x << ',' << p.y << ',' << p.tokens << '\"';
-        separator = ", ";
+        separator = ",";
     }
     file << "],\n  \"transitions\": [";
     separator = "";
     for (auto const& t: m_transitions)
     {
-        file << separator << '\"' << t.key << ',' << t.caption << ','
+        file << separator << "\n    " << '\"' << t.key << ',' << t.caption << ','
              << t.x << ',' << t.y << ',' << t.angle << '\"';
-        separator = ", ";
+        separator = ",";
     }
     file << "],\n  \"arcs\": [";
     separator = "";
     for (auto const& a: m_arcs)
     {
-        file << separator << '\"' << a.from.key << ','
+        file << separator << "\n    " << '\"' << a.from.key << ','
              << a.to.key << ',' << a.duration << '\"';
-        separator = ", ";
+        separator = ",";
     }
     file << "]\n}";
 
@@ -952,10 +953,13 @@ bool PetriNet::save(std::string const& filename)
 }
 
 //------------------------------------------------------------------------------
+//! \note this a quick and dirty but simple JSON parsing since I do not want to
+//! depend on a huge library.
 bool PetriNet::load(std::string const& filename)
 {
-    Splitter s(filename, " \",");
+    std::vector<std::string> words(5);
 
+    Splitter s(filename);
     if (!s)
     {
         std::cerr << "Failed opening '" << filename << "'. Reason was '"
@@ -963,7 +967,8 @@ bool PetriNet::load(std::string const& filename)
         return false;
     }
 
-    if (s.split() != "{")
+    // Expect '{' as first token
+    if (s.split(" \t\n", " \t\n") != "{")
     {
         std::cerr << "Failed loading " << filename
                   << ". Token { missing. Bad JSON file" << std::endl;
@@ -971,96 +976,111 @@ bool PetriNet::load(std::string const& filename)
     }
 
     reset();
-
     while (s)
     {
-        s.split();
-        if ((s.str() == "places") && (s.split() == ":") && (s.split() == "["))
+        // Split for tokens "places : [" or "transitions : [" or "arcs : ["
+        std::string token(s.split(" \t\n\"", " \t\n\""));
+        if ((token == "places") || (token == "transitions") || (token == "arcs"))
         {
-            while (s.split() != "]")
+            // Split and check the presence of tokens ": ["
+            if ((s.split(" \t\n\"", " \t\n")[0] != ':') || (s.split(" \t\n", " ]\t\n\"")[0] != '['))
             {
-                int id = convert_to<int>(s.str().c_str() + 1u);
-                std::string caption = s.split();
-                float x = convert_to<float>(s.split());
-                float y = convert_to<float>(s.split());
-                int tokens = convert_to<int>(s.split());
-                if ((id < 0) || (tokens < 0))
-                {
-                    std::cerr << "Failed loading " << filename
-                              << ". Unique identifiers and tokens shall be > 0"
-                              << std::endl;
-                    return false;
-                }
-                addPlace(size_t(id), caption, x, y, size_t(tokens));
+                std::cerr << "Failed parsing" << std::endl;
+                return false;
             }
-        }
-        else if ((s.str() == "transitions") && (s.split() == ":") && (s.split() == "["))
-        {
-            while (s.split() != "]")
+
+            // Parse Petri place "P0,Caption,146,250,1"
+            if (token == "places")
             {
-                int id = convert_to<int>(s.str().c_str() + 1u);
-                std::string caption = s.split();
-                float x = convert_to<float>(s.split());
-                float y = convert_to<float>(s.split());
-                int angle = convert_to<int>(s.split());
-                if (id < 0)
+                while (s.split(" \t\n\"[", "\"")[0] != ']')
                 {
-                    std::cerr << "Failed loading " << filename
-                              << ". Unique identifiers shall be > 0"
-                              << std::endl;
-                    return false;
+                    if (s.str()[0] == ',')
+                        continue ;
+                    if (token2vector(s.str(), words) != 5u)
+                    {
+                        std::cerr << "Failed parsing Place" << std::endl;
+                        return false;
+                    }
+                    addPlace(convert_to<size_t>(&words[0][1]),  // id
+                             words[1],                      // caption
+                             convert_to<float>(words[2]),   // x
+                             convert_to<float>(words[3]),   // y
+                             convert_to<size_t>(words[4])); // tokens
                 }
-                addTransition(size_t(id), caption, x, y, angle);
             }
-        }
-        else if ((s.str() == "arcs") && (s.split() == ":") && (s.split() == "["))
-        {
-            while (s.split() != "]")
+            // Parse Petri transition "T0,Caption,272,173,315"
+            else if (token == "transitions")
             {
-                Node* from = findNode(s.str());
-                if (!from)
+                while (s.split(" \t\n\"[", "\"")[0] != ']')
                 {
-                    std::cerr << "Failed loading " << filename
-                              << ". Origin node " << s.str()
-                              << " not found" << std::endl;
-                    return false;
+                    if (s.str()[0] == ',')
+                        continue ;
+                    if (token2vector(s.str(), words) != 5u)
+                    {
+                        std::cerr << "Failed parsing Transition" << std::endl;
+                        return false;
+                    }
+                    addTransition(convert_to<size_t>(&words[0][1]),  // id
+                                  words[1],                      // caption
+                                  convert_to<float>(words[2]),   // x
+                                  convert_to<float>(words[3]),   // y
+                                  convert_to<int>(words[4]));    // angle
                 }
+            }
+            // Parse Petri arcs "P0,T0,nan"
+            else
+            {
+                while (s.split(" \t\n\"[", "\"}")[0] != ']')
+                {
+                    if (s.str()[0] == ',')
+                        continue ;
+                    if (token2vector(s.str(), words) != 3u)
+                    {
+                        std::cerr << "Failed parsing Arc" << std::endl;
+                        return false;
+                    }
+                    Node* from = findNode(words[0]);
+                    if (!from)
+                    {
+                        std::cerr << "Failed loading " << filename
+                                  << ". Origin node " << words[0]
+                                  << " not found" << std::endl;
+                        return false;
+                    }
 
-                Node* to = findNode(s.split());
-                if (!to)
-                {
-                    std::cerr << "Failed loading " << filename
-                              << ". Destination node " << s.str()
-                              << " not found" << std::endl;
-                    return false;
-                }
+                    Node* to = findNode(words[1]);
+                    if (!to)
+                    {
+                        std::cerr << "Failed loading " << filename
+                                  << ". Destination node " << words[1]
+                                  << " not found" << std::endl;
+                        return false;
+                    }
 
-                float duration = stof(s.split());
-                if (duration < 0.0f)
-                {
-                    std::cout << "Failed loading " << filename
-                              << ". Duration " << duration
-                              << " shall be > 0" << std::endl;
-                    return false;
-                }
-                if (!addArc(*from, *to, duration))
-                {
-                    std::cerr << "Failed loading " << filename
-                              << ". Arc " << from->key << " -> " << to->key
-                              << " is badly formed" << std::endl;
-                    return false;
+                    float duration = convert_to<float>(words[2]);
+                    if (duration < 0.0f)
+                    {
+                        std::cout << "Failed loading " << filename
+                                  << ". Duration " << words[2]
+                                  << " shall be > 0" << std::endl;
+                        return false;
+                    }
+                    if (!addArc(*from, *to, duration))
+                    {
+                        std::cerr << "Failed loading " << filename
+                                  << ". Arc " << from->key << " -> " << to->key
+                                  << " is badly formed" << std::endl;
+                        return false;
+                    }
                 }
             }
         }
         else if (s.str() == "}")
         {
             // End of the file
+            return true;
         }
-        else if (s.str() == "[]")
-        {
-            // Do nothing
-        }
-        else if (s.str() != "")
+        else if (token != "")
         {
             std::cerr << "Failed loading " << filename
                       << ". Key " << s.str() << " is not a valid token"
