@@ -72,7 +72,7 @@ int main(int argc, char* argv[])
 
     try
     {
-        PetriNet net;
+        PetriNet net(PetriNet::Behavior::TimedPetri);
         if ((argc == 2) && (argv[1][0] != '-'))
         {
             PetriEditor editor(application, net, argv[1]);

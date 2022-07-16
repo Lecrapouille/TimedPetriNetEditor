@@ -29,8 +29,8 @@
 //------------------------------------------------------------------------------
 TEST(TestEventGraph, TestHoward2)
 {
-    PetriNet net;
-    PetriNet canonic;
+    PetriNet net(PetriNet::Behavior::TimedPetri);
+    PetriNet canonic(PetriNet::Behavior::TimedPetri);
 
     ASSERT_EQ(net.load("../examples/Howard2.json"), true);
     ASSERT_EQ(net.isEmpty(), false);
@@ -125,7 +125,7 @@ TEST(TestEventGraph, TesSparseMatrixConstructor)
 //------------------------------------------------------------------------------
 TEST(TestEventGraph, TestToSysLin)
 {
-    PetriNet net;
+    PetriNet net(PetriNet::Behavior::TimedPetri);
 
     ASSERT_EQ(net.load("../examples/Howard2.json"), true); // FIXME shall call generateArcsInArcsOut ?
     net.generateArcsInArcsOut(); // FIXME

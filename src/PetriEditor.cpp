@@ -228,7 +228,8 @@ void PetriEditor::draw(Arc const& arc, uint8_t alpha)
     Arrow arrow(arc.from.x, arc.from.y, arc.to.x, arc.to.y, alpha);
     m_renderer.draw(arrow);
 
-    if (arc.from.type == Node::Type::Transition)
+    if ((arc.from.type == Node::Type::Transition) &&
+        (m_petri_net.behavior() == PetriNet::Behavior::TimedPetri))
     {
         // Draw the timing
         float x = arc.from.x + (arc.to.x - arc.from.x) / 2.0f;
@@ -358,16 +359,21 @@ void PetriEditor::update(float const dt)
         do
         {
             // Randomize the order of fired transition.
-            // FIXME: filter the list to speed up
-            std::vector<Transition*> const& transitions =
-                    m_petri_net.shuffle_transitions();
+            // TODO: filter the list to speed up ?
+            auto const& transitions = m_petri_net.shuffle_transitions();
 
             burning = false;
             for (auto& trans: transitions)
             {
-                size_t tokens = trans->canFire(); // [0 .. 1] tokens
+                // The theory would burn the maximum possibe of tokens that
+                // we can in a single action but we can also try to burn tokens
+                // one by one and randomize the transitions.
+                size_t tokens = (Settings::firing == Settings::Fire::OneByOne)
+                              ? size_t(trans->canFire()) // [0 .. 1] tokens
+                              : trans->howManyTokensCanBurnt(); // [0 .. N] tokens
                 if (tokens > 0u)
                 {
+                    assert(tokens <= Settings::maxTokens);
                     trans->fading.restart();
 
                     burning = true; // keep iterating on this loop
@@ -376,21 +382,22 @@ void PetriEditor::update(float const dt)
                     // Burn a single token on each Places above
                     for (auto& a: trans->arcsIn)
                     {
-                        a->tokensIn() -= 1u;
+                        size_t& tks = a->tokensIn();
+                        assert(tks >= tokens);
+                        tks = std::min(Settings::maxTokens, tks - tokens);
                         a->fading.restart();
                     }
 
                     // Count the number of tokens for the animation
                     for (auto& a: trans->arcsOut)
                     {
-                        a->count += 1u;
-                        // FIXME: speedup: store trans->arcsOut
+                        a->count = std::min(Settings::maxTokens, a->count + tokens);
                     }
                 }
             }
         } while (burning);
 
-        // Create animeted tokens with the correct number of tokens they are
+        // Create animated tokens with the correct number of tokens they are
         // carrying.
         if (burnt)
         {
@@ -686,7 +693,7 @@ void PetriEditor::handleKeyPressed(sf::Event const& event)
     // FIXME TEMPORARY
     else if (event.key.code == sf::Keyboard::W)
     {
-        PetriNet pn;
+        PetriNet pn(m_petri_net.behavior());
         m_petri_net.toCanonicalForm(pn);
         m_petri_net = pn;
     }
@@ -701,7 +708,7 @@ void PetriEditor::handleKeyPressed(sf::Event const& event)
         {
             size_t& tokens = reinterpret_cast<Place*>(node)->tokens;
             if (event.key.code == sf::Keyboard::Add)
-                ++tokens;
+                tokens = std::min(Settings::maxTokens, tokens + 1u);
             else if (tokens > 0u)
                 --tokens;
         }

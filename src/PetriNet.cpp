@@ -29,6 +29,11 @@
 #include <ctype.h>
 
 //------------------------------------------------------------------------------
+// Default Behavior of the Petri. Set
+size_t Settings::maxTokens = std::numeric_limits<size_t>::max();
+Settings::Fire Settings::firing = Settings::Fire::OneByOne;
+
+//------------------------------------------------------------------------------
 bool Transition::canFire() const
 {
     if (arcsIn.size() == 0u)
@@ -61,6 +66,35 @@ size_t Transition::howManyTokensCanBurnt() const
             burnt = tokens;
     }
     return burnt;
+}
+
+//------------------------------------------------------------------------------
+// TODO: GraphEvent and edit as doc/Graph01.png
+// TODO: Petri: click on transition to fire them
+bool PetriNet::behavior(PetriNet::Behavior const mode)
+{
+    switch (mode)
+    {
+        case PetriNet::Behavior::GRAFCET:
+            Settings::maxTokens = 1u;
+            Settings::firing = Settings::Fire::OneByOne;
+        break;
+        case PetriNet::Behavior::Petri:
+            Settings::maxTokens = std::numeric_limits<size_t>::max();
+            Settings::firing = Settings::Fire::MaxPossible;
+        break;
+        case PetriNet::Behavior::TimedPetri:
+            Settings::maxTokens = std::numeric_limits<size_t>::max();
+            Settings::firing = Settings::Fire::OneByOne;
+        break;
+        default:
+            std::cerr << "Undefined Petri behavior" << std::endl;
+            return false;
+        break;
+    }
+
+    m_behavior = mode;
+    return true;
 }
 
 //------------------------------------------------------------------------------
@@ -134,7 +168,8 @@ bool PetriNet::addArc(Node& from, Node& to, float const duration)
         return false;
     }
 
-    m_arcs.push_back(Arc(from, to, duration));
+    float d = (m_behavior == PetriNet::Behavior::TimedPetri) ? duration : 0.0f;
+    m_arcs.push_back(Arc(from, to, d));
     from.arcsOut.push_back(&m_arcs.back());
     to.arcsIn.push_back(&m_arcs.back());
     return true;
@@ -401,7 +436,7 @@ bool PetriNet::toSysLin(SparseMatrix& D, SparseMatrix& A, SparseMatrix& B, Spars
 
     // Duplicate the Petri net since we potentially modify it to transform it to
     // its canonical form.
-    PetriNet canonical;
+    PetriNet canonical(behavior());
     toCanonicalForm(canonical);
 
     // Count the number of inputs, outputs and states for creating matrices.
@@ -449,7 +484,7 @@ bool PetriNet::exportToJulia(std::string const& filename)
 
     // Duplicate the Petri net since we potentially modify it to transform it to
     // its canonical form.
-    PetriNet canonical;
+    PetriNet canonical(behavior());
     toCanonicalForm(canonical);
 
     // TODO

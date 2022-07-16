@@ -29,8 +29,10 @@
 // New JSON format
 TEST(TestJSONLoader, DummyTransitions)
 {
-    PetriNet net;
+    PetriNet net(PetriNet::Behavior::TimedPetri);
+
     ASSERT_EQ(net.load("data/DummyTransitions.json"), true);
+    ASSERT_EQ(net.behavior(), PetriNet::Behavior::TimedPetri);
     ASSERT_EQ(net.m_places.size(), 1u);
     ASSERT_EQ(net.m_transitions.size(), 0u);
     ASSERT_EQ(net.m_arcs.size(), 0u);
@@ -40,8 +42,10 @@ TEST(TestJSONLoader, DummyTransitions)
 // Old JSON format
 TEST(TestJSONLoader, NoCarriageReturn)
 {
-    PetriNet net;
+    PetriNet net(PetriNet::Behavior::TimedPetri);
+
     ASSERT_EQ(net.load("../examples/TrafficLight.json"), true);
+    ASSERT_EQ(net.behavior(), PetriNet::Behavior::TimedPetri);
     ASSERT_EQ(net.m_places.size(), 7u);
     ASSERT_EQ(net.m_transitions.size(), 6u);
     ASSERT_EQ(net.m_arcs.size(), 16u);
@@ -51,9 +55,31 @@ TEST(TestJSONLoader, NoCarriageReturn)
 // New JSON format
 TEST(TestJSONLoader, WithCarriageReturn)
 {
-    PetriNet net;
+    PetriNet net(PetriNet::Behavior::TimedPetri);
+
     ASSERT_EQ(net.load("../examples/AppelsDurgence.json"), true);
+    ASSERT_EQ(net.behavior(), PetriNet::Behavior::TimedPetri);
     ASSERT_EQ(net.m_places.size(), 13u);
     ASSERT_EQ(net.m_transitions.size(), 11u);
     ASSERT_EQ(net.m_arcs.size(), 29u);
+    ASSERT_EQ(net.findPlace(4u)->tokens, 4u);
+    ASSERT_EQ(net.findPlace(9u)->tokens, 4u);
+    ASSERT_EQ(net.findPlace(10u)->tokens, 7u);
+}
+
+//------------------------------------------------------------------------------
+// Compared to TEST(TestJSONLoader, WithCarriageReturn) places have max 1 token.
+TEST(TestJSONLoader, LoadAsGrafcet)
+{
+    PetriNet net(PetriNet::Behavior::GRAFCET);
+
+    ASSERT_EQ(net.load("../examples/AppelsDurgence.json"), true);
+    ASSERT_EQ(net.behavior(), PetriNet::Behavior::GRAFCET);
+    ASSERT_EQ(net.m_places.size(), 13u);
+    ASSERT_EQ(net.m_transitions.size(), 11u);
+    ASSERT_EQ(net.m_arcs.size(), 29u);
+
+    ASSERT_EQ(net.findPlace(4u)->tokens, 1u);
+    ASSERT_EQ(net.findPlace(9u)->tokens, 1u);
+    ASSERT_EQ(net.findPlace(10u)->tokens, 1u);
 }

@@ -34,6 +34,25 @@ class Arc;
 struct SparseMatrix;
 
 // *****************************************************************************
+//! \brief Settings for defining behavior for GRAFCET, Petri net, timed petri net.
+//! This structure is global for all nets and is configured by the constructor
+//! of the PetriNet class.
+// *****************************************************************************
+struct Settings
+{
+    //! \brief 1 for GRAFCET or Petri nets: std::numeric_limits<size_t>::max()
+    static size_t maxTokens;
+
+    //! \brief The theory would burn the maximum possibe of tokens that we can
+    //! in a single action (Fire::MaxPossible) but we can also try to burn tokens
+    //! one by one and randomize the transitions (Fire::OneByOne).
+    enum class Fire { OneByOne, MaxPossible };
+
+    //! \brief Burn tokens one by one or by batch.
+    static Fire firing;
+};
+
+// *****************************************************************************
 //! \brief Since Petri nets are bipartite graph there are two kind of nodes:
 //! place and transition. This class shall not be used directly as instance, it
 //! only allows to factorize the code of derived class Place and Transition.
@@ -173,9 +192,12 @@ public:
     //! \param[in] tokens_: Initial number of tokens in the place.
     //--------------------------------------------------------------------------
     Place(size_t const id_, std::string const& caption_, float const x_,
-          float const y_, size_t const tok_)
-        : Node(Node::Type::Place, id_, caption_, x_, y_), tokens(tok_)
-    {}
+          float const y_, size_t const tokens_)
+        : Node(Node::Type::Place, id_, caption_, x_, y_)
+    {
+        // Petri net: infinite number of tokens but in GRAFCET max is one.
+        tokens = std::min(Settings::maxTokens, tokens_);
+    }
 
     //--------------------------------------------------------------------------
     //! \brief Static method stringifing a place given an identifier.
@@ -415,6 +437,26 @@ public:
     using Arcs = std::deque<Arc>;
 
     //--------------------------------------------------------------------------
+    //! \brief Configure the net as GRAFCET or timed Petri net or Petri net.
+    //--------------------------------------------------------------------------
+    enum class Behavior
+    {
+        // TODO GraphEvent displaying graph like doc/Graph01.png
+        GRAFCET, TimedPetri, Petri /*, GraphEvent */
+    };
+
+    //--------------------------------------------------------------------------
+    //! \brief Default constructor.
+    //! \param[in] mode: select the type of net: GRAFCET or timed Petri net
+    //! or Petri net
+    //--------------------------------------------------------------------------
+    PetriNet(PetriNet::Behavior const mode)
+    {
+        const bool res = this->behavior(mode);
+        assert(res == true);
+    }
+
+    //--------------------------------------------------------------------------
     //! \brief Needed to remove compilation warnings
     //--------------------------------------------------------------------------
     PetriNet(PetriNet const& other)
@@ -471,11 +513,6 @@ public:
     }
 
     //--------------------------------------------------------------------------
-    //! \brief Default constructor
-    //--------------------------------------------------------------------------
-    PetriNet() = default;
-
-    //--------------------------------------------------------------------------
     //! \brief Remove all nodes and arcs. Reset counters for unique identifiers.
     //--------------------------------------------------------------------------
     void reset()
@@ -487,6 +524,16 @@ public:
         m_next_place_id = 0u;
         m_next_transition_id = 0u;
     }
+
+    //--------------------------------------------------------------------------
+    //! \brief
+    //--------------------------------------------------------------------------
+    bool behavior(PetriNet::Behavior const mode);
+
+    //--------------------------------------------------------------------------
+    //! \brief
+    //--------------------------------------------------------------------------
+    inline PetriNet::Behavior behavior() const { return m_behavior; }
 
     //--------------------------------------------------------------------------
     //! \brief Return true if the Petri nets has no nodes (no places and no
@@ -805,6 +852,8 @@ private:
 
 private:
 
+    //! \brief GRAFCET, Petri, Timed Petri ...
+    Behavior m_behavior;
     //! \brief List of Places. We do not use std::vector to avoid invalidating
     //! node references for arcs after a possible resizing.
     Places m_places;
