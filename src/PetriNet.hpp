@@ -29,6 +29,7 @@
 #  include <vector>
 #  include <cassert>
 #  include <algorithm> // std::random_shuffle
+#  include <random>
 
 class Arc;
 struct SparseMatrix;
@@ -237,8 +238,9 @@ public:
     //! \param[in] angle_: angle in degree of rotation for the display.
     //--------------------------------------------------------------------------
     Transition(size_t const id_, std::string const& caption_, float const x_,
-               float const y_, int const angle_)
-        : Node(Node::Type::Transition, id_, caption_, x_, y_), angle(angle_)
+               float const y_, int const angle_, bool const trans_)
+        : Node(Node::Type::Transition, id_, caption_, x_, y_), angle(angle_),
+          transitivity(trans_)
     {}
 
     //--------------------------------------------------------------------------
@@ -298,6 +300,9 @@ public:
     //! \brief Transitions are depicted by rectangles. We allow to rotate it
     //! to have horizontal, vertical or diagonal shape transitions.
     int angle = 0u;
+
+    //! \brief In petri net, click to fire, in timed petri always true.
+    bool transitivity;
 
     //! \brief Temporary matrix index used when building max-plus linear system.
     size_t index = 0u;
@@ -439,7 +444,7 @@ public:
     //--------------------------------------------------------------------------
     //! \brief Configure the net as GRAFCET or timed Petri net or Petri net.
     //--------------------------------------------------------------------------
-    enum class Behavior
+    enum class Type
     {
         // TODO GraphEvent displaying graph like doc/Graph01.png
         GRAFCET, TimedPetri, Petri /*, GraphEvent */
@@ -447,13 +452,13 @@ public:
 
     //--------------------------------------------------------------------------
     //! \brief Default constructor.
-    //! \param[in] mode: select the type of net: GRAFCET or timed Petri net
+    //! \param[in] behavior: select the type of net: GRAFCET or timed Petri net
     //! or Petri net
     //--------------------------------------------------------------------------
-    PetriNet(PetriNet::Behavior const mode)
+    PetriNet(PetriNet::Type const behavior)
     {
-        const bool res = this->behavior(mode);
-        assert(res == true);
+        const bool res = this->type(behavior);
+        assert(res == true); (void) res;
     }
 
     //--------------------------------------------------------------------------
@@ -526,14 +531,14 @@ public:
     }
 
     //--------------------------------------------------------------------------
-    //! \brief
+    //! \brief Set the type of net: GRAFCET, Petri, Timed Petri ...
     //--------------------------------------------------------------------------
-    bool behavior(PetriNet::Behavior const mode);
+    bool type(PetriNet::Type const type_);
 
     //--------------------------------------------------------------------------
-    //! \brief
+    //! \brief Get the type of net: GRAFCET, Petri, Timed Petri ...
     //--------------------------------------------------------------------------
-    inline PetriNet::Behavior behavior() const { return m_behavior; }
+    inline PetriNet::Type type() const { return m_type; }
 
     //--------------------------------------------------------------------------
     //! \brief Return true if the Petri nets has no nodes (no places and no
@@ -601,7 +606,8 @@ public:
     //--------------------------------------------------------------------------
     Transition& addTransition(float const x, float const y)
     {
-        m_transitions.push_back(Transition(m_next_transition_id++, "", x, y, 0u));
+        m_transitions.push_back(Transition(m_next_transition_id++, "", x, y, 0u,
+                                (m_type == PetriNet::Type::TimedPetri) ? true : false));
         return m_transitions.back();
     }
 
@@ -618,7 +624,8 @@ public:
     Transition& addTransition(size_t const id, std::string const& caption,
                               float const x, float const y, int const angle)
     {
-        m_transitions.push_back(Transition(id, caption, x, y, angle));
+        m_transitions.push_back(Transition(id, caption, x, y, angle,
+                                (m_type == PetriNet::Type::TimedPetri) ? true : false));
         if (id + 1u > m_next_transition_id)
             m_next_transition_id = id + 1u;
         return m_transitions.back();
@@ -633,8 +640,10 @@ public:
         m_shuffled_transitions.reserve(m_transitions.size());
         for (auto& trans: m_transitions)
             m_shuffled_transitions.push_back(&trans);
-        std::random_shuffle(std::begin(m_shuffled_transitions),
-                            std::end(m_shuffled_transitions));
+        std::random_device rd;
+        std::mt19937 g(rd());
+        std::shuffle(m_shuffled_transitions.begin(),
+                     m_shuffled_transitions.end(), g);
         return m_shuffled_transitions;
     }
 
@@ -842,6 +851,12 @@ public:
     //--------------------------------------------------------------------------
     void generateArcsInArcsOut();
 
+    //--------------------------------------------------------------------------
+    //! \brief Populate or update Node::arcsIn and Node::arcsOut for all
+    //! transitions and places in the Petri net.
+    //--------------------------------------------------------------------------
+    void resetTransitivities();
+
 private:
 
     //--------------------------------------------------------------------------
@@ -853,7 +868,7 @@ private:
 private:
 
     //! \brief GRAFCET, Petri, Timed Petri ...
-    Behavior m_behavior;
+    Type m_type;
     //! \brief List of Places. We do not use std::vector to avoid invalidating
     //! node references for arcs after a possible resizing.
     Places m_places;

@@ -79,7 +79,21 @@ PetriEditor::PetriEditor(Application& application, PetriNet& net)
     // Init mouse cursor position
     m_mouse = sf::Vector2f(sf::Mouse::getPosition(m_renderer));
 
-    m_message_bar.setInfo("Welcome to timed Petri net editor");
+    switch (m_petri_net.type())
+    {
+        case PetriNet::Type::TimedPetri:
+            m_message_bar.setInfo("Welcome to timed Petri net editor!");
+            break;
+        case PetriNet::Type::Petri:
+            m_message_bar.setInfo("Welcome to Petri net editor!");
+            break;
+        case PetriNet::Type::GRAFCET:
+            m_message_bar.setInfo("Welcome to GRAFCET editor!");
+            break;
+        default:
+            m_message_bar.setInfo("Welcome!");
+            break;
+    }
 }
 
 //------------------------------------------------------------------------------
@@ -213,7 +227,10 @@ void PetriEditor::draw(Transition const& transition, uint8_t alpha)
     // Draw the transition
     m_figure_trans.setPosition(sf::Vector2f(transition.x, transition.y));
     m_figure_trans.setRotation(float(transition.angle));
-    m_figure_trans.setFillColor(FILL_COLOR(alpha));
+    if ((m_petri_net.type() == PetriNet::Type::Petri) && (transition.transitivity))
+        m_figure_trans.setFillColor(sf::Color::Green);
+    else
+        m_figure_trans.setFillColor(FILL_COLOR(alpha));
     m_renderer.draw(m_figure_trans);
 
     // Draw the caption
@@ -229,7 +246,7 @@ void PetriEditor::draw(Arc const& arc, uint8_t alpha)
     m_renderer.draw(arrow);
 
     if ((arc.from.type == Node::Type::Transition) &&
-        (m_petri_net.behavior() == PetriNet::Behavior::TimedPetri))
+        (m_petri_net.type() == PetriNet::Type::TimedPetri))
     {
         // Draw the timing
         float x = arc.from.x + (arc.to.x - arc.from.x) / 2.0f;
@@ -325,10 +342,21 @@ void PetriEditor::update(float const dt)
         break;
 
     case STATE_STARTING:
-        m_message_bar.setInfo("Simulation has started!");
+        if (m_petri_net.type() == PetriNet::Type::Petri)
+        {
+            m_message_bar.setInfo("Simulation has started!\n"
+                                  "  Click on transitions for firing!\n"
+                                  "  Press the key '+' on Places for adding tokens\n"
+                                  "  Press the key '-' on Places for removing tokens");
+        }
+        else
+        {
+            m_message_bar.setInfo("Simulation has started!");
+        }
         std::cout << current_time() << "Simulation has started!" << std::endl;
         // Backup tokens for each places since the simulation will burn them
         m_petri_net.backupMarks();
+        m_petri_net.resetTransitivities();
         // Populate in and out arcs for all transitions to avoid to look after
         // them.
         m_petri_net.generateArcsInArcsOut();
@@ -379,12 +407,19 @@ void PetriEditor::update(float const dt)
                     burning = true; // keep iterating on this loop
                     burnt = true; // At least one place has been fired
 
-                    // Burn a single token on each Places above
+                    // Burn tokens on each predeccessor Places
                     for (auto& a: trans->arcsIn)
                     {
+                        // Burn tokens
                         size_t& tks = a->tokensIn();
                         assert(tks >= tokens);
                         tks = std::min(Settings::maxTokens, tks - tokens);
+
+                        // Disable the transitivity of the transition
+                        if (m_petri_net.type() == PetriNet::Type::Petri)
+                        {
+                            reinterpret_cast<Transition&>(a->to).transitivity = false;
+                        }
                         a->fading.restart();
                     }
 
@@ -441,7 +476,7 @@ void PetriEditor::update(float const dt)
                 }
             }
         }
-        else
+        else if (m_petri_net.type() != PetriNet::Type::Petri)
         {
             std::cout << current_time() << "The simulation cannot burn tokens."
                       << std::endl;
@@ -693,7 +728,7 @@ void PetriEditor::handleKeyPressed(sf::Event const& event)
     // FIXME TEMPORARY
     else if (event.key.code == sf::Keyboard::W)
     {
-        PetriNet pn(m_petri_net.behavior());
+        PetriNet pn(m_petri_net.type());
         m_petri_net.toCanonicalForm(pn);
         m_petri_net = pn;
     }
@@ -851,6 +886,8 @@ bool PetriEditor::clickedOnCaption()
 //------------------------------------------------------------------------------
 void PetriEditor::handleMouseButton(sf::Event const& event)
 {
+    m_petri_net.m_critical.clear();
+
     // The 'M' key was pressed. Reset the state but do not add new node!
     if ((m_selected_modes.size() != 0u) &&
         (event.type == sf::Event::MouseButtonPressed))
@@ -899,14 +936,28 @@ void PetriEditor::handleMouseButton(sf::Event const& event)
         }
         else
         {
-            // Add a new Place or a new Transition only if a node is
-            // not already present
-            if (getNode(m_mouse.x, m_mouse.y) == nullptr)
+            if (!m_simulating)
             {
-                if (event.mouseButton.button == sf::Mouse::Left)
-                    m_petri_net.addPlace(m_mouse.x, m_mouse.y);
-                else if (event.mouseButton.button == sf::Mouse::Right)
-                    m_petri_net.addTransition(m_mouse.x, m_mouse.y);
+                // Add a new Place or a new Transition only if a node is
+                // not already present
+                if (getNode(m_mouse.x, m_mouse.y) == nullptr)
+                {
+                    if (event.mouseButton.button == sf::Mouse::Left)
+                        m_petri_net.addPlace(m_mouse.x, m_mouse.y);
+                    else if (event.mouseButton.button == sf::Mouse::Right)
+                        m_petri_net.addTransition(m_mouse.x, m_mouse.y);
+                }
+            }
+            else if (m_petri_net.type() == PetriNet::Type::Petri)
+            {
+                // Click to fire a transition
+                Node* node = getNode(m_mouse.x, m_mouse.y);
+                if ((node != nullptr) && (node->type == Node::Type::Transition))
+                {
+                    reinterpret_cast<Transition*>(node)->transitivity ^= true;
+                    //Transition& tr = reinterpret_cast<Transition&>(*node);
+                    //reinterpret_cast<Transition*>(node)->transitivity = tr.canFire();
+                }
             }
         }
 
@@ -967,12 +1018,10 @@ void PetriEditor::handleInput()
             }
             else
             {
-                m_petri_net.m_critical.clear();
                 handleMouseButton(event);
             }
             break;
         case sf::Event::MouseButtonReleased:
-            m_petri_net.m_critical.clear();
             handleMouseButton(event);
             break;
         case sf::Event::MouseWheelMoved:

@@ -20,14 +20,19 @@
 
 #include "PetriEditor.hpp"
 #include <iostream>
+#include <unistd.h>
 
 //------------------------------------------------------------------------------
 static void usage(const char* name)
 {
     std::cout
-      << name << " [petri.json]" << std::endl
-      << "  Where:" << std::endl
-      << "    [petri.json] is an optional Petri net file to load" << std::endl
+      << name << " [-t|-p|-g] [petri.json]" << std::endl
+      << "Where:" << std::endl
+      << "  [-t|-p|-g] optional argument to force the type of net:" << std::endl
+      << "    -t for using a timed petri mode (by default)" << std::endl
+      << "    -p for using a petri mode" << std::endl
+      << "    -g for using a GRAFCET mode" << std::endl
+      << "  [petri.json] is an optional Petri net file to load (i.e. examples/Howard1.json)" << std::endl
       << std::endl;
 }
 
@@ -59,23 +64,51 @@ static void help(const char* name)
 //------------------------------------------------------------------------------
 int main(int argc, char* argv[])
 {
-    help(argv[0]);
-
-    if (argc > 2)
+    // Parse the command line
+    const char* filename = nullptr;
+    PetriNet::Type type = PetriNet::Type::TimedPetri;
+    opterr = 0;
+    int opt;
+    while ((opt = getopt(argc, argv, "gtph")) != -1)
     {
-        std::cerr << argv[0] << ": Failed needs zero or one parameter" << std::endl;
-        usage(argv[0]);
-        return EXIT_FAILURE;
+        switch (opt)
+        {
+            case 'g':
+                type = PetriNet::Type::GRAFCET;
+                std::cout << "GRAFCET mode" << std::endl;
+                break;
+            case 't':
+                type = PetriNet::Type::TimedPetri;
+                std::cout << "Timed Petri mode" << std::endl;
+                break;
+            case 'p':
+                type = PetriNet::Type::Petri;
+                std::cout << "Petri mode" << std::endl;
+                break;
+            case 'h':
+                usage(argv[0]);
+                return EXIT_FAILURE;
+            case '?':
+                std::cerr << "Unknown option: '" << char(optopt) << "'!" << std::endl;
+                usage(argv[0]);
+                return EXIT_FAILURE;
+        }
     }
 
-    Application application(800, 600, "Timed Petri Net Editor");
+    // Parse optional arguments
+    for (; optind < argc; optind++)
+    {
+        filename = argv[optind];
+    }
 
+    help(argv[0]);
+    Application application(800, 600, "Timed Petri Net Editor");
     try
     {
-        PetriNet net(PetriNet::Behavior::TimedPetri);
-        if ((argc == 2) && (argv[1][0] != '-'))
+        PetriNet net(type);
+        if (filename != nullptr)
         {
-            PetriEditor editor(application, net, argv[1]);
+            PetriEditor editor(application, net, filename);
             application.loop(editor);
         }
         else

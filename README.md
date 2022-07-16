@@ -88,6 +88,19 @@ folder (for the find the fonts). You will also have to manually modify this
 Julia file to indicate the correct path of the shared library
 `libtimedpetrineteditor.so`.
 
+## Commande line
+
+```sh
+TimedPetriNetEditor [-t|-p|-g] [petri.json]
+```
+
+Where:
+- `[-t|-p|-g]` optional argument to force the type of net:
+   - `-t` for using a timed petri mode (by default)
+   - `-p` for using a petri mode
+   - `-g` for using a GRAFCET mode
+- `[petri.json]` is an optional Petri net file to load (i.e. `examples/Howard1.json`)
+
 ## Usage of the Editor
 
 The editor does not offer any buttons, therefore all actions are directly made

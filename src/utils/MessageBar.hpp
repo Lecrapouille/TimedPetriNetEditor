@@ -52,6 +52,7 @@ public:
     void setText(const std::string& message, sf::Color const& color)
     {
         m_message = message;
+        m_count_lines = 1u + std::count(message.begin(), message.end(), '\n');
         m_shape.setFillColor(color);
         m_text.setString(m_message);
         m_timer.restart();
@@ -88,7 +89,8 @@ public:
     //--------------------------------------------------------------------------
     void setSize(sf::Vector2u const& dimensions)
     {
-        m_shape.setSize(sf::Vector2f(float(dimensions.x), 25.0f));
+        m_shape.setSize(sf::Vector2f(float(dimensions.x),
+                        25.0f * float(m_count_lines)));
     }
 
 private:
@@ -125,6 +127,9 @@ private:
 
     //! \brief String returned when the entry is activated
     std::string m_message;
+
+    //! \brief For the width of the box.
+    size_t m_count_lines = 0u;
 };
 
 #endif

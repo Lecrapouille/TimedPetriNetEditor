@@ -41,7 +41,7 @@ static std::deque<std::unique_ptr<PetriNet>> g_petri_nets;
 //------------------------------------------------------------------------------
 int petri_create()
 {
-    g_petri_nets.push_back(std::make_unique<PetriNet>(PetriNet::Behavior::TimedPetri));
+    g_petri_nets.push_back(std::make_unique<PetriNet>(PetriNet::Type::TimedPetri));
     return int(g_petri_nets.size() - 1u);
 }
 

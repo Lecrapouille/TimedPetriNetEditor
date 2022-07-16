@@ -139,12 +139,13 @@ TEST(TestPetriNet, TestPlaceCreation)
 TEST(TestPetriNet, TestTransitionCreation)
 {
     // Check the default constructor
-    Transition t1(42u, "Hello", 3.5f, 4.0f, 45u);
+    Transition t1(42u, "Hello", 3.5f, 4.0f, 45u, false);
     ASSERT_EQ(t1.id, 42u);
     ASSERT_EQ(t1.type, Node::Transition);
     ASSERT_EQ(t1.angle, 45u);
     ASSERT_EQ(t1.x, 3.5f);
     ASSERT_EQ(t1.y, 4.0f);
+    ASSERT_EQ(t1.transitivity, false);
     ASSERT_STREQ(t1.key.c_str(), "T42");
     ASSERT_STREQ(t1.caption.c_str(), "Hello");
     ASSERT_EQ(t1.arcsIn.size(), 0u);
@@ -161,6 +162,7 @@ TEST(TestPetriNet, TestTransitionCreation)
     ASSERT_EQ(t2.angle, 45u);
     ASSERT_EQ(t2.x, 3.5f);
     ASSERT_EQ(t2.y, 4.0f);
+    ASSERT_EQ(t2.transitivity, false);
     ASSERT_STREQ(t2.key.c_str(), "T42");
     ASSERT_STREQ(t2.caption.c_str(), "Hello");
     ASSERT_EQ(t2.arcsIn.size(), 0u);
@@ -175,7 +177,7 @@ TEST(TestPetriNet, TestTransitionCreation)
     ASSERT_EQ(t1 != t2, false);
 
     // Check the copy operator
-    Transition t3(0u, "world", 0.0f, 0.0f, 0u);
+    Transition t3(0u, "world", 0.0f, 0.0f, 0u, false);
     ASSERT_EQ(t1 == t3, false);
     ASSERT_EQ(t1 != t3, true);
     t3 = t1;
@@ -184,6 +186,7 @@ TEST(TestPetriNet, TestTransitionCreation)
     ASSERT_EQ(t3.angle, 45u);
     ASSERT_EQ(t3.x, 3.5f);
     ASSERT_EQ(t3.y, 4.0f);
+    ASSERT_EQ(t3.transitivity, false);
     ASSERT_STREQ(t3.key.c_str(), "T42");
     ASSERT_STREQ(t3.caption.c_str(), "Hello");
     ASSERT_EQ(t3.arcsIn.size(), 0u);
@@ -201,7 +204,7 @@ TEST(TestPetriNet, TestTransitionCreation)
 //------------------------------------------------------------------------------
 TEST(TestPetriNet, TestArcCreation)
 {
-    Transition t1(42u, "", 3.5f, 4.0f, 45u);
+    Transition t1(42u, "", 3.5f, 4.0f, 45u, true);
     Place p1(43u, "", 4.6f, 5.1f, 13u);
 
     // Check the default constructor: Transition --> Place
@@ -316,22 +319,22 @@ TEST(TestPetriNet, TestUtil)
 //------------------------------------------------------------------------------
 TEST(TestPetriNet, PetriNetConstructor)
 {
-    PetriNet timed_net(PetriNet::Behavior::TimedPetri);
-    ASSERT_EQ(timed_net.behavior(), PetriNet::Behavior::TimedPetri);
+    PetriNet timed_net(PetriNet::Type::TimedPetri);
+    ASSERT_EQ(timed_net.type(), PetriNet::Type::TimedPetri);
 
-    PetriNet net(PetriNet::Behavior::Petri);
-    ASSERT_EQ(net.behavior(), PetriNet::Behavior::Petri);
+    PetriNet net(PetriNet::Type::Petri);
+    ASSERT_EQ(net.type(), PetriNet::Type::Petri);
 
-    PetriNet grafcet(PetriNet::Behavior::GRAFCET);
-    ASSERT_EQ(grafcet.behavior(), PetriNet::Behavior::GRAFCET);
+    PetriNet grafcet(PetriNet::Type::GRAFCET);
+    ASSERT_EQ(grafcet.type(), PetriNet::Type::GRAFCET);
 }
 
 //------------------------------------------------------------------------------
 TEST(TestPetriNet, PetriNetDummy)
 {
     // Check the default constructor: dummy net
-    PetriNet net(PetriNet::Behavior::TimedPetri);
-    ASSERT_EQ(net.behavior(), PetriNet::Behavior::TimedPetri);
+    PetriNet net(PetriNet::Type::TimedPetri);
+    ASSERT_EQ(net.type(), PetriNet::Type::TimedPetri);
 
     ASSERT_EQ(net.isEmpty(), true);
     ASSERT_EQ(net.isEventGraph(), false);
@@ -353,7 +356,7 @@ TEST(TestPetriNet, PetriNetDummy)
 TEST(TestPetriNet, TestAddRemoveOperations)
 {
     // Check the default constructor: dummy net
-    PetriNet net(PetriNet::Behavior::TimedPetri);
+    PetriNet net(PetriNet::Type::TimedPetri);
     ASSERT_EQ(net.isEmpty(), true);
     ASSERT_EQ(net.m_next_place_id, 0u);
     ASSERT_EQ(net.m_next_transition_id, 0u);
@@ -475,7 +478,7 @@ TEST(TestPetriNet, TestAddRemoveOperations)
 //------------------------------------------------------------------------------
 TEST(TestPetriNet, TestIncrementId)
 {
-    PetriNet net(PetriNet::Behavior::TimedPetri);
+    PetriNet net(PetriNet::Type::TimedPetri);
 
     net.addPlace(42u, "", 3.5f, 4.0f, 45u);
     ASSERT_EQ(net.m_next_place_id, 43u);
@@ -493,7 +496,7 @@ TEST(TestPetriNet, TestIncrementId)
 //------------------------------------------------------------------------------
 TEST(TestPetriNet, TestDoubleAdd)
 {
-    PetriNet net(PetriNet::Behavior::TimedPetri);
+    PetriNet net(PetriNet::Type::TimedPetri);
 
     Place& p1 = net.addPlace(42u, "", 3.5f, 4.0f, 45u);
     ASSERT_EQ(net.m_next_place_id, 43u);
@@ -535,10 +538,10 @@ TEST(TestPetriNet, TestDoubleAdd)
 //------------------------------------------------------------------------------
 TEST(TestPetriNet, TestBadAddRemoveArc)
 {
-    PetriNet net(PetriNet::Behavior::TimedPetri);
+    PetriNet net(PetriNet::Type::TimedPetri);
 
-    Transition t1(42u, "", 3.5f, 4.0f, 45u);
-    Transition t2(43u, "", 3.5f, 4.0f, 45u);
+    Transition t1(42u, "", 3.5f, 4.0f, 45u, true);
+    Transition t2(43u, "", 3.5f, 4.0f, 45u, false);
     Place p1(44u, "", 4.6f, 5.1f, 13u);
     Place p2(45u, "", 4.6f, 5.1f, 13u);
 
@@ -583,7 +586,7 @@ TEST(TestPetriNet, TestBadAddRemoveArc)
 //------------------------------------------------------------------------------
 TEST(TestPetriNet, TestLoadedNet)
 {
-    PetriNet net(PetriNet::Behavior::TimedPetri);
+    PetriNet net(PetriNet::Type::TimedPetri);
 
     ASSERT_EQ(net.load("../examples/Howard2.json"), true);
     ASSERT_EQ(net.isEmpty(), false);
@@ -873,7 +876,7 @@ TEST(TestPetriNet, TestLoadedNet)
 //------------------------------------------------------------------------------
 TEST(TestPetriNet, TestRemoveNode)
 {
-    PetriNet net(PetriNet::Behavior::TimedPetri);
+    PetriNet net(PetriNet::Type::TimedPetri);
 
     ASSERT_EQ(net.load("../examples/Howard2.json"), true);
     ASSERT_EQ(net.m_next_place_id, 5u);

@@ -39,6 +39,9 @@ bool Transition::canFire() const
     if (arcsIn.size() == 0u)
         return false;
 
+    if (transitivity == false)
+        return false;
+
     for (auto& a: arcsIn)
     {
         if (a->tokensIn() == 0u)
@@ -53,6 +56,9 @@ size_t Transition::howManyTokensCanBurnt() const
 {
     if (arcsIn.size() == 0u)
         return 0u;
+
+    if (transitivity == false)
+        return false;
 
     size_t burnt = static_cast<size_t>(-1);
 
@@ -71,19 +77,19 @@ size_t Transition::howManyTokensCanBurnt() const
 //------------------------------------------------------------------------------
 // TODO: GraphEvent and edit as doc/Graph01.png
 // TODO: Petri: click on transition to fire them
-bool PetriNet::behavior(PetriNet::Behavior const mode)
+bool PetriNet::type(PetriNet::Type const mode)
 {
     switch (mode)
     {
-        case PetriNet::Behavior::GRAFCET:
+        case PetriNet::Type::GRAFCET:
             Settings::maxTokens = 1u;
             Settings::firing = Settings::Fire::OneByOne;
         break;
-        case PetriNet::Behavior::Petri:
+        case PetriNet::Type::Petri:
             Settings::maxTokens = std::numeric_limits<size_t>::max();
             Settings::firing = Settings::Fire::MaxPossible;
         break;
-        case PetriNet::Behavior::TimedPetri:
+        case PetriNet::Type::TimedPetri:
             Settings::maxTokens = std::numeric_limits<size_t>::max();
             Settings::firing = Settings::Fire::OneByOne;
         break;
@@ -93,7 +99,7 @@ bool PetriNet::behavior(PetriNet::Behavior const mode)
         break;
     }
 
-    m_behavior = mode;
+    m_type = mode;
     return true;
 }
 
@@ -104,6 +110,25 @@ void PetriNet::backupMarks()
     for (auto& place: m_places)
     {
         m_marks[place.id] = place.tokens;
+    }
+}
+
+//------------------------------------------------------------------------------
+void PetriNet::resetTransitivities()
+{
+    if (m_type == PetriNet::Type::Petri)
+    {
+        for (auto& transition: m_transitions)
+        {
+            transition.transitivity = false;
+        }
+    }
+    else
+    {
+        for (auto& transition: m_transitions)
+        {
+            transition.transitivity = true;
+        }
     }
 }
 
@@ -168,8 +193,23 @@ bool PetriNet::addArc(Node& from, Node& to, float const duration)
         return false;
     }
 
-    float d = (m_behavior == PetriNet::Behavior::TimedPetri) ? duration : 0.0f;
-    m_arcs.push_back(Arc(from, to, d));
+    // Durations
+    float dur = duration;
+    switch (m_type)
+    {
+        case PetriNet::Type::TimedPetri:
+            dur = duration;
+            break;
+        case PetriNet::Type::Petri:
+            dur = 0.2f; // In theory 0.0f but nicer for human brain
+            break;
+        case PetriNet::Type::GRAFCET:
+            dur = 1.5f; // In theory 0.0f but nicer for human brain
+            break;
+        default: assert(false && "Unknown type of net"); break;
+    }
+
+    m_arcs.push_back(Arc(from, to, dur));
     from.arcsOut.push_back(&m_arcs.back());
     to.arcsIn.push_back(&m_arcs.back());
     return true;
@@ -436,7 +476,7 @@ bool PetriNet::toSysLin(SparseMatrix& D, SparseMatrix& A, SparseMatrix& B, Spars
 
     // Duplicate the Petri net since we potentially modify it to transform it to
     // its canonical form.
-    PetriNet canonical(behavior());
+    PetriNet canonical(type());
     toCanonicalForm(canonical);
 
     // Count the number of inputs, outputs and states for creating matrices.
@@ -484,7 +524,7 @@ bool PetriNet::exportToJulia(std::string const& filename)
 
     // Duplicate the Petri net since we potentially modify it to transform it to
     // its canonical form.
-    PetriNet canonical(behavior());
+    PetriNet canonical(type());
     toCanonicalForm(canonical);
 
     // TODO
@@ -1265,7 +1305,8 @@ void PetriNet::removeNode(Node& node)
             {
                 Transition& ti = m_transitions[i];
                 Transition& te = m_transitions[m_transitions.size() - 1u];
-                m_transitions[i] = Transition(ti.id, te.caption, te.x, te.y, te.angle);
+                m_transitions[i] = Transition(ti.id, te.caption, te.x, te.y, te.angle,
+                                             (m_type == PetriNet::Type::TimedPetri) ? true : false);
                 assert(m_next_transition_id >= 1u);
                 m_next_transition_id -= 1u;
 
