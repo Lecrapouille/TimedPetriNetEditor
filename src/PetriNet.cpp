@@ -29,21 +29,25 @@
 #include <ctype.h>
 
 //------------------------------------------------------------------------------
-size_t Transition::canFire()
+bool Transition::canFire() const
 {
     if (arcsIn.size() == 0u)
-        return 0u;
-
-#if 1 // Version 1: return 0 or 1 token
+        return false;
 
     for (auto& a: arcsIn)
     {
         if (a->tokensIn() == 0u)
-            return 0u;
+            return false;
     }
-    return 1u;
 
-#else // Version 2: return the maximum possibe of tokens that can be burnt
+    return true;
+}
+
+//------------------------------------------------------------------------------
+size_t Transition::howManyTokensCanBurnt() const
+{
+    if (arcsIn.size() == 0u)
+        return 0u;
 
     size_t burnt = static_cast<size_t>(-1);
 
@@ -57,8 +61,6 @@ size_t Transition::canFire()
             burnt = tokens;
     }
     return burnt;
-
-#endif
 }
 
 //------------------------------------------------------------------------------
@@ -249,9 +251,9 @@ void PetriNet::toCanonicalForm(PetriNet& canonic)
                 while (tokens--)
                 {
                     Node& tmp1 = canonic.addPlace(10.0f, 10.0f, 1u);
-                    canonic.addArc(*from, tmp1, 0.0f);
+                    canonic.addArc(*from, tmp1);
                     Node& tmp2 = canonic.addTransition(20.0f, 20.0f);
-                    canonic.addArc(tmp1, tmp2, 0.0f);
+                    canonic.addArc(tmp1, tmp2);
 
                     from = &tmp2;
                     p.tokens--;
@@ -283,9 +285,9 @@ void PetriNet::toCanonicalForm(PetriNet& canonic)
 
                 Node& tmp1 = canonic.addPlace(50.0f, 50.0f, 0u);
                 Node& tmp2 = canonic.addTransition(60.0f, 60.0f);
-                canonic.addArc(*from, tmp1, 0.0f);
+                canonic.addArc(*from, tmp1);
                 canonic.addArc(tmp1, tmp2, duration);
-                canonic.addArc(tmp2, p, 0.0f);
+                canonic.addArc(tmp2, p);
             }
 
             // Outputs
@@ -296,9 +298,9 @@ void PetriNet::toCanonicalForm(PetriNet& canonic)
 
                 Node& tmp1 = canonic.addTransition(60.0f, 60.0f);
                 Node& tmp2 = canonic.addPlace(50.0f, 50.0f, 0u);
-                canonic.addArc(p, tmp1, 0.0f);
-                canonic.addArc(tmp1, tmp2, 0.0f);
-                canonic.addArc(tmp2, *to, 0.0f);
+                canonic.addArc(p, tmp1);
+                canonic.addArc(tmp1, tmp2);
+                canonic.addArc(tmp2, *to);
             }
         }
     }
