@@ -524,17 +524,17 @@ Node* PetriEditor::getNode(float const x, float const y)
 //------------------------------------------------------------------------------
 void PetriEditor::handleKeyPressed(sf::Event const& event)
 {
-    if (m_entry_box.focus())
+    // Left, right, delete, escape key binding when editing the caption of a node
+    if (m_entry_box.hasFocus())
     {
        m_entry_box.onKeyPressed(event.key);
        return ;
     }
-    m_entry_box.unfocus();
 
     // Escape key: quit the application.
     if (event.key.code == sf::Keyboard::Escape)
     {
-        m_running = false;
+        m_renderer.close();
         return ;
     }
 
@@ -864,7 +864,7 @@ bool PetriEditor::clickedOnCaption()
 {
     for (auto& place: m_petri_net.places())
     {
-        if (m_entry_box.focus(place, m_mouse))
+        if (m_entry_box.canFocusOn(place, m_mouse))
         {
            return true;
         }
@@ -872,12 +872,10 @@ bool PetriEditor::clickedOnCaption()
 
     for (auto& transition: m_petri_net.transitions())
     {
-        if (m_entry_box.focus(transition, m_mouse))
+        if (m_entry_box.canFocusOn(transition, m_mouse))
         {
            return true;
         }
-
-        // TODO time
     }
 
     return false;
@@ -887,6 +885,12 @@ bool PetriEditor::clickedOnCaption()
 void PetriEditor::handleMouseButton(sf::Event const& event)
 {
     m_petri_net.m_critical.clear();
+
+    if (m_entry_box.hasFocus())
+    {
+        m_entry_box.onMousePressed(m_mouse);
+        return ;
+    }
 
     // The 'M' key was pressed. Reset the state but do not add new node!
     if ((m_selected_modes.size() != 0u) &&
@@ -1012,14 +1016,7 @@ void PetriEditor::handleInput()
             m_ctrl = false;
             break;
         case sf::Event::MouseButtonPressed:
-            if (m_entry_box.focus())
-            {
-                m_entry_box.unfocus();
-            }
-            else
-            {
-                handleMouseButton(event);
-            }
+            handleMouseButton(event);
             break;
         case sf::Event::MouseButtonReleased:
             handleMouseButton(event);
