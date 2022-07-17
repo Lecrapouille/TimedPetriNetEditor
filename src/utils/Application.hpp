@@ -171,6 +171,8 @@ public:
         Application& m_application;
         //! \brief the FSML renderer for drawing things.
         sf::RenderWindow& m_renderer;
+        //! \brief Title of the main application
+        std::string m_title;
 
     private:
 

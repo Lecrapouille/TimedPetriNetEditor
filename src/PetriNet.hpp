@@ -606,6 +606,7 @@ public:
     //--------------------------------------------------------------------------
     Transition& addTransition(float const x, float const y)
     {
+        modified = true;
         m_transitions.push_back(Transition(m_next_transition_id++, "", x, y, 0u,
                                 (m_type == PetriNet::Type::TimedPetri) ? true : false));
         return m_transitions.back();
@@ -624,6 +625,7 @@ public:
     Transition& addTransition(size_t const id, std::string const& caption,
                               float const x, float const y, int const angle)
     {
+        modified = true;
         m_transitions.push_back(Transition(id, caption, x, y, angle,
                                 (m_type == PetriNet::Type::TimedPetri) ? true : false));
         if (id + 1u > m_next_transition_id)
@@ -887,6 +889,12 @@ private:
     //! \brief Auto increment unique identifier. Start from 0 (code placed in
     //! the cpp file). Note: their reset is possible through class friendship.
     size_t m_next_transition_id = 0u;
+
+public:
+
+    //! \brief Petri net has been modified, change the title and ask for saving
+    //! the net when leaving the application.
+    bool modified = false;
 
 public: // FIXME
     //

@@ -41,7 +41,7 @@ public:
 private: // Derived from Application::GUI
 
     //--------------------------------------------------------------------------
-    //! \brief Inherit from GUI class. Draw the chessboard and pieces.
+    //! \brief Inherit from GUI class. Draw the Petri net.
     //--------------------------------------------------------------------------
     virtual void draw() override;
 
@@ -98,9 +98,21 @@ private: // Derived from Application::GUI
 private:
 
     //--------------------------------------------------------------------------
-    //! \brief Inherit from GUI class. Draw the chessboard and pieces.
+    //! \brief Load a new Petri net from JSON file.
+    //! \return true if successfully loaded else return false.
     //--------------------------------------------------------------------------
     bool load(std::string const& file);
+
+    //--------------------------------------------------------------------------
+    //! \brief Save the Petri net into a JSON file from a file manager.
+    //! \return true if successfully saved else return false.
+    //--------------------------------------------------------------------------
+    bool save(bool const force = false);
+
+    //--------------------------------------------------------------------------
+    //! \brief Close the application. Ask for saving the Petri net if modified.
+    //--------------------------------------------------------------------------
+    void close();
 
     //--------------------------------------------------------------------------
     //! \brief Draw a Petri Place (as circle), its caption (text) and its tokens

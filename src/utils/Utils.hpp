@@ -25,6 +25,9 @@
 #  include <math.h>
 #  include <sstream>
 #  include <vector>
+#  include <unistd.h> // tmpPetriFile()
+#  include <iomanip>  // tmpPetriFile()
+#  include <pwd.h>    // tmpPetriFile()
 
 //------------------------------------------------------------------------------
 inline float norm(const float xa, const float ya, const float xb, const float yb)
@@ -74,6 +77,23 @@ inline size_t token2vector(std::string const& s, std::vector<std::string>& words
     }
 
     return words.size();
+}
+
+//------------------------------------------------------------------------------
+//! \brief Create the name of a temporary Petri file.
+inline std::string tmpPetriFile()
+{
+    std::ostringstream oss;
+
+    // Home folder
+    oss << getpwuid(getuid())->pw_dir;
+
+    // Add current date
+    auto t = std::time(nullptr);
+    auto tm = *std::localtime(&t);
+    oss << std::put_time(&tm, "/petri__%Y-%m-%d__%H-%M-%S.json");
+
+    return oss.str();
 }
 
 //------------------------------------------------------------------------------

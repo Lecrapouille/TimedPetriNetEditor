@@ -212,6 +212,7 @@ bool PetriNet::addArc(Node& from, Node& to, float const duration)
     m_arcs.push_back(Arc(from, to, dur));
     from.arcsOut.push_back(&m_arcs.back());
     to.arcsIn.push_back(&m_arcs.back());
+    modified = true;
     return true;
 }
 

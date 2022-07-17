@@ -116,6 +116,8 @@ bool PetriEditor::load(std::string const& file)
     if (m_petri_net.load(m_filename))
     {
         m_message_bar.setInfo("Loaded with success the Petri net!");
+        m_title = m_filename;
+        m_petri_net.modified = false;
         return true;
     }
     else
@@ -124,6 +126,53 @@ bool PetriEditor::load(std::string const& file)
         m_petri_net.reset();
         return false;
     }
+}
+
+//------------------------------------------------------------------------------
+bool PetriEditor::save(bool const force)
+{
+    if (force || m_filename.empty())
+    {
+        pfd::save_file manager("Choose the JSON file to save the Petri net", "~/petri.json",
+                               { "JSON File", "*.json" });
+        m_filename = manager.result();
+    }
+
+    if (m_filename.empty())
+    {
+        if (!force)
+            return false;
+
+        m_filename = tmpPetriFile();
+    }
+
+    if (m_petri_net.save(m_filename))
+    {
+        m_message_bar.setInfo("Petri " + m_filename + " net has been saved !");
+        if (!force)
+        {
+            std::cout << "Force saving Petri net as " << m_filename << std::endl;
+        }
+        m_petri_net.modified = false;
+        return true;
+    }
+    else
+    {
+        m_message_bar.setError("Failed saving the Petri net " + m_filename + " !");
+        m_filename.clear(); // To force opening the file manager next time
+        return false;
+    }
+}
+
+//------------------------------------------------------------------------------
+void PetriEditor::close()
+{
+    if (m_petri_net.modified)
+    {
+        if (!save(true))
+            return ;
+    }
+    m_renderer.close();
 }
 
 //------------------------------------------------------------------------------
@@ -534,8 +583,7 @@ void PetriEditor::handleKeyPressed(sf::Event const& event)
     // Escape key: quit the application.
     if (event.key.code == sf::Keyboard::Escape)
     {
-        m_renderer.close();
-        return ;
+        close();
     }
 
     // Left or right Control key pressed: memorize the state
@@ -568,23 +616,7 @@ void PetriEditor::handleKeyPressed(sf::Event const& event)
     {
         if ((!m_simulating) && (!m_petri_net.isEmpty()))
         {
-            if (m_filename.empty())
-            {
-                pfd::save_file manager("Choose the JSON file to save the Petri net", "~/petri.json",
-                                       { "JSON File", "*.json" });
-                m_filename = manager.result();
-            }
-            if (!m_filename.empty())
-            {
-                if (m_petri_net.save(m_filename))
-                {
-                    m_message_bar.setInfo("Petri net has been saved!");
-                }
-                else
-                {
-                    m_message_bar.setError("Failed saving the Petri net!");
-                }
-            }
+            save();
         }
         else if (m_simulating)
         {
@@ -700,7 +732,10 @@ void PetriEditor::handleKeyPressed(sf::Event const& event)
         {
             Node* node = getNode(m_mouse.x, m_mouse.y);
             if (node != nullptr)
+            {
                 m_selected_modes.push_back(node);
+                m_petri_net.modified = true;
+            }
         }
         else
         {
@@ -746,6 +781,7 @@ void PetriEditor::handleKeyPressed(sf::Event const& event)
                 tokens = std::min(Settings::maxTokens, tokens + 1u);
             else if (tokens > 0u)
                 --tokens;
+            m_petri_net.modified = true;
         }
     }
 
@@ -760,6 +796,7 @@ void PetriEditor::handleKeyPressed(sf::Event const& event)
             t.angle = t.angle % 360;
             if (t.angle < 0)
                 t.angle += 360;
+            m_petri_net.modified = true;
         }
     }
 }
@@ -1003,7 +1040,7 @@ void PetriEditor::handleInput()
         switch (event.type)
         {
         case sf::Event::Closed:
-            m_renderer.close();
+            close();
             break;
         case sf::Event::KeyPressed:
             m_petri_net.m_critical.clear();
@@ -1032,5 +1069,14 @@ void PetriEditor::handleInput()
         default:
             break;
         }
+    }
+
+    if (m_petri_net.modified)
+    {
+        m_renderer.setTitle(m_title + " **");
+    }
+    else
+    {
+        m_renderer.setTitle(m_title);
     }
 }
