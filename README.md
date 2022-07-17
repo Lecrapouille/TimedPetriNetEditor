@@ -595,8 +595,6 @@ show(S.x0)
 
 ## Generate C++ code file (GRAFCET aka sequential function chart)
 
-*(Consider this part as a bonus)*
-
 After watching this nice French YouTube video https://youtu.be/v5FwJvtGaEw, in
 where GRAFCET is created manually in C for Arduino, I extended the editor for
 generating GRAFCET in a single C++ header file. But since my project mainly
@@ -612,22 +610,41 @@ methods in your own C++ file:
   transition (usually condition depending on system sensors). Return `true` when
   the transition is enabled. There is one method to write by transitions.
 
-Here a small example on how to call your generated GRAFCET as
-`Grafcet-gen.hpp`. By default, the C++ namespace is `generated` but this can be
-changed by parameters of the method `PetriNet::exportToCpp(filepath,
-namespace)`.
+![TrafficLight](doc/TrafficLight.png)
+
+Here a small example on how to call your generated GRAFCET as `Grafcet-gen.hpp`
+with a traffic light depict by the following [net](examples/TrafficLight.json) :
+- `Red1`, `Green1` and `Orange1` are the three colors of the first light.
+- `Red2`, `Green2` and `Orange1` are the three colors of the second light.
+- `P6`, `T0` and `T3` allows to turn green one of the lights.
+
+By default, the C++ namespace is `generated` but this can be changed by parameters of the method `PetriNet::exportToCpp(filepath, namespace)`. Let us program the main.cpp file:
 
 ```c++
 // main.cpp
 #include "Grafcet-gen.hpp"
+#include <chrono>
+#include <thread>
 
+using namespace std::chrono_literals;
 namespace generated {
 
+bool a = true;
+
 void Grafcet::initIO() { std::cout << "Init system, inputs, outputs" << std::endl; }
-bool Grafcet::T0() const { return true; } // Transitivity (bool expression. Here: always true)
-void Grafcet::X0() { std::cout << "Do Place 0 actions" << std::endl; }
-...
-// Idem for all transitions of the GRAFCET
+bool Grafcet::T0() const { return a; }
+bool Grafcet::T1() const { return true; }
+bool Grafcet::T2() const { return true; }
+bool Grafcet::T3() const { return !a; }
+bool Grafcet::T4() const { return true; }
+bool Grafcet::T5() const { return true; }
+void Grafcet::X0() { std::cout << "Red 1" << std::endl; }
+void Grafcet::X1() { std::cout << "Green 1" << std::endl; }
+void Grafcet::X2() { std::cout << "Orange 1" << std::endl; }
+void Grafcet::X3() { std::cout << "Red 2" << std::endl; }
+void Grafcet::X4() { std::cout << "Green 2" << std::endl; }
+void Grafcet::X5() { std::cout << "Orange 2" << std::endl; }
+void Grafcet::X6() { a = a ^ true; }
 
 } // namespace generated
 
@@ -639,16 +656,56 @@ int main()
    // The loop is for simulating time events of the system
    while (true)
    {
+      std::cout << "=========\n";
       g.update();
-      g.debug();
-      // sleep(x_ms);
+      // g.debug();
+      std::this_thread::sleep_for(1000ms);
    }
 
    return 0;
 }
 ```
 
-To be compiled with: `g++ -W -Wall -Wextra --std=c++11 main.cpp -o grafcet`
+To be compiled with: `g++ --std=c++14 -W -Wall -Wextra main.cpp -o TrafficLight`
+To run: `./TrafficLight` You will see output such as:
+```
+=========
+Red 1
+Red 2
+=========
+Red 1
+Green 2
+=========
+Red 1
+Orange 2
+=========
+Red 1
+Red 2
+=========
+Green 1
+Red 2
+=========
+Orange 1
+Red 2
+=========
+^C
+```
+
+The variable `a` is used to commut which light turns to green. Do not forget that
+OR-divergence `P6 -> T0` and `P6 -> T3` shall be mutally exclusive `T0() const { return a; }`
+and `T3() const { return !a; }` else if both return `true` you will see that both
+lights are simultaneously green and you will not like this kind of system in real life :)
+```
+=========
+Red 1
+Red 2
+=========
+Green 1
+Green 2
+=========
+Orange 1
+Orange 2
+```
 
 ## Description of the file format used for saving Petri net
 
