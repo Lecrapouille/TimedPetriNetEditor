@@ -137,7 +137,7 @@ public:
     }
 
     //------------------------------------------------------------------------------
-    void onKeyPressed(const sf::Event::KeyEvent& key)
+    void onKeyPressed(const sf::Event::KeyEvent& key, bool& modified)
     {
         if (m_node == nullptr)
             return ;
@@ -192,6 +192,7 @@ public:
             break;
 
         case sf::Keyboard::Return:
+            modified = true;
             m_node = nullptr;
             break;
 

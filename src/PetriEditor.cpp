@@ -576,7 +576,7 @@ void PetriEditor::handleKeyPressed(sf::Event const& event)
     // Left, right, delete, escape key binding when editing the caption of a node
     if (m_entry_box.hasFocus())
     {
-       m_entry_box.onKeyPressed(event.key);
+       m_entry_box.onKeyPressed(event.key, m_petri_net.modified);
        return ;
     }
 
