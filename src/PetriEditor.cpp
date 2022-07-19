@@ -153,6 +153,7 @@ bool PetriEditor::save(bool const force)
         {
             std::cout << "Force saving Petri net as " << m_filename << std::endl;
         }
+        m_title = m_filename;
         m_petri_net.modified = false;
         return true;
     }
