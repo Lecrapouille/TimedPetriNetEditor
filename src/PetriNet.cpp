@@ -807,6 +807,8 @@ bool PetriNet::showCriticalCycle()
 //------------------------------------------------------------------------------
 bool PetriNet::exportToCpp(std::string const& filename, std::string const& name)
 {
+    generateArcsInArcsOut();
+
     std::ofstream file(filename);
     if (!file)
     {
@@ -852,7 +854,7 @@ public:
 
     for (size_t i = 0; i < m_places.size(); ++i)
     {
-        file << "        P[" << m_places[i].id << "] = "
+        file << "        X[" << m_places[i].id << "] = "
              << (m_places[i].tokens ? "true; " : "false;")
              << " // " << m_places[i].caption
              << std::endl;
@@ -864,87 +866,61 @@ public:
     {
 )PN";
 
-    file << "        // Do actions of enabled steps" << std::endl;
-    for (size_t p = 0u; p < m_places.size(); ++p)
-    {
-        file << "        if (P[" << p << "]) { X" << p << "(); }"
-             << std::endl;
-    }
+    file << "        // Read inputs" << std::endl << std::endl;
 
-    file << std::endl;
-    file << "        // Read inputs (TODO)" << std::endl << std::endl;
     file << "        // Update transitions" << std::endl;
-
-    for (size_t t = 0u; t < m_transitions.size(); ++t)
+    for (auto const& trans: m_transitions)
     {
-        Transition& trans = m_transitions[t];
         file << "        T[" << trans.id << "] =";
         for (size_t a = 0; a < trans.arcsIn.size(); ++a)
         {
             Arc& arc = *trans.arcsIn[a];
-            if (a > 0u) {  file << " &&"; }
-            file << " P[" << arc.from.id << "]";
+            if (a > 0u) { file << " &&"; }
+            file << " X[" << arc.from.id << "]";
         }
-        file << " && T"  << trans.id << "();";
-        file << " // " << trans.key;
-        if (trans.caption != trans.key)
-        {
-            file << ": " << trans.caption;
-        }
-        file << std::endl;
+        file << " && T"  << trans.id << "();\n";
     }
 
     file  << std::endl << "        // Update steps" << std::endl;
-    for (size_t t = 0u; t < m_transitions.size(); ++t)
+    for (auto const& p: m_places)
     {
-        Transition& trans = m_transitions[t];
-        file << "        if (T[" << t << "]) {" << std::endl;
-        for (size_t a = 0; a < trans.arcsIn.size(); ++a)
+        file << "        X[" << p.id << "] = X[" << p.id << "] &&";
+
+        for (size_t a = 0; a < p.arcsOut.size(); ++a)
         {
-            Arc& arc = *trans.arcsIn[a];
-            file << "            P[" << arc.from.id
-                 << "] = false; // Disable " << arc.from.key;
-            if (arc.from.caption != arc.from.key)
-            {
-                file << ": " << arc.from.caption;
-            }
-            file << std::endl;
+            Arc& arc = *p.arcsOut[a];
+            if (a > 0u) { file << " &&"; }
+            file << " !T[" << arc.to.id << "]";
         }
-        for (size_t a = 0; a < trans.arcsOut.size(); ++a)
+
+        for (size_t a = 0; a < p.arcsIn.size(); ++a)
         {
-            Arc& arc = *trans.arcsOut[a];
-            file << "            P[" << arc.to.id
-                 << "] = true; // Enable " << arc.to.key;
-            if (arc.to.caption != arc.to.key)
-            {
-                file << ": " << arc.to.caption;
-            }
-            file << std::endl;
+            Arc& arc = *p.arcsIn[a];
+            file << " || T[" << arc.from.id << "]";
         }
-        file << "        }" << std::endl << std::endl;
+
+        file << ";" << std::endl;
     }
 
-    file << "        // Set output values (TODO)" << std::endl;
+    file << std::endl;
+    file << "        // Do actions of enabled steps" << std::endl;
+    for (size_t p = 0u; p < m_places.size(); ++p)
+    {
+        file << "        if (X[" << p << "]) { P" << p << "(); }"
+             << std::endl;
+    }
 
     file << R"PN(    }
 
     void debug()
     {
+       std::cout << "Steps:" << std::endl;
+       for (size_t i = 0u; i < MAX_PLACES; ++i)
+          std::cout << "  X[" << i << "] = " << X[i] << std::endl;
+
        std::cout << "Transitions:" << std::endl;
        for (size_t i = 0u; i < MAX_TRANSITIONS; ++i)
           std::cout << "  T[" << i << "] = " << T[i] << std::endl;
-
-       //std::cout << "Inputs:" << std::endl;
-       //for (size_t i = 0u; i < MAX_INPUTS; ++i)
-       //   std::cout << "  I[" << i << "] = " << I[i] << std::endl;
-
-       std::cout << "Steps:" << std::endl;
-       for (size_t i = 0u; i < MAX_PLACES; ++i)
-          std::cout << "  P[" << i << "] = " << P[i] << std::endl;
-
-       //std::cout << "Outputs:" << std::endl;
-       //for (size_t i = 0u; i < MAX_OUTPUTS; ++i)
-       //   std::cout << "  O[" << i << "] = " << O[i] << std::endl;
     }
 
 private:
@@ -957,18 +933,15 @@ private:
 
     for (auto const& t: m_transitions)
     {
-        file << "    //! \\brief Fonction not generated to let the user writting the" << std::endl;
-        file << "    //! transitivity for the Transition " << t.id <<  " depending of the system" << std::endl;
-        file << "    //! inputs I[]." << std::endl;
+        file << "    //! \\brief Transition " << t.id <<  ": " << t.caption << std::endl;
         file << "    //! \\return true if the transition is enabled." << std::endl;
         file << "    bool T" << t.id << "() const;" << std::endl;
     }
 
     for (auto const& p: m_places)
     {
-        file << "    //! \\brief Fonction not generated to let the user writting the" << std::endl;
-        file << "    //! reaction for the Step " << p.id << ": " << p.caption << std::endl;
-        file << "    void X" << p.id << "();" << std::endl;
+        file << "    //! \\brief Actions for the step " << p.id << " (" << p.caption << ")" << std::endl;
+        file << "    void P" << p.id << "();" << std::endl;
     }
 
     file << R"PN(
@@ -982,13 +955,9 @@ private:
     file << "    //static const size_t MAX_OUTPUTS = Y;" << std::endl;
     file << "" << std::endl;
     file << "    //! \\brief Steps"  << std::endl;
-    file << "    bool P[MAX_PLACES];" << std::endl;
+    file << "    bool X[MAX_PLACES];" << std::endl;
     file << "    //! \\brief Transitions"  << std::endl;
     file << "    bool T[MAX_TRANSITIONS];" << std::endl;
-    file << "    //! \\brief Inputs"  << std::endl;
-    file << "    //uint16_t I[MAX_INPUTS];" << std::endl;
-    file << "    //! \\brief Outputs"  << std::endl;
-    file << "    //uint16_t O[MAX_OUTPUTS];" << std::endl;
     file << "};" << std::endl;
     file << "" << std::endl;
     file << "} // namespace " << name << std::endl;

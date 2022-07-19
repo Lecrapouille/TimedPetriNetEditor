@@ -638,13 +638,13 @@ bool Grafcet::T2() const { return true; }
 bool Grafcet::T3() const { return !a; }
 bool Grafcet::T4() const { return true; }
 bool Grafcet::T5() const { return true; }
-void Grafcet::X0() { std::cout << "Red 1" << std::endl; }
-void Grafcet::X1() { std::cout << "Green 1" << std::endl; }
-void Grafcet::X2() { std::cout << "Orange 1" << std::endl; }
-void Grafcet::X3() { std::cout << "Red 2" << std::endl; }
-void Grafcet::X4() { std::cout << "Green 2" << std::endl; }
-void Grafcet::X5() { std::cout << "Orange 2" << std::endl; }
-void Grafcet::X6() { a = a ^ true; }
+void Grafcet::P0() { std::cout << "Red 1" << std::endl; }
+void Grafcet::P1() { std::cout << "Green 1" << std::endl; }
+void Grafcet::P2() { std::cout << "Orange 1" << std::endl; }
+void Grafcet::P3() { std::cout << "Red 2" << std::endl; }
+void Grafcet::P4() { std::cout << "Green 2" << std::endl; }
+void Grafcet::P5() { std::cout << "Orange 2" << std::endl; }
+void Grafcet::P6() { a = a ^ true; }
 
 } // namespace generated
 
