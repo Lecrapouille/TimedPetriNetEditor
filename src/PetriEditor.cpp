@@ -149,7 +149,7 @@ bool PetriEditor::save(bool const force)
     if (m_petri_net.save(m_filename))
     {
         m_message_bar.setInfo("Petri " + m_filename + " net has been saved !");
-        if (!force)
+        if (force)
         {
             std::cout << "Force saving Petri net as " << m_filename << std::endl;
         }
