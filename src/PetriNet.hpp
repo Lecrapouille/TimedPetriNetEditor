@@ -559,6 +559,7 @@ public:
     //--------------------------------------------------------------------------
     Place& addPlace(float const x, float const y, size_t const tokens = 0u)
     {
+        modified = true;
         m_places.push_back(Place(m_next_place_id++, "", x, y, tokens));
         return m_places.back();
     }
@@ -575,6 +576,7 @@ public:
     Place& addPlace(size_t const id, std::string const& caption, float const x,
                     float const y, size_t const tokens)
     {
+        modified = true;
         m_places.push_back(Place(id, caption, x, y, tokens));
         if (id + 1u > m_next_place_id)
             m_next_place_id = id + 1u;
