@@ -81,24 +81,24 @@ PetriEditor::PetriEditor(Application& application, PetriNet& net)
 
     switch (m_petri_net.type())
     {
-        case PetriNet::Type::TimedPetri:
-            m_message_bar.setInfo("Welcome to timed Petri net editor!");
-            break;
-        case PetriNet::Type::Petri:
-            m_message_bar.setInfo("Welcome to Petri net editor!");
-            break;
-        case PetriNet::Type::GRAFCET:
-            m_message_bar.setInfo("Welcome to GRAFCET editor!");
-            break;
-        default:
-            m_message_bar.setInfo("Welcome!");
-            break;
+    case PetriNet::Type::TimedPetri:
+        m_message_bar.setInfo("Welcome to timed Petri net editor!");
+        break;
+    case PetriNet::Type::Petri:
+        m_message_bar.setInfo("Welcome to Petri net editor!");
+        break;
+    case PetriNet::Type::GRAFCET:
+        m_message_bar.setInfo("Welcome to GRAFCET editor!");
+        break;
+    default:
+        m_message_bar.setInfo("Welcome!");
+        break;
     }
 }
 
 //------------------------------------------------------------------------------
 PetriEditor::PetriEditor(Application& application, PetriNet& net, std::string const& file)
-  : PetriEditor(application, net)
+    : PetriEditor(application, net)
 {
     load(file);
 }
@@ -129,8 +129,8 @@ bool PetriEditor::save(bool const force)
     // loaded from a file.
     if (force || m_filename.empty())
     {
-        pfd::save_file manager("Choose the JSON file to save the Petri net", "~/petri.json",
-                               { "JSON File", "*.json" });
+        pfd::save_file manager("Choose the JSON file to save the Petri net",
+                               "~/petri.json", { "JSON File", "*.json" });
         m_filename = manager.result();
     }
 
@@ -449,8 +449,8 @@ void PetriEditor::update(float const dt)
                 // we can in a single action but we can also try to burn tokens
                 // one by one and randomize the transitions.
                 size_t tokens = (Settings::firing == Settings::Fire::OneByOne)
-                              ? size_t(trans->canFire()) // [0 .. 1] tokens
-                              : trans->howManyTokensCanBurnt(); // [0 .. N] tokens
+                                ? size_t(trans->canFire()) // [0 .. 1] tokens
+                                : trans->howManyTokensCanBurnt(); // [0 .. N] tokens
                 if (tokens > 0u)
                 {
                     assert(tokens <= Settings::maxTokens);
@@ -579,8 +579,8 @@ void PetriEditor::handleKeyPressed(sf::Event const& event)
     // Left, right, delete, escape key binding when editing the caption of a node
     if (m_entry_box.hasFocus())
     {
-       m_entry_box.onKeyPressed(event.key, m_petri_net.modified);
-       return ;
+        m_entry_box.onKeyPressed(event.key, m_petri_net.modified);
+        return ;
     }
 
     // Escape key: quit the application.
@@ -680,7 +680,7 @@ void PetriEditor::handleKeyPressed(sf::Event const& event)
         }
     }
 
-     // 'J' key: save the Petri net as graph event in a Julia script file
+    // 'J' key: save the Petri net as graph event in a Julia script file
     else if (event.key.code == sf::Keyboard::J)
     {
         if ((!m_simulating) && (!m_petri_net.isEmpty()))
@@ -906,7 +906,7 @@ bool PetriEditor::clickedOnCaption()
     {
         if (m_entry_box.canFocusOn(place, m_mouse))
         {
-           return true;
+            return true;
         }
     }
 
@@ -914,7 +914,7 @@ bool PetriEditor::clickedOnCaption()
     {
         if (m_entry_box.canFocusOn(transition, m_mouse))
         {
-           return true;
+            return true;
         }
     }
 
