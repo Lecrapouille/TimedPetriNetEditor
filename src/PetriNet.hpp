@@ -320,13 +320,15 @@ public:
     //--------------------------------------------------------------------------
     //! \brief Constructor. This method expects the two nodes have different
     //! types. The check shall be made by the caller class.
-    //! \param[in] from: Origin node (Place or Transition).
-    //! \param[in] to: Destination node (Place or Transition).
+    //! \param[in] from_: Origin node (Place or Transition).
+    //! \param[in] to_: Destination node (Place or Transition).
+    //! \param[in] duration_: Duration of the process (in unit of time) if \c to_
+    //! is a Place (else the duration is forced to 0).
     //! \note Nodes shall have different types. Assertion is made here.
     //--------------------------------------------------------------------------
     Arc(Node& from_, Node& to_, float duration_ = 0.0f)
         : from(from_), to(to_),
-          duration(from_.type == Node::Type::Transition ? duration_ : NAN)
+          duration(from_.type == Node::Type::Transition ? duration_ : 0.0f)
     {
         assert(from.type != to.type);
         fading.restart();
@@ -453,7 +455,7 @@ public:
     //--------------------------------------------------------------------------
     //! \brief Default constructor.
     //! \param[in] behavior: select the type of net: GRAFCET or timed Petri net
-    //! or Petri net
+    //! or Petri net.
     //--------------------------------------------------------------------------
     PetriNet(PetriNet::Type const behavior)
     {
@@ -691,11 +693,19 @@ public:
     Place* findPlace(size_t const id);
 
     //--------------------------------------------------------------------------
-    //! \brief Add a new arc between two Petri nodes (place or transition).
+    //! \brief Add a new arc between two Petri nodes (place or transition) and
+    //! a duration (only for Transition -> Place).
     //! \return true if the arc is valid and has been added, else return false
     //! if an arc is already present or nodes have the same type.
     //--------------------------------------------------------------------------
-    bool addArc(Node& from, Node& to, float const duration = 0.0f);
+    bool addArc(Node& from, Node& to, float const duration);
+
+    //--------------------------------------------------------------------------
+    //! \brief Call addArc(Node& from, Node& to, float const duration) by setting
+    //! a duration depending on the type of petri: 0 for Petri and GRAFCET or
+    //! a random duration for timed Petri net.
+    //--------------------------------------------------------------------------
+    bool addArc(Node& from, Node& to);
 
     //--------------------------------------------------------------------------
     //! \brief Return if the arc linking the two given nodes is present in the

@@ -232,7 +232,7 @@ TEST(TestPetriNet, TestArcCreation)
 
     // Check the default constructor: Place --> Transition
     Arc a2(p1, t1, 15.0f);
-    ASSERT_EQ(isnan(a2.duration), true);
+    ASSERT_EQ(a2.duration, 0.0f);
     ASSERT_EQ(a2.to.id, 42u);
     ASSERT_EQ(a2.to.type, Node::Transition);
     ASSERT_EQ(a2.to.x, 3.5f);
@@ -713,7 +713,7 @@ TEST(TestPetriNet, TestLoadedNet)
     ASSERT_EQ(net.m_arcs[0].to.id, 0u);
     ASSERT_EQ(net.m_arcs[0].to.type, Node::Transition);
     ASSERT_STREQ(net.m_arcs[0].to.key.c_str(), "T0");
-    ASSERT_EQ(isnan(net.m_arcs[0].duration), true); // FIXME forcer json a NAN ?
+    ASSERT_EQ(net.m_arcs[0].duration, 0.0f);
 
     ASSERT_EQ(net.m_arcs[1].from.id, 0u);
     ASSERT_EQ(net.m_arcs[1].from.type, Node::Transition);
@@ -729,7 +729,7 @@ TEST(TestPetriNet, TestLoadedNet)
     ASSERT_EQ(net.m_arcs[2].to.id, 1u);
     ASSERT_EQ(net.m_arcs[2].to.type, Node::Transition);
     ASSERT_STREQ(net.m_arcs[2].to.key.c_str(), "T1");
-    ASSERT_EQ(isnan(net.m_arcs[2].duration), true);
+    ASSERT_EQ(net.m_arcs[2].duration, 0.0f);
 
     ASSERT_EQ(net.m_arcs[3].from.id, 1u);
     ASSERT_EQ(net.m_arcs[3].from.type, Node::Transition);
@@ -745,7 +745,7 @@ TEST(TestPetriNet, TestLoadedNet)
     ASSERT_EQ(net.m_arcs[4].to.id, 2u);
     ASSERT_EQ(net.m_arcs[4].to.type, Node::Transition);
     ASSERT_STREQ(net.m_arcs[4].to.key.c_str(), "T2");
-    ASSERT_EQ(isnan(net.m_arcs[4].duration), true); // FIXME forcer json a NAN ?
+    ASSERT_EQ(net.m_arcs[4].duration, 0.0f);
 
     ASSERT_EQ(net.m_arcs[5].from.id, 2u);
     ASSERT_EQ(net.m_arcs[5].from.type, Node::Transition);
@@ -769,7 +769,7 @@ TEST(TestPetriNet, TestLoadedNet)
     ASSERT_EQ(net.m_arcs[7].to.id, 3u);
     ASSERT_EQ(net.m_arcs[7].to.type, Node::Transition);
     ASSERT_STREQ(net.m_arcs[7].to.key.c_str(), "T3");
-    ASSERT_EQ(isnan(net.m_arcs[7].duration), true); // FIXME forcer json a NAN ?
+    ASSERT_EQ(net.m_arcs[7].duration, 0.0f);
 
     ASSERT_EQ(net.m_arcs[8].from.id, 3u);
     ASSERT_EQ(net.m_arcs[8].from.type, Node::Transition);
@@ -785,7 +785,7 @@ TEST(TestPetriNet, TestLoadedNet)
     ASSERT_EQ(net.m_arcs[9].to.id, 2u);
     ASSERT_EQ(net.m_arcs[9].to.type, Node::Transition);
     ASSERT_STREQ(net.m_arcs[9].to.key.c_str(), "T2");
-    ASSERT_EQ(isnan(net.m_arcs[9].duration), true); // FIXME forcer json a NAN ?
+    ASSERT_EQ(net.m_arcs[9].duration, 0.0f);
 
     // Can we access to nodes ?
     ASSERT_EQ(net.isEmpty(), false);

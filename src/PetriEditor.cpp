@@ -495,7 +495,7 @@ void PetriEditor::update(float const dt)
                               << a.count << " token"
                               << (a.count == 1u ? "" : "s")
                               << std::endl;
-                    m_animations.push_back(AnimatedToken(a, a.count));
+                    m_animations.push_back(AnimatedToken(a, a.count, m_petri_net.type()));
                     a.fading.restart();
                     a.count = 0u;
                 }
@@ -846,17 +846,16 @@ void PetriEditor::handleArcDestination()
                 // of oposing type.
                 float x = m_node_to->x + (m_node_from->x - m_node_to->x) / 2.0f;
                 float y = m_node_to->y + (m_node_from->y - m_node_to->y) / 2.0f;
-                float duration = random(1, 5);
                 if (m_node_to->type == Node::Type::Place)
                 {
                     Transition& n = m_petri_net.addTransition(x, y);
-                    m_petri_net.addArc(*m_node_from, n, duration);
+                    m_petri_net.addArc(*m_node_from, n);
                     m_node_from = &n;
                 }
                 else
                 {
                     Place& n = m_petri_net.addPlace(x, y);
-                    m_petri_net.addArc(*m_node_from, n, duration);
+                    m_petri_net.addArc(*m_node_from, n);
                     m_node_from = &n;
                 }
             }
