@@ -35,21 +35,22 @@ class Arc;
 struct SparseMatrix;
 
 // *****************************************************************************
-//! \brief Settings for defining behavior for GRAFCET, Petri net, timed petri net.
-//! This structure is global for all nets and is configured by the constructor
-//! of the PetriNet class.
+//! \brief Settings for defining the type of net (GRAFCET, Petri net, timed
+//! petri net). This structure is global for the current net and is used by the
+//! PetriNet class.
 // *****************************************************************************
 struct Settings
 {
-    //! \brief 1 for GRAFCET or Petri nets: std::numeric_limits<size_t>::max()
+    //! \brief Max number of tokens in places. For GRAFCET: 1. For Petri nets:
+    //! std::numeric_limits<size_t>::max().
     static size_t maxTokens;
 
     //! \brief The theory would burn the maximum possibe of tokens that we can
-    //! in a single action (Fire::MaxPossible) but we can also try to burn tokens
-    //! one by one and randomize the transitions (Fire::OneByOne).
+    //! in a single action (Fire::MaxPossible) but we can also try to burn
+    //! tokens one by one and randomize the transitions (Fire::OneByOne).
     enum class Fire { OneByOne, MaxPossible };
 
-    //! \brief Burn tokens one by one or by batch.
+    //! \brief Burn tokens one by one or as many as possible.
     static Fire firing;
 };
 
@@ -452,12 +453,12 @@ public:
 
     //--------------------------------------------------------------------------
     //! \brief Default constructor.
-    //! \param[in] behavior: select the type of net: GRAFCET or timed Petri net
-    //! or Petri net
+    //! \param[in] mode: select the type of net: GRAFCET or timed Petri net
+    //! or Petri net.
     //--------------------------------------------------------------------------
-    PetriNet(PetriNet::Type const behavior)
+    PetriNet(PetriNet::Type const mode)
     {
-        this->type(behavior);
+        this->type(mode);
     }
 
     //--------------------------------------------------------------------------
@@ -517,7 +518,7 @@ public:
     //--------------------------------------------------------------------------
     //! \brief Set the type of net: GRAFCET, Petri, Timed Petri ...
     //--------------------------------------------------------------------------
-    void type(PetriNet::Type const type_);
+    void type(PetriNet::Type const mode);
 
     //--------------------------------------------------------------------------
     //! \brief Get the type of net: GRAFCET, Petri, Timed Petri ...
@@ -672,27 +673,36 @@ public:
     //--------------------------------------------------------------------------
     //! \brief Search and return a Transition by its unique identifier. Search
     //! is O(n) where n is the number of nodes. Return nullptr if not found.
-    //! \param[in] key for example "42" for the Transition 42.
+    //! \param[in] id for example 42 for the Transition 42.
     //--------------------------------------------------------------------------
     Transition* findTransition(size_t const id);
 
     //--------------------------------------------------------------------------
     //! \brief Search and return a Place by its unique identifier. Search
     //! is O(n) where n is the number of nodes. Return nullptr if not found.
-    //! \param[in] key for example "42" for the Place 42.
+    //! \param[in] id for example 42 for the Place 42.
     //--------------------------------------------------------------------------
     Place* findPlace(size_t const id);
 
     //--------------------------------------------------------------------------
-    //! \brief Add a new arc between two Petri nodes (place or transition).
+    //! \brief Add a new arc between two Petri nodes (place or transition) and
+    //! a duration (only for Transition -> Place).
+    //! \param[in] from: source node (Place or Transition).
+    //! \param[in] to: destination node (Place or Transition but not of the same
+    //! type than the destination node).
+    //! \param[in] duration: duration of the process in unit of time. This
+    //! information is only important for Transition -> Place arcs (else it is
+    //! forced to 0).
     //! \return true if the arc is valid and has been added, else return false
     //! if an arc is already present or nodes have the same type.
     //--------------------------------------------------------------------------
     bool addArc(Node& from, Node& to, float const duration = 0.0f);
 
     //--------------------------------------------------------------------------
-    //! \brief Return if the arc linking the two given nodes is present in the
-    //! net.
+    //! \brief Return the address of the arc linking the two given nodes.
+    //! \param[in] from: source node (Place or Transition).
+    //! \param[in] to: destination node (Place or Transition but not of the same
+    //! type than the destination node).
     //! \return the address of the arc if found, else return nullptr.
     //--------------------------------------------------------------------------
     Arc* findArc(Node const& from, Node const& to)
@@ -706,7 +716,7 @@ public:
     }
 
     //--------------------------------------------------------------------------
-    //! \brief Const getter.
+    //! \brief Const getter of all arcs.
     //--------------------------------------------------------------------------
     Arcs const& arcs() const
     {
@@ -731,7 +741,9 @@ public:
     bool save(std::string const& filename);
 
     //--------------------------------------------------------------------------
-    //! \brief Load the Petri net from a JSON file.
+    //! \brief Load the Petri net from a JSON file. The current net is cleared
+    //! before the loading. If the loading failed (missing file or invalid
+    //! syntax) the net is set dummy.
     //! \param[in] filename: the file path in where a Petri net has been
     //! saved. Should have the .json extension.
     //! \return true if the Petri net has been loaded with success. Return false
@@ -741,23 +753,25 @@ public:
 
     //--------------------------------------------------------------------------
     //! \brief Set initial number of tokens in places.
+    //! \param[in] marks the vector of token for each places (P0, P1 .. Pn).
+    //! \return true if the length of the vector matchs the number of places.
     //--------------------------------------------------------------------------
     bool setMarks(std::vector<size_t> const& marks);
 
     //--------------------------------------------------------------------------
     //! \brief Since the simulation modifies the number of tokens we have to
-    //! backup them before the simulation.
+    //! backup them before starting the simulation.
     //--------------------------------------------------------------------------
     void backupMarks();
 
     //--------------------------------------------------------------------------
     //! \brief Since the simulation modifies the number of tokens we have to
-    //! restore them after the simulation.
+    //! restore them after the simulation ends.
     //--------------------------------------------------------------------------
     inline void restoreMarks() { setMarks(m_marks); }
 
     //--------------------------------------------------------------------------
-    //! \brief Chech if the Petri net is a graph event meaning that eacg places
+    //! \brief Chech if the Petri net is a graph event meaning that each places
     //! have exactly one input arc and one output arc.
     //! \return true if the Petri net is a graph event.
     //! \note call generateArcsInArcsOut(/*arcs: true*/); before calling this
@@ -766,25 +780,36 @@ public:
     bool isEventGraph();
 
     //--------------------------------------------------------------------------
-    //! \brief
+    //! \brief Show to the critical circuit of the net (where the cycle takes
+    //! the most of time).
     //--------------------------------------------------------------------------
     bool showCriticalCycle();
 
     //--------------------------------------------------------------------------
-    //! \brief
+    //! \brief Return the timed event graph as (min,+) system. For example
+    //! T0(t) = min(2 + T2(t - 5)); where t - 5 is delay implied by duration on
+    //! arcs and min(2 + implied by tokens from incoming places.
+    //!
+    //! \return the string depicting the timed Petri net as (min,+) system if
+    //! this net is a timed graph event. Else return empty string.
     //--------------------------------------------------------------------------
     std::stringstream showCounterForm(std::string const& comment = "# ") const;
 
     //--------------------------------------------------------------------------
-    //! \brief
+    //! \brief Return the timed event graph as (max,+) system. For example
+    //! T0(n) = max(5 + T2(n - 2)); where n - 2 is delay implied by tokens from
+    //! incoming places and max(5 + implied by duration from the incoming arc.
+    //!
+    //! \return the string depicting the timed Petri net as (max,+) system if
+    //! this net is a timed graph event. Else return empty string.
     //--------------------------------------------------------------------------
     std::stringstream showDaterForm(std::string const& comment = "# ") const;
 
     //--------------------------------------------------------------------------
-    //! \brief Export the Petri net as Grafcet in C++ header file.
+    //! \brief Export the Petri net as GRAFCET code as C++ header file.
     //! \param[in] filename the path of h++ file. Should have the .hpp or .h
     //! extension (or any associated to header header files).
-    //! \param[in] name the namespace.
+    //! \param[in] name the namespace protecting the class name.
     //! \return true if the Petri net has been exported with success. Return
     //! false in case of failure.
     //--------------------------------------------------------------------------
