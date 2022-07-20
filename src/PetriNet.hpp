@@ -461,34 +461,15 @@ public:
     }
 
     //--------------------------------------------------------------------------
-    //! \brief Needed to remove compilation warnings
+    //! \brief Copy constructor. Needed to remove compilation warnings.
     //--------------------------------------------------------------------------
     PetriNet(PetriNet const& other)
     {
-        if (this != &other)
-        {
-            m_places = other.m_places;
-            m_transitions = other.m_transitions;
-            m_arcs.clear(); // We have to redo references
-            for (auto const& it: other.m_arcs)
-            {
-                Node& from = (it.from.type == Node::Type::Place)
-                             ? reinterpret_cast<Node&>(m_places[it.from.id])
-                             : reinterpret_cast<Node&>(m_transitions[it.from.id]);
-                Node& to = (it.to.type == Node::Type::Place)
-                           ? reinterpret_cast<Node&>(m_places[it.to.id])
-                           : reinterpret_cast<Node&>(m_transitions[it.to.id]);
-                m_arcs.push_back(Arc(from, to, it.duration));
-            }
-
-            m_next_place_id = other.m_next_place_id;
-            m_next_transition_id = other.m_next_transition_id;
-            generateArcsInArcsOut(/*arcs: true*/);
-        }
+        *this = other;
     }
 
     //--------------------------------------------------------------------------
-    //! \brief Copy constructors.
+    //! \brief Copy operator. Needed to remove compilation warnings.
     //--------------------------------------------------------------------------
     PetriNet& operator=(PetriNet const& other)
     {
