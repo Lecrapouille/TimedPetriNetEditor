@@ -58,10 +58,9 @@ size_t Transition::howManyTokensCanBurnt() const
         return 0u;
 
     if (transitivity == false)
-        return false;
+        return 0u;
 
     size_t burnt = static_cast<size_t>(-1);
-
     for (auto& a: arcsIn)
     {
         size_t tokens = a->tokensIn();
