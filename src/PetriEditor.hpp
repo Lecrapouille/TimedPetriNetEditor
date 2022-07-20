@@ -34,7 +34,20 @@ class PetriEditor: public Application::GUI
 {
 public:
 
+    //--------------------------------------------------------------------------
+    //! \brief Default constructor. Graphical editor with dummy net.
+    //! \param[in] net Petri net (usually dummy but not necessary) to edit.
+    //--------------------------------------------------------------------------
     PetriEditor(Application& application, PetriNet& net);
+
+    //--------------------------------------------------------------------------
+    //! \brief Default constructor. Graphical editor with net to load given the
+    //! path of the file.
+    //! \param[in] net Petri net to edit.
+    //! \param[in] file the path of the Petri JSON file to load. Current net is
+    //! reset before the loading. In case of loading failure (file not found or
+    //! bad parsing) the net is dummy.
+    //--------------------------------------------------------------------------
     PetriEditor(Application& application, PetriNet& net, std::string const& file);
 
 private: // Derived from Application::GUI
@@ -45,7 +58,7 @@ private: // Derived from Application::GUI
     virtual void draw() override;
 
     //--------------------------------------------------------------------------
-    //! \brief Inherit from GUI class. Update GUI.
+    //! \brief Inherit from GUI class. Update GUI and Petri net.
     //--------------------------------------------------------------------------
     virtual void update(const float dt) override;
 
@@ -97,56 +110,88 @@ private: // Derived from Application::GUI
 private:
 
     //--------------------------------------------------------------------------
-    //! \brief Load a new Petri net from JSON file.
+    //! \brief Load a new Petri net from JSON file. Current net is reset before
+    //! the loading. In case of loading failure (file not found or bad parsing)
+    //! the net is dummy.
     //! \return true if successfully loaded else return false.
     //--------------------------------------------------------------------------
     bool load(std::string const& file);
 
     //--------------------------------------------------------------------------
-    //! \brief Save the Petri net into a JSON file from a file manager.
+    //! \brief Save the Petri net in its current JSON file. If the net was not
+    //! loaded from a file, or if the \c force argument is set to true, a file
+    //! manager is called to select the destination file.
+    //!
+    //! \param[in] force set to true when the application is closing to force
+    //! saving the net: this opens a file manager to select the destination
+    //! file. If the user cancel the file manager then the net is saved in a
+    //! temporary file anyway.
+    //!
     //! \return true if successfully saved else return false.
     //--------------------------------------------------------------------------
     bool save(bool const force = false);
 
     //--------------------------------------------------------------------------
-    //! \brief Close the application. Ask for saving the Petri net if modified.
+    //! \brief Halt the application. Before closing the application, open the
+    //! file manage before for saving the Petri net if modified.
     //--------------------------------------------------------------------------
     void close();
 
     //--------------------------------------------------------------------------
     //! \brief Draw a Petri Place (as circle), its caption (text) and its tokens
     //! (as back dots or as a number).
+    //! \param[in] place the reference of the Petri place to render.
+    //! \param[in] alpha transparency channel (0 .. 255) for the fading effect.
     //--------------------------------------------------------------------------
     void draw(Place const& place, uint8_t alpha);
 
     //--------------------------------------------------------------------------
     //! \brief Draw a transition as rectangle and its caption.
+    //! \param[in] transition the reference of the Petri transition to render.
+    //! \param[in] alpha transparency channel (0 .. 255) for the fading effect.
     //--------------------------------------------------------------------------
     void draw(Transition const& transition, uint8_t alpha);
 
     //--------------------------------------------------------------------------
     //! \brief Draw a Petri arc as arrow and its duration (text).
+    //! \param[in] arc the reference of the Petri arc to render.
+    //! \param[in] alpha transparency channel (0 .. 255) for the fading effect.
     //--------------------------------------------------------------------------
     void draw(Arc const& arc, uint8_t alpha);
 
     //--------------------------------------------------------------------------
     //! \brief Draw a string centered on x, y coordiates.
+    //! \param[in] txt the SFML holding font and other information for the
+    //! rendering.
+    //! \param[in] str the text to render.
+    //! \param[in] x: X-axis coordinate of the beginning of the text.
+    //! \param[in] y: Y-axis coordinate of the center of the text height.
     //--------------------------------------------------------------------------
-    void draw(sf::Text&, std::string const& str, float const x, float const y);
+    void draw(sf::Text& txt, std::string const& str, float const x, float const y);
 
     //--------------------------------------------------------------------------
     //! \brief Draw a unsigned integer centered on x, y coordiates.
+    //! \param[in] txt the SFML holding font and other information for the
+    //! rendering.
+    //! \param[in] number the integer value to render.
+    //! \param[in] x: X-axis coordinate of the beginning of the text.
+    //! \param[in] y: Y-axis coordinate of the center of the text height.
     //--------------------------------------------------------------------------
-    void draw(sf::Text&, size_t const number, float const x, float const y);
+    void draw(sf::Text& txt, size_t const number, float const x, float const y);
 
     //--------------------------------------------------------------------------
     //! \brief Draw a float value centered on x, y coordiates.
+    //! \param[in] txt the SFML holding font and other information for the
+    //! rendering.
+    //! \param[in] number the float value to render.
+    //! \param[in] x: X-axis coordinate of the beginning of the text.
+    //! \param[in] y: Y-axis coordinate of the center of the text height.
     //--------------------------------------------------------------------------
-    void draw(sf::Text&, float const number, float const x, float const y);
+    void draw(sf::Text& txt, float const number, float const x, float const y);
 
     //--------------------------------------------------------------------------
-    //! \brief Search and return if a place or a transition is present at the
-    //! given coordinates.
+    //! \brief Search and return of the first place or a transition if its shape
+    //! present contains the given coordinates (usually the mouse).
     //! \param[in] x: X-axis coordinate of the mouse cursor.
     //! \param[in] y: Y-axis coordinate of the mouse cursor.
     //! \return the address of the place or the transition if present, else
@@ -177,7 +222,8 @@ private:
     void handleMouseButton(sf::Event const& event);
 
     //--------------------------------------------------------------------------
-    //! \brief Handle ASCII keyboard pressed.
+    //! \brief Check if the user has clicked on the caption of a node.
+    //! Side effect: the m_entry_box holds the caption.
     //--------------------------------------------------------------------------
     bool clickedOnCaption();
 
@@ -194,31 +240,33 @@ private:
 
     //! \brief The Petri net.
     PetriNet& m_petri_net;
-    //! \brief Path of the loaded file.
+    //! \brief Path of the Petri net file (not empty when the net was loaded
+    //! from file, else empty when created from scratch).
     std::string m_filename;
     //! \brief Set true if the thread of the application shall stay alive.
     //! Set false to quit the application.
     std::atomic<bool> m_running{true};
-    //! \brief Set true for starting the simulation the Petri net and maintain
-    //! it alive. Set false to halt the simulation.
+    //! \brief Set true for starting the simulation the Petri net and to
+    //! maintain the simulation running. Set false to halt the simulation.
     std::atomic<bool> m_simulating{false};
     //! \brief State machine for the simulation.
     std::atomic<States> m_state{STATE_IDLE};
-    //! \brief Set true when the user is pressing the Control key.
-    std::atomic<bool> m_ctrl{false};
-    //! \brief SFML circle shape needed to draw a Petri Place.
-    sf::CircleShape m_figure_place;
-    //! \brief SFML circle shape needed to draw a Petri Token.
-    sf::CircleShape m_figure_token;
-    //! \brief SFML rectangle shape needed to draw a Petri Transition.
-    sf::RectangleShape m_figure_trans;
     //! \brief SFML loaded font from a TTF file.
     sf::Font m_font;
-    //! \brief SFML structure for rendering node captions.
+    //! \brief Set true when the user is pressing the Control key.
+    std::atomic<bool> m_ctrl{false};
+    //! \brief Cache the SFML circle shape needed to draw a Petri Place.
+    sf::CircleShape m_figure_place;
+    //! \brief Cache the SFML circle shape needed to draw a Petri Token.
+    sf::CircleShape m_figure_token;
+    //! \brief Cache the SFML rectangle shape needed to draw a Petri Transition.
+    sf::RectangleShape m_figure_trans;
+    //! \brief Cache the SFML structure for rendering node captions.
     sf::Text m_text_caption;
-    //! \brief SFML structure for rendering the number of tokens in Places.
+    //! \brief Cache the SFML structure for rendering the number of tokens in
+    //! Places.
     sf::Text m_text_token;
-    //!
+    //! \brief Custom widget rendering a message with fading out effect.
     MessageBar m_message_bar;
     //! \brief Selected origin node (place or transition) by the user when
     //! adding an arc.
