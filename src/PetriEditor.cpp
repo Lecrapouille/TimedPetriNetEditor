@@ -806,6 +806,12 @@ void PetriEditor::handleKeyPressed(sf::Event const& event)
             m_petri_net.modified = true;
         }
     }
+
+    // 'H' key: Show the help
+    else if (event.key.code == sf::Keyboard::H)
+    {
+        m_message_bar.setInfo(PetriNet::help().str());
+    }
 }
 
 //------------------------------------------------------------------------------
@@ -1086,4 +1092,30 @@ void PetriEditor::handleInput()
     {
         m_renderer.setTitle(m_title);
     }
+}
+
+//------------------------------------------------------------------------------
+std::stringstream PetriNet::help()
+{
+    std::stringstream ss;
+    ss << "GUI commands for:" << std::endl
+       << "  Left mouse button pressed: add a place" << std::endl
+       << "  Right mouse button pressed: add a transition" << std::endl
+       << "  Middle mouse button pressed: add an arc with the selected place or transition as origin" << std::endl
+       << "  Middle mouse button release: end the arc with the selected place or transition as destination" << std::endl
+       << "  L key: add an arc with the selected place or transition as origin" << std::endl
+       << "  Delete key: remove a place or transition or an arc" << std::endl
+       << "  Z key: clear the whole Petri net" << std::endl
+       << "  M key: move the selected place or transition" << std::endl
+       << "  + key: add a token on the place pointed by the mouse cursor" << std::endl
+       << "  - key: remove a token on the place pointed by the mouse cursor" << std::endl
+       << "  R key: run (start) or stop the simulation" << std::endl
+       << "  SPACE key: run (start) or stop the simulation" << std::endl
+       << "  E key: is net an event graph ?" << std::endl
+       << "  C key: show critical circuit" << std::endl
+       << "  S key: save the Petri net to petri.json file" << std::endl
+       << "  O key: load the Petri net from petri.json file" << std::endl
+       << "  G key: export the Petri net as Grafcet in a C++ header file" << std::endl
+       << "  J key: export the Petri net as Julia code" << std::endl;
+    return ss;
 }
