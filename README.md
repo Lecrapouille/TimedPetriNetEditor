@@ -10,20 +10,21 @@ overview of the look of the application.
 [![TimedPetri](doc/TimedPetri01.png)](https://youtu.be/hOhunzgFpcA)
 
 *Fig 1 - A timed Petri net (made with this editor). Click on the figure to watch
-a YouTube showing a timed petri net running.*
+a YouTube showing a timed Petri net running.*
 
-Why another Petri editor ? Because many Petri node editors in GitHub are no
-longer maintained (> 7 years) or that I cannot personally compile or use (Windows
-system, Visual Studio compiler, C#, Java ..) or the code is too complex to add
-my own extensions. In the future, this editor will complete my
+Why another Petri editor ? Because many Petri net editors in GitHub are no
+longer maintained (> 7 years) or that I cannot personally compile or use
+(Windows system, Visual Studio compiler, C#, Java ..) or the code is too complex
+to add my own extensions. In the future, this editor will fully complete my
 [(max,+)](https://github.com/Lecrapouille/MaxPlus.jl) toolbox for
 [Julia](https://julialang.org/) (still in gestation) by adding a graphical
 interface (for the moment there is no Petri net editors available for Julia).
 
 ## How to compile and install the project?
 
-The following [YouTube video](https://youtu.be/wsiF6u7DNVQ) summarizes the whole
-document: compilation, installation, common usage ...
+The following [YouTube video](https://youtu.be/wsiF6u7DNVQ) gives an overviex of
+the whole document: compilation, installation, common usage of the GUI, API for
+Julia langage and (max,+) and interface for Julia (max,+) toolbox ...
 
 Prerequisites to compile this project are:
 - g++ or clang++ compiler for C++14 (because of `std::make_unique` is used).
@@ -96,9 +97,25 @@ TimedPetriNetEditor [-t|-p|-g] [petri.json]
 
 Where:
 - `[-t|-p|-g]` optional argument to force the type of net:
-   - `-t` for using a timed petri mode (by default)
-   - `-p` for using a petri mode
-   - `-g` for using a GRAFCET mode
+
+   - `-t` for forcing the timed Petri mode (set by default). In this mode,
+     places can have any number of tokens. Arcs `Transition -> Place` have unit
+     of time for emulating the duration of the process work (arcs `Place ->
+     Transition` have implicit 0 of unit time) . When running the net
+     simulation, tokens are animated and move along arcs at the speed imposed by
+     the time (here 1 unit of time is 1 second) and they are shuffled one by one
+     on OR-divergence branches.
+
+   - `-p` for forcing the Petri mode. In this mode, places can have any number
+     of tokens. Arcs have an implicit unit of time set to 0 (while for they
+     still animated to make pleasant).  When simulating the net, you have to
+     click on transitions to fire tokens and the maximum possible of tokens are
+     burnt in once.
+
+   - `-g` for using a GRAFCET mode. This mode is like Petri but where places
+     have at max 1 token and tokens are shuffled one by one on OR-divergence
+     branches.
+
 - `[petri.json]` is an optional Petri net file to load (i.e. `examples/Howard1.json`)
 
 ## Usage of the Editor
@@ -148,7 +165,7 @@ from the mouse and the keyboard.
 - Adding an arc will generate a random duration (between 1 and 5). *Workaround:*
   save the Petri net to JSON file and edit with a text editor, then reload the
   file.
-- Time durations cannot yet be edited. *Workaround:* save the
+- Time duration cannot yet be edited. *Workaround:* save the
   Petri net to JSON file and edit with a text editor, then reload the file.
 - No input node generating periodically tokens is yet made. *Workaround:* during
   the simulation the user can add new token to any desired places selected by
@@ -199,7 +216,7 @@ not activated.
 
 In this editor, for a given type (place and transitions), unique identifiers are
 unsigned integers `0 .. N`.  Numbers shall be consecutive and without
-"holes". This is important when generating graphes defined by adjacency
+"holes". This is important when generating graphs defined by adjacency
 matrices: indices of the matrix will directly match unique identifiers and
 therefore no lookup table is needed. To distinguish the type of node a `T` or
 `P` char is also prepend to the number. Arcs have no identifier because their
@@ -437,7 +454,7 @@ that there is no existing arc.
 
 ## Interface with Julia
 
-*(The Julia API is still a in gestation).*
+*(The Julia API is still in gestation, API for arcs is missing).*
 
 For [Julia](https://github.com/JuliaLang/julia) developers, I made an API, to
 allows editing Petri nets either from function or allow to launch the graphical
@@ -596,19 +613,19 @@ show(S.x0)
 ## Generate C++ code file (GRAFCET aka sequential function chart)
 
 After watching this nice French YouTube video https://youtu.be/v5FwJvtGaEw, in
-where GRAFCET is created manually in C for Arduino, I extended the editor for
-generating GRAFCET in a single C++ header file. But since my project mainly
-concerns Petri net which are less general than GRAFCET, the editor does not
-offer you to edit transitivities, therefore, you will have to write manually the missing
-methods in your own C++ file:
-- `initIO()` to let you initialize input/output of the system (ADC, PWM,
-  GPIO ...)
-- `X0()`, `X1()` ... to let you add the code for actions when places are
-  activated (usually to update actuators). There is one method to write by
-  transitions.
-- `T0()`, `T1()` ... to let you add the code of transitivity of the associated
-  transition (usually condition depending on system sensors). Return `true` when
-  the transition is enabled. There is one method to write by transitions.
+where GRAFCET is created manually in C for Arduino, I extended my editor for
+generating GRAFCET in a single C++ header file. Since my project mainly concerns
+timed Petri net, the editor is not intended to follow all the GRAFCET norm
+(consider it as bonus while GitHub pull requests are welcome) and therefore
+cannot edit transitivities and simulate inputs. As consquence, you will have to
+write manually the missing methods in your own C++ file:
+- `P0()`, `P1()` ... to let you add the code for actions when places are
+  activated (usually to update actuators). You have to implement one method to
+  for each place.
+- `T0()`, `T1()` ... to let you add the code of the transitivity (boolean logic)
+  of the associated transition (usually condition depending on system
+  sensors). Return `true` when the transition is enabled, else return
+  `false`. You have to implement one method for each transition.
 
 ![TrafficLight](doc/TrafficLight.png)
 
@@ -618,7 +635,9 @@ with a traffic light depict by the following [net](examples/TrafficLight.json) :
 - `Red2`, `Green2` and `Orange1` are the three colors of the second light.
 - `P6`, `T0` and `T3` allows to turn green one of the lights.
 
-By default, the C++ namespace is `generated` but this can be changed by parameters of the method `PetriNet::exportToCpp(filepath, namespace)`. Let us program the main.cpp file:
+By default, the C++ namespace is `generated` but this can be changed by
+parameters of the method `PetriNet::exportToCpp(filepath, namespace)`. Let us
+program the main.cpp file:
 
 ```c++
 // main.cpp
@@ -631,7 +650,6 @@ namespace generated {
 
 bool a = true;
 
-void Grafcet::initIO() { std::cout << "Init system, inputs, outputs" << std::endl; }
 bool Grafcet::T0() const { return a; }
 bool Grafcet::T1() const { return true; }
 bool Grafcet::T2() const { return true; }
@@ -653,12 +671,24 @@ int main()
    generated::Grafcet g;
    g.debug();
 
-   // The loop is for simulating time events of the system
+   // Add here init of your sensors
+
+   // The loop is for simulating the runtime loop of your task
    while (true)
    {
       std::cout << "=========\n";
+
+      // Add here the reading of your sensors. For example:
+      // a = digitalRead(3);
+
+      // Do a single GRAFCET iteration. This will call internally
+      // T0(), T1(), .. P0() ...
       g.update();
+
+      // Uncomment for displaying states of the GRAFCET
       // g.debug();
+
+      // Let suppose here the time step is 1 Hz.
       std::this_thread::sleep_for(1000ms);
    }
 
@@ -691,10 +721,17 @@ Red 2
 ^C
 ```
 
-The variable `a` is used to commut which light turns to green. Do not forget that
-OR-divergence `P6 -> T0` and `P6 -> T3` shall be mutally exclusive `T0() const { return a; }`
-and `T3() const { return !a; }` else if both return `true` you will see that both
-lights are simultaneously green and you will not like this kind of system in real life :)
+The variable `a` is used to commute which light turns to green. Ideally, remove
+the code of `a = a ^ true;` of `Grafcet::P6()` and in the `while` loop, before
+`g.update();`, implement a real sensor: for example with an Arduino `a =
+digitalRead(3);` and for actions such `P0()` ... update your actuators (i.e
+`digitalWrite(4, HIGH);`).
+
+Do not forget that OR-divergence `P6 -> T0` and `P6 -> T3` shall be mutually
+exclusive `T0() const { return a; }` and `T3() const { return !a; }` else if
+both return `true` you will see that both lights are simultaneously green and
+you will not like this kind of system in real life :)
+
 ```
 =========
 Red 1
@@ -752,21 +789,22 @@ Arcs:
 Note: this project does not use third part JSON library for a home made token
 splitter (see the `class Tokenizer` in the code).
 
-## Related projects
+## Related lecture and projects
 
-- (en, fr) https://github.com/Lecrapouille/MaxPlus.jl My MaxPlus toolbox for
+- (en, fr) https://jpquadrat.github.io/ Some research based on timed Petri net
+  and (max,+) algebra.
+- (en, fr) https://github.com/Lecrapouille/MaxPlus.jl My (max,+) toolbox for
   Julia, a portage of the http://www.scicoslab.org/ toolbox (since Scilab is no
   longer maintained).
 - (en) http://www.cmap.polytechnique.fr/~gaubert/HOWARD2.html the algorithm used
-  for computing the MaxPlus eigenvalue used in ScicosLab MaxPlus toolbox and
+  for computing the (max,+) eigenvalue used in ScicosLab MaxPlus toolbox and
   that I reused in this project.
-- (en) http://www-sop.inria.fr/mistral/soft/ers.html An abandoned project of
-  Petri net and discrete time event systems.
+- (en) http://www.unice.fr/dgaffe/recherche/outils_grafcet.html GRAFCET editor.
+- (fr) https://sites.google.com/view/apimou/accueil A Grafcet editor and code
+  generation for Arduino.
 - (en) https://github.com/igorakim/pnet-simulator A online Petri net editor that
   inspired my GUI.
 - (en) https://github.com/Kersoph/open-sequential-logic-simulation a Grafcet made
   with Godot Engine.
-- (fr) https://youtu.be/l1F2dIA90s0 Programmation d'un Grafcet en C
-- (fr) https://sites.google.com/view/apimou/accueil A Grafcet editor and code
-  generation for Arduino.
-- (fr) https://youtu.be/v5FwJvtGaEw A lesson about Grafcet and code for Arduino.
+- (fr) https://youtu.be/l1F2dIA90s0 Programmation d'un Grafcet en C.
+- (fr) https://youtu.be/v5FwJvtGaEw Programmation d'un Grafcet en C pour Arduino.
