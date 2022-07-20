@@ -412,6 +412,7 @@ void PetriEditor::update(float const dt)
         // Populate in and out arcs for all transitions to avoid to look after
         // them.
         m_petri_net.generateArcsInArcsOut();
+        m_petri_net.shuffle_transitions(true);
         m_animations.clear();
         m_state = STATE_ANIMATING;
         break;
