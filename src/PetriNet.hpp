@@ -616,16 +616,25 @@ public:
     }
 
     //--------------------------------------------------------------------------
-    //! \brief Const getter. Return the reference to the container of Transitions.
+    //! \brief Const getter. Return the container reference of the shuffled
+    //! Transitions.
+    //! \param[in] reset if set true, force rebuilding the vector from
+    //! transitions before shuffling.
     //--------------------------------------------------------------------------
-    std::vector<Transition*> const& shuffle_transitions()
+    std::vector<Transition*> const& shuffle_transitions(bool const reset = false)
     {
-        m_shuffled_transitions.clear();
-        m_shuffled_transitions.reserve(m_transitions.size());
-        for (auto& trans: m_transitions)
-            m_shuffled_transitions.push_back(&trans);
-        std::random_device rd;
-        std::mt19937 g(rd());
+        static std::random_device rd;
+        static std::mt19937 g(rd());
+
+        if (reset)
+        {
+            // Avoid useless copy at each iteration of the simulation. Do it
+            // once at the begining of the simulation.
+            m_shuffled_transitions.clear();
+            m_shuffled_transitions.reserve(m_transitions.size());
+            for (auto& trans: m_transitions)
+                m_shuffled_transitions.push_back(&trans);
+        }
         std::shuffle(m_shuffled_transitions.begin(),
                      m_shuffled_transitions.end(), g);
         return m_shuffled_transitions;
