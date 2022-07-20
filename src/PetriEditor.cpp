@@ -125,6 +125,8 @@ bool PetriEditor::load(std::string const& file)
 //------------------------------------------------------------------------------
 bool PetriEditor::save(bool const force)
 {
+    // Open the file manager GUI when forced or when the Petri net was never
+    // loaded from a file.
     if (force || m_filename.empty())
     {
         pfd::save_file manager("Choose the JSON file to save the Petri net", "~/petri.json",
@@ -132,29 +134,35 @@ bool PetriEditor::save(bool const force)
         m_filename = manager.result();
     }
 
+    // The user has cancel the file manager ? Ok save anyway the Petri net as
+    // temporary file.
     if (m_filename.empty())
     {
-        if (!force)
-            return false;
-
         m_filename = tmpPetriFile();
     }
 
+    // Save the net. In case of success display the status on the GUI or on the
+    // console.
     if (m_petri_net.save(m_filename))
     {
-        m_message_bar.setInfo("Petri " + m_filename + " net has been saved !");
-        if (force)
+        std::string msg = "Petri net has been saved at " + m_filename;
+        if (!force)
         {
-            std::cout << "Force saving Petri net as " << m_filename << std::endl;
+            m_message_bar.setInfo(msg);
         }
         m_title = m_filename;
         m_petri_net.modified = false;
         return true;
     }
+    // Failed saving. Force opening the file manager next time by clearing its
+    // name.
     else
     {
-        m_message_bar.setError("Failed saving the Petri net " + m_filename + " !");
-        m_filename.clear(); // To force opening the file manager next time
+        if (!force)
+        {
+            m_message_bar.setError("Failed saving the Petri net " + m_filename + " !");
+        }
+        m_filename.clear();
         return false;
     }
 }
