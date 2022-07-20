@@ -790,6 +790,7 @@ void PetriEditor::handleKeyPressed(sf::Event const& event)
         }
     }
 
+    // 'Up' key or 'Down': rotate the transition CW or CCW.
     else if ((event.key.code == sf::Keyboard::PageUp) ||
              (event.key.code == sf::Keyboard::PageDown))
     {

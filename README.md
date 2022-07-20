@@ -151,14 +151,16 @@ from the mouse and the keyboard.
 - `R` or `SPACE`key: start (run) or stop the simulation. Note: if the simulation
   is stalled (no possible burning tokens), then the simulation will automatically
   stops and return to the edition mode.
-- `C` key: show the first critical circuit if and only if the Petri net is a
-  graph event.
 - `S` key: save the Petri net to a JSON file.
 - `O` key: load a Petri net from a JSON file.
+- `E` key: is the current timed Petri net is a timed graph event ?
+- `C` key: show the first critical circuit if and only if the Petri net is a
+  graph event.
 - `J` key: export the graph event into a Julia script file (for example named
   `GraphEvent-gen.jl`) if and only if the Petri net is a graph event.
 - `G` key: export the Petri net as Grafcet into a C++ header file (for example
   named `Grafcet-gen.hpp`).
+- `H` key: show this help.
 
 ## Limitations / Work in progress
 
