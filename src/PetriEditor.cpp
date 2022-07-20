@@ -104,12 +104,6 @@ PetriEditor::PetriEditor(Application& application, PetriNet& net, std::string co
 }
 
 //------------------------------------------------------------------------------
-PetriEditor::~PetriEditor()
-{
-    m_renderer.close();
-}
-
-//------------------------------------------------------------------------------
 bool PetriEditor::load(std::string const& file)
 {
     m_filename = file;

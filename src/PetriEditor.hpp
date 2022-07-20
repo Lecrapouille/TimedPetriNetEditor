@@ -36,7 +36,6 @@ public:
 
     PetriEditor(Application& application, PetriNet& net);
     PetriEditor(Application& application, PetriNet& net, std::string const& file);
-    ~PetriEditor();
 
 private: // Derived from Application::GUI
 
