@@ -36,7 +36,7 @@ public:
     {
         m_text.setPosition(0, 0);
         m_text.setFont(font);
-        m_text.setCharacterSize(20);
+        m_text.setCharacterSize(16);
         m_text.setFillColor(sf::Color::Black);
 
         m_shape.setFillColor(sf::Color(100,100,100));
@@ -90,7 +90,7 @@ public:
     void setSize(sf::Vector2u const& dimensions)
     {
         m_shape.setSize(sf::Vector2f(float(dimensions.x),
-                        25.0f * float(m_count_lines)));
+                        20.0f * float(m_count_lines)));
     }
 
 private:
