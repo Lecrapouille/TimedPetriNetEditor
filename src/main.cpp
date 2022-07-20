@@ -37,31 +37,6 @@ static void usage(const char* name)
 }
 
 //------------------------------------------------------------------------------
-static void help(const char* name)
-{
-    std::cout
-      << "GUI commands for " << name << ":" << std::endl
-      << "Left mouse button pressed: add a place" << std::endl
-      << "Right mouse button pressed: add a transition" << std::endl
-      << "Middle mouse button pressed: add an arc with the selected place or transition as origin" << std::endl
-      << "Middle mouse button release: end the arc with the selected place or transition as destination" << std::endl
-      << "L key: add an arc with the selected place or transition as origin" << std::endl
-      << "Delete key: remove a place or transition or an arc" << std::endl
-      << "Z key: clear the whole Petri net" << std::endl
-      << "M key: move the selected place or transition" << std::endl
-      << "+ key: add a token on the place pointed by the mouse cursor" << std::endl
-      << "- key: remove a token on the place pointed by the mouse cursor" << std::endl
-      << "R key: run (start) or stop the simulation" << std::endl
-      << "SPACE key: run (start) or stop the simulation" << std::endl
-      << "C key: show critical circuit" << std::endl
-      << "S key: save the Petri net to petri.json file" << std::endl
-      << "O key: load the Petri net from petri.json file" << std::endl
-      << "G key: export the Petri net as Grafcet in a C++ header file" << std::endl
-      << "J key: export the Petri net as Julia code" << std::endl
-      << std::endl;
-}
-
-//------------------------------------------------------------------------------
 int main(int argc, char* argv[])
 {
     // Parse the command line
@@ -87,6 +62,7 @@ int main(int argc, char* argv[])
                 break;
             case 'h':
                 usage(argv[0]);
+                std::cout << PetriNet::help().str() << std::endl;
                 return EXIT_FAILURE;
             case '?':
                 std::cerr << "Unknown option: '" << char(optopt) << "'!" << std::endl;
@@ -101,7 +77,7 @@ int main(int argc, char* argv[])
         filename = argv[optind];
     }
 
-    help(argv[0]);
+    std::cout << PetriNet::help().str() << std::endl;
     Application application(800, 600, "Timed Petri Net Editor");
     try
     {
