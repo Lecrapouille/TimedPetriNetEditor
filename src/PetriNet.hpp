@@ -499,15 +499,19 @@ public:
 
     //--------------------------------------------------------------------------
     //! \brief Remove all nodes and arcs. Reset counters for unique identifiers.
+    //! \note the type of net (timed, classic ... ) stay the same.
     //--------------------------------------------------------------------------
     void reset()
     {
         m_places.clear();
         m_transitions.clear();
+        m_shuffled_transitions.clear();
         m_arcs.clear();
+        m_marks.clear();
         m_critical.clear();
         m_next_place_id = 0u;
         m_next_transition_id = 0u;
+        modified = false;
     }
 
     //--------------------------------------------------------------------------

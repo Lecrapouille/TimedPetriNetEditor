@@ -405,16 +405,13 @@ void PetriEditor::update(float const dt)
         {
             m_message_bar.setInfo("Simulation has started!");
         }
-        std::cout << current_time() << "Simulation has started!" << std::endl;
-        // Backup tokens for each places since the simulation will burn them
-        m_petri_net.backupMarks();
-        m_petri_net.resetTransitivities();
-        // Populate in and out arcs for all transitions to avoid to look after
-        // them.
         m_petri_net.generateArcsInArcsOut();
+        m_petri_net.resetTransitivities();
         m_petri_net.shuffle_transitions(true);
+        m_petri_net.backupMarks();
         m_animations.clear();
         m_state = STATE_ANIMATING;
+        std::cout << current_time() << "Simulation has started!" << std::endl;
         break;
 
     case STATE_ENDING:
