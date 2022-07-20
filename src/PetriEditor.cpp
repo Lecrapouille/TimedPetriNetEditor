@@ -714,7 +714,11 @@ void PetriEditor::handleKeyPressed(sf::Event const& event)
     else if (event.key.code == sf::Keyboard::C)
     {
         m_simulating = false;
-        if (!m_petri_net.showCriticalCycle())
+        if (m_petri_net.showCriticalCycle())
+        {
+            m_message_bar.setWarning("TODO"); // FIXME show cycle + value
+        }
+        else
         {
             m_message_bar.setError("Failed to show critical cycle");
         }
