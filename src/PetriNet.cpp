@@ -728,9 +728,9 @@ bool PetriNet::showCriticalCycle()
         Transition& from = *reinterpret_cast<Transition*>(&(p.arcsIn[0]->from));
         Transition& to = *reinterpret_cast<Transition*>(&(p.arcsOut[0]->to));
 
-        std::cout << "# Arc " << p.key << ": " << from.key << " -> " << to.key
-                  << " (Duration: " << p.arcsIn[0]->duration << ", Tokens: "
-                  << p.tokens << ")" << std::endl;
+        //std::cout << "# Arc " << p.key << ": " << from.key << " -> " << to.key
+        //          << " (Duration: " << p.arcsIn[0]->duration << ", Tokens: "
+        //          << p.tokens << ")" << std::endl;
 
         IJ.push_back(int(to.id)); // Transposed is needed
         IJ.push_back(int(from.id));
@@ -743,26 +743,26 @@ bool PetriNet::showCriticalCycle()
     std::vector<int> policy(nnodes); // optimal policy
     int ncomponents; //
     int niterations; // nb of iteration of the algorithm
-    int verbosemode = 1;
+    int verbosemode = 0;
     int res = Semi_Howard(IJ.data(), T.data(), N.data(),
                           int(nnodes), int(narcs),
                           chi.data(), V.data(), policy.data(), &niterations,
                           &ncomponents, verbosemode);
 
-    std::cout << "V=";
+    std::cout << "V:";
     for (auto const& it: V)
     {
         std::cout << ' ' << it;
     }
-    std::cout << std::endl << "CHI=";
+    std::cout << std::endl << "CHI:";
     for (auto const& it: chi)
     {
         std::cout << ' ' << it;
     }
-    std::cout << std::endl << "Nb Policy=" << ncomponents << std::endl;
+    std::cout << std::endl << "Policies: " << ncomponents << std::endl;
     if (ncomponents > 0)
     {
-        std::cout << "POLICY=";
+        std::cout << "Policy:";
         for (auto const& it: policy)
         {
             std::cout << ' ' << it;
@@ -1291,7 +1291,7 @@ void PetriNet::removeNode(Node& node)
                 Transition& ti = m_transitions[i];
                 Transition& te = m_transitions[m_transitions.size() - 1u];
                 m_transitions[i] = Transition(ti.id, te.caption, te.x, te.y, te.angle,
-                                             (m_type == PetriNet::Type::TimedPetri) ? true : false);
+                                              (m_type == PetriNet::Type::TimedPetri) ? true : false);
                 assert(m_next_transition_id >= 1u);
                 m_next_transition_id -= 1u;
 
