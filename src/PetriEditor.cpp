@@ -807,6 +807,20 @@ void PetriEditor::handleKeyPressed(sf::Event const& event)
         }
     }
 
+    // 'E' key: Is Event graph ?
+    else if (event.key.code == sf::Keyboard::E)
+    {
+        m_petri_net.generateArcsInArcsOut();
+        if (m_petri_net.isEventGraph())
+        {
+            m_message_bar.setInfo("The net is a timed event graph !");
+        }
+        else
+        {
+            m_message_bar.setError("The net is not a timed event graph !");
+        }
+    }
+
     // 'H' key: Show the help
     else if (event.key.code == sf::Keyboard::H)
     {
