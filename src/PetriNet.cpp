@@ -29,7 +29,8 @@
 #include <ctype.h>
 
 //------------------------------------------------------------------------------
-// Default Behavior of the Petri. Set
+// Default net configuration: timed petri net. To change the type of nets, call
+// PetriNet::type(PetriNet::Type const)
 size_t Settings::maxTokens = std::numeric_limits<size_t>::max();
 Settings::Fire Settings::firing = Settings::Fire::OneByOne;
 
@@ -74,41 +75,31 @@ size_t Transition::howManyTokensCanBurnt() const
 }
 
 //------------------------------------------------------------------------------
-// TODO: GraphEvent and edit as doc/Graph01.png
-// TODO: Petri: click on transition to fire them
-bool PetriNet::type(PetriNet::Type const mode)
+void PetriNet::type(PetriNet::Type const mode)
 {
+    m_type = mode;
     switch (mode)
     {
-        case PetriNet::Type::GRAFCET:
-            Settings::maxTokens = 1u;
-            Settings::firing = Settings::Fire::OneByOne;
+    case PetriNet::Type::GRAFCET:
+        Settings::maxTokens = 1u;
+        Settings::firing = Settings::Fire::OneByOne;
         break;
-        case PetriNet::Type::Petri:
-            Settings::maxTokens = std::numeric_limits<size_t>::max();
-            Settings::firing = Settings::Fire::MaxPossible;
+    case PetriNet::Type::Petri:
+        Settings::maxTokens = std::numeric_limits<size_t>::max();
+        Settings::firing = Settings::Fire::MaxPossible;
         break;
-        case PetriNet::Type::TimedPetri:
-            Settings::maxTokens = std::numeric_limits<size_t>::max();
-            Settings::firing = Settings::Fire::OneByOne;
+    case PetriNet::Type::TimedPetri:
+        Settings::maxTokens = std::numeric_limits<size_t>::max();
+        Settings::firing = Settings::Fire::OneByOne;
         break;
-        default:
-            std::cerr << "Undefined Petri behavior" << std::endl;
-            return false;
+        // TODO: Missing type
+        //case PetriNet::Type::TimedGraphEvent:
+        //case PetriNet::Type::GraphEvent:
+        // configurate the editor to draw directly doc/Graph01.png
+        // break;
+    default:
+        assert(false && "Undefined Petri behavior");
         break;
-    }
-
-    m_type = mode;
-    return true;
-}
-
-//------------------------------------------------------------------------------
-void PetriNet::backupMarks()
-{
-    m_marks.resize(m_places.size());
-    for (auto& place: m_places)
-    {
-        m_marks[place.id] = place.tokens;
     }
 }
 
@@ -128,6 +119,16 @@ void PetriNet::resetTransitivities()
         {
             transition.transitivity = true;
         }
+    }
+}
+
+//------------------------------------------------------------------------------
+void PetriNet::backupMarks()
+{
+    m_marks.resize(m_places.size());
+    for (auto& place: m_places)
+    {
+        m_marks[place.id] = place.tokens;
     }
 }
 
@@ -257,6 +258,7 @@ bool PetriNet::isEventGraph()
         return false;
     }
     generateArcsInArcsOut();
+    m_critical.clear();
 
     // The Petri net shall be an event graph: all places shall have a single
     // input arc and a single output arc. Else, we cannot generate the linear
@@ -270,30 +272,35 @@ bool PetriNet::isEventGraph()
             // the console.
             std::cerr << "ERROR: Your Petri net is not an event graph. Because:"
                       << std::endl;
-            //for (auto& p: m_places) // FIXME !!!
-            //{
-                if (p.arcsOut.size() != 1u)
-                {
-                    std::cerr << "  " << p.key
-                              << ((p.arcsOut.size() > 1u)
-                                  ? " has more than one output arc:"
-                                  : " has no output arc");
-                    for (auto const& a: p.arcsOut)
-                        std::cerr << " " << a->to.key;
-                    std::cerr << std::endl;
-                }
 
-                if (p.arcsIn.size() != 1u)
+            if (p.arcsOut.size() != 1u)
+            {
+                std::cerr << "  " << p.key
+                          << ((p.arcsOut.size() > 1u)
+                              ? " has more than one output arc:"
+                              : " has no output arc");
+                for (auto const& a: p.arcsOut)
                 {
-                    std::cerr << "  " << p.key
-                              << ((p.arcsIn.size() > 1u)
-                                  ? " has more than one input arc:"
-                                  : " has no input arc");
-                    for (auto const& a: p.arcsIn)
-                        std::cerr << " " << a->from.key;
-                    std::cerr << std::endl;
+                    m_critical.push_back(a);
+                    std::cerr << " " << a->to.key;
                 }
-            //}
+                std::cerr << std::endl;
+            }
+
+            if (p.arcsIn.size() != 1u)
+            {
+                std::cerr << "  " << p.key
+                          << ((p.arcsIn.size() > 1u)
+                              ? " has more than one input arc:"
+                              : " has no input arc");
+                for (auto const& a: p.arcsIn)
+                {
+                    m_critical.push_back(a);
+                    std::cerr << " " << a->from.key;
+                }
+                std::cerr << std::endl;
+            }
+
             return false;
         }
     }

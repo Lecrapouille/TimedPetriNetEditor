@@ -457,8 +457,7 @@ public:
     //--------------------------------------------------------------------------
     PetriNet(PetriNet::Type const behavior)
     {
-        const bool res = this->type(behavior);
-        assert(res == true); (void) res;
+        this->type(behavior);
     }
 
     //--------------------------------------------------------------------------
@@ -533,7 +532,7 @@ public:
     //--------------------------------------------------------------------------
     //! \brief Set the type of net: GRAFCET, Petri, Timed Petri ...
     //--------------------------------------------------------------------------
-    bool type(PetriNet::Type const type_);
+    void type(PetriNet::Type const type_);
 
     //--------------------------------------------------------------------------
     //! \brief Get the type of net: GRAFCET, Petri, Timed Petri ...
