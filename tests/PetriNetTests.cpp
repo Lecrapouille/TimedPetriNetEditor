@@ -321,12 +321,15 @@ TEST(TestPetriNet, PetriNetConstructor)
 {
     PetriNet timed_net(PetriNet::Type::TimedPetri);
     ASSERT_EQ(timed_net.type(), PetriNet::Type::TimedPetri);
+    ASSERT_EQ(timed_net.m_type, PetriNet::Type::TimedPetri);
 
     PetriNet net(PetriNet::Type::Petri);
     ASSERT_EQ(net.type(), PetriNet::Type::Petri);
+    ASSERT_EQ(net.m_type, PetriNet::Type::Petri);
 
     PetriNet grafcet(PetriNet::Type::GRAFCET);
     ASSERT_EQ(grafcet.type(), PetriNet::Type::GRAFCET);
+    ASSERT_EQ(grafcet.m_type, PetriNet::Type::GRAFCET);
 }
 
 //------------------------------------------------------------------------------
@@ -335,17 +338,32 @@ TEST(TestPetriNet, PetriNetDummy)
     // Check the default constructor: dummy net
     PetriNet net(PetriNet::Type::TimedPetri);
     ASSERT_EQ(net.type(), PetriNet::Type::TimedPetri);
+    ASSERT_EQ(net.m_type, PetriNet::Type::TimedPetri);
+
+    ASSERT_EQ(net.m_places.size(), 0u);
+    ASSERT_EQ(&net.places(), &net.m_places);
+    ASSERT_EQ(net.places().size(), 0u);
+
+    ASSERT_EQ(net.m_transitions.size(), 0u);
+    ASSERT_EQ(&net.transitions(), &net.m_transitions);
+    ASSERT_EQ(net.transitions().size(), 0u);
+
+    ASSERT_EQ(net.m_shuffled_transitions.size(), 0u);
+
+    ASSERT_EQ(net.m_arcs.size(), 0u);
+    ASSERT_EQ(&net.arcs(), &net.m_arcs);
+    ASSERT_EQ(net.arcs().size(), 0u);
+
+    ASSERT_EQ(net.m_marks.size(), 0u);
+    ASSERT_EQ(net.m_next_place_id, 0u);
+    ASSERT_EQ(net.m_next_transition_id, 0u);
+
+    ASSERT_EQ(net.modified, false);
+    ASSERT_EQ(net.m_critical.size(), 0u);
 
     ASSERT_EQ(net.isEmpty(), true);
     ASSERT_EQ(net.isEventGraph(), false);
-    ASSERT_EQ(net.m_next_place_id, 0u);
-    ASSERT_EQ(net.m_next_transition_id, 0u);
-    ASSERT_EQ(net.transitions().size(), 0u);
-    ASSERT_EQ(net.places().size(), 0u);
-    ASSERT_EQ(net.arcs().size(), 0u);
-    ASSERT_EQ(&net.transitions(), &net.m_transitions);
-    ASSERT_EQ(&net.places(), &net.m_places);
-    ASSERT_EQ(&net.arcs(), &net.m_arcs);
+
     ASSERT_EQ(net.findNode("P0"), nullptr);
     ASSERT_EQ(net.findNode("T0"), nullptr);
     ASSERT_EQ(net.findNode("pouet"), nullptr);
@@ -366,6 +384,7 @@ TEST(TestPetriNet, TestAddRemoveOperations)
     ASSERT_EQ(net.m_next_place_id, 1u);
     ASSERT_EQ(p0.id, 0u);
     ASSERT_STREQ(p0.key.c_str(), "P0");
+    ASSERT_STREQ(p0.caption.c_str(), "P0");
     ASSERT_EQ(net.isEmpty(), false);
     ASSERT_EQ(net.isEventGraph(), false);
     ASSERT_EQ(net.findNode("P0"), &p0);
@@ -377,6 +396,7 @@ TEST(TestPetriNet, TestAddRemoveOperations)
     ASSERT_EQ(net.m_next_transition_id, 1u);
     ASSERT_EQ(t0->id, 0u);
     ASSERT_STREQ(t0->key.c_str(), "T0");
+    ASSERT_STREQ(t0->caption.c_str(), "T0");
     ASSERT_EQ(net.isEmpty(), false);
     ASSERT_EQ(net.isEventGraph(), false);
     ASSERT_EQ(net.findNode("T0"), t0);
@@ -388,9 +408,12 @@ TEST(TestPetriNet, TestAddRemoveOperations)
     ASSERT_EQ(net.m_next_place_id, 2u);
     ASSERT_EQ(p1.id, 1u);
     ASSERT_STREQ(p1.key.c_str(), "P1");
+    ASSERT_STREQ(p1.caption.c_str(), "P1");
     ASSERT_EQ(net.findNode("P1"), &p1);
     ASSERT_STREQ(net.m_places[0].key.c_str(), "P0");
     ASSERT_STREQ(net.m_places[1].key.c_str(), "P1");
+    ASSERT_STREQ(net.m_places[0].caption.c_str(), "P0");
+    ASSERT_STREQ(net.m_places[1].caption.c_str(), "P1");
 
     // Add arcs: net = P0--T0--P1
     ASSERT_EQ(net.addArc(p0, *t0), true);
@@ -418,11 +441,13 @@ TEST(TestPetriNet, TestAddRemoveOperations)
     ASSERT_EQ(net.m_next_transition_id, 1u);
     ASSERT_EQ(t0->id, 0u);
     ASSERT_STREQ(t0->key.c_str(), "T0");
+    ASSERT_STREQ(t0->caption.c_str(), "T0");
     ASSERT_EQ(net.isEmpty(), false);
     ASSERT_EQ(net.isEventGraph(), false);
     ASSERT_EQ(net.findNode("T0"), t0);
     ASSERT_EQ(net.m_transitions.size(), 1u);
     ASSERT_STREQ(net.m_transitions[0].key.c_str(), "T0");
+    ASSERT_STREQ(net.m_transitions[0].caption.c_str(), "T0");
 
     // Add arcs back: net = P0--T0--P1
     ASSERT_EQ(net.addArc(p0, *t0), true);
@@ -445,6 +470,8 @@ TEST(TestPetriNet, TestAddRemoveOperations)
     ASSERT_EQ(&net.m_arcs[0], a1); // a2 has been merged into a1
     ASSERT_STREQ(net.m_arcs[0].from.key.c_str(), "T0");
     ASSERT_STREQ(net.m_arcs[0].to.key.c_str(), "P1");
+    ASSERT_STREQ(net.m_arcs[0].from.caption.c_str(), "T0");
+    ASSERT_STREQ(net.m_arcs[0].to.caption.c_str(), "P1");
 
     // Remove P1: net = P0 T0
     net.removeNode(p1);
@@ -455,6 +482,8 @@ TEST(TestPetriNet, TestAddRemoveOperations)
     ASSERT_EQ(net.m_transitions.size(), 1u);
     ASSERT_STREQ(net.m_places[0].key.c_str(), "P0");
     ASSERT_STREQ(net.m_transitions[0].key.c_str(), "T0");
+    ASSERT_STREQ(net.m_places[0].caption.c_str(), "P0");
+    ASSERT_STREQ(net.m_transitions[0].caption.c_str(), "T0");
 
     // Remove P0: net = T0
     net.removeNode(p0);
@@ -464,6 +493,7 @@ TEST(TestPetriNet, TestAddRemoveOperations)
     ASSERT_EQ(net.m_places.size(), 0u);
     ASSERT_EQ(net.m_transitions.size(), 1u);
     ASSERT_STREQ(net.m_transitions[0].key.c_str(), "T0");
+    ASSERT_STREQ(net.m_transitions[0].caption.c_str(), "T0");
 
     // Remove T0: net
     net.removeNode(*t0);
@@ -473,6 +503,47 @@ TEST(TestPetriNet, TestAddRemoveOperations)
     ASSERT_EQ(net.m_places.size(), 0u);
     ASSERT_EQ(net.m_transitions.size(), 0u);
     ASSERT_EQ(net.isEmpty(), true);
+}
+
+//------------------------------------------------------------------------------
+TEST(TestPetriNet, TestCaptionAfterRemove)
+{
+    // Add P0 and P1
+    PetriNet net(PetriNet::Type::TimedPetri);
+    Place& p0 = net.addPlace(0u, "Hello", 3.14f, 2.16f, 10u);
+    net.addPlace(1u, "World", 1.0f, 1.5f, 42u);
+
+    ASSERT_EQ(net.m_places.size(), 2u);
+    ASSERT_STREQ(net.m_places[0].key.c_str(), "P0");
+    ASSERT_STREQ(net.m_places[0].caption.c_str(), "Hello");
+    ASSERT_STREQ(net.m_places[1].key.c_str(), "P1");
+    ASSERT_STREQ(net.m_places[1].caption.c_str(), "World");
+
+    // Remove P0 check P1 is now P0 but with its caption
+    net.removeNode(p0);
+    ASSERT_EQ(net.m_places.size(), 1u);
+    ASSERT_STREQ(net.m_places[0].key.c_str(), "P0");
+    ASSERT_STREQ(net.m_places[0].caption.c_str(), "World");
+    ASSERT_EQ(net.m_places[0].x, 1.0f); // Attributes from P1
+    ASSERT_EQ(net.m_places[0].y, 1.5f);
+    ASSERT_EQ(net.m_places[0].tokens, 42u);
+
+    // Add P2. Check we have P0 P2
+    net.addPlace(2u, "", 2.0f, 2.5f, 24u);
+    ASSERT_EQ(net.m_places.size(), 2u);
+    ASSERT_STREQ(net.m_places[0].key.c_str(), "P0");
+    ASSERT_STREQ(net.m_places[0].caption.c_str(), "World");
+    ASSERT_STREQ(net.m_places[1].key.c_str(), "P2");
+    ASSERT_STREQ(net.m_places[1].caption.c_str(), "P2");
+
+    // Remove P0 check P2 is now P0 but without its caption
+    net.removeNode(net.m_places[0]);
+    ASSERT_EQ(net.m_places.size(), 1u);
+    ASSERT_STREQ(net.m_places[0].key.c_str(), "P0");
+    ASSERT_STREQ(net.m_places[0].caption.c_str(), "P0");
+    ASSERT_EQ(net.m_places[0].x, 2.0f); // Attributes from P2
+    ASSERT_EQ(net.m_places[0].y, 2.5f);
+    ASSERT_EQ(net.m_places[0].tokens, 24u);
 }
 
 //------------------------------------------------------------------------------
