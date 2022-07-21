@@ -1271,7 +1271,14 @@ void PetriNet::removeNode(Node& node)
                 // Swap element but keep the ID of the removed element
                 Place& pi = m_places[i];
                 Place& pe = m_places[m_places.size() - 1u];
-                m_places[i] = Place(pi.id, pe.caption, pe.x, pe.y, pe.tokens);
+                if (pe.caption == pe.key)
+                {
+                    m_places[i] = Place(pi.id, pi.key, pe.x, pe.y, pe.tokens);
+                }
+                else
+                {
+                    m_places[i] = Place(pi.id, pe.caption, pe.x, pe.y, pe.tokens);
+                }
                 assert(m_next_place_id >= 1u);
                 m_next_place_id -= 1u;
 
@@ -1297,8 +1304,18 @@ void PetriNet::removeNode(Node& node)
             {
                 Transition& ti = m_transitions[i];
                 Transition& te = m_transitions[m_transitions.size() - 1u];
-                m_transitions[i] = Transition(ti.id, te.caption, te.x, te.y, te.angle,
-                                              (m_type == PetriNet::Type::TimedPetri) ? true : false);
+                if (te.caption == te.key)
+                {
+                    m_transitions[i] = Transition(ti.id, ti.key, te.x, te.y, te.angle,
+                                                  (m_type == PetriNet::Type::TimedPetri)
+                                                  ? true : false);
+                }
+                else
+                {
+                    m_transitions[i] = Transition(ti.id, te.caption, te.x, te.y, te.angle,
+                                                  (m_type == PetriNet::Type::TimedPetri)
+                                                  ? true : false);
+                }
                 assert(m_next_transition_id >= 1u);
                 m_next_transition_id -= 1u;
 
