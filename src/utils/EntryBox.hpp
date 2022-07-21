@@ -121,7 +121,7 @@ public:
         // Update the box size to draw it.
         sf::FloatRect textBounds = m_text.getGlobalBounds();
         m_box.setPosition(textBounds.left, textBounds.top);
-        m_box.setSize({textBounds.width, textBounds.height});
+        m_box.setSize({std::max(2.0f, textBounds.width), std::max(12.0f, textBounds.height)});
 
         // Place cursor after the character under the mouse
         m_cursor.shape.setPosition(m_text.findCharacterPos(m_cursor.index) + sf::Vector2f(0.f, 2.0f));
@@ -192,7 +192,14 @@ public:
             break;
 
         case sf::Keyboard::Return:
-            modified = true;
+            if (m_node->caption.empty())
+            {
+                m_node->caption = m_backup;
+            }
+            else
+            {
+                modified = true;
+            }
             m_node = nullptr;
             break;
 
