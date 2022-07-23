@@ -286,6 +286,11 @@ public:
         return m_renderer;
     }
 
+    sf::Rect<float> bounds()
+    {
+        return { 0.0f, 0.0f, float(m_renderer.getSize().x), float(m_renderer.getSize().y) };
+    }
+
 private:
 
     void loop();

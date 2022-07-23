@@ -25,6 +25,7 @@
 #  include "utils/MessageBar.hpp"
 #  include "utils/EntryBox.hpp"
 #  include "utils/Animation.hpp"
+#  include "utils/Grid.hpp"
 #  include "PetriNet.hpp"
 
 // *****************************************************************************
@@ -227,6 +228,11 @@ private:
     //--------------------------------------------------------------------------
     bool clickedOnCaption();
 
+    //--------------------------------------------------------------------------
+    //! \brief Align nodes on a "magnetic" grid.
+    //--------------------------------------------------------------------------
+    void alignElements();
+
 private:
 
     //! \brief State machine for the Petri net simulation.
@@ -285,6 +291,8 @@ private:
     std::vector<AnimatedToken> m_animations;
     //! \brief Widget editing text such as Node caption and values.
     EntryBox m_entry_box;
+    //! \brief Show the grid
+    Grid m_grid;
 };
 
 #endif

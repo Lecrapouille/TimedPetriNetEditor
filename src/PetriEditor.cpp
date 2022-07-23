@@ -32,7 +32,8 @@ PetriEditor::PetriEditor(Application& application, PetriNet& net)
       m_figure_token(TOKEN_RADIUS),
       m_figure_trans(sf::Vector2f(TRANS_HEIGHT, TRANS_WIDTH)),
       m_message_bar(m_font),
-      m_entry_box(m_font)
+      m_entry_box(m_font),
+      m_grid(application.bounds())
 {
     // Reserve memory
     m_animations.reserve(128u);
@@ -112,6 +113,33 @@ bool PetriEditor::load(std::string const& file)
         m_message_bar.setInfo("Loaded with success the Petri net!");
         m_title = m_filename;
         m_petri_net.modified = false;
+
+        // Find bounds of the net to place the view
+        sf::Vector2f m(800.0f, 600.0f);
+        sf::Vector2f M(800.0f, 600.0f);
+        for (auto& p: m_petri_net.places())
+        {
+            m.x = std::min(m.x, p.x);
+            m.y = std::min(m.y, p.y);
+            M.x = std::max(M.x, p.x);
+            M.y = std::max(M.y, p.y);
+        }
+
+        // Draw all Transitions
+        for (auto& t: m_petri_net.transitions())
+        {
+            m.x = std::min(m.x, t.x);
+            m.y = std::min(m.y, t.y);
+            M.x = std::max(M.x, t.x);
+            M.y = std::max(M.y, t.y);
+        }
+
+        m_renderer.setView(sf::View(
+            sf::Vector2f((M.x - m.x) / 2.0f, (M.y - m.y) / 2.0f),
+            sf::Vector2f(M.x - m.x + 2.0f * TRANS_WIDTH, M.y - m.y + 2.0f * TRANS_WIDTH)));
+        sf::FloatRect r(m.x - TRANS_WIDTH, m.y - TRANS_WIDTH,
+                        M.x + TRANS_WIDTH, M.y + TRANS_WIDTH);
+        m_grid.resize(r);
         return true;
     }
     else
@@ -361,6 +389,12 @@ void PetriEditor::draw()
     for (auto& a: m_petri_net.m_critical)
     {
         draw(*a, 255);
+    }
+
+    // Show the grid
+    if (m_grid.show)
+    {
+        m_renderer.draw(m_grid);
     }
 
     // Draw the GUI
@@ -825,6 +859,19 @@ void PetriEditor::handleKeyPressed(sf::Event const& event)
     {
         m_message_bar.setInfo(PetriNet::help().str());
     }
+
+    // 'A' for aligning nodes on a grid
+    else if (event.key.code == sf::Keyboard::A)
+    {
+        alignElements();
+        m_message_bar.setInfo("Nodes have been aligned !");
+    }
+
+    // 'D' show grid
+    else if (event.key.code == sf::Keyboard::D)
+    {
+        m_grid.show ^= true;
+    }
 }
 
 //------------------------------------------------------------------------------
@@ -920,6 +967,24 @@ void PetriEditor::handleArcDestination()
     m_node_from = m_node_to = nullptr;
     m_selected_modes.clear();
     m_arc_from_unknown_node = false;
+}
+
+//------------------------------------------------------------------------------
+void PetriEditor::alignElements()
+{
+    const int D = int(TRANS_WIDTH);
+
+    for (auto& transition: m_petri_net.transitions())
+    {
+        transition.x = transition.x - float(int(transition.x) % D);
+        transition.y = transition.y - float(int(transition.y) % D);
+    }
+
+    for (auto& place: m_petri_net.places())
+    {
+        place.x = place.x - float(int(place.x) % D);
+        place.y = place.y - float(int(place.y) % D);
+    }
 }
 
 //------------------------------------------------------------------------------
@@ -1089,8 +1154,11 @@ void PetriEditor::handleInput()
             //std::cout << "Zoom: " << zoom << "\n";
             break;
         case sf::Event::Resized:
-            sf::FloatRect(0.0f, 0.0f, float(event.size.width), float(event.size.height));
-            m_renderer.setView(sf::View(sf::FloatRect(0.0f, 0.0f, float(event.size.width), float(event.size.height))));
+            {
+                sf::FloatRect r(0.0f, 0.0f, float(event.size.width), float(event.size.height));
+                m_renderer.setView(sf::View(r));
+                m_grid.resize(r);
+            }
             break;
         default:
             break;
@@ -1120,6 +1188,8 @@ std::stringstream PetriNet::help()
        << "  Delete key: remove a place or transition or an arc" << std::endl
        << "  Z key: clear the whole Petri net" << std::endl
        << "  M key: move the selected place or transition" << std::endl
+       << "  A key: align nodes" << std::endl
+       << "  D key: show the grid" << std::endl
        << "  + key: add a token on the place pointed by the mouse cursor" << std::endl
        << "  - key: remove a token on the place pointed by the mouse cursor" << std::endl
        << "  R key: run (start) or stop the simulation" << std::endl
@@ -1128,7 +1198,7 @@ std::stringstream PetriNet::help()
        << "  C key: show critical circuit" << std::endl
        << "  S key: save the Petri net to petri.json file" << std::endl
        << "  O key: load the Petri net from petri.json file" << std::endl
-       << "  G key: export the Petri net as Grafcet in a C++ header file" << std::endl
+       << "  G key: export the Petri net as GRAFCET in a C++ header file" << std::endl
        << "  J key: export the Petri net as Julia code" << std::endl;
     return ss;
 }
