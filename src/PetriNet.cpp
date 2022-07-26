@@ -715,14 +715,17 @@ bool PetriNet::showCriticalCycle()
     if (!isEventGraph())
         return false;
 
-    // Reserve memory
+    // Number of nodes and number of arcs
     size_t const nnodes = m_transitions.size();
     size_t const narcs = m_places.size();
-    std::vector<double> N; N.reserve(narcs);
-    std::vector<double> T; T.reserve(narcs);
-    std::vector<int> IJ; // FIXME should be std::vector<size_t> but Howard wants int*
 
-    IJ.reserve(2u * narcs);
+    // Reserve memory
+    std::vector<double> T; T.reserve(narcs); // Timings
+    std::vector<double> N; N.reserve(narcs); // Tokens (delays)
+    // Arcs of the graph: {(source node, destination node), ... }
+    // FIXME should be std::vector<size_t> but Howard wants int*
+    std::vector<int> IJ; IJ.reserve(2u * narcs);
+
     for (auto& p: m_places)
     {
         // Since we are sure we are an event graph: places have a single input
@@ -748,13 +751,13 @@ bool PetriNet::showCriticalCycle()
     std::vector<double> V(nnodes); // bias
     std::vector<double> chi(nnodes); // cycle time vector
     std::vector<int> policy(nnodes); // optimal policy
-    int ncomponents; //
-    int niterations; // nb of iteration of the algorithm
-    int verbosemode = 0;
+    int ncomponents; // Number of connected components of the optimal policy
+    int niterations; // Number of iteration needed by the algorithm
+    int verbosemode = 0; // No verbose
     int res = Semi_Howard(IJ.data(), T.data(), N.data(),
                           int(nnodes), int(narcs),
-                          chi.data(), V.data(), policy.data(), &niterations,
-                          &ncomponents, verbosemode);
+                          chi.data(), V.data(), policy.data(),
+                          &niterations, &ncomponents, verbosemode);
 
     std::cout << "V:";
     for (auto const& it: V)
