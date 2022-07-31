@@ -628,6 +628,13 @@ void PetriEditor::handleKeyPressed(sf::Event const& event)
         m_ctrl = true;
     }
 
+    // Left or right Shift key pressed: memorize the state
+    if ((event.key.code == sf::Keyboard::LShift) ||
+        (event.key.code == sf::Keyboard::RShift))
+    {
+        m_shift = true;
+    }
+
     // 'R' or SPACE key: Run the animation of the Petri net
     else if ((event.key.code == sf::Keyboard::R) ||
              (event.key.code == sf::Keyboard::Space))
@@ -649,17 +656,18 @@ void PetriEditor::handleKeyPressed(sf::Event const& event)
     // 'S' key: save the Petri net to a JSON file
     else if (event.key.code == sf::Keyboard::S)
     {
-        if ((!m_simulating) && (!m_petri_net.isEmpty()))
-        {
-            save();
-        }
-        else if (m_simulating)
+        if (m_simulating)
         {
             m_message_bar.setError("Cannot save during the simulation!");
         }
         else if (m_petri_net.isEmpty())
         {
             m_message_bar.setError("Cannot save empty Petri net!");
+        }
+        else
+        {
+            // Save or save-as
+            save(m_shift);
         }
     }
 

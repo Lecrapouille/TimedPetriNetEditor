@@ -261,6 +261,8 @@ private:
     sf::Font m_font;
     //! \brief Set true when the user is pressing the Control key.
     std::atomic<bool> m_ctrl{false};
+    //! \brief Set true when the user is pressing the Shift key.
+    std::atomic<bool> m_shift{false};
     //! \brief Cache the SFML circle shape needed to draw a Petri Place.
     sf::CircleShape m_figure_place;
     //! \brief Cache the SFML circle shape needed to draw a Petri Token.

@@ -152,6 +152,7 @@ from the mouse and the keyboard.
   is stalled (no possible burning tokens), then the simulation will automatically
   stops and return to the edition mode.
 - `S` key: save the Petri net to a JSON file.
+- `Shift S` key: save-as the Petri net to a JSON file.
 - `O` key: load a Petri net from a JSON file.
 - `E` key: is the current timed Petri net is a timed graph event ?
 - `C` key: show the first critical circuit if and only if the Petri net is a
