@@ -632,6 +632,8 @@ write manually the missing methods in your own C++ file:
 
 ![TrafficLight](doc/TrafficLight.png)
 
+*Fig 6 - Traffic Light (made with this editor).*
+
 Here a small example on how to call your generated GRAFCET as `Grafcet-gen.hpp`
 with a traffic light depict by the following [net](examples/TrafficLight.json) :
 - `Red1`, `Green1` and `Orange1` are the three colors of the first light.
