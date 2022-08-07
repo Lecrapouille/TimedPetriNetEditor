@@ -816,8 +816,6 @@ bool PetriNet::showCriticalCycle()
 //------------------------------------------------------------------------------
 bool PetriNet::exportToCpp(std::string const& filename, std::string const& name)
 {
-    generateArcsInArcsOut();
-
     std::ofstream file(filename);
     if (!file)
     {
