@@ -47,7 +47,7 @@ Application::~Application()
 // FIXME never call m_application.push(m_application.gui<GUIxx>("xxx"));
 // from the deactivate() callback!!
 // -----------------------------------------------------------------------------
-void Application::push(Application::GUI& gui)
+void Application::push(Application::GUI& gui_)
 {
     GUI* g = peek();
     if (g != nullptr)
@@ -55,10 +55,10 @@ void Application::push(Application::GUI& gui)
         std::cout << "Deactivate GUI: " << g->name() << std::endl;
         g->deactivate();
     }
-    m_stack.push(&gui);
-    std::cout << "Create GUI: " << gui.name() << std::endl;
-    gui.create();
-    m_gui = &gui;
+    m_stack.push(&gui_);
+    std::cout << "Create GUI: " << gui_.name() << std::endl;
+    gui_.create();
+    m_gui = &gui_;
 }
 
 // -----------------------------------------------------------------------------

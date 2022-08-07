@@ -237,9 +237,9 @@ public:
             if (it->name() != name)
                 continue;
 
-            GUI* gui = dynamic_cast<GUI*>(it.get());
-            if (gui != nullptr)
-                return *gui;
+            GUI* g = dynamic_cast<GUI*>(it.get());
+            if (g != nullptr)
+                return *g;
         }
         return create<GUI>(name);
     }
