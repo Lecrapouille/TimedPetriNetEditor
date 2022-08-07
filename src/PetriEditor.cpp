@@ -83,16 +83,16 @@ PetriEditor::PetriEditor(Application& application, PetriNet& net)
     switch (m_petri_net.type())
     {
     case PetriNet::Type::TimedPetri:
-        m_message_bar.setInfo("Welcome to timed Petri net editor!");
+        m_message_bar.setInfo("Welcome to timed Petri net editor! Type H key for help.");
         break;
     case PetriNet::Type::Petri:
-        m_message_bar.setInfo("Welcome to Petri net editor!");
+        m_message_bar.setInfo("Welcome to Petri net editor! Type H key for help.");
         break;
     case PetriNet::Type::GRAFCET:
-        m_message_bar.setInfo("Welcome to GRAFCET editor!");
+        m_message_bar.setInfo("Welcome to GRAFCET editor! Type H key for help.");
         break;
     default:
-        m_message_bar.setInfo("Welcome!");
+        m_message_bar.setInfo("Welcome! Type H key for help.");
         break;
     }
 }
