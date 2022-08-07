@@ -806,6 +806,23 @@ public:
     std::stringstream showDaterForm(std::string const& comment = "# ") const;
 
     //--------------------------------------------------------------------------
+    //! \brief Export the Petri net as LaTeX code as tex file.
+    //! \param[in] filename the path of tex file.
+    //! \param[in] scale X and Y scaling.
+    //! \return true if the Petri net has been exported with success. Return
+    //! false in case of failure.
+    //--------------------------------------------------------------------------
+    bool exportToLaTeX(std::string const& filename, float const sx, float const sy);
+
+    //--------------------------------------------------------------------------
+    //! \brief Export the Petri net as Graphviz code as dot file.
+    //! \param[in] filename the path of dot file.
+    //! \return true if the Petri net has been exported with success. Return
+    //! false in case of failure.
+    //--------------------------------------------------------------------------
+    bool exportToGraphviz(std::string const& filename);
+
+    //--------------------------------------------------------------------------
     //! \brief Export the Petri net as GRAFCET code as C++ header file.
     //! \param[in] filename the path of h++ file. Should have the .hpp or .h
     //! extension (or any associated to header header files).

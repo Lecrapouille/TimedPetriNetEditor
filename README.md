@@ -159,6 +159,8 @@ from the mouse and the keyboard.
   graph event.
 - `J` key: export the graph event into a Julia script file (for example named
   `GraphEvent-gen.jl`) if and only if the Petri net is a graph event.
+- `X` key: export the Petri net as LaTeX file (for example named `petri.tex`).
+- `P` key: export the Petri net as Graphviz file (for example named `petri.gv`).
 - `G` key: export the Petri net as Grafcet into a C++ header file (for example
   named `Grafcet-gen.hpp`).
 - `H` key: show this help.
@@ -612,6 +614,22 @@ show(S.x0)
 # For more interaction with the (max,+) algebra see tutorials on the repository
 # of the MaxPlus package. For example: MP(3) * MP(2) will return MP(5).
 ```
+
+## Generate LaTeX and Graphviz figures
+
+The Petri net can be exported to LaTeX file or Graphviz file. The application will
+ask you where to save the file. For LaTex a `.tex` file is create, you can compile
+it with a command like `latex LateX-gen.tex; dvipdf LateX-gen.dvi`. For Graphviz,
+you have to install an application for example for Linux:
+`sudo apt-get install xdot`.
+
+![LaTeX](doc/Latex.png)
+
+*Fig 4 - Canonical Event Graph exported in LaTex.*
+
+![Graphviz](doc/Graphviz.png)
+
+*Fig 5 - Canonical Event Graph exported in Graphviz.*
 
 ## Generate C++ code file (GRAFCET aka sequential function chart)
 

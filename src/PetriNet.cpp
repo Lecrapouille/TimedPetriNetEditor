@@ -814,6 +814,144 @@ bool PetriNet::showCriticalCycle()
 }
 
 //------------------------------------------------------------------------------
+bool PetriNet::exportToLaTeX(std::string const& filename, float const scale_x,
+                             float const scale_y)
+{
+    std::ofstream file(filename);
+    if (!file)
+    {
+        std::cerr << "Failed to export the Petri net to '" << filename
+                  << "'. Reason was " << strerror(errno) << std::endl;
+        return false;
+    }
+
+    file << R"PN(\documentclass[border = 0.2cm]{standalone}
+\usepackage{tikz}
+\usetikzlibrary{petri,positioning}
+\begin{document}
+\begin{tikzpicture}
+)PN";
+
+    // Places
+    file << std::endl << "% Places" << std::endl;
+    for (auto const& p: m_places)
+    {
+        file << "\\node[place, "
+             << "label=above:$" << p.caption << "$, "
+             << "fill=blue!25, "
+             << "draw=blue!75, "
+             << "tokens=" << p.tokens << "] "
+             << "(" << p.key << ") at (" << int(p.x * scale_x)
+             << ", " << int(-p.y * scale_y) << ") {};"
+             << std::endl;
+    }
+
+    // Transitions
+    file << std::endl << "% Transitions" << std::endl;
+    for (auto const& t: m_transitions)
+    {
+        std::string color = (t.canFire() ? "green" : "red");
+
+        file << "\\node[transition, "
+             << "label=above:$" << t.caption << "$, "
+             << "fill=" << color << "!25, "
+             << "draw=" << color << "!75] "
+             << "(" << t.key << ") at (" << int(t.x * scale_x)
+             << ", " << int(-t.y * scale_y) << ") {};"
+             << std::endl;
+    }
+
+    // Arcs
+    file << std::endl << "% Arcs" << std::endl;
+    for (auto const& a: m_arcs)
+    {
+        if (a.from.type == Node::Type::Transition)
+        {
+            std::stringstream duration;
+            duration << std::fixed << std::setprecision(2) << a.duration;
+            file << "\\draw[-latex, thick] "
+                 << "(" << a.from.key << ") -- "
+                 << "node[midway, above right] "
+                 << "{" << duration.str() << "} "
+                 << "(" << a.to.key << ");"
+                 << std::endl;
+        }
+        else
+        {
+            file << "\\draw[-latex, thick] "
+                 << "(" << a.from.key << ") -- " << "(" << a.to.key << ");"
+                 << std::endl;
+        }
+    }
+
+    file << R"PN(
+\end{tikzpicture}
+\end{document}
+)PN";
+
+    return true;
+}
+
+//------------------------------------------------------------------------------
+bool PetriNet::exportToGraphviz(std::string const& filename)
+{
+    std::ofstream file(filename);
+    if (!file)
+    {
+        std::cerr << "Failed to export the Petri net to '" << filename
+                  << "'. Reason was " << strerror(errno) << std::endl;
+        return false;
+    }
+
+    file << "digraph G {" << std::endl;
+
+    // Places
+    file << "node [shape=circle, color=blue]" << std::endl;
+    for (auto const& p: m_places)
+    {
+        file << "  " << p.key << " [label=\"" << p.caption;
+        if (p.tokens > 0u)
+        {
+            file << "\\n" << p.tokens << "&bull;";
+        }
+        file << "\"];" << std::endl;
+    }
+
+    // Transitions
+    file << "node [shape=box, color=red]" << std::endl;
+    for (auto const& t: m_transitions)
+    {
+        if (t.canFire())
+        {
+            file << "  " << t.key << " [label=\""
+                 << t.caption << "\", color=green];"
+                 << std::endl;
+        }
+        else
+        {
+            file << "  " << t.key << " [label=\""
+                 << t.caption << "\"];"
+                 << std::endl;
+        }
+    }
+
+    // Arcs
+    file << "edge [style=\"\"]" << std::endl;
+    for (auto const& a: m_arcs)
+    {
+        file << "  " << a.from.key << " -> " << a.to.key;
+        if (a.from.type == Node::Type::Transition)
+        {
+            file << " [label=\"" << a.duration << "\"]";
+        }
+        file << ";" << std::endl;
+    }
+
+    file << "}" << std::endl;
+    return true;
+}
+
+//------------------------------------------------------------------------------
 bool PetriNet::exportToCpp(std::string const& filename, std::string const& name)
 {
     std::ofstream file(filename);

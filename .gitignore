@@ -1,9 +1,17 @@
 # Project specific
 Grafcet-gen.hpp
 GraphEvent-gen.jl
+Graphviz-gen.gv
+LateX-gen.tex
+LateX-gen.pdf
 petri.json
 build/
 doc/coverage/
+
+# LaTeX
+*.aux
+*.dvi
+*.log
 
 # Prerequisites
 *.d

@@ -690,6 +690,75 @@ void PetriEditor::handleKeyPressed(sf::Event const& event)
         }
     }
 
+    // 'X' key: save the Petri net as LaTeX file format
+    else if (event.key.code == sf::Keyboard::X)
+    {
+        if (/*(!m_simulating) &&*/ (!m_petri_net.isEmpty()))
+        {
+            pfd::save_file manager("Choose the LaTeX file to export",
+                                   "~/LateX-gen.tex",
+                                   { "LaTex File", "*.tex" });
+            std::string file = manager.result();
+            if (!file.empty())
+            {
+                sf::Vector2f figure(15.0f, 15.0f); // PDF figure size
+                sf::Vector2f scale(figure.x / float(m_renderer.getSize().x),
+                                   figure.y / float(m_renderer.getSize().y));
+                if (m_petri_net.exportToLaTeX(file, scale.x, scale.y))
+                {
+                    m_message_bar.setInfo(
+                        "Petri net successfully exported as LaTeX file!");
+                }
+                else
+                {
+                    m_message_bar.setError(
+                        "Could not export the Petri net to LaTex file!");
+                }
+            }
+        }
+        //else if (m_simulating)
+        //{
+        //    m_message_bar.setError("Cannot export during the simulation!");
+        //}
+        else if (m_petri_net.isEmpty())
+        {
+            m_message_bar.setWarning("Cannot export empty Petri net!");
+        }
+    }
+
+    // 'P' key: save the Petri net as graphviz file format
+    else if (event.key.code == sf::Keyboard::P)
+    {
+        if (/*(!m_simulating) &&*/ (!m_petri_net.isEmpty()))
+        {
+            pfd::save_file manager("Choose the Graphviz file to export",
+                                   "~/Graphviz-gen.gv",
+                                   { "Graphviz File", "*.gv *.dot" });
+            std::string file = manager.result();
+            if (!file.empty())
+            {
+                if (m_petri_net.exportToGraphviz(file))
+                {
+                    m_message_bar.setInfo(
+                        "Petri net successfully exported as Graphviz file!");
+                }
+                else
+                {
+                    m_message_bar.setError(
+                        "Could not export the Petri net to Graphviz file!");
+                }
+            }
+        }
+        //else if (m_simulating)
+        //{
+        //    m_message_bar.setError("Cannot export during the simulation!");
+        //}
+        else if (m_petri_net.isEmpty())
+        {
+            m_message_bar.setWarning("Cannot export empty Petri net!");
+        }
+    }
+
     // 'G' key: save the Petri net as grafcet in a C++ header file
     else if (event.key.code == sf::Keyboard::G)
     {
@@ -1206,6 +1275,8 @@ std::stringstream PetriNet::help()
        << "  C key: show critical circuit" << std::endl
        << "  S key: save the Petri net to petri.json file" << std::endl
        << "  O key: load the Petri net from petri.json file" << std::endl
+       << "  P key: export the Petri net as Graphviz file" << std::endl
+       << "  X key: export the Petri net as LaTeX file" << std::endl
        << "  G key: export the Petri net as GRAFCET in a C++ header file" << std::endl
        << "  J key: export the Petri net as Julia code" << std::endl;
     return ss;
