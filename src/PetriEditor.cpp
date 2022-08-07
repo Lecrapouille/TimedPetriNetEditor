@@ -808,12 +808,12 @@ void PetriEditor::handleKeyPressed(sf::Event const& event)
     }
 
     // FIXME TEMPORARY
-    else if (event.key.code == sf::Keyboard::W)
-    {
-        PetriNet pn(m_petri_net.type());
-        m_petri_net.toCanonicalForm(pn);
-        m_petri_net = pn;
-    }
+    //else if (event.key.code == sf::Keyboard::W)
+    //{
+    //    PetriNet pn(m_petri_net.type());
+    //    m_petri_net.toCanonicalForm(pn);
+    //    m_petri_net = pn;
+    //}
 
     // '+' key: increase the number of tokens in the place.
     // '-' key: decrease the number of tokens in the place.
