@@ -29,6 +29,7 @@
 
 #  include <SFML/Graphics.hpp>
 #  include <SFML/System.hpp>
+#  include "utils/Utils.hpp"
 #  include <stack>
 #  include <cassert>
 #  include <iostream>

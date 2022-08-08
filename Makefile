@@ -24,7 +24,7 @@
 PROJECT = TimedPetriNetEditor
 TARGET = $(PROJECT)
 DESCRIPTION = Timed Petri Net Editor
-STANDARD = --std=c++14
+STANDARD = --std=c++11
 BUILD_TYPE = debug
 
 ###################################################
