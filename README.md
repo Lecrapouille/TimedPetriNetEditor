@@ -2,61 +2,87 @@
 
 [![CI testing](https://github.com/Lecrapouille/TimedPetriNetEditor/actions/workflows/ci.yml/badge.svg)](https://github.com/Lecrapouille/TimedPetriNetEditor/actions/workflows/ci.yml)
 
-[This project](https://github.com/Lecrapouille/TimedPetriNetEditor) is a timed
-Petri net editor made in C++11 and displayed with the
-[SFML](https://www.sfml-dev.org/index-fr.php). The following picture is an
-overview of the look of the application.
+[This project](https://github.com/Lecrapouille/TimedPetriNetEditor) is a
+graphical interface for editing and running Petri nets and specially timed event
+graphs which are a subclass of Petri nets with good mathematics properties for
+modeling discrete event systems (DES) with [(max,+)
+algebra](https://jpquadrat.github.io/). This tools can generate (max,+) code for
+[Julia](https://julialang.org/), export figures (LaTeX, Graphivz) and generate
+C++ code (GRAFCET aka sequential function chart that could run on Arduino i.e.)
+and used in synergy with [(max,+)](https://github.com/Lecrapouille/MaxPlus.jl)
+algebra toolbox running with the [Julia](https://julialang.org/) language.
+
+The following picture is an overview of the look of the application. You can
+click on it to watch a YouTube showing an example of timed Petri net running.
 
 [![TimedPetri](doc/TimedPetri01.png)](https://youtu.be/hOhunzgFpcA)
 
-*Fig 1 - A timed Petri net (made with this editor). Click on the figure to watch
-a YouTube showing a timed Petri net running.*
+*Fig 1 - A timed Petri net (made with this editor).*
 
-Why another Petri editor ? Because many Petri net editors in GitHub are no
-longer maintained (> 7 years) or that I cannot personally compile or use
-(Windows system, Visual Studio compiler, C#, Java ..) or the code is too complex
-to add my own extensions. In the future, this editor will fully complete my
-[(max,+)](https://github.com/Lecrapouille/MaxPlus.jl) toolbox for
-[Julia](https://julialang.org/) (still in gestation) by adding a graphical
-interface (for the moment there is no Petri net editors available for Julia).
+A second following YouTube [video](https://youtu.be/wsiF6u7DNVQ) gives a quick
+overview of this current document: how to compile and install this project, the
+common key and mouse bindings for the GUI and common usage of the Julia API for
+(max,+) ...
+
+Why developing another Petri editor ? Because:
+- There is no Petri editor with (max,+) on GitHub.
+- This project is a continuation of [ScicosLab](http://www.scicoslab.org/)'s
+  (max,+) toolbox that my father developed at INRIA and which is no longer
+  developed.
+- Many Petri net editors in GitHub are no longer maintained (> 7 years) or that
+  I cannot personally compile or use (Windows system, Visual Studio compiler,
+  C#, Java ..) or the code is too complex to add my own extensions.
+- Currently, there is no Petri net editors available for Julia.
+
+I tried to make code as simple as possible with many comments. Do not hesitate
+to ask if something is not easily understandable.
 
 ## How to compile and install the project?
 
-The following [YouTube video](https://youtu.be/wsiF6u7DNVQ) gives an overviex of
-the whole document: compilation, installation, common usage of the GUI, API for
-Julia langage and (max,+) and interface for Julia (max,+) toolbox ...
+This project is developed in C++11. The GUI is made with the
+[SFML](https://www.sfml-dev.org/index-fr.php). The project is compiled with a
+Makefile (no CMake). Optionally, a [Julia 1.x](https://julialang.org/) code
+binding the C++ API can be optionally used for working in synergy with my
+[(max,+) toolbox](https://github.com/Lecrapouille/MaxPlus.jl).
 
 Prerequisites to compile this project are:
-- g++ or clang++ compiler for C++14 (because of `std::make_unique` is used).
+- g++ or clang++ compiler for C++11.
 - SFML: `sudo apt-get install libsfml-dev`
+- Optionally, you can install Julia from https://julialang.org/downloads but
+this does not impact the standalone graphical editor.
 
-To download the code source, type the following command on a Linux console:
+To download the code source of the
+[TimedPetriNetEditor](https://github.com/Lecrapouille/TimedPetriNetEditor)
+project, type the following command on a Linux console:
+
 ```sh
 git clone https://github.com/Lecrapouille/TimedPetriNetEditor --depth=1 --recursive
 ```
 
-To compile the project:
+The recursive optional is important. To compile the project:
 ```sh
 cd TimedPetriNetEditor/
-make
+make -j8
 
-# Or to compile using all your CPU cores (8 cores in my case):
-# make -j8
+# Where -j8 to adapt to the number of CPU cores of your computer (8 cores in my case):
 ```
 
-To use the application, you can:
+To run the TimedPetriNetEditor application, you can:
 ```sh
 ./build/TimedPetriNetEditor
 ```
 
 For Julia developers, you can use this editor in synergy with my Julia
-[(max,+)](https://github.com/Lecrapouille/MaxPlus.jl) toolbox.  The easier way
-to achieve it is to you install TimedPetriNetEditor on your operating system
-(this will install a shared library needed that can be found by Julia):
+[(max,+)](https://github.com/Lecrapouille/MaxPlus.jl) toolbox. The easier way to
+achieve it is to you install TimedPetriNetEditor on your operating system (this
+will install a shared library needed that can be found by Julia):
 
 ```sh
 sudo make install
+```
 
+For example on Linux:
+```
 *** Installing: doc => /usr/share/TimedPetriNetEditor/0.1.0/doc
 *** Installing: examples => /usr/share/TimedPetriNetEditor/0.1.0/examples
 *** Installing: data => /usr/share/TimedPetriNetEditor/0.1.0/data
@@ -71,8 +97,9 @@ Once installed, you can call directly the Petri net editor:
 TimedPetriNetEditor
 ```
 
-Or from the [Julia](https://github.com/JuliaLang/julia) REPL (this part is described in details
-in the dedicated section of this document):
+Or directly from the [Julia](https://github.com/JuliaLang/julia) REPL (this part
+is described in details in the dedicated section of this document):
+
 ```sh
 julia> include("src/julia/TimedPetriNetEditor.jl")
 counter (generic function with 1 method)
@@ -89,39 +116,51 @@ folder (for the find the fonts). You will also have to manually modify this
 Julia file to indicate the correct path of the shared library
 `libtimedpetrineteditor.so`.
 
-## Commande line
+## Command line
+
+The command line is optional. By default type of net is timed Petri.
 
 ```sh
-TimedPetriNetEditor [-t|-p|-g] [petri.json]
+TimedPetriNetEditor [-t|-p|-g] [petri.json]
 ```
 
 Where:
 - `[-t|-p|-g]` optional argument to force the type of net:
 
-   - `-t` for forcing the timed Petri mode (set by default). In this mode,
-     places can have any number of tokens. Arcs `Transition -> Place` have unit
-     of time for emulating the duration of the process work (arcs `Place ->
-     Transition` have implicit 0 of unit time) . When running the net
-     simulation, tokens are animated and move along arcs at the speed imposed by
-     the time (here 1 unit of time is 1 second) and they are shuffled one by one
-     on OR-divergence branches.
+   - `-t` (default mode) for editing timed Petri nets. In this mode, places can
+     have any number of tokens. Arcs `Transition -> Place` have unit of time for
+     emulating the duration of the process work (arcs `Place -> Transition` have
+     implicit 0 of unit time). When running the net simulation, tokens are
+     animated and move along arcs at the speed imposed by the arc duration. The
+     current unit of time for animation is 1 second. Tokens are shuffled one by
+     one on OR-divergence branches.
 
    - `-p` for forcing the Petri mode. In this mode, places can have any number
      of tokens. Arcs have an implicit unit of time set to 0 (while for they
-     still animated to make pleasant).  When simulating the net, you have to
-     click on transitions to fire tokens and the maximum possible of tokens are
-     burnt in once.
+     still animated with to make the simulation understandable).  When
+     simulating the net, you have to click on transitions to fire tokens. When
+     firing, the maximum possible of tokens are burnt in once.
 
-   - `-g` for using a GRAFCET mode. This mode is like Petri but where places
-     have at max 1 token and tokens are shuffled one by one on OR-divergence
-     branches.
+   - `-g` for forcing the GRAFCET mode. This mode is like Petri (no duration on
+     arcs) but where places have at max 1 token and tokens are shuffled one by
+     one on OR-divergence branches.
 
-- `[petri.json]` is an optional Petri net file to load (i.e. `examples/Howard1.json`)
+- `[petri.json]` is an optional Petri net file to load (JSON format).
 
-## Usage of the Editor
+Example:
+
+```sh
+TimedPetriNetEditor -t examples/Howard2.json
+```
+
+## Mouse and key bindings for the graphical interface
 
 The editor does not offer any buttons, therefore all actions are directly made
-from the mouse and the keyboard.
+from the mouse and the keyboard (like Emacs but without the Meta key ^^).
+- `Escape` quit the application. Unsaved net will be asked for saving before the
+  application closes.
+- `Left mouse button pressed` on a caption (soon or in a duration) to edit it.
+  Press the Enter key to validate the content or press the Escape key to abort.
 - `Left mouse button pressed`: add a new place. Note: this action is ignored if
   you are trying to create a node on an already existing node (place or
   transition).
@@ -165,11 +204,8 @@ from the mouse and the keyboard.
   named `Grafcet-gen.hpp`).
 - `H` key: show this help.
 
-## Limitations / Work in progress
+## Work in progress
 
-- Adding an arc will generate a random duration (between 1 and 5). *Workaround:*
-  save the Petri net to JSON file and edit with a text editor, then reload the
-  file.
 - Time duration cannot yet be edited. *Workaround:* save the
   Petri net to JSON file and edit with a text editor, then reload the file.
 - No input node generating periodically tokens is yet made. *Workaround:* during
@@ -183,7 +219,8 @@ from the mouse and the keyboard.
   console.
 - We cannot move or zoom the Petri net or select several nodes. We cannot change
   the color of nodes and arcs. We cannot merge several nodes into a sub-net for
-  simplifying the net.
+  simplifying the net. Cannot delete arcs. Cannot make undo/redo actions.
+- Julia API: missing add/remove arcs.
 
 ## What are Petri nets, timed Petri nets, timed event graph ?
 
