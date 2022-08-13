@@ -145,7 +145,7 @@ TEST(TestPetriNet, TestTransitionCreation)
     ASSERT_EQ(t1.angle, 45u);
     ASSERT_EQ(t1.x, 3.5f);
     ASSERT_EQ(t1.y, 4.0f);
-    ASSERT_EQ(t1.transitivity, false);
+    ASSERT_EQ(t1.receptivity, false);
     ASSERT_STREQ(t1.key.c_str(), "T42");
     ASSERT_STREQ(t1.caption.c_str(), "Hello");
     ASSERT_EQ(t1.arcsIn.size(), 0u);
@@ -162,7 +162,7 @@ TEST(TestPetriNet, TestTransitionCreation)
     ASSERT_EQ(t2.angle, 45u);
     ASSERT_EQ(t2.x, 3.5f);
     ASSERT_EQ(t2.y, 4.0f);
-    ASSERT_EQ(t2.transitivity, false);
+    ASSERT_EQ(t2.receptivity, false);
     ASSERT_STREQ(t2.key.c_str(), "T42");
     ASSERT_STREQ(t2.caption.c_str(), "Hello");
     ASSERT_EQ(t2.arcsIn.size(), 0u);
@@ -186,7 +186,7 @@ TEST(TestPetriNet, TestTransitionCreation)
     ASSERT_EQ(t3.angle, 45u);
     ASSERT_EQ(t3.x, 3.5f);
     ASSERT_EQ(t3.y, 4.0f);
-    ASSERT_EQ(t3.transitivity, false);
+    ASSERT_EQ(t3.receptivity, false);
     ASSERT_STREQ(t3.key.c_str(), "T42");
     ASSERT_STREQ(t3.caption.c_str(), "Hello");
     ASSERT_EQ(t3.arcsIn.size(), 0u);

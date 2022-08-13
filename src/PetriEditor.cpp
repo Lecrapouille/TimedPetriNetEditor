@@ -311,7 +311,7 @@ void PetriEditor::draw(Transition const& transition, uint8_t alpha)
     // Draw the transition
     m_figure_trans.setPosition(sf::Vector2f(transition.x, transition.y));
     m_figure_trans.setRotation(float(transition.angle));
-    if ((m_petri_net.type() == PetriNet::Type::Petri) && (transition.transitivity))
+    if ((m_petri_net.type() == PetriNet::Type::Petri) && (transition.receptivity))
         m_figure_trans.setFillColor(sf::Color::Green);
     else
         m_figure_trans.setFillColor(FILL_COLOR(alpha));
@@ -446,7 +446,7 @@ void PetriEditor::update(float const dt)
             m_message_bar.setInfo("Simulation has started!");
         }
         m_petri_net.generateArcsInArcsOut();
-        m_petri_net.resetTransitivities();
+        m_petri_net.resetReceptivies();
         m_petri_net.shuffle_transitions(true);
         m_petri_net.backupMarks();
         m_animations.clear();
@@ -505,11 +505,11 @@ void PetriEditor::update(float const dt)
                         assert(tks >= tokens);
                         tks = std::min(Settings::maxTokens, tks - tokens);
 
-                        // Disable the transitivity of the transition
+                        // Invalidate the transition
                         if (m_petri_net.type() == PetriNet::Type::Petri)
                         {
-                            reinterpret_cast<Transition&>(a->to).transitivity =
-                                    false;
+                            Transition& tr = reinterpret_cast<Transition&>(a->to);
+                            tr.receptivity = false;
                         }
                         a->fading.restart();
                     }
@@ -1179,9 +1179,9 @@ void PetriEditor::handleMouseButton(sf::Event const& event)
                 Node* node = getNode(m_mouse.x, m_mouse.y);
                 if ((node != nullptr) && (node->type == Node::Type::Transition))
                 {
-                    reinterpret_cast<Transition*>(node)->transitivity ^= true;
+                    reinterpret_cast<Transition*>(node)->receptivity ^= true;
                     //Transition& tr = reinterpret_cast<Transition&>(*node);
-                    //reinterpret_cast<Transition*>(node)->transitivity = tr.canFire();
+                    //reinterpret_cast<Transition*>(node)->receptivity = tr.canFire();
                 }
             }
         }

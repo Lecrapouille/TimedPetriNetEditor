@@ -35,12 +35,9 @@ size_t Settings::maxTokens = std::numeric_limits<size_t>::max();
 Settings::Fire Settings::firing = Settings::Fire::OneByOne;
 
 //------------------------------------------------------------------------------
-bool Transition::canFire() const
+bool Transition::isEnabled() const
 {
     if (arcsIn.size() == 0u)
-        return false;
-
-    if (transitivity == false)
         return false;
 
     for (auto& a: arcsIn)
@@ -58,7 +55,7 @@ size_t Transition::howManyTokensCanBurnt() const
     if (arcsIn.size() == 0u)
         return 0u;
 
-    if (transitivity == false)
+    if (receptivity == false)
         return 0u;
 
     size_t burnt = static_cast<size_t>(-1);
@@ -104,20 +101,20 @@ void PetriNet::type(PetriNet::Type const mode)
 }
 
 //------------------------------------------------------------------------------
-void PetriNet::resetTransitivities()
+void PetriNet::resetReceptivies()
 {
     if (m_type == PetriNet::Type::Petri)
     {
         for (auto& transition: m_transitions)
         {
-            transition.transitivity = false;
+            transition.receptivity = false;
         }
     }
     else
     {
         for (auto& transition: m_transitions)
         {
-            transition.transitivity = true;
+            transition.receptivity = true;
         }
     }
 }

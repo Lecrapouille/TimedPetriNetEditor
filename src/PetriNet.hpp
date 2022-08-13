@@ -241,7 +241,7 @@ public:
     Transition(size_t const id_, std::string const& caption_, float const x_,
                float const y_, int const angle_, bool const trans_)
         : Node(Node::Type::Transition, id_, caption_, x_, y_), angle(angle_),
-          transitivity(trans_)
+          receptivity(trans_)
     {}
 
     //--------------------------------------------------------------------------
@@ -254,13 +254,28 @@ public:
     }
 
     //--------------------------------------------------------------------------
-    //! \brief Check if the transitivity is active and can burn tokens in
-    //!   predecessor places.
-    //! \note This method does not modify the number of tokens in predecessor
-    //!   places.
+    //! \brief Check if the transition is validated (meaning if the receptivity
+    //! is true) or not validated (meaning if the receptivity is false).
+    //--------------------------------------------------------------------------
+    inline bool isValidated() const { return receptivity; }
+
+    //--------------------------------------------------------------------------
+    //! \brief Check if all upstream places have all at leat one token (meaning
+    //! if all upstream places (steps for GRAFCET) are active.
+    //--------------------------------------------------------------------------
+    bool isEnabled() const;
+
+    //--------------------------------------------------------------------------
+    //! \brief Check if the transition is validated and all upstream places have
+    //! all at leat one token. In this case the transition is passable and can
+    //! burn tokens in upstream places.
+    //! \note The firing is made by the PetriNet class.
     //! \return true if can fire else return false.
     //--------------------------------------------------------------------------
-    bool canFire() const;
+    bool canFire() const
+    {
+        return isValidated() && isEnabled();
+    }
 
     //--------------------------------------------------------------------------
     //! \brief Return the maximum possibe of tokens that can be burnt in
@@ -302,8 +317,11 @@ public:
     //! to have horizontal, vertical or diagonal shape transitions.
     int angle = 0u;
 
-    //! \brief In petri net, click to fire, in timed petri always true.
-    bool transitivity;
+    //! \brief In petri net mode, the user has to click to validate the
+    //! receptivity of the transition. If predecessor places have all at least
+    //! one token, the transition is fired, burning tokens in predecessor places
+    //! and create tokens in the successor places.
+    bool receptivity = false;
 
     //! \brief Temporary matrix index used when building max-plus linear system.
     size_t index = 0u;
@@ -893,10 +911,9 @@ public:
     void generateArcsInArcsOut();
 
     //--------------------------------------------------------------------------
-    //! \brief Populate or update Node::arcsIn and Node::arcsOut for all
-    //! transitions and places in the Petri net.
+    //! \brief Set to false the receptivity for all transitions.
     //--------------------------------------------------------------------------
-    void resetTransitivities();
+    void resetReceptivies();
 
     //--------------------------------------------------------------------------
     //! \brief Return the help.
