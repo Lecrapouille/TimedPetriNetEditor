@@ -39,17 +39,20 @@ PetriEditor::PetriEditor(Application& application, PetriNet& net)
     m_animations.reserve(128u);
 
     // Precompute SFML struct for drawing places
-    m_figure_place.setOrigin(sf::Vector2f(m_figure_place.getRadius(), m_figure_place.getRadius()));
+    m_figure_place.setOrigin(sf::Vector2f(m_figure_place.getRadius(),
+                                          m_figure_place.getRadius()));
     m_figure_place.setFillColor(sf::Color::White);
     m_figure_place.setOutlineThickness(2.0f);
     m_figure_place.setOutlineColor(OUTLINE_COLOR);
 
     // Precompute SFML struct for drawing tokens inside places
-    m_figure_token.setOrigin(sf::Vector2f(m_figure_token.getRadius(), m_figure_token.getRadius()));
+    m_figure_token.setOrigin(sf::Vector2f(m_figure_token.getRadius(),
+                                          m_figure_token.getRadius()));
     m_figure_token.setFillColor(sf::Color::Black);
 
     // Precompute SFML struct for drawing transitions
-    m_figure_trans.setOrigin(m_figure_trans.getSize().x / 2, m_figure_trans.getSize().y / 2);
+    m_figure_trans.setOrigin(m_figure_trans.getSize().x / 2,
+                             m_figure_trans.getSize().y / 2);
     m_figure_trans.setFillColor(sf::Color::White);
     m_figure_trans.setOutlineThickness(2.0f);
     m_figure_trans.setOutlineColor(OUTLINE_COLOR);
@@ -134,9 +137,10 @@ bool PetriEditor::load(std::string const& file)
             M.y = std::max(M.y, t.y);
         }
 
-        m_renderer.setView(sf::View(
-            sf::Vector2f((M.x - m.x) / 2.0f, (M.y - m.y) / 2.0f),
-            sf::Vector2f(M.x - m.x + 2.0f * TRANS_WIDTH, M.y - m.y + 2.0f * TRANS_WIDTH)));
+        m_renderer.setView(
+            sf::View(sf::Vector2f((M.x - m.x) / 2.0f, (M.y - m.y) / 2.0f),
+                     sf::Vector2f(M.x - m.x + 2.0f * TRANS_WIDTH, M.y - m.y +
+                                  2.0f * TRANS_WIDTH)));
         sf::FloatRect r(m.x - TRANS_WIDTH, m.y - TRANS_WIDTH,
                         M.x + TRANS_WIDTH, M.y + TRANS_WIDTH);
         m_grid.resize(r);
@@ -417,7 +421,8 @@ void PetriEditor::update(float const dt)
         {
             if (m_petri_net.isEmpty())
             {
-                m_message_bar.setWarning("Petri net is empty. Simulation request ignored!");
+                m_message_bar.setWarning(
+                    "Petri net is empty. Simulation request ignored!");
                 m_simulating = false;
             }
             else
@@ -430,10 +435,11 @@ void PetriEditor::update(float const dt)
     case STATE_STARTING:
         if (m_petri_net.type() == PetriNet::Type::Petri)
         {
-            m_message_bar.setInfo("Simulation has started!\n"
-                                  "  Click on transitions for firing!\n"
-                                  "  Press the key '+' on Places for adding tokens\n"
-                                  "  Press the key '-' on Places for removing tokens");
+            m_message_bar.setInfo(
+                "Simulation has started!\n"
+                "  Click on transitions for firing!\n"
+                "  Press the key '+' on Places for adding tokens\n"
+                "  Press the key '-' on Places for removing tokens");
         }
         else
         {
@@ -502,7 +508,8 @@ void PetriEditor::update(float const dt)
                         // Disable the transitivity of the transition
                         if (m_petri_net.type() == PetriNet::Type::Petri)
                         {
-                            reinterpret_cast<Transition&>(a->to).transitivity = false;
+                            reinterpret_cast<Transition&>(a->to).transitivity =
+                                    false;
                         }
                         a->fading.restart();
                     }
@@ -510,7 +517,8 @@ void PetriEditor::update(float const dt)
                     // Count the number of tokens for the animation
                     for (auto& a: trans->arcsOut)
                     {
-                        a->count = std::min(Settings::maxTokens, a->count + tokens);
+                        a->count = std::min(Settings::maxTokens,
+                                            a->count + tokens);
                     }
                 }
             }
@@ -764,18 +772,22 @@ void PetriEditor::handleKeyPressed(sf::Event const& event)
     {
         if ((!m_simulating) && (!m_petri_net.isEmpty()))
         {
-            pfd::save_file manager("Choose the C++ header file to export as Grafcet", "~/Grafcet-gen.hpp",
+            pfd::save_file manager("Choose the C++ header file to export as Grafcet",
+                                   "~/Grafcet-gen.hpp",
                                    { "C++ Header File", "*.hpp *.h *.hh *.h++" });
             std::string file = manager.result();
             if (!file.empty())
             {
                 if (m_petri_net.exportToCpp(file, "generated"))
                 {
-                    m_message_bar.setInfo("The Petri net has successfully exported as grafcet as C++ header file!");
+                    m_message_bar.setInfo(
+                        "The Petri net has successfully exported as grafcet as "
+                        "C++ header file!");
                 }
                 else
                 {
-                    m_message_bar.setError("Could not export the Petri net to C++ header file!");
+                    m_message_bar.setError(
+                        "Could not export the Petri net to C++ header file!");
                 }
             }
         }
@@ -794,18 +806,22 @@ void PetriEditor::handleKeyPressed(sf::Event const& event)
     {
         if ((!m_simulating) && (!m_petri_net.isEmpty()))
         {
-            pfd::save_file manager("Choose the Julia file to export as graph event", "~/GraphEvent-gen.jl",
+            pfd::save_file manager("Choose the Julia file to export as graph event",
+                                   "~/GraphEvent-gen.jl",
                                    { "Julia File", "*.jl" });
             std::string file = manager.result();
             if (!file.empty())
             {
                 if (m_petri_net.exportToJulia(file))
                 {
-                    m_message_bar.setInfo("The Petri net has successfully exported as graph event as Julia file!");
+                    m_message_bar.setInfo(
+                        "The Petri net has successfully exported as graph event"
+                        " as Julia file!");
                 }
                 else
                 {
-                    m_message_bar.setError("Could not export the Petri net to Julia file!");
+                    m_message_bar.setError(
+                        "Could not export the Petri net to Julia file!");
                 }
             }
         }

@@ -38,40 +38,40 @@
 // These compilers do not support make_unique so redefine it
 namespace std
 {
-  template<class T> struct _Unique_if
-  {
-    typedef unique_ptr<T> _Single_object;
-  };
+    template<class T> struct _Unique_if
+    {
+        typedef unique_ptr<T> _Single_object;
+    };
 
-  template<class T> struct _Unique_if<T[]>
-  {
-    typedef unique_ptr<T[]> _Unknown_bound;
-  };
+    template<class T> struct _Unique_if<T[]>
+    {
+        typedef unique_ptr<T[]> _Unknown_bound;
+    };
 
-  template<class T, size_t N> struct _Unique_if<T[N]>
-  {
-    typedef void _Known_bound;
-  };
+    template<class T, size_t N> struct _Unique_if<T[N]>
+    {
+        typedef void _Known_bound;
+    };
 
-  template<class T, class... Args>
-  typename _Unique_if<T>::_Single_object
-  make_unique(Args&&... args)
-  {
-    return unique_ptr<T>(new T(std::forward<Args>(args)...));
-  }
+    template<class T, class... Args>
+    typename _Unique_if<T>::_Single_object
+    make_unique(Args&&... args)
+    {
+        return unique_ptr<T>(new T(std::forward<Args>(args)...));
+    }
 
-  template<class T>
-  typename _Unique_if<T>::_Unknown_bound
-  make_unique(size_t n)
-  {
-    typedef typename remove_extent<T>::type U;
-    return unique_ptr<T>(new U[n]());
-  }
+    template<class T>
+    typename _Unique_if<T>::_Unknown_bound
+    make_unique(size_t n)
+    {
+        typedef typename remove_extent<T>::type U;
+        return unique_ptr<T>(new U[n]());
+    }
 
-  //! \brief Implement the C++14 std::make_unique for C++11
-  template<class T, class... Args>
-  typename _Unique_if<T>::_Known_bound
-  make_unique(Args&&...) = delete;
+    //! \brief Implement the C++14 std::make_unique for C++11
+    template<class T, class... Args>
+    typename _Unique_if<T>::_Known_bound
+    make_unique(Args&&...) = delete;
 }
 
 #  endif // __cplusplus == 201103L
@@ -172,28 +172,28 @@ inline uint8_t fading(sf::Clock& timer, bool restart, float blink_period)
 struct SparseMatrix
 {
     SparseMatrix(size_t const N_ = 0u, size_t const M_ = 0u)
-      : N(N_), M(M_)
+        : N(N_), M(M_)
     {}
 
     void dim(size_t const N_, size_t const M_)
     {
-       N = N_;
-       M = M_;
+        N = N_;
+        M = M_;
     }
 
     void clear()
     {
-       i.clear();
-       j.clear();
-       d.clear();
+        i.clear();
+        j.clear();
+        d.clear();
     }
 
     //! \brief Beware double inclusions are not checked
     void add(size_t i_, size_t j_, float d_)
     {
-       i.push_back(i_ + 1u);
-       j.push_back(j_ + 1u);
-       d.push_back(d_);
+        i.push_back(i_ + 1u);
+        j.push_back(j_ + 1u);
+        d.push_back(d_);
     }
 
     //! \brief (I,J) Coordinates

@@ -53,9 +53,9 @@ struct AnimatedToken
         speed = magnitude / arc.duration;
     }
 
-// I dunno why the code in the #else branch seems to make buggy animations with
-// tokens that disapear. Cannot catch it by unit tests.
-// https://github.com/Lecrapouille/TimedPetriNetEditor/issues/2
+    // I dunno why the code in the #else branch seems to make buggy animations
+    // with tokens that disapear. Cannot catch it by unit tests.
+    // https://github.com/Lecrapouille/TimedPetriNetEditor/issues/2
 # if 1
 
     //--------------------------------------------------------------------------
@@ -107,6 +107,7 @@ struct AnimatedToken
         new (this) AnimatedToken(other); // copy construct in place
         return *this;
     }
+
 #endif
 
     //--------------------------------------------------------------------------

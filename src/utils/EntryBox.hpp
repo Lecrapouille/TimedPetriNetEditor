@@ -67,18 +67,18 @@ public:
         m_box.setOutlineColor(OUTLINE_COLOR);
     }
 
-    //------------------------------------------------------------------------------
+    //--------------------------------------------------------------------------
     inline bool hasFocus() const { return m_node != nullptr; }
     inline void unfocus() { m_node = nullptr; }
 
-    //------------------------------------------------------------------------------
+    //--------------------------------------------------------------------------
     bool canFocusOn(Node& node, sf::Vector2f const& mouse)
     {
         // Since node does not use directly sf::Text we have to compute it back
         m_text.setString(node.caption);
         const float x = node.x - m_text.getLocalBounds().width / 2.0f;
         const float y = node.y - m_text.getLocalBounds().height -
-            PLACE_RADIUS - CAPTION_FONT_SIZE / 2.0f - 2.0f;
+                        PLACE_RADIUS - CAPTION_FONT_SIZE / 2.0f - 2.0f;
         m_text.setPosition(x, y);
 
         // Mouse cursor inside the caption of the node ?
@@ -94,7 +94,8 @@ public:
 
         // Place cursor after the character under the mouse
         m_cursor.index = findCursorPosition(mouse.x);
-        m_cursor.shape.setPosition(m_text.findCharacterPos(m_cursor.index) + sf::Vector2f(0.f, 2.0f));
+        m_cursor.shape.setPosition(m_text.findCharacterPos(m_cursor.index) +
+                                   sf::Vector2f(0.f, 2.0f));
         m_cursor.shape.setSize({2.0f, textBounds.height});
         m_cursor.timer.restart();
 
@@ -108,35 +109,39 @@ public:
         return true;
     }
 
-    //------------------------------------------------------------------------------
+    //--------------------------------------------------------------------------
     void refresh()
     {
         // Since node does not use directly sf::Text we have to compute it back
         m_text.setString(m_node->caption);
         const float x = m_node->x - m_text.getLocalBounds().width / 2.0f;
         const float y = m_node->y - m_text.getLocalBounds().height -
-            PLACE_RADIUS - CAPTION_FONT_SIZE / 2.0f - 2.0f;
+                        PLACE_RADIUS - CAPTION_FONT_SIZE / 2.0f - 2.0f;
         m_text.setPosition(x, y);
 
         // Update the box size to draw it.
         sf::FloatRect textBounds = m_text.getGlobalBounds();
         m_box.setPosition(textBounds.left, textBounds.top);
-        m_box.setSize({std::max(2.0f, textBounds.width), std::max(12.0f, textBounds.height)});
+        m_box.setSize({
+                std::max(2.0f, textBounds.width),
+                std::max(12.0f, textBounds.height)
+            });
 
         // Place cursor after the character under the mouse
-        m_cursor.shape.setPosition(m_text.findCharacterPos(m_cursor.index) + sf::Vector2f(0.f, 2.0f));
+        m_cursor.shape.setPosition(m_text.findCharacterPos(m_cursor.index) +
+                                   sf::Vector2f(0.f, 2.0f));
         m_cursor.shape.setSize({2.0f, textBounds.height});
         m_cursor.timer.restart();
     }
 
-    //------------------------------------------------------------------------------
+    //--------------------------------------------------------------------------
     void onMousePressed(sf::Vector2f const& mouse)
     {
         m_cursor.index = findCursorPosition(mouse.x);
         refresh();
     }
 
-    //------------------------------------------------------------------------------
+    //--------------------------------------------------------------------------
     void onKeyPressed(const sf::Event::KeyEvent& key, bool& modified)
     {
         if (m_node == nullptr)
@@ -208,7 +213,7 @@ public:
         }
     }
 
-    //------------------------------------------------------------------------------
+    //--------------------------------------------------------------------------
     void onTextEntered(sf::Uint32 unicode)
     {
         if (m_node == nullptr)
@@ -225,7 +230,7 @@ public:
 
 private:
 
-    //------------------------------------------------------------------------------
+    //--------------------------------------------------------------------------
     size_t findCursorPosition(float const x)
     {
         size_t i = m_text.getString().getSize();
@@ -240,8 +245,9 @@ private:
         return 0u;
     }
 
-    //------------------------------------------------------------------------------
-    virtual void draw(sf::RenderTarget& target, sf::RenderStates /*states*/) const override final
+    //--------------------------------------------------------------------------
+    virtual void draw(sf::RenderTarget& target,
+                      sf::RenderStates /*states*/) const override final
     {
         if (m_node == nullptr)
             return ;
@@ -257,7 +263,8 @@ private:
     Node* m_node = nullptr;
     //! \brief Memorize the initial caption when we need to restore it.
     std::string m_backup;
-    //! \brief Since Node does not use sf::Text we have to get this information back
+    //! \brief Since Node does not use sf::Text we have to get this information
+    //! back
     sf::Text m_text;
     //! \brief Draw a box around the focused text.
     sf::RectangleShape m_box;

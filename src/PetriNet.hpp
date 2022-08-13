@@ -594,8 +594,9 @@ public:
     Transition& addTransition(float const x, float const y)
     {
         modified = true;
-        m_transitions.push_back(Transition(m_next_transition_id++, "", x, y, 0u,
-                                (m_type == PetriNet::Type::TimedPetri) ? true : false));
+        m_transitions.push_back(
+            Transition(m_next_transition_id++, "", x, y, 0u,
+                       (m_type == PetriNet::Type::TimedPetri) ? true : false));
         return m_transitions.back();
     }
 
@@ -613,8 +614,9 @@ public:
                               float const x, float const y, int const angle)
     {
         modified = true;
-        m_transitions.push_back(Transition(id, caption, x, y, angle,
-                                (m_type == PetriNet::Type::TimedPetri) ? true : false));
+        m_transitions.push_back(
+            Transition(id, caption, x, y, angle,
+                       (m_type == PetriNet::Type::TimedPetri) ? true : false));
         if (id + 1u > m_next_transition_id)
             m_next_transition_id = id + 1u;
         return m_transitions.back();

@@ -90,7 +90,7 @@ public:
     void setSize(sf::Vector2u const& dimensions)
     {
         m_shape.setSize(sf::Vector2f(float(dimensions.x),
-                        20.0f * float(m_count_lines)));
+                                     20.0f * float(m_count_lines)));
     }
 
 private:
@@ -98,7 +98,8 @@ private:
     //--------------------------------------------------------------------------
     //! \brief
     //--------------------------------------------------------------------------
-    virtual void draw(sf::RenderTarget& target, sf::RenderStates /*states*/) const override final
+    virtual void draw(sf::RenderTarget& target,
+                      sf::RenderStates /*states*/) const override final
     {
         const float BLINK_PERIOD = 2.5f;
 
