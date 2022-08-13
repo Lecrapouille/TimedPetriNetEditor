@@ -311,10 +311,19 @@ void PetriEditor::draw(Transition const& transition, uint8_t alpha)
     // Draw the transition
     m_figure_trans.setPosition(sf::Vector2f(transition.x, transition.y));
     m_figure_trans.setRotation(float(transition.angle));
-    if ((m_petri_net.type() == PetriNet::Type::Petri) && (transition.receptivity))
+    if ((m_petri_net.type() == PetriNet::Type::Petri) &&
+        (transition.isValidated()))
+    {
         m_figure_trans.setFillColor(sf::Color::Green);
+    }
+    else if (transition.isEnabled())
+    {
+        m_figure_trans.setFillColor(sf::Color(255, 165, 0));
+    }
     else
+    {
         m_figure_trans.setFillColor(FILL_COLOR(alpha));
+    }
     m_renderer.draw(m_figure_trans);
 
     // Draw the caption
