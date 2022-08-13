@@ -26,9 +26,9 @@ using MaxPlus, SparseArrays
 #export
 #    PetriNet, Place, Transition, Arc,
 #    petri_net, is_empty, clear!, editor!, editor, load!, save,
-#    add_place!, remove_place!, places, count_places,
+#    add_place!, remove_place!, places, place, count_places,
 #    add_transition!, remove_transition!, transitions, count_transitions,
-#    tokens, tokens!,
+#    transition, tokens, tokens!,
 #    is_event_graph, canonic
 
 # https://github.com/Lecrapouille/TimedPetriNetEditor
@@ -44,7 +44,7 @@ index of the container in which it is hold. This handle is never invalidated
 even if the container changes of size.
 """
 struct PetriNet
-    handle::Int
+    handle::Int64
 end
 
 """
@@ -57,7 +57,8 @@ the Place is the unique identifier.
 struct Place
     x::Float64
     y::Float64
-    tokens::Int
+    tokens::Int64
+    # TODO caption
 end
 
 """
@@ -70,6 +71,7 @@ identifier.
 struct Transition
     x::Float64
     y::Float64
+    # TODO caption
 end
 
 """
@@ -245,12 +247,29 @@ julia> places(pn)
 2-element Vector{Place}:
  Place(3.15, 4.15, 5)
  Place(4.0, 5.0, 0)
+
+julia> p2 = add_place!(pn, Place(210.0, 210.0, 10))
+2
+
+julia> places(pn)
+3-element Vector{Place}:
+ Place(3.15, 4.15, 5)
+ Place(4.0, 5.0, 0)
+ Place(210.0, 210.0, 10)
 ```
 """
 function add_place!(pn::PetriNet, x::Float64, y::Float64, tokens::Int)
     (tokens < 0) && error("Number of tokens shall be >= 0")
-    id = ccall((:petri_add_place, libtpne), Clonglong, (Clonglong, Cfloat, Cfloat, Clonglong),
+    id = ccall((:petri_add_place, libtpne), Clonglong, (Clonglong, Cdouble, Cdouble, Clonglong),
                 pn.handle, x, y, tokens)
+    (id < 0) && throw_error()
+    return id
+end
+
+function add_place!(pn::PetriNet, p::Place)
+    (p.tokens < 0) && error("Number of tokens shall be >= 0")
+    id = ccall((:petri_add_place, libtpne), Clonglong, (Clonglong, Cdouble, Cdouble, Clonglong),
+                pn.handle, p.x, p.y, p.tokens)
     (id < 0) && throw_error()
     return id
 end
@@ -355,6 +374,26 @@ function places(pn::PetriNet)
     ccall((:petri_get_places, libtpne), Bool, (Clonglong, Ptr{Place}),
           pn.handle, list)
     list
+end
+
+"""
+    place
+"""
+function place(pn::PetriNet, i::Int64)
+    p = Ref(Place(0.0, 0.0, 0))
+    ccall((:petri_get_place, libtpne), Bool, (Clonglong, Clonglong, Ptr{Place}),
+          pn.handle, i, p)
+    p[]
+end
+
+"""
+    transition
+"""
+function transition(pn::PetriNet, i::Int64)
+    t = Ref(Transition(0.0, 0.0))
+    ccall((:petri_get_transition, libtpne), Bool, (Clonglong, Clonglong, Ptr{Transition}),
+          pn.handle, i, t)
+    t[]
 end
 
 """
@@ -511,11 +550,27 @@ julia> transitions(pn)
 2-element Vector{Transition}:
  Transition(3.15, 4.15)
  Transition(4.0, 5.0)
+
+julia> t2 = add_transition!(pn, Transition(4.0, 5.0))
+2
+
+julia> transitions(pn)
+3-element Vector{Transition}:
+ Transition(3.15, 4.15)
+ Transition(4.0, 5.0)
+ Transition(4.0, 5.0)
 ```
 """
 function add_transition!(pn::PetriNet, x::Float64, y::Float64)
-    id = ccall((:petri_add_transition, libtpne), Clonglong, (Clonglong, Cfloat, Cfloat),
-                pn.handle, Cfloat(x), Cfloat(y))
+    id = ccall((:petri_add_transition, libtpne), Clonglong, (Clonglong, Cdouble, Cdouble),
+                pn.handle, Cdouble(x), Cdouble(y))
+    (id < 0) && throw_error()
+    return id
+end
+
+function add_transition!(pn::PetriNet, t::Transition)
+    id = ccall((:petri_add_transition, libtpne), Clonglong, (Clonglong, Cdouble, Cdouble),
+                pn.handle, Cdouble(t.x), Cdouble(t.y))
     (id < 0) && throw_error()
     return id
 end
