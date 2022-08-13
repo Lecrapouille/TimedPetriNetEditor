@@ -190,23 +190,7 @@ bool PetriNet::addArc(Node& from, Node& to, float const duration)
         return false;
     }
 
-    // Durations
-    float dur = duration;
-    switch (m_type)
-    {
-        case PetriNet::Type::TimedPetri:
-            dur = duration;
-            break;
-        case PetriNet::Type::Petri:
-            dur = 0.2f; // In theory 0.0f but nicer for human brain
-            break;
-        case PetriNet::Type::GRAFCET:
-            dur = 1.5f; // In theory 0.0f but nicer for human brain
-            break;
-        default: assert(false && "Unknown type of net"); break;
-    }
-
-    m_arcs.push_back(Arc(from, to, dur));
+    m_arcs.push_back(Arc(from, to, duration));
     from.arcsOut.push_back(&m_arcs.back());
     to.arcsIn.push_back(&m_arcs.back());
     modified = true;

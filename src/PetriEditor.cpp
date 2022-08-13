@@ -546,7 +546,7 @@ void PetriEditor::update(float const dt)
                               << a.count << " token"
                               << (a.count == 1u ? "" : "s")
                               << std::endl;
-                    m_animations.push_back(AnimatedToken(a, a.count));
+                    m_animations.push_back(AnimatedToken(a, a.count, m_petri_net.type()));
                     a.fading.restart();
                     a.count = 0u;
                 }

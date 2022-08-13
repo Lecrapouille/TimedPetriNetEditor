@@ -339,8 +339,10 @@ public:
     //--------------------------------------------------------------------------
     //! \brief Constructor. This method expects the two nodes have different
     //! types. The check shall be made by the caller class.
-    //! \param[in] from: Origin node (Place or Transition).
-    //! \param[in] to: Destination node (Place or Transition).
+    //! \param[in] from_: Origin node (Place or Transition).
+    //! \param[in] to_: Destination node (Place or Transition).
+    //! \param[in] duration_: Duration of the process (in unit of time) if \c to_
+    //! is a Place (else the duration is forced to 0).
     //! \note Nodes shall have different types. Assertion is made here.
     //--------------------------------------------------------------------------
     Arc(Node& from_, Node& to_, float duration_ = 0.0f)

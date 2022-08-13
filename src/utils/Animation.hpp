@@ -37,11 +37,12 @@ struct AnimatedToken
 {
     //--------------------------------------------------------------------------
     //! \brief Constructor.
-    //! \param[in] arc: to which arc token are moving along. Shall be an arc
+    //! \param[in] arc_: to which arc token are moving along. Shall be an arc
     //! Transition -> Place. No check is performed here.
-    //! \param[in] tokens: the number of tokens it shall carry.
+    //! \param[in] tokens_: the number of tokens it shall carry.
+    //! \param[in] type_: Type of the net (Petri, timed Petri, GRAFCET ...)
     //--------------------------------------------------------------------------
-    AnimatedToken(Arc& arc_, size_t tokens_)
+    AnimatedToken(Arc& arc_, size_t tokens_, PetriNet::Type type_)
         : x(arc_.from.x), y(arc_.from.y), tokens(tokens_), arc(arc_)
     {
         assert(arc.from.type == Node::Type::Transition);
@@ -50,7 +51,25 @@ struct AnimatedToken
         // Note: we are supposing the norm and duration is never updated by
         // the user during the simulation.
         magnitude = norm(arc.from.x, arc.from.y, arc.to.x, arc.to.y);
-        speed = magnitude / arc.duration;
+
+        // Set the token animation speed. Depending on the type of Petri net,
+        // and for pure entertainment reason, override the arc duration to
+        // avoid unpleasant instaneous transitions (teleportation effect).
+        switch (type_)
+        {
+        case PetriNet::Type::TimedPetri:
+            speed = magnitude / std::max(0.000001f, arc.duration);
+            break;
+            // In theory duration is 0 but nicer for the user to see animation.
+        case PetriNet::Type::Petri:
+            speed = magnitude / 0.2f;
+            break;
+            // In theory duration is 0 but nicer for the user to see animation.
+        case PetriNet::Type::GRAFCET:
+            speed = magnitude / 1.5f;
+            break;
+        default: assert(false && "Unknown type of net"); break;
+        }
     }
 
     // I dunno why the code in the #else branch seems to make buggy animations

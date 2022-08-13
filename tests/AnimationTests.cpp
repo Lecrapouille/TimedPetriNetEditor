@@ -32,7 +32,7 @@ TEST(TestPetriNet, TestAnimatedTokenCreation)
     Transition t1(42u, "", 3.5f, 4.0f, 45u, true);
     Place p1(43u, "", 4.6f, 5.1f, 13u);
     Arc a1(t1, p1, 10.0f);
-    AnimatedToken at1(a1, 3u);
+    AnimatedToken at1(a1, 3u, PetriNet::Type::TimedPetri);
     float norm = sqrtf((3.5f - 4.6f) * (3.5f - 4.6f) + (4.0f - 5.1f) * (4.0f - 5.1f));
 
     ASSERT_EQ(at1.x, 3.5f);
@@ -67,7 +67,7 @@ TEST(TestPetriNet, TestAnimatedTokenCreation)
     Transition t2(45u, "", 13.5f, 14.0f, 145u, true);
     Place p2(46u, "", 14.6f, 15.1f, 113u);
     Arc a2(t2, p2, 110.0f);
-    AnimatedToken at3(a2, 13u);
+    AnimatedToken at3(a2, 13u, PetriNet::Type::TimedPetri);
     ASSERT_EQ(at3.x, 13.5f);
     ASSERT_EQ(at3.y, 14.0f);
     ASSERT_EQ(at3.tokens, 13u);
@@ -102,7 +102,7 @@ TEST(TestPetriNet, TestAnimatedTokenUpdate)
     Transition t1(42u, "", 0.0f, 0.0f, 45u, true);
     Place p1(43u, "", 20.0f, 0.0f, 13u);
     Arc a1(t1, p1, 10.0f); // Duration: 10 units of time
-    AnimatedToken at1(a1, 3u);
+    AnimatedToken at1(a1, 3u, PetriNet::Type::TimedPetri);
     ASSERT_EQ(at1.magnitude, 20.0f);
     ASSERT_EQ(at1.speed, 2.0f); // 20 units of distance / 10 units of time
 
