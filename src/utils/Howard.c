@@ -32,6 +32,11 @@
 #include <math.h>
 #include "Howard.h"
 
+#if !defined(_WIN32)
+#  pragma GCC diagnostic push
+#    pragma GCC diagnostic ignored "-Wshadow"
+#endif
+
 #define EPSILON -HUGE_VAL
 /*#define EPSILON  -1.79769313486231570e308*/
 
@@ -1069,3 +1074,7 @@ int Semi_Howard(int *IJ, double *A,double *T,int NNODES,int NARCS,double *CHI,do
     ERRORTYPE=End_Message();
     return(ERRORTYPE);
 }
+
+#if !defined(_WIN32)
+#  pragma GCC diagnostic pop
+#endif

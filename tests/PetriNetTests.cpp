@@ -142,7 +142,7 @@ TEST(TestPetriNet, TestTransitionCreation)
     Transition t1(42u, "Hello", 3.5f, 4.0f, 45u, false);
     ASSERT_EQ(t1.id, 42u);
     ASSERT_EQ(t1.type, Node::Transition);
-    ASSERT_EQ(t1.angle, 45u);
+    ASSERT_EQ(t1.angle, 45);
     ASSERT_EQ(t1.x, 3.5f);
     ASSERT_EQ(t1.y, 4.0f);
     ASSERT_EQ(t1.receptivity, false);
@@ -159,7 +159,7 @@ TEST(TestPetriNet, TestTransitionCreation)
     Transition t2(t1);
     ASSERT_EQ(t2.id, 42u);
     ASSERT_EQ(t2.type, Node::Transition);
-    ASSERT_EQ(t2.angle, 45u);
+    ASSERT_EQ(t2.angle, 45);
     ASSERT_EQ(t2.x, 3.5f);
     ASSERT_EQ(t2.y, 4.0f);
     ASSERT_EQ(t2.receptivity, false);
@@ -183,7 +183,7 @@ TEST(TestPetriNet, TestTransitionCreation)
     t3 = t1;
     ASSERT_EQ(t3.id, 42u);
     ASSERT_EQ(t3.type, Node::Transition);
-    ASSERT_EQ(t3.angle, 45u);
+    ASSERT_EQ(t3.angle, 45);
     ASSERT_EQ(t3.x, 3.5f);
     ASSERT_EQ(t3.y, 4.0f);
     ASSERT_EQ(t3.receptivity, false);
@@ -226,7 +226,7 @@ TEST(TestPetriNet, TestArcCreation)
     ASSERT_STREQ(a1.to.caption.c_str(), "P43");
     ASSERT_EQ(a1.to.arcsIn.size(), 0u);
     ASSERT_EQ(a1.to.arcsOut.size(), 0u);
-    ASSERT_EQ(reinterpret_cast<Transition&>(a1.from).angle, 45u);
+    ASSERT_EQ(reinterpret_cast<Transition&>(a1.from).angle, 45);
     ASSERT_EQ(reinterpret_cast<Place&>(a1.to).tokens, 13u);
     ASSERT_EQ(a1.tokensOut(), 13u);
 
@@ -249,7 +249,7 @@ TEST(TestPetriNet, TestArcCreation)
     ASSERT_STREQ(a2.from.caption.c_str(), "P43");
     ASSERT_EQ(a2.from.arcsIn.size(), 0u);
     ASSERT_EQ(a2.from.arcsOut.size(), 0u);
-    ASSERT_EQ(reinterpret_cast<Transition&>(a2.to).angle, 45u);
+    ASSERT_EQ(reinterpret_cast<Transition&>(a2.to).angle, 45);
     ASSERT_EQ(reinterpret_cast<Place&>(a2.from).tokens, 13u);
     ASSERT_EQ(a2.tokensIn(), 13u);
 
@@ -276,7 +276,7 @@ TEST(TestPetriNet, TestArcCreation)
     ASSERT_STREQ(a3.to.caption.c_str(), "P43");
     ASSERT_EQ(a3.to.arcsIn.size(), 0u);
     ASSERT_EQ(a3.to.arcsOut.size(), 0u);
-    ASSERT_EQ(reinterpret_cast<Transition&>(a3.from).angle, 45u);
+    ASSERT_EQ(reinterpret_cast<Transition&>(a3.from).angle, 45);
     ASSERT_EQ(reinterpret_cast<Place&>(a3.to).tokens, 13u);
     ASSERT_EQ(a3.tokensOut(), 13u);
 
@@ -300,7 +300,7 @@ TEST(TestPetriNet, TestArcCreation)
     ASSERT_STREQ(a4.to.caption.c_str(), "P43");
     ASSERT_EQ(a4.to.arcsIn.size(), 0u);
     ASSERT_EQ(a4.to.arcsOut.size(), 0u);
-    ASSERT_EQ(reinterpret_cast<Transition&>(a4.from).angle, 45u);
+    ASSERT_EQ(reinterpret_cast<Transition&>(a4.from).angle, 45);
     ASSERT_EQ(reinterpret_cast<Place&>(a4.to).tokens, 13u);
     ASSERT_EQ(a4.tokensOut(), 13u);
 

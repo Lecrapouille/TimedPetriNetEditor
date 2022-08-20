@@ -53,6 +53,7 @@ DEFINES = -DDATADIR=\"$(DATADIR)\"
 # Reduce warnings
 #
 DEFINES += -Wno-undef -Wno-switch-enum -Wno-sign-conversion -Wno-float-equal
+DEFINES += -Wno-deprecated-copy-dtor -Wno-defaulted-function-deleted
 
 ###################################################
 # Make the list of compiled files used both by the

@@ -49,6 +49,8 @@ VPATH += $(P) $(P)/src $(P)/src/utils
 #
 DEFINES += -Wno-undef -Wno-switch-enum -Wno-sign-conversion -Wno-float-equal -Wno-shadow
 
+DEFINES += -Wno-keyword-macro -Wno-defaulted-function-deleted
+
 ###################################################
 # Make the list of compiled files for tests
 #

@@ -315,7 +315,7 @@ public:
 
     //! \brief Transitions are depicted by rectangles. We allow to rotate it
     //! to have horizontal, vertical or diagonal shape transitions.
-    int angle = 0u;
+    int angle = 0;
 
     //! \brief In petri net mode, the user has to click to validate the
     //! receptivity of the transition. If predecessor places have all at least

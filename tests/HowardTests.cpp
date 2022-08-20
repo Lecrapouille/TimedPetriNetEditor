@@ -44,7 +44,7 @@ TEST(TestHoward, TestSemiSimple)
     ASSERT_EQ(timings.size(), narcs);
     ASSERT_EQ(delays.size(), narcs);
     ASSERT_EQ(arcs.size(), 2u * narcs);
-    ASSERT_EQ(*max_element(std::begin(arcs), std::end(arcs)), nnodes - 1u);
+    ASSERT_EQ(*max_element(std::begin(arcs), std::end(arcs)), int(nnodes - 1u));
 
     std::vector<double> v(nnodes); // bias
     std::vector<double> chi(nnodes); // cycle time vector
@@ -90,7 +90,7 @@ TEST(TestHoward, TestSemiNetherlands)
     ASSERT_EQ(timings.size(), narcs);
     ASSERT_EQ(delays.size(), narcs);
     ASSERT_EQ(arcs.size(), 2u * narcs);
-    ASSERT_EQ(*max_element(std::begin(arcs), std::end(arcs)), nnodes - 1u);
+    ASSERT_EQ(*max_element(std::begin(arcs), std::end(arcs)), int(nnodes - 1u));
 
     std::vector<double> v(nnodes); // bias
     std::vector<double> chi(nnodes); // cycle time vector
