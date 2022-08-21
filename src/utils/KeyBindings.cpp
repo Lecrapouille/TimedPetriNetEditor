@@ -23,6 +23,10 @@
 //------------------------------------------------------------------------------
 std::string const& to_str(sf::Keyboard::Key const key)
 {
+#if !defined(_WIN32)
+#  pragma GCC diagnostic push
+#    pragma GCC diagnostic ignored "-Wpedantic"
+#endif
 #define ITEM(x) [sf::Keyboard::x + 1u] = #x // +1u because sf::Keyboard::Unknown starts from -1
 
     static_assert(sf::Keyboard::KeyCount == 101, "Number of SFML keys has changed");
@@ -133,6 +137,9 @@ std::string const& to_str(sf::Keyboard::Key const key)
     };
 
 #undef ITEM
+#if !defined(_WIN32)
+#  pragma GCC diagnostic pop
+#endif
 
     if (key < sf::Keyboard::KeyCount)
         return s_keys[key + 1u];

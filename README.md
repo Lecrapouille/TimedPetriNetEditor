@@ -179,12 +179,14 @@ from the mouse and the keyboard (like Emacs but without the Meta key ^^).
   well as intermediate arc.
 - `L` key: same action than the middle mouse button.
 - `M` key: move the node (place or transition) selected by the mouse cursor.
-- `Delete` key: remove a node (place or transition). Note: since all identifiers
+- Linux: `Delete` key: remove a node (place or transition). Note: since all identifiers
   shall be consecutive (no gaps), the unique identifier of the last created node
   of the same type will receive the unique identifier of the deleted one. Note:
   arc cannot yet be deleted.
+- MacOSX: `\` for deleting node.
 - `Z` key: clear the whole Petri net.
-- `+`, `-` keys: add/remove a token on the place selected by the mouse cursor.
+- Linux: `+`, `-` keys: add/remove a token on the place selected by the mouse cursor.
+- MacOSX: `[`, `]` keys: add/remove a token on the place selected by the mouse cursor.
 - `PageUp`, `PageDown` keys: rotate CW or CCW the transition selected by the
   mouse cursor.
 - `R` or `SPACE`key: start (run) or stop the simulation. Note: if the simulation

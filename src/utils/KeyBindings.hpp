@@ -39,14 +39,21 @@
 #  define KEY_BINDIND_ERASE_PETRI_NET sf::Keyboard::Z
 #  define KEY_BINDIND_MOVE_PETRI_NODE sf::Keyboard::M
 #  define KEY_BINDIND_ARC_FROM_NODE sf::Keyboard::L
-#  define KEY_BINDING_DELETE_PETRI_ELEMENT sf::Keyboard::Delete
-#  define KEY_BINDIND_INCREMENT_TOKENS sf::Keyboard::Add
-#  define KEY_BINDIND_DECREMENT_TOKENS sf::Keyboard::Subtract
 #  define KEY_BINDIND_ROTATE_CW sf::Keyboard::PageUp
 #  define KEY_BINDIND_ROTATE_CCW sf::Keyboard::PageDown
 #  define KEY_BINDIND_SHOW_GRID sf::Keyboard::D
 #  define KEY_BINDIND_ALIGN_NODES sf::Keyboard::A
 #  define KEY_BINDIND_SHOW_HELP sf::Keyboard::H
+// SFML bug for macOS ?
+#  if defined(__APPLE__)
+#    define KEY_BINDIND_INCREMENT_TOKENS sf::Keyboard::RBracket
+#    define KEY_BINDIND_DECREMENT_TOKENS sf::Keyboard::LBracket
+#    define KEY_BINDING_DELETE_PETRI_ELEMENT sf::Keyboard::Backslash
+#  else
+#    define KEY_BINDIND_INCREMENT_TOKENS sf::Keyboard::Add
+#    define KEY_BINDIND_DECREMENT_TOKENS sf::Keyboard::Subtract
+#    define KEY_BINDING_DELETE_PETRI_ELEMENT sf::Keyboard::Delete
+#  endif
 
 // -----------------------------------------------------------------------------
 std::string const& to_str(sf::Keyboard::Key const key);
