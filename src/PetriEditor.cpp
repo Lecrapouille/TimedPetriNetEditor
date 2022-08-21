@@ -162,7 +162,7 @@ bool PetriEditor::save(bool const force)
     if (force || m_filename.empty())
     {
         pfd::save_file manager("Choose the JSON file to save the Petri net",
-                               "~/petri.json", { "JSON File", "*.json" });
+                               "petri.json", { "JSON File", "*.json" });
         m_filename = manager.result();
     }
 
@@ -713,7 +713,7 @@ void PetriEditor::handleKeyPressed(sf::Event const& event)
         if (/*(!m_simulating) &&*/ (!m_petri_net.isEmpty()))
         {
             pfd::save_file manager("Choose the LaTeX file to export",
-                                   "~/LateX-gen.tex",
+                                   "LateX-gen.tex",
                                    { "LaTex File", "*.tex" });
             std::string file = manager.result();
             if (!file.empty())
@@ -749,7 +749,7 @@ void PetriEditor::handleKeyPressed(sf::Event const& event)
         if (/*(!m_simulating) &&*/ (!m_petri_net.isEmpty()))
         {
             pfd::save_file manager("Choose the Graphviz file to export",
-                                   "~/Graphviz-gen.gv",
+                                   "Graphviz-gen.gv",
                                    { "Graphviz File", "*.gv *.dot" });
             std::string file = manager.result();
             if (!file.empty())
@@ -782,7 +782,7 @@ void PetriEditor::handleKeyPressed(sf::Event const& event)
         if ((!m_simulating) && (!m_petri_net.isEmpty()))
         {
             pfd::save_file manager("Choose the C++ header file to export as Grafcet",
-                                   "~/Grafcet-gen.hpp",
+                                   "Grafcet-gen.hpp",
                                    { "C++ Header File", "*.hpp *.h *.hh *.h++" });
             std::string file = manager.result();
             if (!file.empty())
@@ -816,7 +816,7 @@ void PetriEditor::handleKeyPressed(sf::Event const& event)
         if ((!m_simulating) && (!m_petri_net.isEmpty()))
         {
             pfd::save_file manager("Choose the Julia file to export as graph event",
-                                   "~/GraphEvent-gen.jl",
+                                   "GraphEvent-gen.jl",
                                    { "Julia File", "*.jl" });
             std::string file = manager.result();
             if (!file.empty())
