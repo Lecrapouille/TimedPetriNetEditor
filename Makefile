@@ -59,7 +59,7 @@ DEFINES += -Wno-deprecated-copy-dtor -Wno-defaulted-function-deleted
 # Make the list of compiled files used both by the
 # library and application
 #
-COMMON_OBJS = Howard.o Application.o PetriNet.o PetriEditor.o
+COMMON_OBJS = Howard.o KeyBindings.o Application.o PetriNet.o PetriEditor.o
 
 ###################################################
 # Make the list of compiled files for the library
