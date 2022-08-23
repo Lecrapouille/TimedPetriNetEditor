@@ -78,6 +78,17 @@ OBJS += $(COMMON_OBJS) main.o
 PKG_LIBS = sfml-graphics
 
 ###################################################
+# MacOS X
+#
+ifeq ($(ARCHI),Darwin)
+BUILD_MACOS_APP_BUNDLE = 1
+APPLE_IDENTIFIER = lecrapouille
+MACOS_BUNDLE_ICON = data/TimedPetriNetEditor.icns
+
+LINKER_FLAGS += -framework CoreFoundation
+endif
+
+###################################################
 # Compile the project, the static and shared libraries
 .PHONY: all
 all: $(TARGET) $(STATIC_LIB_TARGET) $(SHARED_LIB_TARGET) $(PKG_FILE)
@@ -94,6 +105,7 @@ unit-tests:
 .PHONY: check
 check: unit-tests
 
+ifeq ($(ARCHI),Linux)
 ###################################################
 # Install project. You need to be root.
 .PHONY: install
@@ -102,6 +114,7 @@ install: $(TARGET) $(STATIC_LIB_TARGET) $(SHARED_LIB_TARGET) $(PKG_FILE)
 	@$(call INSTALL_DOCUMENTATION)
 	@$(call INSTALL_PROJECT_LIBRARIES)
 	@$(call INSTALL_PROJECT_HEADERS)
+endif
 
 ###################################################
 # Clean the whole project.

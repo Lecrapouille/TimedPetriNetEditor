@@ -59,16 +59,10 @@ PetriEditor::PetriEditor(Application& application, PetriNet& net)
     m_figure_trans.setOutlineColor(OUTLINE_COLOR);
 
     // Precompute SFML struct for drawing text (places and transitions)
-    if (!m_font.loadFromFile(DATADIR"/font.ttf"))
+    if (!m_font.loadFromFile(data_path("font.ttf")))
     {
-        if (!m_font.loadFromFile("data/font.ttf"))
-        {
-            if (!m_font.loadFromFile("font.ttf"))
-            {
-                std::cerr << "Could not load font file ..." << std::endl;
-                exit(1);
-            }
-        }
+        std::cerr << "Could not load font file ..." << std::endl;
+        // exit(1);
     }
 
     // Caption for Places and Transitions

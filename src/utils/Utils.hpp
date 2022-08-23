@@ -29,6 +29,58 @@
 #  include <iomanip>  // tmpPetriFile()
 #  include <pwd.h>    // tmpPetriFile()
 #  include <memory>
+#  include <sys/stat.h>
+#  ifdef __APPLE__
+#    include <CoreFoundation/CFBundle.h>
+#  endif
+
+//------------------------------------------------------------------------------
+// Return the data folder.
+//------------------------------------------------------------------------------
+inline std::string data_path(std::string const& file)
+{
+    struct stat exists; // folder exists ?
+    std::string path;
+
+#  ifdef __APPLE__
+
+    // Return the resources folder inside MacOS bundle application
+    CFURLRef resourceURL = CFBundleCopyResourcesDirectoryURL(CFBundleGetMainBundle());
+    char resourcePath[PATH_MAX];
+    if (CFURLGetFileSystemRepresentation(resourceURL, true,
+                                         reinterpret_cast<UInt8 *>(resourcePath),
+                                         PATH_MAX))
+    {
+        if (resourceURL != NULL)
+        {
+            CFRelease(resourceURL);
+        }
+
+        path = std::string(resourcePath) + "/" + file;
+        if (stat(path.c_str(), &exists) == 0)
+        {
+            return path;
+        }
+    }
+
+#endif
+
+#ifdef DATADIR
+    path = std::string(DATADIR) + "/" + file;
+    if (stat(path.c_str(), &exists) == 0)
+    {
+        return path;
+    }
+#endif
+
+    path = "data/" + file;
+    if (stat(path.c_str(), &exists) == 0)
+    {
+        return path;
+    }
+
+    return file;
+}
 
 //------------------------------------------------------------------------------
 // Make the C++14 std::make_unique available for C++11 and Visual Studio.
