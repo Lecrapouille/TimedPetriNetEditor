@@ -68,16 +68,17 @@ public:
     }
 
     //--------------------------------------------------------------------------
-    inline bool hasFocus() const { return m_node != nullptr; }
-    inline void unfocus() { m_node = nullptr; }
+    inline bool hasFocus() const { return m_caption != nullptr; }
+    inline void unfocus() { m_caption = nullptr; }
 
     //--------------------------------------------------------------------------
-    bool canFocusOn(Node& node, sf::Vector2f const& mouse)
+    bool canFocusOn(std::string& caption, float* fvalue, float const caption_x,
+                    float const caption_y, sf::Vector2f const& mouse)
     {
         // Since node does not use directly sf::Text we have to compute it back
-        m_text.setString(node.caption);
-        const float x = node.x - m_text.getLocalBounds().width / 2.0f;
-        const float y = node.y - m_text.getLocalBounds().height -
+        m_text.setString(caption);
+        const float x = caption_x - m_text.getLocalBounds().width / 2.0f;
+        const float y = caption_y - m_text.getLocalBounds().height -
                         PLACE_RADIUS - CAPTION_FONT_SIZE / 2.0f - 2.0f;
         m_text.setPosition(x, y);
 
@@ -100,12 +101,15 @@ public:
         m_cursor.timer.restart();
 
         // Already focused on this caption ? Memorize text for its restoration
-        if (m_node != &node)
+        if (m_caption != &caption)
         {
-            m_backup = node.caption;
+            m_backup = caption;
         }
 
-        m_node = &node;
+        m_caption = &caption;
+        m_caption_x = caption_x;
+        m_caption_y = caption_y;
+        m_fvalue = fvalue;
         return true;
     }
 
@@ -113,19 +117,16 @@ public:
     void refresh()
     {
         // Since node does not use directly sf::Text we have to compute it back
-        m_text.setString(m_node->caption);
-        const float x = m_node->x - m_text.getLocalBounds().width / 2.0f;
-        const float y = m_node->y - m_text.getLocalBounds().height -
+        m_text.setString(*m_caption);
+        const float x = m_caption_x - m_text.getLocalBounds().width / 2.0f;
+        const float y = m_caption_y - m_text.getLocalBounds().height -
                         PLACE_RADIUS - CAPTION_FONT_SIZE / 2.0f - 2.0f;
         m_text.setPosition(x, y);
 
         // Update the box size to draw it.
         sf::FloatRect textBounds = m_text.getGlobalBounds();
         m_box.setPosition(textBounds.left, textBounds.top);
-        m_box.setSize({
-                std::max(2.0f, textBounds.width),
-                std::max(12.0f, textBounds.height)
-            });
+        m_box.setSize({ std::max(2.0f, textBounds.width), textBounds.height });
 
         // Place cursor after the character under the mouse
         m_cursor.shape.setPosition(m_text.findCharacterPos(m_cursor.index) +
@@ -144,7 +145,7 @@ public:
     //--------------------------------------------------------------------------
     void onKeyPressed(const sf::Event::KeyEvent& key, bool& modified)
     {
-        if (m_node == nullptr)
+        if (m_caption == nullptr)
             return ;
 
         switch (key.code)
@@ -158,7 +159,7 @@ public:
             break;
 
         case sf::Keyboard::Right:
-            if (m_cursor.index < m_node->caption.size())
+            if (m_cursor.index < m_caption->size())
             {
                 m_cursor.index = m_cursor.index + 1u;
                 refresh();
@@ -168,15 +169,15 @@ public:
         case sf::Keyboard::BackSpace:
             if (m_cursor.index > 0)
             {
-                m_cursor.index =  m_cursor.index - 1u;
-                m_node->caption.erase(m_cursor.index, 1u);
+                m_cursor.index = m_cursor.index - 1u;
+                m_caption->erase(m_cursor.index, 1u);
                 refresh();
             }
             break;
         case sf::Keyboard::Delete:
-            if (m_cursor.index < m_node->caption.size())
+            if (m_cursor.index < m_caption->size())
             {
-                m_node->caption.erase(m_cursor.index, 1u);
+                m_caption->erase(m_cursor.index, 1u);
                 refresh();
             }
             break;
@@ -187,25 +188,29 @@ public:
             break;
 
         case sf::Keyboard::End:
-            m_cursor.index = m_node->caption.size();
+            m_cursor.index = m_caption->size();
             refresh();
             break;
 
         case sf::Keyboard::Escape:
-            m_node->caption = m_backup;
-            m_node = nullptr;
+            *m_caption = m_backup;
+            m_caption = nullptr;
             break;
 
         case sf::Keyboard::Return:
-            if (m_node->caption.empty())
+            if (m_caption->empty())
             {
-                m_node->caption = m_backup;
+                *m_caption = m_backup;
             }
             else
             {
+                if (m_fvalue != nullptr)
+                {
+                    *m_fvalue = float(std::atof(m_caption->c_str()));
+                }
                 modified = true;
             }
-            m_node = nullptr;
+            m_caption = nullptr;
             break;
 
         default:
@@ -216,13 +221,13 @@ public:
     //--------------------------------------------------------------------------
     void onTextEntered(sf::Uint32 unicode)
     {
-        if (m_node == nullptr)
+        if (m_caption == nullptr)
             return ;
 
         if (unicode > 30 && (unicode < 127 || unicode > 159))
         {
             std::string c(1u, char(unicode));
-            m_node->caption.insert(m_cursor.index, c);
+            m_caption->insert(m_cursor.index, c);
             m_cursor.index = m_cursor.index + 1u;
             refresh();
         }
@@ -249,7 +254,7 @@ private:
     virtual void draw(sf::RenderTarget& target,
                       sf::RenderStates /*states*/) const override final
     {
-        if (m_node == nullptr)
+        if (m_caption == nullptr)
             return ;
 
         m_cursor.blink();
@@ -260,7 +265,8 @@ private:
 private:
 
     //! \brief Reference the caption of the selected Petri node.
-    Node* m_node = nullptr;
+    std::string* m_caption = nullptr;
+    float m_caption_x; float m_caption_y; float* m_fvalue = nullptr;
     //! \brief Memorize the initial caption when we need to restore it.
     std::string m_backup;
     //! \brief Since Node does not use sf::Text we have to get this information

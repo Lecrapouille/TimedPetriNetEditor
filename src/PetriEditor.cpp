@@ -1089,9 +1089,11 @@ void PetriEditor::alignElements()
 //------------------------------------------------------------------------------
 bool PetriEditor::clickedOnCaption()
 {
+    static std::string duration;
+
     for (auto& place: m_petri_net.places())
     {
-        if (m_entry_box.canFocusOn(place, m_mouse))
+        if (m_entry_box.canFocusOn(place.caption, nullptr, place.x, place.y, m_mouse))
         {
             return true;
         }
@@ -1099,8 +1101,29 @@ bool PetriEditor::clickedOnCaption()
 
     for (auto& transition: m_petri_net.transitions())
     {
-        if (m_entry_box.canFocusOn(transition, m_mouse))
+        if (m_entry_box.canFocusOn(transition.caption, nullptr, transition.x, transition.y, m_mouse))
         {
+            return true;
+        }
+    }
+
+    for (auto& arc: m_petri_net.arcs())
+    {
+        if (arc.from.type == Node::Type::Place)
+            continue;
+
+        // Since durations are float, this is more complex: we have to convert
+        // float to string and do not convert it back to float because values
+        // after the dot makes things wrong. For example removing the last 0 of
+        // 2.00 will restore its 0 (+ risk of adding epsilon due to IEEE754 norm)
+        const float x = arc.from.x + (arc.to.x - arc.from.x) / 2.0f;
+        const float y = arc.from.y + (arc.to.y - arc.from.y) / 2.0f + 2.0f;
+        std::stringstream ss;
+        ss << std::fixed << std::setprecision(2) << arc.duration;
+        duration = ss.str();
+        if (m_entry_box.canFocusOn(duration, &arc.duration, x, y, m_mouse))
+        {
+            std::cout << "Duration: " << duration << std::endl;
             return true;
         }
     }
