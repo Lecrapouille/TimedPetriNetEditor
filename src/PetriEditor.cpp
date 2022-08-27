@@ -771,6 +771,39 @@ void PetriEditor::handleKeyPressed(sf::Event const& event)
         }
     }
 
+    // 'K' key: save the Petri net as graphviz file format
+    else if (event.key.code == KEY_BINDIND_EXPORT_PETRI_TO_PNEDITOR)
+    {
+        if (/*(!m_simulating) &&*/ (!m_petri_net.isEmpty()))
+        {
+            pfd::save_file manager("Choose the PN-Editor file to export",
+                                   "petri-gen.pns",
+                                   { "PN-Editor File", "*.pns *.pnl *.pnk *.pnkp" });
+            std::string file = manager.result();
+            if (!file.empty())
+            {
+                if (m_petri_net.exportToPNEditor(file))
+                {
+                    m_message_bar.setInfo(
+                        "Petri net successfully exported as Graphviz file!");
+                }
+                else
+                {
+                    m_message_bar.setError(
+                        "Could not export the Petri net to Graphviz file!");
+                }
+            }
+        }
+        //else if (m_simulating)
+        //{
+        //    m_message_bar.setError("Cannot export during the simulation!");
+        //}
+        else if (m_petri_net.isEmpty())
+        {
+            m_message_bar.setWarning("Cannot export empty Petri net!");
+        }
+    }
+
     // 'G' key: save the Petri net as grafcet in a C++ header file
     else if (event.key.code == KEY_BINDIND_EXPORT_PETRI_TO_GRAFCET)
     {
@@ -1323,6 +1356,7 @@ std::stringstream PetriNet::help()
        << "  " << to_str(KEY_BINDIND_EXPORT_PETRI_TO_GRAPHVIZ) << " key: export the Petri net as Graphviz file" << std::endl
        << "  " << to_str(KEY_BINDIND_EXPORT_PETRI_TO_LATEX) << " key: export the Petri net as LaTeX file" << std::endl
        << "  " << to_str(KEY_BINDIND_EXPORT_PETRI_TO_GRAFCET) << " key: export the Petri net as GRAFCET in a C++ header file" << std::endl
-       << "  " << to_str(KEY_BINDIND_EXPORT_PETRI_TO_JULIA) << " key: export the Petri net as Julia code" << std::endl;
+       << "  " << to_str(KEY_BINDIND_EXPORT_PETRI_TO_JULIA) << " key: export the Petri net as Julia code" << std::endl
+       << "  " << to_str(KEY_BINDIND_EXPORT_PETRI_TO_PNEDITOR) << " key: export the Petri net as for https://gitlab.com/porky11/pn-editor" << std::endl;
     return ss;
 }

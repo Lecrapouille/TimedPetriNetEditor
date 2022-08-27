@@ -204,6 +204,7 @@ from the mouse and the keyboard (like Emacs but without the Meta key ^^).
 - `P` key: export the Petri net as Graphviz file (for example named `petri.gv`).
 - `G` key: export the Petri net as Grafcet into a C++ header file (for example
   named `Grafcet-gen.hpp`).
+- `K` key: export the Petri net for https://gitlab.com/porky11/pn-editor.
 - `H` key: show this help.
 
 ## Work in progress
@@ -823,6 +824,10 @@ Green 2
 Orange 1
 Orange 2
 ```
+
+## Other export
+
+Can export to input files for https://gitlab.com/porky11/pn-editor
 
 ## Description of the file format used for saving Petri net
 

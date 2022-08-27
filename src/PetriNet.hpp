@@ -845,6 +845,14 @@ public:
     bool exportToGraphviz(std::string const& filename);
 
     //--------------------------------------------------------------------------
+    //! \brief Export the Petri net to https://gitlab.com/porky11/pn-editor.
+    //! \param[in] filename the path of dot file.
+    //! \return true if the Petri net has been exported with success. Return
+    //! false in case of failure.
+    //--------------------------------------------------------------------------
+    bool exportToPNEditor(std::string const& filename);
+
+    //--------------------------------------------------------------------------
     //! \brief Export the Petri net as GRAFCET code as C++ header file.
     //! \param[in] filename the path of h++ file. Should have the .hpp or .h
     //! extension (or any associated to header header files).
