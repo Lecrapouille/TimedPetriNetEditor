@@ -1,0 +1,24 @@
+{
+  "places": [
+    "P0,Producer ready,100,75,1",
+    "P1,Idle,100,225,1",
+    "P2,Buffer,300,150,3",
+    "P3,Accepted,500,75,0",
+    "P4,Ready,500,225,2"],
+  "transitions": [
+    "T0,Send,175,150,0",
+    "T1,Produce,25,150,0",
+    "T2,Accept,425,150,0",
+    "T3,Consume,575,150,0"],
+  "arcs": [
+    "P0,T0,nan",
+    "T0,P1,3",
+    "P1,T1,nan",
+    "T1,P0,4",
+    "T0,P2,2",
+    "P2,T2,nan",
+    "T2,P3,3",
+    "P3,T3,nan",
+    "T3,P4,1",
+    "P4,T2,nan"]
+}
