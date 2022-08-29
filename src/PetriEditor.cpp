@@ -29,40 +29,40 @@
 PetriEditor::PetriEditor(Application& application, PetriNet& net)
     : Application::GUI(application, "Editor", sf::Color::White),
       m_petri_net(net),
-      m_figure_place(PLACE_RADIUS),
-      m_figure_token(TOKEN_RADIUS),
-      m_figure_trans(sf::Vector2f(TRANS_HEIGHT, TRANS_WIDTH)),
+      m_shape_place(PLACE_RADIUS),
+      m_shape_token(TOKEN_RADIUS),
+      m_shape_transition(sf::Vector2f(TRANS_HEIGHT, TRANS_WIDTH)),
       m_message_bar(m_font),
       m_entry_box(m_font),
       m_grid(application.bounds())
 {
-    // Reserve memory
+    // Reserve initial memory for animated tokens
     m_animations.reserve(128u);
 
-    // Precompute SFML struct for drawing places
-    m_figure_place.setOrigin(sf::Vector2f(m_figure_place.getRadius(),
-                                          m_figure_place.getRadius()));
-    m_figure_place.setFillColor(sf::Color::White);
-    m_figure_place.setOutlineThickness(2.0f);
-    m_figure_place.setOutlineColor(OUTLINE_COLOR);
+    // Precompute an unique SFML shape for drawing all places
+    m_shape_place.setOrigin(sf::Vector2f(m_shape_place.getRadius(),
+                                         m_shape_place.getRadius()));
+    m_shape_place.setFillColor(sf::Color::White);
+    m_shape_place.setOutlineThickness(2.0f);
+    m_shape_place.setOutlineColor(OUTLINE_COLOR);
 
-    // Precompute SFML struct for drawing tokens inside places
-    m_figure_token.setOrigin(sf::Vector2f(m_figure_token.getRadius(),
-                                          m_figure_token.getRadius()));
-    m_figure_token.setFillColor(sf::Color::Black);
+    // Precompute an unique SFML shape for drawing all tokens
+    m_shape_token.setOrigin(sf::Vector2f(m_shape_token.getRadius(),
+                                         m_shape_token.getRadius()));
+    m_shape_token.setFillColor(sf::Color::Black);
 
-    // Precompute SFML struct for drawing transitions
-    m_figure_trans.setOrigin(m_figure_trans.getSize().x / 2,
-                             m_figure_trans.getSize().y / 2);
-    m_figure_trans.setFillColor(sf::Color::White);
-    m_figure_trans.setOutlineThickness(2.0f);
-    m_figure_trans.setOutlineColor(OUTLINE_COLOR);
+    // Precompute an unique SFML shape for drawing all transitions
+    m_shape_transition.setOrigin(m_shape_transition.getSize().x / 2,
+                                 m_shape_transition.getSize().y / 2);
+    m_shape_transition.setFillColor(sf::Color::White);
+    m_shape_transition.setOutlineThickness(2.0f);
+    m_shape_transition.setOutlineColor(OUTLINE_COLOR);
 
     // Precompute SFML struct for drawing text (places and transitions)
     if (!m_font.loadFromFile(data_path("font.ttf")))
     {
         std::cerr << "Could not load font file ..." << std::endl;
-        // exit(1);
+        exit(1);
     }
 
     // Caption for Places and Transitions
@@ -105,11 +105,11 @@ PetriEditor::PetriEditor(Application& application, PetriNet& net, std::string co
 //------------------------------------------------------------------------------
 bool PetriEditor::load(std::string const& file)
 {
-    m_filename = file;
-    if (m_petri_net.load(m_filename))
+    m_petri_filename = file;
+    if (m_petri_net.load(m_petri_filename))
     {
         m_message_bar.setInfo("Loaded with success the Petri net!");
-        m_title = m_filename;
+        m_title = m_petri_filename;
         m_petri_net.modified = false;
 
         // Find bounds of the net to place the view
@@ -154,30 +154,30 @@ bool PetriEditor::save(bool const force)
 {
     // Open the file manager GUI when forced or when the Petri net was never
     // loaded from a file.
-    if (force || m_filename.empty())
+    if (force || m_petri_filename.empty())
     {
         pfd::save_file manager("Choose the JSON file to save the Petri net",
                                "petri.json", { "JSON File", "*.json" });
-        m_filename = manager.result();
+        m_petri_filename = manager.result();
     }
 
     // The user has cancel the file manager ? Ok save anyway the Petri net as
     // temporary file.
-    if (m_filename.empty())
+    if (m_petri_filename.empty())
     {
-        m_filename = tmpPetriFile();
+        m_petri_filename = tmpPetriFile();
     }
 
     // Save the net. In case of success display the status on the GUI or on the
     // console.
-    if (m_petri_net.save(m_filename))
+    if (m_petri_net.save(m_petri_filename))
     {
-        std::string msg = "Petri net has been saved at " + m_filename;
+        std::string msg = "Petri net has been saved at " + m_petri_filename;
         if (!force)
         {
             m_message_bar.setInfo(msg);
         }
-        m_title = m_filename;
+        m_title = m_petri_filename;
         m_petri_net.modified = false;
         return true;
     }
@@ -187,9 +187,9 @@ bool PetriEditor::save(bool const force)
     {
         if (!force)
         {
-            m_message_bar.setError("Failed saving the Petri net " + m_filename + " !");
+            m_message_bar.setError("Failed saving the Petri net " + m_petri_filename + " !");
         }
-        m_filename.clear();
+        m_petri_filename.clear();
         return false;
     }
 }
@@ -234,9 +234,9 @@ void PetriEditor::draw(Place const& place, uint8_t alpha)
     const float y = place.y;
 
     // Draw the place
-    m_figure_place.setPosition(sf::Vector2f(x, y));
-    m_figure_place.setFillColor(FILL_COLOR(alpha));
-    m_renderer.draw(m_figure_place);
+    m_shape_place.setPosition(sf::Vector2f(x, y));
+    m_shape_place.setFillColor(FILL_COLOR(alpha));
+    m_renderer.draw(m_shape_place);
 
     // Draw the caption
     draw(m_text_caption, place.caption, x,
@@ -250,48 +250,48 @@ void PetriEditor::draw(Place const& place, uint8_t alpha)
 
         if (place.tokens == 1u)
         {
-            m_figure_token.setPosition(sf::Vector2f(x, y));
-            m_renderer.draw(sf::CircleShape(m_figure_token));
+            m_shape_token.setPosition(sf::Vector2f(x, y));
+            m_renderer.draw(sf::CircleShape(m_shape_token));
         }
         else if (place.tokens == 2u)
         {
-            m_figure_token.setPosition(sf::Vector2f(x - d, y));
-            m_renderer.draw(sf::CircleShape(m_figure_token));
+            m_shape_token.setPosition(sf::Vector2f(x - d, y));
+            m_renderer.draw(sf::CircleShape(m_shape_token));
 
-            m_figure_token.setPosition(sf::Vector2f(x + d, y));
-            m_renderer.draw(sf::CircleShape(m_figure_token));
+            m_shape_token.setPosition(sf::Vector2f(x + d, y));
+            m_renderer.draw(sf::CircleShape(m_shape_token));
         }
         else if (place.tokens == 3u)
         {
-            m_figure_token.setPosition(sf::Vector2f(x, y - r));
-            m_renderer.draw(sf::CircleShape(m_figure_token));
+            m_shape_token.setPosition(sf::Vector2f(x, y - r));
+            m_renderer.draw(sf::CircleShape(m_shape_token));
 
-            m_figure_token.setPosition(sf::Vector2f(x - d, y + d));
-            m_renderer.draw(sf::CircleShape(m_figure_token));
+            m_shape_token.setPosition(sf::Vector2f(x - d, y + d));
+            m_renderer.draw(sf::CircleShape(m_shape_token));
 
-            m_figure_token.setPosition(sf::Vector2f(x + d, y + d));
-            m_renderer.draw(sf::CircleShape(m_figure_token));
+            m_shape_token.setPosition(sf::Vector2f(x + d, y + d));
+            m_renderer.draw(sf::CircleShape(m_shape_token));
         }
         else if ((place.tokens == 4u) || (place.tokens == 5u))
         {
             if (place.tokens == 5u)
             {
                 d = r + 3.0f;
-                m_figure_token.setPosition(sf::Vector2f(x, y));
-                m_renderer.draw(sf::CircleShape(m_figure_token));
+                m_shape_token.setPosition(sf::Vector2f(x, y));
+                m_renderer.draw(sf::CircleShape(m_shape_token));
             }
 
-            m_figure_token.setPosition(sf::Vector2f(x - d, y - d));
-            m_renderer.draw(sf::CircleShape(m_figure_token));
+            m_shape_token.setPosition(sf::Vector2f(x - d, y - d));
+            m_renderer.draw(sf::CircleShape(m_shape_token));
 
-            m_figure_token.setPosition(sf::Vector2f(x + d, y - d));
-            m_renderer.draw(sf::CircleShape(m_figure_token));
+            m_shape_token.setPosition(sf::Vector2f(x + d, y - d));
+            m_renderer.draw(sf::CircleShape(m_shape_token));
 
-            m_figure_token.setPosition(sf::Vector2f(x - d, y + d));
-            m_renderer.draw(sf::CircleShape(m_figure_token));
+            m_shape_token.setPosition(sf::Vector2f(x - d, y + d));
+            m_renderer.draw(sf::CircleShape(m_shape_token));
 
-            m_figure_token.setPosition(sf::Vector2f(x + d, y + d));
-            m_renderer.draw(sf::CircleShape(m_figure_token));
+            m_shape_token.setPosition(sf::Vector2f(x + d, y + d));
+            m_renderer.draw(sf::CircleShape(m_shape_token));
         }
         else
         {
@@ -304,22 +304,22 @@ void PetriEditor::draw(Place const& place, uint8_t alpha)
 void PetriEditor::draw(Transition const& transition, uint8_t alpha)
 {
     // Draw the transition
-    m_figure_trans.setPosition(sf::Vector2f(transition.x, transition.y));
-    m_figure_trans.setRotation(float(transition.angle));
+    m_shape_transition.setPosition(sf::Vector2f(transition.x, transition.y));
+    m_shape_transition.setRotation(float(transition.angle));
     if ((m_petri_net.type() == PetriNet::Type::Petri) &&
         (transition.isValidated()))
     {
-        m_figure_trans.setFillColor(sf::Color::Green);
+        m_shape_transition.setFillColor(sf::Color::Green);
     }
     else if (transition.isEnabled())
     {
-        m_figure_trans.setFillColor(sf::Color(255, 165, 0));
+        m_shape_transition.setFillColor(sf::Color(255, 165, 0));
     }
     else
     {
-        m_figure_trans.setFillColor(FILL_COLOR(alpha));
+        m_shape_transition.setFillColor(FILL_COLOR(alpha));
     }
-    m_renderer.draw(m_figure_trans);
+    m_renderer.draw(m_shape_transition);
 
     // Draw the caption
     draw(m_text_caption, transition.caption, transition.x,
@@ -388,15 +388,15 @@ void PetriEditor::draw()
     // Draw all tokens transiting from Transitions to Places
     for (auto const& at: m_animations)
     {
-        m_figure_token.setPosition(at.x, at.y);
-        m_renderer.draw(m_figure_token);
+        m_shape_token.setPosition(at.x, at.y);
+        m_renderer.draw(m_shape_token);
         draw(m_text_token, at.tokens, at.x, at.y - 16);
     }
 
     // Draw critical cycle
-    for (auto& a: m_petri_net.m_critical)
+    for (auto& a: m_marked_arcs)
     {
-        draw(*a, 255);
+        draw(*a, 255); // FIXME: m_marked_arcs_color
     }
 
     // Show the grid
@@ -590,9 +590,15 @@ void PetriEditor::update(float const dt)
 }
 
 //------------------------------------------------------------------------------
-Node* PetriEditor::getNode(float const x, float const y)
+Arc* PetriEditor::getArc(float const /*x*/, float const /*y*/)
 {
-    // TODO: iterate backward to allowing selecting the last node inserted
+    return nullptr; // TODO
+}
+
+//------------------------------------------------------------------------------
+// TODO: iterate backward to allowing selecting the last node inserted
+Place* PetriEditor::getPlace(float const x, float const y)
+{
     for (auto& p: m_petri_net.places())
     {
         float d2 = (p.x - x) * (p.x - x) + (p.y - y) * (p.y - y);
@@ -602,6 +608,12 @@ Node* PetriEditor::getNode(float const x, float const y)
         }
     }
 
+    return nullptr;
+}
+
+//------------------------------------------------------------------------------
+Transition* PetriEditor::getTransition(float const x, float const y)
+{
     for (auto& t: m_petri_net.transitions())
     {
         // Working but sometimes less precise
@@ -615,6 +627,15 @@ Node* PetriEditor::getNode(float const x, float const y)
     }
 
     return nullptr;
+}
+
+//------------------------------------------------------------------------------
+Node* PetriEditor::getNode(float const x, float const y)
+{
+    Node *n = getPlace(x, y);
+    if (n != nullptr)
+        return n;
+    return getTransition(x, y);
 }
 
 //------------------------------------------------------------------------------
@@ -859,6 +880,8 @@ void PetriEditor::handleKeyPressed(sf::Event const& event)
                 {
                     m_message_bar.setError(
                         "Could not export the Petri net to Julia file!");
+                    m_marked_arcs = m_petri_net.markedArcs();
+                    m_marked_arcs_color = sf::Color::Red;
                 }
             }
         }
@@ -876,13 +899,15 @@ void PetriEditor::handleKeyPressed(sf::Event const& event)
     else if (event.key.code == KEY_BINDIND_SHOW_CRITICAL_CYCLE)
     {
         m_simulating = false;
-        if (m_petri_net.showCriticalCycle())
+        if (m_petri_net.findCriticalCycle(m_marked_arcs))
         {
             m_message_bar.setWarning("TODO"); // FIXME show cycle + value
+            m_marked_arcs_color = sf::Color(255, 165, 0);
         }
         else
         {
             m_message_bar.setError("Failed to show critical cycle");
+            m_marked_arcs_color = sf::Color::Red;
         }
     }
 
@@ -929,20 +954,25 @@ void PetriEditor::handleKeyPressed(sf::Event const& event)
             m_petri_net.removeNode(*node);
     }
 
-    // FIXME TEMPORARY
-    //else if (event.key.code == sf::Keyboard::W)
-    //{
-    //    PetriNet pn(m_petri_net.type());
-    //    m_petri_net.toCanonicalForm(pn);
-    //    m_petri_net = pn;
-    //}
+#if 0
+    // Uncomment to check graphically generated cannical net
+    else if (event.key.code == sf::Keyboard::W)
+    {
+        if (isEventGraph(m_marked_arcs))
+        {
+            m_marked_arcs.clear();
+            PetriNet pn(m_petri_net.type());
+            m_petri_net.toCanonicalForm(pn);
+            m_petri_net = pn;
+        }
+    }
+#endif
 
     // '+' key: increase the number of tokens in the place.
     // '-' key: decrease the number of tokens in the place.
     else if ((event.key.code == KEY_BINDIND_INCREMENT_TOKENS) ||
              (event.key.code == KEY_BINDIND_DECREMENT_TOKENS))
     {
-        std::cout << "ICI\n";
         Node* node = getNode(m_mouse.x, m_mouse.y);
         if ((node != nullptr) && (node->type == Node::Type::Place))
         {
@@ -959,15 +989,14 @@ void PetriEditor::handleKeyPressed(sf::Event const& event)
     else if ((event.key.code == KEY_BINDIND_ROTATE_CW) ||
              (event.key.code == KEY_BINDIND_ROTATE_CCW))
     {
-        Node* node = getNode(m_mouse.x, m_mouse.y);
-        if ((node != nullptr) && (node->type == Node::Type::Transition))
+        Transition* transition = getTransition(m_mouse.x, m_mouse.y);
+        if (transition != nullptr)
         {
-            Transition& t = *reinterpret_cast<Transition*>(node);
-            t.angle += (event.key.code == KEY_BINDIND_ROTATE_CW
-                        ? STEP_ANGLE : -STEP_ANGLE);
-            t.angle = t.angle % 360;
-            if (t.angle < 0)
-                t.angle += 360;
+            transition->angle += (
+                (event.key.code == sf::Keyboard::PageDown) ? STEP_ANGLE : -STEP_ANGLE);
+            transition->angle = transition->angle % 360;
+            if (transition->angle < 0)
+                transition->angle += 360;
             m_petri_net.modified = true;
         }
     }
@@ -976,7 +1005,7 @@ void PetriEditor::handleKeyPressed(sf::Event const& event)
     else if (event.key.code == KEY_BINDIND_IS_EVENT_GRAPH)
     {
         m_petri_net.generateArcsInArcsOut();
-        if (m_petri_net.isEventGraph())
+        if (m_petri_net.isEventGraph(m_marked_arcs))
         {
             m_message_bar.setInfo("The net is a timed event graph !");
         }
@@ -1167,7 +1196,7 @@ bool PetriEditor::clickedOnCaption()
 //------------------------------------------------------------------------------
 void PetriEditor::handleMouseButton(sf::Event const& event)
 {
-    m_petri_net.m_critical.clear();
+    m_marked_arcs.clear();
 
     if (m_entry_box.hasFocus())
     {
@@ -1238,12 +1267,10 @@ void PetriEditor::handleMouseButton(sf::Event const& event)
             else if (m_petri_net.type() == PetriNet::Type::Petri)
             {
                 // Click to fire a transition
-                Node* node = getNode(m_mouse.x, m_mouse.y);
-                if ((node != nullptr) && (node->type == Node::Type::Transition))
+                Transition* transition = getTransition(m_mouse.x, m_mouse.y);
+                if (transition != nullptr)
                 {
-                    reinterpret_cast<Transition*>(node)->receptivity ^= true;
-                    //Transition& tr = reinterpret_cast<Transition&>(*node);
-                    //reinterpret_cast<Transition*>(node)->receptivity = tr.canFire();
+                    transition->receptivity ^= true;
                 }
             }
         }
@@ -1289,7 +1316,7 @@ void PetriEditor::handleInput()
             close();
             break;
         case sf::Event::KeyPressed:
-            m_petri_net.m_critical.clear();
+            m_marked_arcs.clear();
             handleKeyPressed(event);
             break;
         case sf::Event::TextEntered:

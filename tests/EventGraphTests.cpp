@@ -29,18 +29,22 @@
 //------------------------------------------------------------------------------
 TEST(TestEventGraph, TestHoward2)
 {
+    std::vector<Arc*> erroneous_arcs;
+
     PetriNet net(PetriNet::Type::TimedPetri);
     PetriNet canonic(PetriNet::Type::TimedPetri);
 
     ASSERT_EQ(net.load("../examples/Howard2.json"), true);
     ASSERT_EQ(net.isEmpty(), false);
-    ASSERT_EQ(net.isEventGraph(), true);
+    ASSERT_EQ(net.isEventGraph(erroneous_arcs), true);
+    ASSERT_EQ(erroneous_arcs.empty(), true);
 
     net.toCanonicalForm(canonic); // FIXME shall return bool isEventGraph() ?
     canonic.generateArcsInArcsOut(); // FIXME
 
     ASSERT_EQ(canonic.isEmpty(), false);
-    ASSERT_EQ(canonic.isEventGraph(), true);
+    ASSERT_EQ(canonic.isEventGraph(erroneous_arcs), true);
+    ASSERT_EQ(erroneous_arcs.empty(), true);
     ASSERT_EQ(canonic.save("/tmp/canonic.json"), true);
     ASSERT_EQ(canonic.m_next_place_id, 6u);
     ASSERT_EQ(canonic.m_next_transition_id, 5u);
@@ -125,12 +129,14 @@ TEST(TestEventGraph, TesSparseMatrixConstructor)
 //------------------------------------------------------------------------------
 TEST(TestEventGraph, TestToSysLin)
 {
+    std::vector<Arc*> erroneous_arcs;
     PetriNet net(PetriNet::Type::TimedPetri);
 
     ASSERT_EQ(net.load("../examples/Howard2.json"), true); // FIXME shall call generateArcsInArcsOut ?
     net.generateArcsInArcsOut(); // FIXME
 
-    ASSERT_EQ(net.isEventGraph(), true);
+    ASSERT_EQ(net.isEventGraph(erroneous_arcs), true);
+    ASSERT_EQ(erroneous_arcs.empty(), true);
 
     SparseMatrix D;
     SparseMatrix A;

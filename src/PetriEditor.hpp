@@ -29,7 +29,8 @@
 #  include "PetriNet.hpp"
 
 // *****************************************************************************
-//! \brief Graphic representation of the Petri net using the SFML library.
+//! \brief Graphical representation and manipulation of the Petri net using the
+//! SFML library for the rendering.
 // *****************************************************************************
 class PetriEditor: public Application::GUI
 {
@@ -192,13 +193,40 @@ private:
 
     //--------------------------------------------------------------------------
     //! \brief Search and return of the first place or a transition if its shape
-    //! present contains the given coordinates (usually the mouse).
+    //! contains the given coordinates (usually the mouse).
     //! \param[in] x: X-axis coordinate of the mouse cursor.
     //! \param[in] y: Y-axis coordinate of the mouse cursor.
     //! \return the address of the place or the transition if present, else
     //! return nullptr.
     //--------------------------------------------------------------------------
     Node* getNode(float const x, float const y);
+
+    //--------------------------------------------------------------------------
+    //! \brief Search and return of the first transition if its shape contains
+    //! the given coordinates (usually the mouse).
+    //! \param[in] x: X-axis coordinate of the mouse cursor.
+    //! \param[in] y: Y-axis coordinate of the mouse cursor.
+    //! \return the address of the transition if present, else return nullptr.
+    //--------------------------------------------------------------------------
+    Transition* getTransition(float const x, float const y);
+
+    //--------------------------------------------------------------------------
+    //! \brief Search and return of the first place if its shape contains
+    //! the given coordinates (usually the mouse).
+    //! \param[in] x: X-axis coordinate of the mouse cursor.
+    //! \param[in] y: Y-axis coordinate of the mouse cursor.
+    //! \return the address of the place if present, else return nullptr.
+    //--------------------------------------------------------------------------
+    Place* getPlace(float const x, float const y);
+
+    //--------------------------------------------------------------------------
+    //! \brief Search and return of the first arc if its shape contains
+    //! the given coordinates (usually the mouse).
+    //! \param[in] x: X-axis coordinate of the mouse cursor.
+    //! \param[in] y: Y-axis coordinate of the mouse cursor.
+    //! \return the address of the arc if present, else return nullptr.
+    //--------------------------------------------------------------------------
+    Arc* getArc(float const x, float const y);
 
     //--------------------------------------------------------------------------
     //! \brief Handle the origin node of the arc when the user is clicking on
@@ -246,11 +274,17 @@ private:
 
     //! \brief The Petri net.
     PetriNet& m_petri_net;
-    //! \brief Path of the Petri net file (not empty when the net was loaded
-    //! from file, else empty when created from scratch).
-    std::string m_filename;
-    //! \brief Set true if the thread of the application shall stay alive.
-    //! Set false to quit the application.
+    //! \brief Critical cycle found by Howard algorithm. Also used to show
+    //! where are erroneous arcs making the Petri net not be a graph event.
+    std::vector<Arc*> m_marked_arcs;
+    //! \brief Color of m_marked_arcs.
+    sf::Color m_marked_arcs_color;
+    //! \brief Path of the Petri net file: not empty when the net was loaded
+    //! from file, else empty when created from scratch.
+    std::string m_petri_filename;
+    //! \brief Set true if the thread of the editor GUI shall stay alive.
+    //! Set false to leave the GUI and pop the previous stacked GUI (stack
+    //! managed by the application)
     std::atomic<bool> m_running{true};
     //! \brief Set true for starting the simulation the Petri net and to
     //! maintain the simulation running. Set false to halt the simulation.
@@ -264,11 +298,11 @@ private:
     //! \brief Set true when the user is pressing the Shift key.
     std::atomic<bool> m_shift{false};
     //! \brief Cache the SFML circle shape needed to draw a Petri Place.
-    sf::CircleShape m_figure_place;
+    sf::CircleShape m_shape_place;
     //! \brief Cache the SFML circle shape needed to draw a Petri Token.
-    sf::CircleShape m_figure_token;
+    sf::CircleShape m_shape_token;
     //! \brief Cache the SFML rectangle shape needed to draw a Petri Transition.
-    sf::RectangleShape m_figure_trans;
+    sf::RectangleShape m_shape_transition;
     //! \brief Cache the SFML structure for rendering node captions.
     sf::Text m_text_caption;
     //! \brief Cache the SFML structure for rendering the number of tokens in

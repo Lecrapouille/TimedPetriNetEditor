@@ -30,6 +30,7 @@
 #  include <cassert>
 #  include <algorithm> // std::random_shuffle
 #  include <random>
+#  include <iostream>
 
 class Arc;
 struct SparseMatrix;
@@ -135,10 +136,7 @@ public:
     //! \brief Compare node with another node. Perform a check ont the type of
     //! node and on the unique identifier.
     //--------------------------------------------------------------------------
-    inline bool operator!=(Node const &other) const
-    {
-        return !(*this == other);
-    }
+    inline bool operator!=(Node const &other) const { return !(*this == other); }
 
 public:
 
@@ -210,6 +208,16 @@ public:
         return std::string("P" + std::to_string(id_));
     }
 
+    //--------------------------------------------------------------------------
+    //! \brief
+    //--------------------------------------------------------------------------
+    inline friend std::ostream& operator<<(std::ostream& os, Place const& p)
+    {
+        os << p.key << " (\"" << p.caption << "\", " << p.tokens
+           << ", (" << p.x << ", " << p.y << "))";
+        return os;
+    }
+
 public:
 
     //! \brief the number of tokens hold by the Place. Public access is fine
@@ -237,11 +245,12 @@ public:
     //! \param[in] x: X-axis coordinate in the window needed for the display.
     //! \param[in] y: Y-axis coordinate in the window needed for the display.
     //! \param[in] angle_: angle in degree of rotation for the display.
+    //! \param[in] recep_: receptivity of the transition.
     //--------------------------------------------------------------------------
     Transition(size_t const id_, std::string const& caption_, float const x_,
-               float const y_, int const angle_, bool const trans_)
+               float const y_, int const angle_, bool const recep_)
         : Node(Node::Type::Transition, id_, caption_, x_, y_), angle(angle_),
-          receptivity(trans_)
+          receptivity(recep_)
     {}
 
     //--------------------------------------------------------------------------
@@ -272,14 +281,11 @@ public:
     //! \note The firing is made by the PetriNet class.
     //! \return true if can fire else return false.
     //--------------------------------------------------------------------------
-    bool canFire() const
-    {
-        return isValidated() && isEnabled();
-    }
+    bool canFire() const { return isValidated() && isEnabled(); }
 
     //--------------------------------------------------------------------------
     //! \brief Return the maximum possibe of tokens that can be burnt in
-    //!   predecessor places.
+    //!   upstream places.
     //! \note This method does not modify the number of tokens in predecessor
     //!   places.
     //! \return the number of tokens that be burnt or 0u if cannot fire.
@@ -311,6 +317,16 @@ public:
         return (arcsIn.size() > 0u) && (arcsOut.size() > 0u);
     }
 
+    //--------------------------------------------------------------------------
+    //! \brief
+    //--------------------------------------------------------------------------
+    friend std::ostream& operator<<(std::ostream& os, Transition const& t)
+    {
+        os << t.key << " (\"" << t.caption << "\", " << t.receptivity
+           << ", (" << t.x << ", " << t.y << "))";
+        return os;
+    }
+
 public:
 
     //! \brief Transitions are depicted by rectangles. We allow to rotate it
@@ -318,12 +334,12 @@ public:
     int angle = 0;
 
     //! \brief In petri net mode, the user has to click to validate the
-    //! receptivity of the transition. If predecessor places have all at least
-    //! one token, the transition is fired, burning tokens in predecessor places
-    //! and create tokens in the successor places.
+    //! receptivity of the transition. If upstream places have all at least one
+    //! token, the transition is fired, burning tokens in upstream places and
+    //! create tokens in the successor places.
     bool receptivity = false;
 
-    //! \brief Temporary matrix index used when building max-plus linear system.
+    //! \brief Temporary matrix index used when building (max,+) linear systems.
     size_t index = 0u;
 };
 
@@ -425,6 +441,16 @@ public:
         return !(*this == other);
     }
 
+    //--------------------------------------------------------------------------
+    //! \brief
+    //--------------------------------------------------------------------------
+    friend std::ostream& operator<<(std::ostream& os, Arc const& a)
+    {
+        os << a.from.key << " \"" << a.from.caption << "\" -> "
+           << a.to.key << " \"" << a.to.caption << "\"";
+        return os;
+    }
+
     //! \brief Origin node (Place or Transition). Its type shall be different to
     //! the destination node.
     Node& from;
@@ -464,11 +490,31 @@ public:
 
     //--------------------------------------------------------------------------
     //! \brief Configure the net as GRAFCET or timed Petri net or Petri net.
+    //! TODO GraphEvent displaying graph like doc/Graph01.png
+    //! TODO StateMachine
     //--------------------------------------------------------------------------
     enum class Type
     {
-        // TODO GraphEvent displaying graph like doc/Graph01.png
-        GRAFCET, TimedPetri, Petri /*, GraphEvent */
+        //! \brief The user has to click on transitions to fire.
+        //! Tokens are burnt one by one.
+        Petri,
+        //! \brief Is a Petri with duration on arcs transition -> palce. When
+        //! transitions are enables, firing is automatic, on divergence
+        //! transition, the firing is shuffle and the maximum of tokens are
+        //! burnt in once. The user cannot click to transitions to fire.
+        TimedPetri,
+        //! \brief Is a timed Petri where all places have a single input arc and
+        //! a single output arc. TODO This mode is not yet implemented: the
+        //! editor shall not display places.
+        TimedGraphEvent,
+        //! \brief Is a Petri net used for making automata: Places do actions
+        //! and receptivities are linked to sensors. Steps (the name for Places)
+        //! have at maximum one token (1-S net). TODO This mode is partially
+        //! implemented: partial GRAFCET norm is respected, GUI does not allow
+        //! to simulated actions and sensors.
+        GRAFCET,
+        //! \brief TODO Is a 1-S Petri net This mode is not managed
+        StateMachine
     };
 
     //--------------------------------------------------------------------------
@@ -476,69 +522,28 @@ public:
     //! \param[in] mode: select the type of net: GRAFCET or timed Petri net
     //! or Petri net.
     //--------------------------------------------------------------------------
-    PetriNet(PetriNet::Type const mode)
-    {
-        this->type(mode);
-    }
+    PetriNet(PetriNet::Type const mode) { this->changeTypeOfNet(mode); }
 
     //--------------------------------------------------------------------------
     //! \brief Copy constructor. Needed to remove compilation warnings.
     //--------------------------------------------------------------------------
-    PetriNet(PetriNet const& other)
-    {
-        *this = other;
-    }
+    PetriNet(PetriNet const& other) { *this = other; }
 
     //--------------------------------------------------------------------------
     //! \brief Copy operator. Needed to remove compilation warnings.
     //--------------------------------------------------------------------------
-    PetriNet& operator=(PetriNet const& other)
-    {
-        if (this != &other)
-        {
-            m_places = other.m_places;
-            m_transitions = other.m_transitions;
-            m_arcs.clear(); // We have to redo references
-            for (auto const& it: other.m_arcs)
-            {
-                Node& from = (it.from.type == Node::Type::Place)
-                             ? reinterpret_cast<Node&>(m_places[it.from.id])
-                             : reinterpret_cast<Node&>(m_transitions[it.from.id]);
-                Node& to = (it.to.type == Node::Type::Place)
-                           ? reinterpret_cast<Node&>(m_places[it.to.id])
-                           : reinterpret_cast<Node&>(m_transitions[it.to.id]);
-                m_arcs.push_back(Arc(from, to, it.duration));
-            }
-
-            m_next_place_id = other.m_next_place_id;
-            m_next_transition_id = other.m_next_transition_id;
-            generateArcsInArcsOut(/*arcs: true*/);
-        }
-
-        return *this;
-    }
+    PetriNet& operator=(PetriNet const& other);
 
     //--------------------------------------------------------------------------
     //! \brief Remove all nodes and arcs. Reset counters for unique identifiers.
     //! \note the type of net (timed, classic ... ) stay the same.
     //--------------------------------------------------------------------------
-    void reset()
-    {
-        m_places.clear();
-        m_transitions.clear();
-        m_shuffled_transitions.clear();
-        m_arcs.clear();
-        m_marks.clear();
-        m_critical.clear();
-        m_next_place_id = 0u;
-        m_next_transition_id = 0u;
-        modified = false;
-    }
+    void reset();
 
     //--------------------------------------------------------------------------
     //! \brief Set the type of net: GRAFCET, Petri, Timed Petri ...
     //--------------------------------------------------------------------------
-    void type(PetriNet::Type const mode);
+    void changeTypeOfNet(PetriNet::Type const type);
 
     //--------------------------------------------------------------------------
     //! \brief Get the type of net: GRAFCET, Petri, Timed Petri ...
@@ -549,7 +554,7 @@ public:
     //! \brief Return true if the Petri nets has no nodes (no places and no
     //! transitions).
     //--------------------------------------------------------------------------
-    bool isEmpty()
+    inline bool isEmpty() const
     {
         return (m_places.size() == 0u) && (m_transitions.size() == 0u);
     }
@@ -562,12 +567,7 @@ public:
     //! \param[in] tokens: Initial number of tokens in the place.
     //! \return the reference of the inserted place.
     //--------------------------------------------------------------------------
-    Place& addPlace(float const x, float const y, size_t const tokens = 0u)
-    {
-        modified = true;
-        m_places.push_back(Place(m_next_place_id++, "", x, y, tokens));
-        return m_places.back();
-    }
+    Place& addPlace(float const x, float const y, size_t const tokens = 0u);
 
     //--------------------------------------------------------------------------
     //! \brief Add a new Petri Place. To be used when loading a Petri net from
@@ -579,30 +579,17 @@ public:
     //! \return the reference of the inserted place.
     //--------------------------------------------------------------------------
     Place& addPlace(size_t const id, std::string const& caption, float const x,
-                    float const y, size_t const tokens)
-    {
-        modified = true;
-        m_places.push_back(Place(id, caption, x, y, tokens));
-        if (id + 1u > m_next_place_id)
-            m_next_place_id = id + 1u;
-        return m_places.back();
-    }
+                    float const y, size_t const tokens);
 
     //--------------------------------------------------------------------------
     //! \brief Const getter. Return the reference to the container of Places.
     //--------------------------------------------------------------------------
-    Places const& places() const
-    {
-        return m_places;
-    }
+    inline Places const& places() const { return m_places; }
 
     //--------------------------------------------------------------------------
     //! \brief Non const getter. TODO: to be removed (ideally).
     //--------------------------------------------------------------------------
-    Places& places()
-    {
-        return m_places;
-    }
+    inline Places& places() { return m_places; }
 
     //--------------------------------------------------------------------------
     //! \brief Add a new Petri Transition. To be called when the user clicked on
@@ -611,14 +598,7 @@ public:
     //! \param[in] y: Y-axis coordinate in the window needed for the display.
     //! \return the reference of the inserted element.
     //--------------------------------------------------------------------------
-    Transition& addTransition(float const x, float const y)
-    {
-        modified = true;
-        m_transitions.push_back(
-            Transition(m_next_transition_id++, "", x, y, 0u,
-                       (m_type == PetriNet::Type::TimedPetri) ? true : false));
-        return m_transitions.back();
-    }
+    Transition& addTransition(float const x, float const y);
 
     //--------------------------------------------------------------------------
     //! \brief Add a new Petri Transition. To be used when loading a Petri net
@@ -631,16 +611,7 @@ public:
     //! \return the reference of the inserted element.
     //--------------------------------------------------------------------------
     Transition& addTransition(size_t const id, std::string const& caption,
-                              float const x, float const y, int const angle)
-    {
-        modified = true;
-        m_transitions.push_back(
-            Transition(id, caption, x, y, angle,
-                       (m_type == PetriNet::Type::TimedPetri) ? true : false));
-        if (id + 1u > m_next_transition_id)
-            m_next_transition_id = id + 1u;
-        return m_transitions.back();
-    }
+                              float const x, float const y, int const angle);
 
     //--------------------------------------------------------------------------
     //! \brief Const getter. Return the container reference of the shuffled
@@ -648,40 +619,17 @@ public:
     //! \param[in] reset if set true, force rebuilding the vector from
     //! transitions before shuffling.
     //--------------------------------------------------------------------------
-    std::vector<Transition*> const& shuffle_transitions(bool const reset = false)
-    {
-        static std::random_device rd;
-        static std::mt19937 g(rd());
-
-        if (reset)
-        {
-            // Avoid useless copy at each iteration of the simulation. Do it
-            // once at the begining of the simulation.
-            m_shuffled_transitions.clear();
-            m_shuffled_transitions.reserve(m_transitions.size());
-            for (auto& trans: m_transitions)
-                m_shuffled_transitions.push_back(&trans);
-        }
-        std::shuffle(m_shuffled_transitions.begin(),
-                     m_shuffled_transitions.end(), g);
-        return m_shuffled_transitions;
-    }
+    std::vector<Transition*> const& shuffle_transitions(bool const reset = false);
 
     //--------------------------------------------------------------------------
     //! \brief Const getter. Return the reference to the container of Transitions.
     //--------------------------------------------------------------------------
-    Transitions const& transitions() const
-    {
-        return m_transitions;
-    }
+    inline Transitions const& transitions() const { return m_transitions; }
 
     //--------------------------------------------------------------------------
     //! \brief Non const getter. TODO: to be removed (ideally).
     //--------------------------------------------------------------------------
-    Transitions& transitions()
-    {
-        return m_transitions;
-    }
+    inline Transitions& transitions() { return m_transitions; }
 
     //--------------------------------------------------------------------------
     //! \brief Search and return a place or a transition by its unique
@@ -727,31 +675,17 @@ public:
     //! type than the destination node).
     //! \return the address of the arc if found, else return nullptr.
     //--------------------------------------------------------------------------
-    Arc* findArc(Node const& from, Node const& to)
-    {
-        for (auto& it: m_arcs)
-        {
-            if ((it.from == from) && (it.to == to))
-                return &it;
-        }
-        return nullptr;
-    }
+    Arc* findArc(Node const& from, Node const& to);
 
     //--------------------------------------------------------------------------
     //! \brief Const getter of all arcs.
     //--------------------------------------------------------------------------
-    Arcs const& arcs() const
-    {
-        return m_arcs;
-    }
+    inline Arcs const& arcs() const { return m_arcs; }
 
     //--------------------------------------------------------------------------
     //! \brief Non const getter. TODO: to be removed (ideally).
     //--------------------------------------------------------------------------
-    Arcs& arcs()
-    {
-        return m_arcs;
-    }
+    inline Arcs& arcs() { return m_arcs; }
 
     //--------------------------------------------------------------------------
     //! \brief Save the Petri net in a JSON file.
@@ -795,17 +729,27 @@ public:
     //--------------------------------------------------------------------------
     //! \brief Chech if the Petri net is a graph event meaning that each places
     //! have exactly one input arc and one output arc.
-    //! \return true if the Petri net is a graph event.
+    //! \param[inout] erroneous_arcs store detected erroneous arcs.
+    //!
+    //! \return true if the Petri net is a graph event and \c erroneous_arcs is
+    //! empty. Return false if the Petri net is not a graph event and \c
+    //! erroneous_arcs contains information.
+    //!
     //! \note call generateArcsInArcsOut(/*arcs: true*/); before calling this
     //! method.
     //--------------------------------------------------------------------------
-    bool isEventGraph();
+    bool isEventGraph(std::vector<Arc*>& erroneous_arcs);
 
     //--------------------------------------------------------------------------
     //! \brief Show to the critical circuit of the net (where the cycle takes
     //! the most of time).
+    //! \param[inout] result container of arcs storing the cycle.
+    //! The container is cleared before reserving its memory.
+    //! \return true if the Petri net was an graph event and \c result will
+    //! contain the arcs of the cycle. Return false if the Petri net was not an
+    //! graph event and \c result will contain erroneous arcs.
     //--------------------------------------------------------------------------
-    bool showCriticalCycle();
+    bool findCriticalCycle(std::vector<Arc*>& result);
 
     //--------------------------------------------------------------------------
     //! \brief Return the timed event graph as (min,+) system. For example
@@ -868,7 +812,7 @@ public:
     //! \param[in] filename the path of julia file. Should have the .jl
     //! extension.
     //! \return true if the Petri net has been exported with success. Return
-    //! false in case of failure.
+    //! false in case of failure and erroneous arcs can be get by \c markedArcs().
     //--------------------------------------------------------------------------
     bool exportToJulia(std::string const& filename); //TODO const;
 
@@ -882,21 +826,22 @@ public:
     bool toAdjacencyMatrices(SparseMatrix& N, SparseMatrix&T); //TODO  const;
 
     //--------------------------------------------------------------------------
+    //! \brief Transform the Event Graph to canonical form
+    //! \param[out] pn: resulting Petri net in canonical mode
+    //! \note This will work only if isEventGraph() has returned true so make
+    //! the caller of this method be aware of what is he doing.
+    //--------------------------------------------------------------------------
+    void toCanonicalForm(PetriNet& pn); //TODO  const;
+
+    //--------------------------------------------------------------------------
     //! \brief Return the event graph as implicit dynamic linear Max-Plus system.
     //! X(n) = D X(n) ⨁ A X(n-1) ⨁ B U(n)
     //! Y(n) = C X(n)
     //! \note This will work only if isEventGraph() returned true.
-    //! TODO return false if the Petri net is not an event graph.
+    //! \return true if the Petri net was an graph event, else return false and
+    //! erroneous arcs can be get by \c markedArcs().
     //--------------------------------------------------------------------------
     bool toSysLin(SparseMatrix& D, SparseMatrix& A, SparseMatrix& B, SparseMatrix& C); //TODO const;
-
-    //--------------------------------------------------------------------------
-    //! \brief Transform the Event Graph to canonical form
-    //! \param[out] pn: resulting Petri net in canonical mode
-    //! \note This will work only if isEventGraph() returned true.
-    //! TODO return false if the Petri net is not an event graph.
-    //--------------------------------------------------------------------------
-    void toCanonicalForm(PetriNet& pn); //TODO  const;
 
     //--------------------------------------------------------------------------
     //! \brief Remove an existing Place or a Transition (usually refered by the
@@ -926,6 +871,11 @@ public:
     void resetReceptivies();
 
     //--------------------------------------------------------------------------
+    //! \brief Return the result of algorithm
+    //--------------------------------------------------------------------------
+    inline std::vector<Arc*> const& markedArcs() const { return m_result_arcs; }
+
+    //--------------------------------------------------------------------------
     //! \brief Return the help.
     //--------------------------------------------------------------------------
     static std::stringstream help();
@@ -940,7 +890,7 @@ private:
 
 private:
 
-    //! \brief GRAFCET, Petri, Timed Petri ...
+    //! \brief Type of net GRAFCET, Petri, Timed Petri ...
     Type m_type;
     //! \brief List of Places. We do not use std::vector to avoid invalidating
     //! node references for arcs after a possible resizing.
@@ -948,12 +898,15 @@ private:
     //! \brief List of Transitions. We do not use std::vector to avoid
     //! invalidating node references for arcs after a possible resizing.
     Transitions m_transitions;
+    //! \brief Memorize initial number of tokens in places.
+    std::vector<size_t> m_marks;
     //! \brief List of shuffled Transitions.
     std::vector<Transition*> m_shuffled_transitions;
     //! \brief List of Arcs.
     Arcs m_arcs;
-    //! \brief Memorize initial number of tokens in places.
-    std::vector<size_t> m_marks;
+    //! \brief Store arcs after some algorithm to return either result i.e.
+    //! findCriticalCycle() or to return the error (i.e. isEventGraph()).
+    std::vector<Arc*> m_result_arcs;
     //! \brief Auto increment unique identifier. Start from 0 (code placed in
     //! the cpp file).
     size_t m_next_place_id = 0u;
@@ -966,10 +919,6 @@ public:
     //! \brief Petri net has been modified, change the title and ask for saving
     //! the net when leaving the application.
     bool modified = false;
-
-public: // FIXME
-    //
-    std::vector<Arc*> m_critical;
 };
 
 #endif

@@ -30,7 +30,7 @@
 
 //------------------------------------------------------------------------------
 // Default net configuration: timed petri net. To change the type of nets, call
-// PetriNet::type(PetriNet::Type const)
+// PetriNet::changeTypeOfNet(PetriNet::Type const)
 size_t Settings::maxTokens = std::numeric_limits<size_t>::max();
 Settings::Fire Settings::firing = Settings::Fire::OneByOne;
 
@@ -52,16 +52,13 @@ bool Transition::isEnabled() const
 //------------------------------------------------------------------------------
 size_t Transition::howManyTokensCanBurnt() const
 {
-    if (arcsIn.size() == 0u)
-        return 0u;
-
-    if (receptivity == false)
+    if ((arcsIn.size() == 0u) || (receptivity == false))
         return 0u;
 
     size_t burnt = static_cast<size_t>(-1);
     for (auto& a: arcsIn)
     {
-        size_t tokens = a->tokensIn();
+        const size_t tokens = a->tokensIn();
         if (tokens == 0u)
             return 0u;
 
@@ -72,7 +69,50 @@ size_t Transition::howManyTokensCanBurnt() const
 }
 
 //------------------------------------------------------------------------------
-void PetriNet::type(PetriNet::Type const mode)
+PetriNet& PetriNet::operator=(PetriNet const& other)
+{
+    if (this != &other)
+    {
+        m_type = other.m_type;
+        m_places = other.m_places;
+        m_transitions = other.m_transitions;
+        m_marks = other.m_marks;
+        m_next_place_id = other.m_next_place_id;
+        m_next_transition_id = other.m_next_transition_id;
+
+        // We have to redo references
+        m_arcs.clear();
+        for (auto const& it: other.m_arcs)
+        {
+            Node& from = (it.from.type == Node::Type::Place)
+                         ? reinterpret_cast<Node&>(m_places[it.from.id])
+                         : reinterpret_cast<Node&>(m_transitions[it.from.id]);
+            Node& to = (it.to.type == Node::Type::Place)
+                       ? reinterpret_cast<Node&>(m_places[it.to.id])
+                       : reinterpret_cast<Node&>(m_transitions[it.to.id]);
+            m_arcs.push_back(Arc(from, to, it.duration));
+        }
+        generateArcsInArcsOut();
+    }
+
+    return *this;
+}
+
+//------------------------------------------------------------------------------
+void PetriNet::reset()
+{
+    m_places.clear();
+    m_transitions.clear();
+    m_shuffled_transitions.clear();
+    m_arcs.clear();
+    m_marks.clear();
+    m_next_place_id = 0u;
+    m_next_transition_id = 0u;
+    modified = false;
+}
+
+//------------------------------------------------------------------------------
+void PetriNet::changeTypeOfNet(PetriNet::Type const mode)
 {
     m_type = mode;
     switch (mode)
@@ -150,6 +190,68 @@ bool PetriNet::setMarks(std::vector<size_t> const& marks)
 }
 
 //------------------------------------------------------------------------------
+Place& PetriNet::addPlace(float const x, float const y, size_t const tokens)
+{
+    modified = true;
+    m_places.push_back(Place(m_next_place_id++, "", x, y, tokens));
+    return m_places.back();
+}
+
+//------------------------------------------------------------------------------
+Place& PetriNet::addPlace(size_t const id, std::string const& caption, float const x,
+                          float const y, size_t const tokens)
+{
+    modified = true;
+    m_places.push_back(Place(id, caption, x, y, tokens));
+    if (id + 1u > m_next_place_id)
+        m_next_place_id = id + 1u;
+    return m_places.back();
+}
+
+//------------------------------------------------------------------------------
+Transition& PetriNet::addTransition(float const x, float const y)
+{
+    modified = true;
+    m_transitions.push_back(
+        Transition(m_next_transition_id++, "", x, y, 0u,
+                   (m_type == PetriNet::Type::TimedPetri) ? true : false));
+    return m_transitions.back();
+}
+
+//------------------------------------------------------------------------------
+Transition& PetriNet::addTransition(size_t const id, std::string const& caption,
+                                    float const x, float const y, int const angle)
+{
+    modified = true;
+    m_transitions.push_back(
+        Transition(id, caption, x, y, angle,
+                   (m_type == PetriNet::Type::TimedPetri) ? true : false));
+    if (id + 1u > m_next_transition_id)
+        m_next_transition_id = id + 1u;
+    return m_transitions.back();
+}
+
+//------------------------------------------------------------------------------
+std::vector<Transition*> const& PetriNet::shuffle_transitions(bool const reset)
+{
+    static std::random_device rd;
+    static std::mt19937 g(rd());
+
+    if (reset)
+    {
+        // Avoid useless copy at each iteration of the simulation. Do it
+        // once at the begining of the simulation.
+        m_shuffled_transitions.clear();
+        m_shuffled_transitions.reserve(m_transitions.size());
+        for (auto& trans: m_transitions)
+            m_shuffled_transitions.push_back(&trans);
+    }
+    std::shuffle(m_shuffled_transitions.begin(),
+                 m_shuffled_transitions.end(), g);
+    return m_shuffled_transitions;
+}
+
+//------------------------------------------------------------------------------
 bool PetriNet::addArc(Node& from, Node& to, float const duration)
 {
     if (from.type == to.type)
@@ -198,6 +300,17 @@ bool PetriNet::addArc(Node& from, Node& to, float const duration)
 }
 
 //------------------------------------------------------------------------------
+Arc* PetriNet::findArc(Node const& from, Node const& to)
+{
+    for (auto& it: m_arcs)
+    {
+        if ((it.from == from) && (it.to == to))
+            return &it;
+    }
+    return nullptr;
+}
+
+//------------------------------------------------------------------------------
 void PetriNet::generateArcsInArcsOut()
 {
     for (auto& trans: m_transitions)
@@ -231,15 +344,15 @@ void PetriNet::generateArcsInArcsOut()
 }
 
 //------------------------------------------------------------------------------
-bool PetriNet::isEventGraph()
+bool PetriNet::isEventGraph(std::vector<Arc*>& erroneous_arcs)
 {
+    erroneous_arcs.clear();
     if (isEmpty())
     {
         std::cerr << "ERROR: Empty Petri net is not an event graph" << std::endl;
         return false;
     }
     generateArcsInArcsOut();
-    m_critical.clear();
 
     // The Petri net shall be an event graph: all places shall have a single
     // input arc and a single output arc. Else, we cannot generate the linear
@@ -262,7 +375,7 @@ bool PetriNet::isEventGraph()
                               : " has no output arc");
                 for (auto const& a: p.arcsOut)
                 {
-                    m_critical.push_back(a);
+                    erroneous_arcs.push_back(a);
                     std::cerr << " " << a->to.key;
                 }
                 std::cerr << std::endl;
@@ -276,7 +389,7 @@ bool PetriNet::isEventGraph()
                               : " has no input arc");
                 for (auto const& a: p.arcsIn)
                 {
-                    m_critical.push_back(a);
+                    erroneous_arcs.push_back(a);
                     std::cerr << " " << a->from.key;
                 }
                 std::cerr << std::endl;
@@ -459,12 +572,12 @@ bool PetriNet::toSysLin(SparseMatrix& D, SparseMatrix& A, SparseMatrix& B, Spars
 {
     // Only Petri net with places having a single input and output arcs are
     // allowed.
-    if (!isEventGraph())
+    if (!isEventGraph(m_result_arcs))
         return false;
 
     // Duplicate the Petri net since we potentially modify it to transform it to
     // its canonical form.
-    PetriNet canonical(type());
+    PetriNet canonical(m_type);
     toCanonicalForm(canonical);
 
     // Count the number of inputs, outputs and states for creating matrices.
@@ -503,7 +616,7 @@ bool PetriNet::exportToJulia(std::string const& filename)
 {
     // Only Petri net with places having a single input and output arcs are
     // allowed.
-    if (!isEventGraph())
+    if (!isEventGraph(m_result_arcs))
         return false;
 
     // TODO quick test check if we have to do the canonical form, this can avoid
@@ -691,10 +804,11 @@ std::stringstream PetriNet::showDaterForm(std::string const& comment) const
 }
 
 //------------------------------------------------------------------------------
-bool PetriNet::showCriticalCycle()
+bool PetriNet::findCriticalCycle(std::vector<Arc*>& result)
 {
-    if (!isEventGraph())
+    if (!isEventGraph(result))
         return false;
+    result.clear();
 
     // Number of nodes and number of arcs
     size_t const nnodes = m_transitions.size();
@@ -764,8 +878,8 @@ bool PetriNet::showCriticalCycle()
     if (ncomponents > 0)
     {
         size_t to = 0u;
-        m_critical.clear();
-        m_critical.reserve(nnodes);
+        result.clear();
+        result.reserve(nnodes);
         std::cout << "Critical cycle:" << std::endl;
         for (auto const& from: policy)
         {
@@ -778,8 +892,8 @@ bool PetriNet::showCriticalCycle()
                 assert(it->to.arcsOut[0]->to.type == Node::Type::Transition);
                 if (it->to.arcsOut[0]->to.id == to)
                 {
-                    m_critical.push_back(it);
-                    m_critical.push_back(it->to.arcsOut[0]);
+                    result.push_back(it);
+                    result.push_back(it->to.arcsOut[0]);
                     break;
                 }
             }

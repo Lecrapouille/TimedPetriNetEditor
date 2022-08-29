@@ -335,6 +335,8 @@ TEST(TestPetriNet, PetriNetConstructor)
 //------------------------------------------------------------------------------
 TEST(TestPetriNet, PetriNetDummy)
 {
+    std::vector<Arc*> erroneous_arcs;
+
     // Check the default constructor: dummy net
     PetriNet net(PetriNet::Type::TimedPetri);
     ASSERT_EQ(net.type(), PetriNet::Type::TimedPetri);
@@ -359,10 +361,10 @@ TEST(TestPetriNet, PetriNetDummy)
     ASSERT_EQ(net.m_next_transition_id, 0u);
 
     ASSERT_EQ(net.modified, false);
-    ASSERT_EQ(net.m_critical.size(), 0u);
 
     ASSERT_EQ(net.isEmpty(), true);
-    ASSERT_EQ(net.isEventGraph(), false);
+    ASSERT_EQ(net.isEventGraph(erroneous_arcs), false);
+    ASSERT_EQ(erroneous_arcs.empty(), true);
 
     ASSERT_EQ(net.findNode("P0"), nullptr);
     ASSERT_EQ(net.findNode("T0"), nullptr);
@@ -373,6 +375,8 @@ TEST(TestPetriNet, PetriNetDummy)
 //------------------------------------------------------------------------------
 TEST(TestPetriNet, TestAddRemoveOperations)
 {
+    std::vector<Arc*> erroneous_arcs;
+
     // Check the default constructor: dummy net
     PetriNet net(PetriNet::Type::TimedPetri);
     ASSERT_EQ(net.isEmpty(), true);
@@ -386,7 +390,8 @@ TEST(TestPetriNet, TestAddRemoveOperations)
     ASSERT_STREQ(p0.key.c_str(), "P0");
     ASSERT_STREQ(p0.caption.c_str(), "P0");
     ASSERT_EQ(net.isEmpty(), false);
-    ASSERT_EQ(net.isEventGraph(), false);
+    ASSERT_EQ(net.isEventGraph(erroneous_arcs), false);
+    ASSERT_EQ(erroneous_arcs.empty(), true);
     ASSERT_EQ(net.findNode("P0"), &p0);
     ASSERT_EQ(net.m_places.size(), 1u);
     ASSERT_STREQ(net.m_places[0].key.c_str(), "P0");
@@ -398,7 +403,8 @@ TEST(TestPetriNet, TestAddRemoveOperations)
     ASSERT_STREQ(t0->key.c_str(), "T0");
     ASSERT_STREQ(t0->caption.c_str(), "T0");
     ASSERT_EQ(net.isEmpty(), false);
-    ASSERT_EQ(net.isEventGraph(), false);
+    ASSERT_EQ(net.isEventGraph(erroneous_arcs), false);
+    ASSERT_EQ(erroneous_arcs.empty(), true);
     ASSERT_EQ(net.findNode("T0"), t0);
     ASSERT_EQ(net.m_transitions.size(), 1u);
     ASSERT_STREQ(net.m_transitions[0].key.c_str(), "T0");
@@ -443,7 +449,8 @@ TEST(TestPetriNet, TestAddRemoveOperations)
     ASSERT_STREQ(t0->key.c_str(), "T0");
     ASSERT_STREQ(t0->caption.c_str(), "T0");
     ASSERT_EQ(net.isEmpty(), false);
-    ASSERT_EQ(net.isEventGraph(), false);
+    ASSERT_EQ(net.isEventGraph(erroneous_arcs), false);
+    ASSERT_EQ(erroneous_arcs.empty(), true);
     ASSERT_EQ(net.findNode("T0"), t0);
     ASSERT_EQ(net.m_transitions.size(), 1u);
     ASSERT_STREQ(net.m_transitions[0].key.c_str(), "T0");

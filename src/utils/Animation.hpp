@@ -43,7 +43,7 @@ struct AnimatedToken
     //! \param[in] type_: Type of the net (Petri, timed Petri, GRAFCET ...)
     //--------------------------------------------------------------------------
     AnimatedToken(Arc& arc_, size_t tokens_, PetriNet::Type type_)
-        : x(arc_.from.x), y(arc_.from.y), tokens(tokens_), arc(arc_)
+        : arc(arc_), x(arc_.from.x), y(arc_.from.y), tokens(tokens_)
     {
         assert(arc.from.type == Node::Type::Transition);
         assert(arc.to.type == Node::Type::Place);
@@ -153,14 +153,14 @@ struct AnimatedToken
         return *reinterpret_cast<Place*>(&(arc.to));
     }
 
+    //! \brief In which arc the token is moving along.
+    Arc& arc;
     //! \brief X-axis coordinate in the window used for the display.
     float x;
     //! \brief Y-axis coordinate in the window used for the display.
     float y;
     //! \brief Number of carried tokens.
     size_t tokens;
-    //! \brief In which arc the token is moving along.
-    Arc& arc;
     //! \brief The length of the arc.
     float magnitude;
     //! \brief The speed of the token moving along the arc.
