@@ -6,7 +6,7 @@
 graphical interface for editing and running Petri nets and specially timed event
 graphs which are a subclass of Petri nets with good mathematics properties for
 modeling discrete event systems (DES) with [(max,+)
-algebra](https://jpquadrat.github.io/). This tools can generate (max,+) code for
+algebra](https://jpquadrat.github.io/). This tool can generate (max,+) code for
 [Julia](https://julialang.org/), export figures (LaTeX, Graphivz) and generate
 C++ code (GRAFCET aka sequential function chart that could run on Arduino i.e.)
 and used in synergy with [(max,+)](https://github.com/Lecrapouille/MaxPlus.jl)
@@ -24,7 +24,7 @@ overview of this current document: how to compile and install this project, the
 common key and mouse bindings for the GUI and common usage of the Julia API for
 (max,+) ...
 
-Why developing another Petri editor ? Because:
+Why develop another Petri editor? Because:
 - There is no Petri editor with (max,+) on GitHub.
 - This project is a continuation of [ScicosLab](http://www.scicoslab.org/)'s
   (max,+) toolbox that my father developed at INRIA and which is no longer
@@ -34,7 +34,7 @@ Why developing another Petri editor ? Because:
   C#, Java ..) or the code is too complex to add my own extensions.
 - Currently, there is no Petri net editors available for Julia.
 
-I tried to make code as simple as possible with many comments. Do not hesitate
+I tried to make the code as simple as possible with many comments. Do not hesitate
 to ask if something is not easily understandable.
 
 ## How to compile and install the project?
@@ -98,7 +98,7 @@ TimedPetriNetEditor
 ```
 
 Or directly from the [Julia](https://github.com/JuliaLang/julia) REPL (this part
-is described in details in the dedicated section of this document):
+is described in detail in the dedicated section of this document):
 
 ```sh
 julia> include("src/julia/TimedPetriNetEditor.jl")
@@ -110,9 +110,9 @@ PetriNet(0)
 julia> editor!(pn)
 ```
 
-If you does not desire install TimedPetriNetEditor on your operating system, you
+If you do not desire to install TimedPetriNetEditor on your operating system, you
 will have to adapt the `DEFINES` in Makefile to indicate the path of the `data/`
-folder (for the find the fonts). You will also have to manually modify this
+folder (to find the fonts). You will also have to manually modify this
 Julia file to indicate the correct path of the shared library
 `libtimedpetrineteditor.so`.
 
@@ -128,7 +128,7 @@ Where:
 - `[-t|-p|-g]` optional argument to force the type of net:
 
    - `-t` (default mode) for editing timed Petri nets. In this mode, places can
-     have any number of tokens. Arcs `Transition -> Place` have unit of time for
+     have any number of tokens. Arcs `Transition -> Place` have units of time for
      emulating the duration of the process work (arcs `Place -> Transition` have
      implicit 0 of unit time). When running the net simulation, tokens are
      animated and move along arcs at the speed imposed by the arc duration. The
@@ -136,10 +136,10 @@ Where:
      one on OR-divergence branches.
 
    - `-p` for forcing the Petri mode. In this mode, places can have any number
-     of tokens. Arcs have an implicit unit of time set to 0 (while for they
-     still animated with to make the simulation understandable).  When
+     of tokens. Arcs have an implicit unit of time set to 0 (while they
+     still animated to make the simulation understandable).  When
      simulating the net, you have to click on transitions to fire tokens. When
-     firing, the maximum possible of tokens are burnt in once.
+     firing, the maximum possible of tokens are burnt at once.
 
    - `-g` for forcing the GRAFCET mode. This mode is like Petri (no duration on
      arcs) but where places have at max 1 token and tokens are shuffled one by
@@ -157,9 +157,9 @@ TimedPetriNetEditor -t examples/Howard2.json
 
 The editor does not offer any buttons, therefore all actions are directly made
 from the mouse and the keyboard (like Emacs but without the Meta key ^^).
-- `Escape` quit the application. Unsaved net will be asked for saving before the
+- `Escape` quit the application. The unsaved net will be asked for saving before the
   application closes.
-- `Left mouse button pressed` on a caption (soon or in a duration) to edit it.
+- `Left mouse button pressed` on a caption or in duration (*work in progress*) to edit it.
   Press the Enter key to validate the content or press the Escape key to abort.
 - `Left mouse button pressed`: add a new place. Note: this action is ignored if
   you are trying to create a node on an already existing node (place or
@@ -168,21 +168,21 @@ from the mouse and the keyboard (like Emacs but without the Meta key ^^).
   ignored if you are trying to create a node on an already existing node (place
   or transition).
 - `Middle mouse button pressed`: start creating an arc either from an existing
-  node (place or transition) as origin or, if no node was selected by the mouse
+  node (place or transition) as the origin or, if no node was selected by the mouse
   cursor, the editor will find the correct type depending on the destination
   node.
 - `Middle mouse button released`: end creating an arc either from the selected
-  node (place or transition) as destination or, if no node is selected, the
+  node (place or transition) as the destination or, if no node is selected, the
   editor will find the correct type depending on the origin node. In the case
   you have tried to link two nodes of the same type (two places or two
-  transitions) then an intermediate node of opposite type will be created as
-  well as intermediate arc.
-- `L` key: same action than the middle mouse button.
+  transitions) then an intermediate node of the opposite type will be created as
+  well as an intermediate arc.
+- `L` key: same action as the middle mouse button.
 - `M` key: move the node (place or transition) selected by the mouse cursor.
 - Linux: `Delete` key: remove a node (place or transition). Note: since all identifiers
   shall be consecutive (no gaps), the unique identifier of the last created node
   of the same type will receive the unique identifier of the deleted one. Note:
-  arc cannot yet be deleted.
+  arcs cannot yet be deleted.
 - MacOSX: `\` for deleting node.
 - `Z` key: clear the whole Petri net.
 - Linux: `+`, `-` keys: add/remove a token on the place selected by the mouse cursor.
@@ -191,11 +191,11 @@ from the mouse and the keyboard (like Emacs but without the Meta key ^^).
   mouse cursor.
 - `R` or `SPACE`key: start (run) or stop the simulation. Note: if the simulation
   is stalled (no possible burning tokens), then the simulation will automatically
-  stops and return to the edition mode.
+  stops and returns to the edition mode.
 - `S` key: save the Petri net to a JSON file.
-- `Shift S` key: save-as the Petri net to a JSON file.
+- `Shift S` key: save as the Petri net to a JSON file.
 - `O` key: load a Petri net from a JSON file.
-- `E` key: is the current timed Petri net is a timed graph event ?
+- `E` key: is the current timed Petri net a timed graph event?
 - `C` key: show the first critical circuit if and only if the Petri net is a
   graph event.
 - `J` key: export the graph event into a Julia script file (for example named
@@ -212,11 +212,11 @@ from the mouse and the keyboard (like Emacs but without the Meta key ^^).
 - Time duration cannot yet be edited. *Workaround:* save the
   Petri net to JSON file and edit with a text editor, then reload the file.
 - No input node generating periodically tokens is yet made. *Workaround:* during
-  the simulation the user can add new token to any desired places selected by
+  the simulation the user can add a new token to any desired places selected by
   the mouse cursor and the `+` key.
-- Showing critical cycles for graph event does not support having transitions
-  without predecessor (inputs). For example this Petri net: `T0 -> P0 -> T1`.
-  *Workaround:* Either modify your net either by removing your inputs or make
+- Showing critical cycles for graph events does not support having transitions
+  without predecessors (inputs). For example this Petri net: `T0 -> P0 -> T1`.
+  *Workaround:* Either modify your net either by removing your inputs or making
   inputs cycling to themselves with a `-inf` time (which makes duality issues).
 - Not all error messages are displayed on the GUI. Read the logs on your Unix
   console.
@@ -225,32 +225,32 @@ from the mouse and the keyboard (like Emacs but without the Meta key ^^).
   simplifying the net. Cannot delete arcs. Cannot make undo/redo actions.
 - Julia API: missing add/remove arcs.
 
-## What are Petri nets, timed Petri nets, timed event graph ?
+## What are Petri nets, timed Petri nets, timed event graph?
 
 ### Petri nets and timed Petri nets
 
 Petri nets are one of several mathematical modeling languages for the
 description of distributed systems and synchronization of their processes. It is
-a class of discrete event dynamic system.
+a class of discrete event dynamic systems.
 
 A Petri net is a directed bipartite graph that has two types of nodes: places
-and transitions, respectively depicted as circles and rectangles. A place can
+and transitions respectively depicted as circles and rectangles. A place can
 contain zero or any positive number of tokens, usually depicted either as black
-circles or as numbers. Arcs, depicted as arrows. An arc allows to direct two
-nodes of different type: either from a place to a transition or from a
+circles or as numbers. Arcs, depicted as arrows. An arc allows directing two
+nodes of different types: either from a place to a transition or from a
 transition to a place. In timed Petri nets, "place -> transition" arcs are
-valuated with a strictly positive duration value which simulates the time needed
+evaluated with a strictly positive duration value which simulates the time needed
 by the place to perform the associated action. A transition is activated if all
 places connected to it as inputs contain at least one token. When a transition
-is activated a token is burnt from each of these places and added to each places
+is activated a token is burnt from each of these places and added to each place
 connected as outputs to this transition.
 
-Usually, the numbers of tokens in places depicts the states of the systems,
-tokens represent the resources of the system and transitions describes the
+Usually, the numbers of tokens in places depict the states of the systems,
+tokens represent the resources of the system and transitions describe the
 synchronization of resources (rendez-vous). Petri is another way to model state
 machines.
 
-In the above figure 1, there are 5 transitions (`T0, T1, T2, T3, T4`) and 4
+In above figure 1, there are 5 transitions (`T0, T1, T2, T3, T4`) and 4
 places (`P0, P1, P2, P3`). Places `P0` and `P1` have 1 token each, the place
 `P1` has 2 tokens and the place `P3` has no token. The arc `T0 -> P1` has 3
 units of times to simulate the fact that `P1` will need this duration to perform
@@ -264,67 +264,67 @@ unsigned integers `0 .. N`.  Numbers shall be consecutive and without
 "holes". This is important when generating graphs defined by adjacency
 matrices: indices of the matrix will directly match unique identifiers and
 therefore no lookup table is needed. To distinguish the type of node a `T` or
-`P` char is also prepend to the number. Arcs have no identifier because their
-relation of directing nodes is unique since this editor does not manage multi
+`P` char is also prepended to the number. Arcs have no identifier because their
+relation to directing nodes is unique since this editor does not manage multi
 arcs. Therefore, when deleting a place (or a transition) the latest place (or
 latest transition) in the container gets the unique identifier of the deleted
 element to guarantee consecutive identifiers without "holes".
 
 ### Dynamic simulation
 
-When running the simulation with this editor, tokens will transit along arcs of
+When running the simulation with this editor, tokens will transit along the arcs of
 the net. When transitions are activated, tokens are instantaneously burnt from
 places and directly "teleported" to transitions. Then, they will move along the
 arc from the transition to the place. This "travel" will hold the number of
-seconds indicated by the arc. This symbolized the time needed to the Place to
-perform its action. A fading effect will help you to show you which arcs and
+seconds indicated by the arc. This symbolized the time needed for the Place to
+perform its action. A fading effect will help to show you which arcs and
 nodes are activated.
 
 Notes:
-- Duration of animations are not yet normalized so short delay will make the GUI
+- Duration of animations is not yet normalized, so a short duration will make the GUI
   blink.
-- To simulate classic Petri net, simply set all duration in arcs to 0.
-- Inputs generating periodically tokens is currently not implemented. For the
+- To simulate a classic Petri net, simply set all duration in arcs to 0.
+- Inputs generating periodically tokens are currently not implemented. For the
 moment, during the simulation, you can place your mouse cursor to any place and
 with `+` key you can add a token this will mimic input generating tokens.
-- For outputs, simply add transitions without successor. Tokens will be
+- For outputs, simply add transitions without successors. Tokens will be
 definitively deleted from the simulation.
 
-### What decision is made when several transitions can burn tokens from the same place ?
+### What decision is made when several transitions can burn tokens from the same place?
 
-Question: In the above figure 1, the place `P1` has two tokens and has two
+Question: In above figure 1, the place `P1` has two tokens and has two
 leaving arcs `P1 -> T1` and `P1 -> T2`. How transitions `T1` and `T2` will burn
-tokens in `P1` and therefore in which arc tokens will transit to ?
+tokens in `P1` and therefore in which arc tokens will transit to?
 
-Answer: Unless you want to simulate system with concurrences between resources,
+Answer: Unless you want to simulate a system with concurrences between resources,
 this kind of net is a bad design and should be avoided when architecturing real
-systems since the execution of this kind of Petri nets is nondeterministic: when
+systems since the execution of this kind of Petri net is nondeterministic: when
 multiple transitions are enabled at the same time, they will fire in any
-order. Therefore you should adapt your Petri net to define uniquely the
-trajectory of the token.
+order. Therefore you should adapt your Petri net to define uniquely
+the trajectory of the token.
 
-Nondeterministic execution policy is made at the discretion of the developer of
+A nondeterministic execution policy is made at the discretion of the developer of
 the editor and you will have different behavior depending on how the editor has
 been developed. Currently in our case, initially, the order when iterating on
-transitions and arcs only depends of their order of creation but now we
+transitions and arcs only depends on their order of creation but now we
 randomize.  When several places are fired, the maximum possible of tokens will
-be burn within a single step of the animation cycle but, internally, we iterate
-over tokens one by one to help dispatching them over the maximum number of arcs.
+be burned within a single step of the animation cycle but, internally, we iterate
+over tokens one by one to help dispatch them over the maximum number of arcs.
 Therefore, in this particular example, since `T1` has been created before `T2`
 (unique identifiers are incremented by one from zero and there is no gap), the
 1st token will go to `T1` and the second will go to `T2`. If `P1` had a single
-token, in early `T1` will always be chosen but in latest version we randomize.
+token, in early `T1` will always be chosen but in the latest version, we randomize.
 
-## What are Timed Graph Events ?
+## What are Timed Graph Events?
 
 A timed event graph is a subclass of Petri net in which all places have a single
 input arc and a single output arc. This property allows to forbid, for example,
-the or-divergent branching (choice between several transitions) and therefore
+the or-divergent branching (choice between several transitions), and therefore
 concurrency is never occurring. Transitions still may have several arcs because
-they simulate synchronisation between resources. Places can have zero or several
-tokens. In the above figure 1, the net is not an event graph since `P0` has 3
+they simulate synchronization between resources. Places can have zero or several
+tokens. In above figure 1, the net is not an event graph since `P0` has 3
 incoming arcs and `P2` has two output arcs but the following figure 2 is an
-event graph. Timed Graph Events are an interesting for designing real time
+event graph. Timed Graph Events are interesting for designing real-time
 systems as explained in the next sections.
 
 ![EventGraph](doc/EventGraph01.png)
@@ -332,15 +332,15 @@ systems as explained in the next sections.
 *Fig 2 - Event Graph (made with this editor).*
 
 Inputs of event graphs are transitions with no predecessor. Outputs of event
-graphs are transitions with no successor. In the figure 2, there is no inputs
+graphs are transitions with no successor. In figure 2, there are no inputs
 and no outputs.
 
 ### Dater and Counter Form
 
-Event graphs represent when system event are occurring. We have two different
+Event graphs represent when system events are occurring. We have two different
 way to represent them: the counter form, and the dater form.
 
-- Counter form of the event graph in the figure 2 is:
+- The counter form of the event graph in figure 2 is:
 ```
 T0(t) = min(2 + T2(t - 5));
 T1(t) = min(0 + T0(t - 5));
@@ -351,7 +351,7 @@ T3(t) = min(0 + T0(t - 1));
 where `t - 5`, `t - 3` and `t - 1` are delays implied by duration on arcs and
 `min(2 +` and `min(0 +` implied by tokens from incoming places.
 
-- Dater form of the event graph in the figure 2 is:
+- The dater form of the event graph in figure 2 is:
 ```
 T0(n) = max(5 + T2(n - 2));
 T1(n) = max(5 + T0(n - 0));
@@ -362,37 +362,37 @@ T3(n) = max(1 + T0(n - 0));
 where `n - 0` and `n - 2` are delays implied by tokens from incoming places and
 `max(5 +`, `max(3 + ` and `max(1 +` are implied by duration from incoming arcs.
 
-In both case, these kinds of formula are not easy to manipulate and the (max,+)
+In both cases, these kinds of formulas are not easy to manipulate and the (max,+)
 algebra is here to simplify them. This algebra introduces the operator ⨁ instead
 of the usual multiplication in classic algebra, and the operator ⨂ (usually
-simply noted as `.`) instead of the usual `max()` function in the classic
+simply noted as `.`) instead of the usual `max()` function in classic
 algebra. The (min,+) algebra also exists (the operator ⨂ is the `min()`
 function) and for more information about (max,+) algebra, see my
 [MaxPlus](https://github.com/Lecrapouille/MaxPlus.jl) Julia package which
 contains tutorials explaining more deeply this algebra.
 
-The (min,+) algebra, for event graphs, is less convenient since dater form is
+The (min,+) algebra, for event graphs, is less convenient since the dater form is
 more friendly than the counter form for two reasons:
-- on a real-time system the number of resources (tokens) are reduced compared to
+- on a real-time system the number of resources (tokens) is reduced compared to
   duration needed to perform tasks (duration on arcs) which can be arbitrary
   long (for example 2 resources versus 2 hours delay when your system is
-  scheduled at 1 Hz).  Remember that in discrete time system each delay costs
+  scheduled at 1 Hz).  Remember that in a discrete-time system each delay costs
   one variable (memory) to hold the value.
 - thanks to the canonical form (explained in the next section) delays can
   simplify be either 0 or 1.
 
 ### Canonical Event Graph
 
-A event graph is said canonical when all places have at most one token and when
-places after an input transition (meaning a transition without predecessor) has
+An event graph is said canonical when all places have at most one token and when
+places after an input transition (meaning a transition without predecessor) have
 no token and when places before an output transition (meaning a transition
-without successor) has no token. Any event graph can be transformed to its
+without successor) have no token. Any event graph can be transformed to its
 canonical form: a place with N tokens can be seen as N consecutive places
 holding each a single token. For system inputs and system outputs having one
-token in the place, we can simply add an extra empty place.
+token in place, we can simply add an extra empty place.
 
 The graph in figure 2 is not canonical since `P0` has two tokens. The following
-figure is the same event graph but on its canonical form: one token `P0` has
+figure is the same event graph but in its canonical form: one token `P0` has
 been transferred to the newly created `P5` place.
 
 ![CanonicalEventGraph](doc/CanoEventGraph01.png)
@@ -401,13 +401,13 @@ been transferred to the newly created `P5` place.
 
 This kind of event graph can directly be converted into an implicit dynamic
 linear systems in the (max,+) algebra (see section after) but since editing
-canonical net is fastidious and therefore it is hidden to the user and the user
+canonical net is fastidious and therefore it is hidden from the user and the user
 can directly manipulate the compact form.
 
 ### Implicit max-plus Dynamic Linear Systems
 
 Canonical event graphs are interesting since their dater form can be modeled by
-an implicit dynamic linear systems with the (max,+) algebra, which have the
+an implicit dynamic linear system with the (max,+) algebra, which has the
 following form:
 
 ```
@@ -415,18 +415,18 @@ following form:
     Y(n) = C ⨂ X(n)
 ```
 
-Or using compact syntax:
+Or using the compact syntax:
 ```
     X(n) = D X(n) ⨁ A X(n-1) ⨁ B U(n)
     Y(n) = C X(n)
 ```
 
 In where `A, B, C, D` are (max,+) matrices: `B` is named controlled matrix, `C`
-the observation matrix, `A` the state matrix and `D` the implicit matrix. `U`
+the observation matrix, `A` the state matrix, and `D` the implicit matrix. `U`
 the column vector of system inputs (transitions with no predecessor), `Y` the
-system outputs (transitions with no successor) and `X` the systems states as
-column vector (transitions with successor and predecessor), `n` in `X(n)`,
-`U(n)`, `Y(n)` are places with no token and `n-1` in `X(n-1)` are places having
+system outputs (transitions with no successor), and `X` the systems states as
+a column vector (transitions with successor and predecessor), `n` in `X(n)`,
+`U(n)`, `Y(n)` are places with no token, and `n-1` in `X(n-1)` are places having
 a single token. Note: that is why, in the previous section, we said that
 canonical form has its input and output places with no token. This editor can
 generate these (max,+) sparse matrices (for Julia), for example from figure 3:
@@ -440,19 +440,19 @@ D = | .  3  .  1  . |,  A = | .  .  .  .  . |
 
 ```
 
-Since this particular net has no input and outputs, there is no U, Y, B, C
+Since this particular net has no input and outputs, there are no U, Y, B, or C
 matrices. Note: `.` is the compact form of the (max,+) number `ε` which is the
-`-∞` in classic algebra and means that there is no existing arc (usually, these
-kind of matrices are sparse since they can be huge but with few of elements
-stored).  Let suppose that matrix indices start from `0`, then `D[1,0]` holds
-the duration 5 (unit of times) and 0 token (the arc `T0 -> P1 -> T1`).  `A[0,4]`
+`-∞` in classic algebra means that there is no existing arc (usually, these
+kinds of matrices are sparse since they can be huge but with few elements
+stored).  Let's suppose that matrix indices start from `0`, then `D[1,0]` holds
+the duration 5 (unit of times) and 0 tokens (the arc `T0 -> P1 -> T1`).  `A[0,4]`
 holds the duration 0 (unit of times) and 1 token (the arc `T4 -> P5 -> T0`).
 
-This kind of systems are interesting for real-time systems because they can show
+These kinds of systems are interesting for real-time systems because they can show
 to the critical circuit of the system (in duration). This editor can show the
-critical circuit like shown in the next figure 4 where the circuit `T0, T1, T2`
-will consumes 13 unit of time (5 + 5 + 3) for two tokens (in `P0`) and therefore
-6.5 unit of time by token (this information is for the moment displayed on the
+a critical circuit as shown in the next figure 4 where the circuit `T0, T1, T2`
+will consume 13 units of time (5 + 5 + 3) for two tokens (in `P0`) and therefore
+6.5 units of time by token (this information is for the moment displayed on the
 console).
 
 ![Circuit](doc/Circuit01.png)
@@ -463,7 +463,7 @@ console).
 
 Thanks to the property of event graphs in which places have a single input arc
 and single arc, another way to represent event graphs in a more compact form, is
-to merge places with their unique incoming and unique out-coming arcs. From the
+to merge places with their unique incoming and unique out-coming arcs. From
 figure 2, we obtain the following figure 3, which is a more compact graph but
 equivalent. For example, the arc `P0/5/2` means the place `P0` with the duration
 5 and 2 tokens. Note: this editor does not yet manipulate or show this compact
@@ -472,12 +472,12 @@ form while a prototype is made in the git branch
 
 ![Graph](doc/Graph01.png)
 
-*Fig 3 - Compact form of figure 2 (made with a modified version of the editor).*
+*Fig 3 - A compact form of figure 2 (made with a modified version of the editor).*
 
 Since, graphs can be represented by adjacency matrices, and since, arcs hold two
 information (duration and tokens), event graphs can be represented by two
 matrices (generally sparse): one matrix for duration `N` and the second matrix
-for tokens `T`. And since, event graph have good properties with the (max,+)
+for tokens `T`. And since, event graphs have good properties with the (max,+)
 algebra, this editor can generate this kind of matrix directly in this algebra
 which can be used by the [MaxPlus](https://github.com/Lecrapouille/MaxPlus.jl)
 Julia package.
@@ -492,8 +492,8 @@ N = | .  0  .  0 |,  T = | .  3  .  1 |
 Let suppose that matrix indices start from `0`, then `N[0,2]` holds the value 1
 token and `T[0,2]` holds the duration 5. The `[0,2]` means the arc `T2 -> T0` in
 the compact form (or arcs `T2 -> P0` and `P0 -> T0` in the classic Petri form).
-Note that origin and destination is inverse, this is because the matrix
-convention is generally the follow: `M . x` with `x` a column vector. This
+Note that origin and destination are inversed, this is because the matrix
+convention is generally the following: `M . x` with `x` a column vector. This
 editor can generate some Julia script. Note that `ε` in (max,+) algebra means
 that there is no existing arc.
 
@@ -517,7 +517,7 @@ because the path of the shared library `libtimedpetrineteditor.so` has to be
 known to be used by Julia.
 
 From your Julia REPL (call Julia at the root of the TimedPetriNetEditor
-repository), you can type this kind of code (consider this code as cheatsheet):
+repository), you can type this kind of code (consider this code as a cheatsheet):
 
 ```julia
 using SparseArrays, MaxPlus
@@ -537,7 +537,7 @@ pn1 = petri_net("examples/TrafficLight.json")
 pn2 = petri_net(pn)
 @assert pn2.handle == 2
 
-# Launch the GUI editor to edit the net graphically. Once presed ESCAPE key,
+# Launch the GUI editor to edit the net graphically. Once pressed ESCAPE key,
 # the editor will quit and modifications applied on the net.
 editor!(pn)
 @assert ans == true
@@ -551,7 +551,7 @@ clear!(pn)
 pn3 = editor(pn)
 @assert pn3.handle == 3
 
-# Has no places and no transitions ? Return true in this case.
+# Has no places and no transitions? Return true in this case.
 is_empty(pn1)
 @assert ans == false
 is_empty(pn2)
@@ -594,7 +594,7 @@ t3 = transition(pn, t2)
 @assert t3.x == 200.0
 @assert t3.y == 240.0
 
-# Remove nodes. Be careful the handle of latest inserted node is invalidated
+# Remove nodes. Be careful the handle of the latest inserted node is invalidated
 remove_place!(pn, p1)
 @assert ans == true
 remove_transition!(pn, t0)
@@ -630,11 +630,11 @@ load!(pn, "examples/Howard2.json")
 pn4 = load("examples/Howard2.json")
 @assert pn4.handle == 4
 
-# Get the list of marks (number of token for each places P0, P1 .. Pn)
+# Get the list of marks (number of tokens for each place P0, P1 .. Pn)
 tokens(pn)
 @assert ans == [2; 0; 0; 0; 0]
 
-# Modify number of tokens for each places
+# Modify the number of tokens for each place
 tokens!(pn, [0; 1; 2; 3; 4])
 @assert ans == true
 
@@ -670,13 +670,13 @@ show(S.C)
 show(S.x0)
 
 # For more interaction with the (max,+) algebra see tutorials on the repository
-# of the MaxPlus package. For example: MP(3) * MP(2) will return MP(5).
+# of the MaxPlus package. For example, MP(3) * MP(2) will return MP(5).
 ```
 
 ## Generate LaTeX and Graphviz figures
 
-The Petri net can be exported to LaTeX file or Graphviz file. The application will
-ask you where to save the file. For LaTex a `.tex` file is create, you can compile
+The Petri net can be exported to a LaTeX file or Graphviz file. The application will
+ask you where to save the file. For LaTex a `.tex` file is created, and you can compile
 it with a command like `latex LateX-gen.tex; dvipdf LateX-gen.dvi`. For Graphviz,
 you have to install an application for example for Linux:
 `sudo apt-get install xdot`.
@@ -692,17 +692,17 @@ you have to install an application for example for Linux:
 ## Generate C++ code file (GRAFCET aka sequential function chart)
 
 After watching this nice French YouTube video https://youtu.be/v5FwJvtGaEw, in
-where GRAFCET is created manually in C for Arduino, I extended my editor for
+which GRAFCET is created manually in C for Arduino, I extended my editor for
 generating GRAFCET in a single C++ header file. Since my project mainly concerns
-timed Petri net, the editor is not intended to follow all the GRAFCET norm
-(consider it as bonus while GitHub pull requests are welcome) and therefore
-cannot edit transitivities and simulate inputs. As consquence, you will have to
+timed Petri net, the editor is not intended to follow all the GRAFCET norms
+(consider it as a bonus while GitHub pull requests are welcome) and therefore
+cannot edit transitivities and simulate inputs. As consequence, you will have to
 write manually the missing methods in your own C++ file:
 - `P0()`, `P1()` ... to let you add the code for actions when places are
-  activated (usually to update actuators). You have to implement one method to
+  activated (usually to update actuators). You have to implement one method
   for each place.
 - `T0()`, `T1()` ... to let you add the code of the transitivity (boolean logic)
-  of the associated transition (usually condition depending on system
+  of the associated transition (usually, condition depending on system
   sensors). Return `true` when the transition is enabled, else return
   `false`. You have to implement one method for each transition.
 
@@ -710,11 +710,11 @@ write manually the missing methods in your own C++ file:
 
 *Fig 6 - Traffic Light (made with this editor).*
 
-Here a small example on how to call your generated GRAFCET as `Grafcet-gen.hpp`
-with a traffic light depict by the following [net](examples/TrafficLight.json) :
+Here is a small example of how to call your generated GRAFCET as `Grafcet-gen.hpp`
+with a traffic light depicted by the following [net](examples/TrafficLight.json) :
 - `Red1`, `Green1` and `Orange1` are the three colors of the first light.
 - `Red2`, `Green2` and `Orange1` are the three colors of the second light.
-- `P6`, `T0` and `T3` allows to turn green one of the lights.
+- `P6`, `T0`, and `T3` allows turning green one of the lights.
 
 By default, the C++ namespace is `generated` but this can be changed by
 parameters of the method `PetriNet::exportToCpp(filepath, namespace)`. Let us
@@ -769,7 +769,7 @@ int main()
       // Uncomment for displaying states of the GRAFCET
       // g.debug();
 
-      // Let suppose here the time step is 1 Hz.
+      //Let's suppose here the time step is 1 Hz.
       std::this_thread::sleep_for(1000ms);
    }
 
@@ -802,7 +802,7 @@ Red 2
 ^C
 ```
 
-The variable `a` is used to commute which light turns to green. Ideally, remove
+The variable `a` is used to commute when the light turns green. Ideally, remove
 the code of `a = a ^ true;` of `Grafcet::P6()` and in the `while` loop, before
 `g.update();`, implement a real sensor: for example with an Arduino `a =
 digitalRead(3);` and for actions such `P0()` ... update your actuators (i.e
@@ -834,7 +834,7 @@ Can export to input files for https://gitlab.com/porky11/pn-editor
 JSON file format has been chosen for saving Petri net. This was initially made
 to be compatible with
 [pnet-simulator](https://github.com/igorakim/pnet-simulator) but it is no longer
-compatible. Here, an example of its content:
+compatible. Here, is an example of its content:
 
 ```json
 {
@@ -846,13 +846,13 @@ compatible. Here, an example of its content:
 
 A Petri net is composed of three arrays (the `[ ]`): `Places`, `Transitions` and
 `Arcs`. In this example, is stored in the JSON file a Petri net made of two
-places, one transition and two arcs. Places are defined as follow `"identifier,
-X-coord, Y-coord, number of tokens"`. Transitions are defined as follow
-`"identifier, X-coord, Y-coord, angle"` and Arcs are defined as follow
+places, one transition, and two arcs. Places are defined as the following `"identifier,
+X-coord, Y-coord, number of tokens"`. Transitions are defined as follows
+`"identifier, X-coord, Y-coord, angle"` and Arcs are defined as follows
 `"identifier origin node, identifier destination node"`.
 
 Places and Transitions:
-- their unique identifier (string) i.e. `P0`, `P1`, `T0`. First character shall
+- their unique identifier (string) i.e. `P0`, `P1`, `T0`. The first character shall
   be `P` (for Places) or `T` (Transitions).
 - their X and Y coordinate (float) in the screen i.e. `T0` is placed at
   `(376,132)`.
@@ -862,26 +862,26 @@ Places and Transitions:
 
 Arcs:
 - have no unique identifier.
-- are directed links between two nodes of different type given they unique
+- are directed links between two nodes of the different types given the unique
   identifier (i.e. the first arc links the origin place `P0` to the destination
   transition `T0`. Therefore an arc cannot link two places or link two
   transitions.
-- has unit of time (positive value) i.e. the arc `T0 --> P1` has 3 units of
+- has a unit of time (positive value) i.e. the arc `T0 --> P1` has 3 units of
   times (float). This time is only used for arc `Transition` to `Place` this
   means that for arc `Place` to `Transition` this value is not used but given
   in the JSON file to make easy its parsing.
 
-Note: this project does not use third part JSON library for a home made token
+Note: this project does not use a third-part JSON library for a homemade token
 splitter (see the `class Tokenizer` in the code).
 
-## Related lecture and projects
+## Related lectures and projects
 
 - (en, fr) https://jpquadrat.github.io/ Some research based on timed Petri net
   and (max,+) algebra.
 - (en, fr) https://github.com/Lecrapouille/MaxPlus.jl My (max,+) toolbox for
   Julia, a portage of the http://www.scicoslab.org/ toolbox (since Scilab is no
   longer maintained).
-- (en) http://www.cmap.polytechnique.fr/~gaubert/HOWARD2.html the algorithm used
+- (en) http://www.cmap.polytechnique.fr/~gaubert/HOWARD2.html is the algorithm used
   for computing the (max,+) eigenvalue used in ScicosLab MaxPlus toolbox and
   that I reused in this project.
 - (en) http://www.unice.fr/dgaffe/recherche/outils_grafcet.html GRAFCET editor.
@@ -893,3 +893,4 @@ splitter (see the `class Tokenizer` in the code).
   with Godot Engine.
 - (fr) https://youtu.be/l1F2dIA90s0 Programmation d'un Grafcet en C.
 - (fr) https://youtu.be/v5FwJvtGaEw Programmation d'un Grafcet en C pour Arduino.
+
