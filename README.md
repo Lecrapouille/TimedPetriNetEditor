@@ -48,8 +48,13 @@ binding the C++ API can be optionally used for working in synergy with my
 Prerequisites to compile this project are:
 - g++ or clang++ compiler for C++11.
 - SFML: `sudo apt-get install libsfml-dev`
+- Optionally, libdwarf: `sudo apt-get install libdw-dev` (needed when compiling
+  this project in debug mode because it will use
+  [backward-cpp](https://github.com/bombela/backward-cpp) for showing the stack
+  trace in case of segfault) else in the Makefile replace `BUILD_TYPE = debug`
+  by `BUILD_TYPE = release`.
 - Optionally, you can install Julia from https://julialang.org/downloads but
-this does not impact the standalone graphical editor.
+  this does not impact the standalone graphical editor.
 
 To download the code source of the
 [TimedPetriNetEditor](https://github.com/Lecrapouille/TimedPetriNetEditor)
@@ -59,7 +64,9 @@ project, type the following command on a Linux console:
 git clone https://github.com/Lecrapouille/TimedPetriNetEditor --depth=1 --recursive
 ```
 
-The recursive optional is important. To compile the project:
+The recursive argument is important: it allows to clone my Makefile helper.
+
+To compile the project:
 ```sh
 cd TimedPetriNetEditor/
 make -j8
@@ -825,9 +832,11 @@ Orange 1
 Orange 2
 ```
 
-## Other export
+## Other exports
 
-Can export to input files for https://gitlab.com/porky11/pn-editor
+Can export to input files for:
+- pn-editor: https://gitlab.com/porky11/pn-editor
+- **TODO** Symfony workflow: https://symfony.com/doc/current/components/workflow.html
 
 ## Description of the file format used for saving Petri net
 
