@@ -78,4 +78,6 @@ unit-tests check: $(TARGET)
 	@$(call print-to,"Running","$(TARGET)","$(RAPPORT)","")
 	$(SANITIZER) ./$(BUILD)/$(TARGET) $(TU_OPTIONS) || (cat $(TARGET).log; return 1)
 
+###################################################
+# Sharable informations between all Makefiles
 include $(M)/Makefile.footer

@@ -835,8 +835,18 @@ Orange 2
 ## Other exports
 
 Can export to input files for:
-- pn-editor: https://gitlab.com/porky11/pn-editor
-- **TODO** Symfony workflow: https://symfony.com/doc/current/components/workflow.html
+
+### Symfony workflow
+
+https://symfony.com/doc/current/components/workflow.html
+
+**TODO** Symfony workflow
+
+### pn-editor
+
+https://gitlab.com/porky11/pn-editor
+
+![PnEditor](doc/pn-editor.png)
 
 ## Description of the file format used for saving Petri net
 
