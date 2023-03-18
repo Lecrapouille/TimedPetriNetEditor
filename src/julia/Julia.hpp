@@ -49,29 +49,30 @@ typedef struct CSparseMatrix
 
 // ****************************************************************************
 //! \brief Create a new empty timed Petri net.
-//! \return the handle of the Petri net.
+//! \return the handle of the Petri net needed by other functions.
 // ****************************************************************************
 extern "C" int64_t petri_create();
 
 // ****************************************************************************
 //! \brief Duplicate the given Petri net.
+//! \param[in] pn: the handle of the petri net created by create_petri_net().
 //! \return the handle of the Petri net.
 // ****************************************************************************
-extern "C" int64_t petri_copy(int64_t const handle);
+extern "C" int64_t petri_copy(int64_t const pn);
 
 // ****************************************************************************
 //! \brief Clear the petri net.
 //! \param[in] pn: the handle of the petri net created by create_petri_net().
 //! \return false if the handle is invalid or return true.
 // ****************************************************************************
-extern "C" bool petri_reset(int64_t const handle);
+extern "C" bool petri_reset(int64_t const pn);
 
 // ****************************************************************************
 //! \brief Is the Petri net empty ?
 //! \param[in] pn: the handle of the petri net created by create_petri_net().
 //! \return true if the net is empty, else return false.
 // ****************************************************************************
-extern "C" bool petri_is_empty(int64_t const handle, bool* empty);
+extern "C" bool petri_is_empty(int64_t const pn, bool* empty);
 
 // ****************************************************************************
 //! \brief Call the GUI for editing the given Petri net.
@@ -79,25 +80,27 @@ extern "C" bool petri_is_empty(int64_t const handle, bool* empty);
 //! \return false if the handle is invalid or the GUI cannot be started else
 //! return true.
 // ****************************************************************************
-extern "C" bool petri_editor(int64_t const handle);
+extern "C" bool petri_editor(int64_t const pn);
 
 // ****************************************************************************
 //! \brief Set the number of tokens for each places.
+//! \param[in] pn: the handle of the petri net created by create_petri_net().
 //! \param[in] tokens the list of tokens for each places (#P0, #P1 .. #Pn).
 //! \note the size of list of tokens is not checked and shall be made by the
 //! caller function.
 //! \return true if the net is valid.
 // ****************************************************************************
-extern "C" bool petri_set_marks(int64_t const handle, int64_t const* tokens);
+extern "C" bool petri_set_marks(int64_t const pn, int64_t const* tokens);
 
 // ****************************************************************************
 //! \brief Get the number of tokens for each places.
+//! \param[in] pn: the handle of the petri net created by create_petri_net().
 //! \param[out] tokens the list of tokens for each places (#P0, #P1 .. #Pn).
 //! \note the size of list of tokens is not checked and shall be made by the
 //! caller function.
 //! \return true if the net is valid.
 // ****************************************************************************
-extern "C" bool petri_get_marks(int64_t const handle, int64_t* tokens);
+extern "C" bool petri_get_marks(int64_t const pn, int64_t* tokens);
 
 // ****************************************************************************
 //! \brief Add a new Place node at position (X,Y) and holding N tokens.
@@ -108,31 +111,35 @@ extern "C" bool petri_get_marks(int64_t const handle, int64_t* tokens);
 //! \return -1 if the handle is invalid or return the unique identifier of the
 //! newly created place.
 // ****************************************************************************
-extern "C" int64_t petri_add_place(int64_t const handle, double const x,
+extern "C" int64_t petri_add_place(int64_t const pn, double const x,
                                    double const y, int64_t const tokens);
 
 // ****************************************************************************
 //! \brief Remove the place refered by its unique identifier.
+//! \param[in] pn: the handle of the petri net created by create_petri_net().
 // ****************************************************************************
-extern "C" bool petri_remove_place(int64_t const handle, int64_t const place);
+extern "C" bool petri_remove_place(int64_t const pn, int64_t const place);
 
 // ****************************************************************************
 //! \brief Return the number of places.
+//! \param[in] pn: the handle of the petri net created by create_petri_net().
 // ****************************************************************************
-extern "C" int64_t petri_count_places(int64_t const handle);
+extern "C" int64_t petri_count_places(int64_t const pn);
 
 // ****************************************************************************
 //! \brief Return the list of places.
+//! \param[in] pn: the handle of the petri net created by create_petri_net().
 //! \param[out] list: a pre-allocated memory to store places. The size shall
 //! have be set with \c petri_count_places().
 // ****************************************************************************
-extern "C" bool petri_get_places(int64_t const handle, CPlace_t* list);
+extern "C" bool petri_get_places(int64_t const pn, CPlace_t* list);
 
 // ****************************************************************************
 //! \brief Return the ith transition.
+//! \param[in] pn: the handle of the petri net created by create_petri_net().
 //! \param[out] transition: a pre-allocated memory to store the transition.
 // ****************************************************************************
-extern "C" bool petri_get_place(int64_t const handle, int64_t const i,
+extern "C" bool petri_get_place(int64_t const pn, int64_t const i,
                                 CPlace_t* place);
 
 // ****************************************************************************
@@ -143,99 +150,115 @@ extern "C" bool petri_get_place(int64_t const handle, int64_t const i,
 //! \return -1 if the handle is invalid or return the unique identifier of the
 //! newly created place.
 // ****************************************************************************
-extern "C" int64_t petri_add_transition(int64_t const handle, double const x,
+extern "C" int64_t petri_add_transition(int64_t const pn, double const x,
                                         double const y);
 
 // ****************************************************************************
 //! \brief Return the number of transitions.
+//! \param[in] pn: the handle of the petri net created by create_petri_net().
 // ****************************************************************************
-extern "C" int64_t petri_count_transitions(int64_t const handle);
+extern "C" int64_t petri_count_transitions(int64_t const pn);
 
 // ****************************************************************************
 //! \brief Return the list of transitions.
+//! \param[in] pn: the handle of the petri net created by create_petri_net().
 //! \param[out] list: a pre-allocated memory to store transitions. The size shall
 //! have be set with \c petri_count_transitions().
 // ****************************************************************************
-extern "C" bool petri_get_transitions(int64_t const handle, CTransition_t* transitions);
+extern "C" bool petri_get_transitions(int64_t const pn, CTransition_t* transitions);
 
 // ****************************************************************************
 //! \brief Return the ith transition.
+//! \param[in] pn: the handle of the petri net created by create_petri_net().
 //! \param[out] transition: a pre-allocated memory to store the transition.
 // ****************************************************************************
-extern "C" bool petri_get_transition(int64_t const handle, int64_t const i,
+extern "C" bool petri_get_transition(int64_t const pn, int64_t const i,
                                      CTransition_t* transition);
 
 // ****************************************************************************
 //! \brief Remove the transition refered by its unique identifier.
+//! \param[in] pn: the handle of the petri net created by create_petri_net().
 // ****************************************************************************
-extern "C" bool petri_remove_transition(int64_t const handle, int64_t const transition);
+extern "C" bool petri_remove_transition(int64_t const pn, int64_t const transition);
 
 // ****************************************************************************
 //! \brief
+//! \param[in] pn: the handle of the petri net created by create_petri_net().
 // ****************************************************************************
-extern "C" int64_t petri_add_arc(int64_t const handle, const char* from, const char* to);
+extern "C" int64_t petri_add_arc(int64_t const pn, const char* from, const char* to);
 
 // ****************************************************************************
 //! \brief
+//! \param[in] pn: the handle of the petri net created by create_petri_net().
 // ****************************************************************************
-extern "C" bool petri_remove_arc(int64_t const handle, const char* from, const char* to);
+extern "C" bool petri_remove_arc(int64_t const pn, const char* from, const char* to);
 
 // ****************************************************************************
 //! \brief Get the number of tokens from the desired places.
+//! \param[in] pn: the handle of the petri net created by create_petri_net().
 // ****************************************************************************
-extern "C" int64_t petri_get_tokens(int64_t const handle, int64_t const id);
+extern "C" int64_t petri_get_tokens(int64_t const pn, int64_t const id);
 
 // ****************************************************************************
 //! \brief Set the given number of tokens in the desired places.
+//! \param[in] pn: the handle of the petri net created by create_petri_net().
 // ****************************************************************************
-extern "C" bool petri_set_tokens(int64_t const handle, int64_t const id,
+extern "C" bool petri_set_tokens(int64_t const pn, int64_t const id,
                                  int64_t const tokens);
 
 // ****************************************************************************
 //! \brief Save the petri net.
+//! \param[in] pn: the handle of the petri net created by create_petri_net().
 //! \return false if the handle is invalid or failed to save, else return true.
 // ****************************************************************************
-extern "C" bool petri_save(int64_t const handle, const char* filepath);
+extern "C" bool petri_save(int64_t const pn, const char* filepath);
 
 // ****************************************************************************
 //! \brief Load the petri net.
+//! \param[in] pn: the handle of the petri net created by create_petri_net().
 //! \return false if the handle is invalid or failed to load, else return true
 // ****************************************************************************
-extern "C" bool petri_load(int64_t const handle, const char* filepath);
+extern "C" bool petri_load(int64_t const pn, const char* filepath);
 
 // ****************************************************************************
 //! \brief
+//! \param[in] pn: the handle of the petri net created by create_petri_net().
 // ****************************************************************************
-extern "C" bool petri_is_event_graph(int64_t const handle, bool* res);
+extern "C" bool petri_is_event_graph(int64_t const pn, bool* res);
 
 // ****************************************************************************
 //! \brief
+//! \param[in] pn: the handle of the petri net created by create_petri_net().
 //! \return the handle of the newly created Petri net.
 // ****************************************************************************
-extern "C" int64_t petri_to_canonical(int64_t const handle);
+extern "C" int64_t petri_to_canonical(int64_t const pn);
 
 // ****************************************************************************
 //! \brief
+//! \param[in] pn: the handle of the petri net created by create_petri_net().
 // ****************************************************************************
-extern "C" bool petri_dater_form(int64_t const handle);
-extern "C" bool petri_counter_form(int64_t const handle);
+extern "C" bool petri_dater_form(int64_t const pn);
+extern "C" bool petri_counter_form(int64_t const pn);
 
 // ****************************************************************************
 //! \brief
+//! \param[in] pn: the handle of the petri net created by create_petri_net().
 // ****************************************************************************
-//extern "C" bool showCriticalCycle(int64_t const handle);
+//extern "C" bool showCriticalCycle(int64_t const pn);
 
 // ****************************************************************************
 //! \brief
+//! \param[in] pn: the handle of the petri net created by create_petri_net().
 // ****************************************************************************
-extern "C" bool petri_to_adjacency_matrices(int64_t const handle,
+extern "C" bool petri_to_adjacency_matrices(int64_t const pn,
                                             CSparseMatrix_t* N,
                                             CSparseMatrix_t* T);
 
 // ****************************************************************************
 //! \brief
+//! \param[in] pn: the handle of the petri net created by create_petri_net().
 // ****************************************************************************
-extern "C" bool petri_to_sys_lin(int64_t const handle, CSparseMatrix_t* D,
+extern "C" bool petri_to_sys_lin(int64_t const pn, CSparseMatrix_t* D,
                                  CSparseMatrix_t* A, CSparseMatrix_t* B,
                                  CSparseMatrix_t* C);
 

@@ -28,13 +28,13 @@
 static std::deque<std::unique_ptr<PetriNet>> g_petri_nets;
 
 //------------------------------------------------------------------------------
-//! \brief Check the validity of the Petri net handle (handle) and return an
+//! \brief Check the validity of the Petri net handle (pn) and return an
 //! error code in case of failure.
 //------------------------------------------------------------------------------
-#define CHECK_VALID_PETRI_HANDLE(handle, err_code)                             \
-    if ((handle < 0) || (size_t(handle) >= g_petri_nets.size()))               \
+#define CHECK_VALID_PETRI_HANDLE(pn, err_code)                                 \
+    if ((pn < 0) || (size_t(pn) >= g_petri_nets.size()))                       \
     {                                                                          \
-        std::cerr << "Unkown Petri net handle " << handle << std::endl;        \
+        std::cerr << "Unkown Petri net handle " << pn << std::endl;            \
         return err_code;                                                       \
     }
 
@@ -42,9 +42,9 @@ static std::deque<std::unique_ptr<PetriNet>> g_petri_nets;
 //! \brief Check the is the Petri net is an event graph. In case of error print
 //! erroneous arcs and return an error code.
 //------------------------------------------------------------------------------
-#define CHECK_IS_EVENT_GRAPH(handle, err_code)                                 \
+#define CHECK_IS_EVENT_GRAPH(pn, err_code)                                     \
     std::vector<Arc*> erroneous_arcs;                                          \
-    if (!g_petri_nets[size_t(handle)]->isEventGraph(erroneous_arcs))           \
+    if (!g_petri_nets[size_t(pn)]->isEventGraph(erroneous_arcs))               \
     {                                                                          \
         return err_code;                                                       \
     }
@@ -57,32 +57,32 @@ int64_t petri_create()
 }
 
 //------------------------------------------------------------------------------
-int64_t petri_copy(int64_t const handle)
+int64_t petri_copy(int64_t const pn)
 {
-    CHECK_VALID_PETRI_HANDLE(handle, -1);
+    CHECK_VALID_PETRI_HANDLE(pn, -1);
 
-    g_petri_nets.push_back(std::make_unique<PetriNet>(*g_petri_nets[size_t(handle)]));
+    g_petri_nets.push_back(std::make_unique<PetriNet>(*g_petri_nets[size_t(pn)]));
     return int64_t(g_petri_nets.size() - 1u);
 }
 
 //------------------------------------------------------------------------------
-bool petri_reset(int64_t const handle)
+bool petri_reset(int64_t const pn)
 {
-    CHECK_VALID_PETRI_HANDLE(handle, false);
+    CHECK_VALID_PETRI_HANDLE(pn, false);
 
-    g_petri_nets[size_t(handle)]->reset();
+    g_petri_nets[size_t(pn)]->reset();
     return true;
 }
 
 //------------------------------------------------------------------------------
-bool petri_is_empty(int64_t const handle, bool* empty)
+bool petri_is_empty(int64_t const pn, bool* empty)
 {
-    CHECK_VALID_PETRI_HANDLE(handle, false);
+    CHECK_VALID_PETRI_HANDLE(pn, false);
 
     if (empty == nullptr)
         return false;
 
-    *empty = g_petri_nets[size_t(handle)]->isEmpty();
+    *empty = g_petri_nets[size_t(pn)]->isEmpty();
     return true;
 }
 
@@ -90,12 +90,12 @@ bool petri_is_empty(int64_t const handle, bool* empty)
 // Equivalent to the main() but separated to allow to export function and create
 // shared library.
 // -----------------------------------------------------------------------------
-bool petri_editor(int64_t const handle)
+bool petri_editor(int64_t const pn)
 {
-    CHECK_VALID_PETRI_HANDLE(handle, false);
+    CHECK_VALID_PETRI_HANDLE(pn, false);
 
     Application application(800, 600, "Timed Petri Net Editor");
-    PetriEditor editor(application, *g_petri_nets[size_t(handle)]);
+    PetriEditor editor(application, *g_petri_nets[size_t(pn)]);
 
     try
     {
@@ -111,19 +111,19 @@ bool petri_editor(int64_t const handle)
 }
 
 //------------------------------------------------------------------------------
-int64_t petri_count_places(int64_t const handle)
+int64_t petri_count_places(int64_t const pn)
 {
-    CHECK_VALID_PETRI_HANDLE(handle, -1);
+    CHECK_VALID_PETRI_HANDLE(pn, -1);
 
-    return int64_t(g_petri_nets[size_t(handle)]->places().size());
+    return int64_t(g_petri_nets[size_t(pn)]->places().size());
 }
 
 //------------------------------------------------------------------------------
-bool petri_get_places(int64_t const handle, CPlace_t* places)
+bool petri_get_places(int64_t const pn, CPlace_t* places)
 {
-    CHECK_VALID_PETRI_HANDLE(handle, false);
+    CHECK_VALID_PETRI_HANDLE(pn, false);
 
-    PetriNet::Places const& p = g_petri_nets[size_t(handle)]->places();
+    PetriNet::Places const& p = g_petri_nets[size_t(pn)]->places();
     size_t i = 0;
     for (auto const& it: p)
     {
@@ -137,15 +137,15 @@ bool petri_get_places(int64_t const handle, CPlace_t* places)
 }
 
 //------------------------------------------------------------------------------
-bool petri_get_place(int64_t const handle, int64_t const i, CPlace_t* place)
+bool petri_get_place(int64_t const pn, int64_t const i, CPlace_t* place)
 {
-    CHECK_VALID_PETRI_HANDLE(handle, false);
+    CHECK_VALID_PETRI_HANDLE(pn, false);
 
-    PetriNet::Places const& p = g_petri_nets[size_t(handle)]->places();
+    PetriNet::Places const& p = g_petri_nets[size_t(pn)]->places();
     if ((i < 0) || (size_t(i) >= p.size()))
     {
         std::cerr << "Unkown Place " << i << std::endl;
-        return false; 
+        return false;
     }
 
     place->x = p[i].x;
@@ -156,39 +156,42 @@ bool petri_get_place(int64_t const handle, int64_t const i, CPlace_t* place)
 }
 
 //------------------------------------------------------------------------------
-int64_t petri_add_place(int64_t const handle, double const x, double const y,
+int64_t petri_add_place(int64_t const pn, double const x, double const y,
                         int64_t const tokens)
 {
-    CHECK_VALID_PETRI_HANDLE(handle, -1);
+    CHECK_VALID_PETRI_HANDLE(pn, -1);
 
-    Place& p = g_petri_nets[size_t(handle)]->addPlace(float(x), float(y),
+    Place& p = g_petri_nets[size_t(pn)]->addPlace(float(x), float(y),
                                                       size_t(tokens));
     return int64_t(p.id);
 }
 
 //------------------------------------------------------------------------------
-int64_t petri_add_transition(int64_t const handle, double const x, double const y)
+int64_t petri_add_transition(int64_t const pn, double const x, double const y)
 {
-    CHECK_VALID_PETRI_HANDLE(handle, -1);
+    CHECK_VALID_PETRI_HANDLE(pn, -1);
 
-    Transition& t = g_petri_nets[size_t(handle)]->addTransition(float(x), float(y));
+    Transition& t = g_petri_nets[size_t(pn)]->addTransition(float(x), float(y));
     return int64_t(t.id);
 }
 
 //------------------------------------------------------------------------------
-int64_t petri_count_transitions(int64_t const handle)
+int64_t petri_count_transitions(int64_t const pn)
 {
-    CHECK_VALID_PETRI_HANDLE(handle, -1);
+    CHECK_VALID_PETRI_HANDLE(pn, -1);
 
-    return int64_t(g_petri_nets[size_t(handle)]->transitions().size());
+    return int64_t(g_petri_nets[size_t(pn)]->transitions().size());
 }
 
 //------------------------------------------------------------------------------
-bool petri_set_marks(int64_t const handle, int64_t const* tokens)
+// FIXME: to be replaced by PetriNet::setMarks()
+bool petri_set_marks(int64_t const pn, int64_t const* tokens)
 {
-    CHECK_VALID_PETRI_HANDLE(handle, false);
+    CHECK_VALID_PETRI_HANDLE(pn, false);
+    // FIXME unknown array size
+    // tokens.size() == places.size()
 
-    PetriNet::Places& places = g_petri_nets[size_t(handle)]->places();
+    PetriNet::Places& places = g_petri_nets[size_t(pn)]->places();
     size_t i = places.size();
     while (i--)
     {
@@ -198,11 +201,11 @@ bool petri_set_marks(int64_t const handle, int64_t const* tokens)
 }
 
 //------------------------------------------------------------------------------
-bool petri_get_marks(int64_t const handle, int64_t* tokens)
+bool petri_get_marks(int64_t const pn, int64_t* tokens)
 {
-    CHECK_VALID_PETRI_HANDLE(handle, false);
+    CHECK_VALID_PETRI_HANDLE(pn, false);
 
-    PetriNet::Places const& places = g_petri_nets[size_t(handle)]->places();
+    PetriNet::Places const& places = g_petri_nets[size_t(pn)]->places();
     size_t i = places.size();
     while (i--)
     {
@@ -212,11 +215,11 @@ bool petri_get_marks(int64_t const handle, int64_t* tokens)
 }
 
 //------------------------------------------------------------------------------
-bool petri_get_transitions(int64_t const handle, CTransition_t* transitions)
+bool petri_get_transitions(int64_t const pn, CTransition_t* transitions)
 {
-    CHECK_VALID_PETRI_HANDLE(handle, false);
+    CHECK_VALID_PETRI_HANDLE(pn, false);
 
-    PetriNet::Transitions const& t = g_petri_nets[size_t(handle)]->transitions();
+    PetriNet::Transitions const& t = g_petri_nets[size_t(pn)]->transitions();
     size_t i = 0;
     for (auto const& it: t)
     {
@@ -229,15 +232,15 @@ bool petri_get_transitions(int64_t const handle, CTransition_t* transitions)
 }
 
 //------------------------------------------------------------------------------
-bool petri_get_transition(int64_t const handle, int64_t const i, CTransition_t* transition)
+bool petri_get_transition(int64_t const pn, int64_t const i, CTransition_t* transition)
 {
-    CHECK_VALID_PETRI_HANDLE(handle, false);
+    CHECK_VALID_PETRI_HANDLE(pn, false);
 
-    PetriNet::Transitions const& t = g_petri_nets[size_t(handle)]->transitions();
+    PetriNet::Transitions const& t = g_petri_nets[size_t(pn)]->transitions();
     if ((i < 0) || (size_t(i) >= t.size()))
     {
         std::cerr << "Unkown Transition " << i << std::endl;
-        return false; 
+        return false;
     }
 
     transition->x = t[i].x;
@@ -247,93 +250,93 @@ bool petri_get_transition(int64_t const handle, int64_t const i, CTransition_t* 
 }
 
 //------------------------------------------------------------------------------
-bool petri_remove_place(int64_t const handle, int64_t const id)
+bool petri_remove_place(int64_t const pn, int64_t const id)
 {
-    CHECK_VALID_PETRI_HANDLE(handle, false);
+    CHECK_VALID_PETRI_HANDLE(pn, false);
 
-    if ((id < 0) || (size_t(id) >= g_petri_nets[size_t(handle)]->places().size()))
+    if ((id < 0) || (size_t(id) >= g_petri_nets[size_t(pn)]->places().size()))
         return false;
 
     std::string strid = Place::to_str(size_t(id));
-    Node* node = g_petri_nets[size_t(handle)]->findNode(strid);
+    Node* node = g_petri_nets[size_t(pn)]->findNode(strid);
     if (node == nullptr)
         return false;
 
-    g_petri_nets[size_t(handle)]->removeNode(*node);
+    g_petri_nets[size_t(pn)]->removeNode(*node);
     return true;
 }
 
 //------------------------------------------------------------------------------
-bool petri_remove_transition(int64_t const handle, int64_t const id)
+bool petri_remove_transition(int64_t const pn, int64_t const id)
 {
-    CHECK_VALID_PETRI_HANDLE(handle, false);
+    CHECK_VALID_PETRI_HANDLE(pn, false);
 
-    if ((id < 0) || (size_t(id) >= g_petri_nets[size_t(handle)]->transitions().size()))
+    if ((id < 0) || (size_t(id) >= g_petri_nets[size_t(pn)]->transitions().size()))
         return false;
 
     std::string strid = Transition::to_str(size_t(id));
-    Node* node = g_petri_nets[size_t(handle)]->findNode(strid);
+    Node* node = g_petri_nets[size_t(pn)]->findNode(strid);
     if (node == nullptr)
         return false;
 
-    g_petri_nets[size_t(handle)]->removeNode(*node);
+    g_petri_nets[size_t(pn)]->removeNode(*node);
     return true;
 }
 
 //------------------------------------------------------------------------------
-int64_t petri_add_arc(int64_t const handle,const char* from, const char* to,
+int64_t petri_add_arc(int64_t const pn,const char* from, const char* to,
                       double const duration)
 {
-    CHECK_VALID_PETRI_HANDLE(handle, -1);
+    CHECK_VALID_PETRI_HANDLE(pn, -1);
 
-    Node* node_from = g_petri_nets[size_t(handle)]->findNode(from);
+    Node* node_from = g_petri_nets[size_t(pn)]->findNode(from);
     if (node_from == nullptr)
         return -1;
 
-    Node* node_to = g_petri_nets[size_t(handle)]->findNode(to);
+    Node* node_to = g_petri_nets[size_t(pn)]->findNode(to);
     if (node_to == nullptr)
         return -1;
 
-    if (!g_petri_nets[size_t(handle)]->addArc(*node_from, *node_to,
+    if (!g_petri_nets[size_t(pn)]->addArc(*node_from, *node_to,
                                               float(duration)))
         return -1;
 
-    return int64_t(g_petri_nets[size_t(handle)]->arcs().size() - 1u);
+    return int64_t(g_petri_nets[size_t(pn)]->arcs().size() - 1u);
 }
 
 //------------------------------------------------------------------------------
-bool petri_remove_arc(int64_t const handle, const char* from, const char* to)
+bool petri_remove_arc(int64_t const pn, const char* from, const char* to)
 {
-    CHECK_VALID_PETRI_HANDLE(handle, false);
+    CHECK_VALID_PETRI_HANDLE(pn, false);
 
-    Node* node_from = g_petri_nets[size_t(handle)]->findNode(from);
+    Node* node_from = g_petri_nets[size_t(pn)]->findNode(from);
     if (node_from == nullptr)
         return false;
 
-    Node* node_to = g_petri_nets[size_t(handle)]->findNode(to);
+    Node* node_to = g_petri_nets[size_t(pn)]->findNode(to);
     if (node_to == nullptr)
         return false;
 
-    return g_petri_nets[size_t(handle)]->removeArc(*node_from, *node_to);
+    return g_petri_nets[size_t(pn)]->removeArc(*node_from, *node_to);
 }
 
 //------------------------------------------------------------------------------
-int64_t petri_get_tokens(int64_t const handle, int64_t const id)
+int64_t petri_get_tokens(int64_t const pn, int64_t const id)
 {
-    CHECK_VALID_PETRI_HANDLE(handle, -1);
+    CHECK_VALID_PETRI_HANDLE(pn, -1);
 
-    auto const& places = g_petri_nets[size_t(handle)]->places();
+    auto const& places = g_petri_nets[size_t(pn)]->places();
     if ((id < 0) || (id > int64_t(places.size())))
         return -1;
     return int64_t(places[size_t(id)].tokens);
 }
 
 //------------------------------------------------------------------------------
-bool petri_set_tokens(int64_t const handle, int64_t const id, int64_t const tokens)
+bool petri_set_tokens(int64_t const pn, int64_t const id, int64_t const tokens)
 {
-    CHECK_VALID_PETRI_HANDLE(handle, false);
+    CHECK_VALID_PETRI_HANDLE(pn, false);
 
-    auto& places = g_petri_nets[size_t(handle)]->places();
+    auto& places = g_petri_nets[size_t(pn)]->places();
     if ((id < 0) || (id > int64_t(places.size())))
         return -1;
 
@@ -342,25 +345,25 @@ bool petri_set_tokens(int64_t const handle, int64_t const id, int64_t const toke
 }
 
 //------------------------------------------------------------------------------
-bool petri_save(int64_t const handle, const char* filepath)
+bool petri_save(int64_t const pn, const char* filepath)
 {
-    CHECK_VALID_PETRI_HANDLE(handle, false);
+    CHECK_VALID_PETRI_HANDLE(pn, false);
 
-    return g_petri_nets[size_t(handle)]->save(filepath);
+    return g_petri_nets[size_t(pn)]->save(filepath);
 }
 
 //------------------------------------------------------------------------------
-bool petri_load(int64_t const handle, const char* filepath)
+bool petri_load(int64_t const pn, const char* filepath)
 {
-    CHECK_VALID_PETRI_HANDLE(handle, false);
+    CHECK_VALID_PETRI_HANDLE(pn, false);
 
-    return g_petri_nets[size_t(handle)]->load(filepath);
+    return g_petri_nets[size_t(pn)]->load(filepath);
 }
 
 //------------------------------------------------------------------------------
-bool petri_is_event_graph(int64_t const handle, bool* res)
+bool petri_is_event_graph(int64_t const pn, bool* res)
 {
-    CHECK_VALID_PETRI_HANDLE(handle, false);
+    CHECK_VALID_PETRI_HANDLE(pn, false);
     if (res == nullptr)
     {
         std::cerr << "Sanity check: NULL param" << std::endl;
@@ -368,19 +371,19 @@ bool petri_is_event_graph(int64_t const handle, bool* res)
     }
 
     std::vector<Arc*> erroneous_arcs;
-    *res = g_petri_nets[size_t(handle)]->isEventGraph(erroneous_arcs);
+    *res = g_petri_nets[size_t(pn)]->isEventGraph(erroneous_arcs);
     return true;
 }
 
 //------------------------------------------------------------------------------
-int64_t petri_to_canonical(int64_t const handle)
+int64_t petri_to_canonical(int64_t const pn)
 {
-    CHECK_VALID_PETRI_HANDLE(handle, -1);
-    CHECK_IS_EVENT_GRAPH(handle, -1);
+    CHECK_VALID_PETRI_HANDLE(pn, -1);
+    CHECK_IS_EVENT_GRAPH(pn, -1);
 
-    int64_t pn = petri_create();
-    g_petri_nets[size_t(handle)]->toCanonicalForm(*g_petri_nets[size_t(pn)]);
-    return pn;
+    int64_t handle = petri_create();
+    g_petri_nets[size_t(pn)]->toCanonicalForm(*g_petri_nets[size_t(handle)]);
+    return handle;
 }
 
 //------------------------------------------------------------------------------
@@ -395,7 +398,7 @@ static void reference(SparseMatrix& org, CSparseMatrix_t* dst)
 }
 
 //------------------------------------------------------------------------------
-bool petri_to_adjacency_matrices(int64_t const handle, CSparseMatrix_t* pN, CSparseMatrix_t* pT)
+bool petri_to_adjacency_matrices(int64_t const pn, CSparseMatrix_t* pN, CSparseMatrix_t* pT)
 {
     static SparseMatrix N;
     static SparseMatrix T;
@@ -405,26 +408,26 @@ bool petri_to_adjacency_matrices(int64_t const handle, CSparseMatrix_t* pN, CSpa
         std::cerr << "Sanity check: NULL param" << std::endl;
         return false;
     }
-    CHECK_VALID_PETRI_HANDLE(handle, false);
-    CHECK_IS_EVENT_GRAPH(handle, false);
+    CHECK_VALID_PETRI_HANDLE(pn, false);
+    CHECK_IS_EVENT_GRAPH(pn, false);
 
-    g_petri_nets[size_t(handle)]->toAdjacencyMatrices(N, T);
+    g_petri_nets[size_t(pn)]->toAdjacencyMatrices(N, T);
     reference(N, pN);
     reference(T, pT);
     return true;
 }
 
 //------------------------------------------------------------------------------
-bool petri_to_sys_lin(int64_t const handle, CSparseMatrix_t* pD, CSparseMatrix_t* pA,
+bool petri_to_sys_lin(int64_t const pn, CSparseMatrix_t* pD, CSparseMatrix_t* pA,
                       CSparseMatrix_t* pB, CSparseMatrix_t* pC)
 {
     static SparseMatrix D; static SparseMatrix A;
     static SparseMatrix B; static SparseMatrix C;
 
-    CHECK_VALID_PETRI_HANDLE(handle, false);
-    CHECK_IS_EVENT_GRAPH(handle, false);
+    CHECK_VALID_PETRI_HANDLE(pn, false);
+    CHECK_IS_EVENT_GRAPH(pn, false);
 
-    g_petri_nets[size_t(handle)]->toSysLin(D, A, B, C);
+    g_petri_nets[size_t(pn)]->toSysLin(D, A, B, C);
     reference(D, pD);
     reference(A, pA);
     reference(B, pB);
@@ -434,21 +437,21 @@ bool petri_to_sys_lin(int64_t const handle, CSparseMatrix_t* pD, CSparseMatrix_t
 }
 
 //------------------------------------------------------------------------------
-bool petri_dater_form(int64_t const handle)
+bool petri_dater_form(int64_t const pn)
 {
-    CHECK_VALID_PETRI_HANDLE(handle, false);
-    CHECK_IS_EVENT_GRAPH(handle, false);
+    CHECK_VALID_PETRI_HANDLE(pn, false);
+    CHECK_IS_EVENT_GRAPH(pn, false);
 
-    std::cout << g_petri_nets[size_t(handle)]->showDaterForm("").str() << std::endl;
+    std::cout << g_petri_nets[size_t(pn)]->showDaterForm("").str() << std::endl;
     return true;
 }
 
 //------------------------------------------------------------------------------
-bool petri_counter_form(int64_t const handle)
+bool petri_counter_form(int64_t const pn)
 {
-    CHECK_VALID_PETRI_HANDLE(handle, false);
-    CHECK_IS_EVENT_GRAPH(handle, false);
+    CHECK_VALID_PETRI_HANDLE(pn, false);
+    CHECK_IS_EVENT_GRAPH(pn, false);
 
-    std::cout << g_petri_nets[size_t(handle)]->showCounterForm("").str() << std::endl;
+    std::cout << g_petri_nets[size_t(pn)]->showCounterForm("").str() << std::endl;
     return true;
 }
