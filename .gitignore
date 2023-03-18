@@ -8,6 +8,9 @@ petri.json
 build/
 doc/coverage/
 
+# Visual Studio code
+.vscode
+
 # LaTeX
 *.aux
 *.dvi
