@@ -704,13 +704,13 @@ void PetriEditor::handleKeyPressed(sf::Event const& event)
         }
     }
 
-    // 'O' key: load the Petri net to a JSON file
+    // 'O' key: load the Petri net from a JSON file
     else if (event.key.code == KEY_BINDIND_LOAD_PETRI_NET)
     {
         if (!m_simulating)
         {
             pfd::open_file manager("Choose the Petri file to load", "",
-                                   { "JSON Files", "*.json" });
+                                   { "JSON files", "*.json" });
             std::vector<std::string> files = manager.result();
             if (!files.empty())
             {
@@ -719,7 +719,7 @@ void PetriEditor::handleKeyPressed(sf::Event const& event)
         }
         else
         {
-            m_message_bar.setError("Cannot save during the simulation!");
+            m_message_bar.setError("Cannot load during the simulation!");
         }
     }
 
@@ -730,7 +730,7 @@ void PetriEditor::handleKeyPressed(sf::Event const& event)
         {
             pfd::save_file manager("Choose the LaTeX file to export",
                                    "LateX-gen.tex",
-                                   { "LaTex File", "*.tex" });
+                                   { "LaTex file", "*.tex" });
             std::string file = manager.result();
             if (!file.empty())
             {
