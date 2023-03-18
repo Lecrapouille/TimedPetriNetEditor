@@ -735,6 +735,32 @@ void PetriEditor::handleKeyPressed(sf::Event const& event)
         }
     }
 
+    // 'F' key: load a flowshop net from a text file
+    else if (event.key.code == KEY_BINDIND_LOAD_FLOWSHOP)
+    {
+        if (!m_simulating)
+        {
+            pfd::open_file manager("Choose the Petri file to load", "",
+                                   { "Flowshop files", "*.flowshop" });
+            std::vector<std::string> files = manager.result();
+            if (!files.empty())
+            {
+                if (m_petri_net.importFlowshop(files[0])) // FIXME a merger avec load()
+                {
+                    m_message_bar.setInfo("Flowshop successfully imported!");
+                }
+                else
+                {
+                    m_message_bar.setError(m_petri_net.message());
+                }
+            }
+        }
+        else
+        {
+            m_message_bar.setError("Cannot load during the simulation!");
+        }
+    }
+
     // 'X' key: save the Petri net as LaTeX file format
     else if (event.key.code == KEY_BINDIND_EXPORT_PETRI_TO_LATEX)
     {

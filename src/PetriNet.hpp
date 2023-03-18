@@ -668,7 +668,7 @@ public:
     //! if an arc is already present or nodes have the same type; call message()
     //! to get the exact reason.
     //--------------------------------------------------------------------------
-    bool addArc(Node& from, Node& to, float const duration = 0.0f);
+    bool addArc(Node& from, Node& to, float const duration = 0.0f, bool const strict = true);
 
     //--------------------------------------------------------------------------
     //! \brief Return the address of the arc linking the two given nodes.
@@ -774,6 +774,11 @@ public:
     //! this net is a timed graph event. Else return empty string.
     //--------------------------------------------------------------------------
     std::stringstream showDaterForm(std::string const& comment = "# ") const;
+
+    //--------------------------------------------------------------------------
+    //! \brief
+    //--------------------------------------------------------------------------
+    bool importFlowshop(std::string const& filename);
 
     //--------------------------------------------------------------------------
     //! \brief Export the Petri net as LaTeX code as tex file.

@@ -27,6 +27,7 @@
 #include <fstream>
 #include <cstring>
 #include <ctype.h>
+#include <limits>
 
 //------------------------------------------------------------------------------
 // Default net configuration: timed petri net. To change the type of nets, call
@@ -253,18 +254,9 @@ std::vector<Transition*> const& PetriNet::shuffle_transitions(bool const reset)
 }
 
 //------------------------------------------------------------------------------
-bool PetriNet::addArc(Node& from, Node& to, float const duration)
+bool PetriNet::addArc(Node& from, Node& to, float const duration, bool const strict)
 {
-    if (from.type == to.type)
-    {
-        m_message.str("");
-        m_message << "Failed adding arc " << from.key
-                  << " --> " << to.key
-                  << ": nodes type shall not be the same"
-                  << std::endl;
-        return false;
-    }
-
+    // Arc already existing ?
     if (findArc(from, to) != nullptr)
     {
         m_message.str("");
@@ -275,6 +267,8 @@ bool PetriNet::addArc(Node& from, Node& to, float const duration)
         return false;
     }
 
+    // Key if the origin node exists (TBD: is this really
+    // necessary since findArc would have returned false ?)
     if (findNode(from.key) == nullptr)
     {
         m_message << "Failed adding arc " << from.key
@@ -285,6 +279,8 @@ bool PetriNet::addArc(Node& from, Node& to, float const duration)
         return false;
     }
 
+    // Key if the destination node exists (TBD: is this really
+    // necessary since findArc would have returned false ?)
     if (findNode(to.key) == nullptr)
     {
         m_message << "Failed adding arc " << from.key
@@ -295,6 +291,59 @@ bool PetriNet::addArc(Node& from, Node& to, float const duration)
         return false;
     }
 
+    // The user tried to link two nodes of the same type: this is
+    // not possible in Petri nets, GRAFCET ... We offer two options:
+    if (from.type == to.type)
+    {
+        // Option 1: we simply fail (for example when loading file)
+        if (strict)
+        {
+            m_message.str("");
+            m_message << "Failed adding arc " << from.key
+                    << " --> " << to.key
+                    << ": nodes type shall not be the same"
+                    << std::endl;
+            return false;
+        }
+        // Option 2: We add the extra node of the good type and
+        // we add a second arc.
+        else
+        {
+            float x = to.x + (from.x - to.x) / 2.0f;
+            float y = to.y + (from.y - to.y) / 2.0f;
+            if (to.type == Node::Type::Place)
+            {
+                // Frist arc
+                Transition& n = addTransition(x, y);
+                m_arcs.push_back(Arc(from, n, duration));
+                from.arcsOut.push_back(&m_arcs.back());
+                n.arcsIn.push_back(&m_arcs.back());
+
+                // Second arc
+                m_arcs.push_back(Arc(n, to, duration));
+                n.arcsOut.push_back(&m_arcs.back());
+                to.arcsIn.push_back(&m_arcs.back());
+            }
+            else
+            {
+                // Frist arc
+                Place& n = addPlace(x, y);
+                m_arcs.push_back(Arc(from, n, duration));
+                from.arcsOut.push_back(&m_arcs.back());
+                n.arcsIn.push_back(&m_arcs.back());
+
+                // Second arc
+                m_arcs.push_back(Arc(n, to, duration));
+                n.arcsOut.push_back(&m_arcs.back());
+                to.arcsIn.push_back(&m_arcs.back());
+            }
+
+            modified = true;
+            return true;
+        }
+    }
+
+    // Arc Place -> Transition or arc Transition -> Place ? Add the arc
     m_arcs.push_back(Arc(from, to, duration));
     from.arcsOut.push_back(&m_arcs.back());
     to.arcsIn.push_back(&m_arcs.back());
@@ -1523,6 +1572,114 @@ bool PetriNet::load(std::string const& filename)
                       << std::endl;
             return false;
         }
+    }
+
+    return true;
+}
+
+//------------------------------------------------------------------------------
+// See http://jpquadrat.free.fr/chine.pdf flowshop_graph() function
+// TODO ./build/TimedPetriEditor foo.flowshop
+bool PetriNet::importFlowshop(std::string const& filename)
+{
+    static_assert(std::numeric_limits<double>::is_iec559, "IEEE 754 required");
+
+    std::ifstream ifs{ filename };
+    if (!ifs)
+    {
+        std::cerr << "Could not open matrix file '"
+                  << filename << "' for reading"
+                  << std::endl;
+        return false;
+    }
+
+    // Dense matrix
+    std::vector<std::vector<double>> matrix;
+    size_t rows, columns;
+
+    // Read the number of rows and columns and resize the vector of data
+    if (!(ifs >> rows >> columns))
+    {
+        m_message.str("");
+        m_message << "Malformed matrix dimension. Needed rows columns information"
+                  << std::endl;
+        return false;
+    }
+
+    // Read all data and store them into the matrix
+    matrix.resize(rows, std::vector<double>(columns));
+    for (std::vector<double>& row : matrix)
+    {
+        for (double& col : row)
+        {
+            std::string text;
+            ifs >> text;
+            col = std::stod(text.c_str());
+            std::cout << ' ' << col;
+        }
+        std::cout << std::endl;
+    }
+
+    // Construct the flowshop
+    float x, y;
+    const size_t machines = rows;
+    const size_t pieces = columns;
+    const float SPACING = 100.0f;
+    size_t id = 0u; // Place unique identifier
+    size_t m, p; // iterators
+    std::vector<Place*> places;
+
+    // Add places of the matrix
+    x = 2.0f * SPACING; y = SPACING - 50.0f;
+    for (m = 0u; m < machines; ++m) // TODO inverser l'ordre
+    {
+        x = 2.0f * SPACING;
+        for (p = 0u; p < pieces; ++p)
+        {
+            if (matrix[m][p] != -std::numeric_limits<double>::infinity())
+            {
+                // Place caption "m1p2" for "Machine1--Piece2"
+                //std::string caption("m" + std::to_string(m) + "p" + std::to_string(p));
+                std::string caption(std::to_string(id) + ": " + std::to_string(m * pieces + p));
+                places.push_back(&addPlace(id++, caption, x, y, 0u));
+            }
+            x += SPACING;
+        }
+        y += SPACING;
+    }
+
+    // Link arcs between places: this will add the transitions
+    for (m = 0u; m < 2u/*machines - 1u*/; ++m)
+    {
+        for (p = 0u; p < pieces - 1u; ++p)
+        {
+            size_t next = p + 1u;
+            while ((next < pieces - 1u) && (matrix[m][next] == -std::numeric_limits<double>::infinity()))
+            {
+                next += 1u;
+            }
+
+            Node* from = findNode(places[m * pieces + p]->key);
+            Node* to = findNode(places[m * pieces + next]->key);
+            std::cout << "M" << m << ": " <<
+            addArc(*from, *to, float(matrix[m][p]), false);
+        }
+    }
+
+    // Construct the flowshop: Place the machines (inputs)
+    x = SPACING; y = SPACING;
+    for (size_t i = 0u; i < machines; ++i)
+    {
+        addPlace(p++, "Machine " + std::to_string(i), x, y, 0u); // FIXME id
+        y += SPACING;
+    }
+
+    // Construct the flowshop: Place the pieces (inputs)
+    x += SPACING / 2.0f;
+    for (size_t i = 0u; i < pieces; ++i)
+    {
+        addPlace(p++, "Piece " + std::to_string(i), x, y, 0u); // FIXME id
+        x += SPACING;
     }
 
     return true;

@@ -30,6 +30,7 @@
 #  define KEY_BINDIND_RUN_SIMULATION_ALT sf::Keyboard::R
 #  define KEY_BINDIND_SAVE_PETRI_NET sf::Keyboard::S
 #  define KEY_BINDIND_LOAD_PETRI_NET sf::Keyboard::O
+#  define KEY_BINDIND_LOAD_FLOWSHOP sf::Keyboard::F
 #  define KEY_BINDIND_EXPORT_PETRI_TO_LATEX sf::Keyboard::X
 #  define KEY_BINDIND_EXPORT_PETRI_TO_GRAPHVIZ sf::Keyboard::P
 #  define KEY_BINDIND_EXPORT_PETRI_TO_GRAFCET sf::Keyboard::G
