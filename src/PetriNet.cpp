@@ -860,58 +860,49 @@ bool PetriNet::findCriticalCycle(std::vector<Arc*>& result)
                           chi.data(), V.data(), policy.data(),
                           &niterations, &ncomponents, verbosemode);
 
-    std::cout << "V:";
-    for (auto const& it: V)
+    m_message.str("");
+    if ((res != 0) || (ncomponents == 0))
     {
-        std::cout << ' ' << it;
-    }
-    std::cout << std::endl << "CHI:";
-    for (auto const& it: chi)
-    {
-        std::cout << ' ' << it;
-    }
-    std::cout << std::endl << "Policies: " << ncomponents << std::endl;
-    if (ncomponents > 0)
-    {
-        std::cout << "Policy:";
-        for (auto const& it: policy)
-        {
-            std::cout << ' ' << it;
-        }
-        std::cout << std::endl;
-    }
-
-    if (ncomponents > 0)
-    {
-        size_t to = 0u;
-        result.clear();
-        result.reserve(nnodes);
-        std::cout << "Critical cycle:" << std::endl;
-        for (auto const& from: policy)
-        {
-            std::cout << "T" << from << " -> T" << to << std::endl;
-            for (auto const& it: m_transitions[size_t(from)].arcsOut)
-            {
-                // Since we are working on an Event Graph we can directly access
-                // Place -> arcsOut[0] -> Transition without checks.
-                assert(it->to.arcsOut[0] != nullptr);
-                assert(it->to.arcsOut[0]->to.type == Node::Type::Transition);
-                if (it->to.arcsOut[0]->to.id == to)
-                {
-                    result.push_back(it);
-                    result.push_back(it->to.arcsOut[0]);
-                    break;
-                }
-            }
-            to += 1u;
-        }
-    }
-    else
-    {
-        std::cerr << "No policy found" << std::endl;
+        m_message << "No policy found" << std::endl;
         return false;
     }
-    return res == 0;
+
+    size_t to = 0u;
+    result.clear();
+    result.reserve(nnodes);
+    m_message << "Critical cycle:" << std::endl;
+    for (auto const& from: policy)
+    {
+        m_message << "  T" << from << " -> T" << to << std::endl;
+        for (auto const& it: m_transitions[size_t(from)].arcsOut)
+        {
+            // Since we are working on an Event Graph we can directly access
+            // Place -> arcsOut[0] -> Transition without checks.
+            assert(it->to.arcsOut[0] != nullptr);
+            assert(it->to.arcsOut[0]->to.type == Node::Type::Transition);
+            if (it->to.arcsOut[0]->to.id == to)
+            {
+                result.push_back(it);
+                result.push_back(it->to.arcsOut[0]);
+                break;
+            }
+        }
+        to += 1u;
+    }
+
+    m_message << "Cycle time [unit of time]:" << std::endl;
+    for (auto const& it: chi)
+    {
+        m_message << "  " << it << std::endl;
+    }
+
+    m_message << "Eigenvector:" << std::endl;
+    for (auto const& it: V)
+    {
+        m_message << "  " << it << std::endl;
+    }
+
+    return true;
 }
 
 //------------------------------------------------------------------------------

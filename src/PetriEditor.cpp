@@ -910,12 +910,13 @@ void PetriEditor::handleKeyPressed(sf::Event const& event)
         m_simulating = false;
         if (m_petri_net.findCriticalCycle(m_marked_arcs))
         {
-            m_message_bar.setWarning("TODO"); // FIXME show cycle + value
+            m_message_bar.setInfo(m_petri_net.message());
             m_marked_arcs_color = sf::Color(255, 165, 0);
+            std::cout << m_petri_net.message();
         }
         else
         {
-            m_message_bar.setError("Failed to show critical cycle");
+            m_message_bar.setError(m_petri_net.message());
             m_marked_arcs_color = sf::Color::Red;
         }
     }
