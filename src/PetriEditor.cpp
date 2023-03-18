@@ -76,7 +76,7 @@ PetriEditor::PetriEditor(Application& application, PetriNet& net)
     m_text_token.setFillColor(sf::Color::Black);
 
     // Init mouse cursor position
-    m_mouse = sf::Vector2f(sf::Mouse::getPosition(m_renderer));
+    m_mouse = m_renderer.mapPixelToCoords(sf::Mouse::getPosition(m_renderer));
 
     switch (m_petri_net.type())
     {
@@ -93,6 +93,8 @@ PetriEditor::PetriEditor(Application& application, PetriNet& net)
         m_message_bar.setInfo("Welcome! Type H key for help.");
         break;
     }
+
+    m_view = m_renderer.getDefaultView();
 }
 
 //------------------------------------------------------------------------------
@@ -344,6 +346,8 @@ void PetriEditor::draw(Arc const& arc, uint8_t alpha)
 //------------------------------------------------------------------------------
 void PetriEditor::onDraw()
 {
+    m_renderer.setView(m_view);
+
     // Draw all Places
     for (auto& p: m_petri_net.places())
     {
@@ -644,12 +648,6 @@ void PetriEditor::handleKeyPressed(sf::Event const& event)
     {
         m_entry_box.onKeyPressed(event.key, m_petri_net.modified);
         return ;
-    }
-
-    // Escape key: quit the application.
-    if (event.key.code == KEY_BINDIND_QUIT_APPLICATION)
-    {
-        close();
     }
 
     // Left or right Control key pressed: memorize the state
@@ -1217,6 +1215,7 @@ void PetriEditor::handleMouseButton(sf::Event const& event)
 {
     m_marked_arcs.clear();
 
+    // Edit node titles or edit duration on arcs.
     if (m_entry_box.hasFocus())
     {
         m_entry_box.onMousePressed(m_mouse);
@@ -1325,7 +1324,7 @@ void PetriEditor::handleMouseButton(sf::Event const& event)
 void PetriEditor::onHandleInput()
 {
     sf::Event event;
-    m_mouse = sf::Vector2f(sf::Mouse::getPosition(m_renderer));
+    m_mouse = m_renderer.mapPixelToCoords(sf::Mouse::getPosition(m_renderer));
 
     while (m_renderer.pollEvent(event))
     {
@@ -1335,8 +1334,23 @@ void PetriEditor::onHandleInput()
             close();
             break;
         case sf::Event::KeyPressed:
-            m_marked_arcs.clear();
-            handleKeyPressed(event);
+            // Escape key: quit the application.
+            if (event.key.code == KEY_BINDIND_QUIT_APPLICATION)
+                close();
+            // Move the view
+            else if (event.key.code == sf::Keyboard::Right)
+                m_view.move(10.0f, 0.0f);
+            else if (event.key.code == sf::Keyboard::Left)
+                m_view.move(-10.0f, 0.0f);
+            else if (event.key.code == sf::Keyboard::Up)
+                m_view.move(0.0f, 10.0f);
+            else if (event.key.code == sf::Keyboard::Down)
+                m_view.move(0.0f, -10.0f);
+            else
+            {
+                m_marked_arcs.clear();
+                handleKeyPressed(event);
+            }
             break;
         case sf::Event::TextEntered:
             m_entry_box.onTextEntered(event.text.unicode);
@@ -1350,14 +1364,13 @@ void PetriEditor::onHandleInput()
         case sf::Event::MouseButtonReleased:
             handleMouseButton(event);
             break;
-        case sf::Event::MouseWheelMoved:
-            //zoom += (float(event.mouseWheel.delta) / 10.0f);
-            //std::cout << "Zoom: " << zoom << "\n";
+        case sf::Event::MouseWheelScrolled:
+            applyZoom(event.mouseWheelScroll.delta);
             break;
         case sf::Event::Resized:
             {
                 sf::FloatRect r(0.0f, 0.0f, float(event.size.width), float(event.size.height));
-                m_renderer.setView(sf::View(r));
+                m_view.reset(r);
                 m_grid.resize(r);
             }
             break;
@@ -1377,6 +1390,26 @@ void PetriEditor::onHandleInput()
 }
 
 //------------------------------------------------------------------------------
+void PetriEditor::applyZoom(float const delta)
+{
+    constexpr float factor = 1.1f;
+    constexpr float inv_factor = 1.0f / factor;
+
+    if (delta < 0.0f)
+    {
+        // Factor > 1 makes the view bigger (objects appear smaller)
+        m_view.zoom(factor);
+        m_zoom_level *= factor;
+    }
+    else
+    {
+        // Factor < 1 makes the view smaller (objects appear bigger)
+        m_view.zoom(inv_factor);
+        m_zoom_level *= inv_factor;
+    }
+}
+
+//------------------------------------------------------------------------------
 std::stringstream PetriEditor::help()
 {
     std::stringstream ss;
@@ -1385,6 +1418,7 @@ std::stringstream PetriEditor::help()
        << "  Right mouse button pressed: add a transition" << std::endl
        << "  Middle mouse button pressed: add an arc with the selected place or transition as origin" << std::endl
        << "  Middle mouse button release: end the arc with the selected place or transition as destination" << std::endl
+       << "  Middle mouse button scroll: zoom/unzoom the view" << std::endl
        << "  " << to_str(KEY_BINDIND_ARC_FROM_NODE) << " key: add an arc with the selected place or transition as origin" << std::endl
        << "  " << to_str(KEY_BINDING_DELETE_PETRI_ELEMENT) << " key: remove a place or transition or an arc" << std::endl
        << "  " << to_str(KEY_BINDIND_ERASE_PETRI_NET) << " key: clear the whole Petri net" << std::endl
@@ -1405,6 +1439,8 @@ std::stringstream PetriEditor::help()
        << "  " << to_str(KEY_BINDIND_EXPORT_PETRI_TO_JULIA) << " key: export the Petri net as Julia code" << std::endl
        << "  " << to_str(KEY_BINDIND_EXPORT_PETRI_TO_PNEDITOR) << " key: export the Petri net as for https://gitlab.com/porky11/pn-editor" << std::endl
        << "  " << to_str(KEY_BINDIND_SCREEN_SHOT) << " key: take a screenshot of the view" << std::endl
+       << "  " << to_str(sf::Keyboard::Right) << " / " << to_str(sf::Keyboard::Left) << " keys: move the view right/left" << std::endl
+       << "  " << to_str(sf::Keyboard::Up) << " / " << to_str(sf::Keyboard::Down) << " keys: move the view up/down" << std::endl
        ;
     return ss;
 }

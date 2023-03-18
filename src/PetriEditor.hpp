@@ -258,6 +258,11 @@ private:
     //--------------------------------------------------------------------------
     void alignElements();
 
+    //--------------------------------------------------------------------------
+    //! \brief Zoom/unzoom.
+    //--------------------------------------------------------------------------
+    void applyZoom(float const delta);
+
 private:
 
     //! \brief State machine for the Petri net simulation.
@@ -326,6 +331,9 @@ private:
     EntryBox m_entry_box;
     //! \brief Show the grid
     Grid m_grid;
+    sf::View m_view;
+    //! \brief Camera zoom
+    float m_zoom_level = 1.0f;
 };
 
 #endif

@@ -188,6 +188,7 @@ from the mouse and the keyboard (like Emacs but without the Meta key ^^).
   you have tried to link two nodes of the same type (two places or two
   transitions) then an intermediate node of the opposite type will be created as
   well as an intermediate arc.
+- `Middle mouse scroll`: zoom/unzoom the view.
 - `L` key: same action as the middle mouse button.
 - `M` key: move the node (place or transition) selected by the mouse cursor.
 - Linux: `Delete` key: remove a node (place or transition). Note: since all identifiers
@@ -218,6 +219,7 @@ from the mouse and the keyboard (like Emacs but without the Meta key ^^).
 - `K` key: export the Petri net for https://gitlab.com/porky11/pn-editor.
 - `F1` key: take a screenshot of the application.
 - `H` key: show this help.
+- `Up`, `Down`, `Right`, `Left` keys: move the view.
 
 ## Work in progress
 
