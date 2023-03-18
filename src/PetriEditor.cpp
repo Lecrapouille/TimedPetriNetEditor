@@ -344,7 +344,7 @@ void PetriEditor::draw(Arc const& arc, uint8_t alpha)
 }
 
 //------------------------------------------------------------------------------
-void PetriEditor::draw()
+void PetriEditor::onDraw()
 {
     // Draw all Places
     for (auto& p: m_petri_net.places())
@@ -412,7 +412,7 @@ void PetriEditor::draw()
 }
 
 //------------------------------------------------------------------------------
-void PetriEditor::update(float const dt)
+void PetriEditor::onUpdate(float const dt)
 {
     bool burnt = false;
     bool burning = false;
@@ -683,7 +683,7 @@ void PetriEditor::handleKeyPressed(sf::Event const& event)
         // update() producing two AnimatedToken carying 1 token that
         // will be displayed at the same position instead of a
         // single AnimatedToken carying 2 tokens.
-        m_renderer.setFramerateLimit(m_simulating ? 30 : 60); // FPS
+        m_application.setFramerate(m_simulating ? 30 : 60); // FPS
     }
 
     // 'S' key: save the Petri net to a JSON file
@@ -1319,7 +1319,7 @@ void PetriEditor::handleMouseButton(sf::Event const& event)
 }
 
 //------------------------------------------------------------------------------
-void PetriEditor::handleInput()
+void PetriEditor::onHandleInput()
 {
     sf::Event event;
     m_mouse = sf::Vector2f(sf::Mouse::getPosition(m_renderer));

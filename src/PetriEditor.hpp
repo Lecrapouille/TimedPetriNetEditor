@@ -57,54 +57,46 @@ private: // Derived from Application::GUI
     //--------------------------------------------------------------------------
     //! \brief Inherit from GUI class. Draw the Petri net.
     //--------------------------------------------------------------------------
-    virtual void draw() override;
+    virtual void onDraw() override;
 
     //--------------------------------------------------------------------------
     //! \brief Inherit from GUI class. Update GUI and Petri net.
     //--------------------------------------------------------------------------
-    virtual void update(const float dt) override;
+    virtual void onUpdate(const float dt) override;
 
     //--------------------------------------------------------------------------
     //! \brief Inherit from GUI class. Manage mouse and keyboard events.
     //--------------------------------------------------------------------------
-    virtual void handleInput() override;
-
-    //--------------------------------------------------------------------------
-    //! \brief Inherit from GUI class. Return true if GUI is alive.
-    //--------------------------------------------------------------------------
-    virtual bool running() const override
-    {
-        return m_running;
-    }
+    virtual void onHandleInput() override;
 
     //-------------------------------------------------------------------------
-    //! \brief Pause the GUI.
+    //! \brief Inherit from GUI class. The GUI has been activated.
     //-------------------------------------------------------------------------
-    virtual void activate() override
+    virtual void onActivate() override
     {
         // Do nothing
     }
 
     //-------------------------------------------------------------------------
-    //! \brief Unpause the GUI.
+    //! \briefInherit from GUI class. The GUI has been deactivated.
     //-------------------------------------------------------------------------
-    virtual void deactivate() override
+    virtual void onDeactivate() override
     {
         // Do nothing
     }
 
     //-------------------------------------------------------------------------
-    //! \brief Create the GUI.
+    //! \brief Create the GUI event.
     //-------------------------------------------------------------------------
-    virtual void create() override
+    virtual void onCreate() override
     {
         // Do nothing
     }
 
     //-------------------------------------------------------------------------
-    //! \brief Release the GUI.
+    //! \brief Release the GUI event.
     //-------------------------------------------------------------------------
-    virtual void release() override
+    virtual void onRelease() override
     {
         // Do nothing
     }
