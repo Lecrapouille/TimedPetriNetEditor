@@ -1034,7 +1034,7 @@ void PetriEditor::handleKeyPressed(sf::Event const& event)
     // 'H' key: Show the help
     else if (event.key.code == KEY_BINDIND_SHOW_HELP)
     {
-        m_message_bar.setInfo(PetriNet::help().str());
+        m_message_bar.setInfo(PetriEditor::help().str());
     }
 
     // 'A' for aligning nodes on a grid
@@ -1374,7 +1374,7 @@ void PetriEditor::onHandleInput()
 }
 
 //------------------------------------------------------------------------------
-std::stringstream PetriNet::help()
+std::stringstream PetriEditor::help()
 {
     std::stringstream ss;
     ss << "GUI commands for:" << std::endl
@@ -1383,7 +1383,7 @@ std::stringstream PetriNet::help()
        << "  Middle mouse button pressed: add an arc with the selected place or transition as origin" << std::endl
        << "  Middle mouse button release: end the arc with the selected place or transition as destination" << std::endl
        << "  " << to_str(KEY_BINDIND_ARC_FROM_NODE) << " key: add an arc with the selected place or transition as origin" << std::endl
-       << "  " << to_str(KEY_BINDING_DELETE_PETRI_ELEMENT) << "Delete key: remove a place or transition or an arc" << std::endl
+       << "  " << to_str(KEY_BINDING_DELETE_PETRI_ELEMENT) << " key: remove a place or transition or an arc" << std::endl
        << "  " << to_str(KEY_BINDIND_ERASE_PETRI_NET) << " key: clear the whole Petri net" << std::endl
        << "  " << to_str(KEY_BINDIND_MOVE_PETRI_NODE) << " key: move the selected place or transition" << std::endl
        << "  " << to_str(KEY_BINDIND_ALIGN_NODES) << " key: align nodes" << std::endl

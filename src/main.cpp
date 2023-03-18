@@ -62,7 +62,7 @@ int main(int argc, char* argv[])
                 break;
             case 'h':
                 usage(argv[0]);
-                std::cout << PetriNet::help().str() << std::endl;
+                std::cout << PetriEditor::help().str() << std::endl;
                 return EXIT_FAILURE;
             case '?':
                 std::cerr << "Unknown option: '" << char(optopt) << "'!" << std::endl;
@@ -77,7 +77,7 @@ int main(int argc, char* argv[])
         filename = argv[optind];
     }
 
-    std::cout << PetriNet::help().str() << std::endl;
+    std::cout << PetriEditor::help().str() << std::endl;
     Application application(800, 600, "Timed Petri Net Editor");
     try
     {
