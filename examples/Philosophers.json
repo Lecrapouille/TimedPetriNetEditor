@@ -1,11 +1,11 @@
 {
   "places": [
-    "P0,NotEating0,150,100,1",
-    "P1,Eating1,300,350,0",
-    "P2,NotEating1,450,100,1",
-    "P3,Eating0,0,350,0",
-    "P4,NotEating2,750,100,1",
-    "P5,Eating2,600,350,0",
+    "P0,Phi0 Not Eating,150,100,1",
+    "P1,Phi1 Eating,300,350,0",
+    "P2,Phi1 Not Eating,450,100,1",
+    "P3,Phi0 Eating,0,350,0",
+    "P4,Phi2 Not Eating,750,100,1",
+    "P5,Phi2 Eating,600,350,0",
     "P6,Fork,225,225,1",
     "P7,Knife,525,225,1",
     "P8,Knife,400,500,1"],

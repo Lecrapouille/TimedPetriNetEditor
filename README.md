@@ -160,6 +160,10 @@ Example:
 TimedPetriNetEditor -t examples/Howard2.json
 ```
 
+## Examples
+
+Some examples are given. See this [document](examples/README.md) for more information.
+
 ## Mouse and key bindings for the graphical interface
 
 The editor does not offer any buttons, therefore all actions are directly made

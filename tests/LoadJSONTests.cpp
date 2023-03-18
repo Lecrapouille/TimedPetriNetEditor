@@ -44,7 +44,7 @@ TEST(TestJSONLoader, NoCarriageReturn)
 {
     PetriNet net(PetriNet::Type::TimedPetri);
 
-    ASSERT_EQ(net.load("../examples/TrafficLight.json"), true);
+    ASSERT_EQ(net.load("../examples/TrafficLights.json"), true);
     ASSERT_EQ(net.type(), PetriNet::Type::TimedPetri);
     ASSERT_EQ(net.m_places.size(), 7u);
     ASSERT_EQ(net.m_transitions.size(), 6u);
