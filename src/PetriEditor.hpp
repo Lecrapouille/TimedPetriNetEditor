@@ -276,6 +276,8 @@ private:
 
     //! \brief The Petri net.
     PetriNet& m_petri_net;
+    //! \brief Memorize initial number of tokens in places.
+    std::vector<size_t> m_marks;
     //! \brief Critical cycle found by Howard algorithm. Also used to show
     //! where are erroneous arcs making the Petri net not be a graph event.
     std::vector<Arc*> m_marked_arcs;
@@ -284,10 +286,6 @@ private:
     //! \brief Path of the Petri net file: not empty when the net was loaded
     //! from file, else empty when created from scratch.
     std::string m_petri_filename;
-    //! \brief Set true if the thread of the editor GUI shall stay alive.
-    //! Set false to leave the GUI and pop the previous stacked GUI (stack
-    //! managed by the application)
-    std::atomic<bool> m_running{true};
     //! \brief Set true for starting the simulation the Petri net and to
     //! maintain the simulation running. Set false to halt the simulation.
     std::atomic<bool> m_simulating{false};

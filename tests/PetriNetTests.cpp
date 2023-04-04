@@ -356,7 +356,6 @@ TEST(TestPetriNet, PetriNetDummy)
     ASSERT_EQ(&net.arcs(), &net.m_arcs);
     ASSERT_EQ(net.arcs().size(), 0u);
 
-    ASSERT_EQ(net.m_marks.size(), 0u);
     ASSERT_EQ(net.m_next_place_id, 0u);
     ASSERT_EQ(net.m_next_transition_id, 0u);
 

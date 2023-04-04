@@ -70,7 +70,7 @@ bool petri_reset(int64_t const pn)
 {
     CHECK_VALID_PETRI_HANDLE(pn, false);
 
-    g_petri_nets[size_t(pn)]->reset();
+    g_petri_nets[size_t(pn)]->clear();
     return true;
 }
 

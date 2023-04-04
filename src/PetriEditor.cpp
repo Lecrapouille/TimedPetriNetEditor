@@ -39,6 +39,13 @@ PetriEditor::PetriEditor(Application& application, PetriNet& net)
     // Reserve initial memory for animated tokens
     m_animations.reserve(128u);
 
+    // Precompute SFML struct for drawing text (places and transitions)
+    if (!m_font.loadFromFile(data_path("font.ttf")))
+    {
+        std::cerr << "Could not load font file ..." << std::endl;
+        exit(1);
+    }
+
     // Precompute an unique SFML shape for drawing all places
     m_shape_place.setOrigin(sf::Vector2f(m_shape_place.getRadius(),
                                          m_shape_place.getRadius()));
@@ -57,13 +64,6 @@ PetriEditor::PetriEditor(Application& application, PetriNet& net)
     m_shape_transition.setFillColor(sf::Color::White);
     m_shape_transition.setOutlineThickness(2.0f);
     m_shape_transition.setOutlineColor(OUTLINE_COLOR);
-
-    // Precompute SFML struct for drawing text (places and transitions)
-    if (!m_font.loadFromFile(data_path("font.ttf")))
-    {
-        std::cerr << "Could not load font file ..." << std::endl;
-        exit(1);
-    }
 
     // Caption for Places and Transitions
     m_text_caption.setFont(m_font);
@@ -111,7 +111,7 @@ bool PetriEditor::load(std::string const& file)
     if (!m_petri_net.load(m_petri_filename))
     {
         m_message_bar.setError(m_petri_net.message());
-        m_petri_net.reset();
+        m_petri_net.clear();
         return false;
     }
 
@@ -454,7 +454,7 @@ void PetriEditor::onUpdate(float const dt)
         m_petri_net.generateArcsInArcsOut();
         m_petri_net.resetReceptivies();
         m_petri_net.shuffle_transitions(true);
-        m_petri_net.backupMarks();
+        m_petri_net.getTokens(m_marks);
         m_animations.clear();
         m_state = STATE_ANIMATING;
         std::cout << current_time() << "Simulation has started!" << std::endl;
@@ -466,7 +466,7 @@ void PetriEditor::onUpdate(float const dt)
                   << std::endl << std::endl;
 
         // Restore burnt tokens from the simulation
-        m_petri_net.restoreMarks();
+        m_petri_net.setTokens(m_marks);
         m_animations.clear();
         m_state = STATE_IDLE;
         break;
@@ -949,7 +949,7 @@ void PetriEditor::handleKeyPressed(sf::Event const& event)
     else if (event.key.code == KEY_BINDIND_ERASE_PETRI_NET)
     {
         m_simulating = false;
-        m_petri_net.reset();
+        m_petri_net.clear();
         m_animations.clear();
     }
 

@@ -77,7 +77,6 @@ PetriNet& PetriNet::operator=(PetriNet const& other)
         m_type = other.m_type;
         m_places = other.m_places;
         m_transitions = other.m_transitions;
-        m_marks = other.m_marks;
         m_next_place_id = other.m_next_place_id;
         m_next_transition_id = other.m_next_transition_id;
 
@@ -100,16 +99,16 @@ PetriNet& PetriNet::operator=(PetriNet const& other)
 }
 
 //------------------------------------------------------------------------------
-void PetriNet::reset()
+void PetriNet::clear()
 {
     m_places.clear();
     m_transitions.clear();
     m_shuffled_transitions.clear();
     m_arcs.clear();
-    m_marks.clear();
     m_next_place_id = 0u;
     m_next_transition_id = 0u;
     modified = false;
+    m_message.str("");
 }
 
 //------------------------------------------------------------------------------
@@ -161,17 +160,17 @@ void PetriNet::resetReceptivies()
 }
 
 //------------------------------------------------------------------------------
-void PetriNet::backupMarks()
+void PetriNet::getTokens(std::vector<size_t>& marks) const
 {
-    m_marks.resize(m_places.size());
+    marks.resize(m_places.size());
     for (auto& place: m_places)
     {
-        m_marks[place.id] = place.tokens;
+        marks[place.id] = place.tokens;
     }
 }
 
 //------------------------------------------------------------------------------
-bool PetriNet::setMarks(std::vector<size_t> const& marks)
+bool PetriNet::setTokens(std::vector<size_t> const& marks)
 {
     if (m_places.size() != marks.size())
     {
@@ -182,10 +181,10 @@ bool PetriNet::setMarks(std::vector<size_t> const& marks)
         return false;
     }
 
-    size_t i = m_marks.size();
+    size_t i = marks.size();
     while (i--)
     {
-        m_places[i].tokens = m_marks[i];
+        m_places[i].tokens = marks[i];
     }
 
     return true;
@@ -1453,7 +1452,7 @@ bool PetriNet::load(std::string const& filename)
         return false;
     }
 
-    reset();
+    clear();
     while (s)
     {
         // Split for tokens "places : [" or "transitions : [" or "arcs : ["

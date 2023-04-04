@@ -539,7 +539,7 @@ public:
     //! \brief Remove all nodes and arcs. Reset counters for unique identifiers.
     //! \note the type of net (timed, classic ... ) stay the same.
     //--------------------------------------------------------------------------
-    void reset();
+    void clear();
 
     //--------------------------------------------------------------------------
     //! \brief Set the type of net: GRAFCET, Petri, Timed Petri ...
@@ -710,24 +710,18 @@ public:
     bool load(std::string const& filename);
 
     //--------------------------------------------------------------------------
-    //! \brief Set initial number of tokens in places.
-    //! \param[in] marks the vector of token for each places (P0, P1 .. Pn).
+    //! \brief Set tokens in all places.
+    //! \param[in] marks the vector holding tokens for each places (P0, P1 .. Pn).
     //! \return true if the length of the vector matchs the number of places,
     //! return false else and you shall call message() to get the error message.
     //--------------------------------------------------------------------------
-    bool setMarks(std::vector<size_t> const& marks);
+    bool setTokens(std::vector<size_t> const& marks);
 
     //--------------------------------------------------------------------------
-    //! \brief Since the simulation modifies the number of tokens we have to
-    //! backup them before starting the simulation.
+    //! \brief Get tokens from all places.
+    //! \param[out] marks the vector holding tokens for each places (P0, P1 .. Pn).
     //--------------------------------------------------------------------------
-    void backupMarks();
-
-    //--------------------------------------------------------------------------
-    //! \brief Since the simulation modifies the number of tokens we have to
-    //! restore them after the simulation ends.
-    //--------------------------------------------------------------------------
-    inline void restoreMarks() { setMarks(m_marks); }
+    void getTokens(std::vector<size_t>& marks) const;
 
     //--------------------------------------------------------------------------
     //! \brief Chech if the Petri net is a graph event meaning that each places
@@ -907,8 +901,6 @@ private:
     //! \brief List of Transitions. We do not use std::vector to avoid
     //! invalidating node references for arcs after a possible resizing.
     Transitions m_transitions;
-    //! \brief Memorize initial number of tokens in places.
-    std::vector<size_t> m_marks;
     //! \brief List of shuffled Transitions.
     std::vector<Transition*> m_shuffled_transitions;
     //! \brief List of Arcs.
