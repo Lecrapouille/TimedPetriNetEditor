@@ -1360,23 +1360,33 @@ void PetriEditor::onHandleInput()
             close();
             break;
         case sf::Event::KeyPressed:
-            // Escape key: quit the application.
-            if (event.key.code == KEY_BINDIND_QUIT_APPLICATION)
-                close();
-            // Move the view
-            else if (event.key.code == sf::Keyboard::Right)
-                m_view.move(10.0f, 0.0f);
-            else if (event.key.code == sf::Keyboard::Left)
-                m_view.move(-10.0f, 0.0f);
-            else if (event.key.code == sf::Keyboard::Up)
-                m_view.move(0.0f, 10.0f);
-            else if (event.key.code == sf::Keyboard::Down)
-                m_view.move(0.0f, -10.0f);
-            else
+            // Move the view if not editing text
+            if (!m_entry_box.hasFocus())
             {
-                m_marked_arcs.clear();
-                handleKeyPressed(event);
+                if (event.key.code == sf::Keyboard::Right)
+                {
+                    m_view.move(10.0f, 0.0f);
+                    return ;
+                }
+                else if (event.key.code == sf::Keyboard::Left)
+                {
+                    m_view.move(-10.0f, 0.0f);
+                    return ;
+                }
+                else if (event.key.code == sf::Keyboard::Up)
+                {
+                    m_view.move(0.0f, 10.0f);
+                    return ;
+                }
+                else if (event.key.code == sf::Keyboard::Down)
+                {
+                    m_view.move(0.0f, -10.0f);
+                    return ;
+                }
             }
+
+            m_marked_arcs.clear();
+            handleKeyPressed(event);
             break;
         case sf::Event::TextEntered:
             m_entry_box.onTextEntered(event.text.unicode);
