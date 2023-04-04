@@ -19,6 +19,7 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install pkg-config lcov libdw-dev libsfml-dev
+          sudo apt-get install libmosquitto-dev
       - name: Checkout TimedPetriNetEditor
         uses: actions/checkout@v3
         with:
@@ -50,7 +51,7 @@ jobs:
     steps:
       - name: Install system packages
         run: |
-          brew install pkg-config sfml
+          brew install pkg-config sfml mosquitto
       - name: Checkout
         uses: actions/checkout@v3
         with:

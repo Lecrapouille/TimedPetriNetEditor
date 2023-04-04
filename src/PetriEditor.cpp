@@ -23,6 +23,7 @@
 #include "utils/Arrow.hpp"
 #include "utils/Utils.hpp"
 #include "utils/KeyBindings.hpp"
+#include "utils/MQTT.hpp"
 #include <iomanip>
 
 //------------------------------------------------------------------------------
@@ -105,6 +106,67 @@ PetriEditor::PetriEditor(Application& application, PetriNet& net, std::string co
 }
 
 //------------------------------------------------------------------------------
+void PetriEditor::onConnected(int /*rc*/)
+{
+    std::cout << "Connected to MQTT broker" << std::endl;
+
+    unsubscribe(m_mqtt_topic);
+    if (m_petri_filename.size() == 0u)
+    {
+        m_mqtt_topic = "pneditor/dummy";
+    }
+    else
+    {
+        // Remove file extension and get the file name
+        size_t lastindex = m_petri_filename.find_last_of(".");
+        std::string rawname = m_petri_filename.substr(0, lastindex);
+        lastindex = rawname.find_last_of("/");
+        m_mqtt_topic = "pneditor/" + rawname.substr(lastindex + 1u);
+    }
+    m_message_bar.append("\nPublish your commands to MQTT topic '" + m_mqtt_topic + "'");
+    subscribe(m_mqtt_topic, 1);
+}
+
+//------------------------------------------------------------------------------
+// TBD: topic "editor/petri.json/P1" and message "=4" or "+2" or "-1"
+// topic "editor/petri.json/T1" and message "1" or "0".
+// "editor/petri.json and message "T1:T2;T3"
+void PetriEditor::onMessageReceived(const struct mosquitto_message& msg)
+{
+    // Convert MQTT message bytes to string.
+    std::string key(static_cast<char*>(msg.payload));
+
+    // Is valid message ?
+    Node* node = m_petri_net.findNode(key);
+    if (node == nullptr)
+    {
+        std::cerr << "Bad MQTT command: Unknown node '" << key
+                  << "'" << std::endl;
+        return ;
+    }
+    if (!m_simulating)
+    {
+        m_message_bar.setError("You can control the net by MQTT only when "
+                               "the simulation is not running");
+        return ;
+    }
+
+    if (key[0] == 'T')
+    {
+        // Trigger the given transition
+        std::cout << node->key << ": true" << std::endl;
+        reinterpret_cast<Transition*>(node)->receptivity ^= true;
+    }
+    else
+    {
+        // Increment the number of tokens
+        std::cout << node->key << ": " << std::endl;
+        Place* p = reinterpret_cast<Place*>(node);
+        p->tokens = std::min(Settings::maxTokens, p->tokens + 1u);
+    }
+}
+
+//------------------------------------------------------------------------------
 bool PetriEditor::load(std::string const& file)
 {
     m_petri_filename = file;
@@ -146,7 +208,9 @@ bool PetriEditor::load(std::string const& file)
     sf::FloatRect r(m.x - TRANS_WIDTH, m.y - TRANS_WIDTH,
                     M.x + TRANS_WIDTH, M.y + TRANS_WIDTH);
     m_grid.resize(r);
-    return true;
+
+    // Connect to the MQTT broker
+    return connect(MQTT_BROKER_ADDR, MQTT_BROKER_PORT);
 }
 
 //------------------------------------------------------------------------------

@@ -93,6 +93,18 @@ public:
                                      20.0f * float(m_count_lines)));
     }
 
+    //--------------------------------------------------------------------------
+    //! \brief Append the displayed messge. The color is not modified.
+    //--------------------------------------------------------------------------
+    MessageBar& append(std::string const& message)
+    {
+        m_text.setString(m_text.getString() + message);
+        m_count_lines = 1u + std::count(message.begin(), message.end(), '\n');
+        reshape(float(m_shape.getSize().x));
+        m_timer.restart();
+        return *this;
+    }
+
 private:
 
     //--------------------------------------------------------------------------
@@ -113,6 +125,15 @@ private:
             target.draw(m_shape);
             target.draw(m_text);
         }
+    }
+
+    //--------------------------------------------------------------------------
+    //! \brief Update the size of the message box depending on its content.
+    //--------------------------------------------------------------------------
+    void reshape(float const width)
+    {
+        m_shape.setSize(sf::Vector2f(width,
+                        float(m_text.getCharacterSize() + 4u) * float(m_count_lines)));
     }
 
 private:

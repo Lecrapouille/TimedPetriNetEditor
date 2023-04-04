@@ -26,13 +26,14 @@
 #  include "utils/EntryBox.hpp"
 #  include "utils/Animation.hpp"
 #  include "utils/Grid.hpp"
+#  include "utils/MQTT.hpp"
 #  include "PetriNet.hpp"
 
 // *****************************************************************************
 //! \brief Graphical representation and manipulation of the Petri net using the
 //! SFML library for the rendering.
 // *****************************************************************************
-class PetriEditor: public Application::GUI
+class PetriEditor: public Application::GUI, public MQTT
 {
 public:
 
@@ -56,6 +57,21 @@ public:
     //! \brief Return the help.
     //--------------------------------------------------------------------------
     static std::stringstream help();
+
+private: // Derived from MQTT
+
+    //--------------------------------------------------------------------------
+    //! \brief Do MQTT subscriptions when this class (MQTT client) is conencted
+    //! to the broker.
+    //--------------------------------------------------------------------------
+    virtual void onConnected(int rc) override;
+
+    //--------------------------------------------------------------------------
+    //! \brief React to the received message. In our case, we want to simulate
+    //! mouse click on transitions to fire them or increment the number of tokens
+    //! in a place.
+    //--------------------------------------------------------------------------
+    virtual void onMessageReceived(const struct mosquitto_message& message) override;
 
 private: // Derived from Application::GUI
 
@@ -332,6 +348,9 @@ private:
     sf::View m_view;
     //! \brief Camera zoom
     float m_zoom_level = 1.0f;
+    //! \brief Subscription to MQTT topic for receiving commands for manipulating
+    //! the net
+    std::string m_mqtt_topic;
 };
 
 #endif

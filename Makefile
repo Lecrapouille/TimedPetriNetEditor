@@ -47,7 +47,7 @@ VPATH += $(P)/src $(P)/src/utils $(P)/src/julia
 ###################################################
 # Project defines
 #
-DEFINES = -DDATADIR=\"$(DATADIR)\"
+DEFINES += -DDATADIR=\"$(DATADIR)\"
 
 ###################################################
 # Reduce warnings
@@ -59,7 +59,7 @@ DEFINES += -Wno-deprecated-copy-dtor -Wno-defaulted-function-deleted
 # Make the list of compiled files used both by the
 # library and application
 #
-COMMON_OBJS = Howard.o KeyBindings.o Application.o PetriNet.o PetriEditor.o
+COMMON_OBJS = MQTT.o Howard.o KeyBindings.o Application.o PetriNet.o PetriEditor.o
 
 ###################################################
 # Make the list of compiled files for the library
@@ -72,10 +72,16 @@ LIB_OBJS += $(COMMON_OBJS) Julia.o
 OBJS += $(COMMON_OBJS) main.o
 
 ###################################################
-# Set Libraries. For knowing which libraries
-# is needed please read the external/README.md file.
+# Set SFML Library.
 #
-PKG_LIBS = sfml-graphics
+PKG_LIBS += sfml-graphics
+
+###################################################
+# Set MQTT Library.
+#
+DEFINES += -DMQTT_BROKER_ADDR=\"localhost\"
+DEFINES += -DMQTT_BROKER_PORT=1883
+PKG_LIBS += libmosquitto
 
 ###################################################
 # MacOS X
