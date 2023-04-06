@@ -871,7 +871,13 @@ void PetriEditor::handleKeyPressed(sf::Event const& event)
             std::string file = manager.result();
             if (!file.empty())
             {
-                if (m_petri_net.exportToCpp(file, "generated"))
+                // Generate the C++ namespace
+                size_t lastindex = m_petri_filename.find_last_of(".");
+                std::string spacename = m_petri_filename.substr(0, lastindex);
+                lastindex = spacename.find_last_of("/");
+                spacename = spacename.substr(lastindex + 1u);
+
+                if (m_petri_net.exportToCpp(file, spacename))
                 {
                     m_message_bar.setInfo(
                         "The Petri net has successfully exported as grafcet as "
