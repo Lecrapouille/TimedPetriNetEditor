@@ -548,7 +548,7 @@ void PetriEditor::onUpdate(float const dt)
         {
             // Randomize the order of fired transition.
             // TODO: filter the list to speed up ?
-            auto const& transitions = m_petri_net.shuffle_transitions();
+            auto& transitions = m_petri_net.shuffle_transitions();
 
             burning = false;
             for (auto& trans: transitions)
@@ -559,6 +559,7 @@ void PetriEditor::onUpdate(float const dt)
                 size_t tokens = (Settings::firing == Settings::Fire::OneByOne)
                                 ? size_t(trans->canFire()) // [0 .. 1] tokens
                                 : trans->howManyTokensCanBurnt(); // [0 .. N] tokens
+
                 if (tokens > 0u)
                 {
                     assert(tokens <= Settings::maxTokens);
@@ -567,28 +568,36 @@ void PetriEditor::onUpdate(float const dt)
                     burning = true; // keep iterating on this loop
                     burnt = true; // At least one place has been fired
 
-                    // Burn tokens on each predeccessor Places
-                    for (auto& a: trans->arcsIn)
+                    // Transition source
+                    if (trans->isInput())
                     {
-                        // Burn tokens
-                        size_t& tks = a->tokensIn();
-                        assert(tks >= tokens);
-                        tks = std::min(Settings::maxTokens, tks - tokens);
-
-                        // Invalidate the transition
-                        if (m_petri_net.type() == PetriNet::Type::Petri)
+                        burning = false;
+                        trans->receptivity = false;
+                    }
+                    else
+                    {
+                        // Burn tokens on each predecessor Places
+                        for (auto& a: trans->arcsIn)
                         {
-                            Transition& tr = reinterpret_cast<Transition&>(a->to);
-                            tr.receptivity = false;
+                            // Burn tokens
+                            size_t& tks = a->tokensIn();
+                            assert(tks >= tokens);
+                            tks = std::min(Settings::maxTokens, tks - tokens);
+
+                            // Invalidate transitions of previous places
+                            if (m_petri_net.type() == PetriNet::Type::Petri)
+                            {
+                                Transition& tr = reinterpret_cast<Transition&>(a->to);
+                                tr.receptivity = false;
+                            }
+                            a->fading.restart();
                         }
-                        a->fading.restart();
                     }
 
                     // Count the number of tokens for the animation
                     for (auto& a: trans->arcsOut)
                     {
-                        a->count = std::min(Settings::maxTokens,
-                                            a->count + tokens);
+                        a->count = std::min(Settings::maxTokens, a->count + tokens);
                     }
                 }
             }
@@ -598,9 +607,9 @@ void PetriEditor::onUpdate(float const dt)
         // carrying.
         if (burnt)
         {
-            for (auto& a: m_petri_net.arcs()) // FIXME: speedup: trans.arcsOut
+            for (auto& a: m_petri_net.arcs()) // FIXME: speedup: trans->arcsOut
             {
-                if (a.count > 0u)
+                if (a.count > 0u) // number of tokens carried by a single animation
                 {
                     std::cout << current_time()
                               << "Transition " << a.from.caption << " burnt "
@@ -632,6 +641,20 @@ void PetriEditor::onUpdate(float const dt)
 
                     // Drop the number of tokens it was carrying.
                     an.arc.tokensOut() += an.tokens;
+
+                    // Transition source. In Petri net we keep using the mouse to
+                    // fire source transition to generate a single token by mouse
+                    // click while in other mode the transition fires once the
+                    // animation ends.
+                    if (m_petri_net.type() != PetriNet::Type::Petri)
+                    {
+                        Transition& t = reinterpret_cast<Transition&>(an.arc.from);
+                        if (t.isInput())
+                        {
+                            t.receptivity = true;
+                        }
+                    }
+
                     // Remove it
                     m_animations[i] = m_animations[m_animations.size() - 1u];
                     m_animations.pop_back();

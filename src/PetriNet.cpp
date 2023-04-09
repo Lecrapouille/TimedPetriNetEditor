@@ -38,8 +38,9 @@ Settings::Fire Settings::firing = Settings::Fire::OneByOne;
 //------------------------------------------------------------------------------
 bool Transition::isEnabled() const
 {
+    // Transition source
     if (arcsIn.size() == 0u)
-        return false;
+        return true;
 
     for (auto& a: arcsIn)
     {
@@ -53,7 +54,11 @@ bool Transition::isEnabled() const
 //------------------------------------------------------------------------------
 size_t Transition::howManyTokensCanBurnt() const
 {
-    if ((arcsIn.size() == 0u) || (receptivity == false))
+    // Transition source
+    if (arcsIn.size() == 0u)
+        return size_t(receptivity != false);
+
+    if (receptivity == false)
         return 0u;
 
     size_t burnt = static_cast<size_t>(-1);

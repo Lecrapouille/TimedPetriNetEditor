@@ -271,7 +271,7 @@ public:
 
     //--------------------------------------------------------------------------
     //! \brief Check if all upstream places have all at leat one token (meaning
-    //! if all upstream places (steps for GRAFCET) are active.
+    //! if all upstream places (steps for GRAFCET) are activated.
     //--------------------------------------------------------------------------
     bool isEnabled() const;
 
