@@ -911,8 +911,11 @@ splitter (see the `class Tokenizer` in the code).
   for computing the (max,+) eigenvalue used in ScicosLab MaxPlus toolbox and
   that I reused in this project.
 - (en) http://www.unice.fr/dgaffe/recherche/outils_grafcet.html GRAFCET editor.
+- (fr) [ENSIAME IMS](https://www.fichier-pdf.fr/2014/06/16/cours-api-ims-2014-v1/) by JC. Popieul.
 - (fr) https://sites.google.com/view/apimou/accueil A Grafcet editor and code
-  generation for Arduino.
+  generation for Arduino. The code source is now [available](https://sites.google.com/view/apimou/sources?authuser=0).
+- (fr) Cours sur le GRAFCET by O. Kamach
+  https://www.electronique-mixte.fr/wp-content/uploads/2018/07/Formation-GRAFCET-cours-9.pdf
 - (en) https://github.com/igorakim/pnet-simulator A online Petri net editor that
   inspired my GUI.
 - (en) https://github.com/Kersoph/open-sequential-logic-simulation a Grafcet made
