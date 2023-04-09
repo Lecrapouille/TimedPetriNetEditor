@@ -723,6 +723,22 @@ void PetriEditor::handleKeyPressed(sf::Event const& event)
         }
     }
 
+    // 'F1' key: take a screenshot
+    else if (event.key.code == KEY_BINDIND_SCREEN_SHOT)
+    {
+        pfd::save_file manager("Choose the PNG file to save the screenshot",
+                                "screenshot.png", { "PNG File", "*.png" });
+        std::string screenshot_filename = manager.result();
+        if (!m_application.screenshot(screenshot_filename))
+        {
+            m_message_bar.setError("Failed to save screenshot to file '" + screenshot_filename + "'");
+        }
+        else
+        {
+            m_message_bar.setInfo("Screenshot taken as file '" + screenshot_filename + "'");
+        }
+    }
+
     // 'X' key: save the Petri net as LaTeX file format
     else if (event.key.code == KEY_BINDIND_EXPORT_PETRI_TO_LATEX)
     {
@@ -1384,6 +1400,8 @@ std::stringstream PetriNet::help()
        << "  " << to_str(KEY_BINDIND_EXPORT_PETRI_TO_LATEX) << " key: export the Petri net as LaTeX file" << std::endl
        << "  " << to_str(KEY_BINDIND_EXPORT_PETRI_TO_GRAFCET) << " key: export the Petri net as GRAFCET in a C++ header file" << std::endl
        << "  " << to_str(KEY_BINDIND_EXPORT_PETRI_TO_JULIA) << " key: export the Petri net as Julia code" << std::endl
-       << "  " << to_str(KEY_BINDIND_EXPORT_PETRI_TO_PNEDITOR) << " key: export the Petri net as for https://gitlab.com/porky11/pn-editor" << std::endl;
+       << "  " << to_str(KEY_BINDIND_EXPORT_PETRI_TO_PNEDITOR) << " key: export the Petri net as for https://gitlab.com/porky11/pn-editor" << std::endl
+       << "  " << to_str(KEY_BINDIND_SCREEN_SHOT) << " key: take a screenshot of the view" << std::endl
+       ;
     return ss;
 }

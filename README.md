@@ -212,6 +212,7 @@ from the mouse and the keyboard (like Emacs but without the Meta key ^^).
 - `G` key: export the Petri net as Grafcet into a C++ header file (for example
   named `Grafcet-gen.hpp`).
 - `K` key: export the Petri net for https://gitlab.com/porky11/pn-editor.
+- `F1` key: take a screenshot of the application.
 - `H` key: show this help.
 
 ## Work in progress

@@ -45,6 +45,8 @@
 #  define KEY_BINDIND_SHOW_GRID sf::Keyboard::D
 #  define KEY_BINDIND_ALIGN_NODES sf::Keyboard::A
 #  define KEY_BINDIND_SHOW_HELP sf::Keyboard::H
+#  define KEY_BINDIND_SCREEN_SHOT sf::Keyboard::F1
+
 // SFML bug for macOS ?
 #  if defined(__APPLE__)
 #    define KEY_BINDIND_INCREMENT_TOKENS sf::Keyboard::RBracket

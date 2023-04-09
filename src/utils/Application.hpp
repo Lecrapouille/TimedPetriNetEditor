@@ -287,6 +287,11 @@ public:
         return m_renderer;
     }
 
+    //--------------------------------------------------------------------------
+    //! \brief Take a screenshot of the game and save it as PNG to the given path.
+    //--------------------------------------------------------------------------
+    bool screenshot(std::string const& screenshot_path);
+
     sf::Rect<float> bounds()
     {
         return { 0.0f, 0.0f, float(m_renderer.getSize().x), float(m_renderer.getSize().y) };

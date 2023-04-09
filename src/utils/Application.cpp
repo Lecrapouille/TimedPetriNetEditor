@@ -113,3 +113,14 @@ void Application::loop(Application::GUI& starting_gui)
     loop();
     pop();
 }
+
+// -----------------------------------------------------------------------------
+bool Application::screenshot(std::string const& screenshot_path)
+{
+    sf::Texture t;
+    t.create(m_renderer.getSize().x, m_renderer.getSize().y);
+    t.update(m_renderer);
+
+    sf::Image screenCap = t.copyToImage();
+    return screenCap.saveToFile(screenshot_path);
+}
