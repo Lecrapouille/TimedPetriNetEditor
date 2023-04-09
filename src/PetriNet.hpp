@@ -31,6 +31,7 @@
 #  include <algorithm> // std::random_shuffle
 #  include <random>
 #  include <iostream>
+#  include <sstream>
 
 class Arc;
 struct SparseMatrix;
@@ -663,8 +664,9 @@ public:
     //! \param[in] duration: duration of the process in unit of time. This
     //! information is only important for Transition -> Place arcs (else it is
     //! forced to 0).
-    //! \return true if the arc is valid and has been added, else return false
-    //! if an arc is already present or nodes have the same type.
+    //! \return true if the arc is valid and has been added. Else return false
+    //! if an arc is already present or nodes have the same type; call message()
+    //! to get the exact reason.
     //--------------------------------------------------------------------------
     bool addArc(Node& from, Node& to, float const duration = 0.0f);
 
@@ -710,7 +712,8 @@ public:
     //--------------------------------------------------------------------------
     //! \brief Set initial number of tokens in places.
     //! \param[in] marks the vector of token for each places (P0, P1 .. Pn).
-    //! \return true if the length of the vector matchs the number of places.
+    //! \return true if the length of the vector matchs the number of places,
+    //! return false else and you shall call message() to get the error message.
     //--------------------------------------------------------------------------
     bool setMarks(std::vector<size_t> const& marks);
 
@@ -733,7 +736,8 @@ public:
     //!
     //! \return true if the Petri net is a graph event and \c erroneous_arcs is
     //! empty. Return false if the Petri net is not a graph event and \c
-    //! erroneous_arcs contains information.
+    //! erroneous_arcs will contain defectuous arcs information and call message()
+    //! to get the real reason.
     //!
     //! \note call generateArcsInArcsOut(/*arcs: true*/); before calling this
     //! method.
@@ -876,9 +880,9 @@ public:
     inline std::vector<Arc*> const& markedArcs() const { return m_result_arcs; }
 
     //--------------------------------------------------------------------------
-    //! \brief Return the help.
+    //! \brief Return a error or information message.
     //--------------------------------------------------------------------------
-    //static std::stringstream help();
+    inline std::string message() const { return m_message.str(); }
 
 private:
 
@@ -913,6 +917,8 @@ private:
     //! \brief Auto increment unique identifier. Start from 0 (code placed in
     //! the cpp file). Note: their reset is possible through class friendship.
     size_t m_next_transition_id = 0u;
+    //! \brief Store current info/error message to the Petri net editor.
+    std::stringstream m_message;
 
 public:
 

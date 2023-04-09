@@ -174,7 +174,8 @@ bool PetriNet::setMarks(std::vector<size_t> const& marks)
 {
     if (m_places.size() != marks.size())
     {
-        std::cerr << current_time()
+        m_message.str("");
+        m_message << current_time()
                   << "the container dimension holding marks does not match the number of places"
                   << std::endl;
         return false;
@@ -256,7 +257,8 @@ bool PetriNet::addArc(Node& from, Node& to, float const duration)
 {
     if (from.type == to.type)
     {
-        std::cerr << "Failed adding arc " << from.key
+        m_message.str("");
+        m_message << "Failed adding arc " << from.key
                   << " --> " << to.key
                   << ": nodes type shall not be the same"
                   << std::endl;
@@ -265,7 +267,8 @@ bool PetriNet::addArc(Node& from, Node& to, float const duration)
 
     if (findArc(from, to) != nullptr)
     {
-        std::cerr << "Failed adding arc " << from.key
+        m_message.str("");
+        m_message << "Failed adding arc " << from.key
                   << " --> " << to.key
                   << ": Arc already exist"
                   << std::endl;
@@ -274,7 +277,7 @@ bool PetriNet::addArc(Node& from, Node& to, float const duration)
 
     if (findNode(from.key) == nullptr)
     {
-        std::cerr << "Failed adding arc " << from.key
+        m_message << "Failed adding arc " << from.key
                   << " --> " << to.key
                   << ": The node " << from.key
                   << " does not exist"
@@ -284,7 +287,7 @@ bool PetriNet::addArc(Node& from, Node& to, float const duration)
 
     if (findNode(to.key) == nullptr)
     {
-        std::cerr << "Failed adding arc " << from.key
+        m_message << "Failed adding arc " << from.key
                   << " --> " << to.key
                   << ": The node " << to.key
                   << " does not exist"
@@ -349,7 +352,8 @@ bool PetriNet::isEventGraph(std::vector<Arc*>& erroneous_arcs)
     erroneous_arcs.clear();
     if (isEmpty())
     {
-        std::cerr << "ERROR: Empty Petri net is not an event graph" << std::endl;
+        m_message.str("");
+        m_message << "Empty Petri net is not an event graph" << std::endl;
         return false;
     }
     generateArcsInArcsOut();
@@ -364,35 +368,36 @@ bool PetriNet::isEventGraph(std::vector<Arc*>& erroneous_arcs)
             // Help the user to debug the Petri net. // TODO: could be nice to
             // show directly odd arcs in red but for the moment we display on
             // the console.
-            std::cerr << "ERROR: Your Petri net is not an event graph. Because:"
+            m_message.str("");
+            m_message << "The Petri net is not an event graph. Because:"
                       << std::endl;
 
             if (p.arcsOut.size() != 1u)
             {
-                std::cerr << "  " << p.key
+                m_message << "  " << p.key
                           << ((p.arcsOut.size() > 1u)
                               ? " has more than one output arc:"
                               : " has no output arc");
                 for (auto const& a: p.arcsOut)
                 {
                     erroneous_arcs.push_back(a);
-                    std::cerr << " " << a->to.key;
+                    m_message << " " << a->to.key;
                 }
-                std::cerr << std::endl;
+                m_message << std::endl;
             }
 
             if (p.arcsIn.size() != 1u)
             {
-                std::cerr << "  " << p.key
+                m_message << "  " << p.key
                           << ((p.arcsIn.size() > 1u)
                               ? " has more than one input arc:"
                               : " has no input arc");
                 for (auto const& a: p.arcsIn)
                 {
                     erroneous_arcs.push_back(a);
-                    std::cerr << " " << a->from.key;
+                    m_message << " " << a->from.key;
                 }
-                std::cerr << std::endl;
+                m_message << std::endl;
             }
 
             return false;
@@ -635,7 +640,8 @@ bool PetriNet::exportToJulia(std::string const& filename)
     std::ofstream file(filename);
     if (!file)
     {
-        std::cerr << "Failed to export the Petri net to '" << filename
+        m_message.str("");
+        m_message << "Failed to export the Petri net to '" << filename
                   << "'. Reason was " << strerror(errno) << std::endl;
         return false;
     }
@@ -915,7 +921,8 @@ bool PetriNet::exportToLaTeX(std::string const& filename, float const scale_x,
     std::ofstream file(filename);
     if (!file)
     {
-        std::cerr << "Failed to export the Petri net to '" << filename
+        m_message.str("");
+        m_message << "Failed to export the Petri net to '" << filename
                   << "'. Reason was " << strerror(errno) << std::endl;
         return false;
     }
@@ -993,7 +1000,8 @@ bool PetriNet::exportToGraphviz(std::string const& filename)
     std::ofstream file(filename);
     if (!file)
     {
-        std::cerr << "Failed to export the Petri net to '" << filename
+        m_message.str("");
+        m_message << "Failed to export the Petri net to '" << filename
                   << "'. Reason was " << strerror(errno) << std::endl;
         return false;
     }
@@ -1076,7 +1084,8 @@ bool PetriNet::exportToPNEditor(std::string const& filename)
         std::ofstream file(filename_pns, std::ios::out | std::ios::binary);
         if (!file)
         {
-            std::cerr << "Failed to export the Petri net to '" << filename_pns
+            m_message.str("");
+            m_message << "Failed to export the Petri net to '" << filename_pns
                       << "'. Reason was " << strerror(errno) << std::endl;
             return false;
         }
@@ -1111,7 +1120,8 @@ bool PetriNet::exportToPNEditor(std::string const& filename)
         std::ofstream file(filename_pnl, std::ios::out | std::ios::binary);
         if (!file)
         {
-            std::cerr << "Failed to export the Petri net to '" << filename_pnl
+            m_message.str("");
+            m_message << "Failed to export the Petri net to '" << filename_pnl
                       << "'. Reason was " << strerror(errno) << std::endl;
             return false;
         }
@@ -1135,7 +1145,8 @@ bool PetriNet::exportToPNEditor(std::string const& filename)
         std::ofstream file(filename_pnkp);
         if (!file)
         {
-            std::cerr << "Failed to export the Petri net to '" << filename_pnkp
+            m_message.str("");
+            m_message << "Failed to export the Petri net to '" << filename_pnkp
                       << "'. Reason was " << strerror(errno) << std::endl;
             return false;
         }
@@ -1152,7 +1163,8 @@ bool PetriNet::exportToPNEditor(std::string const& filename)
         std::ofstream file(filename_pnk);
         if (!file)
         {
-            std::cerr << "Failed to export the Petri net to '" << filename_pnk
+            m_message.str("");
+            m_message << "Failed to export the Petri net to '" << filename_pnk
                       << "'. Reason was " << strerror(errno) << std::endl;
             return false;
         }
@@ -1172,7 +1184,8 @@ bool PetriNet::exportToCpp(std::string const& filename, std::string const& name)
     std::ofstream file(filename);
     if (!file)
     {
-        std::cerr << "Failed to export the Petri net to '" << filename
+        m_message.str("");
+        m_message << "Failed to export the Petri net to '" << filename
                   << "'. Reason was " << strerror(errno) << std::endl;
         return false;
     }
@@ -1323,7 +1336,6 @@ private:
     file << "} // namespace " << name << std::endl;
     file << "#endif // GENERATED_GRAFCET_" << upper_name << "_HPP" << std::endl;
 
-    std::cerr << "Petri net saved into file '" << filename << "'" << std::endl;
     return true;
 }
 
@@ -1335,13 +1347,15 @@ bool PetriNet::save(std::string const& filename)
 
     if (isEmpty())
     {
-        std::cerr << "I'll not save empty net" << std::endl;
+        m_message.str("");
+        m_message << "I'll not save empty net" << std::endl;
         return false;
     }
 
     if (!file)
     {
-        std::cerr << "Failed saving the Petri net in '" << filename
+        m_message.str("");
+        m_message << "Failed saving the Petri net in '" << filename
                   << "'. Reason was " << strerror(errno) << std::endl;
         return false;
     }
@@ -1371,7 +1385,6 @@ bool PetriNet::save(std::string const& filename)
     }
     file << "]\n}";
 
-    std::cerr << "Petri net saved into file '" << filename << "'" << std::endl;
     return true;
 }
 
@@ -1385,7 +1398,8 @@ bool PetriNet::load(std::string const& filename)
     Splitter s(filename);
     if (!s)
     {
-        std::cerr << "Failed opening '" << filename << "'. Reason was '"
+        m_message.str("");
+        m_message << "Failed opening '" << filename << "'. Reason was '"
                   << strerror(errno) << "'" << std::endl;
         return false;
     }
@@ -1393,7 +1407,8 @@ bool PetriNet::load(std::string const& filename)
     // Expect '{' as first token
     if (s.split(" \t\n", " \t\n") != "{")
     {
-        std::cerr << "Failed loading " << filename
+        m_message.str("");
+        m_message << "Failed loading " << filename
                   << ". Token { missing. Bad JSON file" << std::endl;
         return false;
     }
@@ -1408,7 +1423,8 @@ bool PetriNet::load(std::string const& filename)
             // Split and check the presence of tokens ": ["
             if ((s.split(" \t\n\"", " \t\n")[0] != ':') || (s.split(" \t\n", " ]\t\n\"")[0] != '['))
             {
-                std::cerr << "Failed parsing" << std::endl;
+                m_message.str("");
+                m_message << "Failed parsing" << std::endl;
                 return false;
             }
 
@@ -1421,7 +1437,8 @@ bool PetriNet::load(std::string const& filename)
                         continue ;
                     if (token2vector(s.str(), words) != 5u)
                     {
-                        std::cerr << "Failed parsing Place" << std::endl;
+                        m_message.str("");
+                        m_message << "Failed parsing Place" << std::endl;
                         return false;
                     }
                     addPlace(convert_to<size_t>(&words[0][1]),  // id
@@ -1440,7 +1457,8 @@ bool PetriNet::load(std::string const& filename)
                         continue ;
                     if (token2vector(s.str(), words) != 5u)
                     {
-                        std::cerr << "Failed parsing Transition" << std::endl;
+                        m_message.str("");
+                        m_message << "Failed parsing Transition" << std::endl;
                         return false;
                     }
                     addTransition(convert_to<size_t>(&words[0][1]),  // id
@@ -1459,13 +1477,14 @@ bool PetriNet::load(std::string const& filename)
                         continue ;
                     if (token2vector(s.str(), words) != 3u)
                     {
-                        std::cerr << "Failed parsing Arc" << std::endl;
+                        m_message.str("");
+                        m_message << "Failed parsing Arc" << std::endl;
                         return false;
                     }
                     Node* from = findNode(words[0]);
                     if (!from)
                     {
-                        std::cerr << "Failed loading " << filename
+                        m_message << "Failed loading " << filename
                                   << ". Origin node " << words[0]
                                   << " not found" << std::endl;
                         return false;
@@ -1474,7 +1493,7 @@ bool PetriNet::load(std::string const& filename)
                     Node* to = findNode(words[1]);
                     if (!to)
                     {
-                        std::cerr << "Failed loading " << filename
+                        m_message << "Failed loading " << filename
                                   << ". Destination node " << words[1]
                                   << " not found" << std::endl;
                         return false;
@@ -1483,14 +1502,16 @@ bool PetriNet::load(std::string const& filename)
                     float duration = convert_to<float>(words[2]);
                     if (duration < 0.0f)
                     {
-                        std::cout << "Failed loading " << filename
+                        m_message.str("");
+                        m_message << "Failed loading " << filename
                                   << ". Duration " << words[2]
                                   << " shall be > 0" << std::endl;
                         return false;
                     }
                     if (!addArc(*from, *to, duration))
                     {
-                        std::cerr << "Failed loading " << filename
+                        m_message.str("");
+                        m_message << "Failed loading " << filename
                                   << ". Arc " << from->key << " -> " << to->key
                                   << " is badly formed" << std::endl;
                         return false;
@@ -1505,7 +1526,8 @@ bool PetriNet::load(std::string const& filename)
         }
         else if (token != "")
         {
-            std::cerr << "Failed loading " << filename
+            m_message.str("");
+            m_message << "Failed loading " << filename
                       << ". Key " << s.str() << " is not a valid token"
                       << std::endl;
             return false;
@@ -1525,6 +1547,7 @@ Node* PetriNet::findNode(std::string const& key)
             if (p.key == key)
                 return &p;
         }
+        m_message.str("");
         return nullptr;
     }
 
@@ -1535,10 +1558,12 @@ Node* PetriNet::findNode(std::string const& key)
             if (t.key == key)
                 return &t;
         }
+        m_message.str("");
         return nullptr;
     }
 
-    std::cerr << "Node key shall start with 'P' or 'T'" << std::endl;
+    m_message.str("");
+    m_message << "Node key shall start with 'P' or 'T'" << std::endl;
     return nullptr;
 }
 

@@ -106,47 +106,45 @@ PetriEditor::PetriEditor(Application& application, PetriNet& net, std::string co
 bool PetriEditor::load(std::string const& file)
 {
     m_petri_filename = file;
-    if (m_petri_net.load(m_petri_filename))
+    if (!m_petri_net.load(m_petri_filename))
     {
-        m_message_bar.setInfo("Loaded with success the Petri net!");
-        m_title = m_petri_filename;
-        m_petri_net.modified = false;
-
-        // Find bounds of the net to place the view
-        sf::Vector2f m(800.0f, 600.0f);
-        sf::Vector2f M(800.0f, 600.0f);
-        for (auto& p: m_petri_net.places())
-        {
-            m.x = std::min(m.x, p.x);
-            m.y = std::min(m.y, p.y);
-            M.x = std::max(M.x, p.x);
-            M.y = std::max(M.y, p.y);
-        }
-
-        // Draw all Transitions
-        for (auto& t: m_petri_net.transitions())
-        {
-            m.x = std::min(m.x, t.x);
-            m.y = std::min(m.y, t.y);
-            M.x = std::max(M.x, t.x);
-            M.y = std::max(M.y, t.y);
-        }
-
-        m_renderer.setView(
-            sf::View(sf::Vector2f((M.x - m.x) / 2.0f, (M.y - m.y) / 2.0f),
-                     sf::Vector2f(M.x - m.x + 2.0f * TRANS_WIDTH, M.y - m.y +
-                                  2.0f * TRANS_WIDTH)));
-        sf::FloatRect r(m.x - TRANS_WIDTH, m.y - TRANS_WIDTH,
-                        M.x + TRANS_WIDTH, M.y + TRANS_WIDTH);
-        m_grid.resize(r);
-        return true;
-    }
-    else
-    {
-        m_message_bar.setError("Failed loading the Petri net!");
+        m_message_bar.setError(m_petri_net.message());
         m_petri_net.reset();
         return false;
     }
+
+    m_message_bar.setInfo("Loaded with success the Petri net!");
+    m_title = m_petri_filename;
+    m_petri_net.modified = false;
+
+    // Find bounds of the net to place the view
+    sf::Vector2f m(800.0f, 600.0f);
+    sf::Vector2f M(800.0f, 600.0f);
+    for (auto& p: m_petri_net.places())
+    {
+        m.x = std::min(m.x, p.x);
+        m.y = std::min(m.y, p.y);
+        M.x = std::max(M.x, p.x);
+        M.y = std::max(M.y, p.y);
+    }
+
+    // Draw all Transitions
+    for (auto& t: m_petri_net.transitions())
+    {
+        m.x = std::min(m.x, t.x);
+        m.y = std::min(m.y, t.y);
+        M.x = std::max(M.x, t.x);
+        M.y = std::max(M.y, t.y);
+    }
+
+    m_renderer.setView(
+        sf::View(sf::Vector2f((M.x - m.x) / 2.0f, (M.y - m.y) / 2.0f),
+                    sf::Vector2f(M.x - m.x + 2.0f * TRANS_WIDTH, M.y - m.y +
+                                2.0f * TRANS_WIDTH)));
+    sf::FloatRect r(m.x - TRANS_WIDTH, m.y - TRANS_WIDTH,
+                    M.x + TRANS_WIDTH, M.y + TRANS_WIDTH);
+    m_grid.resize(r);
+    return true;
 }
 
 //------------------------------------------------------------------------------
@@ -187,7 +185,7 @@ bool PetriEditor::save(bool const force)
     {
         if (!force)
         {
-            m_message_bar.setError("Failed saving the Petri net " + m_petri_filename + " !");
+            m_message_bar.setError(m_petri_net.message());
         }
         m_petri_filename.clear();
         return false;
@@ -760,8 +758,7 @@ void PetriEditor::handleKeyPressed(sf::Event const& event)
                 }
                 else
                 {
-                    m_message_bar.setError(
-                        "Could not export the Petri net to LaTex file!");
+                    m_message_bar.setError(m_petri_net.message());
                 }
             }
         }
@@ -771,7 +768,7 @@ void PetriEditor::handleKeyPressed(sf::Event const& event)
         //}
         else if (m_petri_net.isEmpty())
         {
-            m_message_bar.setWarning("Cannot export empty Petri net!");
+            m_message_bar.setWarning("Cannot export dummy Petri net!");
         }
     }
 
@@ -793,8 +790,7 @@ void PetriEditor::handleKeyPressed(sf::Event const& event)
                 }
                 else
                 {
-                    m_message_bar.setError(
-                        "Could not export the Petri net to Graphviz file!");
+                    m_message_bar.setError(m_petri_net.message());
                 }
             }
         }
@@ -804,7 +800,7 @@ void PetriEditor::handleKeyPressed(sf::Event const& event)
         //}
         else if (m_petri_net.isEmpty())
         {
-            m_message_bar.setWarning("Cannot export empty Petri net!");
+            m_message_bar.setWarning("Cannot export dummy Petri net!");
         }
     }
 
@@ -826,8 +822,7 @@ void PetriEditor::handleKeyPressed(sf::Event const& event)
                 }
                 else
                 {
-                    m_message_bar.setError(
-                        "Could not export the Petri net to Graphviz file!");
+                    m_message_bar.setError(m_petri_net.message());
                 }
             }
         }
@@ -837,7 +832,7 @@ void PetriEditor::handleKeyPressed(sf::Event const& event)
         //}
         else if (m_petri_net.isEmpty())
         {
-            m_message_bar.setWarning("Cannot export empty Petri net!");
+            m_message_bar.setWarning("Cannot export dummy Petri net!");
         }
     }
 
@@ -860,8 +855,7 @@ void PetriEditor::handleKeyPressed(sf::Event const& event)
                 }
                 else
                 {
-                    m_message_bar.setError(
-                        "Could not export the Petri net to C++ header file!");
+                    m_message_bar.setError(m_petri_net.message());
                 }
             }
         }
@@ -871,7 +865,7 @@ void PetriEditor::handleKeyPressed(sf::Event const& event)
         }
         else if (m_petri_net.isEmpty())
         {
-            m_message_bar.setWarning("Cannot export empty Petri net!");
+            m_message_bar.setWarning("Cannot export dummy Petri net!");
         }
     }
 
@@ -894,8 +888,7 @@ void PetriEditor::handleKeyPressed(sf::Event const& event)
                 }
                 else
                 {
-                    m_message_bar.setError(
-                        "Could not export the Petri net to Julia file!");
+                    m_message_bar.setError(m_petri_net.message());
                     m_marked_arcs = m_petri_net.markedArcs();
                     m_marked_arcs_color = sf::Color::Red;
                 }
@@ -907,7 +900,7 @@ void PetriEditor::handleKeyPressed(sf::Event const& event)
         }
         else if (m_petri_net.isEmpty())
         {
-            m_message_bar.setWarning("Cannot export empty Petri net!");
+            m_message_bar.setWarning("Cannot export dummy Petri net!");
         }
     }
 
@@ -1023,11 +1016,11 @@ void PetriEditor::handleKeyPressed(sf::Event const& event)
         m_petri_net.generateArcsInArcsOut();
         if (m_petri_net.isEventGraph(m_marked_arcs))
         {
-            m_message_bar.setInfo("The net is a timed event graph !");
+            m_message_bar.setInfo(m_petri_net.message());
         }
         else
         {
-            m_message_bar.setError("The net is not a timed event graph !");
+            m_message_bar.setError(m_petri_net.message());
         }
     }
 
@@ -1099,13 +1092,19 @@ void PetriEditor::handleArcDestination()
                 if (m_node_to->type == Node::Type::Place)
                 {
                     Transition& n = m_petri_net.addTransition(x, y);
-                    m_petri_net.addArc(*m_node_from, n, duration);
+                    if (!m_petri_net.addArc(*m_node_from, n, duration))
+                    {
+                        m_message_bar.setError(m_petri_net.message());
+                    }
                     m_node_from = &n;
                 }
                 else
                 {
                     Place& n = m_petri_net.addPlace(x, y);
-                    m_petri_net.addArc(*m_node_from, n, duration);
+                    if (!m_petri_net.addArc(*m_node_from, n, duration))
+                    {
+                        m_message_bar.setError(m_petri_net.message());
+                    }
                     m_node_from = &n;
                 }
             }
@@ -1138,7 +1137,10 @@ void PetriEditor::handleArcDestination()
     // Create the arc. Note: the duration value is only used
     // for arc Transition --> Place.
     float duration = random(1, 5);
-    m_petri_net.addArc(*m_node_from, *m_node_to, duration);
+    if (!m_petri_net.addArc(*m_node_from, *m_node_to, duration))
+    {
+        m_message_bar.setError(m_petri_net.message());
+    }
 
     // Reset states
     m_node_from = m_node_to = nullptr;
