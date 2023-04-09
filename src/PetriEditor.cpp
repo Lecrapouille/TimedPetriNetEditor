@@ -133,36 +133,16 @@ void PetriEditor::onConnected(int /*rc*/)
 // "editor/petri.json and message "T1:T2;T3"
 void PetriEditor::onMessageReceived(const struct mosquitto_message& msg)
 {
-    // Convert MQTT message bytes to string.
-    std::string key(static_cast<char*>(msg.payload));
-
-    // Is valid message ?
-    Node* node = m_petri_net.findNode(key);
-    if (node == nullptr)
+    const char* payload = static_cast<char*>(msg.payload);
+    if (payload[0] == 'T')
     {
-        std::cerr << "Bad MQTT command: Unknown node '" << key
-                  << "'" << std::endl;
-        return ;
-    }
-    if (!m_simulating)
-    {
-        m_message_bar.setError("You can control the net by MQTT only when "
-                               "the simulation is not running");
-        return ;
-    }
-
-    if (key[0] == 'T')
-    {
-        // Trigger the given transition
-        std::cout << node->key << ": true" << std::endl;
-        reinterpret_cast<Transition*>(node)->receptivity ^= true;
-    }
-    else
-    {
-        // Increment the number of tokens
-        std::cout << node->key << ": " << std::endl;
-        Place* p = reinterpret_cast<Place*>(node);
-        p->tokens = std::min(Settings::maxTokens, p->tokens + 1u);
+        //std::cout << "MQTT message 'T'" << std::endl;
+        for (auto& t: m_petri_net.transitions())
+        {
+            const bool b(payload[t.id + 1u]);
+            //std::cout << t.key << ": " << b << std::endl;
+            t.receptivity = b;
+        }
     }
 }
 
