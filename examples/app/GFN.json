@@ -1,0 +1,17 @@
+{
+  "places": [
+    "P0,Chauffe et avance convoyeur,431,119,0",
+    "P1,Chauffe et recule convoyeur,186,180,0",
+    "P2,Repos,217,119,1"],
+  "transitions": [
+    "T0,Acy,294,180,180",
+    "T1,Attente 30s,68,119,45",
+    "T2,GC:GFN . Dcy,294,119,0"],
+  "arcs": [
+    "P0,T0,nan",
+    "T0,P1,2",
+    "P1,T1,nan",
+    "T1,P2,4",
+    "P2,T2,nan",
+    "T2,P0,1"]
+}

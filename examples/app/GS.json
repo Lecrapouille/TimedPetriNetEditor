@@ -1,0 +1,13 @@
+{
+  "places": [
+    "P0,Forcage GFN et GC,152,75,1",
+    "P1,Attente Arret durgence,355,165,0"],
+  "transitions": [
+    "T0,/AU . Rearm,285,75,45",
+    "T1,AU,95,165,135"],
+  "arcs": [
+    "P0,T0,nan",
+    "T0,P1,1",
+    "P1,T1,nan",
+    "T1,P0,2"]
+}

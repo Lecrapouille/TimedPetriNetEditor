@@ -1,0 +1,32 @@
+{
+  "places": [
+    "P0,Verifi desordre,392.3,86.6,0",
+    "P1,GFN,714.6,86.6,0",
+    "P2,Chauffer four,618,234,0",
+    "P3,Choix mode,394,200,0",
+    "P4,Recule Convoyeur,205,200,0",
+    "P5,Init,48,200,1"],
+  "transitions": [
+    "T0,Auto . val,309,87,180",
+    "T1,Manu . Val,525,149,0",
+    "T2,Manu . Val,524.3,86.6,0",
+    "T3,Temp atteinte,715,234,45",
+    "T4,Auto . Val,522,234,180",
+    "T5,Val,130,200,180",
+    "T6,Attendre 30 s,311,200,180"],
+  "arcs": [
+    "P0,T0,nan",
+    "T1,P0,1",
+    "P3,T1,nan",
+    "T0,P4,4",
+    "P1,T2,nan",
+    "T3,P1,3",
+    "P2,T3,nan",
+    "T4,P2,5",
+    "P3,T4,nan",
+    "T2,P0,5",
+    "P5,T5,nan",
+    "T5,P4,4",
+    "P4,T6,nan",
+    "T6,P3,3"]
+}

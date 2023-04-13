@@ -1,13 +1,13 @@
 // This file has been generated and you should avoid editing it.
 // Note: the code generator is still experimental !
 
-#ifndef GENERATED_GRAFCET_HOWARD2_HPP
-#  define GENERATED_GRAFCET_HOWARD2_HPP
+#ifndef GENERATED_GRAFCET_GC_HPP
+#  define GENERATED_GRAFCET_GC_HPP
 
 #  include <iostream>
 #  include "MQTT.hpp"
 
-namespace Howard2 {
+namespace GC {
 
 // *****************************************************************************
 //! \brief
@@ -46,7 +46,7 @@ public:
     //-------------------------------------------------------------------------
     //! \brief Restore all states of the GRAFCET to their initial states.
     //-------------------------------------------------------------------------
-    Grafcet() { initGPIO(); reset(); }
+    Grafcet() { reset(); }
 
     //-------------------------------------------------------------------------
     //! \brief Return the MQTT topic to talk with the Petri net editor.
@@ -79,12 +79,12 @@ public:
     //-------------------------------------------------------------------------
     void reset()
     {
-        X[0] = true;  // P0
-        X[1] = false; // P1
-        X[2] = false; // P2
-        X[3] = false; // P3
-        X[4] = false; // P4
-        doActions();
+        X[0] = false; // Verif desordre
+        X[1] = false; // GFN
+        X[2] = false; // Chauffer four
+        X[3] = false; // Choix mode
+        X[4] = false; // Recule Convoyeur
+        X[5] = true;  // Init
     }
 
     //-------------------------------------------------------------------------
@@ -92,23 +92,25 @@ public:
     //-------------------------------------------------------------------------
     void step()
     {
-        readInputs();
+        doActions();
+        //readInputs();
         setTransitions();
         setSteps();
-        doActions();
     }
+
+    bool const* states() const { return X; }
 
 private:
 
     //-------------------------------------------------------------------------
     //! \brief
     //-------------------------------------------------------------------------
-    void initGPIO();
+    //void initGPIO();
 
     //-------------------------------------------------------------------------
     //! \brief
     //-------------------------------------------------------------------------
-    void readInputs();
+    //void readInputs();
 
     //-------------------------------------------------------------------------
     //! \brief
@@ -120,6 +122,7 @@ private:
         if (X[2]) { P2(); }
         if (X[3]) { P3(); }
         if (X[4]) { P4(); }
+        if (X[5]) { P5(); }
     }
 
     //-------------------------------------------------------------------------
@@ -128,9 +131,12 @@ private:
     void setTransitions()
     {
         T[0] = X[0] && T0();
-        T[1] = X[1] && T1();
-        T[2] = X[2] && X[4] && T2();
-        T[3] = X[3] && T3();
+        T[1] = X[3] && T1();
+        T[2] = X[1] && T2();
+        T[3] = X[2] && T3();
+        T[4] = X[3] && T4();
+        T[5] = X[5] && T5();
+        T[6] = X[4] && T6();
         publish();
     }
 
@@ -142,88 +148,114 @@ private:
         if (T[0])
         {
             X[0] = false;
-            X[1] = true;
-            X[3] = true;
+            X[4] = true;
         }
         if (T[1])
         {
-            X[1] = false;
-            X[2] = true;
+            X[3] = false;
+            X[0] = true;
         }
         if (T[2])
         {
-            X[2] = false;
-            X[4] = false;
+            X[1] = false;
             X[0] = true;
         }
         if (T[3])
         {
+            X[2] = false;
+            X[1] = true;
+        }
+        if (T[4])
+        {
             X[3] = false;
+            X[2] = true;
+        }
+        if (T[5])
+        {
+            X[5] = false;
             X[4] = true;
+        }
+        if (T[6])
+        {
+            X[4] = false;
+            X[3] = true;
         }
     }
 
 private: // You have to implement the following methods in the C++ file
 
     //-------------------------------------------------------------------------
-    //! \brief Transition 0: "T0"
+    //! \brief Transition 0: "Auto . val"
     //! \return true if the transition is enabled.
     //-------------------------------------------------------------------------
     bool T0() const;
     //-------------------------------------------------------------------------
-    //! \brief Transition 1: "T1"
+    //! \brief Transition 1: "Manu . Val"
     //! \return true if the transition is enabled.
     //-------------------------------------------------------------------------
     bool T1() const;
     //-------------------------------------------------------------------------
-    //! \brief Transition 2: "T2"
+    //! \brief Transition 2: "Manu . Val"
     //! \return true if the transition is enabled.
     //-------------------------------------------------------------------------
     bool T2() const;
     //-------------------------------------------------------------------------
-    //! \brief Transition 3: "T3"
+    //! \brief Transition 3: "Temp atteinte"
     //! \return true if the transition is enabled.
     //-------------------------------------------------------------------------
     bool T3() const;
     //-------------------------------------------------------------------------
-    //! \brief Do actions associated with the step 0: P0
+    //! \brief Transition 4: "Auto . Val"
+    //! \return true if the transition is enabled.
+    //-------------------------------------------------------------------------
+    bool T4() const;
+    //-------------------------------------------------------------------------
+    //! \brief Transition 5: "Val"
+    //! \return true if the transition is enabled.
+    //-------------------------------------------------------------------------
+    bool T5() const;
+    //-------------------------------------------------------------------------
+    //! \brief Transition 6: "Attendre 30 s"
+    //! \return true if the transition is enabled.
+    //-------------------------------------------------------------------------
+    bool T6() const;
+
+    //-------------------------------------------------------------------------
+    //! \brief Do actions associated with the step 0: Verifi desordre
     //-------------------------------------------------------------------------
     void P0();
     //-------------------------------------------------------------------------
-    //! \brief Do actions associated with the step 1: P1
+    //! \brief Do actions associated with the step 1: GFN
     //-------------------------------------------------------------------------
     void P1();
     //-------------------------------------------------------------------------
-    //! \brief Do actions associated with the step 2: P2
+    //! \brief Do actions associated with the step 2: Chauffer four
     //-------------------------------------------------------------------------
     void P2();
     //-------------------------------------------------------------------------
-    //! \brief Do actions associated with the step 3: P3
+    //! \brief Do actions associated with the step 3: Choix mode
     //-------------------------------------------------------------------------
     void P3();
     //-------------------------------------------------------------------------
-    //! \brief Do actions associated with the step 4: P4
+    //! \brief Do actions associated with the step 4: Recule Convoyeur
     //-------------------------------------------------------------------------
     void P4();
-
-public:
-
-    bool dcy = false;
-    bool motor_ready = false;
-    bool cardboard_arrived = false;
+    //-------------------------------------------------------------------------
+    //! \brief Do actions associated with the step 5: Init
+    //-------------------------------------------------------------------------
+    void P5();
 
 private:
 
-    static const size_t MAX_STEPS = 5u;
-    static const size_t MAX_TRANSITIONS = 4u;
-
+    static const size_t MAX_STEPS = 6u;
+    static const size_t MAX_TRANSITIONS = 7u;
     //! \brief Steps
     bool X[MAX_STEPS];
     //! \brief Transitions
     bool T[MAX_TRANSITIONS];
     //! \brief MQTT topic to communicate with the Petri net editor
-    std::string m_topic = "pneditor/Howard2";
+    std::string m_topic = "pneditor/GC";
 };
 
-} // namespace Howard2
-#endif // GENERATED_GRAFCET_HOWARD2_HPP
+} // namespace GC
+#endif // GENERATED_GRAFCET_GC_HPP

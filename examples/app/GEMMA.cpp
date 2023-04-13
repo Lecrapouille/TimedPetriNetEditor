@@ -1,150 +1,273 @@
-#include "GEMMA.hpp"
+#include "GC.hpp"
+#include "GS.hpp"
+#include "GFN.hpp"
 #include <chrono>
 #include <thread>
 
 using namespace std::chrono_literals;
-namespace GEMMA {
 
-// GS
-bool Grafcet::T0() const { return (!AU) && rearm; }
-bool Grafcet::T1() const { return AU; }
+static bool AU = false;
+static bool rearm = false;
+static bool dcy = false;
+static bool acy = false;
+static bool validation = false;
+static bool manual = false;
+static bool automatic = false;
+static bool temp_atteinte = false;
+static bool dr = false;
+static bool ga = false;
 
-// GPN
-bool Grafcet::T2() const { return X[9] && dcy; }
-bool Grafcet::T3() const { return acy; }
-bool Grafcet::T4() const { return true; } // 30s/X3
+GS::Grafcet gs;  // GRAFCET de securite
+GC::Grafcet gc;  // GRAFCET de controle
+GFN::Grafcet gfn; // GRAFCET de fonctionement normal
 
-// GC
-bool Grafcet::T5() const { return validation; }
-bool Grafcet::T6() const { return true; }
-bool Grafcet::T7() const { return automatic && validation; }
-bool Grafcet::T8() const { return temp; }
-bool Grafcet::T9() const { return manual && validation; }
-bool Grafcet::T10() const { return manual && validation; }
-bool Grafcet::T11() const { return automatic && validation; }
+// GRAFCET de securite
+namespace GS {
+  // Forcage GFN et GC
+  void Grafcet::P0() { gfn.reset(); gc.reset(); }
+  // Rearmement et désactivation bouton d'arret d'urgence
+  bool Grafcet::T0() const { return AU && rearm; }
+  // Attente du bouton d'arret durgence
+  void Grafcet::P1() { }
+  // Bouton d'arret d'urgence
+  bool Grafcet::T1() const { return !AU; }
+  // MQTT
+  void Grafcet::onConnected(int) { std::cout << "GS connected to MQTT broker" << std::endl; }
+  void Grafcet::onMessageReceived(const struct mosquitto_message&) {}
+} // namespace GS
 
-// Actions on steps
-void Grafcet::P0()
+// GRAFCET de controle
+namespace GC {
+  // Verification manuel en desordre
+  void Grafcet::P0()
+  {
+    if (dr) { std::cout << "Avance Convoyeur" << std::endl; }
+    if (ga) { std::cout << "Recule Convoyeur" << std::endl; }
+    gfn.reset();
+  }
+  // Mode automatique + validation
+  bool Grafcet::T0() const { return automatic && validation; }
+  // GRAFCET de fonctionement normal
+  void Grafcet::P1() { std::cout << "GPN" << std::endl; }
+  // Mode manuel + validation
+  bool Grafcet::T1() const { return manual && validation; }
+  // Chauffer four
+  void Grafcet::P2() { std::cout << "Chauffe Four" << std::endl; }
+  // Mode manuel + validation
+  bool Grafcet::T2() const { return manual && validation; }
+  // Choix mode
+  void Grafcet::P3() { }
+  // Temperature four atteinte
+  bool Grafcet::T3() const { return temp_atteinte; }
+  // Recule Convoyeur
+  void Grafcet::P4() { std::cout << "Recule Convoyeur" << std::endl; }
+  // Mode automatique + validation
+  bool Grafcet::T4() const { return automatic && validation; }
+  // Init
+  void Grafcet::P5() { }
+  // Validation
+  bool Grafcet::T5() const { return validation; }
+  // Attendre 30 s
+  bool Grafcet::T6() const { return true; }
+  // MQTT
+  void Grafcet::onConnected(int) { std::cout << "GC connected to MQTT broker" << std::endl; }
+  void Grafcet::onMessageReceived(const struct mosquitto_message&) {}
+} // namespace GC
+
+// GRAFCET de fonctionement normal
+namespace GFN {
+  // Repos
+  void Grafcet::P2() { }
+  // Attente départ cycle et attente OK du GRAFCET de controle
+  bool Grafcet::T2() const { return gc.states()[1] && dcy; }
+  // Chauffe et recule convoyeur
+  void Grafcet::P1() { std::cout << "Chauffe four + Recule convoyeur" << std::endl; }
+  // Attente 30 secondes
+  bool Grafcet::T1() const { return true; }
+  // Chauffe et avance convoyeur
+  void Grafcet::P0() { std::cout << "Chauffe four + Avance convoyeur" << std::endl; }
+  // Arret cycle
+  bool Grafcet::T0() const { return acy; }
+  // MQTT
+  void Grafcet::onConnected(int) { std::cout << "GFN connected to MQTT broker" << std::endl; }
+  void Grafcet::onMessageReceived(const struct mosquitto_message&) {}
+} // namespace GFN
+
+// *****************************************************************************
+//! \brief
+// *****************************************************************************
+class GEMMA: public MQTT
 {
-  // GPN
-  X[2] = true;
-  X[3] = X[4] = false;
+public:
 
-  // GC
-  X[5] = true;
-  X[6] = X[7] = X[8] = X[9] = X[10] = false;
+    GEMMA();
+    void step();
+
+private: // MQTT
+
+    //-------------------------------------------------------------------------
+    //! \brief Callback when this class is connected to the MQTT broker.
+    //-------------------------------------------------------------------------
+    virtual void onConnected(int /*rc*/) override;
+
+    //-------------------------------------------------------------------------
+    //! \brief Callback when this class is has received a new message from the
+    //! MQTT broker.
+    //-------------------------------------------------------------------------
+    virtual void onMessageReceived(const struct mosquitto_message& message) override;
+
+private:
+
+    GS::Grafcet m_gcs;  // GRAFCET de securite
+    GC::Grafcet m_gcc;  // GRAFCET de controle
+    GFN::Grafcet m_gfn; // GRAFCET de fonctionement normal
+};
+
+GEMMA::GEMMA()
+{
+    connect("localhost", 1883);
+    gs.connect("localhost", 1883);
+    gc.connect("localhost", 1883);
+    gfn.connect("localhost", 1883);
 }
 
-void Grafcet::P1() { }
-void Grafcet::P2() { }
-void Grafcet::P3() { std::cout << "Chauffe Four + Moteur Avance Droit" << std::endl; }
-void Grafcet::P4() { std::cout << "Chauffe Four + Moteur Avance Droit" << std::endl; }
-void Grafcet::P5() { }
-void Grafcet::P6() { std::cout << "Moteur Avance Gauche" << std::endl; }
-void Grafcet::P7() { }
-void Grafcet::P8() { std::cout << "Chauffe Four" << std::endl; }
-void Grafcet::P9() { std::cout << "GPN" << std::endl; }
-void Grafcet::P10()
+void GEMMA::step()
 {
-    if (dr) { std::cout << "Moteur Avance Droit" << std::endl; }
-    if (ga) { std::cout << "Moteur Avance Gauche" << std::endl; }
+//std::cout << "Manual: " << manual << " Auto: " << automatic << " Valid " << validation << std::endl;
 
-  // GPN
-  X[2] = true;
-  X[3] = X[4] = false;
+    gs.step(); //gs.debug();
+    gc.step(); //gc.debug();
+    gfn.step(); //gfn.debug();
 }
 
-void Grafcet::onConnected(int /*rc*/)
+void GEMMA::onConnected(int /*rc*/)
 {
-    std::cout << "MQTT on connected" << std::endl;
-    subscribe("GRAFCET/GEMMA", 0);
+    std::cout << "GEMMA connected to MQTT broker" << std::endl;
+    subscribe("GEMMA/AU", 0);
+    subscribe("GEMMA/Dcy", 0);
+    subscribe("GEMMA/Acy", 0);
+    subscribe("GEMMA/Rearm", 0);
+    subscribe("GEMMA/Valid", 0);
+    subscribe("GEMMA/Manu", 0); // "GEMMA/mode"
+    subscribe("GEMMA/Temp", 0);
+    subscribe("GEMMA/Avance", 0);
+    subscribe("GEMMA/Recule", 0);
 }
 
-void Grafcet::onMessageReceived(const struct mosquitto_message& msg)
+void GEMMA::onMessageReceived(const struct mosquitto_message& msg)
 {
     std::string message(static_cast<char*>(msg.payload));
-    if (message == "AU")
+    std::string topic(static_cast<char*>(msg.topic));
+    //std::cout << "Topic: " << topic << std::endl;
+
+    if (topic == "GEMMA/AU")
     {
-        std::cout << "RECEIVED: AU\n";
-        AU = true;
+        AU = !!(message[0] - '0');
     }
-    else if (message == "0AU")
+    else if (topic == "GEMMA/Dcy")
     {
-        std::cout << "RECEIVED: !AU\n";
-        AU = false;
+        dcy = !!(message[0] - '0');
     }
-    else if (message == "rearm")
+    else if (topic == "GEMMA/Acy")
     {
-        std::cout << "RECEIVED: rearm\n";
-        rearm = true;
+        acy = !!(message[0] - '0');
     }
-    else if (message == "dcy")
+    else if (topic == "GEMMA/Rearm")
     {
-        std::cout << "RECEIVED: dcy\n";
-        dcy = true;
+        rearm = !!(message[0] - '0');
     }
-    else if (message == "acy")
+    else if (topic == "GEMMA/Valid")
     {
-        std::cout << "RECEIVED: acy\n";
-        acy = true;
+        validation = !!(message[0] - '0');
     }
-    else if (message == "validation")
+#if 0
+    else if (topic == "Mode")
     {
-        std::cout << "RECEIVED: validation\n";
-        validation = true;
+        if (message == "manual")
+        {
+            manual = true;
+            automatic = false;
+        }
+        else if (message == "automatic")
+        {
+            manual = false;
+            automatic = true;
+        }
+        else
+        {
+            manual = false;
+            automatic = false;
+        }
     }
-    else if (message == "manual")
+    else if (topic == "Temperature")
     {
-        std::cout << "RECEIVED: manual\n";
-        manual = true;
+        temp_atteinte = (message[0] > 30);
     }
-    else if (message == "automatic")
+#else
+    else if (topic == "GEMMA/Manu")
     {
-        std::cout << "RECEIVED: automatic\n";
-        automatic = true;
+        if (message == "1")
+        {
+            manual = true;
+            automatic = false;
+        }
+        else if (message == "0")
+        {
+            manual = false;
+            automatic = true;
+        }
+        else
+        {
+            manual = false;
+            automatic = false;
+        }
     }
-    else if (message == "temp")
+    else if (topic == "GEMMA/Temp")
     {
-        std::cout << "RECEIVED: temp\n";
-        temp = true;
+        temp_atteinte = !!(message[0] - '0');
     }
-    else if (message == "dr")
+#endif
+    else if (topic == "GEMMA/Avance")
     {
-        std::cout << "RECEIVED: dr\n";
-        dr = true;
+        if (message[0] - '0')
+        {
+            dr = true;
+            ga = false;
+        }
+        else
+        {
+            dr = false;
+            ga = false;
+        }
     }
-    else if (message == "ga")
+    else if (topic == "GEMMA/Recule")
     {
-        std::cout << "RECEIVED: ga\n";
-        ga = true;
+        if (message[0] - '0')
+        {
+            dr = false;
+            ga = true;
+        }
+        else
+        {
+            dr = false;
+            ga = false;
+        }
     }
     else
     {
-        printf("NVALID MESSAGE: %s %d %s\n", msg.topic, msg.qos, message.c_str());
+        printf("INVALID MESSAGE: %s %d %s\n", msg.topic, msg.qos, message.c_str());
     }
-    //received = true;
 }
 
-} // namespace GEMMA
-
-// g++ --std=c++14 -Wall -Wextra -Isrc -Isrc/utils/ GEMMA.cpp src/utils/MQTT.cpp -o GEMMA `pkg-config --libs --cflags libmosquitto`
+// g++ --std=c++14 -Wall -Wextra -I../../src -I../../src/utils/ GEMMA.cpp ../../src/utils/MQTT.cpp -o GEMMA `pkg-config --libs --cflags libmosquitto`
 int main()
 {
-    //size_t cycle = 0u;
-    GEMMA::Grafcet g;
-    g.connect("localhost", 1883);
+    GEMMA g;
 
     while (true)
     {
-       //if (g.received)
-       {
-          //std::cout << cycle++ << " =====================================\n";
-          //g.received = false;
-
-          g.step();
-          //g.debug();
-       }
-      std::this_thread::sleep_for(1000ms);
+        g.step();
+        std::this_thread::sleep_for(1000ms);
     }
 
     return 0;
