@@ -834,7 +834,7 @@ void PetriEditor::handleKeyPressed(sf::Event const& event)
         if (/*(!m_simulating) &&*/ (!m_petri_net.isEmpty()))
         {
             pfd::save_file manager("Choose the LaTeX file to export",
-                                   "LateX-gen.tex",
+                                   "petri-gen.tex",
                                    { "LaTex file", "*.tex" });
             std::string file = manager.result();
             if (!file.empty())
@@ -863,13 +863,44 @@ void PetriEditor::handleKeyPressed(sf::Event const& event)
         }
     }
 
+    // Save the Petri net as graphviz file format
+    else if (event.key.code == KEY_BINDIND_EXPORT_PETRI_TO_DRAWIO)
+    {
+        if (/*(!m_simulating) &&*/ (!m_petri_net.isEmpty()))
+        {
+            pfd::save_file manager("Choose the Draw.io file to export",
+                                   "petri-gen.drawio.xml",
+                                   { "Draw.io File", "*.drawio.xml" });
+            std::string file = manager.result();
+            if (!file.empty())
+            {
+                if (m_petri_net.exportToDrawIO(file))
+                {
+                    m_message_bar.setInfo(
+                        "Petri net successfully exported as Draw.io file!");
+                }
+                else
+                {
+                    m_message_bar.setError(m_petri_net.message());
+                }
+            }
+        }
+        //else if (m_simulating)
+        //{
+        //    m_message_bar.setError("Cannot export during the simulation!");
+        //}
+        else if (m_petri_net.isEmpty())
+        {
+            m_message_bar.setWarning("Cannot export dummy Petri net!");
+        }
+    }
     // 'P' key: save the Petri net as graphviz file format
     else if (event.key.code == KEY_BINDIND_EXPORT_PETRI_TO_GRAPHVIZ)
     {
         if (/*(!m_simulating) &&*/ (!m_petri_net.isEmpty()))
         {
             pfd::save_file manager("Choose the Graphviz file to export",
-                                   "Graphviz-gen.gv",
+                                   "petri-gen.gv",
                                    { "Graphviz File", "*.gv *.dot" });
             std::string file = manager.result();
             if (!file.empty())

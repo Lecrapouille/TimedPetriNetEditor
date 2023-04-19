@@ -33,6 +33,7 @@
 #  define KEY_BINDIND_LOAD_FLOWSHOP sf::Keyboard::F
 #  define KEY_BINDIND_EXPORT_PETRI_TO_LATEX sf::Keyboard::X
 #  define KEY_BINDIND_EXPORT_PETRI_TO_GRAPHVIZ sf::Keyboard::P
+#  define KEY_BINDIND_EXPORT_PETRI_TO_DRAWIO sf::Keyboard::D
 #  define KEY_BINDIND_EXPORT_PETRI_TO_GRAFCET sf::Keyboard::G
 #  define KEY_BINDIND_EXPORT_PETRI_TO_JULIA sf::Keyboard::J
 #  define KEY_BINDIND_EXPORT_PETRI_TO_PNEDITOR sf::Keyboard::K

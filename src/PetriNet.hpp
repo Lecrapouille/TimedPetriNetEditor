@@ -784,6 +784,14 @@ public:
     bool exportToLaTeX(std::string const& filename, float const sx, float const sy);
 
     //--------------------------------------------------------------------------
+    //! \brief Export the Petri net as Draw.io code as xml file.
+    //! \param[in] filename the path of dot file.
+    //! \return true if the Petri net has been exported with success. Return
+    //! false in case of failure.
+    //--------------------------------------------------------------------------
+    bool exportToDrawIO(std::string const& filename);
+
+    //--------------------------------------------------------------------------
     //! \brief Export the Petri net as Graphviz code as dot file.
     //! \param[in] filename the path of dot file.
     //! \return true if the Petri net has been exported with success. Return
