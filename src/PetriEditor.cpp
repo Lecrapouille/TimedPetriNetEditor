@@ -124,7 +124,7 @@ void PetriEditor::onConnected(int /*rc*/)
         m_mqtt_topic = "pneditor/" + rawname.substr(lastindex + 1u);
     }
     m_message_bar.append("\nPublish your commands to MQTT topic '" + m_mqtt_topic + "'");
-    subscribe(m_mqtt_topic, 1);
+    subscribe(m_mqtt_topic, MQTT::QoS::QoS0);
 }
 
 //------------------------------------------------------------------------------

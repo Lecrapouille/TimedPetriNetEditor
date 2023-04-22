@@ -18,7 +18,7 @@
 // along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.
 //=====================================================================
 
-#include "utils/MQTT.hpp"
+#include "MQTT.hpp"
 #include <iostream>
 
 //------------------------------------------------------------------------------
@@ -77,13 +77,26 @@ bool MQTT::connect(std::string const& addr, size_t const port)
     return true;
 }
 
-bool MQTT::publish(std::string const& topic, std::string const& payload, int qos)
+bool MQTT::publish(std::string const& topic, std::string const& payload, QoS const qos)
 {
     int rc = mosquitto_publish(m_mosquitto, nullptr, topic.c_str(),
-                               payload.length(), payload.data(), qos, false);
-	if( rc != MOSQ_ERR_SUCCESS)
+                               payload.size(), payload.data(), int(qos), false);
+    if( rc != MOSQ_ERR_SUCCESS)
     {
-		std::cerr << "MQTT Error publishing: " << mosquitto_strerror(rc)
+        std::cerr << "MQTT Error publishing: " << mosquitto_strerror(rc)
+                  << std::endl;
+        return false;
+    }
+    return true;
+}
+
+bool MQTT::publish(std::string const& topic, std::vector<char> const& payload, QoS const qos)
+{
+    int rc = mosquitto_publish(m_mosquitto, nullptr, topic.c_str(),
+                               payload.size(), payload.data(), int(qos), false);
+    if( rc != MOSQ_ERR_SUCCESS)
+    {
+        std::cerr << "MQTT Error publishing: " << mosquitto_strerror(rc)
                   << std::endl;
         return false;
     }
@@ -99,20 +112,20 @@ bool MQTT::unsubscribe(std::string const& topic)
     int rc = mosquitto_unsubscribe(m_mosquitto, nullptr, topic.c_str());
     if (rc != MOSQ_ERR_SUCCESS)
     {
-		std::cerr << "MQTT Error unsubscribing: " << mosquitto_strerror(rc)
+        std::cerr << "MQTT Error unsubscribing: " << mosquitto_strerror(rc)
                   << std::endl;
         return false;
     }
     return true;
 }
 
-bool MQTT::subscribe(std::string const& topic, int qos)
+bool MQTT::subscribe(std::string const& topic, QoS const qos)
 {
     std::cout << "MQTT subscribe to '" << topic << "'" << std::endl;
-    int rc = mosquitto_subscribe(m_mosquitto, nullptr, topic.c_str(), qos);
+    int rc = mosquitto_subscribe(m_mosquitto, nullptr, topic.c_str(), int(qos));
     if (rc != MOSQ_ERR_SUCCESS)
     {
-		std::cerr << "MQTT Error subscribing: " << mosquitto_strerror(rc)
+        std::cerr << "MQTT Error subscribing: " << mosquitto_strerror(rc)
                   << std::endl;
         return false;
     }

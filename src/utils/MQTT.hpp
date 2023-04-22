@@ -23,6 +23,7 @@
 
 #  include <mosquitto.h>
 #  include <string>
+#  include <vector>
 
 // *****************************************************************************
 //! \brief Base MQTT class based on the mosquitto implementation.
@@ -33,12 +34,15 @@ class MQTT
 {
 public:
 
+    enum class QoS { QoS0, QoS1, QoS2 };
+
     MQTT();
     virtual ~MQTT();
     bool connect(std::string const& addr, size_t const port);
-    bool subscribe(std::string const& topic, int qos);
+    bool subscribe(std::string const& topic, QoS const qos);
     bool unsubscribe(std::string const& topic);
-    bool publish(std::string const& topic, std::string const& payload, int qos);
+    bool publish(std::string const& topic, std::string const& payload, QoS const qos);
+    bool publish(std::string const& topic, std::vector<char> const& payload, QoS const qos);
 
 protected:
 

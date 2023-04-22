@@ -1350,7 +1350,7 @@ private: // MQTT
         for (size_t i = 0u; i < MAX_TRANSITIONS; ++i)
             message[i + 1u] = T[i];
 
-        MQTT::publish(topic().c_str(), std::string(message, MAX_TRANSITIONS + 1u), 0);
+        MQTT::publish(topic().c_str(), std::string(message, MAX_TRANSITIONS + 1u), MQTT::QoS::QoS0);
     }
 
 public:
