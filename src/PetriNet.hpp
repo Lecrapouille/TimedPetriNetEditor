@@ -778,13 +778,21 @@ public:
     bool importFlowshop(std::string const& filename);
 
     //--------------------------------------------------------------------------
+    //! \brief Export the Grafcet net as LaTeX code as tex file.
+    //! \param[in] filename the path of tex file.
+    //! \return true if the Grafcet net has been exported with success. Return
+    //! false in case of failure.
+    //--------------------------------------------------------------------------
+    bool exportToGrafcetLaTeX(std::string const& filename);
+
+    //--------------------------------------------------------------------------
     //! \brief Export the Petri net as LaTeX code as tex file.
     //! \param[in] filename the path of tex file.
     //! \param[in] scale X and Y scaling.
     //! \return true if the Petri net has been exported with success. Return
     //! false in case of failure.
     //--------------------------------------------------------------------------
-    bool exportToLaTeX(std::string const& filename, float const sx, float const sy);
+    bool exportToPetriLaTeX(std::string const& filename, float const sx, float const sy);
 
     //--------------------------------------------------------------------------
     //! \brief Export the Petri net as Draw.io code as xml file.

@@ -29,6 +29,7 @@
 #include <cstring>
 #include <ctype.h>
 #include <limits>
+#include <map>
 
 //------------------------------------------------------------------------------
 // Default net configuration: timed petri net. To change the type of nets, call
@@ -960,8 +961,65 @@ bool PetriNet::findCriticalCycle(std::vector<Arc*>& result)
 }
 
 //------------------------------------------------------------------------------
-bool PetriNet::exportToLaTeX(std::string const& filename, float const scale_x,
-                             float const scale_y)
+// Depth First Search
+static void dfs(Node& n, std::map<std::string, bool>& visited)
+{
+    visited[n.key] = true;
+
+    std::cout << n.key << std::endl;
+
+    if (n.arcsOut.size() == 1u) // while ()
+    {
+        dfs(n.arcsOut[0]->to, visited);
+    }
+    else
+    {
+        if (n.type == Node::Type::Place)
+        {
+            std::cout << "OU {" << std::endl;
+        }
+        else
+        {
+            std::cout << "ET {" << std::endl;
+        }
+
+        for (auto& c: n.arcsOut)
+        {
+            if (!visited[c->to.key])
+            {
+                std::cout << "Branch" << std::endl;
+                // while (n.arcsOut.size() == 1u)
+                dfs(c->to, visited);
+            }
+        }
+
+        if (n.type == Node::Type::Place)
+        {
+            std::cout << "} OU" << std::endl;
+        }
+        else
+        {
+            std::cout << "}ET" << std::endl;
+        }
+    }
+}
+
+//------------------------------------------------------------------------------
+bool PetriNet::exportToGrafcetLaTeX(std::string const& filename)
+{
+    // Update arcs in/out for all transitions to be sure to generate the correct
+    // net.
+    generateArcsInArcsOut();
+
+    std::map<std::string, bool> visited;
+    dfs(m_places[0], visited);
+
+    return false;
+}
+
+//------------------------------------------------------------------------------
+bool PetriNet::exportToPetriLaTeX(std::string const& filename, float const scale_x,
+                                  float const scale_y)
 {
     // Update arcs in/out for all transitions to be sure to generate the correct
     // net.

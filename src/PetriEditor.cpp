@@ -863,6 +863,38 @@ void PetriEditor::handleKeyPressed(sf::Event const& event)
         }
     }
 
+    // 'F' key: save the Grafcet as LaTeX file format
+    else if (event.key.code == KEY_BINDING_EXPORT_PETRI_TO_GRAFCET_LATEX)
+    {
+        if (/*(!m_simulating) &&*/ (!m_petri_net.isEmpty()))
+        {
+            pfd::save_file manager("Choose the Symfony file to export",
+                                   "grafcet-gen.tex",
+                                   { "LaTeX file", "*.tex" });
+            std::string file = manager.result();
+            if (!file.empty())
+            {
+                if (m_petri_net.exportToGrafcetLaTeX(file))
+                {
+                    m_message_bar.setInfo(
+                        "Petri net successfully exported as LaTeX file!");
+                }
+                else
+                {
+                    m_message_bar.setError(m_petri_net.message());
+                }
+            }
+        }
+        //else if (m_simulating)
+        //{
+        //    m_message_bar.setError("Cannot export during the simulation!");
+        //}
+        else if (m_petri_net.isEmpty())
+        {
+            m_message_bar.setWarning("Cannot export dummy Petri net!");
+        }
+    }
+
     // 'X' key: save the Petri net as LaTeX file format
     else if (event.key.code == KEY_BINDING_EXPORT_PETRI_TO_PETRI_LATEX)
     {
