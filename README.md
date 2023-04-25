@@ -214,6 +214,7 @@ from the mouse and the keyboard (like Emacs but without the Meta key ^^).
 - `J` key: export the graph event into a Julia script file (for example named
   `GraphEvent-gen.jl`) if and only if the Petri net is a graph event.
 - `X` key: export the Petri net as LaTeX file (for example named `petri.tex`).
+- `Y` key: export the Petri net as Symfony workflow file (for example named `petri-gen.yaml`).
 - `P` key: export the Petri net as Graphviz file (for example named `petri.gv`).
 - `D` key: export the Petri net as Draw.io file (for example named `petri.gv`).
 - `G` key: export the Petri net as Grafcet into a C++ header file (for example
@@ -850,7 +851,7 @@ Can export to input files for:
 ![PnEditor](doc/pn-editor.png)
 
 - Draw.io: https://app.diagrams.net/
-- **TODO** Symfony workflow: https://symfony.com/doc/current/components/workflow.html
+- Symfony workflow: https://symfony.com/doc/current/components/workflow.html
 
 ## Controlling the editor through MQTT commands
 

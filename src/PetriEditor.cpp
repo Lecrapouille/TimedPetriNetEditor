@@ -828,6 +828,44 @@ void PetriEditor::handleKeyPressed(sf::Event const& event)
         }
     }
 
+    // 'Y' key: save the Petri net as Symfony workflow file format
+    else if (event.key.code == KEY_BINDIND_EXPORT_PETRI_TO_SYMFONY)
+    {
+        if (/*(!m_simulating) &&*/ (!m_petri_net.isEmpty()))
+        {
+            pfd::save_file manager("Choose the Symfony file to export",
+                                   "petri-gen.yaml",
+                                   { "Yaml file", "*.yaml" });
+            std::string file = manager.result();
+            if (!file.empty())
+            {
+                // Generate the C++ namespace
+                size_t lastindex = m_petri_filename.find_last_of(".");
+                std::string name = m_petri_filename.substr(0, lastindex);
+                lastindex = name.find_last_of("/");
+                name = name.substr(lastindex + 1u);
+
+                if (m_petri_net.exportToSymfony(file, name))
+                {
+                    m_message_bar.setInfo(
+                        "Petri net successfully exported as Symfony file!");
+                }
+                else
+                {
+                    m_message_bar.setError(m_petri_net.message());
+                }
+            }
+        }
+        //else if (m_simulating)
+        //{
+        //    m_message_bar.setError("Cannot export during the simulation!");
+        //}
+        else if (m_petri_net.isEmpty())
+        {
+            m_message_bar.setWarning("Cannot export dummy Petri net!");
+        }
+    }
+
     // 'X' key: save the Petri net as LaTeX file format
     else if (event.key.code == KEY_BINDIND_EXPORT_PETRI_TO_LATEX)
     {
@@ -1573,6 +1611,7 @@ std::stringstream PetriEditor::help()
        << "  " << to_str(KEY_BINDIND_SHOW_CRITICAL_CYCLE) << " key: show critical circuit" << std::endl
        << "  " << to_str(KEY_BINDIND_SAVE_PETRI_NET) << " key: save the Petri net to petri.json file" << std::endl
        << "  " << to_str(KEY_BINDIND_LOAD_PETRI_NET) << " key: load the Petri net from petri.json file" << std::endl
+       << "  " << to_str(KEY_BINDIND_EXPORT_PETRI_TO_SYMFONY) << " key: export the Petri net as Symfony file" << std::endl
        << "  " << to_str(KEY_BINDIND_EXPORT_PETRI_TO_GRAPHVIZ) << " key: export the Petri net as Graphviz file" << std::endl
        << "  " << to_str(KEY_BINDIND_EXPORT_PETRI_TO_LATEX) << " key: export the Petri net as LaTeX file" << std::endl
        << "  " << to_str(KEY_BINDIND_EXPORT_PETRI_TO_GRAFCET) << " key: export the Petri net as GRAFCET in a C++ header file" << std::endl

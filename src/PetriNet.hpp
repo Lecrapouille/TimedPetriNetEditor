@@ -770,7 +770,10 @@ public:
     std::stringstream showDaterForm(std::string const& comment = "# ") const;
 
     //--------------------------------------------------------------------------
-    //! \brief
+    //! \brief Export the Petri net as Symfony workflow code as yaml file.
+    //! \param[in] filename the path of yaml file.
+    //! \return true if the Petri net has been exported with success. Return
+    //! false in case of failure.
     //--------------------------------------------------------------------------
     bool importFlowshop(std::string const& filename);
 
@@ -798,6 +801,14 @@ public:
     //! false in case of failure.
     //--------------------------------------------------------------------------
     bool exportToGraphviz(std::string const& filename);
+
+    //--------------------------------------------------------------------------
+    //! \brief Export the Petri net as Symfony workflow as yaml file.
+    //! \param[in] filename the path of dot file.
+    //! \return true if the Petri net has been exported with success. Return
+    //! false in case of failure.
+    //--------------------------------------------------------------------------
+    bool exportToSymfony(std::string const& filename, std::string const& name);
 
     //--------------------------------------------------------------------------
     //! \brief Export the Petri net to https://gitlab.com/porky11/pn-editor.
