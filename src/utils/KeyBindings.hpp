@@ -27,29 +27,30 @@
 // -----------------------------------------------------------------------------
 #  define KEY_BINDING_QUIT_APPLICATION sf::Keyboard::Escape
 #  define KEY_BINDING_RUN_SIMULATION sf::Keyboard::Space
-#  define KEY_BINDING_RUN_SIMULATION_ALT sf::Keyboard::R
-#  define KEY_BINDING_SAVE_PETRI_NET sf::Keyboard::S
-#  define KEY_BINDING_LOAD_PETRI_NET sf::Keyboard::O
-#  define KEY_BINDING_LOAD_FLOWSHOP sf::Keyboard::F
-#  define KEY_BINDING_EXPORT_PETRI_TO_SYMFONY sf::Keyboard::Y
-#  define KEY_BINDING_EXPORT_PETRI_TO_PETRI_LATEX sf::Keyboard::X
-#  define KEY_BINDING_EXPORT_PETRI_TO_GRAFCET_LATEX sf::Keyboard::F
-#  define KEY_BINDING_EXPORT_PETRI_TO_GRAPHVIZ sf::Keyboard::P
-#  define KEY_BINDING_EXPORT_PETRI_TO_DRAWIO sf::Keyboard::D
-#  define KEY_BINDING_EXPORT_PETRI_TO_GRAFCET_CXX sf::Keyboard::G
-#  define KEY_BINDING_EXPORT_PETRI_TO_JULIA sf::Keyboard::J
-#  define KEY_BINDING_EXPORT_PETRI_TO_PNEDITOR sf::Keyboard::K
-#  define KEY_BINDING_IS_EVENT_GRAPH sf::Keyboard::E
-#  define KEY_BINDING_SHOW_CRITICAL_CYCLE sf::Keyboard::C
-#  define KEY_BINDING_ERASE_PETRI_NET sf::Keyboard::Z
-#  define KEY_BINDING_MOVE_PETRI_NODE sf::Keyboard::M
-#  define KEY_BINDING_ARC_FROM_NODE sf::Keyboard::L
 #  define KEY_BINDING_ROTATE_CW sf::Keyboard::PageUp
 #  define KEY_BINDING_ROTATE_CCW sf::Keyboard::PageDown
-#  define KEY_BINDING_SHOW_GRID sf::Keyboard::D
-#  define KEY_BINDING_ALIGN_NODES sf::Keyboard::A
-#  define KEY_BINDING_SHOW_HELP sf::Keyboard::H
 #  define KEY_BINDING_SCREEN_SHOT sf::Keyboard::F1
+
+#  define KEY_BINDING_ALIGN_NODES sf::Keyboard::A
+#  define KEY_BINDING_EXPORT_PETRI_TO_DRAWIO sf::Keyboard::B
+#  define KEY_BINDING_SHOW_CRITICAL_CYCLE sf::Keyboard::C
+#  define KEY_BINDING_SHOW_GRID sf::Keyboard::D
+#  define KEY_BINDING_IS_EVENT_GRAPH sf::Keyboard::E
+#  define KEY_BINDING_LOAD_FLOWSHOP sf::Keyboard::F
+#  define KEY_BINDING_EXPORT_PETRI_TO_GRAFCET_CXX sf::Keyboard::G
+#  define KEY_BINDING_SHOW_HELP sf::Keyboard::H
+#  define KEY_BINDING_EXPORT_PETRI_TO_GRAFCET_LATEX sf::Keyboard::I
+#  define KEY_BINDING_EXPORT_PETRI_TO_JULIA sf::Keyboard::J
+#  define KEY_BINDING_EXPORT_PETRI_TO_PNEDITOR sf::Keyboard::K
+#  define KEY_BINDING_ARC_FROM_NODE sf::Keyboard::L
+#  define KEY_BINDING_MOVE_PETRI_NODE sf::Keyboard::M
+#  define KEY_BINDING_LOAD_PETRI_NET sf::Keyboard::O
+#  define KEY_BINDING_EXPORT_PETRI_TO_GRAPHVIZ sf::Keyboard::P
+#  define KEY_BINDING_RUN_SIMULATION_ALT sf::Keyboard::R
+#  define KEY_BINDING_SAVE_PETRI_NET sf::Keyboard::S
+#  define KEY_BINDING_EXPORT_PETRI_TO_PETRI_LATEX sf::Keyboard::X
+#  define KEY_BINDING_EXPORT_PETRI_TO_SYMFONY sf::Keyboard::Y
+#  define KEY_BINDING_ERASE_PETRI_NET sf::Keyboard::Z
 
 // SFML bug for macOS ?
 #  if defined(__APPLE__)
