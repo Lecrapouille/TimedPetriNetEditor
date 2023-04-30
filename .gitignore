@@ -1,9 +1,13 @@
 # Project specific
-Grafcet-gen.hpp
-GraphEvent-gen.jl
-Graphviz-gen.gv
-LateX-gen.tex
-LateX-gen.pdf
+petri-gen.hpp
+graph-event-gen.jl
+petri-gen.gv
+petri-gen.tex
+petri-gen.pdf
+petri-gen.drawio.xml
+petri-gen.yaml
+petri-gen.pns
+grafcet-gen.hpp
 petri.json
 build/
 doc/coverage/

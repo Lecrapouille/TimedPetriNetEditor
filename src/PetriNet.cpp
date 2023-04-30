@@ -963,6 +963,10 @@ bool PetriNet::findCriticalCycle(std::vector<Arc*>& result)
 bool PetriNet::exportToLaTeX(std::string const& filename, float const scale_x,
                              float const scale_y)
 {
+    // Update arcs in/out for all transitions to be sure to generate the correct
+    // net.
+    generateArcsInArcsOut();
+
     std::ofstream file(filename);
     if (!file)
     {
@@ -1043,6 +1047,10 @@ bool PetriNet::exportToLaTeX(std::string const& filename, float const scale_x,
 bool PetriNet::exportToDrawIO(std::string const& filename)
 {
     const float scale = 2.0f;
+
+    // Update arcs in/out for all transitions to be sure to generate the correct
+    // net.
+    generateArcsInArcsOut();
 
     std::ofstream file(filename);
     if (!file)
@@ -1177,6 +1185,10 @@ bool PetriNet::exportToSymfony(std::string const& filename, std::string const& n
 //------------------------------------------------------------------------------
 bool PetriNet::exportToGraphviz(std::string const& filename)
 {
+    // Update arcs in/out for all transitions to be sure to generate the correct
+    // net.
+    generateArcsInArcsOut();
+
     std::ofstream file(filename);
     if (!file)
     {
@@ -1256,6 +1268,8 @@ template<class T> void write_float32(std::ofstream& file, T const val)
 //------------------------------------------------------------------------------
 bool PetriNet::exportToPNEditor(std::string const& filename)
 {
+    // Update arcs in/out for all transitions to be sure to generate the correct
+    // net.
     generateArcsInArcsOut();
 
     // .pns file: contains the logical contents of the petri net

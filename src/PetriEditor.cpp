@@ -732,8 +732,8 @@ void PetriEditor::handleKeyPressed(sf::Event const& event)
     }
 
     // 'R' or SPACE key: Run the animation of the Petri net
-    else if ((event.key.code == KEY_BINDIND_RUN_SIMULATION) ||
-             (event.key.code == KEY_BINDIND_RUN_SIMULATION_ALT))
+    else if ((event.key.code == KEY_BINDING_RUN_SIMULATION) ||
+             (event.key.code == KEY_BINDING_RUN_SIMULATION_ALT))
     {
         m_simulating = m_simulating ^ true;
 
@@ -750,7 +750,7 @@ void PetriEditor::handleKeyPressed(sf::Event const& event)
     }
 
     // 'S' key: save the Petri net to a JSON file
-    else if (event.key.code == KEY_BINDIND_SAVE_PETRI_NET)
+    else if (event.key.code == KEY_BINDING_SAVE_PETRI_NET)
     {
         if (m_simulating)
         {
@@ -768,7 +768,7 @@ void PetriEditor::handleKeyPressed(sf::Event const& event)
     }
 
     // 'O' key: load the Petri net from a JSON file
-    else if (event.key.code == KEY_BINDIND_LOAD_PETRI_NET)
+    else if (event.key.code == KEY_BINDING_LOAD_PETRI_NET)
     {
         if (!m_simulating)
         {
@@ -787,7 +787,7 @@ void PetriEditor::handleKeyPressed(sf::Event const& event)
     }
 
     // 'F1' key: take a screenshot
-    else if (event.key.code == KEY_BINDIND_SCREEN_SHOT)
+    else if (event.key.code == KEY_BINDING_SCREEN_SHOT)
     {
         pfd::save_file manager("Choose the PNG file to save the screenshot",
                                 "screenshot.png", { "PNG File", "*.png" });
@@ -803,7 +803,7 @@ void PetriEditor::handleKeyPressed(sf::Event const& event)
     }
 
     // 'F' key: load a flowshop net from a text file
-    else if (event.key.code == KEY_BINDIND_LOAD_FLOWSHOP)
+    else if (event.key.code == KEY_BINDING_LOAD_FLOWSHOP)
     {
         if (!m_simulating)
         {
@@ -829,7 +829,7 @@ void PetriEditor::handleKeyPressed(sf::Event const& event)
     }
 
     // 'Y' key: save the Petri net as Symfony workflow file format
-    else if (event.key.code == KEY_BINDIND_EXPORT_PETRI_TO_SYMFONY)
+    else if (event.key.code == KEY_BINDING_EXPORT_PETRI_TO_SYMFONY)
     {
         if (/*(!m_simulating) &&*/ (!m_petri_net.isEmpty()))
         {
@@ -839,13 +839,10 @@ void PetriEditor::handleKeyPressed(sf::Event const& event)
             std::string file = manager.result();
             if (!file.empty())
             {
-                // Generate the C++ namespace
-                size_t lastindex = m_petri_filename.find_last_of(".");
-                std::string name = m_petri_filename.substr(0, lastindex);
-                lastindex = name.find_last_of("/");
-                name = name.substr(lastindex + 1u);
-
-                if (m_petri_net.exportToSymfony(file, name))
+                sf::Vector2f figure(15.0f, 15.0f); // PDF figure size
+                sf::Vector2f scale(figure.x / float(m_renderer.getSize().x),
+                                   figure.y / float(m_renderer.getSize().y));
+                if (m_petri_net.exportToSymfony(file))
                 {
                     m_message_bar.setInfo(
                         "Petri net successfully exported as Symfony file!");
@@ -867,7 +864,7 @@ void PetriEditor::handleKeyPressed(sf::Event const& event)
     }
 
     // 'X' key: save the Petri net as LaTeX file format
-    else if (event.key.code == KEY_BINDIND_EXPORT_PETRI_TO_LATEX)
+    else if (event.key.code == KEY_BINDING_EXPORT_PETRI_TO_PETRI_LATEX)
     {
         if (/*(!m_simulating) &&*/ (!m_petri_net.isEmpty()))
         {
@@ -880,7 +877,7 @@ void PetriEditor::handleKeyPressed(sf::Event const& event)
                 sf::Vector2f figure(15.0f, 15.0f); // PDF figure size
                 sf::Vector2f scale(figure.x / float(m_renderer.getSize().x),
                                    figure.y / float(m_renderer.getSize().y));
-                if (m_petri_net.exportToLaTeX(file, scale.x, scale.y))
+                if (m_petri_net.exportToPetriLaTeX(file, scale.x, scale.y))
                 {
                     m_message_bar.setInfo(
                         "Petri net successfully exported as LaTeX file!");
@@ -902,7 +899,7 @@ void PetriEditor::handleKeyPressed(sf::Event const& event)
     }
 
     // Save the Petri net as graphviz file format
-    else if (event.key.code == KEY_BINDIND_EXPORT_PETRI_TO_DRAWIO)
+    else if (event.key.code == KEY_BINDING_EXPORT_PETRI_TO_DRAWIO)
     {
         if (/*(!m_simulating) &&*/ (!m_petri_net.isEmpty()))
         {
@@ -933,7 +930,7 @@ void PetriEditor::handleKeyPressed(sf::Event const& event)
         }
     }
     // 'P' key: save the Petri net as graphviz file format
-    else if (event.key.code == KEY_BINDIND_EXPORT_PETRI_TO_GRAPHVIZ)
+    else if (event.key.code == KEY_BINDING_EXPORT_PETRI_TO_GRAPHVIZ)
     {
         if (/*(!m_simulating) &&*/ (!m_petri_net.isEmpty()))
         {
@@ -965,7 +962,7 @@ void PetriEditor::handleKeyPressed(sf::Event const& event)
     }
 
     // 'K' key: save the Petri net as graphviz file format
-    else if (event.key.code == KEY_BINDIND_EXPORT_PETRI_TO_PNEDITOR)
+    else if (event.key.code == KEY_BINDING_EXPORT_PETRI_TO_PNEDITOR)
     {
         if (/*(!m_simulating) &&*/ (!m_petri_net.isEmpty()))
         {
@@ -997,12 +994,12 @@ void PetriEditor::handleKeyPressed(sf::Event const& event)
     }
 
     // 'G' key: save the Petri net as grafcet in a C++ header file
-    else if (event.key.code == KEY_BINDIND_EXPORT_PETRI_TO_GRAFCET)
+    else if (event.key.code == KEY_BINDING_EXPORT_PETRI_TO_GRAFCET_CXX)
     {
         if ((!m_simulating) && (!m_petri_net.isEmpty()))
         {
             pfd::save_file manager("Choose the C++ header file to export as Grafcet",
-                                   "Grafcet-gen.hpp",
+                                   "grafcet-gen.hpp",
                                    { "C++ Header File", "*.hpp *.h *.hh *.h++" });
             std::string file = manager.result();
             if (!file.empty())
@@ -1036,12 +1033,12 @@ void PetriEditor::handleKeyPressed(sf::Event const& event)
     }
 
     // 'J' key: save the Petri net as graph event in a Julia script file
-    else if (event.key.code == KEY_BINDIND_EXPORT_PETRI_TO_JULIA)
+    else if (event.key.code == KEY_BINDING_EXPORT_PETRI_TO_JULIA)
     {
         if ((!m_simulating) && (!m_petri_net.isEmpty()))
         {
             pfd::save_file manager("Choose the Julia file to export as graph event",
-                                   "GraphEvent-gen.jl",
+                                   "graph-event-gen.jl",
                                    { "Julia File", "*.jl" });
             std::string file = manager.result();
             if (!file.empty())
@@ -1071,7 +1068,7 @@ void PetriEditor::handleKeyPressed(sf::Event const& event)
     }
 
     // 'C' key: show critical graph (only for event graph)
-    else if (event.key.code == KEY_BINDIND_SHOW_CRITICAL_CYCLE)
+    else if (event.key.code == KEY_BINDING_SHOW_CRITICAL_CYCLE)
     {
         m_simulating = false;
         if (m_petri_net.findCriticalCycle(m_marked_arcs))
@@ -1088,7 +1085,7 @@ void PetriEditor::handleKeyPressed(sf::Event const& event)
     }
 
     // 'Z' key: erase the Petri net
-    else if (event.key.code == KEY_BINDIND_ERASE_PETRI_NET)
+    else if (event.key.code == KEY_BINDING_ERASE_PETRI_NET)
     {
         m_simulating = false;
         m_petri_net.clear();
@@ -1096,7 +1093,7 @@ void PetriEditor::handleKeyPressed(sf::Event const& event)
     }
 
     // 'M' key: Move the selected node
-    else if (event.key.code == KEY_BINDIND_MOVE_PETRI_NODE)
+    else if (event.key.code == KEY_BINDING_MOVE_PETRI_NODE)
     {
         if (m_selected_modes.size() == 0u)
         {
@@ -1114,7 +1111,7 @@ void PetriEditor::handleKeyPressed(sf::Event const& event)
     }
 
     // 'L' key: create the arc from the selected node
-    else if (event.key.code == KEY_BINDIND_ARC_FROM_NODE)
+    else if (event.key.code == KEY_BINDING_ARC_FROM_NODE)
     {
         if ((m_node_from == nullptr) && (!m_arc_from_unknown_node))
             handleArcOrigin();
@@ -1146,14 +1143,14 @@ void PetriEditor::handleKeyPressed(sf::Event const& event)
 
     // '+' key: increase the number of tokens in the place.
     // '-' key: decrease the number of tokens in the place.
-    else if ((event.key.code == KEY_BINDIND_INCREMENT_TOKENS) ||
-             (event.key.code == KEY_BINDIND_DECREMENT_TOKENS))
+    else if ((event.key.code == KEY_BINDING_INCREMENT_TOKENS) ||
+             (event.key.code == KEY_BINDING_DECREMENT_TOKENS))
     {
         Node* node = getNode(m_mouse.x, m_mouse.y);
         if ((node != nullptr) && (node->type == Node::Type::Place))
         {
             size_t& tokens = reinterpret_cast<Place*>(node)->tokens;
-            if (event.key.code == KEY_BINDIND_INCREMENT_TOKENS)
+            if (event.key.code == KEY_BINDING_INCREMENT_TOKENS)
                 tokens = std::min(Settings::maxTokens, tokens + 1u);
             else if (tokens > 0u)
                 --tokens;
@@ -1162,8 +1159,8 @@ void PetriEditor::handleKeyPressed(sf::Event const& event)
     }
 
     // 'Up' key or 'Down': rotate the transition CW or CCW.
-    else if ((event.key.code == KEY_BINDIND_ROTATE_CW) ||
-             (event.key.code == KEY_BINDIND_ROTATE_CCW))
+    else if ((event.key.code == KEY_BINDING_ROTATE_CW) ||
+             (event.key.code == KEY_BINDING_ROTATE_CCW))
     {
         Transition* transition = getTransition(m_mouse.x, m_mouse.y);
         if (transition != nullptr)
@@ -1178,7 +1175,7 @@ void PetriEditor::handleKeyPressed(sf::Event const& event)
     }
 
     // 'E' key: Is Event graph ?
-    else if (event.key.code == KEY_BINDIND_IS_EVENT_GRAPH)
+    else if (event.key.code == KEY_BINDING_IS_EVENT_GRAPH)
     {
         m_petri_net.generateArcsInArcsOut();
         if (m_petri_net.isEventGraph(m_marked_arcs))
@@ -1192,20 +1189,20 @@ void PetriEditor::handleKeyPressed(sf::Event const& event)
     }
 
     // 'H' key: Show the help
-    else if (event.key.code == KEY_BINDIND_SHOW_HELP)
+    else if (event.key.code == KEY_BINDING_SHOW_HELP)
     {
         m_message_bar.setInfo(PetriEditor::help().str());
     }
 
     // 'A' for aligning nodes on a grid
-    else if (event.key.code == KEY_BINDIND_ALIGN_NODES)
+    else if (event.key.code == KEY_BINDING_ALIGN_NODES)
     {
         alignElements();
         m_message_bar.setInfo("Nodes have been aligned !");
     }
 
     // 'D' show grid
-    else if (event.key.code == KEY_BINDIND_SHOW_GRID)
+    else if (event.key.code == KEY_BINDING_SHOW_GRID)
     {
         m_grid.show ^= true;
     }
@@ -1597,27 +1594,29 @@ std::stringstream PetriEditor::help()
        << "  Middle mouse button pressed: add an arc with the selected place or transition as origin" << std::endl
        << "  Middle mouse button release: end the arc with the selected place or transition as destination" << std::endl
        << "  Middle mouse button scroll: zoom/unzoom the view" << std::endl
-       << "  " << to_str(KEY_BINDIND_ARC_FROM_NODE) << " key: add an arc with the selected place or transition as origin" << std::endl
+       << "  " << to_str(KEY_BINDING_ARC_FROM_NODE) << " key: add an arc with the selected place or transition as origin" << std::endl
        << "  " << to_str(KEY_BINDING_DELETE_PETRI_ELEMENT) << " key: remove a place or transition or an arc" << std::endl
-       << "  " << to_str(KEY_BINDIND_ERASE_PETRI_NET) << " key: clear the whole Petri net" << std::endl
-       << "  " << to_str(KEY_BINDIND_MOVE_PETRI_NODE) << " key: move the selected place or transition" << std::endl
-       << "  " << to_str(KEY_BINDIND_ALIGN_NODES) << " key: align nodes" << std::endl
-       << "  " << to_str(KEY_BINDIND_SHOW_GRID) << " key: show the grid" << std::endl
-       << "  " << to_str(KEY_BINDIND_INCREMENT_TOKENS) << " key: add a token on the place pointed by the mouse cursor" << std::endl
-       << "  " << to_str(KEY_BINDIND_DECREMENT_TOKENS) << " key: remove a token on the place pointed by the mouse cursor" << std::endl
-       << "  " << to_str(KEY_BINDIND_RUN_SIMULATION) << " key: run (start) or stop the simulation" << std::endl
-       << "  " << to_str(KEY_BINDIND_RUN_SIMULATION_ALT) << " key: run (start) or stop the simulation" << std::endl
-       << "  " << to_str(KEY_BINDIND_IS_EVENT_GRAPH) << " key: is net an event graph ?" << std::endl
-       << "  " << to_str(KEY_BINDIND_SHOW_CRITICAL_CYCLE) << " key: show critical circuit" << std::endl
-       << "  " << to_str(KEY_BINDIND_SAVE_PETRI_NET) << " key: save the Petri net to petri.json file" << std::endl
-       << "  " << to_str(KEY_BINDIND_LOAD_PETRI_NET) << " key: load the Petri net from petri.json file" << std::endl
-       << "  " << to_str(KEY_BINDIND_EXPORT_PETRI_TO_SYMFONY) << " key: export the Petri net as Symfony file" << std::endl
-       << "  " << to_str(KEY_BINDIND_EXPORT_PETRI_TO_GRAPHVIZ) << " key: export the Petri net as Graphviz file" << std::endl
-       << "  " << to_str(KEY_BINDIND_EXPORT_PETRI_TO_LATEX) << " key: export the Petri net as LaTeX file" << std::endl
-       << "  " << to_str(KEY_BINDIND_EXPORT_PETRI_TO_GRAFCET) << " key: export the Petri net as GRAFCET in a C++ header file" << std::endl
-       << "  " << to_str(KEY_BINDIND_EXPORT_PETRI_TO_JULIA) << " key: export the Petri net as Julia code" << std::endl
-       << "  " << to_str(KEY_BINDIND_EXPORT_PETRI_TO_PNEDITOR) << " key: export the Petri net as for https://gitlab.com/porky11/pn-editor" << std::endl
-       << "  " << to_str(KEY_BINDIND_SCREEN_SHOT) << " key: take a screenshot of the view" << std::endl
+       << "  " << to_str(KEY_BINDING_ERASE_PETRI_NET) << " key: clear the whole Petri net" << std::endl
+       << "  " << to_str(KEY_BINDING_MOVE_PETRI_NODE) << " key: move the selected place or transition" << std::endl
+       << "  " << to_str(KEY_BINDING_ALIGN_NODES) << " key: align nodes" << std::endl
+       << "  " << to_str(KEY_BINDING_SHOW_GRID) << " key: show the grid" << std::endl
+       << "  " << to_str(KEY_BINDING_INCREMENT_TOKENS) << " key: add a token on the place pointed by the mouse cursor" << std::endl
+       << "  " << to_str(KEY_BINDING_DECREMENT_TOKENS) << " key: remove a token on the place pointed by the mouse cursor" << std::endl
+       << "  " << to_str(KEY_BINDING_RUN_SIMULATION) << " key: run (start) or stop the simulation" << std::endl
+       << "  " << to_str(KEY_BINDING_RUN_SIMULATION_ALT) << " key: run (start) or stop the simulation" << std::endl
+       << "  " << to_str(KEY_BINDING_IS_EVENT_GRAPH) << " key: is net an event graph ?" << std::endl
+       << "  " << to_str(KEY_BINDING_SHOW_CRITICAL_CYCLE) << " key: show critical circuit" << std::endl
+       << "  " << to_str(KEY_BINDING_SAVE_PETRI_NET) << " key: save the Petri net to petri.json file" << std::endl
+       << "  " << to_str(KEY_BINDING_LOAD_PETRI_NET) << " key: load the Petri net from petri.json file" << std::endl
+       << "  " << to_str(KEY_BINDING_EXPORT_PETRI_TO_DRAWIO) << " key: export the Petri net as Drawio file" << std::endl
+       << "  " << to_str(KEY_BINDING_EXPORT_PETRI_TO_SYMFONY) << " key: export the Petri net as Symfony workflow file" << std::endl
+       << "  " << to_str(KEY_BINDING_EXPORT_PETRI_TO_GRAPHVIZ) << " key: export the Petri net as Graphviz file" << std::endl
+       << "  " << to_str(KEY_BINDING_EXPORT_PETRI_TO_PETRI_LATEX) << " key: export the Petri net as LaTeX file" << std::endl
+       << "  " << to_str(KEY_BINDING_EXPORT_PETRI_TO_GRAFCET_LATEX) << " key: export Petri net as Grafcet as LaTeX file" << std::endl
+       << "  " << to_str(KEY_BINDING_EXPORT_PETRI_TO_GRAFCET_CXX) << " key: export the Petri net as GRAFCET in a C++ header file" << std::endl
+       << "  " << to_str(KEY_BINDING_EXPORT_PETRI_TO_JULIA) << " key: export the Petri net as Julia code" << std::endl
+       << "  " << to_str(KEY_BINDING_EXPORT_PETRI_TO_PNEDITOR) << " key: export the Petri net as for https://gitlab.com/porky11/pn-editor" << std::endl
+       << "  " << to_str(KEY_BINDING_SCREEN_SHOT) << " key: take a screenshot of the view" << std::endl
        << "  " << to_str(sf::Keyboard::Right) << " / " << to_str(sf::Keyboard::Left) << " keys: move the view right/left" << std::endl
        << "  " << to_str(sf::Keyboard::Up) << " / " << to_str(sf::Keyboard::Down) << " keys: move the view up/down" << std::endl
        ;

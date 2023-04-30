@@ -213,10 +213,10 @@ from the mouse and the keyboard (like Emacs but without the Meta key ^^).
   graph event.
 - `J` key: export the graph event into a Julia script file (for example named
   `GraphEvent-gen.jl`) if and only if the Petri net is a graph event.
-- `X` key: export the Petri net as LaTeX file (for example named `petri.tex`).
+- `X` key: export the Petri net as LaTeX file (for example named `petri-gen.tex`).
 - `Y` key: export the Petri net as Symfony workflow file (for example named `petri-gen.yaml`).
-- `P` key: export the Petri net as Graphviz file (for example named `petri.gv`).
-- `D` key: export the Petri net as Draw.io file (for example named `petri.gv`).
+- `P` key: export the Petri net as Graphviz file (for example named `petri-gen.gv`).
+- `D` key: export the Petri net as Draw.io file (for example named `petri-gen.drawio`).
 - `G` key: export the Petri net as Grafcet into a C++ header file (for example
   named `Grafcet-gen.hpp`).
 - `K` key: export the Petri net for https://gitlab.com/porky11/pn-editor.
