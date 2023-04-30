@@ -37,6 +37,25 @@ PetriEditor::PetriEditor(Application& application, PetriNet& net)
       m_entry_box(m_font),
       m_grid(application.bounds())
 {
+    // Format for exporting
+    m_exports = {
+        { "Julia", { "Julia", {".jl"}, [](PetriNet const& pn, std::string const& file) -> bool { return pn.exportToJulia(file); } } },
+        { "Symfony", { "Symfony", {".yaml"}, [](PetriNet const& pn, std::string const& file) -> bool { return pn.exportToSymfony(file); } } },
+        { "Draw.io", { "Draw.io", {".drawio.xml"}, [](PetriNet const& pn, std::string const& file) -> bool { return pn.exportToDrawIO(file); } } },
+        { "Graphviz", { "Graphviz", {".gv", ".dot"}, [](PetriNet const& pn, std::string const& file) -> bool { return pn.exportToGraphviz(file); } } },
+        { "PN-Editor", { "PN-Editor", {".pns", ".pnl", ".pnk", ".pnkp"}, [](PetriNet const& pn, std::string const& file) -> bool { return pn.exportToPNEditor(file); } } },
+        { "Petri-LaTeX", { "Petri-LaTeX", {".tex"}, [&](PetriNet const& pn, std::string const& file) -> bool
+            {
+                sf::Vector2f figure(15.0f, 15.0f); // PDF figure size
+                sf::Vector2f scale(figure.x / float(m_renderer.getSize().x),
+                                   figure.y / float(m_renderer.getSize().y));
+                return pn.exportToPetriLaTeX(file, scale.x, scale.y);
+            }
+        } },
+        { "Grafcet-LaTeX", { "Grafcet-LaTeX", {".tex"}, [](PetriNet const& pn, std::string const& file) -> bool { return pn.exportToGrafcetLaTeX(file); } } },
+        { "C++", { "C++", {".hpp", ".h", ".hh", ".h++"}, [](PetriNet const& pn, std::string const& file) -> bool { return pn.exportToCpp(file); } } },
+    };
+
     // Reserve initial memory for animated tokens
     m_animations.reserve(128u);
 
@@ -708,6 +727,48 @@ Node* PetriEditor::getNode(float const x, float const y)
 }
 
 //------------------------------------------------------------------------------
+void PetriEditor::exporting(Export const& e)
+{
+    if (/*(!m_simulating) &&*/ (!m_petri_net.isEmpty()))
+    {
+        std::string all_extensions;
+        std::string c("*");
+        for (auto& it: e.extensions)
+        {
+            all_extensions += c;
+            all_extensions += it;
+            c = " *";
+        }
+
+        pfd::save_file manager("Choose the " + e.what + " file to export",
+                                "petri-gen" + e.extensions[0],
+                                { e.what + " file", all_extensions });
+        std::string file = manager.result();
+        if (!file.empty())
+        {
+            bool res = e.exportation(m_petri_net, file);
+            if (res)
+            {
+                m_message_bar.setInfo(
+                    "Petri net successfully exported as " + e.what + " file!");
+            }
+            else
+            {
+                m_message_bar.setError(m_petri_net.message());
+            }
+        }
+    }
+    //else if (m_simulating)
+    //{
+    //    m_message_bar.setError("Cannot export during the simulation!");
+    //}
+    else if (m_petri_net.isEmpty())
+    {
+        m_message_bar.setWarning("Cannot export dummy Petri net!");
+    }
+}
+
+//------------------------------------------------------------------------------
 void PetriEditor::handleKeyPressed(sf::Event const& event)
 {
     // Left, right, delete, escape key binding when editing the caption of a node
@@ -831,272 +892,57 @@ void PetriEditor::handleKeyPressed(sf::Event const& event)
     // 'Y' key: save the Petri net as Symfony workflow file format
     else if (event.key.code == KEY_BINDING_EXPORT_PETRI_TO_SYMFONY)
     {
-        if (/*(!m_simulating) &&*/ (!m_petri_net.isEmpty()))
-        {
-            pfd::save_file manager("Choose the Symfony file to export",
-                                   "petri-gen.yaml",
-                                   { "Yaml file", "*.yaml" });
-            std::string file = manager.result();
-            if (!file.empty())
-            {
-                sf::Vector2f figure(15.0f, 15.0f); // PDF figure size
-                sf::Vector2f scale(figure.x / float(m_renderer.getSize().x),
-                                   figure.y / float(m_renderer.getSize().y));
-                if (m_petri_net.exportToSymfony(file))
-                {
-                    m_message_bar.setInfo(
-                        "Petri net successfully exported as Symfony file!");
-                }
-                else
-                {
-                    m_message_bar.setError(m_petri_net.message());
-                }
-            }
-        }
-        //else if (m_simulating)
-        //{
-        //    m_message_bar.setError("Cannot export during the simulation!");
-        //}
-        else if (m_petri_net.isEmpty())
-        {
-            m_message_bar.setWarning("Cannot export dummy Petri net!");
-        }
+        m_petri_net.generateArcsInArcsOut();
+        exporting(m_exports["Symfony"]);
     }
 
     // 'F' key: save the Grafcet as LaTeX file format
     else if (event.key.code == KEY_BINDING_EXPORT_PETRI_TO_GRAFCET_LATEX)
     {
-        if (/*(!m_simulating) &&*/ (!m_petri_net.isEmpty()))
-        {
-            pfd::save_file manager("Choose the Symfony file to export",
-                                   "grafcet-gen.tex",
-                                   { "LaTeX file", "*.tex" });
-            std::string file = manager.result();
-            if (!file.empty())
-            {
-                if (m_petri_net.exportToGrafcetLaTeX(file))
-                {
-                    m_message_bar.setInfo(
-                        "Petri net successfully exported as LaTeX file!");
-                }
-                else
-                {
-                    m_message_bar.setError(m_petri_net.message());
-                }
-            }
-        }
-        //else if (m_simulating)
-        //{
-        //    m_message_bar.setError("Cannot export during the simulation!");
-        //}
-        else if (m_petri_net.isEmpty())
-        {
-            m_message_bar.setWarning("Cannot export dummy Petri net!");
-        }
+        m_petri_net.generateArcsInArcsOut();
+        exporting(m_exports["Grafcet-LaTeX"]);
     }
 
     // 'X' key: save the Petri net as LaTeX file format
     else if (event.key.code == KEY_BINDING_EXPORT_PETRI_TO_PETRI_LATEX)
     {
-        if (/*(!m_simulating) &&*/ (!m_petri_net.isEmpty()))
-        {
-            pfd::save_file manager("Choose the LaTeX file to export",
-                                   "petri-gen.tex",
-                                   { "LaTex file", "*.tex" });
-            std::string file = manager.result();
-            if (!file.empty())
-            {
-                sf::Vector2f figure(15.0f, 15.0f); // PDF figure size
-                sf::Vector2f scale(figure.x / float(m_renderer.getSize().x),
-                                   figure.y / float(m_renderer.getSize().y));
-                if (m_petri_net.exportToPetriLaTeX(file, scale.x, scale.y))
-                {
-                    m_message_bar.setInfo(
-                        "Petri net successfully exported as LaTeX file!");
-                }
-                else
-                {
-                    m_message_bar.setError(m_petri_net.message());
-                }
-            }
-        }
-        //else if (m_simulating)
-        //{
-        //    m_message_bar.setError("Cannot export during the simulation!");
-        //}
-        else if (m_petri_net.isEmpty())
-        {
-            m_message_bar.setWarning("Cannot export dummy Petri net!");
-        }
+        m_petri_net.generateArcsInArcsOut();
+        exporting(m_exports["Petri-LaTeX"]);
     }
 
     // Save the Petri net as graphviz file format
     else if (event.key.code == KEY_BINDING_EXPORT_PETRI_TO_DRAWIO)
     {
-        if (/*(!m_simulating) &&*/ (!m_petri_net.isEmpty()))
-        {
-            pfd::save_file manager("Choose the Draw.io file to export",
-                                   "petri-gen.drawio.xml",
-                                   { "Draw.io File", "*.drawio.xml" });
-            std::string file = manager.result();
-            if (!file.empty())
-            {
-                if (m_petri_net.exportToDrawIO(file))
-                {
-                    m_message_bar.setInfo(
-                        "Petri net successfully exported as Draw.io file!");
-                }
-                else
-                {
-                    m_message_bar.setError(m_petri_net.message());
-                }
-            }
-        }
-        //else if (m_simulating)
-        //{
-        //    m_message_bar.setError("Cannot export during the simulation!");
-        //}
-        else if (m_petri_net.isEmpty())
-        {
-            m_message_bar.setWarning("Cannot export dummy Petri net!");
-        }
+        m_petri_net.generateArcsInArcsOut();
+        exporting(m_exports["Draw.io"]);
+
     }
     // 'P' key: save the Petri net as graphviz file format
     else if (event.key.code == KEY_BINDING_EXPORT_PETRI_TO_GRAPHVIZ)
     {
-        if (/*(!m_simulating) &&*/ (!m_petri_net.isEmpty()))
-        {
-            pfd::save_file manager("Choose the Graphviz file to export",
-                                   "petri-gen.gv",
-                                   { "Graphviz File", "*.gv *.dot" });
-            std::string file = manager.result();
-            if (!file.empty())
-            {
-                if (m_petri_net.exportToGraphviz(file))
-                {
-                    m_message_bar.setInfo(
-                        "Petri net successfully exported as Graphviz file!");
-                }
-                else
-                {
-                    m_message_bar.setError(m_petri_net.message());
-                }
-            }
-        }
-        //else if (m_simulating)
-        //{
-        //    m_message_bar.setError("Cannot export during the simulation!");
-        //}
-        else if (m_petri_net.isEmpty())
-        {
-            m_message_bar.setWarning("Cannot export dummy Petri net!");
-        }
+        m_petri_net.generateArcsInArcsOut();
+        exporting(m_exports["Graphviz"]);
     }
 
     // 'K' key: save the Petri net as graphviz file format
     else if (event.key.code == KEY_BINDING_EXPORT_PETRI_TO_PNEDITOR)
     {
-        if (/*(!m_simulating) &&*/ (!m_petri_net.isEmpty()))
-        {
-            pfd::save_file manager("Choose the PN-Editor file to export",
-                                   "petri-gen.pns",
-                                   { "PN-Editor File", "*.pns *.pnl *.pnk *.pnkp" });
-            std::string file = manager.result();
-            if (!file.empty())
-            {
-                if (m_petri_net.exportToPNEditor(file))
-                {
-                    m_message_bar.setInfo(
-                        "Petri net successfully exported as Graphviz file!");
-                }
-                else
-                {
-                    m_message_bar.setError(m_petri_net.message());
-                }
-            }
-        }
-        //else if (m_simulating)
-        //{
-        //    m_message_bar.setError("Cannot export during the simulation!");
-        //}
-        else if (m_petri_net.isEmpty())
-        {
-            m_message_bar.setWarning("Cannot export dummy Petri net!");
-        }
+        m_petri_net.generateArcsInArcsOut();
+        exporting(m_exports["PN-Editor"]);
     }
 
     // 'G' key: save the Petri net as grafcet in a C++ header file
     else if (event.key.code == KEY_BINDING_EXPORT_PETRI_TO_GRAFCET_CXX)
     {
-        if ((!m_simulating) && (!m_petri_net.isEmpty()))
-        {
-            pfd::save_file manager("Choose the C++ header file to export as Grafcet",
-                                   "grafcet-gen.hpp",
-                                   { "C++ Header File", "*.hpp *.h *.hh *.h++" });
-            std::string file = manager.result();
-            if (!file.empty())
-            {
-                // Generate the C++ namespace
-                size_t lastindex = m_petri_filename.find_last_of(".");
-                std::string spacename = m_petri_filename.substr(0, lastindex);
-                lastindex = spacename.find_last_of("/");
-                spacename = spacename.substr(lastindex + 1u);
-
-                if (m_petri_net.exportToCpp(file, spacename))
-                {
-                    m_message_bar.setInfo(
-                        "The Petri net has successfully exported as grafcet as "
-                        "C++ header file!");
-                }
-                else
-                {
-                    m_message_bar.setError(m_petri_net.message());
-                }
-            }
-        }
-        else if (m_simulating)
-        {
-            m_message_bar.setError("Cannot export during the simulation!");
-        }
-        else if (m_petri_net.isEmpty())
-        {
-            m_message_bar.setWarning("Cannot export dummy Petri net!");
-        }
+        m_petri_net.generateArcsInArcsOut();
+        exporting(m_exports["C++"]);
     }
 
     // 'J' key: save the Petri net as graph event in a Julia script file
     else if (event.key.code == KEY_BINDING_EXPORT_PETRI_TO_JULIA)
     {
-        if ((!m_simulating) && (!m_petri_net.isEmpty()))
-        {
-            pfd::save_file manager("Choose the Julia file to export as graph event",
-                                   "graph-event-gen.jl",
-                                   { "Julia File", "*.jl" });
-            std::string file = manager.result();
-            if (!file.empty())
-            {
-                if (m_petri_net.exportToJulia(file))
-                {
-                    m_message_bar.setInfo(
-                        "The Petri net has successfully exported as graph event"
-                        " as Julia file!");
-                }
-                else
-                {
-                    m_message_bar.setError(m_petri_net.message());
-                    m_marked_arcs = m_petri_net.markedArcs();
-                    m_marked_arcs_color = sf::Color::Red;
-                }
-            }
-        }
-        else if (m_simulating)
-        {
-            m_message_bar.setWarning("Cannot export during the simulation!");
-        }
-        else if (m_petri_net.isEmpty())
-        {
-            m_message_bar.setWarning("Cannot export dummy Petri net!");
-        }
+        m_petri_net.generateArcsInArcsOut();
+        exporting(m_exports["Julia"]);
     }
 
     // 'C' key: show critical graph (only for event graph)

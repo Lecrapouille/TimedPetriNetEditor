@@ -690,26 +690,6 @@ public:
     inline Arcs& arcs() { return m_arcs; }
 
     //--------------------------------------------------------------------------
-    //! \brief Save the Petri net in a JSON file.
-    //! \param[in] filename: the file path in where to save the Petri net.
-    //! Should have the .json extension.
-    //! \return true if the Petri net has been saved with success. Return false
-    //! in case of failure.
-    //--------------------------------------------------------------------------
-    bool save(std::string const& filename);
-
-    //--------------------------------------------------------------------------
-    //! \brief Load the Petri net from a JSON file. The current net is cleared
-    //! before the loading. If the loading failed (missing file or invalid
-    //! syntax) the net is set dummy.
-    //! \param[in] filename: the file path in where a Petri net has been
-    //! saved. Should have the .json extension.
-    //! \return true if the Petri net has been loaded with success. Return false
-    //! in case of failure.
-    //--------------------------------------------------------------------------
-    bool load(std::string const& filename);
-
-    //--------------------------------------------------------------------------
     //! \brief Set tokens in all places.
     //! \param[in] marks the vector holding tokens for each places (P0, P1 .. Pn).
     //! \return true if the length of the vector matchs the number of places,
@@ -736,7 +716,7 @@ public:
     //! \note call generateArcsInArcsOut(/*arcs: true*/); before calling this
     //! method.
     //--------------------------------------------------------------------------
-    bool isEventGraph(std::vector<Arc*>& erroneous_arcs);
+    bool isEventGraph(std::vector<Arc*>& erroneous_arcs) const;
 
     //--------------------------------------------------------------------------
     //! \brief Show to the critical circuit of the net (where the cycle takes
@@ -770,6 +750,26 @@ public:
     std::stringstream showDaterForm(std::string const& comment = "# ") const;
 
     //--------------------------------------------------------------------------
+    //! \brief Load the Petri net from a JSON file. The current net is cleared
+    //! before the loading. If the loading failed (missing file or invalid
+    //! syntax) the net is set dummy.
+    //! \param[in] filename: the file path in where a Petri net has been
+    //! saved. Should have the .json extension.
+    //! \return true if the Petri net has been loaded with success. Return false
+    //! in case of failure.
+    //--------------------------------------------------------------------------
+    inline bool load(std::string const& filename) { return importFromJSON(filename); }
+
+    //--------------------------------------------------------------------------
+    //! \brief Save the Petri net in a JSON file.
+    //! \param[in] filename: the file path in where to save the Petri net.
+    //! Should have the .json extension.
+    //! \return true if the Petri net has been saved with success. Return false
+    //! in case of failure.
+    //--------------------------------------------------------------------------
+    inline bool save(std::string const& filename) const { return exportToJSON(filename); }
+
+    //--------------------------------------------------------------------------
     //! \brief Export the Petri net as Symfony workflow code as yaml file.
     //! \param[in] filename the path of yaml file.
     //! \return true if the Petri net has been exported with success. Return
@@ -778,12 +778,32 @@ public:
     bool importFlowshop(std::string const& filename);
 
     //--------------------------------------------------------------------------
+    //! \brief Import the Petri net from the given JSON file.  The current net
+    //! is cleared before the loading. If the loading failed (missing file or
+    //! invalid syntax) the net is set dummy.
+    //! \param[in] filename: the file path in where a Petri net has been
+    //! saved. Should have the .json extension.
+    //! \return true if the Petri net has been loaded with success. Return false
+    //! in case of failure.
+    //--------------------------------------------------------------------------
+    bool importFromJSON(std::string const& filename);
+
+    //--------------------------------------------------------------------------
+    //! \brief Export the Petri net as JSON file.
+    //! \param[in] filename: the file path in where to save the Petri net.
+    //! Should have the .json extension.
+    //! \return true if the Petri net has been saved with success. Return false
+    //! in case of failure.
+    //--------------------------------------------------------------------------
+    bool exportToJSON(std::string const& filename) const;
+
+    //--------------------------------------------------------------------------
     //! \brief Export the Grafcet net as LaTeX code as tex file.
     //! \param[in] filename the path of tex file.
     //! \return true if the Grafcet net has been exported with success. Return
     //! false in case of failure.
     //--------------------------------------------------------------------------
-    bool exportToGrafcetLaTeX(std::string const& filename);
+    bool exportToGrafcetLaTeX(std::string const& filename) const;
 
     //--------------------------------------------------------------------------
     //! \brief Export the Petri net as LaTeX code as tex file.
@@ -792,7 +812,7 @@ public:
     //! \return true if the Petri net has been exported with success. Return
     //! false in case of failure.
     //--------------------------------------------------------------------------
-    bool exportToPetriLaTeX(std::string const& filename, float const sx, float const sy);
+    bool exportToPetriLaTeX(std::string const& filename, float const sx, float const sy) const;
 
     //--------------------------------------------------------------------------
     //! \brief Export the Petri net as Draw.io code as xml file.
@@ -800,7 +820,7 @@ public:
     //! \return true if the Petri net has been exported with success. Return
     //! false in case of failure.
     //--------------------------------------------------------------------------
-    bool exportToDrawIO(std::string const& filename);
+    bool exportToDrawIO(std::string const& filename) const;
 
     //--------------------------------------------------------------------------
     //! \brief Export the Petri net as Graphviz code as dot file.
@@ -808,7 +828,7 @@ public:
     //! \return true if the Petri net has been exported with success. Return
     //! false in case of failure.
     //--------------------------------------------------------------------------
-    bool exportToGraphviz(std::string const& filename);
+    bool exportToGraphviz(std::string const& filename) const;
 
     //--------------------------------------------------------------------------
     //! \brief Export the Petri net as Symfony workflow as yaml file.
@@ -816,7 +836,7 @@ public:
     //! \return true if the Petri net has been exported with success. Return
     //! false in case of failure.
     //--------------------------------------------------------------------------
-    bool exportToSymfony(std::string const& filename, std::string const& name);
+    bool exportToSymfony(std::string const& filename) const;
 
     //--------------------------------------------------------------------------
     //! \brief Export the Petri net to https://gitlab.com/porky11/pn-editor.
@@ -824,18 +844,14 @@ public:
     //! \return true if the Petri net has been exported with success. Return
     //! false in case of failure.
     //--------------------------------------------------------------------------
-    bool exportToPNEditor(std::string const& filename);
+    bool exportToPNEditor(std::string const& filename) const;
 
     //--------------------------------------------------------------------------
     //! \brief Export the Petri net as GRAFCET code as C++ header file.
     //! \param[in] filename the path of h++ file. Should have the .hpp or .h
     //! extension (or any associated to header header files).
-    //! \param[in] name the namespace protecting the class name.
-    //! \return true if the Petri net has been exported with success. Return
-    //! false in case of failure.
     //--------------------------------------------------------------------------
-    bool exportToCpp(std::string const& filename,
-                     std::string const& name);
+    bool exportToCpp(std::string const& filename) const;
 
     //--------------------------------------------------------------------------
     //! \brief Export the Petri net as Max-Plus linear system in Julia code.
@@ -844,7 +860,7 @@ public:
     //! \return true if the Petri net has been exported with success. Return
     //! false in case of failure and erroneous arcs can be get by \c markedArcs().
     //--------------------------------------------------------------------------
-    bool exportToJulia(std::string const& filename); //TODO const;
+    bool exportToJulia(std::string const& filename) const;
 
     //--------------------------------------------------------------------------
     //! \brief Return the event graph as 2 adjacency matrices.
@@ -853,7 +869,7 @@ public:
     //! \note This will work only if isEventGraph() returned true.
     //! \return false if the Petri net is not an event graph.
     //--------------------------------------------------------------------------
-    bool toAdjacencyMatrices(SparseMatrix& N, SparseMatrix&T); //TODO  const;
+    bool toAdjacencyMatrices(SparseMatrix& N, SparseMatrix&T); //TODO const;
 
     //--------------------------------------------------------------------------
     //! \brief Transform the Event Graph to canonical form
@@ -861,7 +877,7 @@ public:
     //! \note This will work only if isEventGraph() has returned true so make
     //! the caller of this method be aware of what is he doing.
     //--------------------------------------------------------------------------
-    void toCanonicalForm(PetriNet& pn); //TODO  const;
+    void toCanonicalForm(PetriNet& pn) const;
 
     //--------------------------------------------------------------------------
     //! \brief Return the event graph as implicit dynamic linear Max-Plus system.
@@ -942,7 +958,7 @@ private:
     //! the cpp file). Note: their reset is possible through class friendship.
     size_t m_next_transition_id = 0u;
     //! \brief Store current info/error message to the Petri net editor.
-    std::stringstream m_message;
+    mutable std::stringstream m_message;
 
 public:
 

@@ -28,6 +28,7 @@
 #  include "utils/Grid.hpp"
 #  include "utils/MQTT.hpp"
 #  include "PetriNet.hpp"
+#  include <functional>
 
 // *****************************************************************************
 //! \brief Graphical representation and manipulation of the Petri net using the
@@ -35,6 +36,43 @@
 // *****************************************************************************
 class PetriEditor: public Application::GUI, public MQTT
 {
+private:
+
+    // *************************************************************************
+    //! \brief State machine for the Petri net simulation.
+    // *************************************************************************
+    enum States
+    {
+        STATE_IDLE, //! Waiting the user request to start the simulation.
+        STATE_STARTING, //! Init states before the simulation.
+        STATE_ENDING, //! Restore states after the simulation.
+        STATE_ANIMATING //! Simulation on-going: animate tokens.
+    };
+
+    // *************************************************************************
+    //! \brief Structure holding information for exporting Petri net to another
+    //! application input format.
+    // *************************************************************************
+    struct Export
+    {
+        //! \brief Function doing the exportation of the Petri net into the given
+        //! file.
+        using Fun = std::function<bool(PetriNet const& pn, std::string const& file)>;
+
+        Export() = default;
+        Export(std::string const& w, std::initializer_list<std::string> const& e, Fun f)
+            : what(w), extensions(e), exportation(f)
+        {}
+
+        //! \brief Name to what application we are exporting to.
+        std::string what;
+        //! \brief List of file extensions
+        std::vector<std::string> extensions;
+        //! \brief Function doing the exportation of the Petri net into the given
+        //! file.
+        Fun exportation;
+    };
+
 public:
 
     //--------------------------------------------------------------------------
@@ -279,19 +317,19 @@ private:
     //--------------------------------------------------------------------------
     void applyZoom(float const delta);
 
-private:
+public:
 
-    //! \brief State machine for the Petri net simulation.
-    enum States
-    {
-        STATE_IDLE, //! Waiting the user request to start the simulation.
-        STATE_STARTING, //! Init states before the simulation.
-        STATE_ENDING, //! Restore states after the simulation.
-        STATE_ANIMATING //! Simulation on-going: animate tokens.
-    };
+    //--------------------------------------------------------------------------
+    //! \brief Export the Petri net into application file format.
+    //--------------------------------------------------------------------------
+    void exporting(Export const& e);
+
+private:
 
     //! \brief The Petri net.
     PetriNet& m_petri_net;
+    //! \brief List of format the editor can export.
+    std::map<std::string, PetriEditor::Export> m_exports;
     //! \brief Memorize initial number of tokens in places.
     std::vector<size_t> m_marks;
     //! \brief Critical cycle found by Howard algorithm. Also used to show
