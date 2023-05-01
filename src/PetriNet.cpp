@@ -90,6 +90,12 @@ size_t Transition::howManyTokensCanBurnt() const
 }
 
 //------------------------------------------------------------------------------
+PetriNet::PetriNet(PetriNet::Type const mode)
+{
+    this->changeTypeOfNet(mode);
+}
+
+//------------------------------------------------------------------------------
 PetriNet& PetriNet::operator=(PetriNet const& other)
 {
     if (this != &other)
@@ -1018,4 +1024,24 @@ void PetriNet::removeNode(Node& node)
 
     // Restore in arcs and out arcs for each node
     generateArcsInArcsOut();
+}
+
+//------------------------------------------------------------------------------
+void PetriNet::name(std::string const& filename)
+{
+    size_t lastindex = filename.find_last_of(".");
+    m_name = filename.substr(0, lastindex);
+    lastindex = m_name.find_last_of("/");
+    m_name = m_name.substr(lastindex + 1u);
+}
+
+//------------------------------------------------------------------------------
+bool PetriNet::load(std::string const& filename)
+{
+    bool res = importFromJSON(filename);
+    if (res)
+    {
+        name(filename);
+    }
+    return res;
 }

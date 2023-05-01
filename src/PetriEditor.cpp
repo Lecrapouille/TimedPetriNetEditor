@@ -127,22 +127,14 @@ PetriEditor::PetriEditor(Application& application, PetriNet& net, std::string co
 //------------------------------------------------------------------------------
 void PetriEditor::onConnected(int /*rc*/)
 {
-    std::cout << "Connected to MQTT broker" << std::endl;
+    std::string const pid(std::to_string(getpid()));
+    std::cout << "Petri net editor " << pid << " connected to MQTT broker"
+              << std::endl;
 
     unsubscribe(m_mqtt_topic);
-    if (m_petri_filename.size() == 0u)
-    {
-        m_mqtt_topic = "pneditor/dummy";
-    }
-    else
-    {
-        // Remove file extension and get the file name
-        size_t lastindex = m_petri_filename.find_last_of(".");
-        std::string rawname = m_petri_filename.substr(0, lastindex);
-        lastindex = rawname.find_last_of("/");
-        m_mqtt_topic = "pneditor/" + rawname.substr(lastindex + 1u);
-    }
-    m_message_bar.append("\nPublish your commands to MQTT topic '" + m_mqtt_topic + "'");
+    m_mqtt_topic = "pneditor-" + pid + "/" + m_petri_net.name();
+    std::string message("\nYou can publish your MQTT commands to the Petri net editor ");
+    m_message_bar.append(message + " the topic '" + m_mqtt_topic + "'");
     subscribe(m_mqtt_topic, MQTT::QoS::QoS0);
 }
 
@@ -155,11 +147,11 @@ void PetriEditor::onMessageReceived(const struct mosquitto_message& msg)
     const char* payload = static_cast<char*>(msg.payload);
     if (payload[0] == 'T')
     {
-        //std::cout << "MQTT message 'T'" << std::endl;
+        std::cout << "MQTT message 'T'" << std::endl;
         for (auto& t: m_petri_net.transitions())
         {
             const bool b(payload[t.id + 1u]);
-            //std::cout << t.key << ": " << b << std::endl;
+            std::cout << t.key << ": " << b << std::endl;
             t.receptivity = b;
         }
     }

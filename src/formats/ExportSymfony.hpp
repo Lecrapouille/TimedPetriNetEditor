@@ -1,5 +1,5 @@
 //------------------------------------------------------------------------------
-bool PetriNet::exportToSymfony(std::string const& filename, std::string const& name) const
+bool PetriNet::exportToSymfony(std::string const& filename) const
 {
     std::ofstream file(filename);
     if (!file)
@@ -13,7 +13,7 @@ bool PetriNet::exportToSymfony(std::string const& filename, std::string const& n
     file << R"PN(framework:
     workflows:
 )PN";
-    file << "        " << name << ":";
+    file << "        " << m_name << ":";
     file << R"PN(
             type: 'workflow'
             audit_trail:

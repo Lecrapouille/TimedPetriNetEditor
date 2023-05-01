@@ -1,13 +1,8 @@
 # Project specific
 petri-gen.hpp
 graph-event-gen.jl
-petri-gen.gv
-petri-gen.tex
-petri-gen.pdf
-petri-gen.drawio.xml
-petri-gen.yaml
-petri-gen.pns
-grafcet-gen.hpp
+petri-gen.*
+grafcet-gen.*
 petri.json
 build/
 doc/coverage/
@@ -55,6 +50,7 @@ doc/coverage/
 
 # Linux
 *~
+*.orig
 
 # OS X
 .DS_Store

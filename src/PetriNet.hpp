@@ -523,7 +523,7 @@ public:
     //! \param[in] mode: select the type of net: GRAFCET or timed Petri net
     //! or Petri net.
     //--------------------------------------------------------------------------
-    PetriNet(PetriNet::Type const mode) { this->changeTypeOfNet(mode); }
+    explicit PetriNet(PetriNet::Type const mode);
 
     //--------------------------------------------------------------------------
     //! \brief Copy constructor. Needed to remove compilation warnings.
@@ -534,6 +534,11 @@ public:
     //! \brief Copy operator. Needed to remove compilation warnings.
     //--------------------------------------------------------------------------
     PetriNet& operator=(PetriNet const& other);
+
+    //--------------------------------------------------------------------------
+    //! \brief Return the name of
+    //--------------------------------------------------------------------------
+    std::string const& name() const { return m_name; }
 
     //--------------------------------------------------------------------------
     //! \brief Remove all nodes and arcs. Reset counters for unique identifiers.
@@ -758,7 +763,7 @@ public:
     //! \return true if the Petri net has been loaded with success. Return false
     //! in case of failure.
     //--------------------------------------------------------------------------
-    inline bool load(std::string const& filename) { return importFromJSON(filename); }
+    bool load(std::string const& filename);
 
     //--------------------------------------------------------------------------
     //! \brief Save the Petri net in a JSON file.
@@ -767,7 +772,10 @@ public:
     //! \return true if the Petri net has been saved with success. Return false
     //! in case of failure.
     //--------------------------------------------------------------------------
-    inline bool save(std::string const& filename) const { return exportToJSON(filename); }
+    inline bool save(std::string const& filename) const
+    {
+        return exportToJSON(filename);
+    }
 
     //--------------------------------------------------------------------------
     //! \brief Export the Petri net as Symfony workflow code as yaml file.
@@ -934,8 +942,15 @@ private:
     void toSysLin(SparseMatrix& D, SparseMatrix& A, SparseMatrix& B, SparseMatrix& C,
                   size_t const nb_inputs, size_t const nb_states, size_t const nb_outputs);
 
+    //--------------------------------------------------------------------------
+    //! \brief Set a name to the Petri net from the given filename.
+    //--------------------------------------------------------------------------
+    void name(std::string const& filename);
+
 private:
 
+    //! \brief Name of Petri net given by its filename once load() has been called.
+    std::string m_name = "petri";
     //! \brief Type of net GRAFCET, Petri, Timed Petri ...
     Type m_type;
     //! \brief List of Places. We do not use std::vector to avoid invalidating

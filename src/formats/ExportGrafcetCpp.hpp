@@ -11,23 +11,18 @@ bool PetriNet::exportToCpp(std::string const& filename) const
         return false;
     }
 
-    // Generate the C++ namespace
-    size_t lastindex = filename.find_last_of(".");
-    std::string name_space = filename.substr(0, lastindex);
-    lastindex = name_space.find_last_of("/");
-    name_space = name_space.substr(lastindex + 1u);
-
-    // Upper case
-    std::string upper_namespace(name_space);
-    std::for_each(upper_namespace.begin(), upper_namespace.end(), [](char & c) {
+    // Generate the C++ namespace and header guards
+    std::string name_space = m_name;
+    std::string header_guards(name_space);
+    std::for_each(header_guards.begin(), header_guards.end(), [](char & c) {
         c = char(::toupper(int(c)));
     });
 
     file << "// This file has been generated and you should avoid editing it." << std::endl;
     file << "// Note: the code generator is still experimental !" << std::endl;
     file << "" << std::endl;
-    file << "#ifndef GENERATED_GRAFCET_" << upper_namespace << "_HPP" << std::endl;
-    file << "#  define GENERATED_GRAFCET_" << upper_namespace << "_HPP" << std::endl;
+    file << "#ifndef GENERATED_GRAFCET_" << header_guards << "_HPP" << std::endl;
+    file << "#  define GENERATED_GRAFCET_" << header_guards << "_HPP" << std::endl;
     file << "" << std::endl;
     file << "#  include <iostream>" << std::endl;
     file << "#  include \"MQTT.hpp\"" << std::endl;
@@ -231,7 +226,7 @@ private:
     file << "};" << std::endl;
     file << "" << std::endl;
     file << "} // namespace " << name_space << std::endl;
-    file << "#endif // GENERATED_GRAFCET_" << upper_namespace << "_HPP" << std::endl;
+    file << "#endif // GENERATED_GRAFCET_" << header_guards << "_HPP" << std::endl;
 
     return true;
 }

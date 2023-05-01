@@ -80,7 +80,7 @@ bool MQTT::connect(std::string const& addr, size_t const port)
 bool MQTT::publish(std::string const& topic, std::string const& payload, QoS const qos)
 {
     int rc = mosquitto_publish(m_mosquitto, nullptr, topic.c_str(),
-                               payload.size(), payload.data(), int(qos), false);
+                               int(payload.size()), payload.data(), int(qos), false);
     if( rc != MOSQ_ERR_SUCCESS)
     {
         std::cerr << "MQTT Error publishing: " << mosquitto_strerror(rc)
@@ -93,7 +93,7 @@ bool MQTT::publish(std::string const& topic, std::string const& payload, QoS con
 bool MQTT::publish(std::string const& topic, std::vector<char> const& payload, QoS const qos)
 {
     int rc = mosquitto_publish(m_mosquitto, nullptr, topic.c_str(),
-                               payload.size(), payload.data(), int(qos), false);
+                               int(payload.size()), payload.data(), int(qos), false);
     if( rc != MOSQ_ERR_SUCCESS)
     {
         std::cerr << "MQTT Error publishing: " << mosquitto_strerror(rc)

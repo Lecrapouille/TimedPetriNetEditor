@@ -30,6 +30,8 @@
 #  include <pwd.h>    // tmpPetriFile()
 #  include <memory>
 #  include <sys/stat.h>
+#  include <sys/types.h>
+
 #  ifdef __APPLE__
 #    include <CoreFoundation/CFBundle.h>
 #  endif
@@ -179,19 +181,23 @@ inline size_t token2vector(std::string const& s, std::vector<std::string>& words
 }
 
 //------------------------------------------------------------------------------
+//! \brief Return current date as string.
+inline std::string currentDate()
+{
+    std::ostringstream oss;
+    auto t = std::time(nullptr);
+    auto tm = *std::localtime(&t);
+    oss << std::put_time(&tm, "%Y-%m-%d__%H-%M-%S");
+    return oss.str();
+}
+
+//------------------------------------------------------------------------------
 //! \brief Create the name of a temporary Petri file.
 inline std::string tmpPetriFile()
 {
     std::ostringstream oss;
-
-    // Home folder
-    oss << getpwuid(getuid())->pw_dir;
-
-    // Add current date
-    auto t = std::time(nullptr);
-    auto tm = *std::localtime(&t);
-    oss << std::put_time(&tm, "/petri__%Y-%m-%d__%H-%M-%S.json");
-
+    oss << getpwuid(getuid())->pw_dir; // Home folder
+    oss << ".TimedPetriNetEditor/petri__" << currentDate() << ".json";
     return oss.str();
 }
 
