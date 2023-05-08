@@ -1,4 +1,4 @@
-//=====================================================================
+//=============================================================================
 // TimedPetriNetEditor: A timed Petri net editor.
 // Copyright 2021 -- 2022 Quentin Quadrat <lecrapouille@gmail.com>
 //
@@ -16,104 +16,82 @@
 //
 // You should have received a copy of the GNU General Public License
 // along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.
-//=====================================================================
+//=============================================================================
 
-#ifndef MESSAGEBAR_HPP
-#define MESSAGEBAR_HPP
+#ifndef DEARIMGUI_HPP
+#  define DEARIMGUI_HPP
 
-static size_t tictac = 0u;
+// ****************************************************************************
+//! \file GLImGUI.hpp wraps function calls of the ImGUI project.
+// ****************************************************************************
+
+#  include "imgui/imgui.h"
+#  include "imgui-sfml/imgui-SFML.h"
 
 // *****************************************************************************
-//! \brief A text inside a rectangle
+//! \brief Class wrapper for the dear imgui library: an imediate
+//! mode (im) graphical user interface (GUI) for OpenGL.
+//! https://github.com/ocornut/imgui
 // *****************************************************************************
-class MessageBar
+class DearImGui
 {
 public:
 
-    struct TimedMessage
-    {
-        std::string time;
-        std::string txt;
-    };
+    //--------------------------------------------------------------------------
+    //! \brief
+    //--------------------------------------------------------------------------
+    enum class Theme { Classic, Dark };
 
     //--------------------------------------------------------------------------
     //! \brief
     //--------------------------------------------------------------------------
-    MessageBar(sf::Font& font)
-    {
-    }
+    DearImGui(sf::RenderWindow& renderer, DearImGui::Theme const theme);
 
     //--------------------------------------------------------------------------
     //! \brief
     //--------------------------------------------------------------------------
-    inline void setText(const std::string& alert, const std::string& message)
-    {
-        m_message.time = std::to_string(tictac++);
-        m_message.txt = alert + ": " + message;
-        m_buffer.push_back(m_message);
-    }
+    ~DearImGui();
 
     //--------------------------------------------------------------------------
     //! \brief
     //--------------------------------------------------------------------------
-    inline void setInfo(const std::string& message)
-    {
-        setText("Info", message);
-    }
+    void setTheme(Theme const style);
 
     //--------------------------------------------------------------------------
     //! \brief
     //--------------------------------------------------------------------------
-    inline void setWarning(const std::string& message)
-    {
-        setText("Warning", message);
-    }
+    void update(sf::Time const dt);
 
     //--------------------------------------------------------------------------
     //! \brief
     //--------------------------------------------------------------------------
-    inline void setError(const std::string& message)
-    {
-        setText("Error", message);
-    }
+    void display();
 
     //--------------------------------------------------------------------------
     //! \brief
     //--------------------------------------------------------------------------
-    void setSize(sf::Vector2u const& dimensions)
-    {
-    }
-
-    //--------------------------------------------------------------------------
-    //! \brief Append the displayed messge. The color is not modified.
-    //--------------------------------------------------------------------------
-    MessageBar& append(std::string const& message)
-    {
-        m_message.txt += message;
-        m_buffer.back().txt += message;
-        return *this;
-    }
+    void begin();
 
     //--------------------------------------------------------------------------
     //! \brief
     //--------------------------------------------------------------------------
-    std::string const& getText() const
-    {
-        return m_message.txt;
-    }
-
-    void clear() { m_buffer.clear(); }
-
-    std::vector<TimedMessage> const& getBuffer() const
-    {
-        return m_buffer;
-    }
+    void end();
 
 private:
 
-    //! \brief String returned when the entry is activated
-    TimedMessage m_message;
-    std::vector<TimedMessage> m_buffer;
+    //--------------------------------------------------------------------------
+    //! \brief
+    //--------------------------------------------------------------------------
+    void configurate();
+
+private:
+
+    sf::RenderWindow& m_renderer;
+    bool m_opt_dockspace = true;
+    bool m_opt_padding = false;
+    bool m_opt_fullscreen = true;
+    ImGuiWindowFlags m_window_flags;
+    ImGuiDockNodeFlags m_dockspace_flags;
 };
 
-#endif
+#endif // OPENGLCPPWRAPPER_UI_DEARIMGUI_HPP

@@ -77,7 +77,6 @@ int main(int argc, char* argv[])
         filename = argv[optind];
     }
 
-    std::cout << PetriEditor::help().str() << std::endl;
     Application application(800, 600, "Timed Petri Net Editor");
     try
     {

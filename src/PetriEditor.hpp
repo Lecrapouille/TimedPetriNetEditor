@@ -50,7 +50,7 @@ private:
     };
 
     // *************************************************************************
-    //! \brief Structure holding information for exporting Petri net to another
+    //! \brief Structure holding information for exports Petri net to another
     //! application input format.
     // *************************************************************************
     struct Export
@@ -61,16 +61,16 @@ private:
 
         Export() = default;
         Export(std::string const& w, std::initializer_list<std::string> const& e, Fun f)
-            : what(w), extensions(e), exportation(f)
+            : what(w), extensions(e), exports(f)
         {}
 
-        //! \brief Name to what application we are exporting to.
+        //! \brief Name to what application we are exports to.
         std::string what;
         //! \brief List of file extensions
         std::vector<std::string> extensions;
         //! \brief Function doing the exportation of the Petri net into the given
         //! file.
-        Fun exportation;
+        Fun exports;
     };
 
 public:
@@ -92,11 +92,52 @@ public:
     PetriEditor(Application& application, PetriNet& net, std::string const& file);
 
     //--------------------------------------------------------------------------
-    //! \brief Return the help.
+    //! \brief Halt the application. Before closing the application, open the
+    //! file manage before for saving the Petri net if modified.
+    //--------------------------------------------------------------------------
+    void close();
+
+    bool screenshot();
+    bool load();
+    std::string const& getError() const { return m_message_bar.getText(); }
+    std::vector<MessageBar::TimedMessage> const& getLogs() const { return m_message_bar.getBuffer(); }
+    void clearLogs() { m_message_bar.clear(); }
+
+    //--------------------------------------------------------------------------
+    //! \brief Save the Petri net in its current JSON file. If the net was not
+    //! loaded from a file, or if the \c force argument is set to true, a file
+    //! manager is called to select the destination file.
+    //!
+    //! \param[in] force set to true when the application is closing to force
+    //! saving the net: this opens a file manager to select the destination
+    //! file. If the user cancel the file manager then the net is saved in a
+    //! temporary file anyway.
+    //!
+    //! \return true if successfully saved else return false.
+    //--------------------------------------------------------------------------
+    bool save(bool const force = false);
+
+    //--------------------------------------------------------------------------
+    //! \brief Align nodes on a "magnetic" grid.
+    //--------------------------------------------------------------------------
+    void align();
+
+    void clear();
+
+    //--------------------------------------------------------------------------
+    //! \brief Return the help as stringstream.
     //--------------------------------------------------------------------------
     static std::stringstream help();
 
+    //--------------------------------------------------------------------------
+    //! \brief Export the Petri net into application file format.
+    //--------------------------------------------------------------------------
+    bool exports(std::string const& format);
+
 private: // Derived from MQTT
+
+void onDrawIMGui();
+void renderScene(sf::RenderTexture&);
 
     //--------------------------------------------------------------------------
     //! \brief Do MQTT subscriptions when this class (MQTT client) is conencted
@@ -126,7 +167,7 @@ private: // Derived from Application::GUI
     //--------------------------------------------------------------------------
     //! \brief Inherit from GUI class. Manage mouse and keyboard events.
     //--------------------------------------------------------------------------
-    virtual void onHandleInput() override;
+    virtual void onHandleInput(sf::Event const& event) override;
 
     //-------------------------------------------------------------------------
     //! \brief Inherit from GUI class. The GUI has been activated.
@@ -169,26 +210,6 @@ private:
     //! \return true if successfully loaded else return false.
     //--------------------------------------------------------------------------
     bool load(std::string const& file);
-
-    //--------------------------------------------------------------------------
-    //! \brief Save the Petri net in its current JSON file. If the net was not
-    //! loaded from a file, or if the \c force argument is set to true, a file
-    //! manager is called to select the destination file.
-    //!
-    //! \param[in] force set to true when the application is closing to force
-    //! saving the net: this opens a file manager to select the destination
-    //! file. If the user cancel the file manager then the net is saved in a
-    //! temporary file anyway.
-    //!
-    //! \return true if successfully saved else return false.
-    //--------------------------------------------------------------------------
-    bool save(bool const force = false);
-
-    //--------------------------------------------------------------------------
-    //! \brief Halt the application. Before closing the application, open the
-    //! file manage before for saving the Petri net if modified.
-    //--------------------------------------------------------------------------
-    void close();
 
     //--------------------------------------------------------------------------
     //! \brief Draw a Petri Place (as circle), its caption (text) and its tokens
@@ -308,26 +329,18 @@ private:
     bool clickedOnCaption();
 
     //--------------------------------------------------------------------------
-    //! \brief Align nodes on a "magnetic" grid.
-    //--------------------------------------------------------------------------
-    void alignElements();
-
-    //--------------------------------------------------------------------------
     //! \brief Zoom/unzoom.
     //--------------------------------------------------------------------------
     void applyZoom(float const delta);
 
-public:
-
-    //--------------------------------------------------------------------------
-    //! \brief Export the Petri net into application file format.
-    //--------------------------------------------------------------------------
-    void exporting(Export const& e);
-
 private:
 
+sf::RenderTexture m_render_texture;
+
     //! \brief The Petri net.
-    PetriNet& m_petri_net;
+public:    PetriNet& m_petri_net;
+
+private:
     //! \brief List of format the editor can export.
     std::map<std::string, PetriEditor::Export> m_exports;
     //! \brief Memorize initial number of tokens in places.
@@ -389,6 +402,8 @@ private:
     //! \brief Subscription to MQTT topic for receiving commands for manipulating
     //! the net
     std::string m_mqtt_topic;
+
+    bool m_is_hovered = false;
 };
 
 #endif

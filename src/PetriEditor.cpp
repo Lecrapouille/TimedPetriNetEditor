@@ -47,8 +47,8 @@ PetriEditor::PetriEditor(Application& application, PetriNet& net)
         { "Petri-LaTeX", { "Petri-LaTeX", {".tex"}, [&](PetriNet const& pn, std::string const& file) -> bool
             {
                 sf::Vector2f figure(15.0f, 15.0f); // PDF figure size
-                sf::Vector2f scale(figure.x / float(m_renderer.getSize().x),
-                                   figure.y / float(m_renderer.getSize().y));
+                sf::Vector2f scale(figure.x / float(m_render_texture.getSize().x),
+                                   figure.y / float(m_render_texture.getSize().y));
                 return pn.exportToPetriLaTeX(file, scale.x, scale.y);
             }
         } },
@@ -95,9 +95,6 @@ PetriEditor::PetriEditor(Application& application, PetriNet& net)
     m_text_token.setCharacterSize(TOKEN_FONT_SIZE);
     m_text_token.setFillColor(sf::Color::Black);
 
-    // Init mouse cursor position
-    m_mouse = m_renderer.mapPixelToCoords(sf::Mouse::getPosition(m_renderer));
-
     switch (m_petri_net.type())
     {
     case PetriNet::Type::TimedPetri:
@@ -114,7 +111,7 @@ PetriEditor::PetriEditor(Application& application, PetriNet& net)
         break;
     }
 
-    m_view = m_renderer.getDefaultView();
+    m_view = m_render_texture.getDefaultView();
 }
 
 //------------------------------------------------------------------------------
@@ -158,13 +155,43 @@ void PetriEditor::onMessageReceived(const struct mosquitto_message& msg)
 }
 
 //------------------------------------------------------------------------------
+void PetriEditor::clear()
+{
+    m_simulating = false;
+    m_petri_net.clear();
+    m_animations.clear();
+}
+
+//------------------------------------------------------------------------------
+bool PetriEditor::load()
+{
+    if (!m_simulating)
+    {
+        pfd::open_file manager("Choose the Petri file to load", "",
+                                { "JSON files", "*.json" });
+        std::vector<std::string> files = manager.result();
+        if (files.empty())
+        {
+            m_message_bar.setError("No selected file for loading");
+            return false;
+        }
+
+        return load(files[0]);
+    }
+    else
+    {
+        m_message_bar.setError("Cannot load during the simulation!");
+        return false;
+    }
+}
+
+//------------------------------------------------------------------------------
 bool PetriEditor::load(std::string const& file)
 {
     m_petri_filename = file;
     if (!m_petri_net.load(m_petri_filename))
     {
         m_message_bar.setError(m_petri_net.message());
-        m_petri_net.clear();
         return false;
     }
 
@@ -192,7 +219,7 @@ bool PetriEditor::load(std::string const& file)
         M.y = std::max(M.y, t.y);
     }
 
-    m_renderer.setView(
+    m_render_texture.setView(
         sf::View(sf::Vector2f((M.x - m.x) / 2.0f, (M.y - m.y) / 2.0f),
                     sf::Vector2f(M.x - m.x + 2.0f * TRANS_WIDTH, M.y - m.y +
                                 2.0f * TRANS_WIDTH)));
@@ -265,7 +292,7 @@ void PetriEditor::draw(sf::Text& t, std::string const& str, float const x, float
 {
     t.setString(str);
     t.setPosition(x - t.getLocalBounds().width / 2.0f, y - t.getLocalBounds().height);
-    m_renderer.draw(t);
+    m_render_texture.draw(t);
 }
 
 //------------------------------------------------------------------------------
@@ -291,7 +318,7 @@ void PetriEditor::draw(Place const& place, uint8_t alpha)
     // Draw the place
     m_shape_place.setPosition(sf::Vector2f(x, y));
     m_shape_place.setFillColor(FILL_COLOR(alpha));
-    m_renderer.draw(m_shape_place);
+    m_render_texture.draw(m_shape_place);
 
     // Draw the caption
     draw(m_text_caption, place.caption, x,
@@ -306,26 +333,26 @@ void PetriEditor::draw(Place const& place, uint8_t alpha)
         if (place.tokens == 1u)
         {
             m_shape_token.setPosition(sf::Vector2f(x, y));
-            m_renderer.draw(sf::CircleShape(m_shape_token));
+            m_render_texture.draw(sf::CircleShape(m_shape_token));
         }
         else if (place.tokens == 2u)
         {
             m_shape_token.setPosition(sf::Vector2f(x - d, y));
-            m_renderer.draw(sf::CircleShape(m_shape_token));
+            m_render_texture.draw(sf::CircleShape(m_shape_token));
 
             m_shape_token.setPosition(sf::Vector2f(x + d, y));
-            m_renderer.draw(sf::CircleShape(m_shape_token));
+            m_render_texture.draw(sf::CircleShape(m_shape_token));
         }
         else if (place.tokens == 3u)
         {
             m_shape_token.setPosition(sf::Vector2f(x, y - r));
-            m_renderer.draw(sf::CircleShape(m_shape_token));
+            m_render_texture.draw(sf::CircleShape(m_shape_token));
 
             m_shape_token.setPosition(sf::Vector2f(x - d, y + d));
-            m_renderer.draw(sf::CircleShape(m_shape_token));
+            m_render_texture.draw(sf::CircleShape(m_shape_token));
 
             m_shape_token.setPosition(sf::Vector2f(x + d, y + d));
-            m_renderer.draw(sf::CircleShape(m_shape_token));
+            m_render_texture.draw(sf::CircleShape(m_shape_token));
         }
         else if ((place.tokens == 4u) || (place.tokens == 5u))
         {
@@ -333,20 +360,20 @@ void PetriEditor::draw(Place const& place, uint8_t alpha)
             {
                 d = r + 3.0f;
                 m_shape_token.setPosition(sf::Vector2f(x, y));
-                m_renderer.draw(sf::CircleShape(m_shape_token));
+                m_render_texture.draw(sf::CircleShape(m_shape_token));
             }
 
             m_shape_token.setPosition(sf::Vector2f(x - d, y - d));
-            m_renderer.draw(sf::CircleShape(m_shape_token));
+            m_render_texture.draw(sf::CircleShape(m_shape_token));
 
             m_shape_token.setPosition(sf::Vector2f(x + d, y - d));
-            m_renderer.draw(sf::CircleShape(m_shape_token));
+            m_render_texture.draw(sf::CircleShape(m_shape_token));
 
             m_shape_token.setPosition(sf::Vector2f(x - d, y + d));
-            m_renderer.draw(sf::CircleShape(m_shape_token));
+            m_render_texture.draw(sf::CircleShape(m_shape_token));
 
             m_shape_token.setPosition(sf::Vector2f(x + d, y + d));
-            m_renderer.draw(sf::CircleShape(m_shape_token));
+            m_render_texture.draw(sf::CircleShape(m_shape_token));
         }
         else
         {
@@ -374,7 +401,7 @@ void PetriEditor::draw(Transition const& transition, uint8_t alpha)
     {
         m_shape_transition.setFillColor(FILL_COLOR(alpha));
     }
-    m_renderer.draw(m_shape_transition);
+    m_render_texture.draw(m_shape_transition);
 
     // Draw the caption
     draw(m_text_caption, transition.caption, transition.x,
@@ -386,7 +413,7 @@ void PetriEditor::draw(Arc const& arc, uint8_t alpha)
 {
     // Transition -> Place
     Arrow arrow(arc.from.x, arc.from.y, arc.to.x, arc.to.y, alpha);
-    m_renderer.draw(arrow);
+    m_render_texture.draw(arrow);
 
     if ((arc.from.type == Node::Type::Transition) &&
         (m_petri_net.type() == PetriNet::Type::TimedPetri))
@@ -401,8 +428,47 @@ void PetriEditor::draw(Arc const& arc, uint8_t alpha)
 //------------------------------------------------------------------------------
 void PetriEditor::onDraw()
 {
-    m_renderer.setView(m_view);
+    onDrawIMGui();
 
+    ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2{0.f, 0.f});
+    ImGui::Begin("editor"); // FIXME editer plusieurs Petri
+
+    const ImVec2 region_size(ImGui::GetContentRegionAvail());
+    m_render_texture.create(static_cast<unsigned>(region_size.x),
+                            static_cast<unsigned>(region_size.y));
+    m_render_texture.clear(sf::Color::White);
+    sf::FloatRect r(0.0f, 0.0f, float(region_size.x), float(region_size.y));
+    m_view.reset(r);
+    m_render_texture.setView(m_view);
+
+    renderScene(m_render_texture);
+    m_render_texture.display();
+
+    ImGui::ImageButton(m_render_texture, 0);
+    m_is_hovered = ImGui::IsItemHovered();
+
+    // move the planning scene around by dragging mouse Right-click
+    //if (is_hovered && ImGui::IsMouseDragging(ImGuiMouseButton_Right))
+    //{
+    //    view_move_xy_.x -= io.MouseDelta.x;
+    //    view_move_xy_.y -= io.MouseDelta.y;
+    //}
+
+    // Update the current mouse position in planning scene panel
+    const ImVec2 p(ImGui::GetCursorScreenPos());
+    const ImVec2 origin(p.x /*- view_move_xy_.*/, p.y /*- view_move_xy_.y*/);
+    ImGuiIO& io = ImGui::GetIO();
+    sf::Vector2i mouse_pos_in_canvas(io.MousePos.x - origin.x,
+                                     io.MousePos.y - origin.y + region_size.y);
+    m_mouse = m_render_texture.mapPixelToCoords(mouse_pos_in_canvas);
+
+    ImGui::End();
+    ImGui::PopStyleVar();
+}
+
+//------------------------------------------------------------------------------
+void PetriEditor::renderScene(sf::RenderTexture& r)
+{
     // Draw all Places
     for (auto& p: m_petri_net.places())
     {
@@ -430,7 +496,7 @@ void PetriEditor::onDraw()
         float x = (m_arc_from_unknown_node) ? m_x : m_node_from->x;
         float y = (m_arc_from_unknown_node) ? m_y : m_node_from->y;
         Arrow arrow(x, y, m_mouse.x, m_mouse.y, 0u);
-        m_renderer.draw(arrow);
+        r.draw(arrow);
     }
 
     // Draw the selection
@@ -446,7 +512,7 @@ void PetriEditor::onDraw()
     for (auto const& at: m_animations)
     {
         m_shape_token.setPosition(at.x, at.y);
-        m_renderer.draw(m_shape_token);
+        r.draw(m_shape_token);
         draw(m_text_token, at.tokens, at.x, at.y - 16);
     }
 
@@ -459,18 +525,27 @@ void PetriEditor::onDraw()
     // Show the grid
     if (m_grid.show)
     {
-        m_renderer.draw(m_grid);
+        r.draw(m_grid);
     }
 
     // Draw the GUI
-    m_message_bar.setSize(m_renderer.getSize());
-    m_renderer.draw(m_message_bar);
-    m_renderer.draw(m_entry_box);
+    m_message_bar.setSize(r.getSize());
+    //r.draw(m_message_bar);
+    r.draw(m_entry_box);
 }
 
 //------------------------------------------------------------------------------
 void PetriEditor::onUpdate(float const dt)
 {
+    if (m_petri_net.modified)
+    {
+        m_renderer.setTitle(m_title + " **");
+    }
+    else
+    {
+        m_renderer.setTitle(m_title);
+    }
+
     bool burnt = false;
     bool burning = false;
     States state = m_state;
@@ -719,44 +794,58 @@ Node* PetriEditor::getNode(float const x, float const y)
 }
 
 //------------------------------------------------------------------------------
-void PetriEditor::exporting(Export const& e)
+bool PetriEditor::exports(std::string const& format)
 {
-    if (/*(!m_simulating) &&*/ (!m_petri_net.isEmpty()))
-    {
-        std::string all_extensions;
-        std::string c("*");
-        for (auto& it: e.extensions)
-        {
-            all_extensions += c;
-            all_extensions += it;
-            c = " *";
-        }
-
-        pfd::save_file manager("Choose the " + e.what + " file to export",
-                                "petri-gen" + e.extensions[0],
-                                { e.what + " file", all_extensions });
-        std::string file = manager.result();
-        if (!file.empty())
-        {
-            bool res = e.exportation(m_petri_net, file);
-            if (res)
-            {
-                m_message_bar.setInfo(
-                    "Petri net successfully exported as " + e.what + " file!");
-            }
-            else
-            {
-                m_message_bar.setError(m_petri_net.message());
-            }
-        }
-    }
-    //else if (m_simulating)
-    //{
-    //    m_message_bar.setError("Cannot export during the simulation!");
-    //}
-    else if (m_petri_net.isEmpty())
+    if (m_petri_net.isEmpty())
     {
         m_message_bar.setWarning("Cannot export dummy Petri net!");
+        return false;
+    }
+
+    //if (m_simulating)
+    //{
+    //    m_message_bar.setError("Cannot export during the simulation!");
+    //    return false;
+    //}
+
+    if (m_exports.find(format) == m_exports.end())
+    {
+        m_message_bar.setError("Unknown exporting file format: " + format);
+        return false;
+    }
+
+    Export& exp = m_exports[format];
+    std::string all_extensions;
+    std::string c("*");
+    for (auto& it: exp.extensions)
+    {
+        all_extensions += c;
+        all_extensions += it;
+        c = " *";
+    }
+
+    pfd::save_file manager("Choose the " + exp.what + " file to export",
+                            "petri-gen" + exp.extensions[0],
+                            { exp.what + " file", all_extensions });
+    std::string file = manager.result();
+    if (file.empty())
+    {
+        m_message_bar.setError("Unselected file");
+        return false;
+    }
+
+    m_petri_net.generateArcsInArcsOut();
+    bool res = exp.exports(m_petri_net, file);
+    if (res)
+    {
+        m_message_bar.setInfo(
+            "Petri net successfully exported as " + exp.what + " file!");
+        return true;
+    }
+    else
+    {
+        m_message_bar.setError(m_petri_net.message());
+        return false;
     }
 }
 
@@ -819,41 +908,10 @@ void PetriEditor::handleKeyPressed(sf::Event const& event)
             save(m_shift);
         }
     }
-
-    // 'O' key: load the Petri net from a JSON file
     else if (event.key.code == KEY_BINDING_LOAD_PETRI_NET)
-    {
-        if (!m_simulating)
-        {
-            pfd::open_file manager("Choose the Petri file to load", "",
-                                   { "JSON files", "*.json" });
-            std::vector<std::string> files = manager.result();
-            if (!files.empty())
-            {
-                load(files[0]);
-            }
-        }
-        else
-        {
-            m_message_bar.setError("Cannot load during the simulation!");
-        }
-    }
-
-    // 'F1' key: take a screenshot
+        load();
     else if (event.key.code == KEY_BINDING_SCREEN_SHOT)
-    {
-        pfd::save_file manager("Choose the PNG file to save the screenshot",
-                                "screenshot.png", { "PNG File", "*.png" });
-        std::string screenshot_filename = manager.result();
-        if (!m_application.screenshot(screenshot_filename))
-        {
-            m_message_bar.setError("Failed to save screenshot to file '" + screenshot_filename + "'");
-        }
-        else
-        {
-            m_message_bar.setInfo("Screenshot taken as file '" + screenshot_filename + "'");
-        }
-    }
+        screenshot();
 
     // 'F' key: load a flowshop net from a text file
     else if (event.key.code == KEY_BINDING_LOAD_FLOWSHOP)
@@ -881,62 +939,6 @@ void PetriEditor::handleKeyPressed(sf::Event const& event)
         }
     }
 
-    // 'Y' key: save the Petri net as Symfony workflow file format
-    else if (event.key.code == KEY_BINDING_EXPORT_PETRI_TO_SYMFONY)
-    {
-        m_petri_net.generateArcsInArcsOut();
-        exporting(m_exports["Symfony"]);
-    }
-
-    // 'F' key: save the Grafcet as LaTeX file format
-    else if (event.key.code == KEY_BINDING_EXPORT_PETRI_TO_GRAFCET_LATEX)
-    {
-        m_petri_net.generateArcsInArcsOut();
-        exporting(m_exports["Grafcet-LaTeX"]);
-    }
-
-    // 'X' key: save the Petri net as LaTeX file format
-    else if (event.key.code == KEY_BINDING_EXPORT_PETRI_TO_PETRI_LATEX)
-    {
-        m_petri_net.generateArcsInArcsOut();
-        exporting(m_exports["Petri-LaTeX"]);
-    }
-
-    // Save the Petri net as graphviz file format
-    else if (event.key.code == KEY_BINDING_EXPORT_PETRI_TO_DRAWIO)
-    {
-        m_petri_net.generateArcsInArcsOut();
-        exporting(m_exports["Draw.io"]);
-
-    }
-    // 'P' key: save the Petri net as graphviz file format
-    else if (event.key.code == KEY_BINDING_EXPORT_PETRI_TO_GRAPHVIZ)
-    {
-        m_petri_net.generateArcsInArcsOut();
-        exporting(m_exports["Graphviz"]);
-    }
-
-    // 'K' key: save the Petri net as graphviz file format
-    else if (event.key.code == KEY_BINDING_EXPORT_PETRI_TO_PNEDITOR)
-    {
-        m_petri_net.generateArcsInArcsOut();
-        exporting(m_exports["PN-Editor"]);
-    }
-
-    // 'G' key: save the Petri net as grafcet in a C++ header file
-    else if (event.key.code == KEY_BINDING_EXPORT_PETRI_TO_GRAFCET_CXX)
-    {
-        m_petri_net.generateArcsInArcsOut();
-        exporting(m_exports["C++"]);
-    }
-
-    // 'J' key: save the Petri net as graph event in a Julia script file
-    else if (event.key.code == KEY_BINDING_EXPORT_PETRI_TO_JULIA)
-    {
-        m_petri_net.generateArcsInArcsOut();
-        exporting(m_exports["Julia"]);
-    }
-
     // 'C' key: show critical graph (only for event graph)
     else if (event.key.code == KEY_BINDING_SHOW_CRITICAL_CYCLE)
     {
@@ -957,9 +959,7 @@ void PetriEditor::handleKeyPressed(sf::Event const& event)
     // 'Z' key: erase the Petri net
     else if (event.key.code == KEY_BINDING_ERASE_PETRI_NET)
     {
-        m_simulating = false;
-        m_petri_net.clear();
-        m_animations.clear();
+        clear();
     }
 
     // 'M' key: Move the selected node
@@ -1067,7 +1067,7 @@ void PetriEditor::handleKeyPressed(sf::Event const& event)
     // 'A' for aligning nodes on a grid
     else if (event.key.code == KEY_BINDING_ALIGN_NODES)
     {
-        alignElements();
+        align();
         m_message_bar.setInfo("Nodes have been aligned !");
     }
 
@@ -1183,7 +1183,7 @@ void PetriEditor::handleArcDestination()
 }
 
 //------------------------------------------------------------------------------
-void PetriEditor::alignElements()
+void PetriEditor::align()
 {
     const int D = int(TRANS_WIDTH);
 
@@ -1356,81 +1356,62 @@ void PetriEditor::handleMouseButton(sf::Event const& event)
 }
 
 //------------------------------------------------------------------------------
-void PetriEditor::onHandleInput()
+void PetriEditor::onHandleInput(sf::Event const& event)
 {
-    sf::Event event;
-    m_mouse = m_renderer.mapPixelToCoords(sf::Mouse::getPosition(m_renderer));
-
-    while (m_renderer.pollEvent(event))
+    switch (event.type)
     {
-        switch (event.type)
+    case sf::Event::Closed:
+        close();
+        break;
+    case sf::Event::KeyPressed:
+        // Move the view if not editing text
+        if (!m_entry_box.hasFocus())
         {
-        case sf::Event::Closed:
-            close();
-            break;
-        case sf::Event::KeyPressed:
-            // Move the view if not editing text
-            if (!m_entry_box.hasFocus())
+            if (event.key.code == sf::Keyboard::Right)
             {
-                if (event.key.code == sf::Keyboard::Right)
-                {
-                    m_view.move(10.0f, 0.0f);
-                    return ;
-                }
-                else if (event.key.code == sf::Keyboard::Left)
-                {
-                    m_view.move(-10.0f, 0.0f);
-                    return ;
-                }
-                else if (event.key.code == sf::Keyboard::Up)
-                {
-                    m_view.move(0.0f, 10.0f);
-                    return ;
-                }
-                else if (event.key.code == sf::Keyboard::Down)
-                {
-                    m_view.move(0.0f, -10.0f);
-                    return ;
-                }
+                m_view.move(10.0f, 0.0f);
+                return ;
             }
-
-            m_marked_arcs.clear();
-            handleKeyPressed(event);
-            break;
-        case sf::Event::TextEntered:
-            m_entry_box.onTextEntered(event.text.unicode);
-            break;
-        case sf::Event::KeyReleased:
-            m_ctrl = false;
-            break;
-        case sf::Event::MouseButtonPressed:
-            handleMouseButton(event);
-            break;
-        case sf::Event::MouseButtonReleased:
-            handleMouseButton(event);
-            break;
-        case sf::Event::MouseWheelScrolled:
-            applyZoom(event.mouseWheelScroll.delta);
-            break;
-        case sf::Event::Resized:
+            else if (event.key.code == sf::Keyboard::Left)
             {
-                sf::FloatRect r(0.0f, 0.0f, float(event.size.width), float(event.size.height));
-                m_view.reset(r);
-                m_grid.resize(r);
+                m_view.move(-10.0f, 0.0f);
+                return ;
             }
-            break;
-        default:
-            break;
+            else if (event.key.code == sf::Keyboard::Up)
+            {
+                m_view.move(0.0f, 10.0f);
+                return ;
+            }
+            else if (event.key.code == sf::Keyboard::Down)
+            {
+                m_view.move(0.0f, -10.0f);
+                return ;
+            }
         }
-    }
 
-    if (m_petri_net.modified)
-    {
-        m_renderer.setTitle(m_title + " **");
-    }
-    else
-    {
-        m_renderer.setTitle(m_title);
+        m_marked_arcs.clear();
+        handleKeyPressed(event);
+        break;
+    case sf::Event::TextEntered:
+        m_entry_box.onTextEntered(event.text.unicode);
+        break;
+    case sf::Event::KeyReleased:
+        m_ctrl = false;
+        break;
+    case sf::Event::MouseButtonPressed:
+        if (m_is_hovered)
+            handleMouseButton(event);
+        break;
+    case sf::Event::MouseButtonReleased:
+        if (m_is_hovered)
+            handleMouseButton(event);
+        break;
+    case sf::Event::MouseWheelScrolled:
+        if (m_is_hovered)
+            applyZoom(event.mouseWheelScroll.delta);
+        break;
+    default:
+        break;
     }
 }
 
@@ -1478,17 +1459,29 @@ std::stringstream PetriEditor::help()
        << "  " << to_str(KEY_BINDING_SHOW_CRITICAL_CYCLE) << " key: show critical circuit" << std::endl
        << "  " << to_str(KEY_BINDING_SAVE_PETRI_NET) << " key: save the Petri net to petri.json file" << std::endl
        << "  " << to_str(KEY_BINDING_LOAD_PETRI_NET) << " key: load the Petri net from petri.json file" << std::endl
-       << "  " << to_str(KEY_BINDING_EXPORT_PETRI_TO_DRAWIO) << " key: export the Petri net as Drawio file" << std::endl
-       << "  " << to_str(KEY_BINDING_EXPORT_PETRI_TO_SYMFONY) << " key: export the Petri net as Symfony workflow file" << std::endl
-       << "  " << to_str(KEY_BINDING_EXPORT_PETRI_TO_GRAPHVIZ) << " key: export the Petri net as Graphviz file" << std::endl
-       << "  " << to_str(KEY_BINDING_EXPORT_PETRI_TO_PETRI_LATEX) << " key: export the Petri net as LaTeX file" << std::endl
-       << "  " << to_str(KEY_BINDING_EXPORT_PETRI_TO_GRAFCET_LATEX) << " key: export Petri net as Grafcet as LaTeX file" << std::endl
-       << "  " << to_str(KEY_BINDING_EXPORT_PETRI_TO_GRAFCET_CXX) << " key: export the Petri net as GRAFCET in a C++ header file" << std::endl
-       << "  " << to_str(KEY_BINDING_EXPORT_PETRI_TO_JULIA) << " key: export the Petri net as Julia code" << std::endl
-       << "  " << to_str(KEY_BINDING_EXPORT_PETRI_TO_PNEDITOR) << " key: export the Petri net as for https://gitlab.com/porky11/pn-editor" << std::endl
        << "  " << to_str(KEY_BINDING_SCREEN_SHOT) << " key: take a screenshot of the view" << std::endl
        << "  " << to_str(sf::Keyboard::Right) << " / " << to_str(sf::Keyboard::Left) << " keys: move the view right/left" << std::endl
        << "  " << to_str(sf::Keyboard::Up) << " / " << to_str(sf::Keyboard::Down) << " keys: move the view up/down" << std::endl
        ;
     return ss;
+}
+
+//------------------------------------------------------------------------------
+bool PetriEditor::screenshot()
+{
+    pfd::save_file manager("Choose the PNG file to save the screenshot",
+                            "screenshot.png", { "PNG File", "*.png" });
+    std::string screenshot_filename = manager.result();
+    // Do not call this one because DearImGui stole it
+    //if (!m_application.screenshot(screenshot_filename))
+    if (!m_render_texture.getTexture().copyToImage().saveToFile(screenshot_filename))
+    {
+        m_message_bar.setError("Failed to save screenshot to file '" + screenshot_filename + "'");
+        return false;
+    }
+    else
+    {
+        m_message_bar.setInfo("Screenshot taken as file '" + screenshot_filename + "'");
+        return true;
+    }
 }

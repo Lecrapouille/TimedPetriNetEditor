@@ -37,12 +37,15 @@ include $(M)/Makefile.header
 ###################################################
 # Inform Makefile where to find header files
 #
-INCLUDES += -I$(P)/src -I$(P)/src/utils -I$(P)
+INCLUDES += -I$(P)/src -I$(P)/src/utils
+INCLUDES += -I$(P)/external/imgui -I$(P)/external/imgui-sfml
+INCLUDES += -I$(P)/external -I$(P)
 
 ###################################################
 # Inform Makefile where to find *.cpp and *.o files
 #
-VPATH += $(P)/src $(P)/src/utils $(P)/src/julia
+VPATH += $(P)/src $(P)/src/utils $(P)/external/imgui
+VPATH += $(P)/external/imgui-sfml $(P)/src/julia
 
 ###################################################
 # Project defines
@@ -54,12 +57,16 @@ DEFINES += -DDATADIR=\"$(DATADIR)\"
 #
 DEFINES += -Wno-undef -Wno-switch-enum -Wno-sign-conversion -Wno-float-equal
 DEFINES += -Wno-deprecated-copy-dtor -Wno-defaulted-function-deleted
+# Aaaargf needed because of imgui warnings
+DEFINES += -Wno-old-style-cast -Wno-unused-parameter
+DEFINES += -Wno-conversion -Wno-cast-qual
 
 ###################################################
 # Make the list of compiled files used both by the
 # library and application
 #
-COMMON_OBJS = MQTT.o Howard.o KeyBindings.o Application.o PetriNet.o PetriEditor.o
+IMGUI_OBJS = imgui.o imgui_widgets.o imgui_draw.o imgui_tables.o imgui-SFML.o DearImGui.o
+COMMON_OBJS = MQTT.o Howard.o KeyBindings.o Application.o PetriNet.o HMI.o PetriEditor.o
 
 ###################################################
 # Make the list of compiled files for the library
@@ -69,7 +76,7 @@ LIB_OBJS += $(COMMON_OBJS) Julia.o
 ###################################################
 # Make the list of compiled files for the application
 #
-OBJS += $(COMMON_OBJS) main.o
+OBJS += $(IMGUI_OBJS) $(COMMON_OBJS) main.o
 
 ###################################################
 # Set SFML Library.
@@ -84,13 +91,27 @@ DEFINES += -DMQTT_BROKER_PORT=1883
 PKG_LIBS += libmosquitto
 
 ###################################################
+# Link OpenGL needed by imgui-sfml
+#
+ifeq ($(ARCHI),Darwin)
+DEFINES += -DGL_SILENCE_DEPRECATION
+INCLUDES += -I/usr/local/include -I/opt/local/include
+LINKER_FLAGS += -framework OpenGL -framework Cocoa
+LINKER_FLAGS += -framework IOKit -framework CoreVideo
+LINKER_FLAGS += -L/usr/local/lib -L/opt/local/lib
+else ifeq ($(ARCHI),Linux)
+LINKER_FLAGS += -lGLU -lGL
+else
+$(error Unknown architecture)
+endif
+
+###################################################
 # MacOS X
 #
 ifeq ($(ARCHI),Darwin)
 BUILD_MACOS_APP_BUNDLE = 1
 APPLE_IDENTIFIER = lecrapouille
 MACOS_BUNDLE_ICON = data/TimedPetriNetEditor.icns
-
 LINKER_FLAGS += -framework CoreFoundation
 endif
 

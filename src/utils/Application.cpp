@@ -30,6 +30,7 @@ Application::GUI::GUI(Application& application, std::string const& name,
 // -----------------------------------------------------------------------------
 Application::Application(uint32_t const width, uint32_t const height,
                          std::string const& title)
+    : m_dearimgui(m_renderer, DearImGui::Theme::Dark)
 {
     m_renderer.create(sf::VideoMode(width, height), title);
     setFramerate(60);
@@ -53,7 +54,7 @@ void Application::halt()
 {
     // Clear the satck of GUIs
     std::stack<Application::GUI*>().swap(m_stack);
-    // Stop the SFML renderer
+    // Stop the SFML renderer be sure to call it before ImGui::SFML::Shutdown();
     m_renderer.close();
 }
 
@@ -114,18 +115,30 @@ void Application::loop()
         if (gui == nullptr)
             return ;
 
+        // FIXME shall be placed inside the while
+        m_dearimgui.update(time_per_frame);
+
         // Process events at fixed time steps
         timeSinceLastUpdate += clock.restart();
         while (timeSinceLastUpdate > time_per_frame)
         {
             timeSinceLastUpdate -= time_per_frame;
-            gui->onHandleInput();
+            sf::Event event;
+            while (m_renderer.pollEvent(event))
+            {
+                ImGui::SFML::ProcessEvent(m_renderer, event);
+                gui->onHandleInput(event);
+            }
+            //FIXME m_dearimgui.update(time_per_frame);
             gui->onUpdate(time_per_frame.asSeconds());
         }
 
         // Rendering
         m_renderer.clear(gui->background_color);
+        m_dearimgui.begin();
         gui->onDraw();
+        m_dearimgui.end();
+        m_dearimgui.display();
         m_renderer.display();
 
         // Halt the application

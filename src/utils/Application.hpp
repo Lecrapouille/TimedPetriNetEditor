@@ -29,6 +29,7 @@
 
 #  include <SFML/Graphics.hpp>
 #  include <SFML/System.hpp>
+#  include "utils/DearImGui.hpp"
 #  include "utils/Utils.hpp"
 #  include <stack>
 #  include <cassert>
@@ -160,6 +161,7 @@ public:
         //! has to be rendered.
         //----------------------------------------------------------------------
         virtual void onDraw() = 0;
+        //virtual void onDrawIMGui() = 0;
 
         //----------------------------------------------------------------------
         //! \brief Internal methods called by the Application class when the GUI
@@ -173,7 +175,7 @@ public:
         //! \brief Internal methods called by the Application class when the GUI
         //! has to manage IO events (mouse, keyboard, ...).
         //----------------------------------------------------------------------
-        virtual void onHandleInput() = 0;
+        virtual void onHandleInput(sf::Event const& event) = 0;
 
     public:
 
@@ -331,6 +333,11 @@ public:
 private:
 
     //--------------------------------------------------------------------------
+    //! \brief Dear IM Gui in docking mode (movable sub windows)
+    //--------------------------------------------------------------------------
+    void configurateDearImGui();
+
+    //--------------------------------------------------------------------------
     //! \brief Clear the stack of GUIs and close the renderer.
     //--------------------------------------------------------------------------
     void halt();
@@ -350,6 +357,10 @@ private:
     sf::RenderWindow m_renderer;
     //! \brief Framerate limit [FPS]
     float m_framerate;
+    //! \brief Use DearImGui for the graphical interface instead of
+    //! implementing back all widgets with SFML. Shall be place in
+    //! last to call its destructor after SFML close()
+    DearImGui m_dearimgui;
 };
 
 #endif

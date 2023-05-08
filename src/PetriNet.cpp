@@ -1038,10 +1038,12 @@ void PetriNet::name(std::string const& filename)
 //------------------------------------------------------------------------------
 bool PetriNet::load(std::string const& filename)
 {
-    bool res = importFromJSON(filename);
-    if (res)
+    if (!importFromJSON(filename))
     {
-        name(filename);
+        clear();
+        return false;
     }
-    return res;
+
+    name(filename);
+    return true;
 }

@@ -70,10 +70,13 @@ The recursive argument is important: it allows to clone my Makefile helper.
 To compile the project:
 ```sh
 cd TimedPetriNetEditor/
+make download-external-libs
 make -j8
-
-# Where -j8 to adapt to the number of CPU cores of your computer (8 cores in my case):
 ```
+
+Where `make download-external-libs` is needed once to download third-parts libraries
+and where `-j8` is to be adapted to the number of CPU cores of your computer (8 cores
+in my case).
 
 To run the TimedPetriNetEditor application, you can:
 ```sh

@@ -6,6 +6,8 @@ grafcet-gen.*
 petri.json
 build/
 doc/coverage/
+external/imgui-sfml/
+external/imgui/
 
 # Visual Studio code
 .vscode
