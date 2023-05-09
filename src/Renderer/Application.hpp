@@ -29,7 +29,7 @@
 
 #  include <SFML/Graphics.hpp>
 #  include <SFML/System.hpp>
-#  include "utils/DearImGui.hpp"
+#  include "Renderer/DearImGui.hpp"
 #  include "utils/Utils.hpp"
 #  include <stack>
 #  include <cassert>

@@ -19,10 +19,10 @@
 //=====================================================================
 
 #include "PetriEditor.hpp"
-#include "portable-file-dialogs.h"
-#include "utils/Arrow.hpp"
+#include "Renderer/Arrow.hpp"
 #include "utils/Utils.hpp"
 #include "utils/KeyBindings.hpp"
+#include "portable-file-dialogs.h"
 #include <iomanip>
 
 //------------------------------------------------------------------------------

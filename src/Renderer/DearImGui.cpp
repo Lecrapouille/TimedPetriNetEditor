@@ -23,8 +23,8 @@
 //! for reducing compilation warnings. Yep this is misery!
 // *****************************************************************************
 
-#include "utils/DearImGui.hpp"
-#include "utils/Application.hpp"
+#include "Renderer/DearImGui.hpp"
+#include "Renderer/Application.hpp"
 
 //-----------------------------------------------------------------------------
 DearImGui::DearImGui(sf::RenderWindow& renderer, DearImGui::Theme const theme)

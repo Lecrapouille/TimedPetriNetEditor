@@ -18,7 +18,7 @@
 // along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.
 //=====================================================================
 
-#include "Application.hpp"
+#include "Renderer/Application.hpp"
 
 // -----------------------------------------------------------------------------
 Application::GUI::GUI(Application& application, std::string const& name,

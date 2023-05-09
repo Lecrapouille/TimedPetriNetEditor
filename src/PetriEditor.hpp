@@ -21,11 +21,11 @@
 #ifndef PETRIEDITOR_HPP
 #  define PETRIEDITOR_HPP
 
-#  include "utils/Application.hpp"
-#  include "utils/MessageBar.hpp"
-#  include "utils/EntryBox.hpp"
-#  include "utils/Animation.hpp"
+#  include "Renderer/Application.hpp"
+#  include "Renderer/EntryBox.hpp"
 #  include "utils/Grid.hpp"
+#  include "utils/MessageBar.hpp"
+#  include "utils/Animation.hpp"
 #  include "MQTT/MQTT.hpp"
 #  include "PetriNet.hpp"
 #  include <functional>
