@@ -26,7 +26,7 @@
 #  include "utils/EntryBox.hpp"
 #  include "utils/Animation.hpp"
 #  include "utils/Grid.hpp"
-#  include "utils/MQTT.hpp"
+#  include "MQTT/MQTT.hpp"
 #  include "PetriNet.hpp"
 #  include <functional>
 

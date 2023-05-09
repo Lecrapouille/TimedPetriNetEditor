@@ -19,11 +19,10 @@
 //=====================================================================
 
 #include "PetriEditor.hpp"
-#include "utils/FileDialogs.hpp"
+#include "portable-file-dialogs.h"
 #include "utils/Arrow.hpp"
 #include "utils/Utils.hpp"
 #include "utils/KeyBindings.hpp"
-#include "utils/MQTT.hpp"
 #include <iomanip>
 
 //------------------------------------------------------------------------------
@@ -192,6 +191,7 @@ bool PetriEditor::load(std::string const& file)
     if (!m_petri_net.load(m_petri_filename))
     {
         m_message_bar.setError(m_petri_net.message());
+        m_petri_net.clear();
         return false;
     }
 

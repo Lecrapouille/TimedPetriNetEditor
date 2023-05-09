@@ -1,12 +1,9 @@
 //------------------------------------------------------------------------------
-//! \note this a quick and dirty but simple JSON parsing since I do not want to
-//! depend on a huge library.
 bool PetriNet::importFromJSON(std::string const& filename)
 {
-    std::vector<std::string> words(5);
-
-    Splitter s(filename);
-    if (!s)
+    // Check if file exists
+    std::ifstream file(filename);
+    if (!file)
     {
         m_message.str("");
         m_message << "Failed opening '" << filename << "'. Reason was '"
@@ -14,132 +11,109 @@ bool PetriNet::importFromJSON(std::string const& filename)
         return false;
     }
 
-    // Expect '{' as first token
-    if (s.split(" \t\n", " \t\n") != "{")
+    // Load the JSON content into dictionaries
+    nlohmann::json json;
+    try
+    {
+        file >> json;
+    }
+    catch (std::exception const& e)
     {
         m_message.str("");
-        m_message << "Failed loading " << filename
-                  << ". Token { missing. Bad JSON file" << std::endl;
+        m_message << "Failed parsing '" << filename << "'. Reason was '"
+                  << e.what() << "'" << std::endl;
         return false;
     }
 
-    clear();
-    while (s)
+    std::vector<std::string> words;
+
+    // Places
+    for (nlohmann::json const& p : json["places"])
     {
-        // Split for tokens "places : [" or "transitions : [" or "arcs : ["
-        std::string token(s.split(" \t\n\"", " \t\n\""));
-        if ((token == "places") || (token == "transitions") || (token == "arcs"))
+        token2vector(p, words);
+        if (words[0][0] != 'P')
         {
-            // Split and check the presence of tokens ": ["
-            if ((s.split(" \t\n\"", " \t\n")[0] != ':') || (s.split(" \t\n", " ]\t\n\"")[0] != '['))
-            {
-                m_message.str("");
-                m_message << "Failed parsing" << std::endl;
-                return false;
-            }
-
-            // Parse Petri place "P0,Caption,146,250,1"
-            if (token == "places")
-            {
-                while (s.split(" \t\n\"[", "\"")[0] != ']')
-                {
-                    if (s.str()[0] == ',')
-                        continue ;
-                    if (token2vector(s.str(), words) != 5u)
-                    {
-                        m_message.str("");
-                        m_message << "Failed parsing Place" << std::endl;
-                        return false;
-                    }
-                    addPlace(convert_to<size_t>(&words[0][1]),  // id
-                             words[1],                      // caption
-                             convert_to<float>(words[2]),   // x
-                             convert_to<float>(words[3]),   // y
-                             convert_to<size_t>(words[4])); // tokens
-                }
-            }
-            // Parse Petri transition "T0,Caption,272,173,315"
-            else if (token == "transitions")
-            {
-                while (s.split(" \t\n\"[", "\"")[0] != ']')
-                {
-                    if (s.str()[0] == ',')
-                        continue ;
-                    if (token2vector(s.str(), words) != 5u)
-                    {
-                        m_message.str("");
-                        m_message << "Failed parsing Transition" << std::endl;
-                        return false;
-                    }
-                    addTransition(convert_to<size_t>(&words[0][1]),  // id
-                                  words[1],                      // caption
-                                  convert_to<float>(words[2]),   // x
-                                  convert_to<float>(words[3]),   // y
-                                  convert_to<int>(words[4]));    // angle
-                }
-            }
-            // Parse Petri arcs "P0,T0,nan"
-            else
-            {
-                while (s.split(" \t\n\"[", "\"}")[0] != ']')
-                {
-                    if (s.str()[0] == ',')
-                        continue ;
-                    if (token2vector(s.str(), words) != 3u)
-                    {
-                        m_message.str("");
-                        m_message << "Failed parsing Arc" << std::endl;
-                        return false;
-                    }
-                    Node* from = findNode(words[0]);
-                    if (!from)
-                    {
-                        m_message << "Failed loading " << filename
-                                  << ". Origin node " << words[0]
-                                  << " not found" << std::endl;
-                        return false;
-                    }
-
-                    Node* to = findNode(words[1]);
-                    if (!to)
-                    {
-                        m_message << "Failed loading " << filename
-                                  << ". Destination node " << words[1]
-                                  << " not found" << std::endl;
-                        return false;
-                    }
-
-                    float duration = convert_to<float>(words[2]);
-                    if (duration < 0.0f)
-                    {
-                        m_message.str("");
-                        m_message << "Failed loading " << filename
-                                  << ". Duration " << words[2]
-                                  << " shall be > 0" << std::endl;
-                        return false;
-                    }
-                    if (!addArc(*from, *to, duration))
-                    {
-                        m_message.str("");
-                        m_message << "Failed loading " << filename
-                                  << ". Arc " << from->key << " -> " << to->key
-                                  << " is badly formed" << std::endl;
-                        return false;
-                    }
-                }
-            }
+            m_message.str("");
+            m_message << "Failed parsing '" << filename << "'. Reason was '"
+                      << words[0] << " is not a place'" << std::endl;
+            return false;
         }
-        else if (s.str() == "}")
+        if (words.size() != 5u)
         {
-            // End of the file
-            return true;
+            m_message.str("");
+            m_message << "Failed parsing '" << filename << "'. Reason was '"
+                      << p << " shall have 5 fields'" << std::endl;
+            return false;
         }
-        else if (token != "")
+        addPlace(convert_to<size_t>(&words[0][1]),  // id
+                 words[1],                          // caption
+                 convert_to<float>(words[2]),       // x
+                 convert_to<float>(words[3]),       // y
+                 convert_to<size_t>(words[4]));     // tokens
+    }
+
+    // Transitions
+    for (nlohmann::json const& t : json["transitions"])
+    {
+        token2vector(t, words);
+        if (words[0][0] != 'T')
+        {
+            m_message.str("");
+            m_message << "Failed parsing '" << filename << "'. Reason was '"
+                      << words[0] << " is not a transition'" << std::endl;
+            return false;
+        }
+        if (words.size() != 5u)
+        {
+            m_message.str("");
+            m_message << "Failed parsing '" << filename << "'. Reason was '"
+                      << t << " shall have 5 fields'" << std::endl;
+            return false;
+        }
+        addTransition(convert_to<size_t>(&words[0][1]),  // id
+                      words[1],                          // caption
+                      convert_to<float>(words[2]),       // x
+                      convert_to<float>(words[3]),       // y
+                      convert_to<int>(words[4]));        // angle
+    }
+
+    // Arcs
+    for (nlohmann::json const& a : json["arcs"])
+    {
+        token2vector(a, words);
+        if (words.size() != 3u)
+        {
+            m_message.str("");
+            m_message << "Failed parsing '" << filename << "'. Reason was '"
+                      << a << " shall have 3 fields'" << std::endl;
+            return false;
+        }
+        Node* from = findNode(words[0]);
+        Node* to = findNode(words[1]);
+        if ((from == nullptr) || (to == nullptr))
+        {
+            m_message.str("");
+            m_message << "Failed parsing '" << filename << "'. Reason was 'Arc "
+                      << words[0] << " -> " << words[1] << " refer to unknown nodes'"
+                      << std::endl;
+            return false;
+        }
+
+        float duration = convert_to<float>(words[2]);
+        if (duration < 0.0f)
+        {
+            m_message.str("");
+            m_message << "Failed parsing '" << filename << "'. Reason was 'Arc "
+                      << words[0] << " -> " << words[1] << " has negative duration'"
+                      << std::endl;
+            return false;
+        }
+        if (!addArc(*from, *to, duration))
         {
             m_message.str("");
             m_message << "Failed loading " << filename
-                      << ". Key " << s.str() << " is not a valid token"
-                      << std::endl;
+                      << ". Arc " << from->key << " -> " << to->key
+                      << " is badly formed" << std::endl;
             return false;
         }
     }

@@ -37,15 +37,18 @@ include $(M)/Makefile.header
 ###################################################
 # Inform Makefile where to find header files
 #
-INCLUDES += -I$(P)/src -I$(P)/src/utils
+INCLUDES += -I$(P) -I$(P)/src -I$(P)/src/utils
 INCLUDES += -I$(P)/external/imgui -I$(P)/external/imgui-sfml
-INCLUDES += -I$(P)/external -I$(P)
+INCLUDES += -I$(P)/external/MQTT/include -I$(P)/external
+INCLUDES += -I$(P)/external/portable-file-dialogs
+INCLUDES += -I$(P)/external/json/include
 
 ###################################################
 # Inform Makefile where to find *.cpp and *.o files
 #
-VPATH += $(P)/src $(P)/src/utils $(P)/external/imgui
-VPATH += $(P)/external/imgui-sfml $(P)/src/julia
+VPATH += $(P)/src $(P)/src/utils $(P)/src/julia
+VPATH += $(P)/external/imgui $(P)/external/imgui-sfml
+VPATH += $(P)/external/MQTT/src
 
 ###################################################
 # Project defines

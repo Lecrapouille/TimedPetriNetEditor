@@ -20,9 +20,9 @@
 
 #include "PetriNet.hpp"
 #include "utils/Howard.h"
-#include "utils/Splitter.hpp"
 #include "utils/Utils.hpp"
 #include "utils/Theme.hpp"
+#include "nlohmann/json.hpp"
 #include <iomanip>
 #include <iostream>
 #include <fstream>
@@ -1040,7 +1040,7 @@ bool PetriNet::load(std::string const& filename)
 {
     if (!importFromJSON(filename))
     {
-        clear();
+        //clear(); FIXME: because this will clear error message
         return false;
     }
 

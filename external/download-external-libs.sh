@@ -10,10 +10,20 @@ source ../.makefile/download-external-libs.sh
 ### Dear ImGui: Bloat-free Graphical User interface for C++ with minimal dependencies
 ### License: MIT
 cloning ocornut/imgui -b docking
-#(cd imgui && git checkout -b 719d9313041b85227a3e6deb289a313819aaeab3)
 
 ### Dear ImGui backend for use with SFML
 ### License: MIT
 cloning SFML/imgui-sfml
-#(cd imgui-sfml && git checkout -b 719d9313041b85227a3e6deb289a313819aaeab3)
 cp imgui-sfml/imconfig-SFML.h imgui/imconfig.h
+
+### Class wrapping client MQTT (mosquitto lib)
+### License: MIT
+cloning Lecrapouille/MQTT
+
+### Portable GUI dialogs library, C++11, single-header
+### License: WTFPL
+cloning samhocevar/portable-file-dialogs
+
+### JSON for Modern C++
+### License: MIT
+cloning nlohmann/json
