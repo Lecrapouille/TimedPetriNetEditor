@@ -18,8 +18,8 @@
 // along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.
 //=====================================================================
 
-#ifndef ANIMATION_HPP
-#  define ANIMATION_HPP
+#ifndef ANIMATED_TOKENS_HPP
+#  define ANIMATED_TOKENS_HPP
 
 #  include "PetriNet.hpp"
 #  include "utils/Utils.hpp"

@@ -25,7 +25,7 @@
 #  include "Renderer/EntryBox.hpp"
 #  include "utils/Grid.hpp"
 #  include "utils/MessageBar.hpp"
-#  include "utils/Animation.hpp"
+#  include "utils/AnimatedTokens.hpp"
 #  include "MQTT/MQTT.hpp"
 #  include "PetriNet.hpp"
 #  include <functional>
@@ -391,7 +391,7 @@ private:
     //! \brief Mouse cursor position.
     sf::Vector2f m_mouse;
     //! \brief Animation of tokens when transitioning from Transitions to Places.
-    std::vector<AnimatedToken> m_animations;
+    std::vector<AnimatedToken> m_animated_tokens;
     //! \brief Widget editing text such as Node caption and values.
     EntryBox m_entry_box;
     //! \brief Show the grid

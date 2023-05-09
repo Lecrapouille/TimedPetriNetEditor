@@ -37,19 +37,34 @@ include $(M)/Makefile.header
 ###################################################
 # Inform Makefile where to find header files
 #
-INCLUDES += -I$(P) -I$(P)/src
+INCLUDES += -I$(P) -I$(P)/src -I$(P)/src/utils
+INCLUDES += -I$(P)/src/Renderer
+INCLUDES += -I$(P)/external/imgui -I$(P)/external/imgui-sfml
+INCLUDES += -I$(P)/external/MQTT/include -I$(P)/external
+INCLUDES += -I$(P)/external/portable-file-dialogs
+INCLUDES += -I$(P)/external/json/include
 
 ###################################################
 # Inform Makefile where to find *.cpp and *.o files
 #
-VPATH += $(P) $(P)/src $(P)/src/utils
+VPATH += $(P)/src $(P)/src/utils $(P)/src/julia
+VPATH += $(P)/src/Renderer $(P)/external/MQTT/src
+VPATH += $(P)/external/imgui $(P)/external/imgui-sfml
 
 ###################################################
 # Reduce warnings
 #
-DEFINES += -Wno-undef -Wno-switch-enum -Wno-sign-conversion -Wno-float-equal -Wno-shadow
+#DEFINES += -Wno-undef -Wno-switch-enum -Wno-sign-conversion -Wno-float-equal -Wno-shadow
+#DEFINES += -Wno-keyword-macro -Wno-defaulted-function-deleted
 
-DEFINES += -Wno-keyword-macro -Wno-defaulted-function-deleted
+###################################################
+# Reduce warnings
+#
+DEFINES += -Wno-undef -Wno-switch-enum -Wno-sign-conversion -Wno-float-equal
+DEFINES += -Wno-deprecated-copy-dtor -Wno-defaulted-function-deleted
+# Aaaargf needed because of imgui warnings
+DEFINES += -Wno-old-style-cast -Wno-unused-parameter
+DEFINES += -Wno-conversion -Wno-cast-qual
 
 ###################################################
 # Make the list of compiled files for tests

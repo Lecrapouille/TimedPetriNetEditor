@@ -56,7 +56,7 @@ PetriEditor::PetriEditor(Application& application, PetriNet& net)
     };
 
     // Reserve initial memory for animated tokens
-    m_animations.reserve(128u);
+    m_animated_tokens.reserve(128u);
 
     // Precompute SFML struct for drawing text (places and transitions)
     if (!m_font.loadFromFile(data_path("font.ttf")))
@@ -158,7 +158,7 @@ void PetriEditor::clear()
 {
     m_simulating = false;
     m_petri_net.clear();
-    m_animations.clear();
+    m_animated_tokens.clear();
 }
 
 //------------------------------------------------------------------------------
@@ -509,7 +509,7 @@ void PetriEditor::renderScene(sf::RenderTexture& r)
     }
 
     // Draw all tokens transiting from Transitions to Places
-    for (auto const& at: m_animations)
+    for (auto const& at: m_animated_tokens)
     {
         m_shape_token.setPosition(at.x, at.y);
         r.draw(m_shape_token);
@@ -585,7 +585,7 @@ void PetriEditor::onUpdate(float const dt)
         m_petri_net.resetReceptivies();
         m_petri_net.shuffle_transitions(true);
         m_petri_net.getTokens(m_marks);
-        m_animations.clear();
+        m_animated_tokens.clear();
         m_state = STATE_ANIMATING;
         std::cout << current_time() << "Simulation has started!" << std::endl;
         break;
@@ -597,7 +597,7 @@ void PetriEditor::onUpdate(float const dt)
 
         // Restore burnt tokens from the simulation
         m_petri_net.setTokens(m_marks);
-        m_animations.clear();
+        m_animated_tokens.clear();
         m_state = STATE_IDLE;
         break;
 
@@ -682,7 +682,7 @@ void PetriEditor::onUpdate(float const dt)
                               << a.count << " token"
                               << (a.count == 1u ? "" : "s")
                               << std::endl;
-                    m_animations.push_back(AnimatedToken(a, a.count, m_petri_net.type()));
+                    m_animated_tokens.push_back(AnimatedToken(a, a.count, m_petri_net.type()));
                     a.fading.restart();
                     a.count = 0u;
                 }
@@ -690,12 +690,12 @@ void PetriEditor::onUpdate(float const dt)
         }
 
         // Tokens Transition --> Places are transitioning.
-        if (m_animations.size() > 0u)
+        if (m_animated_tokens.size() > 0u)
         {
-            size_t i = m_animations.size();
+            size_t i = m_animated_tokens.size();
             while (i--)
             {
-                AnimatedToken& an = m_animations[i];
+                AnimatedToken& an = m_animated_tokens[i];
                 if (an.update(dt))
                 {
                     // Animated token reached its ddestination: Place
@@ -722,8 +722,8 @@ void PetriEditor::onUpdate(float const dt)
                     }
 
                     // Remove it
-                    m_animations[i] = m_animations[m_animations.size() - 1u];
-                    m_animations.pop_back();
+                    m_animated_tokens[i] = m_animated_tokens[m_animated_tokens.size() - 1u];
+                    m_animated_tokens.pop_back();
                 }
             }
         }

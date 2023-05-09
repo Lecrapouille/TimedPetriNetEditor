@@ -21,7 +21,7 @@
 #include "main.hpp"
 #define protected public
 #define private public
-#  include "src/utils/Animation.hpp"
+#  include "src/utils/AnimatedTokens.hpp"
 #undef protected
 #undef private
 
