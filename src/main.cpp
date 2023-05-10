@@ -28,9 +28,10 @@ static void usage(const char* name)
     std::cout
       << name << " [-t|-p|-g] [petri.json]" << std::endl
       << "Where:" << std::endl
-      << "  [-t|-p|-g] optional argument to force the type of net:" << std::endl
+      << "  [-t|-p|-e|-g] optional argument to force the type of net:" << std::endl
       << "    -t for using a timed petri mode (by default)" << std::endl
       << "    -p for using a petri mode" << std::endl
+      << "    -e for using a timed graph event mode" << std::endl
       << "    -g for using a GRAFCET mode" << std::endl
       << "  [petri.json] is an optional Petri net file to load (i.e. examples/Howard1.json)" << std::endl
       << std::endl;
@@ -44,7 +45,7 @@ int main(int argc, char* argv[])
     PetriNet::Type type = PetriNet::Type::TimedPetri;
     opterr = 0;
     int opt;
-    while ((opt = getopt(argc, argv, "gtph")) != -1)
+    while ((opt = getopt(argc, argv, "gtpeh")) != -1)
     {
         switch (opt)
         {
@@ -59,6 +60,10 @@ int main(int argc, char* argv[])
             case 'p':
                 type = PetriNet::Type::Petri;
                 std::cout << "Petri mode" << std::endl;
+                break;
+            case 'e':
+                type = PetriNet::Type::TimedGraphEvent;
+                std::cout << "Timed graph event mode" << std::endl;
                 break;
             case 'h':
                 usage(argv[0]);

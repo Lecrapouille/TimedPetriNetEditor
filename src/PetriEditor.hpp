@@ -99,6 +99,16 @@ public:
 
     bool screenshot();
     bool load();
+    bool changeTypeOfNet(PetriNet::Type const mode)
+    {
+        if (m_simulating)
+            return false;
+        if (m_petri_net.changeTypeOfNet(mode, m_marked_arcs))
+            return true;
+
+        m_message_bar.setError(m_petri_net.message());
+        return false;
+    }
     std::string const& getError() const { return m_message_bar.getText(); }
     std::vector<MessageBar::TimedMessage> const& getLogs() const { return m_message_bar.getBuffer(); }
     void clearLogs() { m_message_bar.clear(); }

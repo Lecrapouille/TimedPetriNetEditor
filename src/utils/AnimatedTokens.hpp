@@ -43,14 +43,24 @@ struct AnimatedToken
     //! \param[in] type_: Type of the net (Petri, timed Petri, GRAFCET ...)
     //--------------------------------------------------------------------------
     AnimatedToken(Arc& arc_, size_t tokens_, PetriNet::Type type_)
-        : arc(arc_), x(arc_.from.x), y(arc_.from.y), tokens(tokens_)
+        : arc(arc_), x(arc_.from.x), y(arc_.from.y), tokens(tokens_), type(type_)
     {
         assert(arc.from.type == Node::Type::Transition);
         assert(arc.to.type == Node::Type::Place);
 
         // Note: we are supposing the norm and duration is never updated by
         // the user during the simulation.
-        magnitude = norm(arc.from.x, arc.from.y, arc.to.x, arc.to.y);
+        if (type != PetriNet::Type::TimedGraphEvent)
+        {
+            magnitude = norm(arc.from.x, arc.from.y, arc.to.x, arc.to.y);
+        }
+        else
+        {
+            // With graph event we have to skip implicit places.
+            assert(arc.to.arcsOut.size() == 1u && "malformed graph event");
+            Node& next = arc.to.arcsOut[0]->to;
+            magnitude = norm(arc.from.x, arc.from.y, next.x, next.y);
+        }
 
         // Set the token animation speed. Depending on the type of Petri net,
         // and for pure entertainment reason, override the arc duration to
@@ -58,6 +68,7 @@ struct AnimatedToken
         switch (type_)
         {
         case PetriNet::Type::TimedPetri:
+        case PetriNet::Type::TimedGraphEvent:
             speed = magnitude / std::max(0.000001f, arc.duration);
             break;
             // In theory duration is 0 but nicer for the user to see animation.
@@ -136,9 +147,13 @@ struct AnimatedToken
     //--------------------------------------------------------------------------
     bool update(float const dt)
     {
+        // With graph event we have to skip implicit places.
+        Node& next = (type != PetriNet::Type::TimedGraphEvent)
+                   ? arc.to : arc.to.arcsOut[0]->to;
+
         offset += dt * speed / magnitude;
-        x = arc.from.x + (arc.to.x - arc.from.x) * offset;
-        y = arc.from.y + (arc.to.y - arc.from.y) * offset;
+        x = arc.from.x + (next.x - arc.from.x) * offset;
+        y = arc.from.y + (next.y - arc.from.y) * offset;
 
         return (offset >= 1.0);
     }
@@ -161,6 +176,8 @@ struct AnimatedToken
     float y;
     //! \brief Number of carried tokens.
     size_t tokens;
+    //! \brief
+    PetriNet::Type type;
     //! \brief The length of the arc.
     float magnitude;
     //! \brief The speed of the token moving along the arc.

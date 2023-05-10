@@ -132,7 +132,7 @@ Julia file to indicate the correct path of the shared library
 The command line is optional. By default type of net is timed Petri.
 
 ```sh
-TimedPetriNetEditor [-t|-p|-g] [petri.json]
+TimedPetriNetEditor [-t|-p|-e|-g] [petri.json]
 ```
 
 Where:
@@ -145,6 +145,8 @@ Where:
      animated and move along arcs at the speed imposed by the arc duration. The
      current unit of time for animation is 1 second. Tokens are shuffled one by
      one on OR-divergence branches.
+
+   - `-e` for forcing the timed graph event mode. Places are marged within arcs.
 
    - `-p` for forcing the Petri mode. In this mode, places can have any number
      of tokens. Arcs have an implicit unit of time set to 0 (while they
@@ -486,13 +488,11 @@ and single arc, another way to represent event graphs in a more compact form, is
 to merge places with their unique incoming and unique out-coming arcs. From
 figure 2, we obtain the following figure 3, which is a more compact graph but
 equivalent. For example, the arc `P0/5/2` means the place `P0` with the duration
-5 and 2 tokens. Note: this editor does not yet manipulate or show this compact
-form while a prototype is made in the git branch
-[dev-compact-event-graph-disp](https://github.com/Lecrapouille/TimedPetriNetEditor/tree/dev-compact-event-graph-disp).
+5 and 2 tokens.
 
 ![Graph](doc/Graph01.png)
 
-*Fig 3 - A compact form of figure 2 (made with a modified version of the editor).*
+*Fig 3 - A compact form of figure 2 (made with this editor).*
 
 Since, graphs can be represented by adjacency matrices, and since, arcs hold two
 information (duration and tokens), event graphs can be represented by two

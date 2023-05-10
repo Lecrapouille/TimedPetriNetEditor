@@ -548,8 +548,14 @@ public:
 
     //--------------------------------------------------------------------------
     //! \brief Set the type of net: GRAFCET, Petri, Timed Petri ...
+    //! \return false if the net cannot be changed (i.e. to graph event).
     //--------------------------------------------------------------------------
-    void changeTypeOfNet(PetriNet::Type const type);
+    bool changeTypeOfNet(PetriNet::Type const mode, std::vector<Arc*>& erroneous_arcs);
+    bool changeTypeOfNet(PetriNet::Type const mode)
+    {
+        std::vector<Arc*> erroneous_arcs;
+        return changeTypeOfNet(mode, erroneous_arcs);
+    }
 
     //--------------------------------------------------------------------------
     //! \brief Get the type of net: GRAFCET, Petri, Timed Petri ...

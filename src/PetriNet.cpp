@@ -138,9 +138,11 @@ void PetriNet::clear()
 }
 
 //------------------------------------------------------------------------------
-void PetriNet::changeTypeOfNet(PetriNet::Type const mode)
+bool PetriNet::changeTypeOfNet(PetriNet::Type const mode, std::vector<Arc*>& erroneous_arcs)
 {
-    m_type = mode;
+    if (m_type == mode)
+        return true;
+
     switch (mode)
     {
     case PetriNet::Type::GRAFCET:
@@ -155,15 +157,19 @@ void PetriNet::changeTypeOfNet(PetriNet::Type const mode)
         Settings::maxTokens = std::numeric_limits<size_t>::max();
         Settings::firing = Settings::Fire::OneByOne;
         break;
-        // TODO: Missing type
-        //case PetriNet::Type::TimedGraphEvent:
-        //case PetriNet::Type::GraphEvent:
-        // configurate the editor to draw directly doc/Graph01.png
-        // break;
+    case PetriNet::Type::TimedGraphEvent:
+        if ((!isEmpty()) && (!isEventGraph(erroneous_arcs)))
+            return false;
+        Settings::maxTokens = std::numeric_limits<size_t>::max();
+        Settings::firing = Settings::Fire::OneByOne;
+        break;
     default:
         assert(false && "Undefined Petri behavior");
         break;
     }
+
+    m_type = mode;
+    return true;
 }
 
 //------------------------------------------------------------------------------

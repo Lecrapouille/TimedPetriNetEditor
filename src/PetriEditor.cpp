@@ -96,11 +96,14 @@ PetriEditor::PetriEditor(Application& application, PetriNet& net)
 
     switch (m_petri_net.type())
     {
+    case PetriNet::Type::Petri:
+        m_message_bar.setInfo("Welcome to Petri net editor! Type H key for help.");
+        break;
     case PetriNet::Type::TimedPetri:
         m_message_bar.setInfo("Welcome to timed Petri net editor! Type H key for help.");
         break;
-    case PetriNet::Type::Petri:
-        m_message_bar.setInfo("Welcome to Petri net editor! Type H key for help.");
+    case PetriNet::Type::TimedGraphEvent:
+        m_message_bar.setInfo("Welcome to timed graph event editor! Type H key for help.");
         break;
     case PetriNet::Type::GRAFCET:
         m_message_bar.setInfo("Welcome to GRAFCET editor! Type H key for help.");
@@ -312,6 +315,10 @@ void PetriEditor::draw(sf::Text& t, float const number, float const x, float con
 //------------------------------------------------------------------------------
 void PetriEditor::draw(Place const& place, uint8_t alpha)
 {
+    // In graph event we "compress" the graph by not displaying places.
+    if (m_petri_net.type() == PetriNet::Type::TimedGraphEvent)
+        return ;
+
     const float x = place.x;
     const float y = place.y;
 
@@ -411,17 +418,40 @@ void PetriEditor::draw(Transition const& transition, uint8_t alpha)
 //------------------------------------------------------------------------------
 void PetriEditor::draw(Arc const& arc, uint8_t alpha)
 {
-    // Transition -> Place
-    Arrow arrow(arc.from.x, arc.from.y, arc.to.x, arc.to.y, alpha);
-    m_render_texture.draw(arrow);
-
-    if ((arc.from.type == Node::Type::Transition) &&
-        (m_petri_net.type() == PetriNet::Type::TimedPetri))
+    if (m_petri_net.type() == PetriNet::Type::TimedGraphEvent)
     {
-        // Draw the timing
-        float x = arc.from.x + (arc.to.x - arc.from.x) / 2.0f;
-        float y = arc.from.y + (arc.to.y - arc.from.y) / 2.0f;
-        draw(m_text_token, arc.duration, x, y - 15);
+        // In graph event we "compress" the graph by not displaying places.
+        if (arc.from.type == Node::Type::Place)
+            return ;
+        // So we draw arrows between Transition to Transition using the
+        // property of graph event: there is only one place.
+        assert(arc.to.arcsOut.size() == 1u && "malformed graph event");
+        Node& next = arc.to.arcsOut[0]->to;
+        Arrow arrow(arc.from.x, arc.from.y, next.x, next.y, alpha);
+        m_render_texture.draw(arrow);
+
+        // Print the timing / tokens
+        float x = arc.from.x + (next.x - arc.from.x) / 2.0f;
+        float y = arc.from.y + (next.y - arc.from.y) / 2.0f;
+        std::stringstream stream;
+        stream << std::fixed << std::setprecision(2) << arc.duration << ", "
+               << arc.to.key << "(" << reinterpret_cast<Place&>(arc.to).tokens << ")";
+        draw(m_text_token, stream.str(), x, y - 15);
+    }
+    else
+    {
+        // Transition -> Place
+        Arrow arrow(arc.from.x, arc.from.y, arc.to.x, arc.to.y, alpha);
+        m_render_texture.draw(arrow);
+
+        if ((arc.from.type == Node::Type::Transition) &&
+            (m_petri_net.type() == PetriNet::Type::TimedPetri))
+        {
+            // Print the timing for timed petri net
+            float x = arc.from.x + (arc.to.x - arc.from.x) / 2.0f;
+            float y = arc.from.y + (arc.to.y - arc.from.y) / 2.0f;
+            draw(m_text_token, arc.duration, x, y - 15);
+        }
     }
 }
 
@@ -1162,12 +1192,24 @@ void PetriEditor::handleArcDestination()
         // create the origin node before creating the arc.
         float x = m_mouse.x;
         float y = m_mouse.y;
+        if (m_petri_net.type() == PetriNet::Type::TimedGraphEvent)
+        {
+            // With timed event graph we have to add implicit places.
+            float px = x + (m_node_from->x - x) / 2.0f;
+            float py = y + (m_node_from->y - y) / 2.0f;
+            float duration = random(1, 5);
+            Place& n = m_petri_net.addPlace(px, py);
+            if (!m_petri_net.addArc(*m_node_from, n, duration))
+            {
+                m_message_bar.setError(m_petri_net.message());
+            }
+            m_node_from = &n;
+        }
         if (m_node_from->type == Node::Type::Place)
             m_node_to = &m_petri_net.addTransition(x, y);
         else
             m_node_to = &m_petri_net.addPlace(x, y);
     }
-
     // Create the arc. Note: the duration value is only used
     // for arc Transition --> Place.
     float duration = random(1, 5);

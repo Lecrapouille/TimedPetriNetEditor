@@ -129,31 +129,16 @@ static void menu(PetriEditor& editor)
         }
         if (ImGui::BeginMenu("Actions"))
         {
-            if ("Mode")
+            if (ImGui::BeginMenu("Type of net"))
             {
-                switch (editor.m_petri_net.type())
-                {
-                case PetriNet::Type::TimedPetri:
-                    ImGui::Text("Timed Petri net");
-                    break;
-                case PetriNet::Type::Petri:
-                    ImGui::Text("Petri net");
-                    break;
-                case PetriNet::Type::GRAFCET:
-                    ImGui::Text("GRAFCET");
-                    break;
-                default:
-                    assert(false && "Unknown mode");
-                    break;
-                }
+                static int current_type = int(editor.m_petri_net.type());
 
-                // TODO selection
-                //if (ImGui::MenuItem("Timed Petri net", nullptr, false))
-                //{}
-                //if (ImGui::MenuItem("Timed Petri", nullptr, false))
-                //{}
-                //if (ImGui::MenuItem("GRAFCET", nullptr, false))
-                //{}
+                ImGui::RadioButton("Petri net", &current_type, 0);
+                ImGui::RadioButton("Timed Petri net", &current_type, 1);
+                ImGui::RadioButton("Timed graph event", &current_type, 2);
+                ImGui::RadioButton("GRAFCET", &current_type, 3);
+                editor.changeTypeOfNet(PetriNet::Type(current_type));
+                ImGui::EndMenu();
             }
             ImGui::Separator();
 
