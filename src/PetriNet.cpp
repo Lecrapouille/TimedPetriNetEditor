@@ -35,6 +35,7 @@
 #include "formats/ImportFlowshop.hpp"
 
 #include "formats/ExportJSON.hpp"
+#include "formats/ExportCoDeSys.hpp"
 #include "formats/ExportDrawIO.hpp"
 #include "formats/ExportGrafcetLaTeX.hpp"
 #include "formats/ExportPetriLaTeX.hpp"

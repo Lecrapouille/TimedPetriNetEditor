@@ -39,6 +39,7 @@ PetriEditor::PetriEditor(Application& application, PetriNet& net)
     // Format for exporting
     m_exports = {
         { "Julia", { "Julia", {".jl"}, [](PetriNet const& pn, std::string const& file) -> bool { return pn.exportToJulia(file); } } },
+        { "Codesys", { "Codesys", {".codesys.xml"}, [](PetriNet const& pn, std::string const& file) -> bool { return pn.exportToCodesys(file); } } },
         { "Symfony", { "Symfony", {".yaml"}, [](PetriNet const& pn, std::string const& file) -> bool { return pn.exportToSymfony(file); } } },
         { "Draw.io", { "Draw.io", {".drawio.xml"}, [](PetriNet const& pn, std::string const& file) -> bool { return pn.exportToDrawIO(file); } } },
         { "Graphviz", { "Graphviz", {".gv", ".dot"}, [](PetriNet const& pn, std::string const& file) -> bool { return pn.exportToGraphviz(file); } } },

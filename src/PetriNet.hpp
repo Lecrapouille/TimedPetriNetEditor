@@ -811,6 +811,8 @@ public:
     //--------------------------------------------------------------------------
     bool exportToJSON(std::string const& filename) const;
 
+    bool exportToCodesys(std::string const& filename) const;
+
     //--------------------------------------------------------------------------
     //! \brief Export the Grafcet net as LaTeX code as tex file.
     //! \param[in] filename the path of tex file.
