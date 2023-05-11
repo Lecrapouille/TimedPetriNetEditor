@@ -39,26 +39,49 @@ TEST(TestJSONLoader, DummyTransitions)
 }
 
 //------------------------------------------------------------------------------
-// Old JSON format
-TEST(TestJSONLoader, NoCarriageReturn)
+TEST(TestJSONLoader, LoadJSONfile)
 {
     PetriNet net(PetriNet::Type::TimedPetri);
 
-    ASSERT_EQ(net.load("../examples/TrafficLights.json"), true);
+    ASSERT_EQ(net.load("data/GRAFCET.json"), true);
+    ASSERT_EQ(net.type(), PetriNet::Type::GRAFCET);
+    ASSERT_EQ(net.m_places.size(), 13u);
+    ASSERT_EQ(net.m_transitions.size(), 11u);
+    ASSERT_EQ(net.m_arcs.size(), 29u);
+}
+
+//------------------------------------------------------------------------------
+// Compared to TEST(TestJSONLoader, WithCarriageReturn) places have max 1 token.
+TEST(TestJSONLoader, LoadAsGrafcet)
+{
+    PetriNet net(PetriNet::Type::GRAFCET);
+
+    ASSERT_EQ(net.load("data/TrafficLights.json"), true);
     ASSERT_EQ(net.type(), PetriNet::Type::TimedPetri);
     ASSERT_EQ(net.m_places.size(), 7u);
     ASSERT_EQ(net.m_transitions.size(), 6u);
     ASSERT_EQ(net.m_arcs.size(), 16u);
+
+    ASSERT_EQ(net.findPlace(0u)->tokens, 1u);
+    ASSERT_EQ(net.findPlace(3u)->tokens, 1u);
+    ASSERT_EQ(net.findPlace(6u)->tokens, 1u);
+
+    ASSERT_EQ(net.findPlace(1u)->tokens, 0u);
+    ASSERT_EQ(net.findPlace(2u)->tokens, 0u);
+    ASSERT_EQ(net.findPlace(4u)->tokens, 0u);
+    ASSERT_EQ(net.findPlace(5u)->tokens, 0u);
 }
 
 //------------------------------------------------------------------------------
-// New JSON format
-TEST(TestJSONLoader, WithCarriageReturn)
+TEST(TestJSONLoader, SaveAndLoadFile)
 {
     PetriNet net(PetriNet::Type::TimedPetri);
 
-    ASSERT_EQ(net.load("../examples/AppelsDurgence.json"), true);
-    ASSERT_EQ(net.type(), PetriNet::Type::TimedPetri);
+    ASSERT_EQ(net.load("data/AppelsDurgence.json"), true);
+    net.changeTypeOfNet(PetriNet::Type::Petri);
+    ASSERT_EQ(net.save("/tmp/foo.json"), true);
+    ASSERT_EQ(net.load("/tmp/foo.json"), true);
+    ASSERT_EQ(net.type(), PetriNet::Type::Petri);
     ASSERT_EQ(net.m_places.size(), 13u);
     ASSERT_EQ(net.m_transitions.size(), 11u);
     ASSERT_EQ(net.m_arcs.size(), 29u);
@@ -68,18 +91,24 @@ TEST(TestJSONLoader, WithCarriageReturn)
 }
 
 //------------------------------------------------------------------------------
-// Compared to TEST(TestJSONLoader, WithCarriageReturn) places have max 1 token.
-TEST(TestJSONLoader, LoadAsGrafcet)
+TEST(TestJSONLoader, SaveAndLoadDummyNet)
 {
-    PetriNet net(PetriNet::Type::GRAFCET);
+    PetriNet net(PetriNet::Type::TimedPetri);
 
-    ASSERT_EQ(net.load("../examples/AppelsDurgence.json"), true);
-    ASSERT_EQ(net.type(), PetriNet::Type::GRAFCET);
-    ASSERT_EQ(net.m_places.size(), 13u);
-    ASSERT_EQ(net.m_transitions.size(), 11u);
-    ASSERT_EQ(net.m_arcs.size(), 29u);
+    ASSERT_EQ(net.save("/tmp/foo.json"), true);
+    net.addPlace(1.0, 1.0, 2u);
+    ASSERT_EQ(net.m_places.size(), 1u);
 
-    ASSERT_EQ(net.findPlace(4u)->tokens, 1u);
-    ASSERT_EQ(net.findPlace(9u)->tokens, 1u);
-    ASSERT_EQ(net.findPlace(10u)->tokens, 1u);
+    ASSERT_EQ(net.load("/tmp/foo.json"), true);
+    ASSERT_EQ(net.type(), PetriNet::Type::TimedPetri);
+    ASSERT_EQ(net.m_places.size(), 0u);
+    ASSERT_EQ(net.m_transitions.size(), 0u);
+    ASSERT_EQ(net.m_arcs.size(), 0u);
+}
+
+//------------------------------------------------------------------------------
+TEST(TestJSONLoader, LoadUnexistingFile)
+{
+    PetriNet net(PetriNet::Type::TimedPetri);
+    ASSERT_EQ(net.load("foooobar.json"), false);
 }

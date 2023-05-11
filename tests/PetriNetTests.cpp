@@ -661,11 +661,12 @@ TEST(TestPetriNet, TestBadAddRemoveArc)
 }
 
 //------------------------------------------------------------------------------
-TEST(TestPetriNet, TestLoadedNet)
+TEST(TestPetriNet, TestLoadedNetTimedPetri)
 {
     PetriNet net(PetriNet::Type::TimedPetri);
 
-    ASSERT_EQ(net.load("../examples/Howard2.json"), true);
+    ASSERT_EQ(net.load("data/Howard2.json"), true);
+    ASSERT_EQ(net.type(), PetriNet::Type::TimedPetri);
     ASSERT_EQ(net.isEmpty(), false);
     ASSERT_EQ(net.m_next_place_id, 5u);
     ASSERT_EQ(net.m_next_transition_id, 4u);
@@ -943,11 +944,326 @@ TEST(TestPetriNet, TestLoadedNet)
     ASSERT_STREQ(arc->from.key.c_str(), "P4");
     ASSERT_STREQ(arc->to.key.c_str(), "T2");
 
+    // At least one token
+    ASSERT_EQ(net.m_transitions[0].isEnabled(), true);
+    ASSERT_EQ(net.m_transitions[1].isEnabled(), false);
+    ASSERT_EQ(net.m_transitions[2].isEnabled(), false);
+    ASSERT_EQ(net.m_transitions[3].isEnabled(), false);
+
+    // Receptivity
+    ASSERT_EQ(net.m_transitions[0].isValidated(), true);
+    ASSERT_EQ(net.m_transitions[1].isValidated(), true);
+    ASSERT_EQ(net.m_transitions[2].isValidated(), true);
+    ASSERT_EQ(net.m_transitions[3].isValidated(), true);
+
     // Can fire ? (Version 1)
-    ASSERT_EQ(net.m_transitions[0].canFire(), 1u);
-    ASSERT_EQ(net.m_transitions[1].canFire(), 0u);
-    ASSERT_EQ(net.m_transitions[2].canFire(), 0u);
-    ASSERT_EQ(net.m_transitions[3].canFire(), 0u);
+    ASSERT_EQ(net.m_transitions[0].canFire(), true);
+    ASSERT_EQ(net.m_transitions[1].canFire(), false);
+    ASSERT_EQ(net.m_transitions[2].canFire(), false);
+    ASSERT_EQ(net.m_transitions[3].canFire(), false);
+}
+
+//------------------------------------------------------------------------------
+TEST(TestPetriNet, TestLoadedNetGraphEvent)
+{
+    PetriNet net(PetriNet::Type::TimedPetri);
+
+    ASSERT_EQ(net.load("data/GraphEvent.json"), true);
+    ASSERT_EQ(net.type(), PetriNet::Type::TimedGraphEvent);
+    ASSERT_EQ(net.isEmpty(), false);
+    ASSERT_EQ(net.m_next_place_id, 5u);
+    ASSERT_EQ(net.m_next_transition_id, 4u);
+    ASSERT_EQ(net.m_places.size(), 5u);
+    ASSERT_EQ(net.m_transitions.size(), 4u);
+    ASSERT_EQ(net.m_arcs.size(), 10u);
+
+    // Check places
+    ASSERT_EQ(net.m_places[0].id, 0u);
+    ASSERT_STREQ(net.m_places[0].key.c_str(), "P0");
+    ASSERT_STREQ(net.m_places[0].caption.c_str(), "P0");
+    ASSERT_EQ(net.m_places[0].type, Node::Place);
+    ASSERT_EQ(net.m_places[0].tokens, 2u);
+    ASSERT_EQ(net.m_places[0].arcsIn.size(), 1u);
+    ASSERT_EQ(net.m_places[0].arcsOut.size(), 1u);
+    ASSERT_STREQ(net.m_places[0].arcsIn[0]->from.key.c_str(), "T2");
+    ASSERT_STREQ(net.m_places[0].arcsIn[0]->to.key.c_str(), "P0");
+    ASSERT_STREQ(net.m_places[0].arcsOut[0]->from.key.c_str(), "P0");
+    ASSERT_STREQ(net.m_places[0].arcsOut[0]->to.key.c_str(), "T0");
+
+    ASSERT_EQ(net.m_places[1].id, 1u);
+    ASSERT_STREQ(net.m_places[1].key.c_str(), "P1");
+    ASSERT_STREQ(net.m_places[1].caption.c_str(), "P1");
+    ASSERT_EQ(net.m_places[1].type, Node::Place);
+    ASSERT_EQ(net.m_places[1].tokens, 0u);
+    ASSERT_EQ(net.m_places[1].arcsIn.size(), 1u);
+    ASSERT_EQ(net.m_places[1].arcsOut.size(), 1u);
+    ASSERT_STREQ(net.m_places[1].arcsIn[0]->from.key.c_str(), "T0");
+    ASSERT_STREQ(net.m_places[1].arcsIn[0]->to.key.c_str(), "P1");
+    ASSERT_STREQ(net.m_places[1].arcsOut[0]->from.key.c_str(), "P1");
+    ASSERT_STREQ(net.m_places[1].arcsOut[0]->to.key.c_str(), "T1");
+
+    ASSERT_EQ(net.m_places[2].id, 2u);
+    ASSERT_STREQ(net.m_places[2].key.c_str(), "P2");
+    ASSERT_STREQ(net.m_places[2].caption.c_str(), "P2");
+    ASSERT_EQ(net.m_places[2].type, Node::Place);
+    ASSERT_EQ(net.m_places[2].tokens, 0u);
+    ASSERT_EQ(net.m_places[2].arcsIn.size(), 1u);
+    ASSERT_EQ(net.m_places[2].arcsOut.size(), 1u);
+    ASSERT_STREQ(net.m_places[2].arcsIn[0]->from.key.c_str(), "T1");
+    ASSERT_STREQ(net.m_places[2].arcsIn[0]->to.key.c_str(), "P2");
+    ASSERT_STREQ(net.m_places[2].arcsOut[0]->from.key.c_str(), "P2");
+    ASSERT_STREQ(net.m_places[2].arcsOut[0]->to.key.c_str(), "T2");
+
+    ASSERT_EQ(net.m_places[3].id, 3u);
+    ASSERT_STREQ(net.m_places[3].key.c_str(), "P3");
+    ASSERT_STREQ(net.m_places[3].caption.c_str(), "P3");
+    ASSERT_EQ(net.m_places[3].type, Node::Place);
+    ASSERT_EQ(net.m_places[3].tokens, 0u);
+    ASSERT_EQ(net.m_places[3].arcsIn.size(), 1u);
+    ASSERT_EQ(net.m_places[3].arcsOut.size(), 1u);
+    ASSERT_STREQ(net.m_places[3].arcsIn[0]->from.key.c_str(), "T0");
+    ASSERT_STREQ(net.m_places[3].arcsIn[0]->to.key.c_str(), "P3");
+    ASSERT_STREQ(net.m_places[3].arcsOut[0]->from.key.c_str(), "P3");
+    ASSERT_STREQ(net.m_places[3].arcsOut[0]->to.key.c_str(), "T3");
+
+    ASSERT_EQ(net.m_places[4].id, 4u);
+    ASSERT_STREQ(net.m_places[4].key.c_str(), "P4");
+    ASSERT_STREQ(net.m_places[4].caption.c_str(), "P4");
+    ASSERT_EQ(net.m_places[4].type, Node::Place);
+    ASSERT_EQ(net.m_places[4].tokens, 0u);
+    ASSERT_EQ(net.m_places[4].arcsIn.size(), 1u);
+    ASSERT_EQ(net.m_places[4].arcsOut.size(), 1u);
+    ASSERT_STREQ(net.m_places[4].arcsIn[0]->from.key.c_str(), "T3");
+    ASSERT_STREQ(net.m_places[4].arcsIn[0]->to.key.c_str(), "P4");
+    ASSERT_STREQ(net.m_places[4].arcsOut[0]->from.key.c_str(), "P4");
+    ASSERT_STREQ(net.m_places[4].arcsOut[0]->to.key.c_str(), "T2");
+
+    // Check transitions
+    ASSERT_EQ(net.m_transitions[0].id, 0u);
+    ASSERT_STREQ(net.m_transitions[0].key.c_str(), "T0");
+    ASSERT_STREQ(net.m_transitions[0].caption.c_str(), "T0");
+    ASSERT_EQ(net.m_transitions[0].type, Node::Transition);
+    ASSERT_EQ(net.m_transitions[0].arcsIn.size(), 1u);
+    ASSERT_EQ(net.m_transitions[0].arcsOut.size(), 2u);
+    ASSERT_STREQ(net.m_transitions[0].arcsIn[0]->from.key.c_str(), "P0");
+    ASSERT_STREQ(net.m_transitions[0].arcsIn[0]->to.key.c_str(), "T0");
+    ASSERT_STREQ(net.m_transitions[0].arcsOut[0]->from.key.c_str(), "T0");
+    ASSERT_STREQ(net.m_transitions[0].arcsOut[0]->to.key.c_str(), "P1");
+    ASSERT_STREQ(net.m_transitions[0].arcsOut[1]->from.key.c_str(), "T0");
+    ASSERT_STREQ(net.m_transitions[0].arcsOut[1]->to.key.c_str(), "P3");
+
+    ASSERT_EQ(net.m_transitions[1].id, 1u);
+    ASSERT_STREQ(net.m_transitions[1].key.c_str(), "T1");
+    ASSERT_STREQ(net.m_transitions[1].caption.c_str(), "T1");
+    ASSERT_EQ(net.m_transitions[1].type, Node::Transition);
+    ASSERT_EQ(net.m_transitions[1].arcsIn.size(), 1u);
+    ASSERT_EQ(net.m_transitions[1].arcsOut.size(), 1u);
+    ASSERT_STREQ(net.m_transitions[1].arcsIn[0]->from.key.c_str(), "P1");
+    ASSERT_STREQ(net.m_transitions[1].arcsIn[0]->to.key.c_str(), "T1");
+    ASSERT_STREQ(net.m_transitions[1].arcsOut[0]->from.key.c_str(), "T1");
+    ASSERT_STREQ(net.m_transitions[1].arcsOut[0]->to.key.c_str(), "P2");
+
+    ASSERT_EQ(net.m_transitions[2].id, 2u);
+    ASSERT_STREQ(net.m_transitions[2].key.c_str(), "T2");
+    ASSERT_STREQ(net.m_transitions[2].caption.c_str(), "T2");
+    ASSERT_EQ(net.m_transitions[2].type, Node::Transition);
+    ASSERT_EQ(net.m_transitions[2].arcsIn.size(), 2u);
+    ASSERT_EQ(net.m_transitions[2].arcsOut.size(), 1u);
+    ASSERT_STREQ(net.m_transitions[2].arcsIn[0]->from.key.c_str(), "P2");
+    ASSERT_STREQ(net.m_transitions[2].arcsIn[0]->to.key.c_str(), "T2");
+    ASSERT_STREQ(net.m_transitions[2].arcsIn[1]->from.key.c_str(), "P4");
+    ASSERT_STREQ(net.m_transitions[2].arcsIn[1]->to.key.c_str(), "T2");
+    ASSERT_STREQ(net.m_transitions[2].arcsOut[0]->from.key.c_str(), "T2");
+    ASSERT_STREQ(net.m_transitions[2].arcsOut[0]->to.key.c_str(), "P0");
+
+    ASSERT_EQ(net.m_transitions[3].id, 3u);
+    ASSERT_STREQ(net.m_transitions[3].key.c_str(), "T3");
+    ASSERT_STREQ(net.m_transitions[3].caption.c_str(), "T3");
+    ASSERT_EQ(net.m_transitions[3].type, Node::Transition);
+    ASSERT_EQ(net.m_transitions[3].arcsIn.size(), 1u);
+    ASSERT_EQ(net.m_transitions[3].arcsOut.size(), 1u);
+    ASSERT_STREQ(net.m_transitions[3].arcsIn[0]->from.key.c_str(), "P3");
+    ASSERT_STREQ(net.m_transitions[3].arcsIn[0]->to.key.c_str(), "T3");
+    ASSERT_STREQ(net.m_transitions[3].arcsOut[0]->from.key.c_str(), "T3");
+    ASSERT_STREQ(net.m_transitions[3].arcsOut[0]->to.key.c_str(), "P4");
+
+    // Check arcs
+    ASSERT_EQ(net.m_arcs[0].from.id, 0u);
+    ASSERT_EQ(net.m_arcs[0].from.type, Node::Place);
+    ASSERT_STREQ(net.m_arcs[0].from.key.c_str(), "P0");
+    ASSERT_EQ(net.m_arcs[0].to.id, 0u);
+    ASSERT_EQ(net.m_arcs[0].to.type, Node::Transition);
+    ASSERT_STREQ(net.m_arcs[0].to.key.c_str(), "T0");
+    ASSERT_EQ(isnan(net.m_arcs[0].duration), true); // FIXME forcer json a NAN ?
+
+    ASSERT_EQ(net.m_arcs[1].from.id, 0u);
+    ASSERT_EQ(net.m_arcs[1].from.type, Node::Transition);
+    ASSERT_STREQ(net.m_arcs[1].from.key.c_str(), "T0");
+    ASSERT_EQ(net.m_arcs[1].to.id, 1u);
+    ASSERT_EQ(net.m_arcs[1].to.type, Node::Place);
+    ASSERT_STREQ(net.m_arcs[1].to.key.c_str(), "P1");
+    ASSERT_EQ(net.m_arcs[1].duration, 5u);
+
+    ASSERT_EQ(net.m_arcs[2].from.id, 1u);
+    ASSERT_EQ(net.m_arcs[2].from.type, Node::Place);
+    ASSERT_STREQ(net.m_arcs[2].from.key.c_str(), "P1");
+    ASSERT_EQ(net.m_arcs[2].to.id, 1u);
+    ASSERT_EQ(net.m_arcs[2].to.type, Node::Transition);
+    ASSERT_STREQ(net.m_arcs[2].to.key.c_str(), "T1");
+    ASSERT_EQ(isnan(net.m_arcs[2].duration), true);
+
+    ASSERT_EQ(net.m_arcs[3].from.id, 1u);
+    ASSERT_EQ(net.m_arcs[3].from.type, Node::Transition);
+    ASSERT_STREQ(net.m_arcs[3].from.key.c_str(), "T1");
+    ASSERT_EQ(net.m_arcs[3].to.id, 2u);
+    ASSERT_EQ(net.m_arcs[3].to.type, Node::Place);
+    ASSERT_STREQ(net.m_arcs[3].to.key.c_str(), "P2");
+    ASSERT_EQ(net.m_arcs[3].duration, 3u);
+
+    ASSERT_EQ(net.m_arcs[4].from.id, 2u);
+    ASSERT_EQ(net.m_arcs[4].from.type, Node::Place);
+    ASSERT_STREQ(net.m_arcs[4].from.key.c_str(), "P2");
+    ASSERT_EQ(net.m_arcs[4].to.id, 2u);
+    ASSERT_EQ(net.m_arcs[4].to.type, Node::Transition);
+    ASSERT_STREQ(net.m_arcs[4].to.key.c_str(), "T2");
+    ASSERT_EQ(isnan(net.m_arcs[4].duration), true); // FIXME forcer json a NAN ?
+
+    ASSERT_EQ(net.m_arcs[5].from.id, 2u);
+    ASSERT_EQ(net.m_arcs[5].from.type, Node::Transition);
+    ASSERT_STREQ(net.m_arcs[5].from.key.c_str(), "T2");
+    ASSERT_EQ(net.m_arcs[5].to.id, 0u);
+    ASSERT_EQ(net.m_arcs[5].to.type, Node::Place);
+    ASSERT_STREQ(net.m_arcs[5].to.key.c_str(), "P0");
+    ASSERT_EQ(net.m_arcs[5].duration, 5u);
+
+    ASSERT_EQ(net.m_arcs[6].from.id, 0u);
+    ASSERT_EQ(net.m_arcs[6].from.type, Node::Transition);
+    ASSERT_STREQ(net.m_arcs[6].from.key.c_str(), "T0");
+    ASSERT_EQ(net.m_arcs[6].to.id, 3u);
+    ASSERT_EQ(net.m_arcs[6].to.type, Node::Place);
+    ASSERT_STREQ(net.m_arcs[6].to.key.c_str(), "P3");
+    ASSERT_EQ(net.m_arcs[6].duration, 1u);
+
+    ASSERT_EQ(net.m_arcs[7].from.id, 3u);
+    ASSERT_EQ(net.m_arcs[7].from.type, Node::Place);
+    ASSERT_STREQ(net.m_arcs[7].from.key.c_str(), "P3");
+    ASSERT_EQ(net.m_arcs[7].to.id, 3u);
+    ASSERT_EQ(net.m_arcs[7].to.type, Node::Transition);
+    ASSERT_STREQ(net.m_arcs[7].to.key.c_str(), "T3");
+    ASSERT_EQ(isnan(net.m_arcs[7].duration), true); // FIXME forcer json a NAN ?
+
+    ASSERT_EQ(net.m_arcs[8].from.id, 3u);
+    ASSERT_EQ(net.m_arcs[8].from.type, Node::Transition);
+    ASSERT_STREQ(net.m_arcs[8].from.key.c_str(), "T3");
+    ASSERT_EQ(net.m_arcs[8].to.id, 4u);
+    ASSERT_EQ(net.m_arcs[8].to.type, Node::Place);
+    ASSERT_STREQ(net.m_arcs[8].to.key.c_str(), "P4");
+    ASSERT_EQ(net.m_arcs[8].duration, 1u);
+
+    ASSERT_EQ(net.m_arcs[9].from.id, 4u);
+    ASSERT_EQ(net.m_arcs[9].from.type, Node::Place);
+    ASSERT_STREQ(net.m_arcs[9].from.key.c_str(), "P4");
+    ASSERT_EQ(net.m_arcs[9].to.id, 2u);
+    ASSERT_EQ(net.m_arcs[9].to.type, Node::Transition);
+    ASSERT_STREQ(net.m_arcs[9].to.key.c_str(), "T2");
+    ASSERT_EQ(isnan(net.m_arcs[9].duration), true); // FIXME forcer json a NAN ?
+
+    // Can we access to nodes ?
+    ASSERT_EQ(net.isEmpty(), false);
+    ASSERT_EQ(net.findNode("P0"), &net.m_places[0]);
+    ASSERT_EQ(net.findNode("P1"), &net.m_places[1]);
+    ASSERT_EQ(net.findNode("P2"), &net.m_places[2]);
+    ASSERT_EQ(net.findNode("P3"), &net.m_places[3]);
+    ASSERT_EQ(net.findNode("P4"), &net.m_places[4]);
+    ASSERT_EQ(net.findNode("P5"), nullptr);
+    ASSERT_EQ(net.findPlace(0u), &net.m_places[0]);
+    ASSERT_EQ(net.findPlace(1u), &net.m_places[1]);
+    ASSERT_EQ(net.findPlace(2u), &net.m_places[2]);
+    ASSERT_EQ(net.findPlace(3u), &net.m_places[3]);
+    ASSERT_EQ(net.findPlace(4u), &net.m_places[4]);
+    ASSERT_EQ(net.findPlace(5u), nullptr);
+    ASSERT_EQ(net.findNode("T0"), &net.m_transitions[0]);
+    ASSERT_EQ(net.findNode("T1"), &net.m_transitions[1]);
+    ASSERT_EQ(net.findNode("T2"), &net.m_transitions[2]);
+    ASSERT_EQ(net.findNode("T3"), &net.m_transitions[3]);
+    ASSERT_EQ(net.findNode("T4"), nullptr);
+    ASSERT_EQ(net.findTransition(1u), &net.m_transitions[1]);
+    ASSERT_EQ(net.findTransition(2u), &net.m_transitions[2]);
+    ASSERT_EQ(net.findTransition(3u), &net.m_transitions[3]);
+    ASSERT_EQ(net.findTransition(4u), nullptr);
+    ASSERT_EQ(net.findNode("pouet"), nullptr);
+    ASSERT_EQ(net.findNode(""), nullptr);
+
+    // Can we access to arcs ?
+    Arc* arc;
+
+    arc = net.findArc(*net.findNode("T0"), *net.findNode("P1"));
+    ASSERT_NE(arc, nullptr);
+    ASSERT_STREQ(arc->from.key.c_str(), "T0");
+    ASSERT_STREQ(arc->to.key.c_str(), "P1");
+
+    arc = net.findArc(*net.findNode("T0"), *net.findNode("P3"));
+    ASSERT_NE(arc, nullptr);
+    ASSERT_STREQ(arc->from.key.c_str(), "T0");
+    ASSERT_STREQ(arc->to.key.c_str(), "P3");
+
+    arc = net.findArc(*net.findNode("T1"), *net.findNode("P2"));
+    ASSERT_NE(arc, nullptr);
+    ASSERT_STREQ(arc->from.key.c_str(), "T1");
+    ASSERT_STREQ(arc->to.key.c_str(), "P2");
+
+    arc = net.findArc(*net.findNode("T2"), *net.findNode("P0"));
+    ASSERT_NE(arc, nullptr);
+    ASSERT_STREQ(arc->from.key.c_str(), "T2");
+    ASSERT_STREQ(arc->to.key.c_str(), "P0");
+
+    arc = net.findArc(*net.findNode("T3"), *net.findNode("P4"));
+    ASSERT_NE(arc, nullptr);
+    ASSERT_STREQ(arc->from.key.c_str(), "T3");
+    ASSERT_STREQ(arc->to.key.c_str(), "P4");
+
+    arc = net.findArc(*net.findNode("P0"), *net.findNode("T0"));
+    ASSERT_NE(arc, nullptr);
+    ASSERT_STREQ(arc->from.key.c_str(), "P0");
+    ASSERT_STREQ(arc->to.key.c_str(), "T0");
+
+    arc = net.findArc(*net.findNode("P1"), *net.findNode("T1"));
+    ASSERT_NE(arc, nullptr);
+    ASSERT_STREQ(arc->from.key.c_str(), "P1");
+    ASSERT_STREQ(arc->to.key.c_str(), "T1");
+
+    arc = net.findArc(*net.findNode("P2"), *net.findNode("T2"));
+    ASSERT_NE(arc, nullptr);
+    ASSERT_STREQ(arc->from.key.c_str(), "P2");
+    ASSERT_STREQ(arc->to.key.c_str(), "T2");
+
+    arc = net.findArc(*net.findNode("P3"), *net.findNode("T3"));
+    ASSERT_NE(arc, nullptr);
+    ASSERT_STREQ(arc->from.key.c_str(), "P3");
+    ASSERT_STREQ(arc->to.key.c_str(), "T3");
+
+    arc = net.findArc(*net.findNode("P4"), *net.findNode("T2"));
+    ASSERT_NE(arc, nullptr);
+    ASSERT_STREQ(arc->from.key.c_str(), "P4");
+    ASSERT_STREQ(arc->to.key.c_str(), "T2");
+
+    // At least one token
+    ASSERT_EQ(net.m_transitions[0].isEnabled(), true);
+    ASSERT_EQ(net.m_transitions[1].isEnabled(), false);
+    ASSERT_EQ(net.m_transitions[2].isEnabled(), false);
+    ASSERT_EQ(net.m_transitions[3].isEnabled(), false);
+
+    // Receptivity
+    ASSERT_EQ(net.m_transitions[0].isValidated(), true);
+    ASSERT_EQ(net.m_transitions[1].isValidated(), true);
+    ASSERT_EQ(net.m_transitions[2].isValidated(), true);
+    ASSERT_EQ(net.m_transitions[3].isValidated(), true);
+
+    // Can fire ? (Version 1)
+    ASSERT_EQ(net.m_transitions[0].canFire(), true);
+    ASSERT_EQ(net.m_transitions[1].canFire(), false);
+    ASSERT_EQ(net.m_transitions[2].canFire(), false);
+    ASSERT_EQ(net.m_transitions[3].canFire(), false);
 }
 
 //------------------------------------------------------------------------------
@@ -955,7 +1271,8 @@ TEST(TestPetriNet, TestRemoveNode)
 {
     PetriNet net(PetriNet::Type::TimedPetri);
 
-    ASSERT_EQ(net.load("../examples/Howard2.json"), true);
+    ASSERT_EQ(net.load("data/Howard2.json"), true);
+    ASSERT_EQ(net.type(), PetriNet::Type::TimedPetri);
     ASSERT_EQ(net.m_next_place_id, 5u);
     ASSERT_EQ(net.m_next_transition_id, 4u);
     ASSERT_EQ(net.m_places.size(), 5u);

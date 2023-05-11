@@ -3,7 +3,7 @@
   "nets": [
     {
        "name": "AppelsDurgence",
-       "type": "Timed Petri net",
+       "type": "GRAFCET",
        "places": [
             { "id": 0, "caption": "P0", "tokens": 0, "x": 403, "y": 136 },
             { "id": 1, "caption": "P1", "tokens": 0, "x": 269, "y": 217 },

@@ -1,16 +1,16 @@
 //------------------------------------------------------------------------------
 bool PetriNet::exportToJSON(std::string const& filename) const
 {
-    std::string separator;
+    std::string separator("\n");
+
+    //if (isEmpty())
+    //{
+    //    m_message.str("");
+    //    m_message << "I'll not save empty net" << std::endl;
+    //    return false;
+    //}
+
     std::ofstream file(filename);
-
-    if (isEmpty())
-    {
-        m_message.str("");
-        m_message << "I'll not save empty net" << std::endl;
-        return false;
-    }
-
     if (!file)
     {
         m_message.str("");
@@ -19,30 +19,48 @@ bool PetriNet::exportToJSON(std::string const& filename) const
         return false;
     }
 
-    file << "{\n  \"places\": [";
+    file << "{" << std::endl;
+    file << "  \"revision\": 2," << std::endl;
+    file << "  \"nets\": [\n    {" << std::endl;
+    file << "       \"name\": \"" << name() << "\"," << std::endl;
+    file << "       \"type\": \"" << typeOfNet() << "\"," << std::endl;
+
+    // Places
+    file << "       \"places\": [";
     for (auto const& p: m_places)
     {
-        file << separator << "\n    " << '\"' << p.key << ',' << p.caption << ','
-             << p.x << ',' << p.y << ',' << p.tokens << '\"';
-        separator = ",";
+        file << separator; separator = ",\n";
+        file << "            { \"id\": " << p.id << ", \"caption\": \"" << p.caption
+             << "\", \"tokens\": " << p.tokens << ", \"x\": " << p.x
+             << ", \"y\": " << p.y << " }";
     }
-    file << "],\n  \"transitions\": [";
-    separator = "";
+
+    // Transitions
+    separator = "\n";
+    file << "\n       ],\n       \"transitions\": [";
     for (auto const& t: m_transitions)
     {
-        file << separator << "\n    " << '\"' << t.key << ',' << t.caption << ','
-             << t.x << ',' << t.y << ',' << t.angle << '\"';
-        separator = ",";
+        file << separator; separator = ",\n";
+        file << "            { \"id\": " << t.id << ", \"caption\": \"" << t.caption << "\", \"x\": "
+             << t.x << ", \"y\": " << t.y << ", \"angle\": " << t.angle << " }";
     }
-    file << "],\n  \"arcs\": [";
-    separator = "";
+
+    // Arcs
+    separator = "\n";
+    file << "\n       ],\n       \"arcs\": [";
     for (auto const& a: m_arcs)
     {
-        file << separator << "\n    " << '\"' << a.from.key << ','
-             << a.to.key << ',' << a.duration << '\"';
-        separator = ",";
+        file << separator; separator = ",\n";
+        file << "            { \"from\": \"" << a.from.key << "\", " << "\"to\": \"" << a.to.key
+             << "\"";
+        if (a.from.type == Node::Type::Transition)
+            file << ", \"duration\": " << a.duration;
+        file << " }";
     }
-    file << "]\n}";
+    file << "\n       ]" << std::endl;
+    file << "    }" << std::endl;
+    file << "  ]" << std::endl;
+    file << "}" << std::endl;
 
     return true;
 }

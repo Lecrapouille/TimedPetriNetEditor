@@ -113,6 +113,11 @@ public:
     std::vector<MessageBar::TimedMessage> const& getLogs() const { return m_message_bar.getBuffer(); }
     void clearLogs() { m_message_bar.clear(); }
 
+    bool findCriticalCycle()
+    {
+        return m_petri_net.findCriticalCycle(m_marked_arcs);
+    }
+
     //--------------------------------------------------------------------------
     //! \brief Save the Petri net in its current JSON file. If the net was not
     //! loaded from a file, or if the \c force argument is set to true, a file

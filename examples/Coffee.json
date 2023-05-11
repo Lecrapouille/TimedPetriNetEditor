@@ -1,27 +1,37 @@
 {
-  "places": [
-    "P0,Cold,239,104,1",
-    "P1,Hot,245,251,0",
-    "P2,Ready,392,90,0",
-    "P3,Coin Inserted,598,172,0",
-    "P4,Accepted,387,250,0"],
-  "transitions": [
-    "T0,Brew,156,179,0",
-    "T1,Dispense,314,180,0",
-    "T2,Insert Coin,529,90,0",
-    "T3,Reject Coin,465,172,0",
-    "T4,Accept,525,250,0"],
-  "arcs": [
-    "P0,T0,nan",
-    "T0,P1,5",
-    "P1,T1,nan",
-    "T1,P2,0.2",
-    "P2,T2,nan",
-    "T2,P3,2",
-    "P3,T3,nan",
-    "T3,P2,2",
-    "P3,T4,nan",
-    "T4,P4,0.2",
-    "P4,T1,nan",
-    "T1,P0,0.2"]
+  "revision": 2,
+  "nets": [
+    {
+       "name": "Coffee",
+       "type": "Timed Petri net",
+       "places": [
+            { "id": 0, "caption": "Cold", "tokens": 1, "x": 239, "y": 104 },
+            { "id": 1, "caption": "Hot", "tokens": 0, "x": 245, "y": 251 },
+            { "id": 2, "caption": "Ready", "tokens": 0, "x": 392, "y": 90 },
+            { "id": 3, "caption": "Coin Inserted", "tokens": 0, "x": 598, "y": 172 },
+            { "id": 4, "caption": "Accepted", "tokens": 0, "x": 387, "y": 250 }
+       ],
+       "transitions": [
+            { "id": 0, "caption": "Brew", "x": 156, "y": 179, "angle": 0 },
+            { "id": 1, "caption": "Dispense", "x": 314, "y": 180, "angle": 0 },
+            { "id": 2, "caption": "Insert Coin", "x": 529, "y": 90, "angle": 0 },
+            { "id": 3, "caption": "Reject Coin", "x": 465, "y": 172, "angle": 0 },
+            { "id": 4, "caption": "Accept", "x": 525, "y": 250, "angle": 0 }
+       ],
+       "arcs": [
+            { "from": "P0", "to": "T0" },
+            { "from": "T0", "to": "P1", "duration": 5 },
+            { "from": "P1", "to": "T1" },
+            { "from": "T1", "to": "P2", "duration": 0.2 },
+            { "from": "P2", "to": "T2" },
+            { "from": "T2", "to": "P3", "duration": 2 },
+            { "from": "P3", "to": "T3" },
+            { "from": "T3", "to": "P2", "duration": 2 },
+            { "from": "P3", "to": "T4" },
+            { "from": "T4", "to": "P4", "duration": 0.2 },
+            { "from": "P4", "to": "T1" },
+            { "from": "T1", "to": "P0", "duration": 0.2 }
+       ]
+    }
+  ]
 }

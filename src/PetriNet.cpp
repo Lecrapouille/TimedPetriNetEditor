@@ -174,6 +174,25 @@ bool PetriNet::changeTypeOfNet(PetriNet::Type const mode, std::vector<Arc*>& err
 }
 
 //------------------------------------------------------------------------------
+std::string PetriNet::typeOfNet() const
+{
+    switch (m_type)
+    {
+    case PetriNet::Type::GRAFCET:
+        return "GRAFCET";
+    case PetriNet::Type::Petri:
+        return "Petri net";
+    case PetriNet::Type::TimedPetri:
+        return "Timed Petri net";
+    case PetriNet::Type::TimedGraphEvent:
+        return "Timed graph event";
+    default:
+        assert(false && "Undefined Petri behavior");
+        break;
+    }
+}
+
+//------------------------------------------------------------------------------
 void PetriNet::resetReceptivies()
 {
     if (m_type == PetriNet::Type::Petri)
@@ -1045,6 +1064,7 @@ void PetriNet::name(std::string const& filename)
 //------------------------------------------------------------------------------
 bool PetriNet::load(std::string const& filename)
 {
+    clear();
     if (!importFromJSON(filename))
     {
         //clear(); FIXME: because this will clear error message
@@ -1052,5 +1072,7 @@ bool PetriNet::load(std::string const& filename)
     }
 
     name(filename);
+    generateArcsInArcsOut();
+    resetReceptivies();
     return true;
 }

@@ -152,24 +152,27 @@ static void menu(PetriEditor& editor)
                 editor.screenshot();
             ImGui::EndMenu();
         }
+
+        if (editor.m_petri_net.type() == PetriNet::Type::TimedGraphEvent)
+        {
+            if (ImGui::BeginMenu("Graph Events"))
+            {
+                if (ImGui::MenuItem("Show critical circuit", NULL, false))
+                {
+                    editor.findCriticalCycle();
+                }
+                // TODO call all methods concerning SysLin
+                ImGui::EndMenu();
+            }
+        }
         ImGui::EndMenuBar();
     }
-}
-
-//------------------------------------------------------------------------------
-static void graphevents(PetriEditor& editor)
-{
-    ImGui::Begin("Graph Events");
-    ImGui::Text("Is event graph ? %s", "todo");
-    ImGui::Text("Show critical circuit");
-    ImGui::End();
 }
 
 //------------------------------------------------------------------------------
 void PetriEditor::onDrawIMGui()
 {
     ::menu(*this);
-    ::graphevents(*this);
     ::help(*this);
     ::about();
     ::console(*this);

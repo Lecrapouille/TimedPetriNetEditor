@@ -27,69 +27,38 @@ bool PetriNet::importFromJSON(std::string const& filename)
 
     std::vector<std::string> words;
 
-    // Places
-    for (nlohmann::json const& p : json["places"])
+    nlohmann::json const& net = json["nets"][0];
+    m_name = std::string(net["name"]);
+    std::string type = std::string(net["type"]);
+    if (type == "GRAFCET")
+        m_type = PetriNet::Type::GRAFCET;
+    else if (type == "Petri net")
+        m_type = PetriNet::Type::Petri;
+    else if (type == "Timed Petri net")
+        m_type = PetriNet::Type::TimedPetri;
+    else if (type == "Timed graph event")
+        m_type = PetriNet::Type::TimedGraphEvent;
+    else
     {
-        token2vector(p, words);
-        if (words[0][0] != 'P')
-        {
-            m_message.str("");
-            m_message << "Failed parsing '" << filename << "'. Reason was '"
-                      << words[0] << " is not a place'" << std::endl;
-            return false;
-        }
-        if (words.size() != 5u)
-        {
-            m_message.str("");
-            m_message << "Failed parsing '" << filename << "'. Reason was '"
-                      << p << " shall have 5 fields'" << std::endl;
-            return false;
-        }
-        addPlace(convert_to<size_t>(&words[0][1]),  // id
-                 words[1],                          // caption
-                 convert_to<float>(words[2]),       // x
-                 convert_to<float>(words[3]),       // y
-                 convert_to<size_t>(words[4]));     // tokens
+        m_message.str("");
+        m_message << "Failed parsing '" << filename << "'. Reason was '"
+                  << "Unknown type of net: " << type << "'" << std::endl;
+        return false;
     }
+
+    // Places
+    for (nlohmann::json const& p : net["places"])
+        addPlace(p["id"], p["caption"], p["x"], p["y"], p["tokens"]);
 
     // Transitions
-    for (nlohmann::json const& t : json["transitions"])
-    {
-        token2vector(t, words);
-        if (words[0][0] != 'T')
-        {
-            m_message.str("");
-            m_message << "Failed parsing '" << filename << "'. Reason was '"
-                      << words[0] << " is not a transition'" << std::endl;
-            return false;
-        }
-        if (words.size() != 5u)
-        {
-            m_message.str("");
-            m_message << "Failed parsing '" << filename << "'. Reason was '"
-                      << t << " shall have 5 fields'" << std::endl;
-            return false;
-        }
-        addTransition(convert_to<size_t>(&words[0][1]),  // id
-                      words[1],                          // caption
-                      convert_to<float>(words[2]),       // x
-                      convert_to<float>(words[3]),       // y
-                      convert_to<int>(words[4]));        // angle
-    }
+    for (nlohmann::json const& t : net["transitions"])
+        addTransition(t["id"], t["caption"], t["x"], t["y"], t["angle"]);
 
     // Arcs
-    for (nlohmann::json const& a : json["arcs"])
+    for (nlohmann::json const& a : net["arcs"])
     {
-        token2vector(a, words);
-        if (words.size() != 3u)
-        {
-            m_message.str("");
-            m_message << "Failed parsing '" << filename << "'. Reason was '"
-                      << a << " shall have 3 fields'" << std::endl;
-            return false;
-        }
-        Node* from = findNode(words[0]);
-        Node* to = findNode(words[1]);
+        Node* from = findNode(a["from"]);
+        Node* to = findNode(a["to"]);
         if ((from == nullptr) || (to == nullptr))
         {
             m_message.str("");
@@ -99,14 +68,19 @@ bool PetriNet::importFromJSON(std::string const& filename)
             return false;
         }
 
-        float duration = convert_to<float>(words[2]);
-        if (duration < 0.0f)
+        float duration = NAN;
+        auto const& it = a.find("duration");
+        if (it != a.end())
         {
-            m_message.str("");
-            m_message << "Failed parsing '" << filename << "'. Reason was 'Arc "
-                      << words[0] << " -> " << words[1] << " has negative duration'"
-                      << std::endl;
-            return false;
+            duration = *it;
+            if (duration < 0.0f)
+            {
+                m_message.str("");
+                m_message << "Failed parsing '" << filename << "'. Reason was 'Arc "
+                        << words[0] << " -> " << words[1] << " has negative duration'"
+                        << std::endl;
+                return false;
+            }
         }
         if (!addArc(*from, *to, duration))
         {

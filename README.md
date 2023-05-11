@@ -885,26 +885,42 @@ compatible. Here, is an example of its content:
 
 ```json
 {
-  "places": ["P0,204,135,0", "P1,576,132,2"],
-  "transitions": ["T0,376,132,0"],
-  "arcs": ["P0,T0,0", "T0,P1,3"]
+  "revision": 2,
+  "nets": [
+    {
+       "name": "Hello World",
+       "type": "Timed Petri net",
+       "places": [
+            { "id": 0, "caption": "P0", "tokens": 1, "x": 184, "y": 295 },
+            { "id": 1, "caption": "P1", "tokens": 0, "x": 513, "y": 295 }
+       ],
+       "transitions": [
+            { "id": 0, "caption": "T0", "x": 351, "y": 295, "angle": 0 }
+       ],
+       "arcs": [
+            { "from": "P0", "to": "T0" },
+            { "from": "T0", "to": "P1", "duration": 3 },
+            { "from": "T0", "to": "P0", "duration": 1 }
+       ]
+    }
+  ]
 }
 ```
 
+Json file has revison number concerning its syntax (here version 2). Currently
+only an array with a single net is loaded (`"nets": [ { ... ] ]`).
+
 A Petri net is composed of three arrays (the `[ ]`): `Places`, `Transitions` and
 `Arcs`. In this example, is stored in the JSON file a Petri net made of two
-places, one transition, and two arcs. Places are defined as the following `"identifier,
-X-coord, Y-coord, number of tokens"`. Transitions are defined as follows
-`"identifier, X-coord, Y-coord, angle"` and Arcs are defined as follows
-`"identifier origin node, identifier destination node"`.
+places, one transition, and two arcs.
 
 Places and Transitions:
-- their unique identifier (string) i.e. `P0`, `P1`, `T0`. The first character shall
-  be `P` (for Places) or `T` (Transitions).
+- their unique identifier (unsigned int) i.e. `0`, `1`.
+- their caption is a string with spaces accepted.
 - their X and Y coordinate (float) in the screen i.e. `T0` is placed at
-  `(376,132)`.
+  `(351,295)`.
 - for places only: the number of tokens they hold (zero or positive number)
-  i.e. `P0` has 0 tokens while `P1` has two tokens.
+  i.e. `P1` has 0 tokens while `P0` has a single token.
 - for transition only: the angle (in degree) of rotation when displayed.
 
 Arcs:
@@ -915,11 +931,10 @@ Arcs:
   transitions.
 - has a unit of time (positive value) i.e. the arc `T0 --> P1` has 3 units of
   times (float). This time is only used for arc `Transition` to `Place` this
-  means that for arc `Place` to `Transition` this value is not used but given
-  in the JSON file to make easy its parsing.
+  means that for arc `Place` to `Transition` this value is not used.
 
-Note: this project does not use a third-part JSON library for a homemade token
-splitter (see the `class Tokenizer` in the code).
+Petri net:
+- Have a name (here "Hello World") and is typed of "Timed Petri net".
 
 ## Related lectures and projects
 

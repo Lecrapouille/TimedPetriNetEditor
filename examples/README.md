@@ -8,14 +8,14 @@ The machine accept to return the inserted client coin.
 ![Coffee](pics/Coffee.png)
 
 ```
-TimedPetriNetEditor -p examples/Coffee.json
+TimedPetriNetEditor examples/Coffee.json
 ```
 
 ## Traffic Lights
 
 Two traffic lights (red, orange, red lights) synchronized by the Place `P6`.
 
-![TrafficLights](pics/TrafficLights.png)
+![Traffic Lights](pics/TrafficLights.png)
 
 ```
 TimedPetriNetEditor examples/TrafficLights.json
@@ -28,7 +28,7 @@ Three philosophers are eating but they are sharing their fork and knives.
 ![Philosophers](pics/Philosophers.png)
 
 ```
-TimedPetriNetEditor -p examples/Philosophers.json
+TimedPetriNetEditor examples/Philosophers.json
 ```
 
 ## Urgency Call (French 911)
@@ -38,17 +38,17 @@ Victims is calling the 911. A first operator (level 1) is selecting the type of 
 - For a urgent case, the phone call is transfered to the operator of level 2.
 - For a critical case, the phone call is transfered to the operator of level 2 but the operator of level 1 is still present with the victim.
 
-![AppelsDurgence](pics/AppelsDurgence.png)
+![Appels Durgence](pics/AppelsDurgence.png)
 
 ```
-TimedPetriNetEditor -p examples/AppelsDurgence.json
+TimedPetriNetEditor examples/AppelsDurgence.json
 ```
 
 ## Four Roads Junction
 
 Simulate a road junction.
 
-![FourRoadJunctions](pics/FourRoadJunctions.png)
+![Four Road Junctions](pics/FourRoadJunctions.png)
 
 ```
 TimedPetriNetEditor examples/FourRoadJunctions.json
@@ -58,8 +58,18 @@ TimedPetriNetEditor examples/FourRoadJunctions.json
 
 Simulate a producer and a consumer with a buffer.
 
-![ProducerConsumer](pics/ProducerConsumer.png)
+![Producer Consumer](pics/ProducerConsumer.png)
 
 ```
 TimedPetriNetEditor examples/ProducerConsumer.json
+```
+
+## Inputs Outputs
+
+Show source and sinks transitions
+
+![Inputs Outputs](pics/InputsOutputs.png)
+
+```
+TimedPetriNetEditor examples/InputsOutputs.json
 ```

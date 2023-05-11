@@ -1,19 +1,29 @@
 {
-  "places": [
-    "P0,P0,668,272,2",
-    "P1,P1,360,180,2",
-    "P2,P2,374,402,2",
-    "P3,P3,54,282,2"],
-  "transitions": [
-    "T0,T0,526,272,0",
-    "T1,T1,212,282,0"],
-  "arcs": [
-    "T0,P0,1",
-    "P0,T0,nan",
-    "T0,P1,3",
-    "P1,T1,nan",
-    "T1,P2,2",
-    "P2,T0,nan",
-    "T1,P3,4",
-    "P3,T1,nan"]
+  "revision": 2,
+  "nets": [
+    {
+       "name": "Howard1",
+       "type": "Timed graph event",
+       "places": [
+            { "id": 0, "caption": "P0", "tokens": 2, "x": 668, "y": 272 },
+            { "id": 1, "caption": "P1", "tokens": 2, "x": 360, "y": 180 },
+            { "id": 2, "caption": "P2", "tokens": 2, "x": 374, "y": 402 },
+            { "id": 3, "caption": "P3", "tokens": 2, "x": 54, "y": 282 }
+       ],
+       "transitions": [
+            { "id": 0, "caption": "T0", "x": 526, "y": 272, "angle": 0 },
+            { "id": 1, "caption": "T1", "x": 212, "y": 282, "angle": 0 }
+       ],
+       "arcs": [
+            { "from": "T0", "to": "P0", "duration": 1 },
+            { "from": "P0", "to": "T0" },
+            { "from": "T0", "to": "P1", "duration": 3 },
+            { "from": "P1", "to": "T1" },
+            { "from": "T1", "to": "P2", "duration": 2 },
+            { "from": "P2", "to": "T0" },
+            { "from": "T1", "to": "P3", "duration": 4 },
+            { "from": "P3", "to": "T1" }
+       ]
+    }
+  ]
 }

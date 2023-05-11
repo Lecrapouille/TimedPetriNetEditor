@@ -179,7 +179,17 @@ bool PetriEditor::load()
             return false;
         }
 
-        return load(files[0]);
+        if (!load(files[0]))
+            return false;
+
+        // Connect to the MQTT broker
+        if (!connect(MQTT_BROKER_ADDR, MQTT_BROKER_PORT))
+        {
+            m_message_bar.setError("Failed connecting to MQTT broker");
+            return false;
+        }
+
+        return true;
     }
     else
     {
@@ -199,7 +209,7 @@ bool PetriEditor::load(std::string const& file)
         return false;
     }
 
-    m_message_bar.setInfo("Loaded with success the Petri net!");
+    m_message_bar.setInfo("Loaded with success the Petri net file '" + file + "'");
     m_title = m_petri_filename;
     m_petri_net.modified = false;
 
@@ -231,8 +241,7 @@ bool PetriEditor::load(std::string const& file)
                     M.x + TRANS_WIDTH, M.y + TRANS_WIDTH);
     m_grid.resize(r);
 
-    // Connect to the MQTT broker
-    return connect(MQTT_BROKER_ADDR, MQTT_BROKER_PORT);
+    return true;
 }
 
 //------------------------------------------------------------------------------
