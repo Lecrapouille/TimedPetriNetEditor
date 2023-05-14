@@ -72,7 +72,7 @@ DEFINES += -Wno-conversion -Wno-cast-qual
 # library and application
 #
 IMGUI_OBJS = imgui_stdlib.o imgui.o imgui_widgets.o imgui_draw.o imgui_tables.o imgui-SFML.o DearImGui.o
-COMMON_OBJS = MQTT.o Howard.o KeyBindings.o Application.o PetriNet.o HMI.o PetriEditor.o
+COMMON_OBJS = MQTT.o Howard.o KeyBindings.o Application.o Receptivities.o PetriNet.o HMI.o PetriEditor.o
 
 ###################################################
 # Make the list of compiled files for the library
