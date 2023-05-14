@@ -82,7 +82,7 @@ int main(int argc, char* argv[])
         filename = argv[optind];
     }
 
-    Application application(800, 600, "Timed Petri Net Editor");
+    Application application(1200, 720, "Timed Petri Net Editor");
     try
     {
         PetriNet net(type);

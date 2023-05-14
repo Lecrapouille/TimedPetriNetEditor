@@ -78,6 +78,37 @@ static void messagebox(PetriEditor const& editor)
 }
 
 //------------------------------------------------------------------------------
+static void inspector(PetriEditor& editor)
+{
+    PetriNet& net = editor.m_petri_net;
+
+    ImGui::Begin("Places");
+    for (auto& p: net.places())
+    {
+        ImGui::InputText(p.key.c_str(), &p.caption);
+    }
+    ImGui::End();
+
+    ImGui::Begin("Transitions");
+    for (auto& t: net.transitions())
+    {
+        ImGui::InputText(t.key.c_str(), &t.caption);
+    }
+    ImGui::End();
+
+    ImGui::Begin("Arcs");
+    for (auto& a: net.arcs())
+    {
+        if (a.from.type == Node::Type::Transition)
+        {
+            std::string arc(a.from.key + " -> " + a.to.key);
+            ImGui::InputFloat(arc.c_str(), &a.duration, 0.01f, 1.0f, "%.3f");
+        }
+    }
+    ImGui::End();
+}
+
+//------------------------------------------------------------------------------
 static void menu(PetriEditor& editor)
 {
     if (ImGui::BeginMenuBar())
@@ -150,6 +181,11 @@ static void menu(PetriEditor& editor)
             //    editor.grid();
             if (ImGui::MenuItem("Take screenshot", NULL, false))
                 editor.screenshot();
+            ImGui::Separator();
+            //if (ImGui::MenuItem("Run", NULL, false)) TODO
+            //    editor.run();
+            //if (ImGui::MenuItem("Stop", NULL, false)) TODO
+            //    editor.stop();
             ImGui::EndMenu();
         }
 
@@ -177,6 +213,7 @@ void PetriEditor::onDrawIMGui()
     ::about();
     ::console(*this);
     ::messagebox(*this);
-    //::inspector(*this); Affiche tous les noeuds, arcs, permet de les chercher + ajouter editons des champs (caption, transitivite, actions)
+    // TODO:
+    ::inspector(*this);
 }
 

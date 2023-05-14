@@ -39,7 +39,8 @@ include $(M)/Makefile.header
 #
 INCLUDES += -I$(P) -I$(P)/src -I$(P)/src/utils
 INCLUDES += -I$(P)/src/Renderer
-INCLUDES += -I$(P)/external/imgui -I$(P)/external/imgui-sfml
+INCLUDES += -I$(P)/external/imgui -I$(P)/external/imgui/misc/cpp
+INCLUDES += -I$(P)/external/imgui-sfml
 INCLUDES += -I$(P)/external/MQTT/include -I$(P)/external
 INCLUDES += -I$(P)/external/portable-file-dialogs
 INCLUDES += -I$(P)/external/json/include
@@ -50,6 +51,7 @@ INCLUDES += -I$(P)/external/json/include
 VPATH += $(P)/src $(P)/src/utils $(P)/src/julia
 VPATH += $(P)/src/Renderer $(P)/external/MQTT/src
 VPATH += $(P)/external/imgui $(P)/external/imgui-sfml
+VPATH += $(P)/external/imgui/misc/cpp
 
 ###################################################
 # Project defines
@@ -69,7 +71,7 @@ DEFINES += -Wno-conversion -Wno-cast-qual
 # Make the list of compiled files used both by the
 # library and application
 #
-IMGUI_OBJS = imgui.o imgui_widgets.o imgui_draw.o imgui_tables.o imgui-SFML.o DearImGui.o
+IMGUI_OBJS = imgui_stdlib.o imgui.o imgui_widgets.o imgui_draw.o imgui_tables.o imgui-SFML.o DearImGui.o
 COMMON_OBJS = MQTT.o Howard.o KeyBindings.o Application.o PetriNet.o HMI.o PetriEditor.o
 
 ###################################################
