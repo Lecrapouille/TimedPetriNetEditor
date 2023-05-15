@@ -35,6 +35,10 @@ static void about()
                 std::to_string(project::info::patch_version));
     ImGui::Text("%s", version.c_str());
     ImGui::Separator();
+    ImGui::Text("Git branch: %s", project::info::git_branch.c_str());
+    ImGui::Text("Git SHA1: %s", project::info::git_sha1.c_str());
+    ImGui::Text("Compiled as %s", (project::info::mode == project::info::Mode::debug) ? "Debug" : "Release");
+    ImGui::Separator();
     ImGui::Text("Developed by Quentin Quadrat");
     ImGui::Text("Email: lecrapouille@gmail.com");
     ImGui::Separator();
@@ -46,6 +50,10 @@ static void help(PetriEditor const& editor)
 {
     ImGui::Begin("Help");
     ImGui::Text("%s", editor.help().str().c_str());
+    ImGui::Separator();
+    ImGui::Text("Data path: %s", project::info::data_path.c_str());
+    ImGui::Text("Temporary path: %s", project::info::tmp_path.c_str());
+    ImGui::Text("Log path: %s", project::info::log_path.c_str());
     ImGui::End();
 }
 
@@ -131,25 +139,14 @@ static void menu(PetriEditor& editor)
             if (ImGui::MenuItem("Save", NULL, false))
                 editor.save();
             if (ImGui::MenuItem("Save As", NULL, false))
-                {/*TODO*/};
-            if (ImGui::BeginMenu("Export"))
+                editor.save(true);
+            if (ImGui::BeginMenu("Export to"))
             {
-                if (ImGui::MenuItem("To Grafcet C++", NULL, false))
-                    editor.exports("C++");
-                if (ImGui::MenuItem("To Julia lang", NULL, false))
-                    editor.exports("Julia");
-                if (ImGui::MenuItem("To PN-Editor", NULL, false))
-                    editor.exports("PN-Editor");
-                if (ImGui::MenuItem("To Graphviz", NULL, false))
-                    editor.exports("Graphviz");
-                if (ImGui::MenuItem("To Draw.io", NULL, false))
-                    editor.exports("Draw.io");
-                if (ImGui::MenuItem("To Symfony", NULL, false))
-                    editor.exports("Symfony");
-                if (ImGui::MenuItem("To LaTeX (Petri)", NULL, false))
-                    editor.exports("Petri-LaTeX");
-                if (ImGui::MenuItem("To LaTeX (Grafcet)", NULL, false))
-                    editor.exports("Grafcet-LaTeX");
+                for (auto const& it: editor.exporters())
+                {
+                    if (ImGui::MenuItem(it.second.title().c_str(), NULL, false))
+                        editor.exports(it.first.c_str());
+                }
                 ImGui::EndMenu();
             }
 
@@ -206,6 +203,7 @@ static void menu(PetriEditor& editor)
 }
 
 //------------------------------------------------------------------------------
+// TODO: menu MQTT: ok/ko, topic, ip/port
 void PetriEditor::onDrawIMGui()
 {
     ::menu(*this);
@@ -213,7 +211,6 @@ void PetriEditor::onDrawIMGui()
     ::about();
     ::console(*this);
     ::messagebox(*this);
-    // TODO:
     ::inspector(*this);
 }
 

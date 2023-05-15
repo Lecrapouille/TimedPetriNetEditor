@@ -55,22 +55,47 @@ private:
     // *************************************************************************
     struct Export
     {
+        //--------------------------------------------------------------------------
         //! \brief Function doing the exportation of the Petri net into the given
         //! file.
-        using Fun = std::function<bool(PetriNet const& pn, std::string const& file)>;
+        //--------------------------------------------------------------------------
+        using ExportFun = std::function<bool(PetriNet const& pn, std::string const& file)>;
 
-        Export() = default;
-        Export(std::string const& w, std::initializer_list<std::string> const& e, Fun f)
-            : what(w), extensions(e), exports(f)
+        //--------------------------------------------------------------------------
+        //! \brief Default constructor
+        //--------------------------------------------------------------------------
+        Export(std::string const& application, std::string const& title, std::initializer_list<std::string>
+               const& extensions, ExportFun export_function)
+            : m_application(application), m_title(title), m_extensions(extensions),
+              m_export_function(export_function)
         {}
 
-        //! \brief Name to what application we are exports to.
-        std::string what;
-        //! \brief List of file extensions
-        std::vector<std::string> extensions;
+        //--------------------------------------------------------------------------
+        //! \brief
+        //--------------------------------------------------------------------------
+        inline std::string const& title() const { return m_title; }
+
+        //--------------------------------------------------------------------------
+        //! \brief
+        //--------------------------------------------------------------------------
+        bool exports(PetriNet& net, std::string const& application, std::string& message) const;
+
+        //--------------------------------------------------------------------------
+        //! \brief Dummy constructor do not use call it directly.
+        //--------------------------------------------------------------------------
+        Export() = default;
+
+    private:
+
+        //! \brief Name to which application we are exporting the Petri net to.
+        std::string m_application;
+        //! \brief Menu title
+        std::string m_title;
+        //! \brief List of file extensions.
+        std::vector<std::string> m_extensions;
         //! \brief Function doing the exportation of the Petri net into the given
         //! file.
-        Fun exports;
+        ExportFun m_export_function;
     };
 
 public:
@@ -116,6 +141,11 @@ public:
     bool findCriticalCycle()
     {
         return m_petri_net.findCriticalCycle(m_marked_arcs);
+    }
+
+    inline std::map<std::string, PetriEditor::Export>const& exporters() const
+    {
+        return m_exporters;
     }
 
     //--------------------------------------------------------------------------
@@ -355,9 +385,9 @@ sf::RenderTexture m_render_texture;
     //! \brief The Petri net.
 public:    PetriNet& m_petri_net;
 
-private:
+//private:
     //! \brief List of format the editor can export.
-    std::map<std::string, PetriEditor::Export> m_exports;
+    std::map<std::string, PetriEditor::Export> m_exporters;
     //! \brief Memorize initial number of tokens in places.
     std::vector<size_t> m_marks;
     //! \brief Critical cycle found by Howard algorithm. Also used to show

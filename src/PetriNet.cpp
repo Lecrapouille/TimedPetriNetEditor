@@ -128,6 +128,7 @@ PetriNet& PetriNet::operator=(PetriNet const& other)
 //------------------------------------------------------------------------------
 void PetriNet::clear()
 {
+    m_name.clear();
     m_places.clear();
     m_transitions.clear();
     m_shuffled_transitions.clear();

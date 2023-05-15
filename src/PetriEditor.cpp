@@ -26,6 +26,42 @@
 #include <iomanip>
 
 //------------------------------------------------------------------------------
+bool PetriEditor::Export::exports(PetriNet& petri_net, std::string const& application, std::string& message) const
+{
+    std::string extensions;
+    std::string separator;
+    for (auto& it: m_extensions)
+    {
+        extensions += separator;
+        extensions += "*.";
+        extensions += it;
+        separator = " ";
+    }
+
+    pfd::save_file manager("Choose the " + m_application + " file to export",
+                            "petri-gen." + m_extensions[0],
+                            { m_application + " file", extensions });
+    std::string file = manager.result();
+    if (file.empty())
+    {
+        message = "Unselected file";
+        return false;
+    }
+
+    bool res = m_export_function(petri_net, file);
+    if (res)
+    {
+        message = "Petri net successfully exported as " + m_application + " file!";
+        return true;
+    }
+    else
+    {
+        message = petri_net.message();
+        return false;
+    }
+}
+
+//------------------------------------------------------------------------------
 PetriEditor::PetriEditor(Application& application, PetriNet& net)
     : Application::GUI(application, "Editor", sf::Color::White),
       m_petri_net(net),
@@ -37,14 +73,14 @@ PetriEditor::PetriEditor(Application& application, PetriNet& net)
       m_grid(application.bounds())
 {
     // Format for exporting
-    m_exports = {
-        { "Julia", { "Julia", {".jl"}, [](PetriNet const& pn, std::string const& file) -> bool { return pn.exportToJulia(file); } } },
-        { "Codesys", { "Codesys", {".codesys.xml"}, [](PetriNet const& pn, std::string const& file) -> bool { return pn.exportToCodesys(file); } } },
-        { "Symfony", { "Symfony", {".yaml"}, [](PetriNet const& pn, std::string const& file) -> bool { return pn.exportToSymfony(file); } } },
-        { "Draw.io", { "Draw.io", {".drawio.xml"}, [](PetriNet const& pn, std::string const& file) -> bool { return pn.exportToDrawIO(file); } } },
-        { "Graphviz", { "Graphviz", {".gv", ".dot"}, [](PetriNet const& pn, std::string const& file) -> bool { return pn.exportToGraphviz(file); } } },
-        { "PN-Editor", { "PN-Editor", {".pns", ".pnl", ".pnk", ".pnkp"}, [](PetriNet const& pn, std::string const& file) -> bool { return pn.exportToPNEditor(file); } } },
-        { "Petri-LaTeX", { "Petri-LaTeX", {".tex"}, [&](PetriNet const& pn, std::string const& file) -> bool
+    m_exporters = {
+        { "Julia", { "Julia", "To Julia lang", {"jl"}, [](PetriNet const& pn, std::string const& file) -> bool { return pn.exportToJulia(file); } } },
+        { "Codesys", { "Codesys", "To CoDeSys (OpenPLC XML)", {"codesys.xml"}, [](PetriNet const& pn, std::string const& file) -> bool { return pn.exportToCodesys(file); } } },
+        { "Symfony", { "Symfony", "To Symfony workflow", {"yaml"}, [](PetriNet const& pn, std::string const& file) -> bool { return pn.exportToSymfony(file); } } },
+        { "Draw.io", { "Draw.io", "To Draw.io", {"drawio.xml"}, [](PetriNet const& pn, std::string const& file) -> bool { return pn.exportToDrawIO(file); } } },
+        { "Graphviz", { "Graphviz", "To Graphviz", {"gv", "dot"}, [](PetriNet const& pn, std::string const& file) -> bool { return pn.exportToGraphviz(file); } } },
+        { "PN-Editor", { "PN-Editor", "To PN-Editor", {"pns", "pnl", "pnk", "pnkp"}, [](PetriNet const& pn, std::string const& file) -> bool { return pn.exportToPNEditor(file); } } },
+        { "Petri-LaTeX", { "Petri-LaTeX", "To LaTeX (Petri)", {"tex"}, [&](PetriNet const& pn, std::string const& file) -> bool
             {
                 sf::Vector2f figure(15.0f, 15.0f); // PDF figure size
                 sf::Vector2f scale(figure.x / float(m_render_texture.getSize().x),
@@ -52,8 +88,8 @@ PetriEditor::PetriEditor(Application& application, PetriNet& net)
                 return pn.exportToPetriLaTeX(file, scale.x, scale.y);
             }
         } },
-        { "Grafcet-LaTeX", { "Grafcet-LaTeX", {".tex"}, [](PetriNet const& pn, std::string const& file) -> bool { return pn.exportToGrafcetLaTeX(file); } } },
-        { "C++", { "C++", {".hpp", ".h", ".hh", ".h++"}, [](PetriNet const& pn, std::string const& file) -> bool { return pn.exportToCpp(file); } } },
+        { "Grafcet-LaTeX", { "Grafcet-LaTeX", "To LaTeX (Grafcet)", {"tex"}, [](PetriNet const& pn, std::string const& file) -> bool { return pn.exportToGrafcetLaTeX(file); } } },
+        { "C++", { "C++", "To Grafcet C++", {"hpp", "h", "hh", "h++"}, [](PetriNet const& pn, std::string const& file) -> bool { return pn.exportToCpp(file); } } },
     };
 
     // Reserve initial memory for animated tokens
@@ -121,7 +157,17 @@ PetriEditor::PetriEditor(Application& application, PetriNet& net)
 PetriEditor::PetriEditor(Application& application, PetriNet& net, std::string const& file)
     : PetriEditor(application, net)
 {
-    load(file);
+    if (!load(file))
+    {
+        //
+    }
+
+    // Connect to the MQTT broker
+    if (!connect(MQTT_BROKER_ADDR, MQTT_BROKER_PORT))
+    {
+        m_message_bar.setError("Failed connecting to MQTT broker");
+        //return false;
+    }
 }
 
 //------------------------------------------------------------------------------
@@ -168,41 +214,28 @@ void PetriEditor::clear()
 //------------------------------------------------------------------------------
 bool PetriEditor::load()
 {
-    if (!m_simulating)
-    {
-        pfd::open_file manager("Choose the Petri file to load", "",
-                                { "JSON files", "*.json" });
-        std::vector<std::string> files = manager.result();
-        if (files.empty())
-        {
-            m_message_bar.setError("No selected file for loading");
-            return false;
-        }
-
-        if (!load(files[0]))
-            return false;
-
-        // Connect to the MQTT broker
-        if (!connect(MQTT_BROKER_ADDR, MQTT_BROKER_PORT))
-        {
-            m_message_bar.setError("Failed connecting to MQTT broker");
-            return false;
-        }
-
-        return true;
-    }
-    else
+    if (m_simulating)
     {
         m_message_bar.setError("Cannot load during the simulation!");
         return false;
     }
+
+    pfd::open_file manager("Choose the Petri file to load", "",
+                            { "JSON files", "*.json" });
+    std::vector<std::string> files = manager.result();
+    if (files.empty())
+    {
+        m_message_bar.setError("No selected file for loading");
+        return false;
+    }
+
+    return load(files[0]);
 }
 
 //------------------------------------------------------------------------------
 bool PetriEditor::load(std::string const& file)
 {
-    m_petri_filename = file;
-    if (!m_petri_net.load(m_petri_filename))
+    if (!m_petri_net.load(file))
     {
         m_message_bar.setError(m_petri_net.message());
         m_petri_net.clear();
@@ -210,6 +243,7 @@ bool PetriEditor::load(std::string const& file)
     }
 
     m_message_bar.setInfo("Loaded with success the Petri net file '" + file + "'");
+    m_petri_filename = file;
     m_title = m_petri_filename;
     m_petri_net.modified = false;
 
@@ -267,11 +301,11 @@ bool PetriEditor::save(bool const force)
     // console.
     if (m_petri_net.save(m_petri_filename))
     {
-        std::string msg = "Petri net has been saved at " + m_petri_filename;
-        if (!force)
-        {
-            m_message_bar.setInfo(msg);
-        }
+        std::string msg = (force || m_petri_filename.empty())
+            ? "Petri net has been saved-as to " + m_petri_filename
+            : "Petri net " + m_petri_filename + " saved";
+
+        m_message_bar.setInfo(msg);
         m_title = m_petri_filename;
         m_petri_net.modified = false;
         return true;
@@ -834,57 +868,31 @@ Node* PetriEditor::getNode(float const x, float const y)
 }
 
 //------------------------------------------------------------------------------
-bool PetriEditor::exports(std::string const& format)
+bool PetriEditor::exports(std::string const& application)
 {
-    if (m_petri_net.isEmpty())
+    if (m_simulating)
     {
-        m_message_bar.setWarning("Cannot export dummy Petri net!");
+        m_message_bar.setError("Cannot export during the simulation!");
         return false;
     }
 
-    //if (m_simulating)
-    //{
-    //    m_message_bar.setError("Cannot export during the simulation!");
-    //    return false;
-    //}
-
-    if (m_exports.find(format) == m_exports.end())
+    auto const& it = m_exporters.find(application);
+    if (it == m_exporters.end())
     {
-        m_message_bar.setError("Unknown exporting file format: " + format);
-        return false;
-    }
-
-    Export& exp = m_exports[format];
-    std::string all_extensions;
-    std::string c("*");
-    for (auto& it: exp.extensions)
-    {
-        all_extensions += c;
-        all_extensions += it;
-        c = " *";
-    }
-
-    pfd::save_file manager("Choose the " + exp.what + " file to export",
-                            "petri-gen" + exp.extensions[0],
-                            { exp.what + " file", all_extensions });
-    std::string file = manager.result();
-    if (file.empty())
-    {
-        m_message_bar.setError("Unselected file");
+        m_message_bar.setError("Unknown exporting file format for " + application);
         return false;
     }
 
     m_petri_net.generateArcsInArcsOut();
-    bool res = exp.exports(m_petri_net, file);
-    if (res)
+    std::string message;
+    if ((*it).second.exports(m_petri_net, application, message))
     {
-        m_message_bar.setInfo(
-            "Petri net successfully exported as " + exp.what + " file!");
+        m_message_bar.setInfo(message);
         return true;
     }
     else
     {
-        m_message_bar.setError(m_petri_net.message());
+        m_message_bar.setError(message);
         return false;
     }
 }
