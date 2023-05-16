@@ -90,17 +90,20 @@ static void inspector(PetriEditor& editor)
 {
     PetriNet& net = editor.m_petri_net;
 
+    // Do not allow editing when running simulation
+    const auto readonly = editor.m_simulating ? ImGuiInputTextFlags_ReadOnly : ImGuiInputTextFlags_None;
     ImGui::Begin("Places");
+    // TODO pour event graph: afficher ImGui::InputText("T1 P0 T2", &p.places);
     for (auto& p: net.places())
     {
-        ImGui::InputText(p.key.c_str(), &p.caption);
+        ImGui::InputText(p.key.c_str(), &p.caption, readonly);
     }
     ImGui::End();
 
     ImGui::Begin("Transitions");
     for (auto& t: net.transitions())
     {
-        ImGui::InputText(t.key.c_str(), &t.caption);
+        ImGui::InputText(t.key.c_str(), &t.caption, readonly);
     }
     ImGui::End();
 
@@ -110,7 +113,7 @@ static void inspector(PetriEditor& editor)
         if (a.from.type == Node::Type::Transition)
         {
             std::string arc(a.from.key + " -> " + a.to.key);
-            ImGui::InputFloat(arc.c_str(), &a.duration, 0.01f, 1.0f, "%.3f");
+            ImGui::InputFloat(arc.c_str(), &a.duration, 0.01f, 1.0f, "%.3f", readonly);
         }
     }
     ImGui::End();
@@ -123,11 +126,11 @@ static void menu(PetriEditor& editor)
     {
         if (ImGui::BeginMenu("File"))
         {
-            if (ImGui::MenuItem("New", NULL, false))
+            if (ImGui::MenuItem("New", nullptr, false))
                 {/*TODO*/};
 
             ImGui::Separator();
-            if (ImGui::MenuItem("Open", NULL, false))
+            if (ImGui::MenuItem("Open", nullptr, false))
                 editor.load();
             if (ImGui::BeginMenu("Import"))
             {
@@ -136,22 +139,22 @@ static void menu(PetriEditor& editor)
             }
 
             ImGui::Separator();
-            if (ImGui::MenuItem("Save", NULL, false))
+            if (ImGui::MenuItem("Save", nullptr, false))
                 editor.save();
-            if (ImGui::MenuItem("Save As", NULL, false))
+            if (ImGui::MenuItem("Save As", nullptr, false))
                 editor.save(true);
             if (ImGui::BeginMenu("Export to"))
             {
                 for (auto const& it: editor.exporters())
                 {
-                    if (ImGui::MenuItem(it.second.title().c_str(), NULL, false))
+                    if (ImGui::MenuItem(it.second.title().c_str(), nullptr, false))
                         editor.exports(it.first.c_str());
                 }
                 ImGui::EndMenu();
             }
 
             ImGui::Separator();
-            if (ImGui::MenuItem("Exit", NULL, false))
+            if (ImGui::MenuItem("Exit", nullptr, false))
                 editor.close();
             ImGui::EndMenu();
         }
@@ -170,31 +173,57 @@ static void menu(PetriEditor& editor)
             }
             ImGui::Separator();
 
-            if (ImGui::MenuItem("Clear net", NULL, false))
+            if (ImGui::MenuItem("Clear net", nullptr, false))
                 editor.clear();
-            if (ImGui::MenuItem("Align nodes", NULL, false))
+            if (ImGui::MenuItem("Align nodes", nullptr, false))
                 editor.align();
-            //if (ImGui::MenuItem("Show grid", NULL, false)) TODO
+            //if (ImGui::MenuItem("Show grid", nullptr, false)) TODO
             //    editor.grid();
-            if (ImGui::MenuItem("Take screenshot", NULL, false))
+            if (ImGui::MenuItem("Take screenshot", nullptr, false))
                 editor.screenshot();
             ImGui::Separator();
-            //if (ImGui::MenuItem("Run", NULL, false)) TODO
+            //if (ImGui::MenuItem("Run", nullptr, false)) TODO
             //    editor.run();
-            //if (ImGui::MenuItem("Stop", NULL, false)) TODO
+            //if (ImGui::MenuItem("Stop", nullptr, false)) TODO
             //    editor.stop();
             ImGui::EndMenu();
         }
 
-        if (editor.m_petri_net.type() == PetriNet::Type::TimedGraphEvent)
+        if ((editor.m_petri_net.type() == PetriNet::Type::TimedGraphEvent) ||
+            (editor.m_petri_net.isEventGraph()))
         {
             if (ImGui::BeginMenu("Graph Events"))
             {
-                if (ImGui::MenuItem("Show critical circuit", NULL, false))
+                if (ImGui::MenuItem("Show critical circuit", nullptr, false))
                 {
-                    editor.findCriticalCycle();
+                    editor.findCriticalCycle(); // TODO show other information
                 }
-                // TODO call all methods concerning SysLin
+                if (ImGui::MenuItem("To dynamic linear (max, +) system", nullptr, false))
+                {
+                    SparseMatrix D; SparseMatrix A; SparseMatrix B; SparseMatrix C;
+                    editor.m_petri_net.toSysLin(D, A, B, C);
+                    SparseMatrix::display_for_julia = false;
+                    std::cout << "D: " << D << std::endl
+                              << "A: " << A << std::endl
+                              << "B: " << B << std::endl
+                              << "C: " << C << std::endl;
+                }
+                if (ImGui::MenuItem("Show Dater form", nullptr, false))
+                {
+                    std::cout << editor.m_petri_net.showDaterForm().str() << std::endl;
+                }
+                if (ImGui::MenuItem("Show Counter form", nullptr, false))
+                {
+                    std::cout << editor.m_petri_net.showCounterForm().str() << std::endl;
+                }
+                if (ImGui::MenuItem("Show adjacency matrices", nullptr, false))
+                {
+                    SparseMatrix tokens; SparseMatrix durations;
+                    editor.m_petri_net.toAdjacencyMatrices(tokens, durations);
+                    SparseMatrix::display_for_julia = false;
+                    std::cout << "Durations: " << durations << std::endl;
+                    std::cout << "Tokens: " << tokens << std::endl;
+                }
                 ImGui::EndMenu();
             }
         }
