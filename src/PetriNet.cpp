@@ -56,10 +56,12 @@ bool SparseMatrix::display_for_julia = true;
 //------------------------------------------------------------------------------
 bool Transition::isEnabled() const
 {
-    // Transition source
+    // Transition source will always produce tokens.
     if (arcsIn.size() == 0u)
         return true;
 
+    // To enabled this current transition, all its previous Places shall have at
+    // least one token.
     for (auto& a: arcsIn)
     {
         if (a->tokensIn() == 0u)
@@ -72,13 +74,17 @@ bool Transition::isEnabled() const
 //------------------------------------------------------------------------------
 size_t Transition::howManyTokensCanBurnt() const
 {
-    // Transition source
+    // Transition source will fire one token iff the animated token transitioning
+    // along the arcs has reached the Place (in this receptivity becomes true ...
+    // FIXME this will conflict if we add code to the receptivity add && animation_done)
     if (arcsIn.size() == 0u)
         return size_t(receptivity != false);
 
+    // The transition is false => it does not let burn tokens.
     if (receptivity == false)
         return 0u;
 
+    // Iterate on all previous places to know how many tokens can be burned.
     size_t burnt = static_cast<size_t>(-1);
     for (auto& a: arcsIn)
     {
@@ -103,13 +109,16 @@ PetriNet& PetriNet::operator=(PetriNet const& other)
 {
     if (this != &other)
     {
+        m_name = other.m_name;
         m_type = other.m_type;
         m_places = other.m_places;
         m_transitions = other.m_transitions;
         m_next_place_id = other.m_next_place_id;
         m_next_transition_id = other.m_next_transition_id;
+        m_message.str("");
+        modified = true;
 
-        // We have to redo references
+        // For arcs: we have to redo references to nodes
         m_arcs.clear();
         for (auto const& it: other.m_arcs)
         {
@@ -137,7 +146,7 @@ void PetriNet::clear()
     m_arcs.clear();
     m_next_place_id = 0u;
     m_next_transition_id = 0u;
-    modified = false;
+    modified = true;
     m_message.str("");
 }
 
@@ -162,6 +171,7 @@ bool PetriNet::changeTypeOfNet(PetriNet::Type const mode, std::vector<Arc*>& err
         Settings::firing = Settings::Fire::OneByOne;
         break;
     case PetriNet::Type::TimedGraphEvent:
+        // Check conditions of a well formed event graph
         if ((!isEmpty()) && (!isEventGraph(erroneous_arcs)))
             return false;
         Settings::maxTokens = std::numeric_limits<size_t>::max();
@@ -172,6 +182,7 @@ bool PetriNet::changeTypeOfNet(PetriNet::Type const mode, std::vector<Arc*>& err
         break;
     }
 
+    // Place this at the end because of possible return false.
     m_type = mode;
     return true;
 }

@@ -38,18 +38,19 @@ struct SparseMatrix;
 
 // *****************************************************************************
 //! \brief Settings for defining the type of net (GRAFCET, Petri net, timed
-//! petri net). This structure is global for the current net and is used by the
-//! PetriNet class.
+//! petri net, timed graph event ...). This structure is global for the current
+//! net and is used by the PetriNet class.
 // *****************************************************************************
 struct Settings
 {
-    //! \brief Max number of tokens in places. For GRAFCET: 1. For Petri nets:
+    //! \brief Max number of tokens in places. For GRAFCET: 1. For other nets:
     //! std::numeric_limits<size_t>::max().
     static size_t maxTokens;
 
     //! \brief The theory would burn the maximum possibe of tokens that we can
-    //! in a single action (Fire::MaxPossible) but we can also try to burn
-    //! tokens one by one and randomize the transitions (Fire::OneByOne).
+    //! within a single action (Fire::MaxPossible) but we can also try to burn
+    //! tokens one by one and randomize the transitions (Fire::OneByOne). This
+    //! will favor dispatching tokens along arcs.
     enum class Fire { OneByOne, MaxPossible };
 
     //! \brief Burn tokens one by one or as many as possible.
@@ -59,7 +60,7 @@ struct Settings
 // *****************************************************************************
 //! \brief Since Petri nets are bipartite graph there are two kind of nodes:
 //! place and transition. This class shall not be used directly as instance, it
-//! only allows to factorize the code of derived class Place and Transition.
+//! only allows to factorize the code of derived classes Place and Transition.
 // *****************************************************************************
 class Node
 {
@@ -73,7 +74,7 @@ public:
 
     //--------------------------------------------------------------------------
     //! \brief Constructor. No sanity checks are made in this method.
-    //! \param[in] type: Type of Petri node: Place or Transition.
+    //! \param[in] type_: Type of Petri node: Place or Transition.
     //! \param[in] id_: unique identifier (0u, 1u, ...).
     //! \param[in] caption_: Text to displaying indentifying the node.
     //! \param[in] x_: X-axis coordinate in the window needed for the display.
@@ -83,8 +84,7 @@ public:
          float const x_, float const y_)
         : type(type_), id(id_),
           key((type == Node::Type::Place ? 'P' : 'T') + std::to_string(id)),
-          x(x_), y(y_),
-          caption(caption_.empty() ? key : caption_)
+          x(x_), y(y_), caption(caption_.empty() ? key : caption_)
     {
         fading.restart();
     }
@@ -101,21 +101,21 @@ public:
     }
 
     //--------------------------------------------------------------------------
-    //! \brief Needed to remove compilation warnings.
+    //! \brief Needed to remove compilation warnings with clang++ and MacOSx.
     //--------------------------------------------------------------------------
     Node(Node const& other)
         : Node(other.type, other.id, other.caption, other.x, other.y)
     {}
 
     //--------------------------------------------------------------------------
-    //! \brief Needed to remove compilation warnings.
+    //! \brief Needed to remove compilation warnings with clang++ and MacOSx.
     //--------------------------------------------------------------------------
     Node(Node&& other)
         : Node(other.type, other.id, other.caption, other.x, other.y)
     {}
 
     //--------------------------------------------------------------------------
-    //! \brief Needed to remove compilation warnings.
+    //! \brief Needed to remove compilation warnings with clang++ and MacOSx.
     //--------------------------------------------------------------------------
     Node& operator=(Node&& other)
     {
@@ -141,16 +141,18 @@ public:
 
 public:
 
-    //! \brief Type of nodes: Petri Place or Petri Transition.
+    //! \brief Type of nodes: Petri Place or Petri Transition .Once created it is
+    //! not supposed to be changed.
     Type const type;
     //! \brief Unique identifier (auto-incremented from 0 by the derived class).
+    //! Once created it is not supposed to be changed.
     size_t const id;
     //! \brief Unique node identifier as string. It is formed by the 'P' char
     //! for place or by the 'T' char for transition followed by the unique
     //! identifier (i.e. "P0", "P1", "T0", "T1", ...). Once created it is not
     //! supposed to be changed.
     std::string const key;
-    //! \brief Position in the window needed for the display.
+    //! \brief Position inside the window needed for the display.
     float x;
     //! \brief Position in the window needed for the display.
     float y;
@@ -159,7 +161,7 @@ public:
     std::string caption;
     //! \brief Timer for fading colors.
     sf::Clock fading;
-    //! \brief Hold the incoming arcs to access to predecessor nodes.
+    //! \brief Hold the incoming arcs to access to previous nodes.
     //! \note this vector is updated by the method
     //! PetriNet::generateArcsInArcsOut() and posible evolution could be to
     //! update dynamicaly this vector when editing the net through the GUI.
@@ -186,11 +188,11 @@ public:
     //--------------------------------------------------------------------------
     //! \brief Constructor. To be used when loading a Petri net from JSON file.
     //! \param[in] id_: unique node identifier. Shall be unique (responsability
-    //!   given to the caller class.
-    //! \param[in] caption_: Text to displaying indentifying the node.
+    //!   given to the caller class).
+    //! \param[in] caption_: Displayed text under the node.
     //! \param[in] x_: X-axis coordinate in the window needed for the display.
     //! \param[in] y_: Y-axis coordinate in the window needed for the display.
-    //! \param[in] tokens_: Initial number of tokens in the place.
+    //! \param[in] tokens_: Initial number of tokens in the place >= 0.
     //--------------------------------------------------------------------------
     Place(size_t const id_, std::string const& caption_, float const x_,
           float const y_, size_t const tokens_)
@@ -201,7 +203,7 @@ public:
     }
 
     //--------------------------------------------------------------------------
-    //! \brief Static method stringifing a place given an identifier.
+    //! \brief Static method stringifying a place given an identifier.
     //! \return "P42" for example.
     //--------------------------------------------------------------------------
     inline static std::string to_str(size_t const id_)
@@ -210,7 +212,7 @@ public:
     }
 
     //--------------------------------------------------------------------------
-    //! \brief
+    //! \brief For debug purpose only.
     //--------------------------------------------------------------------------
     inline friend std::ostream& operator<<(std::ostream& os, Place const& p)
     {
@@ -242,9 +244,11 @@ public:
 
     //--------------------------------------------------------------------------
     //! \brief Constructor. To be used when loading a Petri net from JSON file.
-    //! \param[in] id: unique node identifier.
-    //! \param[in] x: X-axis coordinate in the window needed for the display.
-    //! \param[in] y: Y-axis coordinate in the window needed for the display.
+    //! \param[in] id_: unique node identifier. Shall be unique (responsability
+    //!   given to the caller class).
+    //! \param[in] caption_: Displayed text under the node.
+    //! \param[in] x_: X-axis coordinate in the window needed for the display.
+    //! \param[in] y_: Y-axis coordinate in the window needed for the display.
     //! \param[in] angle_: angle in degree of rotation for the display.
     //! \param[in] recep_: receptivity of the transition.
     //--------------------------------------------------------------------------
@@ -255,7 +259,7 @@ public:
     {}
 
     //--------------------------------------------------------------------------
-    //! \brief Static method stringifing a transition given an identifier.
+    //! \brief Static method stringifying a transition given an identifier.
     //! \return "T42" for example.
     //--------------------------------------------------------------------------
     inline static std::string to_str(size_t const id_)
@@ -270,26 +274,28 @@ public:
     inline bool isValidated() const { return receptivity; }
 
     //--------------------------------------------------------------------------
-    //! \brief Check if all upstream places have all at leat one token (meaning
-    //! if all upstream places (steps for GRAFCET) are activated.
+    //! \brief Check if all previous places have all at leat one token (meaning
+    //! if all previous places (steps for GRAFCET) are activated.
     //--------------------------------------------------------------------------
     bool isEnabled() const;
 
     //--------------------------------------------------------------------------
-    //! \brief Check if the transition is validated and all upstream places have
-    //! all at leat one token. In this case the transition is passable and can
-    //! burn tokens in upstream places.
-    //! \note The firing is made by the PetriNet class.
+    //! \brief Check if the transition is validated and all previous places have
+    //! all at leat one token. In this case the transition can burn tokens in all
+    //! previous places.
+    //! \note The burning of tokens is made by the PetriEditor class during the
+    //! animation.
     //! \return true if can fire else return false.
     //--------------------------------------------------------------------------
     bool canFire() const { return isValidated() && isEnabled(); }
 
     //--------------------------------------------------------------------------
     //! \brief Return the maximum possibe of tokens that can be burnt in
-    //!   upstream places.
-    //! \note This method does not modify the number of tokens in predecessor
-    //!   places.
-    //! \return the number of tokens that be burnt or 0u if cannot fire.
+    //!   previous places iff canFire() is true.
+    //! \note This method does not modify the number of tokens in previous places.
+    //! \return the max number of tokens that be burnt or 0u if cannot fire. This
+    //! number can be > 1 even for GRAFCET because the saturation shall be done
+    //! after by the caller.
     //--------------------------------------------------------------------------
     size_t howManyTokensCanBurnt() const;
 
@@ -335,7 +341,7 @@ public:
     }
 
     //--------------------------------------------------------------------------
-    //! \brief
+    //! \brief For debug purpose only.
     //--------------------------------------------------------------------------
     friend std::ostream& operator<<(std::ostream& os, Transition const& t)
     {
@@ -347,13 +353,16 @@ public:
 public:
 
     //! \brief Transitions are depicted by rectangles. We allow to rotate it
-    //! to have horizontal, vertical or diagonal shape transitions.
+    //! to have horizontal, vertical or diagonal shape transitions when rendering
+    //! transitions.
     int angle = 0;
 
     //! \brief In petri net mode, the user has to click to validate the
-    //! receptivity of the transition. If upstream places have all at least one
-    //! token, the transition is fired, burning tokens in upstream places and
-    //! create tokens in the successor places.
+    //! receptivity of the transition. If previous places have all at least one
+    //! token, the transition is fired, burning tokens in previous places and
+    //! create tokens in the successor places. In timed Petri net receptivities
+    //! are always true. In GRAFCET receptivity depends on boolean logic on
+    //! sensors (i.e. urgency button pressed).
     bool receptivity = false;
 };
 
