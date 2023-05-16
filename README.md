@@ -397,9 +397,9 @@ The (min,+) algebra, for event graphs, is less convenient since the dater form i
 more friendly than the counter form for two reasons:
 - on a real-time system the number of resources (tokens) is reduced compared to
   duration needed to perform tasks (duration on arcs) which can be arbitrary
-  long (for example 2 resources versus 2 hours delay when your system is
-  scheduled at 1 Hz).  Remember that in a discrete-time system each delay costs
-  one variable (memory) to hold the value.
+  long (for example 2 resources (2 delays) versus 2 hours when your system is
+  scheduled at 1 Hz (7200 delays). Remember that in a discrete-time system each
+  delay costs one variable (memory) to hold the value.
 - thanks to the canonical form (explained in the next section) delays can
   simplify be either 0 or 1.
 
@@ -421,10 +421,10 @@ been transferred to the newly created `P5` place.
 
 *Fig 3 - Canonical Event Graph (made with this editor).*
 
-This kind of event graph can directly be converted into an implicit dynamic
-linear systems in the (max,+) algebra (see section after) but since editing
-canonical net is fastidious and therefore it is hidden from the user and the user
-can directly manipulate the compact form.
+A canonical event graph can directly be converted into an implicit dynamic
+linear systems inside the (max,+) algebra (see section after) but since editing
+canonical net is fastidious and therefore the editor will deal it and let the
+user can directly manipulate the compact form of event graph.
 
 ### Implicit max-plus Dynamic Linear Systems
 
@@ -444,21 +444,22 @@ Or using the compact syntax:
 ```
 
 In where `A, B, C, D` are (max,+) matrices: `B` is named controlled matrix, `C`
-the observation matrix, `A` the state matrix, and `D` the implicit matrix. `U`
-the column vector of system inputs (transitions with no predecessor), `Y` the
-system outputs (transitions with no successor), and `X` the systems states as
-a column vector (transitions with successor and predecessor), `n` in `X(n)`,
-`U(n)`, `Y(n)` are places with no token, and `n-1` in `X(n-1)` are places having
-a single token. Note: that is why, in the previous section, we said that
-canonical form has its input and output places with no token. This editor can
-generate these (max,+) sparse matrices (for Julia), for example from figure 3:
+the observation matrix, `A` the state matrix (places with 1 token), and `D` the
+implicit matrix (places without token). `U` the column vector of system inputs
+(transitions with no predecessor), `Y` the system outputs (transitions with no
+successor), and `X` the systems states as a column vector (transitions with
+successor and predecessor), `n` in `X(n)`, `U(n)`, `Y(n)` are places with no
+token, and `n-1` in `X(n-1)` are places having a single token. Note: that is
+why, in the previous section, we said that canonical form has its input and
+output places with no token. This editor can generate these (max,+) sparse
+matrices (for Julia), for example from figure 3:
 
 ```
-    | .  .  .  .  . |       | .  .  .  .  0 |
+    | .  .  .  .  . |       | .  .  .  .  5 |
     | 5  .  .  .  . |       | .  .  .  .  . |
 D = | .  3  .  1  . |,  A = | .  .  .  .  . |
     | 1  .  .  .  . |       | .  .  .  .  . |
-    | .  .  .  .  . |       | .  .  5  .  . |
+    | .  .  .  .  . |       | .  .  0  .  . |
 
 ```
 
@@ -466,29 +467,51 @@ Since this particular net has no input and outputs, there are no U, Y, B, or C
 matrices. Note: `.` is the compact form of the (max,+) number `ε` which is the
 `-∞` in classic algebra means that there is no existing arc (usually, these
 kinds of matrices are sparse since they can be huge but with few elements
-stored).  Let's suppose that matrix indices start from `0`, then `D[1,0]` holds
-the duration 5 (unit of times) and 0 tokens (the arc `T0 -> P1 -> T1`).  `A[0,4]`
-holds the duration 0 (unit of times) and 1 token (the arc `T4 -> P5 -> T0`).
+stored).  Let's suppose that matrix indices start from `0`, then `D[2,3]` holds
+the duration 1 (unit of times) and 0 tokens (the arc `T3 -> P4 -> T2`).  `A[0,4]`
+holds the duration 5 (unit of times) and 1 token (the arc `T4 -> P0 -> T0`).
+
+`[i,j]` (of matrices `A, B, C, D`) refers to the arc `Tj -> P -> Ti`. Note, the
+direction is inversed because of matrix multiplication `A x`.
+
+Let give an example with inputs and outputs. The following figure 5 show an network
+with one input and one output.
+
+![JPQ](doc/JPQPetri.png)
+
+*Fig 5 - Network with one input and one output (made with this editor).*
+
+and corresponds to this graph:
+
+![graph](doc/JPQgraph.png)
+
+The matrices are:
+
+```
+    | .  . |      | 3  7 |      | . |
+D = | .  . |, A = | 2  4 |, B = | 1 |, C = | 3 . |
+```
+
 
 These kinds of systems are interesting for real-time systems because they can show
-to the critical circuit of the system (in duration). This editor can show the
-a critical circuit as shown in the next figure 4 where the circuit `T0, T1, T2`
+to the critical circuit of the system (in duration). The algorihm used is [Howard](http://www.cmap.polytechnique.fr/~gaubert/HOWARD2.html). This editor can show the
+a critical circuit as shown in the next figure 5 where the circuit `T0, T1, T2`
 will consume 13 units of time (5 + 5 + 3) for two tokens (in `P0`) and therefore
 6.5 units of time by token (this information is for the moment displayed on the
 console).
 
 ![Circuit](doc/Circuit01.png)
 
-*Fig 4 - The critical circuit in orange (made with this editor).*
+*Fig 5 - The critical circuit in orange (made with this editor).*
 
-### Graph form
+### Compact form of timed event graphs
 
 Thanks to the property of event graphs in which places have a single input arc
 and single arc, another way to represent event graphs in a more compact form, is
 to merge places with their unique incoming and unique out-coming arcs. From
 figure 2, we obtain the following figure 3, which is a more compact graph but
-equivalent. For example, the arc `P0/5/2` means the place `P0` with the duration
-5 and 2 tokens.
+equivalent. For example, the arc `5.00, P0(2)` means the place `P0` with 2 tokens
+and 2 units of time for the arc `T2 T1`.
 
 ![Graph](doc/Graph01.png)
 
@@ -505,12 +528,12 @@ Julia package.
 ```
     | .  .  2  . |       | .  .  5  . |
     | 0  .  .  . |       | 5  .  .  . |
-N = | .  0  .  0 |,  T = | .  3  .  1 |
+T = | .  0  .  0 |,  N = | .  3  .  1 |
     | 0  .  .  . |       | 1  .  .  . |
 ```
 
-Let suppose that matrix indices start from `0`, then `N[0,2]` holds the value 1
-token and `T[0,2]` holds the duration 5. The `[0,2]` means the arc `T2 -> T0` in
+Let suppose that matrix indices start from `0`, then `T[0,2]` holds the value 2
+token and `N[0,2]` holds the duration 5. The `[0,2]` means the arc `T2 -> T0` in
 the compact form (or arcs `T2 -> P0` and `P0 -> T0` in the classic Petri form).
 Note that origin and destination are inversed, this is because the matrix
 convention is generally the following: `M . x` with `x` a column vector. This
@@ -958,4 +981,3 @@ Petri net:
   with Godot Engine.
 - (fr) https://youtu.be/l1F2dIA90s0 Programmation d'un Grafcet en C.
 - (fr) https://youtu.be/v5FwJvtGaEw Programmation d'un Grafcet en C pour Arduino.
-

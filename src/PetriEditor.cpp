@@ -1045,11 +1045,10 @@ void PetriEditor::handleKeyPressed(sf::Event const& event)
             m_petri_net.removeNode(*node);
     }
 
-#if 0
     // Uncomment to check graphically generated cannical net
     else if (event.key.code == sf::Keyboard::W)
     {
-        if (isEventGraph(m_marked_arcs))
+        if (m_petri_net.isEventGraph(m_marked_arcs))
         {
             m_marked_arcs.clear();
             PetriNet pn(m_petri_net.type());
@@ -1057,7 +1056,6 @@ void PetriEditor::handleKeyPressed(sf::Event const& event)
             m_petri_net = pn;
         }
     }
-#endif
 
     // '+' key: increase the number of tokens in the place.
     // '-' key: decrease the number of tokens in the place.

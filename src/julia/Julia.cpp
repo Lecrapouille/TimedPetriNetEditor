@@ -455,3 +455,8 @@ bool petri_counter_form(int64_t const pn)
     std::cout << g_petri_nets[size_t(pn)]->showCounterForm("").str() << std::endl;
     return true;
 }
+
+// TODO
+//------------------------------------------------------------------------------
+//bool petri_semihoward(int64_t const pn)
+//{}

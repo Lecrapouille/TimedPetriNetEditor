@@ -51,6 +51,8 @@
 size_t Settings::maxTokens = std::numeric_limits<size_t>::max();
 Settings::Fire Settings::firing = Settings::Fire::OneByOne;
 
+bool SparseMatrix::display_for_julia = true;
+
 //------------------------------------------------------------------------------
 bool Transition::isEnabled() const
 {
@@ -588,13 +590,13 @@ void PetriNet::toCanonicalForm(PetriNet& canonic) const
 }
 
 //------------------------------------------------------------------------------
-bool PetriNet::toAdjacencyMatrices(SparseMatrix& N, SparseMatrix&T)
+bool PetriNet::toAdjacencyMatrices(SparseMatrix& tokens, SparseMatrix& durations)
 {
     generateArcsInArcsOut(/*arcs: true*/);
     size_t const nnodes = m_transitions.size();
 
-    T.clear(); T.dim(nnodes, nnodes);
-    N.clear(); N.dim(nnodes, nnodes);
+    durations.clear(); durations.dim(nnodes, nnodes);
+    tokens.clear(); tokens.dim(nnodes, nnodes);
 
     for (auto& p: m_places)
     {
@@ -615,8 +617,8 @@ bool PetriNet::toAdjacencyMatrices(SparseMatrix& N, SparseMatrix&T)
 
         // Note origin and destination are inverted because we use the following
         // matrix product convension: M * x where x is a column vector.
-        T.add(to.id, from.id, p.arcsIn[0]->duration);
-        N.add(to.id, from.id, float(p.tokens));
+        durations.add(to.id, from.id, p.arcsIn[0]->duration);
+        tokens.add(to.id, from.id, float(p.tokens));
     }
 
     return true;
@@ -624,14 +626,17 @@ bool PetriNet::toAdjacencyMatrices(SparseMatrix& N, SparseMatrix&T)
 
 //------------------------------------------------------------------------------
 void PetriNet::toSysLin(SparseMatrix& D, SparseMatrix& A, SparseMatrix& B, SparseMatrix& C,
-                        size_t const nb_inputs, size_t const nb_states, size_t const nb_outputs)
+                        std::vector<size_t> const& indices, size_t const nb_inputs,
+                        size_t const nb_states, size_t const nb_outputs)
 {
     D.clear(); A.clear(); B.clear(); C.clear();
     D.dim(nb_states, nb_states);
     A.dim(nb_states, nb_states);
-    B.dim(nb_inputs, nb_inputs);
-    C.dim(nb_outputs, nb_outputs);
+    B.dim(nb_inputs, nb_states);
+    C.dim(nb_states, nb_outputs);
 
+    // Note origin and destination are inverted because we use the following
+    // matrix product convension: M * x where x is a column vector.
     for (auto& arc: m_arcs)
     {
         if (arc.from.type == Node::Type::Place)
@@ -640,8 +645,13 @@ void PetriNet::toSysLin(SparseMatrix& D, SparseMatrix& A, SparseMatrix& B, Spars
         Transition& t = *reinterpret_cast<Transition*>(&(arc.from));
         if (t.isInput())
         {
-            // System inputs: B U(n)
-            B.add(t.index, t.index, float(arc.duration));
+            Place& p = *reinterpret_cast<Place*>(&(arc.to));
+            for (auto& a: p.arcsOut)
+            {
+                // System inputs: B U(n)
+                Transition& td = *reinterpret_cast<Transition*>(&(a->to));
+                B.add(indices[td.id], indices[t.id], float(arc.duration));
+            }
         }
         else // States or outputs
         {
@@ -649,23 +659,22 @@ void PetriNet::toSysLin(SparseMatrix& D, SparseMatrix& A, SparseMatrix& B, Spars
             for (auto& a: p.arcsOut)
             {
                 Transition& td = *reinterpret_cast<Transition*>(&(a->to));
-
                 if (td.isState())
                 {
                     // Systems states: X(n) = D X(n) (+) A X(n-1)
                     if (p.tokens == 1u)
                     {
-                        A.add(td.index, t.index, arc.duration);
+                        A.add(indices[td.id], indices[t.id], arc.duration);
                     }
                     else
                     {
-                        D.add(td.index, t.index, arc.duration);
+                        D.add(indices[td.id], indices[t.id], arc.duration);
                     }
                 }
                 else if (td.isOutput())
                 {
                     // System outputs: Y(n) = C X(n)
-                    C.add(t.index, t.index, arc.duration);
+                    C.add(indices[td.id], indices[t.id], arc.duration);
                 }
             }
         }
@@ -682,8 +691,10 @@ bool PetriNet::toSysLin(SparseMatrix& D, SparseMatrix& A, SparseMatrix& B, Spars
     if (!isEventGraph(m_result_arcs))
         return false;
 
-    // Duplicate the Petri net since we potentially modify it to transform it to
-    // its canonical form.
+    // Duplicate the Petri net to preserve it because we will modify it into
+    // its canonical form (places with several tokens will splitted to places
+    // with a single token). Canonical Petri net have 0 or 1 tokens on each
+    // places.
     PetriNet canonical(m_type);
     toCanonicalForm(canonical);
 
@@ -692,25 +703,26 @@ bool PetriNet::toSysLin(SparseMatrix& D, SparseMatrix& A, SparseMatrix& B, Spars
     size_t nb_inputs = 0u;
     size_t nb_outputs = 0u;
 
+    std::vector<size_t> indices;
+    indices.resize(canonical.transitions().size());
+
     for (auto& t: canonical.transitions())
     {
         if (t.isInput())
         {
-            t.index = nb_inputs++;
+            indices[t.id] = nb_inputs++;
         }
-
         if (t.isState())
         {
-            t.index = nb_states++;
+            indices[t.id] = nb_states++;
         }
-
         if (t.isOutput())
         {
-            t.index = nb_outputs++;
+            indices[t.id] = nb_outputs++;
         }
     }
 
-    canonical.toSysLin(D, A, B, C, nb_inputs, nb_states, nb_outputs);
+    canonical.toSysLin(D, A, B, C, indices, nb_inputs, nb_states, nb_outputs);
     return true;
 }
 

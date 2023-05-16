@@ -295,6 +295,11 @@ public:
 
     //--------------------------------------------------------------------------
     //! \brief Return true if the transition comes from an input place.
+    //! This method is useful for converting event graph to (max,+) dynamic linear
+    //! systems:
+    //! X(n) = D X(n) ⨁ A X(n-1) ⨁ B U(n)
+    //! Y(n) = C X(n)
+    //! System inputs: B U(n) with U the column vector of system inputs.
     //--------------------------------------------------------------------------
     inline bool isInput() const
     {
@@ -303,6 +308,11 @@ public:
 
     //--------------------------------------------------------------------------
     //! \brief Return true if the transition goes to an output place.
+    //! This method is useful for converting event graph to (max,+) dynamic linear
+    //! systems:
+    //! X(n) = D X(n) ⨁ A X(n-1) ⨁ B U(n)
+    //! Y(n) = C X(n)
+    //! System outputs: Y(n) = C X(n)
     //--------------------------------------------------------------------------
     inline bool isOutput() const
     {
@@ -312,6 +322,12 @@ public:
     //--------------------------------------------------------------------------
     //! \brief Return true is the transition is not an input or an output for
     //! the system.
+    //! This method is useful for converting event graph to (max,+) dynamic linear
+    //! systems:
+    //! X(n) = D X(n) ⨁ A X(n-1) ⨁ B U(n)
+    //! Y(n) = C X(n)
+    //! Systems states: X(n) = D X(n) (+) A X(n-1) with A the state matrix and
+    //! D the implicit matrix.
     //--------------------------------------------------------------------------
     inline bool isState() const
     {
@@ -339,9 +355,6 @@ public:
     //! token, the transition is fired, burning tokens in upstream places and
     //! create tokens in the successor places.
     bool receptivity = false;
-
-    //! \brief Temporary matrix index used when building (max,+) linear systems.
-    size_t index = 0u;
 };
 
 // *****************************************************************************
@@ -728,6 +741,11 @@ public:
     //! method.
     //--------------------------------------------------------------------------
     bool isEventGraph(std::vector<Arc*>& erroneous_arcs) const;
+    bool isEventGraph() const
+    {
+        std::vector<Arc*> erroneous_arcs;
+        return isEventGraph(erroneous_arcs);
+    }
 
     //--------------------------------------------------------------------------
     //! \brief Show to the critical circuit of the net (where the cycle takes
@@ -870,7 +888,7 @@ public:
     bool exportToCpp(std::string const& filename) const;
 
     //--------------------------------------------------------------------------
-    //! \brief Export the Petri net as Max-Plus linear system in Julia code.
+    //! \brief Export the Petri net as (max, +) linear system in Julia code.
     //! \param[in] filename the path of julia file. Should have the .jl
     //! extension.
     //! \return true if the Petri net has been exported with success. Return
@@ -880,12 +898,12 @@ public:
 
     //--------------------------------------------------------------------------
     //! \brief Return the event graph as 2 adjacency matrices.
-    //! \param[out] N the adjacency matrix of tokens.
-    //! \param[out] Tthe adjacency matrix of durations.
+    //! \param[out] tokens the adjacency matrix of tokens.
+    //! \param[out] durations the adjacency matrix of durations.
     //! \note This will work only if isEventGraph() returned true.
     //! \return false if the Petri net is not an event graph.
     //--------------------------------------------------------------------------
-    bool toAdjacencyMatrices(SparseMatrix& N, SparseMatrix&T); //TODO const;
+    bool toAdjacencyMatrices(SparseMatrix& tokens, SparseMatrix& durations); //TODO const;
 
     //--------------------------------------------------------------------------
     //! \brief Transform the Event Graph to canonical form
@@ -896,7 +914,7 @@ public:
     void toCanonicalForm(PetriNet& pn) const;
 
     //--------------------------------------------------------------------------
-    //! \brief Return the event graph as implicit dynamic linear Max-Plus system.
+    //! \brief Return the event graph as implicit dynamic linear (max, +) system.
     //! X(n) = D X(n) ⨁ A X(n-1) ⨁ B U(n)
     //! Y(n) = C X(n)
     //! \note This will work only if isEventGraph() returned true.
@@ -949,7 +967,8 @@ private:
     //! \brief Inner method for the public toSysLin() method.
     //--------------------------------------------------------------------------
     void toSysLin(SparseMatrix& D, SparseMatrix& A, SparseMatrix& B, SparseMatrix& C,
-                  size_t const nb_inputs, size_t const nb_states, size_t const nb_outputs);
+                  std::vector<size_t> const& indices, size_t const nb_inputs,
+                  size_t const nb_states, size_t const nb_outputs);
 
     //--------------------------------------------------------------------------
     //! \brief Set a name to the Petri net from the given filename.

@@ -42,6 +42,9 @@ bool PetriNet::exportToJulia(std::string const& filename) const
     size_t nb_inputs = 0u;
     size_t nb_outputs = 0u;
 
+    std::vector<size_t> indices;
+    indices.resize(canonical.transitions().size());
+
     file << "## Petri Transitions:" << std::endl;
 
     // Show and count system inputs
@@ -49,7 +52,7 @@ bool PetriNet::exportToJulia(std::string const& filename) const
     {
         if (t.isInput())
         {
-            t.index = nb_inputs++;
+            indices[t.id] = nb_inputs++;
             file << "# " << t.key << ": input (U"
                  << nb_inputs << ")" << std::endl;
         }
@@ -60,7 +63,7 @@ bool PetriNet::exportToJulia(std::string const& filename) const
     {
         if (t.isState())
         {
-            t.index = nb_states++;
+            indices[t.id] = nb_states++;
             file << "# " << t.key << ": state (X"
                  << nb_states << ")" << std::endl;
         }
@@ -71,7 +74,7 @@ bool PetriNet::exportToJulia(std::string const& filename) const
     {
         if (t.isOutput())
         {
-            t.index = nb_outputs++;
+            indices[t.id] = nb_outputs++;
             file << "# " << t.key << ": output (Y" << nb_outputs
                  << ")" << std::endl;
         }
@@ -112,21 +115,22 @@ bool PetriNet::exportToJulia(std::string const& filename) const
     // X(n) = D X(n) ⨁ A X(n-1) ⨁ B U(n)
     // Y(n) = C X(n)
     SparseMatrix D; SparseMatrix A; SparseMatrix B; SparseMatrix C;
-    canonical.toSysLin(D, A, B, C, nb_inputs, nb_states, nb_outputs);
+    canonical.toSysLin(D, A, B, C, indices, nb_inputs, nb_states, nb_outputs);
 
     file << std::endl;
     file << "## Max-Plus implicit linear dynamic system of the dater form:" << std::endl;
     file << "# X(n) = D X(n) ⨁ A X(n-1) ⨁ B U(n)" << std::endl;
     file << "# Y(n) = C X(n)" << std::endl;
-    file << "D = sparse(" << D << ", " << nb_states << ", " << nb_states << ") # States without tokens" << std::endl;
-    file << "A = sparse(" << A << ", " << nb_states << ", " << nb_states << ") # States with 1 token" << std::endl;
-    file << "B = sparse(" << B << ", " << nb_inputs << ", " << nb_inputs << ") # Inputs" << std::endl;
-    file << "C = sparse(" << C << ", " << nb_outputs << ", " << nb_outputs << ") # Outputs" << std::endl;
+    SparseMatrix::display_for_julia = true;
+    file << "D = sparse(" << D << ") # States without tokens" << std::endl;
+    file << "A = sparse(" << A << ") # States with 1 token" << std::endl;
+    file << "B = sparse(" << B << ") # Inputs" << std::endl;
+    file << "C = sparse(" << C << ") # Outputs" << std::endl;
     file << "S = MPSysLin(A, B, C, D)" << std::endl;
 
     // Semi-Howard
     file << std::endl;
-    file << "# TODO" << std::endl;
+    file << "# TODO not yet implemented" << std::endl;
     file << "l,v = semihoward(S.D, S.A)" << std::endl;
 
     return true;

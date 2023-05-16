@@ -34,7 +34,7 @@ TEST(TestEventGraph, TestHoward2)
     PetriNet net(PetriNet::Type::TimedPetri);
     PetriNet canonic(PetriNet::Type::TimedPetri);
 
-    ASSERT_EQ(net.load("../examples/Howard2.json"), true);
+    ASSERT_EQ(net.load("data/Howard2.json"), true);
     ASSERT_EQ(net.isEmpty(), false);
     ASSERT_EQ(net.isEventGraph(erroneous_arcs), true);
     ASSERT_EQ(erroneous_arcs.empty(), true);
@@ -127,12 +127,12 @@ TEST(TestEventGraph, TesSparseMatrixConstructor)
 }
 
 //------------------------------------------------------------------------------
-TEST(TestEventGraph, TestToSysLin)
+TEST(TestEventGraph, TestToSysLinNoInputNoOutput)
 {
     std::vector<Arc*> erroneous_arcs;
     PetriNet net(PetriNet::Type::TimedPetri);
 
-    ASSERT_EQ(net.load("../examples/Howard2.json"), true); // FIXME shall call generateArcsInArcsOut ?
+    ASSERT_EQ(net.load("data/Howard2.json"), true); // FIXME shall call generateArcsInArcsOut ?
     net.generateArcsInArcsOut(); // FIXME
 
     ASSERT_EQ(net.isEventGraph(erroneous_arcs), true);
@@ -146,27 +146,27 @@ TEST(TestEventGraph, TestToSysLin)
     ASSERT_EQ(net.toSysLin(D, A, B, C), true);
     //
     //       j
-    //   i | .  .  .  .  . |       | .  .  .  .  0 |
+    //   i | .  .  .  .  . |       | .  .  .  .  5 |
     //     | 5  .  .  .  . |       | .  .  .  .  . |
     // D = | .  3  .  1  . |,  A = | .  .  .  .  . |
     //     | 1  .  .  .  . |       | .  .  .  .  . |
-    //     | .  .  .  .  . |       | .  .  5  .  . |
+    //     | .  .  .  .  . |       | .  .  0  .  . |
     //
     ASSERT_EQ(D.i.size(), 4u);
     ASSERT_EQ(D.j.size(), 4u);
     ASSERT_EQ(D.d.size(), 4u);
     ASSERT_EQ(D.N, 5u);
     ASSERT_EQ(D.M, 5u);
-    ASSERT_THAT(D.i, UnorderedElementsAre(2u, 3u, 3u, 4u));
-    ASSERT_THAT(D.j, UnorderedElementsAre(1u, 1u, 2u, 4u));
-    ASSERT_THAT(D.d, UnorderedElementsAre(5.0, 1.0, 3.0, 1.0));
+    ASSERT_THAT(D.i, UnorderedElementsAre(2u, 3u, 4u, 3u));
+    ASSERT_THAT(D.j, UnorderedElementsAre(1u, 2u, 1u, 4u));
+    ASSERT_THAT(D.d, UnorderedElementsAre(5.0, 3.0, 1.0, 1.0));
 
     ASSERT_EQ(A.i.size(), 2u);
     ASSERT_EQ(A.j.size(), 2u);
     ASSERT_EQ(A.d.size(), 2u);
     ASSERT_EQ(A.N, 5u);
     ASSERT_EQ(A.M, 5u);
-    ASSERT_THAT(A.i, UnorderedElementsAre(1u, 5u));
+    ASSERT_THAT(A.i, UnorderedElementsAre(5u, 1u));
     ASSERT_THAT(A.j, UnorderedElementsAre(3u, 5u));
     ASSERT_THAT(A.d, UnorderedElementsAre(0.0, 5.0));
 
@@ -174,12 +174,66 @@ TEST(TestEventGraph, TestToSysLin)
     ASSERT_EQ(B.j.size(), 0u);
     ASSERT_EQ(B.d.size(), 0u);
     ASSERT_EQ(B.N, 0u);
-    ASSERT_EQ(B.M, 0u);
+    ASSERT_EQ(B.M, 5u);
 
     ASSERT_EQ(C.i.size(), 0u);
     ASSERT_EQ(C.j.size(), 0u);
     ASSERT_EQ(C.d.size(), 0u);
-    ASSERT_EQ(C.N, 0u);
+    ASSERT_EQ(C.N, 5u);
     ASSERT_EQ(C.M, 0u);
 }
 
+//------------------------------------------------------------------------------
+TEST(TestEventGraph, TestToSysLinInputOutput)
+{
+    std::vector<Arc*> erroneous_arcs;
+    PetriNet net(PetriNet::Type::TimedPetri);
+
+    ASSERT_EQ(net.load("data/JPQ.json"), true); // FIXME shall call generateArcsInArcsOut ?
+    net.generateArcsInArcsOut(); // FIXME
+
+    ASSERT_EQ(net.isEventGraph(erroneous_arcs), true);
+    ASSERT_EQ(erroneous_arcs.empty(), true);
+
+    SparseMatrix D;
+    SparseMatrix A;
+    SparseMatrix B;
+    SparseMatrix C;
+
+    ASSERT_EQ(net.toSysLin(D, A, B, C), true);
+
+    //     | .  . |      | 3  7 |      | . |
+    // D = | .  . |, A = | 2  4 |, B = | 1 |, C = | 3 . |
+    ASSERT_EQ(D.i.size(), 0u);
+    ASSERT_EQ(D.j.size(), 0u);
+    ASSERT_EQ(D.d.size(), 0u);
+    ASSERT_EQ(D.N, 2u);
+    ASSERT_EQ(D.M, 2u);
+
+    ASSERT_EQ(A.i.size(), 4u);
+    ASSERT_EQ(A.j.size(), 4u);
+    ASSERT_EQ(A.d.size(), 4u);
+    ASSERT_EQ(A.N, 2u);
+    ASSERT_EQ(A.M, 2u);
+    ASSERT_THAT(A.i, UnorderedElementsAre(2u, 1u, 1u, 2u));
+    ASSERT_THAT(A.j, UnorderedElementsAre(1u, 2u, 1u, 2u));
+    ASSERT_THAT(A.d, UnorderedElementsAre(2.0, 7.0, 3.0, 4.0));
+
+    ASSERT_EQ(B.i.size(), 1u);
+    ASSERT_EQ(B.j.size(), 1u);
+    ASSERT_EQ(B.d.size(), 1u);
+    ASSERT_EQ(B.N, 1u);
+    ASSERT_EQ(B.M, 2u);
+    ASSERT_THAT(B.i, UnorderedElementsAre(2u));
+    ASSERT_THAT(B.j, UnorderedElementsAre(1u));
+    ASSERT_THAT(B.d, UnorderedElementsAre(1.0));
+
+    ASSERT_EQ(C.i.size(), 1u);
+    ASSERT_EQ(C.j.size(), 1u);
+    ASSERT_EQ(C.d.size(), 1u);
+    ASSERT_EQ(C.N, 2u);
+    ASSERT_EQ(C.M, 1u);
+    ASSERT_THAT(C.i, UnorderedElementsAre(1u));
+    ASSERT_THAT(C.j, UnorderedElementsAre(1u));
+    ASSERT_THAT(C.d, UnorderedElementsAre(3.0));
+}

@@ -260,20 +260,26 @@ struct SparseMatrix
     std::vector<double> d;
     //! \brief Matrix dimension
     size_t N, M;
+    //! \brief Option to display for C++ or for Julia
+    static bool display_for_julia;
 };
 
 //------------------------------------------------------------------------------
-//! \brief Julia sparse is built as sparse(I, J, D) where I, J and D are 3
-//! vectors.
+//! \brief Output sparse matrix as I, J, D where I, J and D are 3 vectors.
 //------------------------------------------------------------------------------
 inline std::ostream & operator<<(std::ostream &os, SparseMatrix const& matrix)
 {
     std::string separator;
 
+    if (!matrix.display_for_julia)
+    {
+        os << matrix.M << "x" << matrix.N << " sparse (max,+) matrix with "
+        << matrix.d.size() << " stored entry:" << std::endl;
+    }
     os << "[";
     for (auto const& it: matrix.i)
     {
-        os << separator << it;
+        os << separator << (matrix.display_for_julia ? it : (it - 1));
         separator = ", ";
     }
 
@@ -281,7 +287,7 @@ inline std::ostream & operator<<(std::ostream &os, SparseMatrix const& matrix)
     separator.clear();
     for (auto const& it: matrix.j)
     {
-        os << separator << it;
+        os << separator << (matrix.display_for_julia ? it : (it - 1));
         separator = ", ";
     }
 
@@ -293,6 +299,10 @@ inline std::ostream & operator<<(std::ostream &os, SparseMatrix const& matrix)
         separator = ", ";
     }
     os << "])";
+    if (matrix.display_for_julia)
+    {
+        os << ", " << matrix.M << ", " << matrix.N;
+    }
 
     return os;
 }
