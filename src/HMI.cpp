@@ -100,10 +100,28 @@ static void inspector(PetriEditor& editor)
     }
     ImGui::End();
 
+    // FIXME parse and clear sensors if and only if we modified entrytext
     ImGui::Begin("Transitions");
-    for (auto& t: net.transitions())
+    if (!editor.m_simulating)
+        net.m_sensors.clear();
+    for (auto& transition: net.transitions())
     {
-        ImGui::InputText(t.key.c_str(), &t.caption, readonly);
+        ImGui::InputText(transition.key.c_str(), &transition.caption, readonly);
+        if (!editor.m_simulating)
+        {
+            std::string err = net.parse(transition, true);
+            if (!err.empty())
+            {
+                ImGui::TextColored(ImVec4(1.0f, 0.0f, 0.0f, 1.0f), "%s", err.c_str());
+            }
+        }
+    }
+    ImGui::End();
+
+    ImGui::Begin("Sensors");
+    for (auto& it: net.m_sensors.database())
+    {
+        ImGui::SliderInt(it.first.c_str(), &it.second, 0, 1);
     }
     ImGui::End();
 

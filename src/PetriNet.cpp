@@ -51,7 +51,28 @@
 size_t Settings::maxTokens = std::numeric_limits<size_t>::max();
 Settings::Fire Settings::firing = Settings::Fire::OneByOne;
 
+//------------------------------------------------------------------------------
+// Used to control the behavior of operator<<.
 bool SparseMatrix::display_for_julia = true;
+
+//------------------------------------------------------------------------------
+std::string PetriNet::to_str(PetriNet::Type const mode)
+{
+    switch (mode)
+    {
+    case PetriNet::Type::GRAFCET:
+        return "GRAFCET";
+    case PetriNet::Type::Petri:
+        return "Petri net";
+    case PetriNet::Type::TimedPetri:
+        return "Timed Petri net";
+    case PetriNet::Type::TimedGraphEvent:
+        return "Timed graph event";
+    default:
+        assert(false && "Undefined Petri behavior");
+        break;
+    }
+}
 
 //------------------------------------------------------------------------------
 bool Transition::isEnabled() const
@@ -101,7 +122,7 @@ size_t Transition::howManyTokensCanBurnt() const
 //------------------------------------------------------------------------------
 PetriNet::PetriNet(PetriNet::Type const mode)
 {
-    this->changeTypeOfNet(mode);
+    this->type(mode);
 }
 
 //------------------------------------------------------------------------------
@@ -151,7 +172,7 @@ void PetriNet::clear()
 }
 
 //------------------------------------------------------------------------------
-bool PetriNet::changeTypeOfNet(PetriNet::Type const mode, std::vector<Arc*>& erroneous_arcs)
+bool PetriNet::type(PetriNet::Type const mode, std::vector<Arc*>& erroneous_arcs)
 {
     if (m_type == mode)
         return true;
@@ -161,6 +182,11 @@ bool PetriNet::changeTypeOfNet(PetriNet::Type const mode, std::vector<Arc*>& err
     case PetriNet::Type::GRAFCET:
         Settings::maxTokens = 1u;
         Settings::firing = Settings::Fire::OneByOne;
+        m_sensors.clear();
+        for (auto& transition: m_transitions)
+        {
+            parse(transition);
+        }
         break;
     case PetriNet::Type::Petri:
         Settings::maxTokens = std::numeric_limits<size_t>::max();
@@ -188,32 +214,43 @@ bool PetriNet::changeTypeOfNet(PetriNet::Type const mode, std::vector<Arc*>& err
 }
 
 //------------------------------------------------------------------------------
-std::string PetriNet::typeOfNet() const
+std::string PetriNet::parse(Transition& transition, bool force)
 {
-    switch (m_type)
+    std::string error;
+
+    if (force || (transition.expression.expression == nullptr))
     {
-    case PetriNet::Type::GRAFCET:
-        return "GRAFCET";
-    case PetriNet::Type::Petri:
-        return "Petri net";
-    case PetriNet::Type::TimedPetri:
-        return "Timed Petri net";
-    case PetriNet::Type::TimedGraphEvent:
-        return "Timed graph event";
-    default:
-        assert(false && "Undefined Petri behavior");
-        break;
+        transition.expression.expression =
+        Receptivity::Parser::parse(*this, transition.caption, error);
+        transition.expression.valid = error.empty();
     }
+    return error;
 }
 
 //------------------------------------------------------------------------------
-void PetriNet::resetReceptivies()
+bool PetriNet::resetReceptivies()
 {
+    bool res = true;
+
     if (m_type == PetriNet::Type::Petri)
     {
         for (auto& transition: m_transitions)
         {
             transition.receptivity = false;
+        }
+    }
+    else if (m_type == PetriNet::Type::GRAFCET)
+    {
+        m_sensors.clear();
+        for (auto& transition: m_transitions)
+        {
+            std::string err = parse(transition, true);
+            if (!err.empty())
+            {
+                m_message.str("");
+                m_message << err;
+                res = false;
+            }
         }
     }
     else
@@ -223,6 +260,8 @@ void PetriNet::resetReceptivies()
             transition.receptivity = true;
         }
     }
+
+    return res;
 }
 
 //------------------------------------------------------------------------------
@@ -1097,6 +1136,6 @@ bool PetriNet::load(std::string const& filename)
 
     name(filename);
     generateArcsInArcsOut();
-    resetReceptivies();
+    resetReceptivies(); // FIXME pas au bon endroit
     return true;
 }

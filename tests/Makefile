@@ -69,7 +69,7 @@ DEFINES += -Wno-conversion -Wno-cast-qual
 ###################################################
 # Make the list of compiled files for tests
 #
-OBJS += PetriNet.o Howard.o
+OBJS += Receptivities.o PetriNet.o Howard.o
 OBJS += PetriNetTests.o AnimationTests.o EventGraphTests.o
 OBJS += LoadJSONTests.o HowardTests.o
 OBJS += main.o

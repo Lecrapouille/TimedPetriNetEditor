@@ -26,7 +26,8 @@
 #include <iomanip>
 
 //------------------------------------------------------------------------------
-bool PetriEditor::Export::exports(PetriNet& petri_net, std::string const& application, std::string& message) const
+bool PetriEditor::Export::exports(PetriNet const& petri_net, std::string const&
+                                  application, std::string& message) const
 {
     std::string extensions;
     std::string separator;
@@ -656,7 +657,12 @@ void PetriEditor::onUpdate(float const dt)
             m_message_bar.setInfo("Simulation has started!");
         }
         m_petri_net.generateArcsInArcsOut();
-        m_petri_net.resetReceptivies();
+        if (!m_petri_net.resetReceptivies())
+        {
+            m_message_bar.setError(m_petri_net.message());
+            m_state = STATE_ENDING;
+            break;
+        }
         m_petri_net.shuffle_transitions(true);
         m_petri_net.getTokens(m_marks);
         m_animated_tokens.clear();
@@ -677,6 +683,13 @@ void PetriEditor::onUpdate(float const dt)
 
     case STATE_ANIMATING:
         m_state = m_simulating ? STATE_ANIMATING : STATE_ENDING;
+
+        // Interpret the code of receptivities
+        if (m_petri_net.type() == PetriNet::Type::GRAFCET)
+        {
+            for (auto& trans: m_petri_net.transitions())
+                trans.evaluate(m_petri_net.m_sensors);
+        }
 
         // For each transition check if it is activated (all incoming Places
         // have at least one token to burn. Note: since here we care Petri but
@@ -801,7 +814,8 @@ void PetriEditor::onUpdate(float const dt)
                 }
             }
         }
-        else if (m_petri_net.type() != PetriNet::Type::Petri)
+        else if ((m_petri_net.type() != PetriNet::Type::Petri) &&
+                 (m_petri_net.type() != PetriNet::Type::GRAFCET))
         {
             std::cout << current_time() << "The simulation cannot burn tokens."
                       << std::endl;
@@ -1422,33 +1436,36 @@ void PetriEditor::onHandleInput(sf::Event const& event)
         close();
         break;
     case sf::Event::KeyPressed:
-        // Move the view if not editing text
-        if (!m_entry_box.hasFocus())
+        if (m_is_hovered)
         {
-            if (event.key.code == sf::Keyboard::Right)
+            // Move the view if not editing text
+            if (!m_entry_box.hasFocus())
             {
-                m_view.move(10.0f, 0.0f);
-                return ;
+                if (event.key.code == sf::Keyboard::Right)
+                {
+                    m_view.move(10.0f, 0.0f);
+                    return ;
+                }
+                else if (event.key.code == sf::Keyboard::Left)
+                {
+                    m_view.move(-10.0f, 0.0f);
+                    return ;
+                }
+                else if (event.key.code == sf::Keyboard::Up)
+                {
+                    m_view.move(0.0f, 10.0f);
+                    return ;
+                }
+                else if (event.key.code == sf::Keyboard::Down)
+                {
+                    m_view.move(0.0f, -10.0f);
+                    return ;
+                }
             }
-            else if (event.key.code == sf::Keyboard::Left)
-            {
-                m_view.move(-10.0f, 0.0f);
-                return ;
-            }
-            else if (event.key.code == sf::Keyboard::Up)
-            {
-                m_view.move(0.0f, 10.0f);
-                return ;
-            }
-            else if (event.key.code == sf::Keyboard::Down)
-            {
-                m_view.move(0.0f, -10.0f);
-                return ;
-            }
-        }
 
-        m_marked_arcs.clear();
-        handleKeyPressed(event);
+            m_marked_arcs.clear();
+            handleKeyPressed(event);
+        }
         break;
     case sf::Event::TextEntered:
         m_entry_box.onTextEntered(event.text.unicode);

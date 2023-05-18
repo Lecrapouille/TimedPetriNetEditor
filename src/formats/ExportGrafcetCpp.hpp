@@ -203,7 +203,15 @@ private:
         file << "    //! \\brief Transition " << t.id <<  ": \"" << t.caption << "\"" << std::endl;
         file << "    //! \\return true if the transition is enabled." << std::endl;
         file << "    //-------------------------------------------------------------------------" << std::endl;
-        file << "    bool T" << t.id << "() const;" << std::endl;
+        if (m_type == PetriNet::Type::GRAFCET)
+        {
+            file << "    bool T" << t.id << "() { return " << Receptivity::Parser::translate(t.caption, "C") << "; } const;";
+        }
+        else
+        {
+            file << "    bool T" << t.id << "() const;";
+        }
+        file << std::endl << std::endl;
     }
 
     for (auto const& p: m_places)
@@ -211,7 +219,7 @@ private:
         file << "    //-------------------------------------------------------------------------" << std::endl;
         file << "    //! \\brief Do actions associated with the step " << p.id << ": " << p.caption << std::endl;
         file << "    //-------------------------------------------------------------------------" << std::endl;
-        file << "    void P" << p.id << "();" << std::endl;
+        file << "    void P" << p.id << "();" << std::endl << std::endl;
     }
 
     file << std::endl << "private:" << std::endl << std::endl;
@@ -223,6 +231,11 @@ private:
     file << "    bool T[MAX_TRANSITIONS];" << std::endl;
     file << "    //! \\brief MQTT topic to communicate with the Petri net editor"  << std::endl;
     file << "    std::string m_topic = \"pneditor/" << name_space << "\";" << std::endl;
+    for (auto const& s: m_sensors.database())
+    {
+        file << "    //! \\brief"  << std::endl;
+        file << "    bool " << s.first << " = " << s.second << ";" << std::endl;
+    }
     file << "};" << std::endl;
     file << "" << std::endl;
     file << "} // namespace " << name_space << std::endl;

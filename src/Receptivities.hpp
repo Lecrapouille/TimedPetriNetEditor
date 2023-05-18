@@ -1,6 +1,6 @@
 //=============================================================================
 // TimedPetriNetEditor: A timed Petri net editor.
-// Copyright 2021 -- 2022 Quentin Quadrat <lecrapouille@gmail.com>
+// Copyright 2021 -- 2023 Quentin Quadrat <lecrapouille@gmail.com>
 //
 // This file is part of TimedPetriNetEditor.
 //
@@ -28,25 +28,32 @@
 #  include <vector>
 #  include <iostream>
 
+class PetriNet;
+
+// ****************************************************************************
+//! \brief Container of sensors.
+// ****************************************************************************
+class Sensors
+{
+public:
+
+    bool lookup(std::string const& key) const { return values.at(key); }
+    void assign(std::string const& key, int const value) { values[key] = value; }
+    std::map<const std::string, int>& database() { return values; }
+    std::map<const std::string, int> const& database() const { return values; }
+    void clear() { values.clear(); }
+
+private:
+
+    std::map<const std::string, int> values;
+};
+
 // *****************************************************************************
 //! \brief
 // *****************************************************************************
 class Receptivity
 {
-    // *************************************************************************
-    //! \brief
-    // *************************************************************************
-    class Context
-    {
-    public:
-
-        bool lookup(std::string const& key) const { return m.at(key); }
-        void assign(std::string const& key, bool const value) { m[key] = value; }
-
-    private:
-
-        std::map<const std::string, bool> m;
-    };
+public:
 
     // *************************************************************************
     //! \brief
@@ -56,7 +63,23 @@ class Receptivity
     public:
 
         virtual ~BooleanExp() = default;
-        virtual bool evaluate(Context const&) const = 0;
+        virtual bool evaluate(Sensors const&) const = 0;
+    };
+
+    // *************************************************************************
+    //! \brief
+    // *************************************************************************
+    class StepExp : public BooleanExp
+    {
+    public:
+
+        StepExp(PetriNet& net, std::string const& token);
+        virtual bool evaluate(Sensors const& sensors) const override;
+
+    private:
+
+        PetriNet& m_net;
+        size_t m_id; // Place id
     };
 
     // *************************************************************************
@@ -70,14 +93,62 @@ class Receptivity
             : m_name(name)
         {}
 
-        virtual bool evaluate(Context const& context) const
+        virtual bool evaluate(Sensors const& sensors) const override
         {
-            return context.lookup(m_name);
+            return sensors.lookup(m_name);
         }
 
     private:
 
         std::string m_name;
+    };
+
+    // *************************************************************************
+    //! \brief
+    // *************************************************************************
+    class ConstExp : public BooleanExp
+    {
+    public:
+
+        ConstExp(std::string const& op1)
+        {
+            if (op1 == "true")
+                m_operand1 = true;
+            else
+                m_operand1 = false;
+        }
+
+        virtual ~ConstExp() = default;
+        virtual bool evaluate(Sensors const& sensors) const override
+        {
+            return m_operand1;
+        }
+
+    private:
+
+        bool m_operand1;
+    };
+
+    // *************************************************************************
+    //! \brief
+    // *************************************************************************
+    class NotExp : public BooleanExp
+    {
+    public:
+
+        NotExp(std::shared_ptr<BooleanExp> op1)
+            : m_operand1(op1)
+        {}
+
+        virtual ~NotExp() = default;
+        virtual bool evaluate(Sensors const& sensors) const override
+        {
+            return !m_operand1->evaluate(sensors);
+        }
+
+    private:
+
+        std::shared_ptr<BooleanExp> m_operand1;
     };
 
     // *************************************************************************
@@ -92,9 +163,9 @@ class Receptivity
         {}
 
         virtual ~AndExp() = default;
-        virtual bool evaluate(Context const& context) const
+        virtual bool evaluate(Sensors const& sensors) const override
         {
-            return m_operand1->evaluate(context) && m_operand2->evaluate(context);
+            return m_operand1->evaluate(sensors) && m_operand2->evaluate(sensors);
         }
 
     private:
@@ -115,9 +186,9 @@ class Receptivity
         {}
 
         virtual ~OrExp() = default;
-        virtual bool evaluate(Context const& context) const
+        virtual bool evaluate(Sensors const& sensors) const override
         {
-            return m_operand1->evaluate(context) || m_operand2->evaluate(context);
+            return m_operand1->evaluate(sensors) || m_operand2->evaluate(sensors);
         }
 
     private:
@@ -126,78 +197,54 @@ class Receptivity
         std::shared_ptr<BooleanExp> m_operand2;
     };
 
+    // *****************************************************************************
+    //! \brief
+    // *****************************************************************************
+    class Parser
+    {
+    public:
+
+        //--------------------------------------------------------------------------
+        //! \brief Rranslate the code of the receptivity to a given language.
+        //--------------------------------------------------------------------------
+        static std::string translate(std::string const& code, std::string const& lang);
+
+        //--------------------------------------------------------------------------
+        //! \brief Parse a postfix notation into an AST.
+        //--------------------------------------------------------------------------
+        static std::shared_ptr<BooleanExp> parse(PetriNet& net, std::string const& code, std::string& error);
+
+        //--------------------------------------------------------------------------
+        //! \brief Parse a postfix notation into an AST.
+        //--------------------------------------------------------------------------
+        static bool evaluate(Receptivity const recept, Sensors const& sensors);
+
+    private:
+
+        //--------------------------------------------------------------------------
+        //! brief
+        //--------------------------------------------------------------------------
+        static bool isBinaryOperator(std::string const& token);
+        static bool isUnitaryOperator(std::string const& token);
+        static bool isConst(std::string const& token);
+        static bool isState(std::string const& token);
+        static bool isVariable(std::string const& token);
+
+        //--------------------------------------------------------------------------
+        //! brief
+        //--------------------------------------------------------------------------
+        static std::vector<std::string> tokenizer(std::string const& s, std::string const& delimiter);
+
+        //--------------------------------------------------------------------------
+        //! brief
+        //--------------------------------------------------------------------------
+        static std::string convert(std::string const& token, std::string const& lang);
+    };
+
 public:
 
-    //--------------------------------------------------------------------------
-    //! brief Postfix to Infix
-    //--------------------------------------------------------------------------
-    void code(std::string const& code_);
-    std::string const& code() const { return m_code; }
-
-    //--------------------------------------------------------------------------
-    //! \brief Rranslate the code of the receptivity to a given language.
-    //--------------------------------------------------------------------------
-    std::string translate(std::string const& lang);
-
-private:
-
-    //--------------------------------------------------------------------------
-    //! brief
-    //--------------------------------------------------------------------------
-    bool isOperator(std::string const& token);
-
-    //--------------------------------------------------------------------------
-    //! brief
-    //--------------------------------------------------------------------------
-    std::vector<std::string> tokenizer(std::string const& s, std::string const& delimiter);
-
-    //--------------------------------------------------------------------------
-    //! brief
-    //--------------------------------------------------------------------------
-    std::string convert(std::string const& token, std::string const& lang);
-
-    //--------------------------------------------------------------------------
-    //! \brief Postfix to Infix
-    //--------------------------------------------------------------------------
-    std::shared_ptr<BooleanExp> parse();
-
-public:
-
-    //static
-    std::string m_code;
-    std::shared_ptr<BooleanExp> m_expression;
+    std::shared_ptr<BooleanExp> expression;
+    bool valid = false;
 };
-
-#if 0
-int main()
-{
-    // Receptivite de la transition
-    std::string receptivite("Dcy X14 . foo +");
-
-    // Traduction vers C++ ou structure text
-    std::string infix = postfixToInfix(receptivite, "C");
-
-    std::cout << "Postfix expression : " << receptivite << std::endl;
-    std::cout << "Infix expression : " << infix << std::endl;
-
-    // Vers AST pour l'editeur
-    std::shared_ptr<BooleanExp> expression = ast("Dcy X14 . foo +");
-    Context context; // sensors
-    context.assign("Dcy", false);
-    context.assign("X14", true);
-    context.assign("foo", true);
-
-    // TODO Dear Im Gui
-    // for (auto const& it: context) { ImGui::InputFloat(it.first, it.second); }
-
-    bool result = expression->evaluate(context);
-    std::cout << result << '\n';
-
-    bool Dcy = false; bool X14 = true; bool foo = true;
-    std::cout << "Attendu: " << ((Dcy & X14) | foo) << '\n';
-
-    return 0;
-}
-#endif
 
 #endif

@@ -21,6 +21,7 @@
 #ifndef PETRI_NET_HPP
 #  define PETRI_NET_HPP
 
+#  include "Receptivities.hpp"
 #  include <SFML/System/Clock.hpp> // For fading
 #  include <math.h> // Nan
 #  include <atomic>
@@ -267,6 +268,11 @@ public:
         return std::string("T" + std::to_string(id_));
     }
 
+    inline void evaluate(Sensors const& sensors)
+    {
+        receptivity = Receptivity::Parser::evaluate(expression, sensors);
+    }
+
     //--------------------------------------------------------------------------
     //! \brief Check if the transition is validated (meaning if the receptivity
     //! is true) or not validated (meaning if the receptivity is false).
@@ -364,6 +370,12 @@ public:
     //! are always true. In GRAFCET receptivity depends on boolean logic on
     //! sensors (i.e. urgency button pressed).
     bool receptivity = false;
+
+//private:
+
+    //! \brief Hold the code of the receptivity (ie "Dcy . X14").
+    // std::string expression; ==> utiliser caption
+    Receptivity expression;
 };
 
 // *****************************************************************************
@@ -521,7 +533,7 @@ public:
         //! \brief The user has to click on transitions to fire.
         //! Tokens are burnt one by one.
         Petri,
-        //! \brief Is a Petri with duration on arcs transition -> palce. When
+        //! \brief Is a Petri with duration on arcs transition -> place. When
         //! transitions are enables, firing is automatic, on divergence
         //! transition, the firing is shuffle and the maximum of tokens are
         //! burnt in once. The user cannot click to transitions to fire.
@@ -558,7 +570,7 @@ public:
     PetriNet& operator=(PetriNet const& other);
 
     //--------------------------------------------------------------------------
-    //! \brief Return the name of
+    //! \brief Return the name of net.
     //--------------------------------------------------------------------------
     std::string const& name() const { return m_name; }
 
@@ -569,20 +581,25 @@ public:
     void clear();
 
     //--------------------------------------------------------------------------
-    //! \brief Set the type of net: GRAFCET, Petri, Timed Petri ...
-    //! \return false if the net cannot be changed (i.e. to graph event).
-    //--------------------------------------------------------------------------
-    bool changeTypeOfNet(PetriNet::Type const mode, std::vector<Arc*>& erroneous_arcs);
-    bool changeTypeOfNet(PetriNet::Type const mode)
-    {
-        std::vector<Arc*> erroneous_arcs;
-        return changeTypeOfNet(mode, erroneous_arcs);
-    }
-
-    //--------------------------------------------------------------------------
     //! \brief Get the type of net: GRAFCET, Petri, Timed Petri ...
     //--------------------------------------------------------------------------
     inline PetriNet::Type type() const { return m_type; }
+
+    //--------------------------------------------------------------------------
+    //! \brief Set the type of net: GRAFCET, Petri, Timed Petri ...
+    //! \return false if the net cannot be changed (i.e. to graph event).
+    //--------------------------------------------------------------------------
+    bool type(PetriNet::Type const mode, std::vector<Arc*>& erroneous_arcs);
+    bool type(PetriNet::Type const mode)
+    {
+        std::vector<Arc*> erroneous_arcs;
+        return type(mode, erroneous_arcs);
+    }
+
+    //--------------------------------------------------------------------------
+    //! \brief Return the string of the type of Petri net.
+    //--------------------------------------------------------------------------
+    static std::string to_str(PetriNet::Type const mode);
 
     //--------------------------------------------------------------------------
     //! \brief Return true if the Petri nets has no nodes (no places and no
@@ -956,8 +973,10 @@ public:
 
     //--------------------------------------------------------------------------
     //! \brief Set to false the receptivity for all transitions.
+    //! \return false if in GRAFCET mode and if at least one transition has an
+    //! invalid syntaxt in its recepetivity.
     //--------------------------------------------------------------------------
-    void resetReceptivies();
+    bool resetReceptivies();
 
     //--------------------------------------------------------------------------
     //! \brief Return the result of algorithm
@@ -969,7 +988,11 @@ public:
     //--------------------------------------------------------------------------
     inline std::string message() const { return m_message.str(); }
 
-std::string typeOfNet() const;
+    //--------------------------------------------------------------------------
+    //! \brief
+    //--------------------------------------------------------------------------
+    std::string parse(Transition& transition, bool force = false);
+
 private:
 
     //--------------------------------------------------------------------------
@@ -983,6 +1006,11 @@ private:
     //! \brief Set a name to the Petri net from the given filename.
     //--------------------------------------------------------------------------
     void name(std::string const& filename);
+
+public: // FIXME
+
+    //! \brief Hold boolean values of sensors needed for interpreting receptivities
+    Sensors m_sensors;
 
 private:
 

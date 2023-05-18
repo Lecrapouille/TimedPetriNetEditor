@@ -78,7 +78,7 @@ TEST(TestJSONLoader, SaveAndLoadFile)
     PetriNet net(PetriNet::Type::TimedPetri);
 
     ASSERT_EQ(net.load("data/AppelsDurgence.json"), true);
-    net.changeTypeOfNet(PetriNet::Type::Petri);
+    net.type(PetriNet::Type::Petri);
     ASSERT_EQ(net.save("/tmp/foo.json"), true);
     ASSERT_EQ(net.load("/tmp/foo.json"), true);
     ASSERT_EQ(net.type(), PetriNet::Type::Petri);

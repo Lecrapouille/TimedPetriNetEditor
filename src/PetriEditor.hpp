@@ -43,9 +43,9 @@ private:
     // *************************************************************************
     enum States
     {
-        STATE_IDLE, //! Waiting the user request to start the simulation.
+        STATE_IDLE,     //! Waiting the user request to start the simulation.
         STATE_STARTING, //! Init states before the simulation.
-        STATE_ENDING, //! Restore states after the simulation.
+        STATE_ENDING,   //! Restore states after the simulation.
         STATE_ANIMATING //! Simulation on-going: animate tokens.
     };
 
@@ -63,6 +63,10 @@ private:
 
         //--------------------------------------------------------------------------
         //! \brief Default constructor
+        //! \param[in] application the name of the application we are exporting to.
+        //! \param[in] title the caption for the menu.
+        //! \param[in] extensions the list of file extensions accepted by the Application.
+        //! \param[in] export_function the function to call for doing the export.
         //--------------------------------------------------------------------------
         Export(std::string const& application, std::string const& title, std::initializer_list<std::string>
                const& extensions, ExportFun export_function)
@@ -71,14 +75,18 @@ private:
         {}
 
         //--------------------------------------------------------------------------
-        //! \brief
+        //! \brief Return the title for Dear IM Gui menu.
         //--------------------------------------------------------------------------
         inline std::string const& title() const { return m_title; }
 
         //--------------------------------------------------------------------------
-        //! \brief
+        //! \brief Call the exportation function to the given Petri net.
+        //! \param[in] net: the Petri net to export.
+        //! \param[in] application the name of the application we are exporting to.
+        //! \param[out] message the error or information returned during the exportation.
+        //! \return true in case of success.
         //--------------------------------------------------------------------------
-        bool exports(PetriNet& net, std::string const& application, std::string& message) const;
+        bool exports(PetriNet const& net, std::string const& application, std::string& message) const;
 
         //--------------------------------------------------------------------------
         //! \brief Dummy constructor do not use call it directly.
@@ -128,7 +136,7 @@ public:
     {
         if (m_simulating)
             return false;
-        if (m_petri_net.changeTypeOfNet(mode, m_marked_arcs))
+        if (m_petri_net.type(mode, m_marked_arcs))
             return true;
 
         m_message_bar.setError(m_petri_net.message());

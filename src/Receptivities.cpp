@@ -19,16 +19,28 @@
 //=============================================================================
 
 #include "Receptivities.hpp"
+#include "PetriNet.hpp"
+#include <cassert>
 
 //-----------------------------------------------------------------------------
-void Receptivity::code(std::string const& code_)
+Receptivity::StepExp::StepExp(PetriNet& net, std::string const& token)
+    : m_net(net)
 {
-    m_code = code_;
-    m_expression = parse();
+    assert(token[0] == 'X' && "Incorrect state identifier");
+    m_id = std::stoi(&token[1]);
 }
 
 //-----------------------------------------------------------------------------
-bool Receptivity::isOperator(std::string const& token)
+bool Receptivity::StepExp::evaluate(Sensors const& sensors) const
+{
+    Place* p = m_net.findPlace(m_id);
+    if (p == nullptr)
+        return false;
+    return !!(p->tokens);
+}
+
+//-----------------------------------------------------------------------------
+bool Receptivity::Parser::isBinaryOperator(std::string const& token)
 {
     static const std::vector<std::string> operators = {
         ".", "+"
@@ -43,12 +55,75 @@ bool Receptivity::isOperator(std::string const& token)
 }
 
 //-----------------------------------------------------------------------------
-std::string Receptivity::convert(std::string const& token, std::string const& lang)
+bool Receptivity::Parser::isUnitaryOperator(std::string const& token)
+{
+    static const std::vector<std::string> operators = {
+        "!"
+    };
+
+    for (auto const& it: operators)
+    {
+        if (token == it)
+            return true;
+    }
+    return false;
+}
+
+//-----------------------------------------------------------------------------
+bool Receptivity::Parser::isConst(std::string const& token)
+{
+    static const std::vector<std::string> operators = {
+        "true", "false"
+    };
+
+    for (auto const& it: operators)
+    {
+        if (token == it)
+            return true;
+    }
+    return false;
+}
+
+//-----------------------------------------------------------------------------
+bool Receptivity::Parser::isState(std::string const& token)
+{
+    if ((token.size() <= 1u) || (token[0] != 'X'))
+        return false;
+
+    for (size_t i = 1u; i < token.length(); i++)
+    {
+        if (!isdigit(token[i]))
+            return false;
+    }
+
+    return true;
+}
+
+//-----------------------------------------------------------------------------
+bool Receptivity::Parser::isVariable(std::string const& token)
+{
+    if (!isalpha(token[0]))
+        return false;
+
+    for (size_t i = 1u; i < token.length(); i++)
+    {
+        if (!isalnum(token[i]))
+            return false;
+    }
+
+    return true;
+}
+
+//-----------------------------------------------------------------------------
+std::string Receptivity::Parser::convert(std::string const& token, std::string const& lang)
 {
     // <Forth symbole> -> map(<destination language>, <destination symbole>)
     static std::map<std::string, std::map<std::string, std::string>> translations = {
         { ".", { { "C", "&" }, { "ST", "AND" } } },
         { "+", { { "C", "|" }, { "ST", "OR" } } },
+        { "!", { { "C", "!" }, { "ST", "NOT" } } },
+        { "true", { { "C", "true" }, { "ST", "TRUE" } } },
+        { "false", { { "C", "false" }, { "ST", "FALSE" } } },
     };
 
     // Not token found => return directly
@@ -65,7 +140,7 @@ std::string Receptivity::convert(std::string const& token, std::string const& la
 }
 
 //-----------------------------------------------------------------------------
-std::vector<std::string> Receptivity::tokenizer(std::string const& s, std::string const& delimiter)
+std::vector<std::string> Receptivity::Parser::tokenizer(std::string const& s, std::string const& delimiter)
 {
     size_t pos_start = 0, pos_end, delim_len = delimiter.length();
     std::string token;
@@ -75,27 +150,45 @@ std::vector<std::string> Receptivity::tokenizer(std::string const& s, std::strin
     {
         token = s.substr(pos_start, pos_end - pos_start);
         pos_start = pos_end + delim_len;
-        res.push_back(token);
+        if (!token.empty())
+            res.push_back(token);
     }
 
-    res.push_back(s.substr (pos_start));
+    token = s.substr(pos_start);
+    if (!token.empty())
+        res.push_back(token);
     return res;
 }
 
 //-----------------------------------------------------------------------------
-std::string Receptivity::translate(std::string const& lang)
+std::string Receptivity::Parser::translate(std::string const& code, std::string const& lang)
 {
+    if (code.empty())
+        return convert("true", lang);
+
     std::stack<std::string> exprs;
-    std::vector<std::string> tokens = tokenizer(m_code, " ");
+    std::vector<std::string> tokens = tokenizer(code, " ");
 
     for (auto const& it: tokens)
     {
-        if (isOperator(it))
+        if (isUnitaryOperator(it))
+        {
+            if (exprs.size() < 1u)
+            {
+                throw "Bad expression";
+            }
+
+            std::string operand1 = exprs.top();
+            exprs.pop();
+
+            exprs.push("(" + convert(it, lang) + " " + operand1 + ")");
+
+        }
+        else if (isBinaryOperator(it))
         {
             if (exprs.size() < 2u)
             {
-                std::cerr << "Bad expression" <<std::endl;
-                return {};
+                throw "Bad expression";
             }
 
             std::string operand1 = exprs.top();
@@ -106,28 +199,66 @@ std::string Receptivity::translate(std::string const& lang)
 
             exprs.push("(" + operand2 + " " + convert(it, lang) + " " + operand1 + ")");
         }
-        else
+        else if (isConst(it))
+        {
+            exprs.push(convert(it, lang));
+        }
+        else if (isState(it))
+        {
+            std::string state("X[");
+            state += &it[1];
+            state += "]";
+            exprs.push(state);
+        }
+        else if (isVariable(it))
         {
             exprs.push(it);
+        }
+        else
+        {
+            throw "Bad expression";
         }
     }
     return exprs.top();
 }
 
 //-----------------------------------------------------------------------------
-std::shared_ptr<Receptivity::BooleanExp> Receptivity::parse()
+std::shared_ptr<Receptivity::BooleanExp> Receptivity::Parser::parse(PetriNet& net, std::string const& code, std::string& error)
 {
-    std::stack<std::shared_ptr<BooleanExp>> exprs;
-    std::vector<std::string> tokens = tokenizer(m_code, " ");
+    error.clear();
 
-    for (auto const& it: tokens)
+    // Implicity dummy expression means always true receptivities
+    if (code.empty())
+        return nullptr;
+
+    std::stack<std::shared_ptr<BooleanExp>> exprs;
+    std::vector<std::string> tokens = tokenizer(code, " ");
+
+    for (std::string const& it: tokens)
     {
-        if (isOperator(it))
+        if (isUnitaryOperator(it))
+        {
+            if (exprs.size() < 1u)
+            {
+                error = "Parse error: stack underflow with operator " + it;
+                return std::make_shared<ConstExp>("false");
+            }
+
+            std::shared_ptr<BooleanExp> operand1 = exprs.top();
+            exprs.pop();
+
+            if (it == "!")
+                exprs.push(std::make_shared<NotExp>(operand1));
+            else
+                assert(false && "Missing operator");
+
+        }
+        else if (isBinaryOperator(it))
         {
             if (exprs.size() < 2u)
             {
-                std::cerr << "Bad expression" <<std::endl;
-                return nullptr;
+                error = "Parse error: stack underflow with operator " + it;
+                return std::make_shared<ConstExp>("false");
             }
 
             std::shared_ptr<BooleanExp> operand1 = exprs.top();
@@ -140,11 +271,38 @@ std::shared_ptr<Receptivity::BooleanExp> Receptivity::parse()
                 exprs.push(std::make_shared<AndExp>(operand1, operand2));
             else if (it == "+")
                 exprs.push(std::make_shared<OrExp>(operand1, operand2));
+            else
+                assert(false && "Missing operator");
+        }
+        else if (isConst(it))
+        {
+            exprs.push(std::make_shared<ConstExp>(it));
+        }
+        else if (isState(it))
+        {
+            exprs.push(std::make_shared<StepExp>(net, it));
+        }
+        else if (isVariable(it))
+        {
+            net.m_sensors.assign(it, false); // Default value
+            exprs.push(std::make_shared<VariableExp>(it));
         }
         else
         {
-            exprs.push(std::make_shared<VariableExp>(it));
+            error = "Parse error: invalid token " + it;
+            return std::make_shared<ConstExp>("false");
         }
     }
+
     return exprs.top();
+}
+
+//-----------------------------------------------------------------------------
+bool Receptivity::Parser::evaluate(Receptivity const recept, Sensors const& sensors)
+{
+    // No expression means always TRUE receptivity
+    if (recept.expression == nullptr)
+        return recept.valid;
+
+    return recept.expression->evaluate(sensors);
 }

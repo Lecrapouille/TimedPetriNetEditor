@@ -97,7 +97,7 @@ bool PetriNet::exportToCodesys(std::string const& filename) const
         file << "            <inVariable localId=\"" << t.key << "_recept" << "\">" << std::endl;
         file << "              <position x=\"0\" y=\"0\" />" << std::endl;
         file << "              <connectionPointOut />" << std::endl;
-        file << "              <expression>" << (t.caption.empty() ? "TRUE" : t.caption) << "</expression>" << std::endl;
+        file << "              <expression>" << Receptivity::Parser::translate(t.caption, "ST") << "</expression>" << std::endl;
         file << "            </inVariable>" << std::endl;
 
         // Transition

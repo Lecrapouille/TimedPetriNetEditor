@@ -1,0 +1,30 @@
+{
+  "revision": 2,
+  "nets": [
+    {
+       "name": "GRAFCET",
+       "type": "GRAFCET",
+       "places": [
+            { "id": 0, "caption": "P0", "tokens": 1, "x": 332, "y": 87 },
+            { "id": 1, "caption": "P1", "tokens": 0, "x": 246, "y": 252 },
+            { "id": 2, "caption": "P2", "tokens": 0, "x": 446, "y": 242 }
+       ],
+       "transitions": [
+            { "id": 0, "caption": "A B ! .", "x": 448, "y": 112, "angle": 0 },
+            { "id": 1, "caption": "A B .", "x": 246, "y": 123, "angle": 0 },
+            { "id": 2, "caption": "true", "x": 389, "y": 164.5, "angle": 0 },
+            { "id": 3, "caption": "true", "x": 289, "y": 169.5, "angle": 0 }
+       ],
+       "arcs": [
+            { "from": "P0", "to": "T0" },
+            { "from": "P0", "to": "T1" },
+            { "from": "T1", "to": "P1", "duration": 5 },
+            { "from": "T0", "to": "P2", "duration": 5 },
+            { "from": "P2", "to": "T2" },
+            { "from": "T2", "to": "P0", "duration": 2 },
+            { "from": "P1", "to": "T3" },
+            { "from": "T3", "to": "P0", "duration": 3 }
+       ]
+    }
+  ]
+}
