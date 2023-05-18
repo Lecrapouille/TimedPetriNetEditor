@@ -7,10 +7,12 @@ graphical interface for editing and running Petri nets and specially timed event
 graphs which are a subclass of Petri nets with good mathematics properties for
 modeling discrete event systems (DES) with [(max,+)
 algebra](https://jpquadrat.github.io/). This tool can generate (max,+) code for
-[Julia](https://julialang.org/), export figures (LaTeX, Graphivz) and generate
-C++ code (GRAFCET aka sequential function chart that could run on Arduino i.e.)
-and used in synergy with [(max,+)](https://github.com/Lecrapouille/MaxPlus.jl)
-algebra toolbox running with the [Julia](https://julialang.org/) language.
+[Julia](https://julialang.org/) used in synergy with
+[(max,+)](https://github.com/Lecrapouille/MaxPlus.jl) algebra toolbox running
+with the [Julia](https://julialang.org/) language.  This editor also exports the
+net as figures (LaTeX, Graphivz) or to other applications (Symfony,
+pn-editor ...) or generate C++ code (GRAFCET aka SFC sequential function chart
+that could run i.e. on Arduino).
 
 The following picture is an overview of the look of the application. You can
 click on it to watch a YouTube showing an example of timed Petri net running.
@@ -24,15 +26,16 @@ overview of this current document: how to compile and install this project, the
 common key and mouse bindings for the GUI and common usage of the Julia API for
 (max,+) ...
 
-Why develop another Petri editor? Because:
-- There is no Petri editor with (max,+) on GitHub.
-- This project is a continuation of [ScicosLab](http://www.scicoslab.org/)'s
-  (max,+) toolbox that my father developed at INRIA and which is no longer
-  developed.
+Why developing another Petri editor? Because:
+- This project has started as a continuation of
+  [ScicosLab](http://www.scicoslab.org/)'s (max,+) toolbox that my father
+  developed at INRIA and which is no longer developed. There are no Petri
+  editors with (max,+) on GitHub. Currently, there is no Petri net editors
+  available for Julia.
 - Many Petri net editors in GitHub are no longer maintained (> 7 years) or that
   I cannot personally compile or use (Windows system, Visual Studio compiler,
-  C#, Java ..) or the code is too complex to add my own extensions.
-- Currently, there is no Petri net editors available for Julia.
+  C#, Java ..) or the code is too complex (no comments) to add my own
+  extensions.
 
 I tried to make the code as simple as possible with many comments. Do not hesitate
 to ask if something is not easily understandable.
@@ -40,15 +43,16 @@ to ask if something is not easily understandable.
 ## How to compile and install the project?
 
 This project is developed in C++11. The GUI is made with the
-[SFML](https://www.sfml-dev.org/index-fr.php). The project is compiled with a
-Makefile (no CMake). Optionally, a [Julia 1.x](https://julialang.org/) code
+[SFML](https://www.sfml-dev.org/index-fr.php) and [Dear ImGui](https://github.com/ocornut/imgui).
+The project is compiled with a Makefile (no CMake). Optionally, a [Julia 1.x](https://julialang.org/) code
 binding the C++ API can be optionally used for working in synergy with my
-[(max,+) toolbox](https://github.com/Lecrapouille/MaxPlus.jl).
+[(max,+) toolbox](https://github.com/Lecrapouille/MaxPlus.jl) (ideally Julia upper to 1.8).
 
 Prerequisites to compile this project are:
 - g++ or clang++ compiler for C++11.
 - [SFML](https://www.sfml-dev.org/): `sudo apt-get install libsfml-dev`
-- [MQTT mosquitto](https://github.com/eclipse/mosquitto): `sudo apt install libmosquitto-dev mosquitto mosquitto-clients`.
+- [MQTT mosquitto](https://github.com/eclipse/mosquitto): `sudo apt install
+  libmosquitto-dev mosquitto mosquitto-clients`.
 - Optionally, libdwarf: `sudo apt-get install libdw-dev` (needed when compiling
   this project in debug mode because it will use
   [backward-cpp](https://github.com/bombela/backward-cpp) for showing the stack
@@ -74,9 +78,9 @@ make download-external-libs
 make -j8
 ```
 
-Where `make download-external-libs` is needed once to download third-parts libraries
-and where `-j8` is to be adapted to the number of CPU cores of your computer (8 cores
-in my case).
+Where `make download-external-libs` is needed once to download third-parts
+libraries and where `-j8` is to be adapted to the number of CPU cores of your
+computer (8 cores in my case).
 
 To run the TimedPetriNetEditor application, you can:
 ```sh
@@ -94,13 +98,13 @@ sudo make install
 
 For example on Linux:
 ```
-*** Installing: doc => /usr/share/TimedPetriNetEditor/0.1.0/doc
-*** Installing: examples => /usr/share/TimedPetriNetEditor/0.1.0/examples
-*** Installing: data => /usr/share/TimedPetriNetEditor/0.1.0/data
+*** Installing: doc => /usr/share/TimedPetriNetEditor/0.3.0/doc
+*** Installing: examples => /usr/share/TimedPetriNetEditor/0.3.0/examples
+*** Installing: data => /usr/share/TimedPetriNetEditor/0.3.0/data
 *** Installing: libs => /usr/lib
 *** Installing: pkg-config => /usr/lib/pkgconfig
-*** Installing: headers => /usr/include/TimedPetriNetEditor-0.1.0
-*** Installing: src => /usr/include/TimedPetriNetEditor-0.1.0
+*** Installing: headers => /usr/include/TimedPetriNetEditor-0.3.0
+*** Installing: src => /usr/include/TimedPetriNetEditor-0.3.0
 ```
 
 Once installed, you can call directly the Petri net editor:
@@ -121,24 +125,25 @@ PetriNet(0)
 julia> editor!(pn)
 ```
 
-If you do not desire to install TimedPetriNetEditor on your operating system, you
-will have to adapt the `DEFINES` in Makefile to indicate the path of the `data/`
-folder (to find the fonts). You will also have to manually modify this
+If you do not desire to install TimedPetriNetEditor on your operating system,
+you will have to adapt the `DEFINES` in Makefile to indicate the path of the
+`data/` folder (to find the fonts). You will also have to manually modify this
 Julia file to indicate the correct path of the shared library
 `libtimedpetrineteditor.so`.
 
 ## Command line
 
-The command line is optional. By default type of net is timed Petri.
+The command line is optional. By default type of net is timed Petri. The type of
+net is stored inside the file (GRAFCET, timed Petri net ...).
 
 ```sh
 TimedPetriNetEditor [petri.json]
 ```
 
 Where:
-- `[petri.json]` is an optional Petri net file to load (JSON format). The type of net
-is stored inside the json file ((timed) Petri net, timed graph event, GRAFCET ...) but
-the GUI allows you to swith of type.
+- `[petri.json]` is an optional Petri net file to load (JSON format). The type
+of net is stored inside the json file ((timed) Petri net, timed graph event,
+GRAFCET ...) but the GUI allows you to swith of type.
 
 Example:
 
@@ -175,6 +180,7 @@ from the mouse and the keyboard (like Emacs but without the Meta key ^^).
   transitions) then an intermediate node of the opposite type will be created as
   well as an intermediate arc.
 - `Middle mouse scroll`: zoom/unzoom the view.
+- `Up`, `Down`, `Right`, `Left` keys: move the view.
 - `L` key: same action as the middle mouse button.
 - `M` key: move the node (place or transition) selected by the mouse cursor.
 - Linux: `Delete` key: remove a node (place or transition). Note: since all identifiers
@@ -182,6 +188,9 @@ from the mouse and the keyboard (like Emacs but without the Meta key ^^).
   of the same type will receive the unique identifier of the deleted one. Note:
   arcs cannot yet be deleted.
 - MacOSX: `\` for deleting node.
+
+The whole GUI is currently in refacto. The following commands will be removed in next
+commits:
 - `Z` key: clear the whole Petri net.
 - Linux: `+`, `-` keys: add/remove a token on the place selected by the mouse cursor.
 - MacOSX: `[`, `]` keys: add/remove a token on the place selected by the mouse cursor.
@@ -196,36 +205,25 @@ from the mouse and the keyboard (like Emacs but without the Meta key ^^).
 - `E` key: is the current timed Petri net a timed graph event?
 - `C` key: show the first critical circuit if and only if the Petri net is a
   graph event.
-- `J` key: export the graph event into a Julia script file (for example named
-  `GraphEvent-gen.jl`) if and only if the Petri net is a graph event.
-- `X` key: export the Petri net as LaTeX file (for example named `petri-gen.tex`).
-- `Y` key: export the Petri net as Symfony workflow file (for example named `petri-gen.yaml`).
-- `P` key: export the Petri net as Graphviz file (for example named `petri-gen.gv`).
-- `D` key: export the Petri net as Draw.io file (for example named `petri-gen.drawio`).
-- `G` key: export the Petri net as Grafcet into a C++ header file (for example
-  named `Grafcet-gen.hpp`).
-- `K` key: export the Petri net for https://gitlab.com/porky11/pn-editor.
 - `F1` key: take a screenshot of the application.
 - `H` key: show this help.
-- `Up`, `Down`, `Right`, `Left` keys: move the view.
 
 ## Work in progress
 
-- Time duration cannot yet be edited. *Workaround:* save the
-  Petri net to JSON file and edit with a text editor, then reload the file.
-- No input node generating periodically tokens is yet made. *Workaround:* during
-  the simulation the user can add a new token to any desired places selected by
-  the mouse cursor and the `+` key.
+- The whole GUI is currently in refacto. It will change a lot in next commits.
+- Time duration are not yet correctly editable from the net. Use the menu instead.
 - Showing critical cycles for graph events does not support having transitions
   without predecessors (inputs). For example this Petri net: `T0 -> P0 -> T1`.
   *Workaround:* Either modify your net either by removing your inputs or making
   inputs cycling to themselves with a `-inf` time (which makes duality issues).
 - Not all error messages are displayed on the GUI. Read the logs on your Unix
   console.
-- We cannot move or zoom the Petri net or select several nodes. We cannot change
-  the color of nodes and arcs. We cannot merge several nodes into a sub-net for
-  simplifying the net. Cannot delete arcs. Cannot make undo/redo actions.
+- We cannot change the color of nodes and arcs. We cannot merge several nodes
+  into a sub-net for simplifying the net. Cannot delete arcs. Cannot make
+  undo/redo actions.
+- Use bezier to draw arcs. Text and arrows are mixed together.
 - Julia API: missing add/remove arcs.
+- Code for some export/import files are here but not yet done.
 
 ## What are Petri nets, timed Petri nets, timed event graph?
 
@@ -283,8 +281,8 @@ perform its action. A fading effect will help to show you which arcs and
 nodes are activated.
 
 Notes:
-- Duration of animations is not yet normalized, so a short duration will make the GUI
-  blink.
+- Duration of animations is not yet normalized, so a short duration will make
+  the GUI blink.
 - To simulate a classic Petri net, simply set all duration in arcs to 0.
 - Inputs generating periodically tokens are currently not implemented. For the
 moment, during the simulation, you can place your mouse cursor to any place and
@@ -719,15 +717,23 @@ which GRAFCET is created manually in C for Arduino, I extended my editor for
 generating GRAFCET in a single C++ header file. Since my project mainly concerns
 timed Petri net, the editor is not intended to follow all the GRAFCET norms
 (consider it as a bonus while GitHub pull requests are welcome) and therefore
-cannot edit transitivities and simulate inputs. As consequence, you will have to
-write manually the missing methods in your own C++ file:
+cannot edit transitivities and simulate inputs.
+
+Inside the editor, set your net type to GRAFCET and you can add code inside
+transitions caption in postfix notation (i.e. `a b ! .` will means `and(a, not(b))`).
+
+Note: Tempo, raising or falling edge and states of steps are not yet managed. Actions code
+are not yet managed.
+
+As consequence, you will have to write manually the missing methods in your own C++ file:
 - `P0()`, `P1()` ... to let you add the code for actions when places are
   activated (usually to update actuators). You have to implement one method
   for each place.
-- `T0()`, `T1()` ... to let you add the code of the transitivity (boolean logic)
+- if your net is not a GRAFCET. `T0()`, `T1()` ... to let you add the code of the
+  transitivity (boolean logic)
   of the associated transition (usually, condition depending on system
   sensors). Return `true` when the transition is enabled, else return
-  `false`. You have to implement one method for each transition.
+  `false`. With GRAFCET net the code of receptivities are generated.
 
 ![TrafficLight](doc/TrafficLight.png)
 
