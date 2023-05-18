@@ -132,38 +132,18 @@ Julia file to indicate the correct path of the shared library
 The command line is optional. By default type of net is timed Petri.
 
 ```sh
-TimedPetriNetEditor [-t|-p|-e|-g] [petri.json]
+TimedPetriNetEditor [petri.json]
 ```
 
 Where:
-- `[-t|-p|-g]` optional argument to force the type of net:
-
-   - `-t` (default mode) for editing timed Petri nets. In this mode, places can
-     have any number of tokens. Arcs `Transition -> Place` have units of time for
-     emulating the duration of the process work (arcs `Place -> Transition` have
-     implicit 0 of unit time). When running the net simulation, tokens are
-     animated and move along arcs at the speed imposed by the arc duration. The
-     current unit of time for animation is 1 second. Tokens are shuffled one by
-     one on OR-divergence branches.
-
-   - `-e` for forcing the timed graph event mode. Places are marged within arcs.
-
-   - `-p` for forcing the Petri mode. In this mode, places can have any number
-     of tokens. Arcs have an implicit unit of time set to 0 (while they
-     still animated to make the simulation understandable).  When
-     simulating the net, you have to click on transitions to fire tokens. When
-     firing, the maximum possible of tokens are burnt at once.
-
-   - `-g` for forcing the GRAFCET mode. This mode is like Petri (no duration on
-     arcs) but where places have at max 1 token and tokens are shuffled one by
-     one on OR-divergence branches.
-
-- `[petri.json]` is an optional Petri net file to load (JSON format).
+- `[petri.json]` is an optional Petri net file to load (JSON format). The type of net
+is stored inside the json file ((timed) Petri net, timed graph event, GRAFCET ...) but
+the GUI allows you to swith of type.
 
 Example:
 
 ```sh
-TimedPetriNetEditor -t examples/Howard2.json
+TimedPetriNetEditor examples/Howard2.json
 ```
 
 ## Examples

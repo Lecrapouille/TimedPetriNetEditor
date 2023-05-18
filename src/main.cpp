@@ -26,13 +26,8 @@
 static void usage(const char* name)
 {
     std::cout
-      << name << " [-t|-p|-g] [petri.json]" << std::endl
+      << name << " [petri.json]" << std::endl
       << "Where:" << std::endl
-      << "  [-t|-p|-e|-g] optional argument to force the type of net:" << std::endl
-      << "    -t for using a timed petri mode (by default)" << std::endl
-      << "    -p for using a petri mode" << std::endl
-      << "    -e for using a timed graph event mode" << std::endl
-      << "    -g for using a GRAFCET mode" << std::endl
       << "  [petri.json] is an optional Petri net file to load (i.e. examples/Howard1.json)" << std::endl
       << std::endl;
 }
@@ -42,29 +37,12 @@ int main(int argc, char* argv[])
 {
     // Parse the command line
     const char* filename = nullptr;
-    PetriNet::Type type = PetriNet::Type::TimedPetri;
     opterr = 0;
     int opt;
-    while ((opt = getopt(argc, argv, "gtpeh")) != -1)
+    while ((opt = getopt(argc, argv, "h")) != -1)
     {
         switch (opt)
         {
-            case 'g':
-                type = PetriNet::Type::GRAFCET;
-                std::cout << "GRAFCET mode" << std::endl;
-                break;
-            case 't':
-                type = PetriNet::Type::TimedPetri;
-                std::cout << "Timed Petri mode" << std::endl;
-                break;
-            case 'p':
-                type = PetriNet::Type::Petri;
-                std::cout << "Petri mode" << std::endl;
-                break;
-            case 'e':
-                type = PetriNet::Type::TimedGraphEvent;
-                std::cout << "Timed graph event mode" << std::endl;
-                break;
             case 'h':
                 usage(argv[0]);
                 std::cout << PetriEditor::help().str() << std::endl;
@@ -85,7 +63,7 @@ int main(int argc, char* argv[])
     Application application(1200, 720, "Timed Petri Net Editor");
     try
     {
-        PetriNet net(type);
+        PetriNet net(PetriNet::Type::TimedPetri);
         if (filename != nullptr)
         {
             PetriEditor editor(application, net, filename);
