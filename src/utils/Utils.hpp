@@ -131,6 +131,18 @@ namespace std
 #  endif // __cplusplus == 201103L
 
 //------------------------------------------------------------------------------
+inline float sqrtdist(sf::Vector2f const& a, sf::Vector2f const& b)
+{
+   return (b.x - a.x) * (b.x - a.x) + (b.y - a.y) * (b.y - a.y);
+}
+
+//------------------------------------------------------------------------------
+inline float distance(sf::Vector2f const& a, sf::Vector2f const& b)
+{
+   return sqrtf((b.x - a.x) * (b.x - a.x) + (b.y - a.y) * (b.y - a.y));
+}
+
+//------------------------------------------------------------------------------
 inline float norm(const float xa, const float ya, const float xb, const float yb)
 {
     return sqrtf((xb - xa) * (xb - xa) + (yb - ya) * (yb - ya));
