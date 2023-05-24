@@ -473,7 +473,7 @@ void PetriEditor::draw(Arc const& arc, uint8_t alpha)
         // property of graph event: there is only one place.
         assert(arc.to.arcsOut.size() == 1u && "malformed graph event");
         Node& next = arc.to.arcsOut[0]->to;
-        /*Arrow*/ Bezier arrow(arc.from.x, arc.from.y, next.x, next.y, alpha);
+        Arrow arrow(arc.from.x, arc.from.y, next.x, next.y, alpha);
         m_render_texture.draw(arrow);
 
         // Print the timing / tokens
@@ -487,7 +487,7 @@ void PetriEditor::draw(Arc const& arc, uint8_t alpha)
     else
     {
         // Transition -> Place
-        /*Arrow*/ Bezier arrow(arc.from.x, arc.from.y, arc.to.x, arc.to.y, alpha);
+        Arrow arrow(arc.from.x, arc.from.y, arc.to.x, arc.to.y, alpha);
         m_render_texture.draw(arrow);
 
         if ((arc.from.type == Node::Type::Transition) &&
