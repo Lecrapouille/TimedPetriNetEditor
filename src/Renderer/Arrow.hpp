@@ -1,6 +1,6 @@
-//=====================================================================
+//=============================================================================
 // TimedPetriNetEditor: A timed Petri net editor.
-// Copyright 2021 -- 2022 Quentin Quadrat <lecrapouille@gmail.com>
+// Copyright 2021 -- 2023 Quentin Quadrat <lecrapouille@gmail.com>
 //
 // This file is part of TimedPetriNetEditor.
 //
@@ -16,7 +16,7 @@
 //
 // You should have received a copy of the GNU General Public License
 // along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.
-//=====================================================================
+//=============================================================================
 
 #ifndef ARROW_HPP
 #  define ARROW_HPP
