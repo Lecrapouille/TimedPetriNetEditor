@@ -61,11 +61,8 @@ DEFINES += -DDATADIR=\"$(DATADIR)\"
 ###################################################
 # Reduce warnings
 #
-DEFINES += -Wno-undef -Wno-switch-enum -Wno-sign-conversion -Wno-float-equal
-DEFINES += -Wno-deprecated-copy-dtor -Wno-defaulted-function-deleted
-# Aaaargf needed because of imgui warnings
-DEFINES += -Wno-old-style-cast -Wno-unused-parameter
-DEFINES += -Wno-conversion -Wno-cast-qual
+CCFLAGS += -Wno-sign-conversion -Wno-float-equal
+CXXFLAGS += -Wno-undef -Wno-switch-enum
 
 ###################################################
 # Make the list of compiled files used both by the
