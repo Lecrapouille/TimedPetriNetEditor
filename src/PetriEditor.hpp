@@ -36,6 +36,9 @@
 // *****************************************************************************
 class PetriEditor: public Application::GUI, public MQTT
 {
+    friend void inspector(PetriEditor& editor);
+    friend void menu(PetriEditor& editor);
+
 private:
 
     // *************************************************************************
@@ -387,13 +390,8 @@ private:
     void applyZoom(float const delta);
 
 private:
-
-sf::RenderTexture m_render_texture;
-
-    //! \brief The Petri net.
-public:    PetriNet& m_petri_net;
-
-//private:
+    //! \brief The single Petri net the editor can edit
+    PetriNet& m_petri_net;
     //! \brief List of format the editor can export.
     std::map<std::string, PetriEditor::Export> m_exporters;
     //! \brief Memorize initial number of tokens in places.
@@ -455,8 +453,10 @@ public:    PetriNet& m_petri_net;
     //! \brief Subscription to MQTT topic for receiving commands for manipulating
     //! the net
     std::string m_mqtt_topic;
-
+    //!
     bool m_is_hovered = false;
+    //! Make SFML render the Petri net inside a texture that DearIMGui can display
+    sf::RenderTexture m_render_texture;
 };
 
 #endif

@@ -885,11 +885,11 @@ function to_syslin(pn::PetriNet)
 end
 
 function dater(pn::PetriNet)
-    ccall((:petri_dater_form, libtpne), Bool, (Clonglong,), pn.handle) || error("Invalid Petri net handle")
+    ccall((:petri_dater_equation, libtpne), Bool, (Clonglong, Bool,), pn.handle) || error("Invalid Petri net handle")
 end
 
 function counter(pn::PetriNet)
-    ccall((:petri_counter_form, libtpne), Bool, (Clonglong,), pn.handle) || error("Invalid Petri net handle")
+    ccall((:petri_counter_equation, libtpne), Bool, (Clonglong, Bool,), pn.handle) || error("Invalid Petri net handle")
 end
 
 #end # TimedPetriNetEditor module

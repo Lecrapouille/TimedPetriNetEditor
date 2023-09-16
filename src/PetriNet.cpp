@@ -777,49 +777,68 @@ bool PetriNet::toSysLin(SparseMatrix& D, SparseMatrix& A, SparseMatrix& B, Spars
 }
 
 //------------------------------------------------------------------------------
-std::stringstream PetriNet::showCounterForm(std::string const& comment) const
+std::stringstream PetriNet::showCounterEquation(std::string const& comment,
+                                                bool use_caption,
+                                                bool minplus_notation) const
 {
     std::stringstream ss;
 
-    ss << comment << "Timed event graph represented as its counter form:" << std::endl;
+    ss << comment << "Timed event graph represented as counter equation"
+       << (minplus_notation ? " (min-plus algebra):" : ":") << std::endl;
     for (auto const& t: this->transitions())
     {
         if (t.arcsIn.size() == 0u)
             continue;
 
-        ss << comment << t.key << "(t) = min(";
+        ss << comment << (use_caption ? t.caption : t.key) << "(t) = ";
+        ss << (minplus_notation ? "" : "min(");
         std::string separator1;
         for (auto const& ai: t.arcsIn)
         {
             ss << separator1;
-            ss << ai->tokensIn() << " + ";
+            if (ai->tokensIn() != 0u)
+            {
+                ss << ai->tokensIn() << (minplus_notation ? " " : " + ");
+            }
             std::string separator2;
             for (auto const& ao: ai->from.arcsIn)
             {
                 ss << separator2;
-                ss << ao->from.key << "(t - " << ao->duration << ")";
-                separator2 = ", ";
+                ss << (use_caption ? ao->from.caption : ao->from.key);
+                if (ao->duration != 0u)
+                {
+                    ss << "(t - " << ao->duration << ")";
+                }
+                else
+                {
+                    ss << "(t)";
+                }
+                separator2 = (minplus_notation ? " ⨁ " : ", ");
             }
-            separator1 = ", ";
+            separator1 = (minplus_notation ? " ⨁ " : ", ");
         }
-        ss << ");" << std::endl;
+        ss << (minplus_notation ? "" : ")") << std::endl;
     }
 
     return ss;
 }
 
 //------------------------------------------------------------------------------
-std::stringstream PetriNet::showDaterForm(std::string const& comment) const
+std::stringstream PetriNet::showDaterEquation(std::string const& comment,
+                                              bool use_caption,
+                                              bool maxplus_notation) const
 {
     std::stringstream ss;
 
-    ss << comment << "Timed event graph represented as its dater form:" << std::endl;
+    ss << comment << "Timed event graph represented as dater equation"
+       << (maxplus_notation ? " (max-plus algebra):" : ":") << std::endl;
     for (auto const& t: this->transitions())
     {
         if (t.arcsIn.size() == 0u)
             continue;
 
-        ss << comment << t.key << "(n) = max(";
+        ss << comment << (use_caption ? t.caption : t.key) << "(n) = ";
+        ss << (maxplus_notation ? "" : "max(");
         std::string separator1;
         for (auto const& ai: t.arcsIn)
         {
@@ -828,13 +847,22 @@ std::stringstream PetriNet::showDaterForm(std::string const& comment) const
             for (auto const& ao: ai->from.arcsIn)
             {
                 ss << separator2;
-                ss << ao->duration << " + " << ao->from.key
-                   << "(n - " << ai->tokensIn() << ")";
-                separator2 = ", ";
+                if (ao->duration != 0u)
+                {
+                    ss << ao->duration << (maxplus_notation ? " " : " + ");
+                }
+                ss << (use_caption ? ao->from.caption : ao->from.key) << "(n";
+                if (ai->tokensIn() != 0u)
+                {
+                    ss << " - " << ai->tokensIn();
+                }
+                ss << ")";
+
+                separator2 = (maxplus_notation ? " ⨁ " : ", ");
             }
-            separator1 = ", ";
+            separator1 = (maxplus_notation ? " ⨁ " : ", ");
         }
-        ss << ");" << std::endl;
+        ss << (maxplus_notation ? "" : ")") << std::endl;
     }
 
     return ss;

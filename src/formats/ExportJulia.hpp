@@ -105,11 +105,13 @@ bool PetriNet::exportToJulia(std::string const& filename) const
     file << "N = sparse(" << N << ", " << nnodes << ", " << nnodes << ") # Tokens" << std::endl;
     file << "T = sparse(" << T << ", " << nnodes << ", " << nnodes << ") # Durations" << std::endl;
 
-    // Show the event graph to its Max-Plus counter and dater form
+    // Show the event graph to its Max-Plus counter and dater equation
     file << std::endl;
-    file << this->showCounterForm().str();
+    file << this->showCounterEquation("# ", false, false).str();
+    file << this->showCounterEquation("# ", false, true).str();
     file << std::endl;
-    file << this->showDaterForm().str();
+    file << this->showDaterEquation("# ", false, false).str();
+    file << this->showDaterEquation("# ", false, false).str();
 
     // Compute the syslin as Julia code using the Max-Plus package
     // X(n) = D X(n) ⨁ A X(n-1) ⨁ B U(n)
@@ -118,7 +120,7 @@ bool PetriNet::exportToJulia(std::string const& filename) const
     canonical.toSysLin(D, A, B, C, indices, nb_inputs, nb_states, nb_outputs);
 
     file << std::endl;
-    file << "## Max-Plus implicit linear dynamic system of the dater form:" << std::endl;
+    file << "## Max-Plus implicit linear dynamic system of the dater equation:" << std::endl;
     file << "# X(n) = D X(n) ⨁ A X(n-1) ⨁ B U(n)" << std::endl;
     file << "# Y(n) = C X(n)" << std::endl;
     SparseMatrix::display_for_julia = true;

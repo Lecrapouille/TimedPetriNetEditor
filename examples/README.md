@@ -73,3 +73,14 @@ Show source and sinks transitions
 ```
 TimedPetriNetEditor examples/InputsOutputs.json
 ```
+
+## Event Graph
+
+Show a timed event graph taken from
+https://www.rocq.inria.fr/metalau/cohen/SED/book-online.html.
+
+![Inputs Outputs](pics/InputsOutputs.png)
+
+```
+TimedPetriNetEditor examples/EventGraph.json
+```

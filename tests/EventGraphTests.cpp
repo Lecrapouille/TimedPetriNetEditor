@@ -237,3 +237,105 @@ TEST(TestEventGraph, TestToSysLinInputOutput)
     ASSERT_THAT(C.j, UnorderedElementsAre(1u));
     ASSERT_THAT(C.d, UnorderedElementsAre(3.0));
 }
+
+//------------------------------------------------------------------------------
+// https://www.rocq.inria.fr/metalau/cohen/SED/book-online.html
+// Chapter 5.2 A Comparison Between Counter and Dater Descriptions
+TEST(TestEventGraph, TestToDaterEquation)
+{
+    std::vector<Arc*> erroneous_arcs;
+    PetriNet net(PetriNet::Type::TimedPetri);
+
+    ASSERT_EQ(net.load("data/EventGraph.json"), true);
+    net.generateArcsInArcsOut(); // FIXME
+    ASSERT_EQ(net.isEventGraph(erroneous_arcs), true);
+
+    std::stringstream expected, obtained;
+
+    // --
+    expected.str(
+        "# Timed event graph represented as dater equation:\n"
+        "# T1(n) = max(1 + T0(n), 1 + T2(n - 1), 1 + T1(n - 2))\n"
+        "# T2(n) = max(1 + T1(n - 1), 2 + T0(n))\n"
+        "# T3(n) = max(T1(n), T2(n))\n");
+    obtained = net.showDaterEquation("# ", false, false);
+    ASSERT_STREQ(obtained.str().c_str(), expected.str().c_str());
+
+    // --
+    expected.str(
+        "# Timed event graph represented as dater equation:\n"
+        "# x1(n) = max(1 + u(n), 1 + x2(n - 1), 1 + x1(n - 2))\n"
+        "# x2(n) = max(1 + x1(n - 1), 2 + u(n))\n"
+        "# y(n) = max(x1(n), x2(n))\n");
+    obtained = net.showDaterEquation("# ", true, false);
+    ASSERT_STREQ(obtained.str().c_str(), expected.str().c_str());
+
+    // --
+    expected.str(
+        "# Timed event graph represented as dater equation (max-plus algebra):\n"
+        "# T1(n) = 1 T0(n) ⨁ 1 T2(n - 1) ⨁ 1 T1(n - 2)\n"
+        "# T2(n) = 1 T1(n - 1) ⨁ 2 T0(n)\n"
+        "# T3(n) = T1(n) ⨁ T2(n)\n");
+    obtained = net.showDaterEquation("# ", false, true);
+    ASSERT_STREQ(obtained.str().c_str(), expected.str().c_str());
+
+    // --
+    expected.str(
+        "# Timed event graph represented as dater equation (max-plus algebra):\n"
+        "# x1(n) = 1 u(n) ⨁ 1 x2(n - 1) ⨁ 1 x1(n - 2)\n"
+        "# x2(n) = 1 x1(n - 1) ⨁ 2 u(n)\n"
+        "# y(n) = x1(n) ⨁ x2(n)\n");
+    obtained = net.showDaterEquation("# ", true, true);
+    ASSERT_STREQ(obtained.str().c_str(), expected.str().c_str());
+}
+
+//------------------------------------------------------------------------------
+// https://www.rocq.inria.fr/metalau/cohen/SED/book-online.html
+// Chapter 5.2 A Comparison Between Counter and Dater Descriptions
+TEST(TestEventGraph, TestToCounterEquation)
+{
+    std::vector<Arc*> erroneous_arcs;
+    PetriNet net(PetriNet::Type::TimedPetri);
+
+    ASSERT_EQ(net.load("data/EventGraph.json"), true);
+    net.generateArcsInArcsOut(); // FIXME
+    ASSERT_EQ(net.isEventGraph(erroneous_arcs), true);
+
+    std::stringstream expected, obtained;
+
+    // --
+    expected.str(
+        "# Timed event graph represented as counter equation:\n"
+        "# T1(t) = min(T0(t - 1), 1 + T2(t - 1), 2 + T1(t - 1))\n"
+        "# T2(t) = min(1 + T1(t - 1), T0(t - 2))\n"
+        "# T3(t) = min(T1(t), T2(t))\n");
+    obtained = net.showCounterEquation("# ", false, false);
+    ASSERT_STREQ(obtained.str().c_str(), expected.str().c_str());
+
+    // --
+    expected.str(
+        "# Timed event graph represented as counter equation:\n"
+        "# x1(t) = min(u(t - 1), 1 + x2(t - 1), 2 + x1(t - 1))\n"
+        "# x2(t) = min(1 + x1(t - 1), u(t - 2))\n"
+        "# y(t) = min(x1(t), x2(t))\n");
+    obtained = net.showCounterEquation("# ", true, false);
+    ASSERT_STREQ(obtained.str().c_str(), expected.str().c_str());
+
+    // --
+    expected.str(
+        "# Timed event graph represented as counter equation (min-plus algebra):\n"
+        "# T1(t) = T0(t - 1) ⨁ 1 T2(t - 1) ⨁ 2 T1(t - 1)\n"
+        "# T2(t) = 1 T1(t - 1) ⨁ T0(t - 2)\n"
+        "# T3(t) = T1(t) ⨁ T2(t)\n");
+    obtained = net.showCounterEquation("# ", false, true);
+    ASSERT_STREQ(obtained.str().c_str(), expected.str().c_str());
+
+    // --
+    expected.str(
+        "# Timed event graph represented as counter equation (min-plus algebra):\n"
+        "# x1(t) = u(t - 1) ⨁ 1 x2(t - 1) ⨁ 2 x1(t - 1)\n"
+        "# x2(t) = 1 x1(t - 1) ⨁ u(t - 2)\n"
+        "# y(t) = x1(t) ⨁ x2(t)\n");
+    obtained = net.showCounterEquation("# ", true, true);
+    ASSERT_STREQ(obtained.str().c_str(), expected.str().c_str());
+}

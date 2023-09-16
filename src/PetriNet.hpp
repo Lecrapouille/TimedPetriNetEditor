@@ -789,20 +789,34 @@ public:
     //! T0(t) = min(2 + T2(t - 5)); where t - 5 is delay implied by duration on
     //! arcs and min(2 + implied by tokens from incoming places.
     //!
+    //! \param[in] comment string used as comment (when exported to a langage)
+    //! \param[in] use_caption if set to true use transition captions else use
+    //!   transition keys.
+    //! \param[in] minplus_notation if set to true use the (min-plus) algebra
+    //!   symbols (⨁ and no symbol for ⨂) else show min() symbol.
+    //!
     //! \return the string depicting the timed Petri net as (min,+) system if
     //! this net is a timed graph event. Else return empty string.
     //--------------------------------------------------------------------------
-    std::stringstream showCounterForm(std::string const& comment = "# ") const;
+    std::stringstream showCounterEquation(std::string const& comment,
+        bool use_caption, bool minplus_notation) const;
 
     //--------------------------------------------------------------------------
     //! \brief Return the timed event graph as (max,+) system. For example
     //! T0(n) = max(5 + T2(n - 2)); where n - 2 is delay implied by tokens from
     //! incoming places and max(5 + implied by duration from the incoming arc.
     //!
+    //! \param[in] comment string used as comment (when exported to a langage)
+    //! \param[in] use_caption if set to true use transition captions else use
+    //!   transition keys.
+    //! \param[in] maxplus_notation if set to true use the (max-plus) algebra
+    //!   symbols (⨁ and no symbol for ⨂) else show max() symbol.
+    //!
     //! \return the string depicting the timed Petri net as (max,+) system if
     //! this net is a timed graph event. Else return empty string.
     //--------------------------------------------------------------------------
-    std::stringstream showDaterForm(std::string const& comment = "# ") const;
+    std::stringstream showDaterEquation(std::string const& comment,
+        bool use_caption, bool maxplus_notation) const;
 
     //--------------------------------------------------------------------------
     //! \brief Load the Petri net from a JSON file. The current net is cleared

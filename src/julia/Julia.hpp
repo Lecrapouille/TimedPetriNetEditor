@@ -280,18 +280,18 @@ extern "C" bool petri_is_event_graph(int64_t const pn, bool* res);
 extern "C" int64_t petri_to_canonical(int64_t const pn);
 
 // ****************************************************************************
-//! \brief Display the event graph into its dater form.
+//! \brief Display the event graph into its dater equation.
 //! \param[in] pn: the handle of the petri net created by create_petri_net().
 //! \return false if the Petri net handle is invalid or return true.
 // ****************************************************************************
-extern "C" bool petri_dater_form(int64_t const pn);
+extern "C" bool petri_dater_equation(int64_t const pn);
 
 // ****************************************************************************
-//! \brief Display the event graph into its counter form.
+//! \brief Display the event graph into its counter equation.
 //! \param[in] pn: the handle of the petri net created by create_petri_net().
 //! \return false if the Petri net handle is invalid or return true.
 // ****************************************************************************
-extern "C" bool petri_counter_form(int64_t const pn);
+extern "C" bool petri_counter_equation(int64_t const pn);
 
 // ****************************************************************************
 //! \brief Show the critical cycle in the graph event.

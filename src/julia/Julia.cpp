@@ -437,22 +437,30 @@ bool petri_to_sys_lin(int64_t const pn, CSparseMatrix_t* pD, CSparseMatrix_t* pA
 }
 
 //------------------------------------------------------------------------------
-bool petri_dater_form(int64_t const pn)
+bool petri_dater_equation(int64_t const pn, bool use_caption)
 {
     CHECK_VALID_PETRI_HANDLE(pn, false);
     CHECK_IS_EVENT_GRAPH(pn, false);
 
-    std::cout << g_petri_nets[size_t(pn)]->showDaterForm("").str() << std::endl;
+    std::cout
+        << g_petri_nets[size_t(pn)]->showDaterEquation("", use_caption, false).str()
+        << std::endl
+        << g_petri_nets[size_t(pn)]->showDaterEquation("", use_caption, true).str()
+        << std::endl;
     return true;
 }
 
 //------------------------------------------------------------------------------
-bool petri_counter_form(int64_t const pn)
+bool petri_counter_equation(int64_t const pn, bool use_caption, bool minplus_notation)
 {
     CHECK_VALID_PETRI_HANDLE(pn, false);
     CHECK_IS_EVENT_GRAPH(pn, false);
 
-    std::cout << g_petri_nets[size_t(pn)]->showCounterForm("").str() << std::endl;
+    std::cout
+        << g_petri_nets[size_t(pn)]->showCounterEquation("", use_caption, false).str()
+        << std::endl
+        << g_petri_nets[size_t(pn)]->showCounterEquation("", use_caption, true).str()
+        << std::endl;
     return true;
 }
 

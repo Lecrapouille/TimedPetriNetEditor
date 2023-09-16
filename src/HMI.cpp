@@ -18,6 +18,7 @@
 // along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.
 //=============================================================================
 
+#include "HMI.hpp"
 #include "PetriEditor.hpp"
 #include "project_info.hpp"
 
@@ -86,7 +87,7 @@ static void messagebox(PetriEditor const& editor)
 }
 
 //------------------------------------------------------------------------------
-static void inspector(PetriEditor& editor)
+void inspector(PetriEditor& editor)
 {
     PetriNet& net = editor.m_petri_net;
 
@@ -138,7 +139,7 @@ static void inspector(PetriEditor& editor)
 }
 
 //------------------------------------------------------------------------------
-static void menu(PetriEditor& editor)
+void menu(PetriEditor& editor)
 {
     if (ImGui::BeginMenuBar())
     {
@@ -226,13 +227,19 @@ static void menu(PetriEditor& editor)
                               << "B: " << B << std::endl
                               << "C: " << C << std::endl;
                 }
-                if (ImGui::MenuItem("Show Dater form", nullptr, false))
+                if (ImGui::MenuItem("Show Dater equation", nullptr, false))
                 {
-                    std::cout << editor.m_petri_net.showDaterForm().str() << std::endl;
+                    std::cout << editor.m_petri_net.showDaterEquation("", false, false).str() << std::endl;
+                    std::cout << editor.m_petri_net.showDaterEquation("", true, false).str() << std::endl;
+                    std::cout << editor.m_petri_net.showDaterEquation("", false, true).str() << std::endl;
+                    std::cout << editor.m_petri_net.showDaterEquation("", true, true).str() << std::endl;
                 }
-                if (ImGui::MenuItem("Show Counter form", nullptr, false))
+                if (ImGui::MenuItem("Show Counter equation", nullptr, false))
                 {
-                    std::cout << editor.m_petri_net.showCounterForm().str() << std::endl;
+                    std::cout << editor.m_petri_net.showCounterEquation("", false, false).str() << std::endl;
+                    std::cout << editor.m_petri_net.showCounterEquation("", true, false).str() << std::endl;
+                    std::cout << editor.m_petri_net.showCounterEquation("", false, true).str() << std::endl;
+                    std::cout << editor.m_petri_net.showCounterEquation("", true, true).str() << std::endl;
                 }
                 if (ImGui::MenuItem("Show adjacency matrices", nullptr, false))
                 {
