@@ -205,7 +205,7 @@ private:
         file << "    //-------------------------------------------------------------------------" << std::endl;
         if (m_type == PetriNet::Type::GRAFCET)
         {
-            file << "    bool T" << t.id << "() { return " << Receptivity::Parser::translate(t.caption, "C") << "; } const;";
+            file << "    bool T" << t.id << "() { return " << Receptivity::Parser::translate(t.caption, "C") << "; } const";
         }
         else
         {
