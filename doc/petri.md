@@ -108,6 +108,23 @@ Inputs of event graphs are transitions with no predecessor. Outputs of event
 graphs are transitions with no successor. In figure 2, there are no inputs
 and no outputs.
 
+## Other look of event graph in literature
+
+In [literature](https://www.rocq.inria.fr/metalau/cohen/SED/book-online.html)
+timed event graphs are displayed with vertical bars inside places: they indicate
+holding times of these places (in time units). In our net editor bars are displayed
+as numbers on arcs going to places. For example, this net:
+
+![EventGraph](pics/EventGraphBar.png)
+
+*Timed Event Graph with vertical bars.*
+
+is the same than this net:
+
+![EventGraph](pics/EventGraph.png)
+
+*Timed Event Graph (made with this editor).*
+
 ## Dater and Counter Form
 
 Event graphs represent when system events are occurring. We have two different
@@ -115,10 +132,10 @@ way to represent them: the counter form, and the dater form.
 
 - The counter form of the event graph in figure 2 is:
 ```
-T0(t) = min(2 + T2(t - 5));
-T1(t) = min(0 + T0(t - 5));
-T2(t) = min(0 + T1(t - 3), 0 + T3(t - 1));
-T3(t) = min(0 + T0(t - 1));
+T0(t) = min(2 + T2(t - 5))
+T1(t) = min(0 + T0(t - 5))
+T2(t) = min(0 + T1(t - 3), 0 + T3(t - 1))
+T3(t) = min(0 + T0(t - 1))
 ```
 
 where `t - 5`, `t - 3` and `t - 1` are delays implied by duration on arcs and
@@ -126,10 +143,10 @@ where `t - 5`, `t - 3` and `t - 1` are delays implied by duration on arcs and
 
 - The dater form of the event graph in figure 2 is:
 ```
-T0(n) = max(5 + T2(n - 2));
-T1(n) = max(5 + T0(n - 0));
-T2(n) = max(3 + T1(n - 0), 1 + T3(n - 0));
-T3(n) = max(1 + T0(n - 0));
+T0(n) = max(5 + T2(n - 2))
+T1(n) = max(5 + T0(n - 0))
+T2(n) = max(3 + T1(n - 0), 1 + T3(n - 0))
+T3(n) = max(1 + T0(n - 0))
 ```
 
 where `n - 0` and `n - 2` are delays implied by tokens from incoming places and
@@ -138,7 +155,7 @@ where `n - 0` and `n - 2` are delays implied by tokens from incoming places and
 In both cases, these kinds of formulas are not easy to manipulate and the (max,+)
 algebra is here to simplify them. This algebra introduces the operator ⨁ instead
 of the usual multiplication in classic algebra, and the operator ⨂ (usually
-simply noted as `.`) instead of the usual `max()` function in classic
+simply noted as `.` or without symbol) instead of the usual `max()` function in classic
 algebra. The (min,+) algebra also exists (the operator ⨂ is the `min()`
 function) and for more information about (max,+) algebra, see my
 [MaxPlus](https://github.com/Lecrapouille/MaxPlus.jl) Julia package which
@@ -153,6 +170,22 @@ more friendly than the counter form for two reasons:
   delay costs one variable (memory) to hold the value.
 - thanks to the canonical form (explained in the next section) delays can
   simplify be either 0 or 1.
+
+- The counter form of the event graph in figure 2 is:
+```
+T0(t) = 2 T2(t - 5)
+T1(t) = T0(t - 5)
+T2(t) = T1(t - 3) ⨁ T3(t - 1)
+T3(t) = T0(t - 1)
+```
+
+- The dater form of the event graph in figure 2 is:
+```
+T0(n) = 5 T2(n - 2)
+T1(n) = 5 T0(n)
+T2(n) = 3 T1(n) ⨁ 1 T3(n)
+T3(n) = 1 T0(n)
+```
 
 ## Canonical Event Graph
 
