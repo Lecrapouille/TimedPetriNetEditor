@@ -1,0 +1,62 @@
+{
+  "revision": 2,
+  "nets": [
+    {
+       "name": "dualband",
+       "type": "GRAFCET",
+       "places": [
+            { "id": 0, "caption": "Attente depart", "tokens": 1, "x": 126, "y": 200 },
+            { "id": 1, "caption": "Demarrage moteurs", "tokens": 0, "x": 276, "y": 200 },
+            { "id": 2, "caption": "Arret moteurs", "tokens": 0, "x": 101, "y": 375 },
+            { "id": 3, "caption": "Attente validation panne", "tokens": 1, "x": 429, "y": 75 },
+            { "id": 4, "caption": "Debarasser cartons", "tokens": 0, "x": 625, "y": 75 },
+            { "id": 5, "caption": "Attente selec manu ou auto", "tokens": 0, "x": 647, "y": 192 },
+            { "id": 6, "caption": "Debarasser cartons", "tokens": 0, "x": 650, "y": 247 },
+            { "id": 7, "caption": "Production normale", "tokens": 0, "x": 650, "y": 298 },
+            { "id": 8, "caption": "Marche manuelle", "tokens": 0, "x": 845, "y": 364 },
+            { "id": 9, "caption": "Forcage GPN & GC", "tokens": 1, "x": 172, "y": 451 },
+            { "id": 10, "caption": "Attente", "tokens": 0, "x": 177, "y": 571 }
+       ],
+       "transitions": [
+            { "id": 0, "caption": "X7 Dcy .", "x": 201, "y": 125, "angle": 0 },
+            { "id": 1, "caption": "Acy", "x": 176, "y": 300, "angle": 0 },
+            { "id": 2, "caption": "true", "x": 51, "y": 275, "angle": 0 },
+            { "id": 3, "caption": "Val", "x": 545, "y": 75, "angle": 0 },
+            { "id": 4, "caption": "true", "x": 725, "y": 75, "angle": 0 },
+            { "id": 5, "caption": "Auto Val .", "x": 526, "y": 225, "angle": 0 },
+            { "id": 6, "caption": "Manu Val .", "x": 766, "y": 218, "angle": 0 },
+            { "id": 7, "caption": "true", "x": 525, "y": 280, "angle": 0 },
+            { "id": 8, "caption": "Manu Val .", "x": 525, "y": 328, "angle": 0 },
+            { "id": 9, "caption": "Auto Val .", "x": 429, "y": 364, "angle": 0 },
+            { "id": 10, "caption": "Au ! Rearm .", "x": 255, "y": 496, "angle": 0 },
+            { "id": 11, "caption": "Au", "x": 72, "y": 519, "angle": 0 }
+       ],
+       "arcs": [
+            { "from": "P0", "to": "T0" },
+            { "from": "T0", "to": "P1", "duration": 5 },
+            { "from": "P1", "to": "T1" },
+            { "from": "T1", "to": "P2", "duration": 1 },
+            { "from": "P2", "to": "T2" },
+            { "from": "T2", "to": "P0", "duration": 4 },
+            { "from": "P3", "to": "T3" },
+            { "from": "T3", "to": "P4", "duration": 3 },
+            { "from": "P4", "to": "T4" },
+            { "from": "T4", "to": "P5", "duration": 4 },
+            { "from": "P5", "to": "T5" },
+            { "from": "P5", "to": "T6" },
+            { "from": "T5", "to": "P6", "duration": 4 },
+            { "from": "P6", "to": "T7" },
+            { "from": "T7", "to": "P7", "duration": 4 },
+            { "from": "P7", "to": "T8" },
+            { "from": "T8", "to": "P8", "duration": 5 },
+            { "from": "T6", "to": "P8", "duration": 5 },
+            { "from": "P8", "to": "T9" },
+            { "from": "T9", "to": "P3", "duration": 5 },
+            { "from": "P9", "to": "T10" },
+            { "from": "T10", "to": "P10", "duration": 2 },
+            { "from": "P10", "to": "T11" },
+            { "from": "T11", "to": "P9", "duration": 4 }
+       ]
+    }
+  ]
+}
