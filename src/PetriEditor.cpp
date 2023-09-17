@@ -604,6 +604,23 @@ void PetriEditor::renderScene(sf::RenderTexture& r)
         r.draw(m_grid);
     }
 
+    // Show a green ractangle around the view to indicate
+    // the simulation is working
+    if (m_simulating)
+    {
+        constexpr float border = 8.0f;
+
+        sf::RectangleShape rect(
+            sf::Vector2f(m_render_texture.getSize().x - border * 2.0f,
+                         m_render_texture.getSize().y - border * 2.0f));
+        rect.setOrigin(0.0f, 0.0f);
+        rect.setPosition(border, border);
+        rect.setFillColor(sf::Color(0,0,0,0));
+        rect.setOutlineThickness(border);
+        rect.setOutlineColor(sf::Color::Green);
+        m_render_texture.draw(rect);
+    }
+
     // Draw the GUI
     m_message_bar.setSize(r.getSize());
     //r.draw(m_message_bar);
