@@ -650,8 +650,7 @@ void PetriEditor::onUpdate(float const dt)
         {
             if (m_petri_net.isEmpty())
             {
-                m_message_bar.setWarning(
-                    "Petri net is empty. Simulation request ignored!");
+                m_message_bar.setWarning("Starting simulation request ignored because the net is empty");
                 m_simulating = false;
             }
             else
@@ -662,30 +661,30 @@ void PetriEditor::onUpdate(float const dt)
         break;
 
     case STATE_STARTING:
-        if (m_petri_net.type() == PetriNet::Type::Petri)
-        {
-            m_message_bar.setInfo(
-                "Simulation has started!\n"
-                "  Click on transitions for firing!\n"
-                "  Press the key '+' on Places for adding tokens\n"
-                "  Press the key '-' on Places for removing tokens");
-        }
-        else
-        {
-            m_message_bar.setInfo("Simulation has started!");
-        }
-        m_petri_net.generateArcsInArcsOut();
-        if (!m_petri_net.resetReceptivies())
+        if (!m_petri_net.start(m_marks))
         {
             m_message_bar.setError(m_petri_net.message());
             m_state = STATE_ENDING;
             break;
         }
-        m_petri_net.shuffle_transitions(true);
-        m_petri_net.getTokens(m_marks);
-        m_animated_tokens.clear();
-        m_state = STATE_ANIMATING;
-        std::cout << current_time() << "Simulation has started!" << std::endl;
+        else
+        {
+            m_animated_tokens.clear();
+            m_state = STATE_ANIMATING;
+            std::cout << current_time() << "Simulation has started!" << std::endl;
+            if (m_petri_net.type() == PetriNet::Type::Petri)
+            {
+                m_message_bar.setInfo(
+                    "Simulation has started!\n"
+                    "  Click on transitions for firing!\n"
+                    "  Press the key '+' on Places for adding tokens\n"
+                    "  Press the key '-' on Places for removing tokens");
+            }
+            else
+            {
+                m_message_bar.setInfo("Simulation has started!");
+            }
+        }
         break;
 
     case STATE_ENDING:
@@ -694,7 +693,7 @@ void PetriEditor::onUpdate(float const dt)
                   << std::endl << std::endl;
 
         // Restore burnt tokens from the simulation
-        m_petri_net.setTokens(m_marks);
+        m_petri_net.end(m_marks);
         m_animated_tokens.clear();
         m_state = STATE_IDLE;
         break;

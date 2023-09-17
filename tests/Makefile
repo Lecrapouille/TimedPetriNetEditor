@@ -71,7 +71,7 @@ DEFINES += -Wno-conversion -Wno-cast-qual
 #
 OBJS += Receptivities.o PetriNet.o Howard.o
 OBJS += PetriNetTests.o AnimationTests.o EventGraphTests.o
-OBJS += LoadJSONTests.o HowardTests.o
+OBJS += LoadJSONTests.o HowardTests.o SparseMatrixTests.o
 OBJS += main.o
 
 ###################################################

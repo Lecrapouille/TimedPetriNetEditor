@@ -310,10 +310,20 @@ TEST(TestPetriNet, TestArcCreation)
 }
 
 //------------------------------------------------------------------------------
-TEST(TestPetriNet, TestUtil)
+TEST(TestPetriNet, TestToKey)
 {
-    assert(Place::to_str(42u) == "P42");
-    assert(Transition::to_str(0u) == "T0");
+    ASSERT_STREQ(Place::to_str(42u).c_str(), "P42");
+    ASSERT_STREQ(Transition::to_str(0u).c_str(), "T0");
+}
+
+//------------------------------------------------------------------------------
+TEST(TestPetriNet, TestToMode)
+{
+    ASSERT_STREQ(PetriNet::to_str(PetriNet::Type::GRAFCET).c_str(), "GRAFCET");
+    ASSERT_STREQ(PetriNet::to_str(PetriNet::Type::Petri).c_str(), "Petri net");
+    ASSERT_STREQ(PetriNet::to_str(PetriNet::Type::TimedPetri).c_str(), "Timed Petri net");
+    ASSERT_STREQ(PetriNet::to_str(PetriNet::Type::TimedGraphEvent).c_str(), "Timed graph event");
+    ASSERT_STREQ(PetriNet::to_str(PetriNet::Type(42)).c_str(), "Undefined type of net");
 }
 
 //------------------------------------------------------------------------------
@@ -509,6 +519,9 @@ TEST(TestPetriNet, TestAddRemoveOperations)
     ASSERT_EQ(net.m_places.size(), 0u);
     ASSERT_EQ(net.m_transitions.size(), 0u);
     ASSERT_EQ(net.isEmpty(), true);
+
+    // Try removing non existing arc
+    ASSERT_EQ(net.removeArc(p0, *t0), false);
 }
 
 //------------------------------------------------------------------------------
@@ -613,7 +626,7 @@ TEST(TestPetriNet, TestDoubleAdd)
 }
 
 //------------------------------------------------------------------------------
-TEST(TestPetriNet, TestBadAddRemoveArc)
+TEST(TestPetriNet, TestInvalidAddArc)
 {
     PetriNet net(PetriNet::Type::TimedPetri);
 
@@ -658,6 +671,7 @@ TEST(TestPetriNet, TestBadAddRemoveArc)
     Transition& t3 = net.addTransition(43u, "", 3.5f, 4.0f, 45u);
     ASSERT_EQ(net.addArc(t3, p2), false);
     ASSERT_EQ(net.m_arcs.size(), 0u);
+
 }
 
 //------------------------------------------------------------------------------
@@ -1575,4 +1589,25 @@ TEST(TestPetriNet, TestRemoveNode)
     net.removeNode(*net.findNode("P1"));
     net.removeNode(*net.findNode("P0"));
     ASSERT_EQ(net.isEmpty(), true);
+}
+
+//------------------------------------------------------------------------------
+TEST(TestPetriNet, TestHowManyTokensCanBurnt)
+{
+    PetriNet net(PetriNet::Type::TimedPetri);
+
+    ASSERT_EQ(net.load("data/EventGraph.json"), true);
+    net.type(PetriNet::Type::Petri);
+
+    ASSERT_EQ(net.m_transitions.size(), 4u);
+    ASSERT_EQ(net.m_transitions[0].howManyTokensCanBurnt(), 1u); // u
+    ASSERT_EQ(net.m_transitions[1].howManyTokensCanBurnt(), 0u); // x1
+    ASSERT_EQ(net.m_transitions[2].howManyTokensCanBurnt(), 0u); // x2
+    ASSERT_EQ(net.m_transitions[3].howManyTokensCanBurnt(), 0u); // y
+
+    // TODO ASSERT_EQ(net.m_transitions[0].fire());
+    //ASSERT_EQ(net.m_transitions[0].howManyTokensCanBurnt(), 1u); // u
+    //ASSERT_EQ(net.m_transitions[1].howManyTokensCanBurnt(), 2u); // x1
+    //ASSERT_EQ(net.m_transitions[2].howManyTokensCanBurnt(), 2u); // x2
+    //ASSERT_EQ(net.m_transitions[3].howManyTokensCanBurnt(), 0u); // y
 }

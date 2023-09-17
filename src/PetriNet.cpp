@@ -69,8 +69,7 @@ std::string PetriNet::to_str(PetriNet::Type const mode)
     case PetriNet::Type::TimedGraphEvent:
         return "Timed graph event";
     default:
-        assert(false && "Undefined Petri behavior");
-        break;
+        return "Undefined type of net";
     }
 }
 
@@ -169,6 +168,26 @@ void PetriNet::clear()
     m_next_transition_id = 0u;
     modified = true;
     m_message.str("");
+}
+
+//------------------------------------------------------------------------------
+bool PetriNet::start(std::vector<size_t>& tokens)
+{
+    generateArcsInArcsOut();
+    if (resetReceptivies())
+    {
+        shuffle_transitions(true);
+        getTokens(tokens);
+        return true;
+    }
+
+    return false;
+}
+
+//------------------------------------------------------------------------------
+void PetriNet::end(std::vector<size_t> const& tokens)
+{
+    setTokens(tokens);
 }
 
 //------------------------------------------------------------------------------
