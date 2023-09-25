@@ -139,128 +139,162 @@ void inspector(PetriEditor& editor)
 }
 
 //------------------------------------------------------------------------------
+static void showDaterCounterEquation(PetriNet const& net, bool const dater, bool const counter)
+{
+    if (dater || counter)
+    {
+        const char* title = dater ? "Dater Equation" : "Counter Equation";
+        ImGui::OpenPopup(title);
+
+        ImVec2 center = ImGui::GetMainViewport()->GetCenter();
+        ImGui::SetNextWindowPos(center, ImGuiCond_Appearing, ImVec2(0.5f, 0.5f));
+        if (ImGui::BeginPopupModal(title, NULL, ImGuiWindowFlags_AlwaysAutoResize))
+        {
+            static bool use_caption = false;
+            static bool maxplus_notation = false;
+            ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(0, 0));
+            ImGui::Checkbox(dater ? "(max,+)" : "(min,+)", &maxplus_notation);
+            ImGui::SameLine();
+            ImGui::Checkbox("Use caption", &use_caption);
+            ImGui::PopStyleVar();
+
+            ImGui::Separator();
+            if (dater)
+            {
+                ImGui::Text("%s", net.showDaterEquation("", use_caption, maxplus_notation).str().c_str());
+            }
+            else
+            {
+                ImGui::Text("%s", net.showCounterEquation("", use_caption, maxplus_notation).str().c_str());
+            }
+
+            if (ImGui::Button("OK", ImVec2(120, 0))) { ImGui::CloseCurrentPopup(); }
+            ImGui::EndPopup();
+        }
+    }
+}
+
+//------------------------------------------------------------------------------
 void menu(PetriEditor& editor)
 {
-    if (ImGui::BeginMenuBar())
+    bool dater = false;
+    bool counter = false;
+
+    if (ImGui::BeginMenu("File"))
     {
-        if (ImGui::BeginMenu("File"))
+        if (ImGui::MenuItem("New", nullptr, false))
+            {/*TODO*/};
+
+        ImGui::Separator();
+        if (ImGui::MenuItem("Open", nullptr, false))
+            editor.load();
+        if (ImGui::BeginMenu("Import"))
         {
-            if (ImGui::MenuItem("New", nullptr, false))
-                {/*TODO*/};
-
-            ImGui::Separator();
-            if (ImGui::MenuItem("Open", nullptr, false))
-                editor.load();
-            if (ImGui::BeginMenu("Import"))
-            {
-                // TODO
-                ImGui::EndMenu();
-            }
-
-            ImGui::Separator();
-            if (ImGui::MenuItem("Save", nullptr, false))
-                editor.save();
-            if (ImGui::MenuItem("Save As", nullptr, false))
-                editor.save(true);
-            if (ImGui::BeginMenu("Export to"))
-            {
-                for (auto const& it: editor.exporters())
-                {
-                    if (ImGui::MenuItem(it.second.title().c_str(), nullptr, false))
-                        editor.exports(it.first.c_str());
-                }
-                ImGui::EndMenu();
-            }
-
-            ImGui::Separator();
-            if (ImGui::MenuItem("Exit", nullptr, false))
-                editor.close();
-            ImGui::EndMenu();
-        }
-        if (ImGui::BeginMenu("Actions"))
-        {
-            if (ImGui::BeginMenu("Type of net"))
-            {
-                static int current_type = int(editor.m_petri_net.type());
-
-                ImGui::RadioButton("Petri net", &current_type, 0);
-                ImGui::RadioButton("Timed Petri net", &current_type, 1);
-                ImGui::RadioButton("Timed graph event", &current_type, 2);
-                ImGui::RadioButton("GRAFCET", &current_type, 3);
-                editor.changeTypeOfNet(PetriNet::Type(current_type));
-                ImGui::EndMenu();
-            }
-            ImGui::Separator();
-
-            if (ImGui::MenuItem("Clear net", nullptr, false))
-                editor.clear();
-            if (ImGui::MenuItem("Align nodes", nullptr, false))
-                editor.align();
-            //if (ImGui::MenuItem("Show grid", nullptr, false)) TODO
-            //    editor.grid();
-            if (ImGui::MenuItem("Take screenshot", nullptr, false))
-                editor.screenshot();
-            ImGui::Separator();
-            //if (ImGui::MenuItem("Run", nullptr, false)) TODO
-            //    editor.run();
-            //if (ImGui::MenuItem("Stop", nullptr, false)) TODO
-            //    editor.stop();
+            // TODO
             ImGui::EndMenu();
         }
 
-        if ((editor.m_petri_net.type() == PetriNet::Type::TimedGraphEvent) ||
-            (editor.m_petri_net.isEventGraph()))
+        ImGui::Separator();
+        if (ImGui::MenuItem("Save", nullptr, false))
+            editor.save();
+        if (ImGui::MenuItem("Save As", nullptr, false))
+            editor.save(true);
+        if (ImGui::BeginMenu("Export to"))
         {
-            if (ImGui::BeginMenu("Graph Events"))
+            for (auto const& it: editor.exporters())
             {
-                if (ImGui::MenuItem("Show critical circuit", nullptr, false))
-                {
-                    editor.findCriticalCycle(); // TODO show other information
-                }
-                if (ImGui::MenuItem("To dynamic linear (max, +) system", nullptr, false))
-                {
-                    SparseMatrix D; SparseMatrix A; SparseMatrix B; SparseMatrix C;
-                    editor.m_petri_net.toSysLin(D, A, B, C);
-                    SparseMatrix::display_for_julia = false;
-                    std::cout << "D: " << D << std::endl
-                              << "A: " << A << std::endl
-                              << "B: " << B << std::endl
-                              << "C: " << C << std::endl;
-                }
-                if (ImGui::MenuItem("Show Dater equation", nullptr, false))
-                {
-                    std::cout << editor.m_petri_net.showDaterEquation("", false, false).str() << std::endl;
-                    std::cout << editor.m_petri_net.showDaterEquation("", true, false).str() << std::endl;
-                    std::cout << editor.m_petri_net.showDaterEquation("", false, true).str() << std::endl;
-                    std::cout << editor.m_petri_net.showDaterEquation("", true, true).str() << std::endl;
-                }
-                if (ImGui::MenuItem("Show Counter equation", nullptr, false))
-                {
-                    std::cout << editor.m_petri_net.showCounterEquation("", false, false).str() << std::endl;
-                    std::cout << editor.m_petri_net.showCounterEquation("", true, false).str() << std::endl;
-                    std::cout << editor.m_petri_net.showCounterEquation("", false, true).str() << std::endl;
-                    std::cout << editor.m_petri_net.showCounterEquation("", true, true).str() << std::endl;
-                }
-                if (ImGui::MenuItem("Show adjacency matrices", nullptr, false))
-                {
-                    SparseMatrix tokens; SparseMatrix durations;
-                    editor.m_petri_net.toAdjacencyMatrices(tokens, durations);
-                    SparseMatrix::display_for_julia = false;
-                    std::cout << "Durations: " << durations << std::endl;
-                    std::cout << "Tokens: " << tokens << std::endl;
-                }
-                ImGui::EndMenu();
+                if (ImGui::MenuItem(it.second.title().c_str(), nullptr, false))
+                    editor.exports(it.first.c_str());
             }
+            ImGui::EndMenu();
         }
-        ImGui::EndMenuBar();
+
+        ImGui::Separator();
+        if (ImGui::MenuItem("Exit", nullptr, false))
+            editor.close();
+        ImGui::EndMenu();
     }
+    if (ImGui::BeginMenu("Actions"))
+    {
+        if (ImGui::BeginMenu("Type of net"))
+        {
+            static int current_type = int(editor.m_petri_net.type());
+
+            ImGui::RadioButton("Petri net", &current_type, 0);
+            ImGui::RadioButton("Timed Petri net", &current_type, 1);
+            ImGui::RadioButton("Timed graph event", &current_type, 2);
+            ImGui::RadioButton("GRAFCET", &current_type, 3);
+            editor.changeTypeOfNet(PetriNet::Type(current_type));
+            ImGui::EndMenu();
+        }
+        ImGui::Separator();
+
+        if (ImGui::MenuItem("Clear net", nullptr, false))
+            editor.clear();
+        if (ImGui::MenuItem("Align nodes", nullptr, false))
+            editor.align();
+        //if (ImGui::MenuItem("Show grid", nullptr, false)) TODO
+        //    editor.grid();
+        if (ImGui::MenuItem("Take screenshot", nullptr, false))
+            editor.screenshot();
+        ImGui::Separator();
+        //if (ImGui::MenuItem("Run", nullptr, false)) TODO
+        //    editor.run();
+        //if (ImGui::MenuItem("Stop", nullptr, false)) TODO
+        //    editor.stop();
+        ImGui::EndMenu();
+    }
+
+    if ((editor.m_petri_net.type() == PetriNet::Type::TimedGraphEvent) ||
+        (editor.m_petri_net.isEventGraph()))
+    {
+        if (ImGui::BeginMenu("Graph Events"))
+        {
+            if (ImGui::MenuItem("Show critical circuit", nullptr, false))
+            {
+                editor.findCriticalCycle(); // TODO show other information
+            }
+            if (ImGui::MenuItem("To dynamic linear (max, +) system", nullptr, false))
+            {
+                SparseMatrix D; SparseMatrix A; SparseMatrix B; SparseMatrix C;
+                editor.m_petri_net.toSysLin(D, A, B, C);
+                SparseMatrix::display_for_julia = false;
+                std::cout << "D: " << D << std::endl
+                            << "A: " << A << std::endl
+                            << "B: " << B << std::endl
+                            << "C: " << C << std::endl;
+            }
+            if (ImGui::MenuItem("Show Dater equation", nullptr, false))
+            {
+                dater = true;
+            }
+            if (ImGui::MenuItem("Show Counter equation", nullptr, false))
+            {
+                counter = true;
+            }
+            if (ImGui::MenuItem("Show adjacency matrices", nullptr, false))
+            {
+                SparseMatrix tokens; SparseMatrix durations;
+                editor.m_petri_net.toAdjacencyMatrices(tokens, durations);
+                SparseMatrix::display_for_julia = false;
+                std::cout << "Durations: " << durations << std::endl;
+                std::cout << "Tokens: " << tokens << std::endl;
+            }
+            ImGui::EndMenu();
+        }
+    }
+    ImGui::EndMenuBar();
+
+    showDaterCounterEquation(editor.m_petri_net, dater, counter);
 }
 
 //------------------------------------------------------------------------------
 // TODO: menu MQTT: ok/ko, topic, ip/port
 void PetriEditor::onDrawIMGui()
 {
-    ::menu(*this);
+    if (ImGui::BeginMenuBar()) {
+        ::menu(*this);
+    }
     ::help(*this);
     ::about();
     ::console(*this);
