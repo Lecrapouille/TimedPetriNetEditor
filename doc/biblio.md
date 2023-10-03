@@ -20,3 +20,4 @@
   with Godot Engine.
 - ![fr](https://lecrapouille.github.io/icons/fr.png) https://youtu.be/l1F2dIA90s0 Programmation d'un Grafcet en C.
 - ![fr](https://lecrapouille.github.io/icons/fr.png) https://youtu.be/v5FwJvtGaEw Programmation d'un Grafcet en C pour Arduino.
+- ![fr](https://lecrapouille.github.io/icons/fr.png) https://www.youtube.com/watch?v=y8lWIG71040 Introduction au Guide d'Etude des Modes de Marche et d'Arrêt (GEMMA). You can download the [template PDF](../data/GEMMA.pdf) or to the [draw.io](../data/GEMMA.drawio) format.
