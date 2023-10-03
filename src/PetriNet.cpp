@@ -54,6 +54,7 @@ Settings::Fire Settings::firing = Settings::Fire::OneByOne;
 //------------------------------------------------------------------------------
 // Used to control the behavior of operator<<.
 bool SparseMatrix::display_for_julia = true;
+bool SparseMatrix::display_as_dense = false;
 
 //------------------------------------------------------------------------------
 std::string PetriNet::to_str(PetriNet::Type const mode)

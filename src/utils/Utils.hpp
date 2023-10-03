@@ -266,6 +266,27 @@ struct SparseMatrix
         d.push_back(d_);
     }
 
+    double operator()(size_t i_, size_t j_) const
+    {
+        size_t currCol;
+
+		for (size_t pos = 0u; pos < i.size(); ++pos)
+        {
+            if (i[pos] == i_)
+            {
+                if (j[pos] == j_)
+                {
+                    return d[pos];
+                }
+            }
+		}
+
+		return zero();
+    }
+
+    // FIXME only for (max,+)
+    inline double zero() const { return -std::numeric_limits<double>::infinity(); }
+
     //! \brief (I,J) Coordinates
     std::vector<size_t> i, j;
     //! \brief Non zero element (double to be usable by Julia)
@@ -274,6 +295,8 @@ struct SparseMatrix
     size_t N, M;
     //! \brief Option to display for C++ or for Julia
     static bool display_for_julia;
+    //! \brief Option to force display as dense matrix
+    static bool display_as_dense;
 };
 
 //------------------------------------------------------------------------------
@@ -283,39 +306,63 @@ inline std::ostream & operator<<(std::ostream &os, SparseMatrix const& matrix)
 {
     std::string separator;
 
-    if (!matrix.display_for_julia)
+    if (SparseMatrix::display_as_dense)
     {
-        os << matrix.M << "x" << matrix.N << " sparse (max,+) matrix with "
-        << matrix.d.size() << " stored entry:" << std::endl;
-    }
-    os << "[";
-    for (auto const& it: matrix.i)
-    {
-        os << separator << (matrix.display_for_julia ? it : (it - 1));
-        separator = ", ";
-    }
+        if (!SparseMatrix::display_for_julia)
+        {
+            os << matrix.M << "x" << matrix.N << " (max,+) dense matrix:"
+               << std::endl;
+        }
 
-    os << "], [";
-    separator.clear();
-    for (auto const& it: matrix.j)
-    {
-        os << separator << (matrix.display_for_julia ? it : (it - 1));
-        separator = ", ";
+        // FIXME: manage column alignement
+        for (size_t i = 0u; i < matrix.M; ++i)
+        {
+            for (size_t j = 0u; j < matrix.N; ++j)
+            {
+                double d = matrix(i + 1u, j + 1u);
+                if (d != matrix.zero())
+                    os << d << " ";
+                else
+                    os << ". ";
+            }
+            os << std::endl;
+        }
     }
+    else
+    {
+        if (!SparseMatrix::display_for_julia)
+        {
+            os << matrix.M << "x" << matrix.N << " sparse (max,+) matrix with "
+               << matrix.d.size() << " stored entry:" << std::endl;
+        }
+        os << "[";
+        for (auto const& it: matrix.i)
+        {
+            os << separator << (matrix.display_for_julia ? it : (it - 1));
+            separator = ", ";
+        }
 
-    os << "], MP([";
-    separator.clear();
-    for (auto const& it: matrix.d)
-    {
-        os << separator << it;
-        separator = ", ";
-    }
-    os << "])";
-    if (matrix.display_for_julia)
-    {
-        os << ", " << matrix.M << ", " << matrix.N;
-    }
+        os << "], [";
+        separator.clear();
+        for (auto const& it: matrix.j)
+        {
+            os << separator << (matrix.display_for_julia ? it : (it - 1));
+            separator = ", ";
+        }
 
+        os << "], MP([";
+        separator.clear();
+        for (auto const& it: matrix.d)
+        {
+            os << separator << it;
+            separator = ", ";
+        }
+        os << "])";
+        if (matrix.display_for_julia)
+        {
+            os << ", " << matrix.M << ", " << matrix.N;
+        }
+    }
     return os;
 }
 

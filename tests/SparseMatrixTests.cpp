@@ -29,7 +29,8 @@
 static std::string stream(SparseMatrix const& M, bool display_for_julia)
 {
     std::stringstream ss;
-    M.display_for_julia = display_for_julia;
+    SparseMatrix::display_for_julia = display_for_julia;
+    SparseMatrix::display_as_dense = false;
     ss << M;
     return ss.str();
 }

@@ -141,9 +141,11 @@ void inspector(PetriEditor& editor)
 //------------------------------------------------------------------------------
 void menu(PetriEditor& editor)
 {
-    bool dater = false;
-    bool counter = false;
+    static bool do_dater = false;
+    static bool do_counter = false;
     static bool do_find_critical_cycle = false;
+    static bool do_syslin = false;
+    static bool do_adjency = false;
 
     if (ImGui::BeginMenuBar())
     {
@@ -221,31 +223,21 @@ void menu(PetriEditor& editor)
                 {
                     do_find_critical_cycle = true;
                 }
-                if (ImGui::MenuItem("To dynamic linear (max, +) system", nullptr, false))
+                if (ImGui::MenuItem("Show (max, +) dynamic linear system", nullptr, false))
                 {
-                    SparseMatrix D; SparseMatrix A; SparseMatrix B; SparseMatrix C;
-                    editor.m_petri_net.toSysLin(D, A, B, C);
-                    SparseMatrix::display_for_julia = false;
-                    std::cout << "D: " << D << std::endl
-                                << "A: " << A << std::endl
-                                << "B: " << B << std::endl
-                                << "C: " << C << std::endl;
+                    do_syslin = true;
                 }
                 if (ImGui::MenuItem("Show Dater equation", nullptr, false))
                 {
-                    dater = true;
+                    do_dater = true;
                 }
                 if (ImGui::MenuItem("Show Counter equation", nullptr, false))
                 {
-                    counter = true;
+                    do_counter = true;
                 }
                 if (ImGui::MenuItem("Show adjacency matrices", nullptr, false))
                 {
-                    SparseMatrix tokens; SparseMatrix durations;
-                    editor.m_petri_net.toAdjacencyMatrices(tokens, durations);
-                    SparseMatrix::display_for_julia = false;
-                    std::cout << "Durations: " << durations << std::endl;
-                    std::cout << "Tokens: " << tokens << std::endl;
+                    do_adjency = true;
                 }
                 ImGui::EndMenu();
             }
@@ -255,42 +247,133 @@ void menu(PetriEditor& editor)
 
     ImVec2 center = ImGui::GetMainViewport()->GetCenter();
 
-    if (dater) { ImGui::OpenPopup("Dater Equation"); }
-    ImGui::SetNextWindowPos(center, ImGuiCond_Appearing, ImVec2(0.5f, 0.5f));
-    if (ImGui::BeginPopupModal("Dater Equation", NULL, ImGuiWindowFlags_AlwaysAutoResize))
+    if (do_adjency)
     {
-        static bool use_caption = false;
-        static bool maxplus_notation = false;
-        ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(0, 0));
-        ImGui::Checkbox("(max,+)", &maxplus_notation);
-        ImGui::SameLine();
-        ImGui::Checkbox("Use caption", &use_caption);
-        ImGui::PopStyleVar();
+        ImGui::OpenPopup("Show adjacency matrices");
+        ImGui::SetNextWindowPos(center, ImGuiCond_Appearing, ImVec2(0.5f, 0.5f));
+        if (ImGui::BeginPopupModal("Show adjacency matrices", NULL, ImGuiWindowFlags_AlwaysAutoResize))
+        {
+            ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(0, 0));
+            ImGui::Checkbox("Dense matrix", &SparseMatrix::display_as_dense);
+            SparseMatrix::display_for_julia = false;
+            ImGui::PopStyleVar();
 
-        ImGui::Separator();
-        ImGui::Text(u8"%s", editor.m_petri_net.showDaterEquation("", use_caption, maxplus_notation).str().c_str());
+            SparseMatrix tokens; SparseMatrix durations;
+            editor.m_petri_net.toAdjacencyMatrices(tokens, durations);
 
-        if (ImGui::Button("OK", ImVec2(120, 0))) { ImGui::CloseCurrentPopup(); }
-        ImGui::EndPopup();
+            ImGuiTabBarFlags tab_bar_flags = ImGuiTabBarFlags_None;
+            if (ImGui::BeginTabBar("adjacency", tab_bar_flags))
+            {
+                if (ImGui::BeginTabItem("Durations"))
+                {
+                    std::stringstream txt; txt << durations;
+                    ImGui::Text("%s", txt.str().c_str());
+                    ImGui::EndTabItem();
+                }
+                if (ImGui::BeginTabItem("Tokens"))
+                {
+                    std::stringstream txt; txt << tokens;
+                    ImGui::Text("%s", txt.str().c_str());
+                    ImGui::EndTabItem();
+                }
+                ImGui::EndTabBar();
+            }
+
+            if (ImGui::Button("OK", ImVec2(120, 0)))
+            {
+                ImGui::CloseCurrentPopup();
+                do_adjency = false;
+            }
+            ImGui::EndPopup();
+        }
     }
 
-    if (counter) { ImGui::OpenPopup("Counter Equation"); }
-    ImGui::SetNextWindowPos(center, ImGuiCond_Appearing, ImVec2(0.5f, 0.5f));
-    if (ImGui::BeginPopupModal("Counter Equation", NULL, ImGuiWindowFlags_AlwaysAutoResize))
+    if (do_counter || do_dater)
     {
-        static bool use_caption = false;
-        static bool maxplus_notation = false;
-        ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(0, 0));
-        ImGui::Checkbox("(min,+)", &maxplus_notation);
-        ImGui::SameLine();
-        ImGui::Checkbox("Use caption", &use_caption);
-        ImGui::PopStyleVar();
+        const char* title = do_counter ? "Counter Equation": "Dater Equation";
+        ImGui::OpenPopup(title);
+        ImGui::SetNextWindowPos(center, ImGuiCond_Appearing, ImVec2(0.5f, 0.5f));
+        if (ImGui::BeginPopupModal(title, NULL, ImGuiWindowFlags_AlwaysAutoResize))
+        {
+            static bool use_caption = false;
+            static bool maxplus_notation = false;
+            static bool show_matrix = false;
+            ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(0, 0));
+            ImGui::Checkbox(do_counter ? "Use (min,+) operator" : "Use (max,+) operator", &maxplus_notation);
+            ImGui::SameLine();
+            ImGui::Checkbox("Use caption", &use_caption);
+            ImGui::PopStyleVar();
 
-        ImGui::Separator();
-        ImGui::Text("%s", editor.m_petri_net.showCounterEquation("", use_caption, maxplus_notation).str().c_str());
+            ImGui::Separator();
+            if (do_counter)
+            {
+                ImGui::Text("%s", editor.m_petri_net.showCounterEquation("", use_caption, maxplus_notation).str().c_str());
+            }
+            else
+            {
+                ImGui::Text("%s", editor.m_petri_net.showDaterEquation("", use_caption, maxplus_notation).str().c_str());
+            }
 
-        if (ImGui::Button("OK", ImVec2(120, 0))) { ImGui::CloseCurrentPopup(); }
-        ImGui::EndPopup();
+            if (ImGui::Button("OK", ImVec2(120, 0)))
+            {
+                ImGui::CloseCurrentPopup();
+                do_counter = do_dater = false;
+            }
+            ImGui::EndPopup();
+        }
+    }
+
+    if (do_syslin)
+    {
+        ImGui::OpenPopup("(max, +) dynamic linear system");
+        ImGui::SetNextWindowPos(center, ImGuiCond_Appearing, ImVec2(0.5f, 0.5f));
+        if (ImGui::BeginPopupModal("(max, +) dynamic linear system", NULL, ImGuiWindowFlags_AlwaysAutoResize))
+        {
+            ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(0, 0));
+            ImGui::Checkbox("Dense matrix", &SparseMatrix::display_as_dense);
+            ImGui::PopStyleVar();
+
+            SparseMatrix D; SparseMatrix A; SparseMatrix B; SparseMatrix C;
+            editor.m_petri_net.toSysLin(D, A, B, C);
+            SparseMatrix::display_for_julia = false;
+            ImGui::Text(u8"%s", "X(n) = D . X(n) ⨁ A . X(n-1) ⨁ B . U(n)\nY(n) = C . X(n)");
+            ImGuiTabBarFlags tab_bar_flags = ImGuiTabBarFlags_None;
+            if (ImGui::BeginTabBar("syslin", tab_bar_flags))
+            {
+                if (ImGui::BeginTabItem("D"))
+                {
+                    std::stringstream txt; txt << D;
+                    ImGui::Text("%s", txt.str().c_str());
+                    ImGui::EndTabItem();
+                }
+                if (ImGui::BeginTabItem("A"))
+                {
+                    std::stringstream txt; txt << A;
+                    ImGui::Text("%s", txt.str().c_str());
+                    ImGui::EndTabItem();
+                }
+                if (ImGui::BeginTabItem("B"))
+                {
+                    std::stringstream txt; txt << B;
+                    ImGui::Text("%s", txt.str().c_str());
+                    ImGui::EndTabItem();
+                }
+                if (ImGui::BeginTabItem("C"))
+                {
+                    std::stringstream txt; txt << C;
+                    ImGui::Text("%s", txt.str().c_str());
+                    ImGui::EndTabItem();
+                }
+                ImGui::EndTabBar();
+            }
+
+            if (ImGui::Button("OK", ImVec2(120, 0)))
+            {
+                ImGui::CloseCurrentPopup();
+                do_syslin = false;
+            }
+            ImGui::EndPopup();
+        }
     }
 
     if (do_find_critical_cycle)

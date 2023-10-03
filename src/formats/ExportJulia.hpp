@@ -124,6 +124,7 @@ bool PetriNet::exportToJulia(std::string const& filename) const
     file << "# X(n) = D X(n) ⨁ A X(n-1) ⨁ B U(n)" << std::endl;
     file << "# Y(n) = C X(n)" << std::endl;
     SparseMatrix::display_for_julia = true;
+    SparseMatrix::display_as_dense = false;
     file << "D = sparse(" << D << ") # States without tokens" << std::endl;
     file << "A = sparse(" << A << ") # States with 1 token" << std::endl;
     file << "B = sparse(" << B << ") # Inputs" << std::endl;
