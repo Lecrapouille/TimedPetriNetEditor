@@ -143,6 +143,7 @@ void menu(PetriEditor& editor)
 {
     bool dater = false;
     bool counter = false;
+    static bool do_find_critical_cycle = false;
 
     if (ImGui::BeginMenuBar())
     {
@@ -218,7 +219,7 @@ void menu(PetriEditor& editor)
             {
                 if (ImGui::MenuItem("Show critical circuit", nullptr, false))
                 {
-                    editor.findCriticalCycle(); // TODO show other information
+                    do_find_critical_cycle = true;
                 }
                 if (ImGui::MenuItem("To dynamic linear (max, +) system", nullptr, false))
                 {
@@ -267,7 +268,6 @@ void menu(PetriEditor& editor)
         ImGui::PopStyleVar();
 
         ImGui::Separator();
-        io.Fonts->AddFontFromFileTTF()
         ImGui::Text(u8"%s", editor.m_petri_net.showDaterEquation("", use_caption, maxplus_notation).str().c_str());
 
         if (ImGui::Button("OK", ImVec2(120, 0))) { ImGui::CloseCurrentPopup(); }
@@ -292,12 +292,90 @@ void menu(PetriEditor& editor)
         if (ImGui::Button("OK", ImVec2(120, 0))) { ImGui::CloseCurrentPopup(); }
         ImGui::EndPopup();
     }
+
+    if (do_find_critical_cycle)
+    {
+        ImGui::OpenPopup("Critical Cycle");
+        ImGui::SetNextWindowPos(center, ImGuiCond_Appearing, ImVec2(0.5f, 0.5f));
+        if (ImGui::BeginPopupModal("Critical Cycle", NULL, ImGuiWindowFlags_AlwaysAutoResize))
+        {
+            PetriNet::CriticalCycleResult critical_cycle = editor.findCriticalCycle();
+            if (!critical_cycle.success)
+            {
+                ImGui::Text(u8"%s", critical_cycle.message.str().c_str());
+            }
+            else
+            {
+                ImGuiTabBarFlags tab_bar_flags = ImGuiTabBarFlags_None;
+                if (ImGui::BeginTabBar("CriticalCycleResult", tab_bar_flags))
+                {
+                    if (ImGui::BeginTabItem("Critical cycle"))
+                    {
+                        std::stringstream txt;
+                        if (editor.m_petri_net.type() == PetriNet::Type::TimedGraphEvent)
+                        {
+                            // Only show transitions
+                            for (auto const& it: critical_cycle.arcs)
+                            {
+                                if (it->from.type == Node::Type::Transition)
+                                    txt << it->from.key << " -> ";
+                                if (it->to.type == Node::Type::Transition)
+                                    txt << it->to.key << std::endl;
+                            }
+                        }
+                        else
+                        {
+                            // Show transitions and places
+                            for (auto const& it: critical_cycle.arcs)
+                            {
+                                txt << it->from.key << " -> " << it->to.key << std::endl;
+                            }
+                        }
+                        ImGui::Text("%s", txt.str().c_str());
+                        ImGui::EndTabItem();
+                    }
+                    if (ImGui::BeginTabItem("Cycle time"))
+                    {
+                        const auto& tr = editor.m_petri_net.transitions();
+                        std::stringstream txt;
+                        for (size_t i = 0u; i < critical_cycle.cycle_time.size(); ++i)
+                        {
+                            txt << tr[i].key << ": " << critical_cycle.cycle_time[i]
+                                << " unit of time" << std::endl;
+                        }
+                        ImGui::Text("%s", txt.str().c_str());
+                        ImGui::EndTabItem();
+                    }
+                    if (ImGui::BeginTabItem("Eigenvector"))
+                    {
+                        std::stringstream txt;
+                        for (auto const& it: critical_cycle.eigenvector)
+                        {
+                            txt << it << std::endl;
+                        }
+                        ImGui::Text("%s", txt.str().c_str());
+                        ImGui::EndTabItem();
+                    }
+                    ImGui::EndTabBar();
+                }
+            }
+
+            ImGui::Separator();
+            if (ImGui::Button("OK", ImVec2(120, 0)))
+            {
+                ImGui::CloseCurrentPopup();
+                do_find_critical_cycle = false;
+            }
+            ImGui::EndPopup();
+        }
+    }
 }
 
 //------------------------------------------------------------------------------
 // TODO: menu MQTT: ok/ko, topic, ip/port
 void PetriEditor::onDrawIMGui()
 {
+    // ImGui::ShowDemoWindow();
     ::menu(*this);
     ::help(*this);
     ::about();

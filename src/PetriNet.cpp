@@ -888,21 +888,27 @@ std::stringstream PetriNet::showDaterEquation(std::string const& comment,
 }
 
 //------------------------------------------------------------------------------
-bool PetriNet::findCriticalCycle(std::vector<Arc*>& result)
+PetriNet::CriticalCycleResult PetriNet::findCriticalCycle()
 {
+    PetriNet::CriticalCycleResult result;
+
     generateArcsInArcsOut();
-    if (!isEventGraph(result))
-        return false;
-    result.clear();
+    if (!isEventGraph(result.arcs)) {
+        result.message << "Not an event graph";
+        result.success = false;
+        return result;
+    }
 
     // Number of nodes and number of arcs
     size_t const nnodes = m_transitions.size();
     size_t const narcs = m_places.size();
 
-    // Reserve memory
-    std::vector<double> T; T.reserve(narcs); // Timings
-    std::vector<double> N; N.reserve(narcs); // Tokens (delays)
-    // Arcs of the graph: {(source node, destination node), ... }
+    // Reserve memory for storing timings
+    std::vector<double> T; T.reserve(narcs);
+    // Reserve memory for storing Tokens (delays)
+    std::vector<double> N; N.reserve(narcs);
+    // Reserve memory for storing arcs of the graph:
+    // {(source node, destination node), ... }
     // FIXME should be std::vector<size_t> but Howard wants int*
     std::vector<int> IJ; IJ.reserve(2u * narcs);
 
@@ -918,41 +924,41 @@ bool PetriNet::findCriticalCycle(std::vector<Arc*>& result)
         Transition& from = *reinterpret_cast<Transition*>(&(p.arcsIn[0]->from));
         Transition& to = *reinterpret_cast<Transition*>(&(p.arcsOut[0]->to));
 
-        //std::cout << "# Arc " << p.key << ": " << from.key << " -> " << to.key
-        //          << " (Duration: " << p.arcsIn[0]->duration << ", Tokens: "
-        //          << p.tokens << ")" << std::endl;
-
         IJ.push_back(int(to.id)); // Transposed is needed
         IJ.push_back(int(from.id));
         T.push_back(p.arcsIn[0]->duration);
         N.push_back(double(p.tokens));
     }
 
-    std::vector<double> V(nnodes); // bias
-    std::vector<double> chi(nnodes); // cycle time vector
-    std::vector<int> policy(nnodes); // optimal policy
+    result.eigenvector.resize(nnodes);
+    result.cycle_time.resize(nnodes);
+    result.optimal_policy.resize(nnodes); // optimal policy
     int ncomponents; // Number of connected components of the optimal policy
     int niterations; // Number of iteration needed by the algorithm
     int verbosemode = 0; // No verbose
     int res = Semi_Howard(IJ.data(), T.data(), N.data(),
                           int(nnodes), int(narcs),
-                          chi.data(), V.data(), policy.data(),
+                          result.cycle_time.data(), result.eigenvector.data(),
+                          result.optimal_policy.data(),
                           &niterations, &ncomponents, verbosemode);
 
-    m_message.str("");
     if ((res != 0) || (ncomponents == 0))
     {
-        m_message << "No policy found" << std::endl;
-        return false;
+        result.eigenvector.clear();
+        result.cycle_time.clear();
+        result.optimal_policy.clear();
+        result.arcs.clear();
+        result.message << "No policy found";
+        result.success = false;
+        return result;
     }
 
     size_t to = 0u;
-    result.clear();
-    result.reserve(nnodes);
-    m_message << "Critical cycle:" << std::endl;
-    for (auto const& from: policy)
+    result.arcs.reserve(nnodes);
+    result.message << "Critical cycle:" << std::endl;
+    for (auto const& from: result.optimal_policy)
     {
-        m_message << "  T" << from << " -> T" << to << std::endl;
+        result.message << "  T" << from << " -> T" << to << std::endl;
         for (auto const& it: m_transitions[size_t(from)].arcsOut)
         {
             // Since we are working on an Event Graph we can directly access
@@ -961,27 +967,28 @@ bool PetriNet::findCriticalCycle(std::vector<Arc*>& result)
             assert(it->to.arcsOut[0]->to.type == Node::Type::Transition);
             if (it->to.arcsOut[0]->to.id == to)
             {
-                result.push_back(it);
-                result.push_back(it->to.arcsOut[0]);
+                result.arcs.push_back(it);
+                result.arcs.push_back(it->to.arcsOut[0]);
                 break;
             }
         }
         to += 1u;
     }
 
-    m_message << "Cycle time [unit of time]:" << std::endl;
-    for (auto const& it: chi)
+    result.message << "Cycle time [unit of time]:" << std::endl;
+    for (auto const& it: result.cycle_time)
     {
-        m_message << "  " << it << std::endl;
+        result.message << "  " << it << std::endl;
     }
 
-    m_message << "Eigenvector:" << std::endl;
-    for (auto const& it: V)
+    result.message << "Eigenvector:" << std::endl;
+    for (auto const& it: result.eigenvector)
     {
-        m_message << "  " << it << std::endl;
+        result.message << "  " << it << std::endl;
     }
 
-    return true;
+    result.success = true;
+    return result;
 }
 
 //------------------------------------------------------------------------------

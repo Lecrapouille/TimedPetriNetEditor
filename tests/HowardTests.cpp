@@ -22,6 +22,7 @@
 #define protected public
 #define private public
 #  include "src/utils/Howard.h"
+#  include "src/PetriNet.hpp"
 #undef protected
 #undef private
 
@@ -118,4 +119,81 @@ TEST(TestHoward, TestSemiNetherlands)
     ASSERT_DOUBLE_EQ(chi[5], 47.666666666666664); ASSERT_DOUBLE_EQ(v[5], 57.666666666666707); ASSERT_EQ(pi[5], 4);
     ASSERT_DOUBLE_EQ(chi[6], 47.666666666666664); ASSERT_DOUBLE_EQ(v[6], 82.000000000000036); ASSERT_EQ(pi[6], 1);
     ASSERT_DOUBLE_EQ(chi[7], 47.666666666666664); ASSERT_DOUBLE_EQ(v[7], 71.0); ASSERT_EQ(pi[7], 5);
+}
+
+//------------------------------------------------------------------------------
+TEST(TestHoward, TestPetriNetSemiSimple)
+{
+    PetriNet net(PetriNet::Type::TimedPetri);
+
+    // Check dummy result is set to "invalid".
+    PetriNet::CriticalCycleResult res;
+    ASSERT_EQ(res.success, false);
+    ASSERT_EQ(res.eigenvector.size(), 0u);
+    ASSERT_EQ(res.cycle_time.size(), 0u);
+    ASSERT_EQ(res.optimal_policy.size(), 0u);
+    ASSERT_EQ(res.arcs.size(), 0u);
+    ASSERT_STREQ(res.message.str().c_str(), "");
+
+    // Load a net that is not event graph
+    ASSERT_EQ(net.load("data/AppelsDurgence.json"), true);
+    ASSERT_EQ(net.type(), PetriNet::Type::TimedPetri);
+    ASSERT_EQ(net.isEmpty(), false);
+    res = net.findCriticalCycle();
+    ASSERT_EQ(res.success, false);
+    ASSERT_EQ(res.eigenvector.size(), 0u);
+    ASSERT_EQ(res.cycle_time.size(), 0u);
+    ASSERT_EQ(res.optimal_policy.size(), 0u);
+    ASSERT_NE(res.arcs.size(), 0u);
+    ASSERT_STREQ(res.message.str().c_str(), "Not an event graph");
+
+    // Load a net that is an event graph but that Howard does find policy (FIXME while it should)
+    ASSERT_EQ(net.load("data/EventGraph.json"), true);
+    ASSERT_EQ(net.type(), PetriNet::Type::TimedGraphEvent);
+    ASSERT_EQ(net.isEmpty(), false);
+    res = net.findCriticalCycle();
+    ASSERT_EQ(res.success, false);
+    ASSERT_EQ(res.eigenvector.size(), 0u);
+    ASSERT_EQ(res.cycle_time.size(), 0u);
+    ASSERT_EQ(res.optimal_policy.size(), 0u);
+    ASSERT_EQ(res.arcs.size(), 0u);
+    ASSERT_STREQ(res.message.str().c_str(), "No policy found");
+
+    // Load a net that is an event graph
+    ASSERT_EQ(net.load("data/Howard2.json"), true);
+    ASSERT_EQ(net.type(), PetriNet::Type::TimedPetri);
+    ASSERT_EQ(net.isEmpty(), false);
+    res = net.findCriticalCycle();
+    ASSERT_EQ(res.success, true);
+    ASSERT_EQ(res.eigenvector.size(), 4u);
+    ASSERT_EQ(res.eigenvector[0], 0.0f);
+    ASSERT_EQ(res.eigenvector[1], 5.0f);
+    ASSERT_EQ(res.eigenvector[2], 8.0f);
+    ASSERT_EQ(res.eigenvector[3], 1.0f);
+    ASSERT_EQ(res.cycle_time.size(), 4u);
+    ASSERT_EQ(res.cycle_time[0], 6.5f);
+    ASSERT_EQ(res.cycle_time[1], 6.5f);
+    ASSERT_EQ(res.cycle_time[2], 6.5f);
+    ASSERT_EQ(res.cycle_time[3], 6.5f);
+    ASSERT_EQ(res.optimal_policy.size(), 4u);
+    ASSERT_EQ(res.optimal_policy[0], 2u);
+    ASSERT_EQ(res.optimal_policy[1], 0u);
+    ASSERT_EQ(res.arcs.size(), 8u);
+    ASSERT_STREQ(res.arcs[0]->from.key.c_str(), "T2");
+    ASSERT_STREQ(res.arcs[0]->to.key.c_str(), "P0");
+    ASSERT_STREQ(res.arcs[1]->from.key.c_str(), "P0");
+    ASSERT_STREQ(res.arcs[1]->to.key.c_str(), "T0");
+    ASSERT_STREQ(res.arcs[2]->from.key.c_str(), "T0");
+    ASSERT_STREQ(res.arcs[2]->to.key.c_str(), "P1");
+    ASSERT_STREQ(res.arcs[3]->from.key.c_str(), "P1");
+    ASSERT_STREQ(res.arcs[3]->to.key.c_str(), "T1");
+    ASSERT_STREQ(res.arcs[4]->from.key.c_str(), "T1");
+    ASSERT_STREQ(res.arcs[4]->to.key.c_str(), "P2");
+    ASSERT_STREQ(res.arcs[5]->from.key.c_str(), "P2");
+    ASSERT_STREQ(res.arcs[5]->to.key.c_str(), "T2");
+    ASSERT_STREQ(res.arcs[6]->from.key.c_str(), "T0");
+    ASSERT_STREQ(res.arcs[6]->to.key.c_str(), "P3");
+    ASSERT_STREQ(res.arcs[7]->from.key.c_str(), "P3");
+    ASSERT_STREQ(res.arcs[7]->to.key.c_str(), "T3");
+    ASSERT_STREQ(res.message.str().substr(0u, 14u).c_str(), "Critical cycle");
 }

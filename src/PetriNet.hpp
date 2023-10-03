@@ -553,6 +553,28 @@ public:
     };
 
     //--------------------------------------------------------------------------
+    //! \brief Returned by findCriticalCycle()
+    //--------------------------------------------------------------------------
+    struct CriticalCycleResult
+    {
+       //! \brief In case of failure only the field message can be used indicating
+       //! the reason of the failure.
+       bool success = false;
+       //! \brief
+       std::vector<double> eigenvector;
+       //! \brief Sum of durations divided by the number of tokens.
+       std::vector<double> cycle_time;
+       //! \brief
+       std::vector<int> optimal_policy;
+       //! \brief List of selected arcs defining the critical cycle (to be used for
+       //! the display).
+       std::vector<Arc*> arcs;
+       //! \brief In case of failure, holds the reason of the failure. In case of
+       //! success hold all result in human readable format.
+       std::stringstream message;
+    };
+
+    //--------------------------------------------------------------------------
     //! \brief Default constructor.
     //! \param[in] mode: select the type of net: GRAFCET or timed Petri net
     //! or Petri net.
@@ -781,11 +803,10 @@ public:
     //! the most of time).
     //! \param[inout] result container of arcs storing the cycle.
     //! The container is cleared before reserving its memory.
-    //! \return true if the Petri net was an graph event and \c result will
-    //! contain the arcs of the cycle. Return false if the Petri net was not an
-    //! graph event and \c result will contain erroneous arcs.
+    //! \return the struct CriticalCycleResult holding all information (success,
+    //! message, marked arcs for the cycle, eigenvector ...).
     //--------------------------------------------------------------------------
-    bool findCriticalCycle(std::vector<Arc*>& result);
+    CriticalCycleResult findCriticalCycle();
 
     //--------------------------------------------------------------------------
     //! \brief Return the timed event graph as (min,+) system. For example

@@ -149,11 +149,16 @@ public:
     std::vector<MessageBar::TimedMessage> const& getLogs() const { return m_message_bar.getBuffer(); }
     void clearLogs() { m_message_bar.clear(); }
 
-    bool findCriticalCycle()
-    {
-        return m_petri_net.findCriticalCycle(m_marked_arcs);
-    }
+    //--------------------------------------------------------------------------
+    //! \brief Show to the critical circuit of the net (where the cycle takes
+    //! the most of time).
+    //--------------------------------------------------------------------------
+    PetriNet::CriticalCycleResult findCriticalCycle();
 
+    //--------------------------------------------------------------------------
+    //! \brief Return the list of exporters to export the Petri net to other
+    //! application (LaTeX, CodeSys, Dot ...).
+    //--------------------------------------------------------------------------
     inline std::map<std::string, PetriEditor::Export>const& exporters() const
     {
         return m_exporters;

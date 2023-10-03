@@ -337,6 +337,25 @@ void PetriEditor::close()
 }
 
 //------------------------------------------------------------------------------
+PetriNet::CriticalCycleResult PetriEditor::findCriticalCycle()
+{
+    PetriNet::CriticalCycleResult result;
+
+    m_simulating = false;
+    result = m_petri_net.findCriticalCycle();
+    m_marked_arcs = result.arcs;
+    if (result.success)
+    {
+        m_marked_arcs_color = sf::Color(255, 165, 0);
+    }
+    else
+    {
+        m_marked_arcs_color = sf::Color::Red;
+    }
+    return result;
+}
+
+//------------------------------------------------------------------------------
 void PetriEditor::draw(sf::Text& t, std::string const& str, float const x, float const y)
 {
     t.setString(str);
@@ -1021,18 +1040,19 @@ void PetriEditor::handleKeyPressed(sf::Event const& event)
     // 'C' key: show critical graph (only for event graph)
     else if (event.key.code == KEY_BINDING_SHOW_CRITICAL_CYCLE)
     {
-        m_simulating = false;
-        if (m_petri_net.findCriticalCycle(m_marked_arcs))
+        /*
+        std::string message;
+        findCriticalCycle(message);
+        ImVec2 center = ImGui::GetMainViewport()->GetCenter();
+        if (!message.empty()) { ImGui::OpenPopup("Critical Cycle"); }
+        ImGui::SetNextWindowPos(center, ImGuiCond_Appearing, ImVec2(0.5f, 0.5f));
+        if (ImGui::BeginPopupModal("Critical Cycle", NULL, ImGuiWindowFlags_AlwaysAutoResize))
         {
-            m_message_bar.setInfo(m_petri_net.message());
-            m_marked_arcs_color = sf::Color(255, 165, 0);
-            std::cout << m_petri_net.message();
-        }
-        else
-        {
-            m_message_bar.setError(m_petri_net.message());
-            m_marked_arcs_color = sf::Color::Red;
-        }
+            ImGui::Text(u8"%s", m_petri_net.message().c_str());
+
+            if (ImGui::Button("OK", ImVec2(120, 0))) { ImGui::CloseCurrentPopup(); }
+            ImGui::EndPopup();
+        }*/
     }
 
     // 'Z' key: erase the Petri net
