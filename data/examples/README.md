@@ -8,7 +8,7 @@ The machine accept to return the inserted client coin.
 ![Coffee](pics/Coffee.png)
 
 ```
-TimedPetriNetEditor examples/Coffee.json
+TimedPetriNetEditor data/examples/Coffee.json
 ```
 
 ## Traffic Lights
@@ -18,7 +18,7 @@ Two traffic lights (red, orange, red lights) synchronized by the Place `P6`.
 ![Traffic Lights](pics/TrafficLights.png)
 
 ```
-TimedPetriNetEditor examples/TrafficLights.json
+TimedPetriNetEditor data/examples/TrafficLights.json
 ```
 
 ## Philosphers
@@ -28,7 +28,7 @@ Three philosophers are eating but they are sharing their fork and knives.
 ![Philosophers](pics/Philosophers.png)
 
 ```
-TimedPetriNetEditor examples/Philosophers.json
+TimedPetriNetEditor data/examples/Philosophers.json
 ```
 
 ## Urgency Call (French 911)
@@ -41,7 +41,7 @@ Victims is calling the 911. A first operator (level 1) is selecting the type of 
 ![Appels Durgence](pics/AppelsDurgence.png)
 
 ```
-TimedPetriNetEditor examples/AppelsDurgence.json
+TimedPetriNetEditor data/examples/AppelsDurgence.json
 ```
 
 ## Four Roads Junction
@@ -51,7 +51,7 @@ Simulate a road junction.
 ![Four Road Junctions](pics/FourRoadJunctions.png)
 
 ```
-TimedPetriNetEditor examples/FourRoadJunctions.json
+TimedPetriNetEditor data/examples/FourRoadJunctions.json
 ```
 
 ## Producer Consumer
@@ -61,7 +61,7 @@ Simulate a producer and a consumer with a buffer.
 ![Producer Consumer](pics/ProducerConsumer.png)
 
 ```
-TimedPetriNetEditor examples/ProducerConsumer.json
+TimedPetriNetEditor data/examples/ProducerConsumer.json
 ```
 
 ## Inputs Outputs
@@ -71,7 +71,7 @@ Show source and sinks transitions
 ![Inputs Outputs](pics/InputsOutputs.png)
 
 ```
-TimedPetriNetEditor examples/InputsOutputs.json
+TimedPetriNetEditor data/examples/InputsOutputs.json
 ```
 
 ## Event Graph
@@ -79,8 +79,8 @@ TimedPetriNetEditor examples/InputsOutputs.json
 Show a timed event graph taken from
 https://www.rocq.inria.fr/metalau/cohen/SED/book-online.html.
 
-![Inputs Outputs](pics/InputsOutputs.png)
+![Event Graph](pics/EventGraph.png)
 
 ```
-TimedPetriNetEditor examples/EventGraph.json
+TimedPetriNetEditor data/examples/EventGraph.json
 ```
