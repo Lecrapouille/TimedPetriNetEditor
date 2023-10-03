@@ -189,7 +189,7 @@ void menu(PetriEditor& editor)
 
                 ImGui::RadioButton("Petri net", &current_type, 0);
                 ImGui::RadioButton("Timed Petri net", &current_type, 1);
-                ImGui::RadioButton("Timed graph event", &current_type, 2);
+                ImGui::RadioButton("Timed event graph", &current_type, 2);
                 ImGui::RadioButton("GRAFCET", &current_type, 3);
                 editor.changeTypeOfNet(PetriNet::Type(current_type));
                 ImGui::EndMenu();
@@ -212,7 +212,7 @@ void menu(PetriEditor& editor)
             ImGui::EndMenu();
         }
 
-        if ((editor.m_petri_net.type() == PetriNet::Type::TimedGraphEvent) ||
+        if ((editor.m_petri_net.type() == PetriNet::Type::TimedEventGraph) ||
             (editor.m_petri_net.isEventGraph()))
         {
             if (ImGui::BeginMenu("Graph Events"))
@@ -312,7 +312,7 @@ void menu(PetriEditor& editor)
                     if (ImGui::BeginTabItem("Critical cycle"))
                     {
                         std::stringstream txt;
-                        if (editor.m_petri_net.type() == PetriNet::Type::TimedGraphEvent)
+                        if (editor.m_petri_net.type() == PetriNet::Type::TimedEventGraph)
                         {
                             // Only show transitions
                             for (auto const& it: critical_cycle.arcs)

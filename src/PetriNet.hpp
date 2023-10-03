@@ -541,7 +541,7 @@ public:
         //! \brief Is a timed Petri where all places have a single input arc and
         //! a single output arc. TODO This mode is not yet implemented: the
         //! editor shall not display places.
-        TimedGraphEvent,
+        TimedEventGraph,
         //! \brief Is a Petri net used for making automata: Places do actions
         //! and receptivities are linked to sensors. Steps (the name for Places)
         //! have at maximum one token (1-S net). TODO This mode is partially

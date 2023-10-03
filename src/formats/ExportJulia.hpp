@@ -87,7 +87,7 @@ bool PetriNet::exportToJulia(std::string const& filename) const
     // be represented by an adjacency matrix, here, we genereate two adjacency
     // matrices: one for tokens and one for durations.
     file << std::endl;
-    file << "## Timed graph event depict as two graph adjacency matrices:" << std::endl;
+    file << "## Timed event graph depict as two graph adjacency matrices:" << std::endl;
     file << "# Nodes are Transitions." << std::endl;
     file << "# Arcs are Places and therefore have tokens and durations" << std::endl;
     SparseMatrix N; SparseMatrix T;

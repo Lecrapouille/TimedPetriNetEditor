@@ -3,7 +3,7 @@
   "nets": [
     {
        "name": "JPQ",
-       "type": "Timed graph event",
+       "type": "Timed event graph",
        "places": [
             { "id": 0, "caption": "P0", "tokens": 1, "x": 375, "y": 288 },
             { "id": 1, "caption": "P1", "tokens": 1, "x": 372, "y": 173 },

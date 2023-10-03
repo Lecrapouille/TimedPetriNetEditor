@@ -66,8 +66,8 @@ std::string PetriNet::to_str(PetriNet::Type const mode)
         return "Petri net";
     case PetriNet::Type::TimedPetri:
         return "Timed Petri net";
-    case PetriNet::Type::TimedGraphEvent:
-        return "Timed graph event";
+    case PetriNet::Type::TimedEventGraph:
+        return "Timed event graph";
     default:
         return "Undefined type of net";
     }
@@ -215,7 +215,7 @@ bool PetriNet::type(PetriNet::Type const mode, std::vector<Arc*>& erroneous_arcs
         Settings::maxTokens = std::numeric_limits<size_t>::max();
         Settings::firing = Settings::Fire::OneByOne;
         break;
-    case PetriNet::Type::TimedGraphEvent:
+    case PetriNet::Type::TimedEventGraph:
         // Check conditions of a well formed event graph
         if ((!isEmpty()) && (!isEventGraph(erroneous_arcs)))
             return false;

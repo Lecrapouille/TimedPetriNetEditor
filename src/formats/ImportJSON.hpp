@@ -36,8 +36,8 @@ bool PetriNet::importFromJSON(std::string const& filename)
         m_type = PetriNet::Type::Petri;
     else if (type == "Timed Petri net")
         m_type = PetriNet::Type::TimedPetri;
-    else if (type == "Timed graph event")
-        m_type = PetriNet::Type::TimedGraphEvent;
+    else if (type == "Timed event graph")
+        m_type = PetriNet::Type::TimedEventGraph;
     else
     {
         m_message.str("");

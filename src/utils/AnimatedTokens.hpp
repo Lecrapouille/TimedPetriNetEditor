@@ -50,7 +50,7 @@ struct AnimatedToken
 
         // Note: we are supposing the norm and duration is never updated by
         // the user during the simulation.
-        if (type != PetriNet::Type::TimedGraphEvent)
+        if (type != PetriNet::Type::TimedEventGraph)
         {
             magnitude = norm(arc.from.x, arc.from.y, arc.to.x, arc.to.y);
         }
@@ -68,7 +68,7 @@ struct AnimatedToken
         switch (type_)
         {
         case PetriNet::Type::TimedPetri:
-        case PetriNet::Type::TimedGraphEvent:
+        case PetriNet::Type::TimedEventGraph:
             speed = magnitude / std::max(0.000001f, arc.duration);
             break;
             // In theory duration is 0 but nicer for the user to see animation.
@@ -148,7 +148,7 @@ struct AnimatedToken
     bool update(float const dt)
     {
         // With graph event we have to skip implicit places.
-        Node& next = (type != PetriNet::Type::TimedGraphEvent)
+        Node& next = (type != PetriNet::Type::TimedEventGraph)
                    ? arc.to : arc.to.arcsOut[0]->to;
 
         offset += dt * speed / magnitude;

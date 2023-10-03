@@ -141,7 +141,7 @@ PetriEditor::PetriEditor(Application& application, PetriNet& net)
     case PetriNet::Type::TimedPetri:
         m_message_bar.setInfo("Welcome to timed Petri net editor!");
         break;
-    case PetriNet::Type::TimedGraphEvent:
+    case PetriNet::Type::TimedEventGraph:
         m_message_bar.setInfo("Welcome to timed graph event editor!");
         break;
     case PetriNet::Type::GRAFCET:
@@ -381,7 +381,7 @@ void PetriEditor::draw(sf::Text& t, float const number, float const x, float con
 void PetriEditor::draw(Place const& place, uint8_t alpha)
 {
     // In graph event we "compress" the graph by not displaying places.
-    if (m_petri_net.type() == PetriNet::Type::TimedGraphEvent)
+    if (m_petri_net.type() == PetriNet::Type::TimedEventGraph)
         return ;
 
     const float x = place.x;
@@ -483,7 +483,7 @@ void PetriEditor::draw(Transition const& transition, uint8_t alpha)
 //------------------------------------------------------------------------------
 void PetriEditor::draw(Arc const& arc, uint8_t alpha)
 {
-    if (m_petri_net.type() == PetriNet::Type::TimedGraphEvent)
+    if (m_petri_net.type() == PetriNet::Type::TimedEventGraph)
     {
         // In graph event we "compress" the graph by not displaying places.
         if (arc.from.type == Node::Type::Place)
@@ -1259,7 +1259,7 @@ void PetriEditor::handleArcDestination()
         // create the origin node before creating the arc.
         float x = m_mouse.x;
         float y = m_mouse.y;
-        if (m_petri_net.type() == PetriNet::Type::TimedGraphEvent)
+        if (m_petri_net.type() == PetriNet::Type::TimedEventGraph)
         {
             // With timed event graph we have to add implicit places.
             float px = x + (m_node_from->x - x) / 2.0f;

@@ -322,7 +322,7 @@ TEST(TestPetriNet, TestToMode)
     ASSERT_STREQ(PetriNet::to_str(PetriNet::Type::GRAFCET).c_str(), "GRAFCET");
     ASSERT_STREQ(PetriNet::to_str(PetriNet::Type::Petri).c_str(), "Petri net");
     ASSERT_STREQ(PetriNet::to_str(PetriNet::Type::TimedPetri).c_str(), "Timed Petri net");
-    ASSERT_STREQ(PetriNet::to_str(PetriNet::Type::TimedGraphEvent).c_str(), "Timed graph event");
+    ASSERT_STREQ(PetriNet::to_str(PetriNet::Type::TimedEventGraph).c_str(), "Timed event graph");
     ASSERT_STREQ(PetriNet::to_str(PetriNet::Type(42)).c_str(), "Undefined type of net");
 }
 
@@ -982,8 +982,8 @@ TEST(TestPetriNet, TestLoadedNetGraphEvent)
 {
     PetriNet net(PetriNet::Type::TimedPetri);
 
-    ASSERT_EQ(net.load("data/GraphEvent.json"), true);
-    ASSERT_EQ(net.type(), PetriNet::Type::TimedGraphEvent);
+    ASSERT_EQ(net.load("data/EventGraph2.json"), true);
+    ASSERT_EQ(net.type(), PetriNet::Type::TimedEventGraph);
     ASSERT_EQ(net.isEmpty(), false);
     ASSERT_EQ(net.m_next_place_id, 5u);
     ASSERT_EQ(net.m_next_transition_id, 4u);

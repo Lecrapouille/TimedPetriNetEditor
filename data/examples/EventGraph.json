@@ -3,7 +3,7 @@
   "nets": [
     {
        "name": "EventGraph",
-       "type": "Timed graph event",
+       "type": "Timed event graph",
        "places": [
             { "id": 0, "caption": "P0", "tokens": 0, "x": 219, "y": 128 },
             { "id": 1, "caption": "P1", "tokens": 0, "x": 484, "y": 121 },
