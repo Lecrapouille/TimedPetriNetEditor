@@ -32,4 +32,5 @@ click on it to watch a YouTube showing an example of timed Petri net running.
 - [Exporting the net](doc/export.md)
 - [Exporting to C++ code](doc/grafcet.md)
 - [Interface with Julia](doc/julia.md)
+- [Examples](data/examples/README.md)
 - [Related lectures and projects](doc/biblio.md)
