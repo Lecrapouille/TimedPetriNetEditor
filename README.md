@@ -21,6 +21,8 @@ click on it to watch a YouTube showing an example of timed Petri net running.
 
 *Fig 1 - A timed Petri net (made with this editor).*
 
+**Note:** An online version is in gestation. Here is the [link](https://lecrapouille.github.io/TimedPetriNetEditor/TimedPetriNetEditor.html).
+
 - [Why developing another Petri editor?](doc/why.md)
 - [Work in progress](doc/wip.md)
 - [What are Petri nets, timed Petri nets, timed event graph?](doc/petri.md)
