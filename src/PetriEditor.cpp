@@ -179,7 +179,8 @@ void PetriEditor::onConnected(int /*rc*/)
     std::cout << "Petri net editor " << pid << " connected to MQTT broker"
               << std::endl;
 
-    unsubscribe(m_mqtt_topic);
+    if (!m_mqtt_topic.empty())
+        unsubscribe(m_mqtt_topic);
     m_mqtt_topic = "pneditor-" + pid + "/" + m_petri_net.name();
     std::string message("\nYou can publish your MQTT commands to the Petri net editor ");
     m_message_bar.append(message + " the topic '" + m_mqtt_topic + "'");
@@ -190,7 +191,7 @@ void PetriEditor::onConnected(int /*rc*/)
 // TBD: topic "editor/petri.json/P1" and message "=4" or "+2" or "-1"
 // topic "editor/petri.json/T1" and message "1" or "0".
 // "editor/petri.json and message "T1:T2;T3"
-void PetriEditor::onMessageReceived(const struct mosquitto_message& msg)
+void PetriEditor::onMessageReceived(MQTT::Message const& msg)
 {
     const char* payload = static_cast<char*>(msg.payload);
     if (payload[0] == 'T')

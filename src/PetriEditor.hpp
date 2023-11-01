@@ -211,7 +211,7 @@ void renderScene(sf::RenderTexture&);
     //! mouse click on transitions to fire them or increment the number of tokens
     //! in a place.
     //--------------------------------------------------------------------------
-    virtual void onMessageReceived(const struct mosquitto_message& message) override;
+    virtual void onMessageReceived(MQTT::Message const& message) override;
 
 private: // Derived from Application::GUI
 
