@@ -1,9 +1,9 @@
 {
-  "revision": 2,
+  "revision": 3,
+  "type": "Petri net",
   "nets": [
     {
        "name": "ProducerConsumer",
-       "type": "Petri net",
        "places": [
             { "id": 0, "caption": "Producer ready", "tokens": 1, "x": 100, "y": 75 },
             { "id": 1, "caption": "Idle", "tokens": 1, "x": 100, "y": 225 },

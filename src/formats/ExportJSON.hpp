@@ -22,10 +22,10 @@ bool PetriNet::exportToJSON(std::string const& filename) const
     // TODO sensors
 
     file << "{" << std::endl;
-    file << "  \"revision\": 2," << std::endl;
+    file << "  \"revision\": 3," << std::endl;
+    file << "  \"type\": \"" << to_str(m_type) << "\"," << std::endl;
     file << "  \"nets\": [\n    {" << std::endl;
     file << "       \"name\": \"" << name() << "\"," << std::endl;
-    file << "       \"type\": \"" << to_str(m_type) << "\"," << std::endl;
 
     // Places
     file << "       \"places\": [";

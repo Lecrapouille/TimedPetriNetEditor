@@ -1,9 +1,9 @@
 {
   "revision": 2,
+  "type": "GRAFCET",
   "nets": [
     {
        "name": "dualband",
-       "type": "GRAFCET",
        "places": [
             { "id": 0, "caption": "Attente depart", "tokens": 1, "x": 126, "y": 200 },
             { "id": 1, "caption": "Demarrage moteurs", "tokens": 0, "x": 276, "y": 200 },

@@ -1,9 +1,9 @@
 {
-  "revision": 2,
+  "revision": 3,
+  "type": "Timed event graph",
   "nets": [
     {
        "name": "Howard2",
-       "type": "Timed event graph",
        "places": [
             { "id": 0, "caption": "P0", "tokens": 2, "x": 208, "y": 250 },
             { "id": 1, "caption": "P1", "tokens": 0, "x": 562, "y": 276 },

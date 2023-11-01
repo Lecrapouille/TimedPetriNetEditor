@@ -27,9 +27,7 @@ bool PetriNet::importFromJSON(std::string const& filename)
 
     std::vector<std::string> words;
 
-    nlohmann::json const& net = json["nets"][0];
-    m_name = std::string(net["name"]);
-    std::string type = std::string(net["type"]);
+    std::string type = std::string(json["type"]);
     if (type == "GRAFCET")
         m_type = PetriNet::Type::GRAFCET;
     else if (type == "Petri net")
@@ -45,6 +43,9 @@ bool PetriNet::importFromJSON(std::string const& filename)
                   << "Unknown type of net: " << type << "'" << std::endl;
         return false;
     }
+
+    nlohmann::json const& net = json["nets"][0];
+    m_name = std::string(net["name"]);
 
     // Places
     for (nlohmann::json const& p : net["places"])

@@ -1,9 +1,9 @@
 {
-  "revision": 2,
+  "revision": 3,
+  "type": "Timed Petri net",
   "nets": [
     {
        "name": "Coffee",
-       "type": "Timed Petri net",
        "places": [
             { "id": 0, "caption": "Cold", "tokens": 1, "x": 239, "y": 104 },
             { "id": 1, "caption": "Hot", "tokens": 0, "x": 245, "y": 251 },

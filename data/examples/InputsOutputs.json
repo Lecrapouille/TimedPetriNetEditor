@@ -1,9 +1,9 @@
 {
-  "revision": 2,
+  "revision": 3,
+  "type": "Timed Petri net",
   "nets": [
     {
        "name": "Example6",
-       "type": "Timed Petri net",
        "places": [
             { "id": 0, "caption": "P0", "tokens": 1, "x": 275, "y": 175 },
             { "id": 1, "caption": "P1", "tokens": 0, "x": 525, "y": 175 },
