@@ -18,12 +18,33 @@
 // along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.
 //=============================================================================
 
-#ifndef PETRIEDITOR_HMI_HPP
-#  define PETRIEDITOR_HMI_HPP
+#ifndef EXPORTS_HPP
+#  define EXPORTS_HPP
 
-class PetriEditor;
+#include <string>
 
-void inspector(PetriEditor& editor);
-void menu(PetriEditor& editor);
+namespace tpne {
+
+class Net;
+
+std::string exportToJSON(Net const& net, std::string const& filename);
+std::string exportToSymfony(Net const& net, std::string const& filename);
+std::string exportToPNEditor(Net const& net, std::string const& filename);
+std::string exportToDrawIO(Net const& net, std::string const& filename);
+std::string exportToGraphviz(Net const& net, std::string const& filename);
+std::string exportToPetriLaTeX(Net const& net, std::string const& filename);
+std::string exportToJulia(Net const& net, std::string const& filename);
+std::string exportToGrafcetCpp(Net const& net, std::string const& filename);
+
+typedef std::string (*ExportFunc)(Net const&, std::string const&);
+
+struct Exporter
+{
+    std::string format;
+    std::string extensions;
+    ExportFunc exportFct;
+};
+
+} // namespace tpne
 
 #endif

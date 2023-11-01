@@ -21,8 +21,6 @@
 #ifndef PETRI_NET_HPP
 #  define PETRI_NET_HPP
 
-#  include "Receptivities.hpp"
-#  include <SFML/System/Clock.hpp> // For fading
 #  include <math.h> // Nan
 #  include <atomic>
 #  include <string>
@@ -34,28 +32,33 @@
 #  include <iostream>
 #  include <sstream>
 
+namespace tpne {
+
 class Arc;
-struct SparseMatrix;
 
-// *****************************************************************************
-//! \brief Settings for defining the type of net (GRAFCET, Petri net, timed
-//! petri net, timed graph event ...). This structure is global for the current
-//! net and is used by the PetriNet class.
-// *****************************************************************************
-struct Settings
+//--------------------------------------------------------------------------
+//! \brief Configure the net as GRAFCET or timed Petri net or Petri net.
+//--------------------------------------------------------------------------
+enum class TypeOfNet
 {
-    //! \brief Max number of tokens in places. For GRAFCET: 1. For other nets:
-    //! std::numeric_limits<size_t>::max().
-    static size_t maxTokens;
-
-    //! \brief The theory would burn the maximum possibe of tokens that we can
-    //! within a single action (Fire::MaxPossible) but we can also try to burn
-    //! tokens one by one and randomize the transitions (Fire::OneByOne). This
-    //! will favor dispatching tokens along arcs.
-    enum class Fire { OneByOne, MaxPossible };
-
-    //! \brief Burn tokens one by one or as many as possible.
-    static Fire firing;
+    //! \brief The user has to click on transitions to fire.
+    //! Tokens are burnt one by one.
+    PetriNet,
+    //! \brief Is a Petri with duration on arcs transition -> place. When
+    //! transitions are enables, firing is automatic, on divergence
+    //! transition, the firing is shuffle and the maximum of tokens are
+    //! burnt in once. The user cannot click to transitions to fire.
+    TimedPetriNet,
+    //! \brief Is a timed Petri where all places have a single input arc and
+    //! a single output arc. TODO This mode is not yet implemented: the
+    //! editor shall not display places.
+    TimedEventGraph,
+    //! \brief Is a Petri net used for making automata: Places do actions
+    //! and receptivities are linked to sensors. Steps (the name for Places)
+    //! have at maximum one token (1-S net). TODO This mode is partially
+    //! implemented: partial GRAFCET norm is respected, GUI does not allow
+    //! to simulated actions and sensors.
+    GRAFCET
 };
 
 // *****************************************************************************
@@ -86,9 +89,7 @@ public:
         : type(type_), id(id_),
           key((type == Node::Type::Place ? 'P' : 'T') + std::to_string(id)),
           x(x_), y(y_), caption(caption_.empty() ? key : caption_)
-    {
-        fading.restart();
-    }
+    {}
 
     //--------------------------------------------------------------------------
     //! \brief Copy operator needed because this class has constant member
@@ -125,21 +126,6 @@ public:
         return *this;
     }
 
-    //--------------------------------------------------------------------------
-    //! \brief Compare node with another node. Perform a check ont the type of
-    //! node and on the unique identifier.
-    //--------------------------------------------------------------------------
-    inline bool operator==(Node const &other) const
-    {
-        return (type == other.type) && (id == other.id);
-    }
-
-    //--------------------------------------------------------------------------
-    //! \brief Compare node with another node. Perform a check ont the type of
-    //! node and on the unique identifier.
-    //--------------------------------------------------------------------------
-    inline bool operator!=(Node const &other) const { return !(*this == other); }
-
 public:
 
     //! \brief Type of nodes: Petri Place or Petri Transition .Once created it is
@@ -160,16 +146,14 @@ public:
     //! \brief Text displayed near a node the user can modify. Defaut value is
     //! the tring unique \c key.
     std::string caption;
-    //! \brief Timer for fading colors.
-    sf::Clock fading;
     //! \brief Hold the incoming arcs to access to previous nodes.
     //! \note this vector is updated by the method
-    //! PetriNet::generateArcsInArcsOut() and posible evolution could be to
+    //! Net::generateArcsInArcsOut() and posible evolution could be to
     //! update dynamicaly this vector when editing the net through the GUI.
     std::vector<Arc*> arcsIn;
     //! \brief Hold the outcoming arcs to access to successor nodes.
     //! \note this vector is updated by the method
-    //! PetriNet::generateArcsInArcsOut() and posible evolution could be to
+    //! Net::generateArcsInArcsOut() and posible evolution could be to
     //! update dynamicaly this vector when editing the net through the GUI.
     std::vector<Arc*> arcsOut;
 };
@@ -184,7 +168,7 @@ class Place : public Node
 public:
 
     //! \brief to access s_next_id
-    friend class PetriNet;
+    friend class Net;
 
     //--------------------------------------------------------------------------
     //! \brief Constructor. To be used when loading a Petri net from JSON file.
@@ -196,12 +180,7 @@ public:
     //! \param[in] tokens_: Initial number of tokens in the place >= 0.
     //--------------------------------------------------------------------------
     Place(size_t const id_, std::string const& caption_, float const x_,
-          float const y_, size_t const tokens_)
-        : Node(Node::Type::Place, id_, caption_, x_, y_)
-    {
-        // Petri net: infinite number of tokens but in GRAFCET max is one.
-        tokens = std::min(Settings::maxTokens, tokens_);
-    }
+          float const y_, size_t const tokens_);
 
     //--------------------------------------------------------------------------
     //! \brief Static method stringifying a place given an identifier.
@@ -241,7 +220,7 @@ class Transition : public Node
 public:
 
     //! \brief to access s_next_id
-    friend class PetriNet;
+    friend class Net;
 
     //--------------------------------------------------------------------------
     //! \brief Constructor. To be used when loading a Petri net from JSON file.
@@ -266,11 +245,6 @@ public:
     inline static std::string to_str(size_t const id_)
     {
         return std::string("T" + std::to_string(id_));
-    }
-
-    inline void evaluate(Sensors const& sensors)
-    {
-        receptivity = Receptivity::Parser::evaluate(expression, sensors);
     }
 
     //--------------------------------------------------------------------------
@@ -370,12 +344,6 @@ public:
     //! are always true. In GRAFCET receptivity depends on boolean logic on
     //! sensors (i.e. urgency button pressed).
     bool receptivity = false;
-
-//private:
-
-    //! \brief Hold the code of the receptivity (ie "Dcy . X14").
-    // std::string expression; ==> utiliser caption
-    Receptivity expression;
 };
 
 // *****************************************************************************
@@ -401,7 +369,6 @@ public:
           duration(from_.type == Node::Type::Transition ? duration_ : NAN)
     {
         assert(from.type != to.type);
-        fading.restart();
     }
 
     //--------------------------------------------------------------------------
@@ -459,24 +426,6 @@ public:
     }
 
     //--------------------------------------------------------------------------
-    //! \brief Compare node with another node. Perform a check ont the type of
-    //! node and on the unique identifier.
-    //--------------------------------------------------------------------------
-    inline bool operator==(Arc const &other) const
-    {
-        return (from == other.from) && (to == other.to);
-    }
-
-    //--------------------------------------------------------------------------
-    //! \brief Compare node with another node. Perform a check ont the type of
-    //! node and on the unique identifier.
-    //--------------------------------------------------------------------------
-    inline bool operator!=(Arc const &other) const
-    {
-        return !(*this == other);
-    }
-
-    //--------------------------------------------------------------------------
     //! \brief
     //--------------------------------------------------------------------------
     friend std::ostream& operator<<(std::ostream& os, Arc const& a)
@@ -505,8 +454,6 @@ public:
     //! framerate is suggested to force bigger coordinate steps avoiding
     //! overlapping AnimatedToken.
     size_t count = 0u;
-    //! \brief Timer for fading colors.
-    sf::Clock fading;
 };
 
 // *****************************************************************************
@@ -515,7 +462,7 @@ public:
 //! currently the PetriEditor is doing the simulation which is mainly animations
 //! with some basic features such as burning tokens ...
 // *****************************************************************************
-class PetriNet
+class Net
 {
 public:
 
@@ -523,55 +470,25 @@ public:
     using Transitions = std::deque<Transition>;
     using Arcs = std::deque<Arc>;
 
-    //--------------------------------------------------------------------------
-    //! \brief Configure the net as GRAFCET or timed Petri net or Petri net.
-    //! TODO GraphEvent displaying graph like doc/Graph01.png
-    //! TODO StateMachine
-    //--------------------------------------------------------------------------
-    enum class Type
+    // *****************************************************************************
+    //! \brief Settings for defining the type of net (GRAFCET, Petri net, timed
+    //! petri net, timed graph event ...). This structure is global for the current
+    //! net and is used by the Net class.
+    // *****************************************************************************
+    struct Settings
     {
-        //! \brief The user has to click on transitions to fire.
-        //! Tokens are burnt one by one.
-        Petri,
-        //! \brief Is a Petri with duration on arcs transition -> place. When
-        //! transitions are enables, firing is automatic, on divergence
-        //! transition, the firing is shuffle and the maximum of tokens are
-        //! burnt in once. The user cannot click to transitions to fire.
-        TimedPetri,
-        //! \brief Is a timed Petri where all places have a single input arc and
-        //! a single output arc. TODO This mode is not yet implemented: the
-        //! editor shall not display places.
-        TimedEventGraph,
-        //! \brief Is a Petri net used for making automata: Places do actions
-        //! and receptivities are linked to sensors. Steps (the name for Places)
-        //! have at maximum one token (1-S net). TODO This mode is partially
-        //! implemented: partial GRAFCET norm is respected, GUI does not allow
-        //! to simulated actions and sensors.
-        GRAFCET,
-        //! \brief TODO Is a 1-S Petri net This mode is not managed
-        StateMachine
-    };
+        //! \brief Max number of tokens in places. For GRAFCET: 1. For other nets:
+        //! std::numeric_limits<size_t>::max().
+        static size_t maxTokens;
 
-    //--------------------------------------------------------------------------
-    //! \brief Returned by findCriticalCycle()
-    //--------------------------------------------------------------------------
-    struct CriticalCycleResult
-    {
-       //! \brief In case of failure only the field message can be used indicating
-       //! the reason of the failure.
-       bool success = false;
-       //! \brief
-       std::vector<double> eigenvector;
-       //! \brief Sum of durations divided by the number of tokens.
-       std::vector<double> cycle_time;
-       //! \brief
-       std::vector<int> optimal_policy;
-       //! \brief List of selected arcs defining the critical cycle (to be used for
-       //! the display).
-       std::vector<Arc*> arcs;
-       //! \brief In case of failure, holds the reason of the failure. In case of
-       //! success hold all result in human readable format.
-       std::stringstream message;
+        //! \brief The theory would burn the maximum possibe of tokens that we can
+        //! within a single action (Fire::MaxPossible) but we can also try to burn
+        //! tokens one by one and randomize the transitions (Fire::OneByOne). This
+        //! will favor dispatching tokens along arcs.
+        enum class Fire { OneByOne, MaxPossible };
+
+        //! \brief Burn tokens one by one or as many as possible.
+        static Fire firing;
     };
 
     //--------------------------------------------------------------------------
@@ -579,52 +496,65 @@ public:
     //! \param[in] mode: select the type of net: GRAFCET or timed Petri net
     //! or Petri net.
     //--------------------------------------------------------------------------
-    explicit PetriNet(PetriNet::Type const mode);
+    explicit Net(TypeOfNet const type = TypeOfNet::TimedPetriNet);
 
     //--------------------------------------------------------------------------
     //! \brief Copy constructor. Needed to remove compilation warnings.
     //--------------------------------------------------------------------------
-    PetriNet(PetriNet const& other) { *this = other; }
+    Net(Net const& other) { *this = other; }
 
     //--------------------------------------------------------------------------
     //! \brief Copy operator. Needed to remove compilation warnings.
     //--------------------------------------------------------------------------
-    PetriNet& operator=(PetriNet const& other);
-
-    //--------------------------------------------------------------------------
-    //! \brief Return the name of net.
-    //--------------------------------------------------------------------------
-    std::string const& name() const { return m_name; }
+    Net& operator=(Net const& other);
 
     //--------------------------------------------------------------------------
     //! \brief Remove all nodes and arcs. Reset counters for unique identifiers.
     //! \note the type of net (timed, classic ... ) stay the same.
     //--------------------------------------------------------------------------
-    void clear();
+    void clear(TypeOfNet const type);
 
-    bool start(std::vector<size_t>& tokens);
-    void end(std::vector<size_t> const& tokens);
+    //--------------------------------------------------------------------------
+    //! \brief Return the name of net.
+    //--------------------------------------------------------------------------
+    //std::string const& name() const { return m_name; }
+
+    //--------------------------------------------------------------------------
+    //! \brief Return the file of net to save.
+    //--------------------------------------------------------------------------
+    std::string const& filename() const { return m_filename; }
 
     //--------------------------------------------------------------------------
     //! \brief Get the type of net: GRAFCET, Petri, Timed Petri ...
     //--------------------------------------------------------------------------
-    inline PetriNet::Type type() const { return m_type; }
+    inline TypeOfNet type() const { return m_type; }
 
     //--------------------------------------------------------------------------
-    //! \brief Set the type of net: GRAFCET, Petri, Timed Petri ...
+    //! \brief Convert to the desired type of net: GRAFCET, Petri, timed Petri,
+    //! timed graph even, etc.
     //! \return false if the net cannot be changed (i.e. to graph event).
     //--------------------------------------------------------------------------
-    bool type(PetriNet::Type const mode, std::vector<Arc*>& erroneous_arcs);
-    bool type(PetriNet::Type const mode)
-    {
-        std::vector<Arc*> erroneous_arcs;
-        return type(mode, erroneous_arcs);
-    }
+    bool convertTo(TypeOfNet const type, std::vector<Arc*>& erroneous_arcs);
 
     //--------------------------------------------------------------------------
-    //! \brief Return the string of the type of Petri net.
+    //! \brief Load the Petri net from a JSON file. The current net is cleared
+    //! before the loading. If the loading failed (missing file or invalid
+    //! syntax) the net is set dummy.
+    //! \param[in] filename: the file path in where a Petri net has been
+    //! saved. Should have the .json extension.
+    //! \return true if the Petri net has been loaded with success. Return false
+    //! in case of failure.
     //--------------------------------------------------------------------------
-    static std::string to_str(PetriNet::Type const mode);
+    bool load(std::string const& filename);
+
+    //--------------------------------------------------------------------------
+    //! \brief Save the Petri net in a JSON file.
+    //! \param[in] filename: the file path in where to save the Petri net.
+    //! Should have the .json extension.
+    //! \return true if the Petri net has been saved with success. Return false
+    //! in case of failure.
+    //--------------------------------------------------------------------------
+    bool saveAs(std::string const& filename) const;
 
     //--------------------------------------------------------------------------
     //! \brief Return true if the Petri nets has no nodes (no places and no
@@ -661,11 +591,21 @@ public:
     //! \brief Const getter. Return the reference to the container of Places.
     //--------------------------------------------------------------------------
     inline Places const& places() const { return m_places; }
+    inline Places& places() { return m_places; } // FIXME: because of toCanonicalForm()
 
     //--------------------------------------------------------------------------
-    //! \brief Non const getter. TODO: to be removed (ideally).
+    //! \brief Set tokens in all places.
+    //! \param[in] marks the vector holding tokens for each places (P0, P1 .. Pn).
+    //! \return true if the length of the vector matchs the number of places,
+    //! return false else and you shall call message() to get the error message.
     //--------------------------------------------------------------------------
-    inline Places& places() { return m_places; }
+    bool setTokens(std::vector<size_t> const& tokens);
+
+    //--------------------------------------------------------------------------
+    //! \brief Get tokens from all places.
+    //! \param[out] marks the vector holding tokens for each places (P0, P1 .. Pn).
+    //--------------------------------------------------------------------------
+    void getTokens(std::vector<size_t>& tokens) const;
 
     //--------------------------------------------------------------------------
     //! \brief Add a new Petri Transition. To be called when the user clicked on
@@ -690,22 +630,9 @@ public:
                               float const x, float const y, int const angle);
 
     //--------------------------------------------------------------------------
-    //! \brief Const getter. Return the container reference of the shuffled
-    //! Transitions.
-    //! \param[in] reset if set true, force rebuilding the vector from
-    //! transitions before shuffling.
-    //--------------------------------------------------------------------------
-    std::vector<Transition*> const& shuffle_transitions(bool const reset = false);
-
-    //--------------------------------------------------------------------------
     //! \brief Const getter. Return the reference to the container of Transitions.
     //--------------------------------------------------------------------------
     inline Transitions const& transitions() const { return m_transitions; }
-
-    //--------------------------------------------------------------------------
-    //! \brief Non const getter. TODO: to be removed (ideally).
-    //--------------------------------------------------------------------------
-    inline Transitions& transitions() { return m_transitions; }
 
     //--------------------------------------------------------------------------
     //! \brief Search and return a place or a transition by its unique
@@ -715,6 +642,7 @@ public:
     //! transition 0.
     //--------------------------------------------------------------------------
     Node* findNode(std::string const& key);
+    Node const* findNode(std::string const& key) const;
 
     //--------------------------------------------------------------------------
     //! \brief Search and return a Transition by its unique identifier. Search
@@ -743,7 +671,8 @@ public:
     //! if an arc is already present or nodes have the same type; call message()
     //! to get the exact reason.
     //--------------------------------------------------------------------------
-    bool addArc(Node& from, Node& to, float const duration = 0.0f, bool const strict = true);
+    bool addArc(Node& from, Node& to, float const duration = 0.0f,
+                bool const strict = true);
 
     //--------------------------------------------------------------------------
     //! \brief Return the address of the arc linking the two given nodes.
@@ -753,239 +682,12 @@ public:
     //! \return the address of the arc if found, else return nullptr.
     //--------------------------------------------------------------------------
     Arc* findArc(Node const& from, Node const& to);
+    Arc const* findArc(Node const& from, Node const& to) const;
 
     //--------------------------------------------------------------------------
     //! \brief Const getter of all arcs.
     //--------------------------------------------------------------------------
     inline Arcs const& arcs() const { return m_arcs; }
-
-    //--------------------------------------------------------------------------
-    //! \brief Non const getter. TODO: to be removed (ideally).
-    //--------------------------------------------------------------------------
-    inline Arcs& arcs() { return m_arcs; }
-
-    //--------------------------------------------------------------------------
-    //! \brief Set tokens in all places.
-    //! \param[in] marks the vector holding tokens for each places (P0, P1 .. Pn).
-    //! \return true if the length of the vector matchs the number of places,
-    //! return false else and you shall call message() to get the error message.
-    //--------------------------------------------------------------------------
-    bool setTokens(std::vector<size_t> const& marks);
-
-    //--------------------------------------------------------------------------
-    //! \brief Get tokens from all places.
-    //! \param[out] marks the vector holding tokens for each places (P0, P1 .. Pn).
-    //--------------------------------------------------------------------------
-    void getTokens(std::vector<size_t>& marks) const;
-
-    //--------------------------------------------------------------------------
-    //! \brief Chech if the Petri net is a graph event meaning that each places
-    //! have exactly one input arc and one output arc.
-    //! \param[inout] erroneous_arcs store detected erroneous arcs.
-    //!
-    //! \return true if the Petri net is a graph event and \c erroneous_arcs is
-    //! empty. Return false if the Petri net is not a graph event and \c
-    //! erroneous_arcs will contain defectuous arcs information and call message()
-    //! to get the real reason.
-    //!
-    //! \note call generateArcsInArcsOut(/*arcs: true*/); before calling this
-    //! method.
-    //--------------------------------------------------------------------------
-    bool isEventGraph(std::vector<Arc*>& erroneous_arcs) const;
-    bool isEventGraph() const
-    {
-        std::vector<Arc*> erroneous_arcs;
-        return isEventGraph(erroneous_arcs);
-    }
-
-    //--------------------------------------------------------------------------
-    //! \brief Show to the critical circuit of the net (where the cycle takes
-    //! the most of time).
-    //! \param[inout] result container of arcs storing the cycle.
-    //! The container is cleared before reserving its memory.
-    //! \return the struct CriticalCycleResult holding all information (success,
-    //! message, marked arcs for the cycle, eigenvector ...).
-    //--------------------------------------------------------------------------
-    CriticalCycleResult findCriticalCycle();
-
-    //--------------------------------------------------------------------------
-    //! \brief Return the timed event graph as (min,+) system. For example
-    //! T0(t) = min(2 + T2(t - 5)); where t - 5 is delay implied by duration on
-    //! arcs and min(2 + implied by tokens from incoming places.
-    //!
-    //! \param[in] comment string used as comment (when exported to a langage)
-    //! \param[in] use_caption if set to true use transition captions else use
-    //!   transition keys.
-    //! \param[in] minplus_notation if set to true use the (min-plus) algebra
-    //!   symbols (⨁ and no symbol for ⨂) else show min() symbol.
-    //!
-    //! \return the string depicting the timed Petri net as (min,+) system if
-    //! this net is a timed graph event. Else return empty string.
-    //--------------------------------------------------------------------------
-    std::stringstream showCounterEquation(std::string const& comment,
-        bool use_caption, bool minplus_notation) const;
-
-    //--------------------------------------------------------------------------
-    //! \brief Return the timed event graph as (max,+) system. For example
-    //! T0(n) = max(5 + T2(n - 2)); where n - 2 is delay implied by tokens from
-    //! incoming places and max(5 + implied by duration from the incoming arc.
-    //!
-    //! \param[in] comment string used as comment (when exported to a langage)
-    //! \param[in] use_caption if set to true use transition captions else use
-    //!   transition keys.
-    //! \param[in] maxplus_notation if set to true use the (max-plus) algebra
-    //!   symbols (⨁ and no symbol for ⨂) else show max() symbol.
-    //!
-    //! \return the string depicting the timed Petri net as (max,+) system if
-    //! this net is a timed graph event. Else return empty string.
-    //--------------------------------------------------------------------------
-    std::stringstream showDaterEquation(std::string const& comment,
-        bool use_caption, bool maxplus_notation) const;
-
-    //--------------------------------------------------------------------------
-    //! \brief Load the Petri net from a JSON file. The current net is cleared
-    //! before the loading. If the loading failed (missing file or invalid
-    //! syntax) the net is set dummy.
-    //! \param[in] filename: the file path in where a Petri net has been
-    //! saved. Should have the .json extension.
-    //! \return true if the Petri net has been loaded with success. Return false
-    //! in case of failure.
-    //--------------------------------------------------------------------------
-    bool load(std::string const& filename);
-
-    //--------------------------------------------------------------------------
-    //! \brief Save the Petri net in a JSON file.
-    //! \param[in] filename: the file path in where to save the Petri net.
-    //! Should have the .json extension.
-    //! \return true if the Petri net has been saved with success. Return false
-    //! in case of failure.
-    //--------------------------------------------------------------------------
-    inline bool save(std::string const& filename) const
-    {
-        return exportToJSON(filename);
-    }
-
-    //--------------------------------------------------------------------------
-    //! \brief Export the Petri net as Symfony workflow code as yaml file.
-    //! \param[in] filename the path of yaml file.
-    //! \return true if the Petri net has been exported with success. Return
-    //! false in case of failure.
-    //--------------------------------------------------------------------------
-    bool importFlowshop(std::string const& filename);
-
-    //--------------------------------------------------------------------------
-    //! \brief Import the Petri net from the given JSON file.  The current net
-    //! is cleared before the loading. If the loading failed (missing file or
-    //! invalid syntax) the net is set dummy.
-    //! \param[in] filename: the file path in where a Petri net has been
-    //! saved. Should have the .json extension.
-    //! \return true if the Petri net has been loaded with success. Return false
-    //! in case of failure.
-    //--------------------------------------------------------------------------
-    bool importFromJSON(std::string const& filename);
-
-    //--------------------------------------------------------------------------
-    //! \brief Export the Petri net as JSON file.
-    //! \param[in] filename: the file path in where to save the Petri net.
-    //! Should have the .json extension.
-    //! \return true if the Petri net has been saved with success. Return false
-    //! in case of failure.
-    //--------------------------------------------------------------------------
-    bool exportToJSON(std::string const& filename) const;
-
-    bool exportToCodesys(std::string const& filename) const;
-
-    //--------------------------------------------------------------------------
-    //! \brief Export the Grafcet net as LaTeX code as tex file.
-    //! \param[in] filename the path of tex file.
-    //! \return true if the Grafcet net has been exported with success. Return
-    //! false in case of failure.
-    //--------------------------------------------------------------------------
-    bool exportToGrafcetLaTeX(std::string const& filename) const;
-
-    //--------------------------------------------------------------------------
-    //! \brief Export the Petri net as LaTeX code as tex file.
-    //! \param[in] filename the path of tex file.
-    //! \param[in] scale X and Y scaling.
-    //! \return true if the Petri net has been exported with success. Return
-    //! false in case of failure.
-    //--------------------------------------------------------------------------
-    bool exportToPetriLaTeX(std::string const& filename, float const sx, float const sy) const;
-
-    //--------------------------------------------------------------------------
-    //! \brief Export the Petri net as Draw.io code as xml file.
-    //! \param[in] filename the path of dot file.
-    //! \return true if the Petri net has been exported with success. Return
-    //! false in case of failure.
-    //--------------------------------------------------------------------------
-    bool exportToDrawIO(std::string const& filename) const;
-
-    //--------------------------------------------------------------------------
-    //! \brief Export the Petri net as Graphviz code as dot file.
-    //! \param[in] filename the path of dot file.
-    //! \return true if the Petri net has been exported with success. Return
-    //! false in case of failure.
-    //--------------------------------------------------------------------------
-    bool exportToGraphviz(std::string const& filename) const;
-
-    //--------------------------------------------------------------------------
-    //! \brief Export the Petri net as Symfony workflow as yaml file.
-    //! \param[in] filename the path of dot file.
-    //! \return true if the Petri net has been exported with success. Return
-    //! false in case of failure.
-    //--------------------------------------------------------------------------
-    bool exportToSymfony(std::string const& filename) const;
-
-    //--------------------------------------------------------------------------
-    //! \brief Export the Petri net to https://gitlab.com/porky11/pn-editor.
-    //! \param[in] filename the path of dot file.
-    //! \return true if the Petri net has been exported with success. Return
-    //! false in case of failure.
-    //--------------------------------------------------------------------------
-    bool exportToPNEditor(std::string const& filename) const;
-
-    //--------------------------------------------------------------------------
-    //! \brief Export the Petri net as GRAFCET code as C++ header file.
-    //! \param[in] filename the path of h++ file. Should have the .hpp or .h
-    //! extension (or any associated to header header files).
-    //--------------------------------------------------------------------------
-    bool exportToCpp(std::string const& filename) const;
-
-    //--------------------------------------------------------------------------
-    //! \brief Export the Petri net as (max, +) linear system in Julia code.
-    //! \param[in] filename the path of julia file. Should have the .jl
-    //! extension.
-    //! \return true if the Petri net has been exported with success. Return
-    //! false in case of failure and erroneous arcs can be get by \c markedArcs().
-    //--------------------------------------------------------------------------
-    bool exportToJulia(std::string const& filename) const;
-
-    //--------------------------------------------------------------------------
-    //! \brief Return the event graph as 2 adjacency matrices.
-    //! \param[out] tokens the adjacency matrix of tokens.
-    //! \param[out] durations the adjacency matrix of durations.
-    //! \note This will work only if isEventGraph() returned true.
-    //! \return false if the Petri net is not an event graph.
-    //--------------------------------------------------------------------------
-    bool toAdjacencyMatrices(SparseMatrix& tokens, SparseMatrix& durations); //TODO const;
-
-    //--------------------------------------------------------------------------
-    //! \brief Transform the Event Graph to canonical form
-    //! \param[out] pn: resulting Petri net in canonical mode
-    //! \note This will work only if isEventGraph() has returned true so make
-    //! the caller of this method be aware of what is he doing.
-    //--------------------------------------------------------------------------
-    void toCanonicalForm(PetriNet& pn) const;
-
-    //--------------------------------------------------------------------------
-    //! \brief Return the event graph as implicit dynamic linear (max, +) system.
-    //! X(n) = D X(n) ⨁ A X(n-1) ⨁ B U(n)
-    //! Y(n) = C X(n)
-    //! \note This will work only if isEventGraph() returned true.
-    //! \return true if the Petri net was an graph event, else return false and
-    //! erroneous arcs can be get by \c markedArcs().
-    //--------------------------------------------------------------------------
-    bool toSysLin(SparseMatrix& D, SparseMatrix& A, SparseMatrix& B, SparseMatrix& C); //TODO const;
 
     //--------------------------------------------------------------------------
     //! \brief Remove an existing Place or a Transition (usually refered by the
@@ -1001,74 +703,38 @@ public:
     //--------------------------------------------------------------------------
     //! \brief Remove an existing arc.
     //--------------------------------------------------------------------------
-    bool removeArc(Node& from, Node& to);
+    bool removeArc(Node const& from, Node const& to);
+
+    //--------------------------------------------------------------------------
+    //! \brief Return a error or information message.
+    //--------------------------------------------------------------------------
+    inline std::string error() const { return m_message.str(); }
 
     //--------------------------------------------------------------------------
     //! \brief Populate or update Node::arcsIn and Node::arcsOut for all
     //! transitions and places in the Petri net.
     //--------------------------------------------------------------------------
-    void generateArcsInArcsOut();
+    void generateArcsInArcsOut(); // FIXME a placer dana protected
+
+protected:
 
     //--------------------------------------------------------------------------
-    //! \brief Set to false the receptivity for all transitions.
-    //! \return false if in GRAFCET mode and if at least one transition has an
-    //! invalid syntaxt in its recepetivity.
+    //! \brief Helper function checking arguments.
     //--------------------------------------------------------------------------
-    bool resetReceptivies();
-
-    //--------------------------------------------------------------------------
-    //! \brief Return the result of algorithm
-    //--------------------------------------------------------------------------
-    inline std::vector<Arc*> const& markedArcs() const { return m_result_arcs; }
-
-    //--------------------------------------------------------------------------
-    //! \brief Return a error or information message.
-    //--------------------------------------------------------------------------
-    inline std::string message() const { return m_message.str(); }
-
-    //--------------------------------------------------------------------------
-    //! \brief
-    //--------------------------------------------------------------------------
-    std::string parse(Transition& transition, bool force = false);
+    bool sanityArc(Node const& from, Node const& to, bool const strict) const;
 
 private:
 
-    //--------------------------------------------------------------------------
-    //! \brief Inner method for the public toSysLin() method.
-    //--------------------------------------------------------------------------
-    void toSysLin(SparseMatrix& D, SparseMatrix& A, SparseMatrix& B, SparseMatrix& C,
-                  std::vector<size_t> const& indices, size_t const nb_inputs,
-                  size_t const nb_states, size_t const nb_outputs);
-
-    //--------------------------------------------------------------------------
-    //! \brief Set a name to the Petri net from the given filename.
-    //--------------------------------------------------------------------------
-    void name(std::string const& filename);
-
-public: // FIXME
-
-    //! \brief Hold boolean values of sensors needed for interpreting receptivities
-    Sensors m_sensors;
-
-private:
-
-    //! \brief Name of Petri net given by its filename once load() has been called.
-    std::string m_name = "petri";
     //! \brief Type of net GRAFCET, Petri, Timed Petri ...
-    Type m_type;
+    TypeOfNet m_type;
     //! \brief List of Places. We do not use std::vector to avoid invalidating
     //! node references for arcs after a possible resizing.
     Places m_places;
     //! \brief List of Transitions. We do not use std::vector to avoid
     //! invalidating node references for arcs after a possible resizing.
     Transitions m_transitions;
-    //! \brief List of shuffled Transitions.
-    std::vector<Transition*> m_shuffled_transitions;
     //! \brief List of Arcs.
     Arcs m_arcs;
-    //! \brief Store arcs after some algorithm to return either result i.e.
-    //! findCriticalCycle() or to return the error (i.e. isEventGraph()).
-    std::vector<Arc*> m_result_arcs;
     //! \brief Auto increment unique identifier. Start from 0 (code placed in
     //! the cpp file).
     size_t m_next_place_id = 0u;
@@ -1077,12 +743,22 @@ private:
     size_t m_next_transition_id = 0u;
     //! \brief Store current info/error message to the Petri net editor.
     mutable std::stringstream m_message;
+    //! \brief File used to load the net.
+    std::string m_filename;
 
 public:
 
-    //! \brief Petri net has been modified, change the title and ask for saving
-    //! the net when leaving the application.
+    //! \brief Editor has changed content and save is needed.
     bool modified = false;
+    //! \brief Name of Petri net given by its filename once load() has been called.
+    std::string name;
 };
+
+//--------------------------------------------------------------------------
+//! \brief Return the string of the type of Petri net.
+//--------------------------------------------------------------------------
+std::string to_str(TypeOfNet const type);
+
+} // namespace tpne
 
 #endif

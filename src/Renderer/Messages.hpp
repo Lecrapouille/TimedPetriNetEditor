@@ -18,47 +18,33 @@
 // along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.
 //=============================================================================
 
-#ifndef MESSAGEBAR_HPP
-#define MESSAGEBAR_HPP
+#ifndef MESSAGES_HPP
+#  define MESSAGES_HPP
 
-static size_t tictac = 0u;
+#  include "Utils.hpp"
+#  include <cassert>
 
 // *****************************************************************************
 //! \brief A text inside a rectangle
 // *****************************************************************************
-class MessageBar
+class Messages
 {
 public:
 
+    enum Level { Info, Warning, Error };
     struct TimedMessage
     {
+        Level level;
         std::string time;
-        std::string txt;
+        std::string message;
     };
-
-    //--------------------------------------------------------------------------
-    //! \brief
-    //--------------------------------------------------------------------------
-    MessageBar(sf::Font& font)
-    {
-    }
-
-    //--------------------------------------------------------------------------
-    //! \brief
-    //--------------------------------------------------------------------------
-    inline void setText(const std::string& alert, const std::string& message)
-    {
-        m_message.time = std::to_string(tictac++);
-        m_message.txt = alert + ": " + message;
-        m_buffer.push_back(m_message);
-    }
 
     //--------------------------------------------------------------------------
     //! \brief
     //--------------------------------------------------------------------------
     inline void setInfo(const std::string& message)
     {
-        setText("Info", message);
+        add(Messages::Level::Info, message);
     }
 
     //--------------------------------------------------------------------------
@@ -66,7 +52,7 @@ public:
     //--------------------------------------------------------------------------
     inline void setWarning(const std::string& message)
     {
-        setText("Warning", message);
+        add(Messages::Level::Warning, message);
     }
 
     //--------------------------------------------------------------------------
@@ -74,46 +60,53 @@ public:
     //--------------------------------------------------------------------------
     inline void setError(const std::string& message)
     {
-        setText("Error", message);
-    }
-
-    //--------------------------------------------------------------------------
-    //! \brief
-    //--------------------------------------------------------------------------
-    void setSize(sf::Vector2u const& dimensions)
-    {
+        add(Messages::Level::Error, message);
     }
 
     //--------------------------------------------------------------------------
     //! \brief Append the displayed messge. The color is not modified.
     //--------------------------------------------------------------------------
-    MessageBar& append(std::string const& message)
+    Messages& append(std::string const& message)
     {
-        m_message.txt += message;
-        m_buffer.back().txt += message;
+        m_messages.back().message += message;
         return *this;
     }
 
     //--------------------------------------------------------------------------
     //! \brief
     //--------------------------------------------------------------------------
-    std::string const& getText() const
+    TimedMessage getMessage() const
     {
-        return m_message.txt;
+        assert((m_messages.size() >= 1u) && "dummy message");
+        return m_messages.back();
     }
 
-    void clear() { m_buffer.clear(); }
-
-    std::vector<TimedMessage> const& getBuffer() const
+    //--------------------------------------------------------------------------
+    //! \brief
+    //--------------------------------------------------------------------------
+    std::vector<TimedMessage> const& getMessages() const
     {
-        return m_buffer;
+        return m_messages;
+    }
+
+    //--------------------------------------------------------------------------
+    //! \brief
+    //--------------------------------------------------------------------------
+    void clear() { m_messages.clear(); }
+
+protected:
+
+    //--------------------------------------------------------------------------
+    //! \brief
+    //--------------------------------------------------------------------------
+    inline void add(Messages::Level const level, std::string const& message)
+    {
+        m_messages.push_back({level, current_time(), message});
     }
 
 private:
 
-    //! \brief String returned when the entry is activated
-    TimedMessage m_message;
-    std::vector<TimedMessage> m_buffer;
+    std::vector<TimedMessage> m_messages;
 };
 
 #endif

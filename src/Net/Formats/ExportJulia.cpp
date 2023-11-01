@@ -1,15 +1,43 @@
+//=============================================================================
+// TimedPetriNetEditor: A timed Petri net editor.
+// Copyright 2021 -- 2023 Quentin Quadrat <lecrapouille@gmail.com>
+//
+// This file is part of TimedPetriNetEditor.
+//
+// TimedPetriNetEditor is free software: you can redistribute it and/or modify it
+// under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful, but
+// WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+// General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.
+//=============================================================================
+
+#include "Exports.hpp"
+#include "TimedPetriNetEditor/PetriNet.hpp"
+#include "TimedPetriNetEditor/Algorithms.hpp"
+#include "Net/SparseMatrix.hpp"
+#include <fstream>
+#include <cstring>
+
+namespace tpne {
+
 //------------------------------------------------------------------------------
 //! \note PetriNet shall be an event graph and to a canonical form (each places
 //! have at most one token and no token at places in inputs or outputs). No
 //! checks are performed and shall be done by the external caller.
 //------------------------------------------------------------------------------
-bool PetriNet::exportToJulia(std::string const& filename) const
+std::string exportToJulia(Net const& net, std::string const& filename)
 {
     // Only Petri net with places having a single input and output arcs are
     // allowed.
-    std::vector<Arc*> erroneous_arcs;
-    if (!isEventGraph(erroneous_arcs))
-        return false;
+    if (!isEventGraph(net))
+        return "Expected a net with places having a single input and output arcs";
 
     // TODO quick test check if we have to do the canonical form, this can avoid
     // duplicating the Petri net
@@ -17,8 +45,8 @@ bool PetriNet::exportToJulia(std::string const& filename) const
 
     // Duplicate the Petri net since we potentially modify it to transform it to
     // its canonical form.
-    PetriNet canonical(type());
-    toCanonicalForm(canonical);
+    Net canonic;
+    toCanonicalForm(net, canonic);
 
     // TODO
     // } else { return ::exportToJulia(*this, filename); }
@@ -27,10 +55,10 @@ bool PetriNet::exportToJulia(std::string const& filename) const
     std::ofstream file(filename);
     if (!file)
     {
-        m_message.str("");
-        m_message << "Failed to export the Petri net to '" << filename
-                  << "'. Reason was " << strerror(errno) << std::endl;
-        return false;
+        std::stringstream error;
+        error << "Failed to export the Petri net to '" << filename
+              << "'. Reason was " << strerror(errno) << std::endl;
+        return error.str();
     }
 
     // Generate the Julia header
@@ -43,12 +71,12 @@ bool PetriNet::exportToJulia(std::string const& filename) const
     size_t nb_outputs = 0u;
 
     std::vector<size_t> indices;
-    indices.resize(canonical.transitions().size());
+    indices.resize(canonic.transitions().size());
 
     file << "## Petri Transitions:" << std::endl;
 
     // Show and count system inputs
-    for (auto& t: canonical.transitions())
+    for (auto& t: canonic.transitions())
     {
         if (t.isInput())
         {
@@ -59,7 +87,7 @@ bool PetriNet::exportToJulia(std::string const& filename) const
     }
 
     // Show and count system states
-    for (auto& t: canonical.transitions())
+    for (auto& t: canonic.transitions())
     {
         if (t.isState())
         {
@@ -70,7 +98,7 @@ bool PetriNet::exportToJulia(std::string const& filename) const
     }
 
     // Show and count system outputs
-    for (auto& t: canonical.transitions())
+    for (auto& t: canonic.transitions())
     {
         if (t.isOutput())
         {
@@ -90,9 +118,10 @@ bool PetriNet::exportToJulia(std::string const& filename) const
     file << "## Timed event graph depict as two graph adjacency matrices:" << std::endl;
     file << "# Nodes are Transitions." << std::endl;
     file << "# Arcs are Places and therefore have tokens and durations" << std::endl;
-    SparseMatrix N; SparseMatrix T;
-    bool res = canonical.toAdjacencyMatrices(N, T); assert(res == true);
-    for (auto& p: canonical.places())
+    SparseMatrix<double> N; SparseMatrix<double> T;
+    bool res = toAdjacencyMatrices(canonic, N, T);
+    assert(res == true);
+    for (auto& p: canonic.places())
     {
         Transition& from = *reinterpret_cast<Transition*>(&(p.arcsIn[0]->from));
         Transition& to = *reinterpret_cast<Transition*>(&(p.arcsOut[0]->to));
@@ -101,30 +130,30 @@ bool PetriNet::exportToJulia(std::string const& filename) const
              << " (Duration: " << p.arcsIn[0]->duration
              << ", Tokens: " << p.tokens << ")" << std::endl;
     }
-    size_t const nnodes = canonical.transitions().size();
+    size_t const nnodes = canonic.transitions().size();
     file << "N = sparse(" << N << ", " << nnodes << ", " << nnodes << ") # Tokens" << std::endl;
     file << "T = sparse(" << T << ", " << nnodes << ", " << nnodes << ") # Durations" << std::endl;
 
     // Show the event graph to its Max-Plus counter and dater equation
     file << std::endl;
-    file << this->showCounterEquation("# ", false, false).str();
-    file << this->showCounterEquation("# ", false, true).str();
+    file << showCounterEquation(net, "# ", false, false).str();
+    file << showCounterEquation(net, "# ", false, true).str();
     file << std::endl;
-    file << this->showDaterEquation("# ", false, false).str();
-    file << this->showDaterEquation("# ", false, false).str();
+    file << showDaterEquation(net, "# ", false, false).str();
+    file << showDaterEquation(net, "# ", false, false).str();
 
     // Compute the syslin as Julia code using the Max-Plus package
     // X(n) = D X(n) ⨁ A X(n-1) ⨁ B U(n)
     // Y(n) = C X(n)
-    SparseMatrix D; SparseMatrix A; SparseMatrix B; SparseMatrix C;
-    canonical.toSysLin(D, A, B, C, indices, nb_inputs, nb_states, nb_outputs);
+    SparseMatrix<double> D; SparseMatrix<double> A; SparseMatrix<double> B; SparseMatrix<double> C;
+    toSysLin(canonic, D, A, B, C, indices, nb_inputs, nb_states, nb_outputs);
 
     file << std::endl;
     file << "## Max-Plus implicit linear dynamic system of the dater equation:" << std::endl;
     file << "# X(n) = D X(n) ⨁ A X(n-1) ⨁ B U(n)" << std::endl;
     file << "# Y(n) = C X(n)" << std::endl;
-    SparseMatrix::display_for_julia = true;
-    SparseMatrix::display_as_dense = false;
+    SparseMatrix<double>::display_for_julia = true;
+    SparseMatrix<double>::display_as_dense = false;
     file << "D = sparse(" << D << ") # States without tokens" << std::endl;
     file << "A = sparse(" << A << ") # States with 1 token" << std::endl;
     file << "B = sparse(" << B << ") # Inputs" << std::endl;
@@ -136,5 +165,7 @@ bool PetriNet::exportToJulia(std::string const& filename) const
     file << "# TODO not yet implemented" << std::endl;
     file << "l,v = semihoward(S.D, S.A)" << std::endl;
 
-    return true;
+    return {};
 }
+
+} // namespace tpne

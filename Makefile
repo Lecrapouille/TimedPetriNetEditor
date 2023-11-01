@@ -1,30 +1,10 @@
-##=====================================================================
-## TimedPetriNetEditor: A timed Petri net editor.
-## Copyright 2021 -- 2023 Quentin Quadrat <lecrapouille@gmail.com>
-##
-## This file is part of PetriEditor.
-##
-## PetriEditor is free software: you can redistribute it and/or modify it
-## under the terms of the GNU General Public License as published by
-## the Free Software Foundation, either version 3 of the License, or
-## (at your option) any later version.
-##
-## This program is distributed in the hope that it will be useful, but
-## WITHOUT ANY WARRANTY; without even the implied warranty of
-## MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-## General Public License for more details.
-##
-## You should have received a copy of the GNU General Public License
-## along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.
-##=====================================================================
-
 ###################################################
 # Project definition
 #
 PROJECT = TimedPetriNetEditor
 TARGET = $(PROJECT)
-DESCRIPTION = Timed Petri Net Editor
-STANDARD = --std=c++11
+DESCRIPTION = Test RayLib
+STANDARD = --std=c++14
 BUILD_TYPE = debug
 
 ###################################################
@@ -35,23 +15,19 @@ M := $(P)/.makefile
 include $(M)/Makefile.header
 
 ###################################################
+# Linkage
+#
+LINKER_FLAGS += -ldl -lpthread
+
+###################################################
 # Inform Makefile where to find header files
 #
-INCLUDES += -I$(P) -I$(P)/src -I$(P)/src/utils
-INCLUDES += -I$(P)/src/Renderer
-INCLUDES += -I$(P)/external/imgui -I$(P)/external/imgui/misc/cpp
-INCLUDES += -I$(P)/external/imgui-sfml
-INCLUDES += -I$(P)/external/MQTT/include -I$(P)/external
-INCLUDES += -I$(P)/external/portable-file-dialogs
-INCLUDES += -I$(P)/external/json/include
+INCLUDES += -I$(P)/include -I$(P)/src -I$(P)/src/Net/Formats -I$(P)/src/Renderer
 
 ###################################################
 # Inform Makefile where to find *.cpp and *.o files
 #
-VPATH += $(P)/src $(P)/src/utils $(P)/src/julia
-VPATH += $(P)/src/Renderer $(P)/external/MQTT/src
-VPATH += $(P)/external/imgui $(P)/external/imgui-sfml
-VPATH += $(P)/external/imgui/misc/cpp
+VPATH += $(P)/src $(P)/src/Net $(P)/src/Net/Formats $(P)/src/Renderer $(P)/include
 
 ###################################################
 # Project defines
@@ -62,51 +38,78 @@ DEFINES += -DDATADIR=\"$(DATADIR)\"
 # Reduce warnings
 #
 CCFLAGS += -Wno-sign-conversion -Wno-float-equal
-CXXFLAGS += -Wno-undef -Wno-switch-enum
+CXXFLAGS += -Wno-undef -Wno-switch-enum -Wno-enum-compare
 
 ###################################################
-# Make the list of compiled files used both by the
-# library and application
+# Set thirdpart Raylib
 #
-IMGUI_OBJS = imgui_stdlib.o imgui.o imgui_widgets.o imgui_draw.o imgui_tables.o imgui-SFML.o DearImGui.o
-COMMON_OBJS = MQTT.o Howard.o KeyBindings.o Application.o Receptivities.o PetriNet.o HMI.o PetriEditor.o
+INCLUDES += -I$(THIRDPART)/raylib/src
+THIRDPART_LIBS += $(abspath $(THIRDPART)/raylib/src/$(ARCHI)/libraylib.a)
+
+ifeq ($(ARCHI),Emscripten)
+# We tell the linker that the game/library uses GLFW3
+# library internally, it must be linked automatically
+# (emscripten provides the implementation)
+LINKER_FLAGS += -s USE_GLFW=3
+# Add this flag ONLY in case we are using ASYNCIFY code
+LINKER_FLAGS += -s ASYNCIFY
+# All webs need a "shell" structure to load and run the game,
+# by default emscripten has a `shell.html` but we can provide
+# our own.
+LINKER_FLAGS += --shell-file $(THIRDPART)/raylib/src/shell.html
+endif
 
 ###################################################
-# Make the list of compiled files for the library
+# Set thirdpart Dear ImGui
 #
-LIB_OBJS += $(COMMON_OBJS) Julia.o
+INCLUDES += -I$(THIRDPART)/imgui -I$(THIRDPART)/imgui/backends -I$(THIRDPART)/imgui/misc/cpp
+VPATH += $(THIRDPART)/imgui $(THIRDPART)/imgui/backends $(THIRDPART)/imgui/misc/cpp
+DEARIMGUI_OBJS += imgui_widgets.o imgui_draw.o imgui_tables.o imgui.o imgui_stdlib.o
+# DEARIMGUI_OBJS += imgui_impl_glfw.o imgui_impl_opengl3.o
 
 ###################################################
-# Make the list of compiled files for the application
+# Set thirdpart Dear ImGui Plot
 #
-OBJS += $(IMGUI_OBJS) $(COMMON_OBJS) main.o
+INCLUDES += -I$(THIRDPART)/implot
+VPATH += $(THIRDPART)/implot
+DEARIMGUI_OBJS += implot_items.o implot.o
 
 ###################################################
-# Set SFML Library.
+# Set thirdpart file dialog
+INCLUDES += -I$(THIRDPART)/ImGuiFileDialog
+VPATH += $(THIRDPART)/ImGuiFileDialog
+DEARIMGUI_OBJS += ImGuiFileDialog.o
+
+###################################################
+# Set thirdpart Raylib with Dear ImGui
 #
-PKG_LIBS += sfml-graphics
+INCLUDES += -I$(THIRDPART)/rlImGui
+VPATH += $(THIRDPART)/rlImGui
+DEARIMGUI_OBJS += rlImGui.o
 
 ###################################################
 # Set MQTT Library.
 #
+INCLUDES += -I$(THIRDPART) -I$(THIRDPART)/MQTT/include
+VPATH += $(THIRDPART)/MQTT/src
 DEFINES += -DMQTT_BROKER_ADDR=\"localhost\"
 DEFINES += -DMQTT_BROKER_PORT=1883
 PKG_LIBS += libmosquitto
 
 ###################################################
-# Link OpenGL needed by imgui-sfml
+# Set json Library.
 #
-ifeq ($(ARCHI),Darwin)
-DEFINES += -DGL_SILENCE_DEPRECATION
-INCLUDES += -I/usr/local/include -I/opt/local/include
-LINKER_FLAGS += -framework OpenGL -framework Cocoa
-LINKER_FLAGS += -framework IOKit -framework CoreVideo
-LINKER_FLAGS += -L/usr/local/lib -L/opt/local/lib
-else ifeq ($(ARCHI),Linux)
-LINKER_FLAGS += -lGLU -lGL
-else
-$(error Unknown architecture)
-endif
+INCLUDES += -I$(THIRDPART)/json/include
+
+###################################################
+# Make the list of compiled files for the application
+#
+#DEARIMGUI_OBJS += imgui_demo.o
+OBJS += $(DEARIMGUI_OBJS)
+OBJS += Application.o PetriNet.o PetriEditor.o Howard.o Algorithms.o main.o
+OBJS += ImportJSON.o ExportJSON.o ExportSymfony.o ExportPnEditor.o
+OBJS += ExportPetriLaTeX.o ExportJulia.o ExportGraphviz.o ExportDrawIO.o
+OBJS += ExportGrafcetCpp.o
 
 ###################################################
 # MacOS X
@@ -121,7 +124,7 @@ endif
 ###################################################
 # Compile the project, the static and shared libraries
 .PHONY: all
-all: $(TARGET) $(STATIC_LIB_TARGET) $(SHARED_LIB_TARGET) $(PKG_FILE)
+all: $(TARGET)
 
 ###################################################
 # Compile and launch unit tests and generate the code coverage html report.
@@ -139,7 +142,7 @@ ifeq ($(ARCHI),Linux)
 ###################################################
 # Install project. You need to be root.
 .PHONY: install
-install: $(TARGET) $(STATIC_LIB_TARGET) $(SHARED_LIB_TARGET) $(PKG_FILE)
+install: $(TARGET)
 	@$(call INSTALL_BINARY)
 	@$(call INSTALL_DOCUMENTATION)
 	@$(call INSTALL_PROJECT_LIBRARIES)
