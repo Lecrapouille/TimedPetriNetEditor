@@ -40,6 +40,6 @@ int main(int argc, char* argv[])
         filename = argv[optind];
     }
 
-    tpne::Editor editor(800, 600, "Petri Net Editor", filename);
+    tpne::Editor editor(1024, 768, "Petri Net Editor", filename);
     editor.run();
 }

@@ -40,6 +40,8 @@ static bool do_save_as = false;
 static Exporter const* do_export_to = nullptr;
 static bool show_about = false;
 static bool show_help = false;
+static bool show_place_captions = false;
+static bool show_transition_captions = false;
 
 static std::vector<Exporter> const exporters = {
     { "Grafcet C++", ".hpp,.h,.hh,.h++", exportToGrafcetCpp },
@@ -202,6 +204,111 @@ static void messagebox(Editor const& editor)
     ImGui::Begin("Message");
     ImGui::Text("%s", editor.getError().c_str()); // FIXME: by copy
     ImGui::End();
+}
+
+//------------------------------------------------------------------------------
+static void inputInteger(std::string const& title, size_t& tokens)
+{
+    ImGui::AlignTextToFramePadding();
+    ImGui::Text("%d", tokens);
+    ImGui::SameLine();
+
+    float spacing = ImGui::GetStyle().ItemInnerSpacing.x;
+    ImGui::PushButtonRepeat(true);
+    if (ImGui::ArrowButton("##left", ImGuiDir_Left))
+    {
+        tokens = std::max(size_t(1), tokens);
+        --tokens;
+    }
+    ImGui::SameLine(0.0f, spacing);
+    if (ImGui::ArrowButton("##right", ImGuiDir_Right))
+    {
+        tokens = std::min(Net::Settings::maxTokens, ++tokens);
+    }
+    ImGui::PopButtonRepeat();
+    ImGui::SameLine();
+    ImGui::Text("%s", title.c_str());
+}
+
+//------------------------------------------------------------------------------
+static void inspector(Editor& editor)
+{
+    // Do not allow editing when running simulation
+    const auto readonly = editor.m_simulating ? ImGuiInputTextFlags_ReadOnly : ImGuiInputTextFlags_None;
+
+    // Place captions and tokens
+    {
+        ImGui::Begin("Places");
+        ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(0, 0));
+        ImGui::Checkbox(show_place_captions ? "Show place identifiers" : "Show place captions", &show_place_captions);
+        ImGui::PopStyleVar();
+
+        ImGui::Separator();
+
+        // TODO pour event graph: afficher ImGui::InputText("T1 P0 T2", &p.places);
+        ImGui::Text("%s", "Captions:");
+        for (auto& place: editor.m_net.places())
+        {
+            ImGui::InputText(place.key.c_str(), &place.caption, readonly);
+        }
+
+        ImGui::Separator();
+        ImGui::Text("%s", "Tokens:");
+        for (auto& place: editor.m_net.places())
+        {
+            inputInteger(show_place_captions ? place.caption.c_str() : place.key.c_str(), place.tokens);
+        }
+
+        ImGui::End();
+    }
+
+    // Transition captions and GRAFCET transitivities
+    {
+        // FIXME parse and clear sensors if and only if we modified entrytext
+        ImGui::Begin("Transitions");
+        ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(0, 0));
+        ImGui::Checkbox(show_transition_captions ? "Show transition identifiers" : "Show transition captions", &show_transition_captions);
+        ImGui::PopStyleVar();
+        ImGui::Separator();
+        //if (!editor.m_simulating)
+        //    editor.m_net.m_sensors.clear();
+        ImGui::Text("%s", "Captions:");
+        for (auto& transition: editor.m_net.transitions())
+        {
+            ImGui::InputText(transition.key.c_str(), &transition.caption, readonly);
+            if (!editor.m_simulating)
+            {
+                //std::string err = editor.m_net.parse(transition, true);
+                //if (!err.empty())
+                //{
+                //    ImGui::TextColored(ImVec4(1.0f, 0.0f, 0.0f, 1.0f), "%s", err.c_str());
+                //}
+            }
+        }
+        ImGui::End();
+
+        //ImGui::Begin("Sensors");
+        //for (auto const& it: editor.m_net.m_sensors.database())
+        //{
+        //    ImGui::SliderInt(it.first.c_str(), &it.second, 0, 1);
+        //}
+        //ImGui::End();
+    }
+
+    // Arc durations
+    {
+        ImGui::Begin("Arcs");
+        ImGui::Text("%s", "Durations:");
+        for (auto& arc: editor.m_net.arcs())
+        {
+            if (arc.from.type == Node::Type::Transition)
+            {
+                std::string text(arc.from.key + " -> " + arc.to.key);
+                ImGui::InputFloat(text.c_str(), &arc.duration, 0.01f, 1.0f, "%.3f", readonly);
+            }
+        }
+        ImGui::End();
+    }
 }
 
 //------------------------------------------------------------------------------
@@ -651,6 +758,7 @@ void Editor::onDraw()
     ::tpne::menu(*this);
     ::tpne::console(*this);
     ::tpne::messagebox(*this);
+    ::tpne::inspector(*this);
 
     drawPetriNet();
 }
@@ -791,7 +899,8 @@ void Editor::drawPlace(Place const& place)
     // Draw the caption
     ImVec2 dim = ImGui::CalcTextSize(place.key.c_str());
     ImVec2 ptext = p - ImVec2(dim.x / 2.0f, PLACE_RADIUS + dim.y);
-    draw_list->AddText(ptext, IM_COL32(0, 0, 0, 255), place.key.c_str());
+    draw_list->AddText(ptext, IM_COL32(0, 0, 0, 255),
+        show_place_captions ? place.caption.c_str() : place.key.c_str());
 
     // Draw the number of tokens
     if (place.tokens == 0u)
@@ -862,7 +971,8 @@ void Editor::drawTransition(Transition const& transition)
     // Draw the caption
     ImVec2 dim = ImGui::CalcTextSize(transition.key.c_str());
     ImVec2 ptext = p - ImVec2(dim.x / 2.0f, TRANS_HEIGHT + dim.y);
-    draw_list->AddText(ptext, IM_COL32(0, 0, 0, 255), transition.key.c_str());
+    draw_list->AddText(ptext, IM_COL32(0, 0, 0, 255),
+        show_transition_captions ? transition.caption.c_str() : transition.key.c_str());
 }
 
 //------------------------------------------------------------------------------

@@ -591,7 +591,7 @@ public:
     //! \brief Const getter. Return the reference to the container of Places.
     //--------------------------------------------------------------------------
     inline Places const& places() const { return m_places; }
-    inline Places& places() { return m_places; } // FIXME: because of toCanonicalForm()
+    inline Places& places() { return m_places; } // FIXME: because of toCanonicalForm(), inspector
 
     //--------------------------------------------------------------------------
     //! \brief Set tokens in all places.
@@ -633,6 +633,7 @@ public:
     //! \brief Const getter. Return the reference to the container of Transitions.
     //--------------------------------------------------------------------------
     inline Transitions const& transitions() const { return m_transitions; }
+    inline Transitions& transitions() { return m_transitions; } // FIXME because of inspector
 
     //--------------------------------------------------------------------------
     //! \brief Search and return a place or a transition by its unique
@@ -688,6 +689,7 @@ public:
     //! \brief Const getter of all arcs.
     //--------------------------------------------------------------------------
     inline Arcs const& arcs() const { return m_arcs; }
+    inline Arcs& arcs() { return m_arcs; } // FIXME because of inspector
 
     //--------------------------------------------------------------------------
     //! \brief Remove an existing Place or a Transition (usually refered by the

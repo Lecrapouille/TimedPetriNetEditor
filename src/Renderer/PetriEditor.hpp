@@ -130,13 +130,16 @@ private:
     //! \brief Some algorithms indicate arcs (i.e. critical cycles, or
     //! if a Petri net is an event graph).
     std::vector<Arc*> m_selected_arcs;
+    //! \brief State machine for the simulation.
+    std::atomic<States> m_state{STATE_IDLE};
+    //! \brief
+    Messages m_messages;
+
+public: // FIXME
+
     //! \brief Set true for starting the simulation the Petri net and to
     //! maintain the simulation running. Set false to halt the simulation.
     std::atomic<bool> m_simulating{false};
-    //! \brief State machine for the simulation.
-    std::atomic<States> m_state{STATE_IDLE};
-
-    Messages m_messages;
 };
 
 // FIXME export mandatory because of friendship

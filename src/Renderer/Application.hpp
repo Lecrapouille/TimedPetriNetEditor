@@ -3,6 +3,7 @@
 
 #include "raylib.h"
 #include "imgui_impl_raylib.h"
+#include "imgui/misc/cpp/imgui_stdlib.h"
 #include "imgui.h"
 #include "implot.h"
 #include "ImGuiFileDialog.h"
