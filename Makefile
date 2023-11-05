@@ -41,6 +41,16 @@ CCFLAGS += -Wno-sign-conversion -Wno-float-equal
 CXXFLAGS += -Wno-undef -Wno-switch-enum -Wno-enum-compare
 
 ###################################################
+# Embed assets for web version. Assets shall be
+# present inside $(BUILD) folder.
+#
+ifeq ($(ARCHI),Emscripten)
+LINKER_FLAGS += --preload-file imgui.ini
+LINKER_FLAGS += --preload-file examples
+LINKER_FLAGS += -s FORCE_FILESYSTEM=1
+endif
+
+###################################################
 # Set thirdpart Raylib
 #
 INCLUDES += -I$(THIRDPART)/raylib/src
@@ -124,7 +134,18 @@ endif
 ###################################################
 # Compile the project, the static and shared libraries
 .PHONY: all
-all: $(TARGET)
+all: copy-emscripten-assets $(TARGET)
+
+###################################################
+#
+.PHONY: copy-emscripten-assets
+copy-emscripten-assets: | $(BUILD)
+ifeq ($(ARCHI),Emscripten)
+	@$(call print-to,"Copying assets","$(TARGET)","$(BUILD)","")
+	@cp -r $(P)/data/examples $(BUILD)
+	@cp $(P)/imgui.ini $(BUILD)
+	@rm -fr $(BUILD)/examples/pics
+endif
 
 ###################################################
 # Compile and launch unit tests and generate the code coverage html report.
