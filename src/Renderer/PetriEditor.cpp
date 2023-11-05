@@ -210,7 +210,7 @@ static void messagebox(Editor const& editor)
 static void inputInteger(std::string const& title, size_t& tokens)
 {
     ImGui::AlignTextToFramePadding();
-    ImGui::Text("%d", tokens);
+    ImGui::Text("%zu", tokens);
     ImGui::SameLine();
 
     float spacing = ImGui::GetStyle().ItemInnerSpacing.x;

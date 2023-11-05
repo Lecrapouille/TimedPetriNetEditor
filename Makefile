@@ -3,7 +3,7 @@
 #
 PROJECT = TimedPetriNetEditor
 TARGET = $(PROJECT)
-DESCRIPTION = Test RayLib
+DESCRIPTION = Timed Petri Net Editor
 STANDARD = --std=c++14
 BUILD_TYPE = debug
 
@@ -110,6 +110,17 @@ PKG_LIBS += libmosquitto
 # Set json Library.
 #
 INCLUDES += -I$(THIRDPART)/json/include
+
+###################################################
+# OpenGL: glfw and glew libraries
+#
+ifeq ($(ARCHI),Darwin)
+INCLUDES += -I/usr/local/include -I/opt/local/include
+LINKER_FLAGS += -framework OpenGL -framework Cocoa
+LINKER_FLAGS += -framework IOKit -framework CoreVideo
+LINKER_FLAGS += -L/usr/local/lib -L/opt/local/lib
+LINKER_FLAGS += -lGLEW -lglfw
+endif
 
 ###################################################
 # Make the list of compiled files for the application

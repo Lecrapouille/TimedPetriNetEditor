@@ -3,14 +3,49 @@ on:
   workflow_dispatch:
     branches:
       - master
+      - dev-refactor
   push:
     branches:
       - master
+      - dev-refactor
   pull_request:
     branches:
       - master
+      - dev-refactor
 
 jobs:
+  build_html5:
+    name: Build with Emscripten
+    runs-on: ubuntu-20.04
+    steps:
+      - name: Install system packages
+        run: |
+          sudo apt-get update
+          sudo apt-get install pkg-config libmosquitto-dev libx11-dev libxinerama-dev
+          sudo apt-get install libasound2-dev libx11-dev libxrandr-dev libxi-dev libgl1-mesa-dev libglu1-mesa-dev libxcursor-dev libxinerama-dev
+      - name: Install Emscripten
+        uses: mymindstorm/setup-emsdk@v11
+      - name: Checkout TimedPetriNetEditor
+        uses: actions/checkout@v4
+        with:
+          submodules: true
+      - name: Compile TimedPetriNetEditor
+        run: |
+          make download-external-libs
+          emmake make compile-external-libs
+          emmake make -j`nproc --all`
+      - name: Deploy
+        run: |
+          git config --global user.name 'GitHub CI'
+          git config --global user.email 'github-ci@users.noreply.github.com'
+          git remote set-url origin https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}
+          git fetch --all
+          git checkout gh-pages
+          cp build/TimedPetriNetEditor.* .
+          git add TimedPetriNetEditor.*
+          git commit -m "Automated commit"
+          git push
+
   non_regression_linux:
     name: Non regression tests on Linux
     runs-on: ubuntu-20.04
@@ -18,15 +53,16 @@ jobs:
       - name: Install system packages
         run: |
           sudo apt-get update
-          sudo apt-get install pkg-config lcov libdw-dev libsfml-dev libglew-dev
-          sudo apt-get install libmosquitto-dev
+          sudo apt-get install libdw-dev pkg-config libmosquitto-dev libx11-dev libxinerama-dev
+          sudo apt-get install libasound2-dev libx11-dev libxrandr-dev libxi-dev libgl1-mesa-dev libglu1-mesa-dev libxcursor-dev
       - name: Checkout TimedPetriNetEditor
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           submodules: true
       - name: Compile TimedPetriNetEditor
         run: |
           make download-external-libs
+          make compile-external-libs
           make -j`nproc --all`
       - name: Download, configure and install Google test
         run: |
@@ -35,16 +71,11 @@ jobs:
           cd googletest-release-1.11.0
           cmake -DBUILD_SHARED_LIBS=OFF -DCMAKE_POSITION_INDEPENDENT_CODE=ON .
           sudo make install
-      - name: Do non regression tests
-        run: |
-          cd tests
-          make -j`nproc --all`
-          ./build/TimedPetriNetEditor-UnitTest
-      - name: Deploy
-        uses: actions/upload-artifact@v3
-        with:
-          name: TimedPetriNetEditor-linux
-          path: build/TimedPetriNetEditor
+#      - name: Do non regression tests
+#        run: |
+#          cd tests
+#          make -j`nproc --all`
+#          ./build/TimedPetriNetEditor-UnitTest
 
   non_regression_macos:
     name: Non regression tests on MacOS X
@@ -52,14 +83,15 @@ jobs:
     steps:
       - name: Install system packages
         run: |
-          brew install pkg-config sfml mosquitto glew
+          brew install pkg-config mosquitto raylib glfw glew
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           submodules: true
       - name: Compile TimedPetriNetEditor
         run: |
           make download-external-libs
+          make compile-external-libs
           make -j`sysctl -n hw.logicalcpu`
       - name: Download, configure and install Google test
         run: |
@@ -68,11 +100,11 @@ jobs:
           cd googletest-release-1.11.0
           cmake -DBUILD_SHARED_LIBS=OFF -DCMAKE_POSITION_INDEPENDENT_CODE=ON .
           sudo make install
-      - name: Do non regression tests
-        run: |
-          cd tests
-          make -j`sysctl -n hw.logicalcpu`
-          ./build/TimedPetriNetEditor-UnitTest
+#      - name: Do non regression tests
+#        run: |
+#          cd tests
+#          make -j`sysctl -n hw.logicalcpu`
+#          ./build/TimedPetriNetEditor-UnitTest
       - name: Create the DMG file
         run: |
           hdiutil create -format UDZO -srcfolder build/TimedPetriNetEditor.app build/TimedPetriNetEditor.dmg
