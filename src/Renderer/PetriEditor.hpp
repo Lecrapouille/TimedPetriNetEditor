@@ -25,7 +25,7 @@ public:
     //! dummy if you do not want to open a file.
     //--------------------------------------------------------------------------
     Editor(size_t const width, size_t const height, std::string const& title,
-          std::string const& project_path = {});
+           std::string const& project_path = {});
 
 public:
 
@@ -63,12 +63,12 @@ public: //private:
     ImVec2 getMousePosition();
     void handleArcOrigin();
     void handleArcDestination();
-/*
-    void align();
-    PetriNet::CriticalCycleResult findCriticalCycle();
-    bool screenshot();
-    bool changeTypeOfNet(TypeOfNet const type);
-*/
+    /*
+      void align();
+      PetriNet::CriticalCycleResult findCriticalCycle();
+      bool screenshot();
+      bool changeTypeOfNet(TypeOfNet const type);
+    */
     void clear();
 
     std::string getError() const

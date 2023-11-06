@@ -37,7 +37,7 @@ std::string importFromJSON(Net& net, std::string const& filename)
     if (!file)
     {
         error << "Failed opening '" << filename << "'. Reason was '"
-                  << strerror(errno) << "'" << std::endl;
+              << strerror(errno) << "'" << std::endl;
         return error.str();
     }
 
@@ -50,7 +50,7 @@ std::string importFromJSON(Net& net, std::string const& filename)
     catch (std::exception const& e)
     {
         error << "Failed parsing '" << filename << "'. Reason was '"
-                  << e.what() << "'" << std::endl;
+              << e.what() << "'" << std::endl;
         return error.str();
     }
 
@@ -65,7 +65,7 @@ std::string importFromJSON(Net& net, std::string const& filename)
         net.clear(TypeOfNet::TimedEventGraph);
     } else {
         error << "Failed parsing '" << filename << "'. Reason was '"
-                  << "Unknown type of net: " << type << "'" << std::endl;
+              << "Unknown type of net: " << type << "'" << std::endl;
         return error.str();
     }
 
@@ -90,8 +90,8 @@ std::string importFromJSON(Net& net, std::string const& filename)
         if ((from == nullptr) || (to == nullptr))
         {
             error << "Failed parsing '" << filename << "'. Reason was 'Arc "
-                      << a["from"] << " -> " << a["to"] << " refer to unknown nodes'"
-                      << std::endl;
+                  << a["from"] << " -> " << a["to"] << " refer to unknown nodes'"
+                  << std::endl;
             return error.str();
         }
 
@@ -103,16 +103,16 @@ std::string importFromJSON(Net& net, std::string const& filename)
             if (duration < 0.0f)
             {
                 error << "Failed parsing '" << filename << "'. Reason was 'Arc "
-                        << from->key << " -> " << to->key << " has negative duration'"
-                        << std::endl;
+                      << from->key << " -> " << to->key << " has negative duration'"
+                      << std::endl;
                 return error.str();
             }
         }
         if (!net.addArc(*from, *to, duration))
         {
             error << "Failed loading " << filename
-                      << ". Arc " << from->key << " -> " << to->key
-                      << " is badly formed" << std::endl;
+                  << ". Arc " << from->key << " -> " << to->key
+                  << " is badly formed" << std::endl;
             return error.str();
         }
     }

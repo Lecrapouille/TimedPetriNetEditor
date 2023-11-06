@@ -111,7 +111,7 @@ size_t Transition::howManyTokensCanBurnt() const
 
 //------------------------------------------------------------------------------
 Net::Net(TypeOfNet const type)
-  : m_type(type), name(to_str(type))
+    : m_type(type), name(to_str(type))
 {}
 
 //------------------------------------------------------------------------------
@@ -125,11 +125,11 @@ Net& Net::operator=(Net const& other)
     for (auto const& it: other.m_arcs)
     {
         Node& from = (it.from.type == Node::Type::Place)
-                ? reinterpret_cast<Node&>(m_places[it.from.id])
-                : reinterpret_cast<Node&>(m_transitions[it.from.id]);
+                     ? reinterpret_cast<Node&>(m_places[it.from.id])
+                     : reinterpret_cast<Node&>(m_transitions[it.from.id]);
         Node& to = (it.to.type == Node::Type::Place)
-                ? reinterpret_cast<Node&>(m_places[it.to.id])
-                : reinterpret_cast<Node&>(m_transitions[it.to.id]);
+                   ? reinterpret_cast<Node&>(m_places[it.to.id])
+                   : reinterpret_cast<Node&>(m_transitions[it.to.id]);
         m_arcs.push_back(Arc(from, to, it.duration));
     }
     generateArcsInArcsOut();
@@ -234,7 +234,7 @@ Place& Net::addPlace(float const x, float const y, size_t const tokens)
 
 //------------------------------------------------------------------------------
 Place& Net::addPlace(size_t const id, std::string const& caption, float const x,
-                          float const y, size_t const tokens)
+                     float const y, size_t const tokens)
 {
     modified = true;
     m_places.push_back(Place(id, caption, x, y, tokens));
@@ -311,9 +311,9 @@ bool Net::sanityArc(Node const& from, Node const& to, bool const strict) const
         // Option 1: we simply fail (for example when loading file)
         m_message.str("");
         m_message << "Failed adding arc " << from.key
-                << " --> " << to.key
-                << ": nodes type shall not be the same"
-                << std::endl;
+                  << " --> " << to.key
+                  << ": nodes type shall not be the same"
+                  << std::endl;
         return false;
     }
 

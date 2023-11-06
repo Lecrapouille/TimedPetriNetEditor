@@ -76,7 +76,7 @@ struct SparseMatrix // FIXME: redo manage (max,+) type
     {
         size_t currCol;
 
-		for (size_t pos = 0u; pos < i.size(); ++pos)
+        for (size_t pos = 0u; pos < i.size(); ++pos)
         {
             if (i[pos] == i_)
             {
@@ -85,9 +85,9 @@ struct SparseMatrix // FIXME: redo manage (max,+) type
                     return d[pos];
                 }
             }
-		}
+        }
 
-		return zero<T>();
+        return zero<T>();
     }
 
     //! \brief Option to display for C++ or for Julia

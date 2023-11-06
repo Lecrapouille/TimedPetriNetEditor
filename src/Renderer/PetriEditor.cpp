@@ -138,10 +138,10 @@ static void help()
             {
                 std::stringstream help;
                 help << "Left button pressed: add a place" << std::endl
-                << "Right button pressed: add a transition" << std::endl
-                << "Middle button pressed: add an arc with the selected place or transition as origin" << std::endl
-                << "Middle button release: end the arc with the selected place or transition as destination" << std::endl
-                << "Middle button pressed: move the view" << std::endl;
+                     << "Right button pressed: add a transition" << std::endl
+                     << "Middle button pressed: add an arc with the selected place or transition as origin" << std::endl
+                     << "Middle button release: end the arc with the selected place or transition as destination" << std::endl
+                     << "Middle button pressed: move the view" << std::endl;
 
                 ImGui::Text("%s", help.str().c_str());
                 ImGui::EndTabItem();
@@ -193,17 +193,17 @@ static void console(Editor& editor)
         if (logs[i].level == Messages::Level::Info)
         {
             ImGui::TextColored(ImVec4(0, 255, 0, 255), "%s[info]: %s",
-                 logs[i].time.c_str(), logs[i].message.c_str());
+                               logs[i].time.c_str(), logs[i].message.c_str());
         }
         else if (logs[i].level == Messages::Level::Error)
         {
             ImGui::TextColored(ImVec4(255, 0, 0, 255), "%s[error]: %s",
-            logs[i].time.c_str(), logs[i].message.c_str());
+                               logs[i].time.c_str(), logs[i].message.c_str());
         }
         else
         {
             ImGui::TextColored(ImVec4(255, 0, 255, 255), "%s[warn]: %s",
-            logs[i].time.c_str(), logs[i].message.c_str());
+                               logs[i].time.c_str(), logs[i].message.c_str());
         }
     }
     ImGui::End();
@@ -777,7 +777,7 @@ void Editor::onDraw()
 //------------------------------------------------------------------------------
 //------------------------------------------------------------------------------
 static void drawArrow(ImDrawList* draw_list, const float xa, const float ya,
-   const float xb, const float yb, const ImU32 color)
+                      const float xb, const float yb, const ImU32 color)
 {
     // Orientation
     const float teta = (yb - ya) / (xb - xa);
@@ -901,7 +901,7 @@ void Editor::drawPlace(Place const& place)
     ImVec2 dim = ImGui::CalcTextSize(place.key.c_str());
     ImVec2 ptext = p - ImVec2(dim.x / 2.0f, PLACE_RADIUS + dim.y);
     draw_list->AddText(ptext, IM_COL32(0, 0, 0, 255),
-        show_place_captions ? place.caption.c_str() : place.key.c_str());
+                       show_place_captions ? place.caption.c_str() : place.key.c_str());
 
     // Draw the number of tokens
     if (place.tokens == 0u)
@@ -973,7 +973,7 @@ void Editor::drawTransition(Transition const& transition)
     ImVec2 dim = ImGui::CalcTextSize(transition.key.c_str());
     ImVec2 ptext = p - ImVec2(dim.x / 2.0f, TRANS_HEIGHT + dim.y);
     draw_list->AddText(ptext, IM_COL32(0, 0, 0, 255),
-        show_transition_captions ? transition.caption.c_str() : transition.key.c_str());
+                       show_transition_captions ? transition.caption.c_str() : transition.key.c_str());
 }
 
 //------------------------------------------------------------------------------
@@ -1043,7 +1043,7 @@ void Editor::load()
             if (m_net.load(ImGuiFileDialog::Instance()->GetFilePathName()))
             {
                 m_messages.setInfo("loaded with success " +
-                    ImGuiFileDialog::Instance()->GetFilePathName());
+                                   ImGuiFileDialog::Instance()->GetFilePathName());
             }
             else
             {
@@ -1083,7 +1083,7 @@ void Editor::exportTo(Exporter const& exporter)
             if (error.empty())
             {
                 m_messages.setInfo("saved with success " +
-                    ImGuiFileDialog::Instance()->GetFilePathName());
+                                   ImGuiFileDialog::Instance()->GetFilePathName());
             }
             else
             {
