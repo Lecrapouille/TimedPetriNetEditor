@@ -70,8 +70,19 @@ const uint8_t alpha = 255; // FIXME
 
 //------------------------------------------------------------------------------
 // helper functions
-static inline ImVec2 operator+(const ImVec2& lhs, const ImVec2& rhs) { return ImVec2(lhs.x + rhs.x, lhs.y + rhs.y); }
-static inline ImVec2 operator-(const ImVec2& lhs, const ImVec2& rhs) { return ImVec2(lhs.x - rhs.x, lhs.y - rhs.y); }
+static inline ImVec2 operator+(const ImVec2 &lhs, const ImVec2 &rhs) { return ImVec2(lhs.x + rhs.x, lhs.y + rhs.y); }
+static inline ImVec2 operator-(const ImVec2 &lhs, const ImVec2 &rhs) { return ImVec2(lhs.x - rhs.x, lhs.y - rhs.y); }
+
+//------------------------------------------------------------------------------
+static inline float norm(const float xa, const float ya, const float xb, const float yb)
+{
+    return sqrtf((xb - xa) * (xb - xa) + (yb - ya) * (yb - ya));
+}
+
+static inline ImVec2 ImRotate(const ImVec2 &v, float cos_a, float sin_a)
+{
+    return ImVec2(v.x * cos_a - v.y * sin_a, v.x * sin_a + v.y * cos_a);
+}
 
 //------------------------------------------------------------------------------
 static void about()
@@ -727,7 +738,7 @@ void Editor::drawPetriNet()
     }
 
     reshape();
-    drag();
+    onHandleInput();
 
     draw_list = ImGui::GetWindowDrawList();
     draw_list->ChannelsSplit(2);
@@ -764,16 +775,6 @@ void Editor::onDraw()
 }
 
 //------------------------------------------------------------------------------
-static inline float norm(const float xa, const float ya, const float xb, const float yb)
-{
-    return sqrtf((xb - xa) * (xb - xa) + (yb - ya) * (yb - ya));
-}
-
-static inline ImVec2 ImRotate(const ImVec2& v, float cos_a, float sin_a)
-{
-    return ImVec2(v.x * cos_a - v.y * sin_a, v.x * sin_a + v.y * cos_a);
-}
-
 //------------------------------------------------------------------------------
 static void drawArrow(ImDrawList* draw_list, const float xa, const float ya,
    const float xb, const float yb, const ImU32 color)
@@ -976,32 +977,6 @@ void Editor::drawTransition(Transition const& transition)
 }
 
 //------------------------------------------------------------------------------
-ImVec2 Editor::mouse()
-{
-    ImGuiIO& io = ImGui::GetIO();
-    return ImVec2(io.MousePos.x - origin.x, io.MousePos.y - origin.y);
-}
-
-//------------------------------------------------------------------------------
-void Editor::drag()
-{
-    // This will catch our interactions
-    ImGui::InvisibleButton("canvas", canvas_sz, ImGuiButtonFlags_MouseButtonLeft | ImGuiButtonFlags_MouseButtonRight);
-    const bool is_hovered = ImGui::IsItemHovered(); // Hovered
-    const bool is_active = ImGui::IsItemActive();   // Held
-
-    // Pan (we use a zero mouse threshold when there's no context menu)
-    // You may decide to make that threshold dynamic based on whether the mouse is hovering something etc.
-    const float mouse_threshold_for_pan = m_layout_config.grid.menu ? -1.0f : 0.0f;
-    if (is_active && ImGui::IsMouseDragging(ImGuiMouseButton_Right, mouse_threshold_for_pan))
-    {
-        ImGuiIO& io = ImGui::GetIO();
-        scrolling.x += io.MouseDelta.x;
-        scrolling.y += io.MouseDelta.y;
-    }
-}
-
-//------------------------------------------------------------------------------
 void Editor::clear()
 {
     m_simulating = false;
@@ -1021,6 +996,30 @@ bool Editor::changeTypeOfNet(TypeOfNet const type)
 
     m_messages.setError(m_net.error());
     return false;
+}
+
+//------------------------------------------------------------------------------
+Node *Editor::getNode(float const x, float const y)
+{
+    for (auto &p : m_net.places())
+    {
+        float d2 = (p.x - x) * (p.x - x) + (p.y - y) * (p.y - y);
+        if (d2 < PLACE_RADIUS * PLACE_RADIUS)
+        {
+            return &p;
+        }
+    }
+
+    for (auto &t : m_net.transitions())
+    {
+        float d2 = (t.x - x) * (t.x - x) + (t.y - y) * (t.y - y);
+        if (d2 < TRANS_WIDTH * TRANS_WIDTH)
+        {
+            return &t;
+        }
+    }
+
+    return nullptr;
 }
 
 //------------------------------------------------------------------------------
@@ -1109,6 +1108,166 @@ void Editor::saveAs()
 //------------------------------------------------------------------------------
 void Editor::close()
 {
+}
+
+//------------------------------------------------------------------------------
+void Editor::onDragged(ImVec2 const &mouse_delta)
+{
+    scrolling.x += mouse_delta.x;
+    scrolling.y += mouse_delta.y;
+}
+
+//------------------------------------------------------------------------------
+ImVec2 Editor::getMousePosition()
+{
+    ImGuiIO &io = ImGui::GetIO();
+    return ImVec2(io.MousePos.x - origin.x, io.MousePos.y - origin.y);
+}
+
+// A placer dans Grid
+//------------------------------------------------------------------------------
+void Editor::onHandleInput()
+{
+    // This will catch our interactions
+    ImGui::InvisibleButton("canvas", canvas_sz,
+                           ImGuiButtonFlags_MouseButtonLeft |
+                           ImGuiButtonFlags_MouseButtonRight |
+                           ImGuiButtonFlags_MouseButtonMiddle);
+
+    m_mouse = getMousePosition();
+
+    // Pan (we use a zero mouse threshold when there's no context menu)
+    // You may decide to make that threshold dynamic based on whether the mouse is hovering something etc.
+    const float mouse_threshold_for_pan = m_layout_config.grid.menu ? -1.0f : 0.0f;
+    // if (ImGui::IsMouseDragging(ImGuiMouseButton_Middle, mouse_threshold_for_pan))
+    //{
+    //     ImGuiIO& io = ImGui::GetIO();
+    //     onDragged(io.MouseDelta);
+    // }
+
+    if (ImGui::IsItemActive() && ImGui::IsMouseClicked(ImGuiMouseButton_Middle))
+    {
+        handleArcOrigin();
+    }
+
+    if (ImGui::IsMouseReleased(ImGuiMouseButton_Middle))
+    {
+        handleArcDestination();
+    }
+}
+
+//------------------------------------------------------------------------------
+void Editor::handleArcOrigin()
+{
+    // Get a place or a transition from the mouse cursor
+    m_node_from = getNode(m_mouse.x, m_mouse.y);
+    if (m_node_from == nullptr)
+    {
+        if ((m_net.places().size() != 0u) || (m_net.transitions().size() != 0u))
+        {
+            // We do not yet know the type of the destination node so create
+            // intermediate information.
+            m_click_position = m_mouse;
+            m_arc_from_unknown_node = true;
+        }
+    }
+
+    // Reset states
+    m_node_to = nullptr;
+}
+
+//------------------------------------------------------------------------------
+void Editor::handleArcDestination()
+{
+    // Finish the creation of the arc (destination node) from the mouse cursor
+    m_node_to = getNode(m_mouse.x, m_mouse.y);
+
+    // The user grab no nodes: abort
+    if ((m_node_from == nullptr) && (m_node_to == nullptr))
+        return;
+
+    // Reached the destination node
+    if (m_node_to != nullptr)
+    {
+        if (m_node_from != nullptr)
+        {
+            if (m_node_to->type == m_node_from->type)
+            {
+                // The user tried to link two nodes of the same type: this is
+                // forbidden but we allow it by creating the intermediate node
+                // of oposing type.
+                float x = m_node_to->x + (m_node_from->x - m_node_to->x) / 2.0f;
+                float y = m_node_to->y + (m_node_from->y - m_node_to->y) / 2.0f;
+                float duration = random(1, 5);
+                if (m_node_to->type == Node::Type::Place)
+                {
+                    Transition &n = m_net.addTransition(x, y);
+                    if (!m_net.addArc(*m_node_from, n, duration))
+                    {
+                        // m_message_bar.setError(m_petri_net.message());
+                    }
+                    m_node_from = &n;
+                }
+                else
+                {
+                    Place &n = m_net.addPlace(x, y);
+                    if (!m_net.addArc(*m_node_from, n, duration))
+                    {
+                        // m_message_bar.setError(m_petri_net.message());
+                    }
+                    m_node_from = &n;
+                }
+            }
+        }
+        else
+        {
+            // The user did not click on a node but released mouse on a node. We
+            // create the origin node before creating the arc.
+            if (m_arc_from_unknown_node)
+            {
+                if (m_node_to->type == Node::Type::Place)
+                    m_node_from = &m_net.addTransition(m_click_position.x, m_click_position.y);
+                else
+                    m_node_from = &m_net.addPlace(m_click_position.x, m_click_position.y);
+            }
+        }
+    }
+    else if (m_node_from != nullptr)
+    {
+        // The user did not click on a node but released mouse on a node. We
+        // create the origin node before creating the arc.
+        float x = m_mouse.x;
+        float y = m_mouse.y;
+        if (m_net.type() == TypeOfNet::TimedEventGraph)
+        {
+            // With timed event graph we have to add implicit places.
+            float px = x + (m_node_from->x - x) / 2.0f;
+            float py = y + (m_node_from->y - y) / 2.0f;
+            float duration = random(1, 5);
+            Place &n = m_net.addPlace(px, py);
+            if (!m_net.addArc(*m_node_from, n, duration))
+            {
+                // m_message_bar.setError(m_net.message());
+            }
+            m_node_from = &n;
+        }
+        if (m_node_from->type == Node::Type::Place)
+            m_node_to = &m_net.addTransition(x, y);
+        else
+            m_node_to = &m_net.addPlace(x, y);
+    }
+    // Create the arc. Note: the duration value is only used
+    // for arc Transition --> Place.
+    float duration = random(1, 5);
+    if (!m_net.addArc(*m_node_from, *m_node_to, duration))
+    {
+        // m_message_bar.setError(m_petri_net.message());
+    }
+
+    // Reset states
+    m_node_from = m_node_to = nullptr;
+    // m_selected_modes.clear();
+    m_arc_from_unknown_node = false;
 }
 
 } // namespace tpne

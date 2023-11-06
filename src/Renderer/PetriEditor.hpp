@@ -51,11 +51,18 @@ public:
 
 public: //private:
 
+    Node* getNode(float const x, float const y);
     bool changeTypeOfNet(TypeOfNet const type);
     void load();
     void exportTo(Exporter const& exporter);
     void saveAs();
     void close();
+
+    void onHandleInput();
+    void onDragged(ImVec2 const& mouse_delta); // Grid
+    ImVec2 getMousePosition();
+    void handleArcOrigin();
+    void handleArcDestination();
 /*
     void align();
     PetriNet::CriticalCycleResult findCriticalCycle();
@@ -82,8 +89,6 @@ private: // A deplacer dans Renderer:
 
     void reshape();
     void drawGrill();
-    void drag();
-    ImVec2 mouse();
     void drawArc(Arc const& arc);
     void drawPlace(Place const& place);
     void drawTransition(Transition const& transition);
@@ -108,7 +113,21 @@ public: // FIXME A deplacer dans Grid:
     ImDrawList* draw_list;
 
     int node_hovered_in_list = -1;
-int node_hovered_in_scene = -1;
+    int node_hovered_in_scene = -1;
+
+private: // gestion de la souris
+
+    //! \brief Mouse cursor position.
+    ImVec2 m_mouse;
+    //! \brief Selected origin node (place or transition) by the user when
+    //! adding an arc.
+    Node* m_node_from = nullptr;
+    //! \brief Selected destination node (place or transition) by the user when
+    //! adding an arc.
+    Node* m_node_to = nullptr;
+    // Ugly stuffs needed when trying to determine which node the user wants to
+    // create.
+    ImVec2 m_click_position; bool m_arc_from_unknown_node = false;
 
 private:
 

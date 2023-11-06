@@ -24,7 +24,6 @@ Application::Application(size_t const width, size_t const height, std::string co
     ImPlot::CreateContext();
     ImGuiIO& io = ImGui::GetIO();
     io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;    // Enable Keyboard Controls
-    io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;    // Enable Gamepad Controls
     io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;       // Enable Docking
 
     // Setup Dear ImGui style
