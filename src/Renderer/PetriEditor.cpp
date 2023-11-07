@@ -30,6 +30,8 @@ namespace tpne {
 
 //------------------------------------------------------------------------------
 // states for dear im gui
+static bool is_dragging = false;
+static bool disable_dragging = false;
 static bool do_dater = false;
 static bool do_counter = false;
 static bool do_find_critical_cycle = false;
@@ -746,15 +748,22 @@ void Editor::drawPetriNet()
     draw_list->PushClipRect(canvas_p0, canvas_p1, true);
 
     drawGrill();
-    for (auto const& it: m_net.arcs()) {
-        drawArc(it);
+
+    // Update the node the user is moving
+    for (auto& it: m_selected_modes)
+    {
+        it->x = m_mouse.x;
+        it->y = m_mouse.y;
     }
-    for (auto const& it: m_net.places()) {
+
+    for (auto const& it: m_net.places())
         drawPlace(it);
-    }
-    for (auto const& it: m_net.transitions()) {
+
+    for (auto const& it: m_net.transitions())
         drawTransition(it);
-    }
+
+    for (auto const& it: m_net.arcs())
+        drawArc(it);
 
     draw_list->PopClipRect();
 
@@ -999,7 +1008,16 @@ bool Editor::changeTypeOfNet(TypeOfNet const type)
 }
 
 //------------------------------------------------------------------------------
-Node *Editor::getNode(float const x, float const y)
+Node* Editor::getNode(float const x, float const y)
+{
+    Node *n = getPlace(x, y);
+    if (n != nullptr)
+        return n;
+    return getTransition(x, y);
+}
+
+//------------------------------------------------------------------------------
+Place* Editor::getPlace(float const x, float const y)
 {
     for (auto &p : m_net.places())
     {
@@ -1010,6 +1028,12 @@ Node *Editor::getNode(float const x, float const y)
         }
     }
 
+    return nullptr;
+}
+
+//------------------------------------------------------------------------------
+Transition* Editor::getTransition(float const x, float const y)
+{
     for (auto &t : m_net.transitions())
     {
         float d2 = (t.x - x) * (t.x - x) + (t.y - y) * (t.y - y);
@@ -1124,6 +1148,94 @@ ImVec2 Editor::getMousePosition()
     return ImVec2(io.MousePos.x - origin.x, io.MousePos.y - origin.y);
 }
 
+//------------------------------------------------------------------------------
+bool Editor::IsMouseClicked(ImGuiMouseButton& key, bool& dragging)
+{
+    ImGuiIO &io = ImGui::GetIO();
+    if ((io.MousePos.x >= canvas_p0.x) && (io.MousePos.x <= canvas_p1.x) &&
+        (io.MousePos.y >= canvas_p0.y) && (io.MousePos.y <= canvas_p1.y))
+    {
+        if (ImGui::IsMouseClicked(ImGuiMouseButton_Middle))
+        {
+            key = ImGuiMouseButton_Middle;
+            if (getNode(m_mouse.x, m_mouse.y) != nullptr)
+                disable_dragging = true;
+            dragging = false;
+            return true;
+        }
+        if (ImGui::IsMouseClicked(ImGuiMouseButton_Left))
+        {
+            key = ImGuiMouseButton_Left;
+            dragging = false;
+            return true;
+        }
+        if (ImGui::IsMouseClicked(ImGuiMouseButton_Right))
+        {
+            key = ImGuiMouseButton_Right;
+            dragging = false;
+            return true;
+        }
+
+        const float mouse_threshold_for_pan = m_layout_config.grid.menu ? -1.0f : 0.0f;
+        if (!disable_dragging)
+        {
+            if (ImGui::IsMouseDragging(ImGuiMouseButton_Middle, mouse_threshold_for_pan))
+            {
+                key = ImGuiMouseButton_Middle;
+                dragging = true;
+                return true;
+            }
+        }
+    }
+
+    return false;
+}
+
+//------------------------------------------------------------------------------
+bool Editor::IsMouseReleased(ImGuiMouseButton& key)
+{
+    ImGuiIO &io = ImGui::GetIO();
+    if ((io.MousePos.x >= canvas_p0.x) && (io.MousePos.x <= canvas_p1.x) &&
+        (io.MousePos.y >= canvas_p0.y) && (io.MousePos.y <= canvas_p1.y))
+    {
+        if (ImGui::IsMouseReleased(ImGuiMouseButton_Middle))
+        {
+            key = ImGuiMouseButton_Middle;
+            return true;
+        }
+        if (ImGui::IsMouseReleased(ImGuiMouseButton_Left))
+        {
+            key = ImGuiMouseButton_Left;
+            return true;
+        }
+        if (ImGui::IsMouseReleased(ImGuiMouseButton_Right))
+        {
+            key = ImGuiMouseButton_Right;
+            return true;
+        }
+    }
+    return false;
+}
+
+//------------------------------------------------------------------------------
+void Editor::handleMoveNode()
+{
+    std::cout << "handleMoveNode\n";
+    if (m_selected_modes.size() == 0u)
+    {
+        Node* node = getNode(m_mouse.x, m_mouse.y);
+        if (node != nullptr)
+        {
+            m_selected_modes.push_back(node);
+            m_net.modified = true;
+        }
+    }
+    else
+    {
+        m_selected_modes.clear();
+    }
+}
+
 // A placer dans Grid
 //------------------------------------------------------------------------------
 void Editor::onHandleInput()
@@ -1135,30 +1247,98 @@ void Editor::onHandleInput()
                            ImGuiButtonFlags_MouseButtonMiddle);
 
     m_mouse = getMousePosition();
-
-    // Pan (we use a zero mouse threshold when there's no context menu)
-    // You may decide to make that threshold dynamic based on whether the mouse is hovering something etc.
-    const float mouse_threshold_for_pan = m_layout_config.grid.menu ? -1.0f : 0.0f;
-    // if (ImGui::IsMouseDragging(ImGuiMouseButton_Middle, mouse_threshold_for_pan))
-    //{
-    //     ImGuiIO& io = ImGui::GetIO();
-    //     onDragged(io.MouseDelta);
-    // }
-
-    if (ImGui::IsItemActive() && ImGui::IsMouseClicked(ImGuiMouseButton_Middle))
+    ImGuiMouseButton button;
+    if (ImGui::IsItemActive() && ImGui::IsItemHovered())
     {
-        handleArcOrigin();
+        if (IsMouseClicked(button, is_dragging))
+        {
+            // The 'M' key was pressed. Reset the state but do not add new node!
+            if (m_selected_modes.size() != 0u)
+            {
+                m_node_from = m_node_to = nullptr;
+                m_selected_modes.clear();
+                if (button == ImGuiMouseButton_Middle)
+                    return;
+            }
+
+            if (is_dragging)
+            {
+                ImGuiIO& io = ImGui::GetIO();
+                onDragged(io.MouseDelta);
+            }
+            else if (button == ImGuiMouseButton_Middle)
+            {
+                handleArcOrigin();
+            }
+            else
+            {
+                handleAddNode(button);
+            }
+        }
     }
 
-    if (ImGui::IsMouseReleased(ImGuiMouseButton_Middle))
+    if (IsMouseReleased(button))
     {
-        handleArcDestination();
+        is_dragging = disable_dragging = false;
+
+        // The 'M' key was pressed. Reset the state but do not add new node!
+        if (m_selected_modes.size() != 0u)
+        {
+            m_node_from = m_node_to = nullptr;
+            m_selected_modes.clear();
+            if (button == ImGuiMouseButton_Middle)
+                return;
+        }
+
+        if (button == ImGuiMouseButton_Middle)
+        {
+            handleArcDestination();
+        }
+    }
+
+    if (ImGui::IsItemHovered())
+    {
+        if (ImGui::IsKeyPressed(ImGuiKey_Semicolon, false))
+        {
+            handleMoveNode();
+        }
+    }
+}
+
+//------------------------------------------------------------------------------
+void Editor::handleAddNode(ImGuiMouseButton button)
+{
+    // TODO m_marked_arcs.clear();
+
+    if (!m_simulating)
+    {
+        // Add a new Place or a new Transition only if a node is not already
+        // present.
+        if (getNode(m_mouse.x, m_mouse.y) == nullptr)
+        {
+            if (button == ImGuiMouseButton_Left)
+                m_net.addPlace(m_mouse.x, m_mouse.y);
+            else if (button == ImGuiMouseButton_Right)
+                m_net.addTransition(m_mouse.x, m_mouse.y);
+        }
+    }
+    else if (m_net.type() == TypeOfNet::PetriNet)
+    {
+        // Click to fire a transition
+        Transition* transition = getTransition(m_mouse.x, m_mouse.y);
+        if (transition != nullptr)
+        {
+            transition->receptivity ^= true;
+        }
     }
 }
 
 //------------------------------------------------------------------------------
 void Editor::handleArcOrigin()
 {
+    // TODO m_marked_arcs.clear();
+    m_selected_modes.clear();
+
     // Get a place or a transition from the mouse cursor
     m_node_from = getNode(m_mouse.x, m_mouse.y);
     if (m_node_from == nullptr)
@@ -1185,6 +1365,10 @@ void Editor::handleArcDestination()
     // The user grab no nodes: abort
     if ((m_node_from == nullptr) && (m_node_to == nullptr))
         return;
+
+    // Arc to itself
+    if (m_node_from == m_node_to)
+        return ;
 
     // Reached the destination node
     if (m_node_to != nullptr)
@@ -1266,7 +1450,7 @@ void Editor::handleArcDestination()
 
     // Reset states
     m_node_from = m_node_to = nullptr;
-    // m_selected_modes.clear();
+    m_selected_modes.clear();
     m_arc_from_unknown_node = false;
 }
 

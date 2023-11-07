@@ -52,6 +52,8 @@ public:
 public: //private:
 
     Node* getNode(float const x, float const y);
+    Place* getPlace(float const x, float const y);
+    Transition* getTransition(float const x, float const y);
     bool changeTypeOfNet(TypeOfNet const type);
     void load();
     void exportTo(Exporter const& exporter);
@@ -63,6 +65,11 @@ public: //private:
     ImVec2 getMousePosition();
     void handleArcOrigin();
     void handleArcDestination();
+    void handleAddNode(ImGuiMouseButton button);
+    void handleMoveNode();
+    bool IsMouseClicked(ImGuiMouseButton& button, bool& dragging);
+    bool IsMouseReleased(ImGuiMouseButton& key);
+
     /*
       void align();
       PetriNet::CriticalCycleResult findCriticalCycle();
@@ -125,6 +132,8 @@ private: // gestion de la souris
     //! \brief Selected destination node (place or transition) by the user when
     //! adding an arc.
     Node* m_node_to = nullptr;
+    //! \brief The user has select a node to be displaced.
+    std::vector<Node*> m_selected_modes;
     // Ugly stuffs needed when trying to determine which node the user wants to
     // create.
     ImVec2 m_click_position; bool m_arc_from_unknown_node = false;
