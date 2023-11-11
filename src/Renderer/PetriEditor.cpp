@@ -19,6 +19,7 @@
 //=============================================================================
 
 #include "Renderer/PetriEditor.hpp"
+#include "Renderer/KeyBindings.hpp"
 #include "TimedPetriNetEditor/Algorithms.hpp"
 #include "Net/Formats/Exports.hpp"
 #include "Net/Formats/Imports.hpp"
@@ -59,16 +60,20 @@ static std::vector<Exporter> const exporters = {
 
 //------------------------------------------------------------------------------
 // Config for rendering the Petri net
-const float TRANS_WIDTH = 25.0f;  // Rectangle width for rendering Transitions
-const float TRANS_HEIGHT = TRANS_WIDTH / 2.0f;  // Rectangle height for rendering Transitions
-const float PLACE_RADIUS = TRANS_WIDTH / 2.0f; // Circle radius for rendering Places
-const float TOKEN_RADIUS = 2.0f;  // Circle radius for rendering tokens
-const float CAPTION_FONT_SIZE = 12;
+static float thickness = 1.0f;
+static float sz = 36.0f;
+static const float TRANS_WIDTH = 36.0f;  // Rectangle width for rendering Transitions
+static const float TRANS_HEIGHT = TRANS_WIDTH / 2.0f;  // Rectangle height for rendering Transitions
+static const float PLACE_RADIUS = TRANS_WIDTH / 2.0f; // Circle radius for rendering Places
+static const float TOKEN_RADIUS = 2.0f;  // Circle radius for rendering tokens
+static const float CAPTION_FONT_SIZE = 12;
 #define FILL_COLOR(a) IM_COL32(255, 165, 0, (a))
 #define OUTLINE_COLOR IM_COL32(165, 42, 42, 255) // Arcs, Places, Transitions
 #define CRITICAL_COLOR IM_COL32(255, 0, 0, 255)
 
-const uint8_t alpha = 255; // FIXME
+static const uint8_t alpha = 255; // FIXME
+static float font_size_pixels = 16.0f;
+static ImFont* font1 = nullptr;
 
 //------------------------------------------------------------------------------
 // helper functions
@@ -143,7 +148,7 @@ static void help()
                      << "Right button pressed: add a transition" << std::endl
                      << "Middle button pressed: add an arc with the selected place or transition as origin" << std::endl
                      << "Middle button release: end the arc with the selected place or transition as destination" << std::endl
-                     << "Middle button pressed: move the view" << std::endl;
+                     << "Middle button pressed: move the view is no place or transitions are selected" << std::endl;
 
                 ImGui::Text("%s", help.str().c_str());
                 ImGui::EndTabItem();
@@ -281,6 +286,8 @@ static void inspector(Editor& editor)
         ImGui::Begin("Transitions");
         ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(0, 0));
         ImGui::Checkbox(show_transition_captions ? "Show transition identifiers" : "Show transition captions", &show_transition_captions);
+        ImGui::DragFloat("Thickness", &thickness, 0.05f, 1.0f, 8.0f, "%.02f");
+        ImGui::DragFloat("Size", &sz, 0.2f, 2.0f, 100.0f, "%.0f");
         ImGui::PopStyleVar();
         ImGui::Separator();
         //if (!editor.m_simulating)
@@ -675,16 +682,16 @@ Editor::Editor(size_t const width, size_t const height,
 //------------------------------------------------------------------------------
 void Editor::onStartUp()
 {
-    if (m_filename.empty())
-        return ;
-
-    if (m_net.load(m_filename))
+    if (!m_filename.empty())
     {
-        m_messages.setInfo("loaded with success " + m_filename);
-    }
-    else
-    {
-        m_messages.setError(m_net.error());
+        if (m_net.load(m_filename))
+        {
+            m_messages.setInfo("loaded with success " + m_filename);
+        }
+        else
+        {
+            m_messages.setError(m_net.error());
+        }
     }
 }
 
@@ -708,7 +715,8 @@ void Editor::drawGrill()
 {
     draw_list->ChannelsSetCurrent(0); // Background
     draw_list->AddRectFilled(canvas_p0, canvas_p1, IM_COL32(50, 50, 50, 255));
-    draw_list->AddRect(canvas_p0, canvas_p1, IM_COL32(255, 255, 255, 255));
+    ImU32 color = m_simulating ? IM_COL32(0, 255, 0, 255) : IM_COL32(255, 255, 255, 255);
+    draw_list->AddRect(canvas_p0, canvas_p1, color);
 
     if (!m_layout_config.grid.enable)
         return ;
@@ -749,21 +757,21 @@ void Editor::drawPetriNet()
 
     drawGrill();
 
-    // Update the node the user is moving
+    // Update node positions the user is moving
     for (auto& it: m_selected_modes)
     {
         it->x = m_mouse.x;
         it->y = m_mouse.y;
     }
 
+    for (auto const& it: m_net.arcs())
+        drawArc(it);
+
     for (auto const& it: m_net.places())
         drawPlace(it);
 
     for (auto const& it: m_net.transitions())
         drawTransition(it);
-
-    for (auto const& it: m_net.arcs())
-        drawArc(it);
 
     draw_list->PopClipRect();
 
@@ -779,6 +787,7 @@ void Editor::onDraw()
     ::tpne::console(*this);
     ::tpne::messagebox(*this);
     ::tpne::inspector(*this);
+    ImGui::ShowDemoWindow();
 
     drawPetriNet();
 }
@@ -976,7 +985,8 @@ void Editor::drawTransition(Transition const& transition)
     const ImVec2 pmin(p.x - TRANS_WIDTH / 2.0f, p.y - TRANS_HEIGHT / 2.0f);
     const ImVec2 pmax(p.x + TRANS_WIDTH / 2.0f, p.y + TRANS_HEIGHT / 2.0f);
     draw_list->AddRectFilled(pmin, pmax, color);
-    draw_list->AddRect(pmin, pmax + ImVec2(0.0f, 1.0f), OUTLINE_COLOR, 0, 5.0f);
+    const float rounding = sz / 5.0f;
+    draw_list->AddRect(pmin, pmax, OUTLINE_COLOR, rounding, ImDrawFlags_RoundCornersTopLeft | ImDrawFlags_RoundCornersBottomRight, thickness);
 
     // Draw the caption
     ImVec2 dim = ImGui::CalcTextSize(transition.key.c_str());
@@ -1220,7 +1230,6 @@ bool Editor::IsMouseReleased(ImGuiMouseButton& key)
 //------------------------------------------------------------------------------
 void Editor::handleMoveNode()
 {
-    std::cout << "handleMoveNode\n";
     if (m_selected_modes.size() == 0u)
     {
         Node* node = getNode(m_mouse.x, m_mouse.y);
@@ -1281,13 +1290,16 @@ void Editor::onHandleInput()
     {
         is_dragging = disable_dragging = false;
 
-        // The 'M' key was pressed. Reset the state but do not add new node!
+        // The 'M' key was pressed for moving selected nodes.
+        // Reset the state but do not add new node!
         if (m_selected_modes.size() != 0u)
         {
             m_node_from = m_node_to = nullptr;
             m_selected_modes.clear();
             if (button == ImGuiMouseButton_Middle)
+            {
                 return;
+            }
         }
 
         if (button == ImGuiMouseButton_Middle)
@@ -1298,9 +1310,26 @@ void Editor::onHandleInput()
 
     if (ImGui::IsItemHovered())
     {
-        if (ImGui::IsKeyPressed(ImGuiKey_Semicolon, false))
+        if (ImGui::IsKeyPressed(KEY_BINDING_MOVE_PETRI_NODE, false))
         {
             handleMoveNode();
+        }
+        // Run the animation of the Petri net
+        else if (ImGui::IsKeyPressed(KEY_BINDING_RUN_SIMULATION) ||
+                 ImGui::IsKeyPressed(KEY_BINDING_RUN_SIMULATION_ALT))
+        {
+            m_simulating = m_simulating ^ true;
+
+            // Note: in GUI.cpp in the Application constructor, I set
+            // the window to have slower framerate in the aim to have a
+            // bigger discrete time and therefore AnimatedToken moving
+            // with a bigger step range and avoid them to overlap when
+            // i.e. two of them, carying 1 token, are arriving at almost
+            // the same moment but separated by one call of this method
+            // update() producing two AnimatedToken carying 1 token that
+            // will be displayed at the same position instead of a
+            // single AnimatedToken carying 2 tokens.
+            setFramerate(m_simulating ? 30 : 60); // FPS
         }
     }
 }

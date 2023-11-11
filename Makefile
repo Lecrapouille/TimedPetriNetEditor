@@ -8,6 +8,12 @@ STANDARD = --std=c++14
 BUILD_TYPE = debug
 
 ###################################################
+# Select backend for dear im gui: RayLib or GLFW3
+#
+BACKEND ?= RayLib
+# BACKEND ?= GLFW3
+
+###################################################
 # Location of the project directory and Makefiles
 #
 P := .
@@ -15,19 +21,15 @@ M := $(P)/.makefile
 include $(M)/Makefile.header
 
 ###################################################
-# Linkage
+# Inform Makefile where to find *.cpp files
 #
-LINKER_FLAGS += -ldl -lpthread
+VPATH += $(P)/src $(P)/src/Utils $(P)/src/Net
+VPATH += $(P)/src/Net/Formats $(P)/src/Renderer $(P)/include
 
 ###################################################
 # Inform Makefile where to find header files
 #
 INCLUDES += -I$(P)/include -I$(P)/src -I$(P)/src/Net/Formats -I$(P)/src/Renderer
-
-###################################################
-# Inform Makefile where to find *.cpp and *.o files
-#
-VPATH += $(P)/src $(P)/src/Net $(P)/src/Net/Formats $(P)/src/Renderer $(P)/include
 
 ###################################################
 # Project defines
@@ -41,18 +43,14 @@ CCFLAGS += -Wno-sign-conversion -Wno-float-equal
 CXXFLAGS += -Wno-undef -Wno-switch-enum -Wno-enum-compare
 
 ###################################################
-# Embed assets for web version. Assets shall be
-# present inside $(BUILD) folder.
+# Linkage
 #
-ifeq ($(ARCHI),Emscripten)
-LINKER_FLAGS += --preload-file imgui.ini
-LINKER_FLAGS += --preload-file examples
-LINKER_FLAGS += -s FORCE_FILESYSTEM=1
-endif
+LINKER_FLAGS += -ldl -lpthread
 
 ###################################################
 # Set thirdpart Raylib
 #
+ifeq ($(BACKEND),RayLib)
 INCLUDES += -I$(THIRDPART)/raylib/src
 THIRDPART_LIBS += $(abspath $(THIRDPART)/raylib/src/$(ARCHI)/libraylib.a)
 
@@ -68,6 +66,27 @@ LINKER_FLAGS += -s ASYNCIFY
 # our own.
 LINKER_FLAGS += --shell-file $(THIRDPART)/raylib/src/shell.html
 endif
+endif
+
+###################################################
+# Dear ImGui backends: Raylib
+#
+ifeq ($(BACKEND),RayLib)
+VPATH += $(THIRDPART)/rlImGui
+VPATH += $(P)/src/Renderer/Backends/RayLib
+INCLUDES += -I$(THIRDPART)/rlImGui
+INCLUDES += -I$(P)/src/Renderer/Backends/RayLib
+DEARIMGUI_BACKEND_OBJS += rlImGui.o
+endif
+
+###################################################
+# Dear ImGui backends: OpenGL/GLFW3
+#
+ifeq ($(BACKEND),GLFW3)
+VPATH += $(P)/src/Renderer/Backends/GLFW3
+INCLUDES += -I$(P)/src/Renderer/Backends/GLFW3
+DEARIMGUI_BACKEND_OBJS += imgui_impl_glfw.o imgui_impl_opengl3.o
+endif
 
 ###################################################
 # Set thirdpart Dear ImGui
@@ -75,27 +94,20 @@ endif
 INCLUDES += -I$(THIRDPART)/imgui -I$(THIRDPART)/imgui/backends -I$(THIRDPART)/imgui/misc/cpp
 VPATH += $(THIRDPART)/imgui $(THIRDPART)/imgui/backends $(THIRDPART)/imgui/misc/cpp
 DEARIMGUI_OBJS += imgui_widgets.o imgui_draw.o imgui_tables.o imgui.o imgui_stdlib.o
-# DEARIMGUI_OBJS += imgui_impl_glfw.o imgui_impl_opengl3.o
+DEARIMGUI_OBJS += imgui_demo.o
 
 ###################################################
 # Set thirdpart Dear ImGui Plot
 #
-INCLUDES += -I$(THIRDPART)/implot
 VPATH += $(THIRDPART)/implot
+INCLUDES += -I$(THIRDPART)/implot
 DEARIMGUI_OBJS += implot_items.o implot.o
 
 ###################################################
 # Set thirdpart file dialog
-INCLUDES += -I$(THIRDPART)/ImGuiFileDialog
 VPATH += $(THIRDPART)/ImGuiFileDialog
+INCLUDES += -I$(THIRDPART)/ImGuiFileDialog
 DEARIMGUI_OBJS += ImGuiFileDialog.o
-
-###################################################
-# Set thirdpart Raylib with Dear ImGui
-#
-INCLUDES += -I$(THIRDPART)/rlImGui
-VPATH += $(THIRDPART)/rlImGui
-DEARIMGUI_OBJS += rlImGui.o
 
 ###################################################
 # Set MQTT Library.
@@ -120,17 +132,30 @@ LINKER_FLAGS += -framework OpenGL -framework Cocoa
 LINKER_FLAGS += -framework IOKit -framework CoreVideo
 LINKER_FLAGS += -L/usr/local/lib -L/opt/local/lib
 LINKER_FLAGS += -lGLEW -lglfw
+else ifeq ($(ARCHI),Linux)
+LINKER_FLAGS += -lGL
+PKG_LIBS += --static glfw3
+else ifneq ($(ARCHI),Emscripten)
+$(error Unknown architecture $(ARCHI) for OpenGL)
 endif
 
 ###################################################
-# Make the list of compiled files for the application
+# Check if Dear im gui backend has been set
 #
-#DEARIMGUI_OBJS += imgui_demo.o
-OBJS += $(DEARIMGUI_OBJS)
-OBJS += Application.o PetriNet.o PetriEditor.o Howard.o Algorithms.o main.o
-OBJS += ImportJSON.o ExportJSON.o ExportSymfony.o ExportPnEditor.o
-OBJS += ExportPetriLaTeX.o ExportJulia.o ExportGraphviz.o ExportDrawIO.o
-OBJS += ExportGrafcetCpp.o
+ifeq ($(DEARIMGUI_BACKEND_OBJS),)
+$(error "Define BACKEND either as RayLib or GLFW3")
+endif
+
+###################################################
+# Embed assets for web version. Assets shall be
+# present inside $(BUILD) folder.
+#
+ifeq ($(ARCHI),Emscripten)
+LINKER_FLAGS += --preload-file imgui.ini
+LINKER_FLAGS += --preload-file examples
+LINKER_FLAGS += --preload-file data
+LINKER_FLAGS += -s FORCE_FILESYSTEM=1
+endif
 
 ###################################################
 # MacOS X
@@ -143,6 +168,15 @@ LINKER_FLAGS += -framework CoreFoundation
 endif
 
 ###################################################
+# Make the list of compiled files for the application
+#
+OBJS += $(DEARIMGUI_BACKEND_OBJS) $(DEARIMGUI_OBJS)
+OBJS += Path.o Application.o PetriNet.o PetriEditor.o Howard.o Algorithms.o main.o
+OBJS += ImportJSON.o ExportJSON.o ExportSymfony.o ExportPnEditor.o
+OBJS += ExportPetriLaTeX.o ExportJulia.o ExportGraphviz.o ExportDrawIO.o
+OBJS += ExportGrafcetCpp.o
+
+###################################################
 # Compile the project, the static and shared libraries
 .PHONY: all
 all: copy-emscripten-assets $(TARGET)
@@ -153,9 +187,11 @@ all: copy-emscripten-assets $(TARGET)
 copy-emscripten-assets: | $(BUILD)
 ifeq ($(ARCHI),Emscripten)
 	@$(call print-to,"Copying assets","$(TARGET)","$(BUILD)","")
-	@cp -r $(P)/data/examples $(BUILD)
+	@mkdir -p $(BUILD)/data
+	@mkdir -p $(BUILD)/examples
+	@cp $(P)/data/examples/*.json $(BUILD)/examples
+	@cp $(P)/data/font.ttf $(BUILD)/data
 	@cp $(P)/imgui.ini $(BUILD)
-	@rm -fr $(BUILD)/examples/pics
 endif
 
 ###################################################
