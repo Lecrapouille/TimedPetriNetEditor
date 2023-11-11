@@ -122,6 +122,7 @@ var REMOTE_PACKAGE_SIZE = metadata['remote_package_size'];
       function assert(check, msg) {
         if (!check) throw msg + new Error().stack;
       }
+Module['FS_createPath']("/", "data", true, true);
 Module['FS_createPath']("/", "examples", true, true);
 
       /** @constructor */
@@ -190,7 +191,7 @@ Module['FS_createPath']("/", "examples", true, true);
     }
 
     }
-    loadPackage({"files": [{"filename": "/examples/AppelsDurgence.json", "start": 0, "end": 3709}, {"filename": "/examples/Coffee.json", "start": 3709, "end": 5294}, {"filename": "/examples/EventGraph.json", "start": 5294, "end": 7000}, {"filename": "/examples/FourRoadJunctions.json", "start": 7000, "end": 12397}, {"filename": "/examples/GRAFCET.json", "start": 12397, "end": 13511}, {"filename": "/examples/Howard1.json", "start": 13511, "end": 14546}, {"filename": "/examples/Howard2.json", "start": 14546, "end": 15904}, {"filename": "/examples/Infinite.json", "start": 15904, "end": 16475}, {"filename": "/examples/InputsOutputs.json", "start": 16475, "end": 18153}, {"filename": "/examples/JPQ.json", "start": 18153, "end": 19685}, {"filename": "/examples/Philosophers.json", "start": 19685, "end": 22261}, {"filename": "/examples/ProducerConsumer.json", "start": 22261, "end": 23660}, {"filename": "/examples/README.md", "start": 23660, "end": 25571}, {"filename": "/examples/TrafficLights.json", "start": 25571, "end": 27554}, {"filename": "/examples/dualband.json", "start": 27554, "end": 30861}, {"filename": "/examples/simple.flowshop", "start": 30861, "end": 31045}, {"filename": "/imgui.ini", "start": 31045, "end": 36231}], "remote_package_size": 36231});
+    loadPackage({"files": [{"filename": "/data/font.ttf", "start": 0, "end": 171792}, {"filename": "/examples/AppelsDurgence.json", "start": 171792, "end": 175501}, {"filename": "/examples/Coffee.json", "start": 175501, "end": 177086}, {"filename": "/examples/EventGraph.json", "start": 177086, "end": 178792}, {"filename": "/examples/FourRoadJunctions.json", "start": 178792, "end": 184189}, {"filename": "/examples/GRAFCET.json", "start": 184189, "end": 185303}, {"filename": "/examples/Howard1.json", "start": 185303, "end": 186338}, {"filename": "/examples/Howard2.json", "start": 186338, "end": 187696}, {"filename": "/examples/Infinite.json", "start": 187696, "end": 188267}, {"filename": "/examples/InputsOutputs.json", "start": 188267, "end": 189945}, {"filename": "/examples/JPQ.json", "start": 189945, "end": 191477}, {"filename": "/examples/Philosophers.json", "start": 191477, "end": 194053}, {"filename": "/examples/ProducerConsumer.json", "start": 194053, "end": 195452}, {"filename": "/examples/TrafficLights.json", "start": 195452, "end": 197435}, {"filename": "/examples/dualband.json", "start": 197435, "end": 200742}, {"filename": "/imgui.ini", "start": 200742, "end": 204889}], "remote_package_size": 204889});
 
   })();
 
@@ -1187,8 +1188,8 @@ function dbg(text) {
 // === Body ===
 
 var ASM_CONSTS = {
-  431160: ($0) => { navigator.clipboard.writeText(UTF8ToString($0)); },  
- 431213: ($0) => { document.getElementById("canvas").style.cursor = UTF8ToString($0); }
+  534384: ($0) => { navigator.clipboard.writeText(UTF8ToString($0)); },  
+ 534437: ($0) => { document.getElementById("canvas").style.cursor = UTF8ToString($0); }
 };
 function GetWindowInnerWidth() { return window.innerWidth; }
 function GetWindowInnerHeight() { return window.innerHeight; }
@@ -10633,13 +10634,14 @@ var stackRestore = createExportWrapper('stackRestore');
 var stackAlloc = createExportWrapper('stackAlloc');
 var _emscripten_stack_get_current = () => (_emscripten_stack_get_current = wasmExports['emscripten_stack_get_current'])();
 var ___cxa_is_pointer_type = createExportWrapper('__cxa_is_pointer_type');
-var dynCall_iii = Module['dynCall_iii'] = createExportWrapper('dynCall_iii');
-var dynCall_ii = Module['dynCall_ii'] = createExportWrapper('dynCall_ii');
+var dynCall_vi = Module['dynCall_vi'] = createExportWrapper('dynCall_vi');
 var dynCall_vii = Module['dynCall_vii'] = createExportWrapper('dynCall_vii');
+var dynCall_ii = Module['dynCall_ii'] = createExportWrapper('dynCall_ii');
+var dynCall_iii = Module['dynCall_iii'] = createExportWrapper('dynCall_iii');
+var dynCall_fii = Module['dynCall_fii'] = createExportWrapper('dynCall_fii');
 var dynCall_iiii = Module['dynCall_iiii'] = createExportWrapper('dynCall_iiii');
 var dynCall_viiii = Module['dynCall_viiii'] = createExportWrapper('dynCall_viiii');
 var dynCall_viii = Module['dynCall_viii'] = createExportWrapper('dynCall_viii');
-var dynCall_vi = Module['dynCall_vi'] = createExportWrapper('dynCall_vi');
 var dynCall_viiiiiiiii = Module['dynCall_viiiiiiiii'] = createExportWrapper('dynCall_viiiiiiiii');
 var dynCall_vif = Module['dynCall_vif'] = createExportWrapper('dynCall_vif');
 var dynCall_viiiiii = Module['dynCall_viiiiii'] = createExportWrapper('dynCall_viiiiii');
@@ -10674,8 +10676,8 @@ var _asyncify_start_unwind = createExportWrapper('asyncify_start_unwind');
 var _asyncify_stop_unwind = createExportWrapper('asyncify_stop_unwind');
 var _asyncify_start_rewind = createExportWrapper('asyncify_start_rewind');
 var _asyncify_stop_rewind = createExportWrapper('asyncify_stop_rewind');
-var ___start_em_js = Module['___start_em_js'] = 431282;
-var ___stop_em_js = Module['___stop_em_js'] = 431355;
+var ___start_em_js = Module['___start_em_js'] = 534506;
+var ___stop_em_js = Module['___stop_em_js'] = 534579;
 
 // include: postamble.js
 // === Auto-generated postamble setup entry stuff ===
