@@ -89,12 +89,7 @@ public: //private:
     bool IsMouseClicked(ImGuiMouseButton& button, bool& dragging);
     bool IsMouseReleased(ImGuiMouseButton& key);
 
-    /*
-      void align();
-      PetriNet::CriticalCycleResult findCriticalCycle();
-      bool screenshot();
-      bool changeTypeOfNet(TypeOfNet const type);
-    */
+    void screenshot();
     void clear();
 
     std::string getError() const

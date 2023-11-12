@@ -41,8 +41,21 @@ public:
 
     Application(size_t const width, size_t const height, std::string const& title);
     virtual ~Application();
+
+    //--------------------------------------------------------------------------
+    //! \brief Start a blocking loop for managing its draw and IO events.
+    //--------------------------------------------------------------------------
     void run();
-    void setFramerate(size_t const framerate);
+
+    //--------------------------------------------------------------------------
+    //! \brief Limit the framerate to a maximum fixed frequency.
+    //--------------------------------------------------------------------------
+    void framerate(size_t const framerate);
+
+    //--------------------------------------------------------------------------
+    //! \brief Take a screenshot of the game and save it as PNG to the given path.
+    //--------------------------------------------------------------------------
+    bool screenshot(std::string const& screenshot_path);
 
 private:
 

@@ -115,8 +115,15 @@ void Application::run()
 }
 
 //------------------------------------------------------------------------------
-void Application::setFramerate(size_t const framerate)
+void Application::framerate(size_t const framerate)
 {
     m_framerate = framerate;
     SetTargetFPS(m_framerate);
+}
+
+//------------------------------------------------------------------------------
+bool Application::screenshot(std::string const& screenshot_path)
+{
+    TakeScreenshot(screenshot_path.c_str());
+    return true; // FIXME always ?
 }

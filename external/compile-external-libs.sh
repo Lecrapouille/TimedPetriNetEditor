@@ -41,10 +41,3 @@ print-compile raylib
    call-make PLATFORM=PLATFORM_WEB RAYLIB_RELEASE_PATH=$ARCHI
  fi
 )
-
- #rm -fr build usr 2> /dev/null
- #mkdir -p build
- #cd build
- #call-cmake -DPLATFORM=Web -DBUILD_SHARED_LIBS=OFF -DBUILD_EXAMPLES=OFF ..
- #call-make
- #call-make install DESTDIR=.

@@ -40,6 +40,7 @@ static bool do_syslin = false;
 static bool do_adjency = false;
 static bool do_load = false;
 static bool do_save_as = false;
+static bool do_screenshot = false;
 static Exporter const* do_export_to = nullptr;
 static bool show_about = false;
 static bool show_help = false;
@@ -413,7 +414,9 @@ static void menu(Editor& editor)
                 editor.m_layout_config.grid.enable ^= true;
             }
             if (ImGui::MenuItem("Take screenshot", nullptr, false))
-            {}//editor.screenshot();
+            {
+                do_screenshot = true;
+            }
             ImGui::Separator();
             //if (ImGui::MenuItem("Run", nullptr, false)) TODO
             //    editor.run();
@@ -469,6 +472,7 @@ static void menu(Editor& editor)
     if (do_load) { editor.load(); }
     if (do_save_as) { editor.saveAs(); }
     if (do_export_to != nullptr) { editor.exportTo(*do_export_to); }
+    if (do_screenshot) { editor.screenshot(); }
 
     ImVec2 center = ImGui::GetMainViewport()->GetCenter();
 
@@ -1132,11 +1136,11 @@ void Editor::exportTo(Exporter const& exporter)
     {
         if (ImGuiFileDialog::Instance()->IsOk())
         {
-            std::string error = exporter.exportFct(m_net, ImGuiFileDialog::Instance()->GetFilePathName());
+            auto const path = ImGuiFileDialog::Instance()->GetFilePathName();
+            std::string error = exporter.exportFct(m_net, path);
             if (error.empty())
             {
-                m_messages.setInfo("saved with success " +
-                                   ImGuiFileDialog::Instance()->GetFilePathName());
+                m_messages.setInfo("saved with success '" + path + "'");
             }
             else
             {
@@ -1156,6 +1160,36 @@ void Editor::saveAs()
 {
     static Exporter exporter{"TimedPetriNetEditor", ".json", exportToJSON};
     exportTo(exporter);
+}
+
+//------------------------------------------------------------------------------
+void Editor::screenshot()
+{
+    ImGuiFileDialog::Instance()->OpenDialog("ChooseFileDlgKey",
+                                            "Choose the JPEG file to save the screenshot",
+                                            ".jpg", ".", 1, nullptr,
+                                            ImGuiFileDialogFlags_Modal | ImGuiFileDialogFlags_ConfirmOverwrite);
+
+    if (ImGuiFileDialog::Instance()->Display("ChooseFileDlgKey"))
+    {
+        if (ImGuiFileDialog::Instance()->IsOk())
+        {
+            auto const path = ImGuiFileDialog::Instance()->GetFilePathName();
+            std::cout << "ghhghgh\n";
+            if (Application::screenshot(path))
+            {
+                m_messages.setInfo("Screenshot taken as file '" + path + "'");
+            }
+            else
+            {
+                m_messages.setError("Failed to save screenshot to file '" + path + "'");
+            }
+        }
+
+        // close.
+        do_screenshot = false;
+        ImGuiFileDialog::Instance()->Close();
+    }
 }
 
 //------------------------------------------------------------------------------
@@ -1348,7 +1382,7 @@ void Editor::onHandleInput()
             // update() producing two AnimatedToken carying 1 token that
             // will be displayed at the same position instead of a
             // single AnimatedToken carying 2 tokens.
-            setFramerate(m_simulating ? 30 : 60); // FPS
+            framerate(m_simulating ? 30 : 60); // FPS
         }
     }
 }
