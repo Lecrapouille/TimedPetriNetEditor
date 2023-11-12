@@ -1188,8 +1188,8 @@ function dbg(text) {
 // === Body ===
 
 var ASM_CONSTS = {
-  534496: ($0) => { navigator.clipboard.writeText(UTF8ToString($0)); },  
- 534549: ($0) => { document.getElementById("canvas").style.cursor = UTF8ToString($0); }
+  535536: ($0) => { navigator.clipboard.writeText(UTF8ToString($0)); },  
+ 535589: ($0) => { document.getElementById("canvas").style.cursor = UTF8ToString($0); }
 };
 function GetWindowInnerWidth() { return window.innerWidth; }
 function GetWindowInnerHeight() { return window.innerHeight; }
@@ -1430,11 +1430,6 @@ function GetWindowInnerHeight() { return window.innerHeight; }
       assert(false, 'Exception thrown, but exception catching is not enabled. Compile with -sNO_DISABLE_EXCEPTION_CATCHING or -sEXCEPTION_CATCHING_ALLOWED=[..] to catch.');
     };
 
-  var setErrNo = (value) => {
-      HEAP32[((___errno_location())>>2)] = value;
-      return value;
-    };
-  
   var PATH = {
   isAbs:(path) => path.charAt(0) === '/',
   splitPath:(filename) => {
@@ -4234,6 +4229,40 @@ function GetWindowInnerHeight() { return window.innerHeight; }
         return stream;
       },
   };
+  function ___syscall_faccessat(dirfd, path, amode, flags) {
+  try {
+  
+      path = SYSCALLS.getStr(path);
+      assert(flags === 0);
+      path = SYSCALLS.calculateAt(dirfd, path);
+      if (amode & ~7) {
+        // need a valid mode
+        return -28;
+      }
+      var lookup = FS.lookupPath(path, { follow: true });
+      var node = lookup.node;
+      if (!node) {
+        return -44;
+      }
+      var perms = '';
+      if (amode & 4) perms += 'r';
+      if (amode & 2) perms += 'w';
+      if (amode & 1) perms += 'x';
+      if (perms /* otherwise, they've just passed F_OK */ && FS.nodePermissions(node, perms)) {
+        return -2;
+      }
+      return 0;
+    } catch (e) {
+    if (typeof FS == 'undefined' || !(e.name === 'ErrnoError')) throw e;
+    return -e.errno;
+  }
+  }
+
+  var setErrNo = (value) => {
+      HEAP32[((___errno_location())>>2)] = value;
+      return value;
+    };
+  
   function ___syscall_fcntl64(fd, cmd, varargs) {
   SYSCALLS.varargs = varargs;
   try {
@@ -8270,6 +8299,11 @@ function GetWindowInnerHeight() { return window.innerHeight; }
   }
   }
 
+  var _getentropy = (buffer, size) => {
+      randomFill(HEAPU8.subarray(buffer, buffer + size));
+      return 0;
+    };
+
 
 
 
@@ -10050,6 +10084,8 @@ var wasmImports = {
   /** @export */
   __cxa_throw: ___cxa_throw,
   /** @export */
+  __syscall_faccessat: ___syscall_faccessat,
+  /** @export */
   __syscall_fcntl64: ___syscall_fcntl64,
   /** @export */
   __syscall_fstat64: ___syscall_fstat64,
@@ -10458,6 +10494,8 @@ var wasmImports = {
   /** @export */
   fd_write: _fd_write,
   /** @export */
+  getentropy: _getentropy,
+  /** @export */
   glActiveTexture: _glActiveTexture,
   /** @export */
   glAttachShader: _glAttachShader,
@@ -10676,8 +10714,8 @@ var _asyncify_start_unwind = createExportWrapper('asyncify_start_unwind');
 var _asyncify_stop_unwind = createExportWrapper('asyncify_stop_unwind');
 var _asyncify_start_rewind = createExportWrapper('asyncify_start_rewind');
 var _asyncify_stop_rewind = createExportWrapper('asyncify_stop_rewind');
-var ___start_em_js = Module['___start_em_js'] = 534618;
-var ___stop_em_js = Module['___stop_em_js'] = 534691;
+var ___start_em_js = Module['___start_em_js'] = 535658;
+var ___stop_em_js = Module['___stop_em_js'] = 535731;
 
 // include: postamble.js
 // === Auto-generated postamble setup entry stuff ===
