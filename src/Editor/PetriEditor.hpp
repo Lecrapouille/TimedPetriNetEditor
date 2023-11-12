@@ -21,9 +21,10 @@
 #ifndef PETRIEDITOR_HPP
 #  define PETRIEDITOR_HPP
 
+#  include "Application.hpp" // Path defined in the Makefile
 #  include "TimedPetriNetEditor/PetriNet.hpp"
-#  include "Application.hpp"
-#  include "Utils/Messages.hpp"
+#  include "Net/Simulation.hpp"
+#  include "Editor/Messages.hpp"
 
 namespace tpne {
 
@@ -35,8 +36,6 @@ struct Exporter;
 // *****************************************************************************
 class Editor: public Application
 {
-    //friend void menu(Editor& editor);
-
 public:
 
     //--------------------------------------------------------------------------
@@ -160,28 +159,13 @@ private: // gestion de la souris
 
 private:
 
-    // *************************************************************************
-    //! \brief State machine for the Petri net simulation.
-    // *************************************************************************
-    enum States
-    {
-        STATE_IDLE,     //! Waiting the user request to start the simulation.
-        STATE_STARTING, //! Init states before the simulation.
-        STATE_ENDING,   //! Restore states after the simulation.
-        STATE_ANIMATING //! Simulation on-going: animate tokens.
-    };
-
-private:
-
-    //! \brief Memorize number of tokens in places.
-    std::vector<size_t> m_backup_tokens;
     //! \brief Some algorithms indicate arcs (i.e. critical cycles, or
     //! if a Petri net is an event graph).
     std::vector<Arc*> m_selected_arcs;
-    //! \brief State machine for the simulation.
-    std::atomic<States> m_state{STATE_IDLE};
     //! \brief
     Messages m_messages;
+    //! \brief
+    Simulation m_simulation;
 
 public: // FIXME
 

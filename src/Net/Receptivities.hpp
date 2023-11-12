@@ -1,10 +1,10 @@
 //=============================================================================
-// TimedPetriNetEditor: A timed Petri net editor.
+// TimedNetEditor: A timed Petri net editor.
 // Copyright 2021 -- 2023 Quentin Quadrat <lecrapouille@gmail.com>
 //
-// This file is part of TimedPetriNetEditor.
+// This file is part of TimedNetEditor.
 //
-// TimedPetriNetEditor is free software: you can redistribute it and/or modify it
+// TimedNetEditor is free software: you can redistribute it and/or modify it
 // under the terms of the GNU General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
 // (at your option) any later version.
@@ -28,7 +28,9 @@
 #  include <vector>
 #  include <iostream>
 
-class PetriNet;
+namespace tpne {
+
+class Net;
 
 // ****************************************************************************
 //! \brief Container of sensors.
@@ -73,12 +75,12 @@ public:
     {
     public:
 
-        StepExp(PetriNet& net, std::string const& token);
+        StepExp(Net& net, std::string const& token);
         virtual bool evaluate(Sensors const& sensors) const override;
 
     private:
 
-        PetriNet& m_net;
+        Net& m_net;
         size_t m_id; // Place id
     };
 
@@ -212,7 +214,7 @@ public:
         //--------------------------------------------------------------------------
         //! \brief Parse a postfix notation into an AST.
         //--------------------------------------------------------------------------
-        static std::shared_ptr<BooleanExp> parse(PetriNet& net, std::string const& code, std::string& error);
+        static std::shared_ptr<BooleanExp> parse(Net& net, std::string const& code, std::string& error);
 
         //--------------------------------------------------------------------------
         //! \brief Parse a postfix notation into an AST.
@@ -246,5 +248,7 @@ public:
     std::shared_ptr<BooleanExp> expression;
     bool valid = false;
 };
+
+} // namespace tpne
 
 #endif

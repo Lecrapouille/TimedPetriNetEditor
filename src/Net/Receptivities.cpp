@@ -1,10 +1,10 @@
 //=============================================================================
-// TimedPetriNetEditor: A timed Petri net editor.
+// TimedNetEditor: A timed Petri net editor.
 // Copyright 2021 -- 2023 Quentin Quadrat <lecrapouille@gmail.com>
 //
-// This file is part of TimedPetriNetEditor.
+// This file is part of TimedNetEditor.
 //
-// TimedPetriNetEditor is free software: you can redistribute it and/or modify it
+// TimedNetEditor is free software: you can redistribute it and/or modify it
 // under the terms of the GNU General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
 // (at your option) any later version.
@@ -18,12 +18,14 @@
 // along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.
 //=============================================================================
 
-#include "Receptivities.hpp"
-#include "PetriNet.hpp"
+#include "Net/Receptivities.hpp"
+#include "TimedPetriNetEditor/PetriNet.hpp"
 #include <cassert>
 
+namespace tpne {
+
 //-----------------------------------------------------------------------------
-Receptivity::StepExp::StepExp(PetriNet& net, std::string const& token)
+Receptivity::StepExp::StepExp(Net& net, std::string const& token)
     : m_net(net)
 {
     assert(token[0] == 'X' && "Incorrect state identifier");
@@ -223,7 +225,7 @@ std::string Receptivity::Parser::translate(std::string const& code, std::string 
 }
 
 //-----------------------------------------------------------------------------
-std::shared_ptr<Receptivity::BooleanExp> Receptivity::Parser::parse(PetriNet& net, std::string const& code, std::string& error)
+std::shared_ptr<Receptivity::BooleanExp> Receptivity::Parser::parse(Net& net, std::string const& code, std::string& error)
 {
     error.clear();
 
@@ -284,7 +286,7 @@ std::shared_ptr<Receptivity::BooleanExp> Receptivity::Parser::parse(PetriNet& ne
         }
         else if (isVariable(it))
         {
-            net.m_sensors.assign(it, false); // Default value
+            // TODO net.m_sensors.assign(it, false); // Default value
             exprs.push(std::make_shared<VariableExp>(it));
         }
         else
@@ -306,3 +308,5 @@ bool Receptivity::Parser::evaluate(Receptivity const recept, Sensors const& sens
 
     return recept.expression->evaluate(sensors);
 }
+
+} // namespace tpne

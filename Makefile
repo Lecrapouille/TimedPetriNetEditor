@@ -23,13 +23,13 @@ include $(M)/Makefile.header
 ###################################################
 # Inform Makefile where to find *.cpp files
 #
-VPATH += $(P)/src $(P)/src/Utils $(P)/src/Net
-VPATH += $(P)/src/Net/Formats $(P)/src/Renderer $(P)/include
+VPATH += $(P)/include $(P)/src $(P)/src/Net
+VPATH += $(P)/src/Net/Formats $(P)/src/Editor
 
 ###################################################
 # Inform Makefile where to find header files
 #
-INCLUDES += -I$(P)/include -I$(P)/src -I$(P)/src/Net/Formats -I$(P)/src/Renderer
+INCLUDES += -I$(P)/include -I$(P)/src
 
 ###################################################
 # Project defines
@@ -73,9 +73,9 @@ endif
 #
 ifeq ($(BACKEND),RayLib)
 VPATH += $(THIRDPART)/rlImGui
-VPATH += $(P)/src/Renderer/Backends/RayLib
+VPATH += $(P)/src/Editor/Backends/RayLib
 INCLUDES += -I$(THIRDPART)/rlImGui
-INCLUDES += -I$(P)/src/Renderer/Backends/RayLib
+INCLUDES += -I$(P)/src/Editor/Backends/RayLib
 DEARIMGUI_BACKEND_OBJS += rlImGui.o
 endif
 
@@ -83,8 +83,8 @@ endif
 # Dear ImGui backends: OpenGL/GLFW3
 #
 ifeq ($(BACKEND),GLFW3)
-VPATH += $(P)/src/Renderer/Backends/GLFW3
-INCLUDES += -I$(P)/src/Renderer/Backends/GLFW3
+VPATH += $(P)/src/Editor/Backends/GLFW3
+INCLUDES += -I$(P)/src/Editor/Backends/GLFW3
 DEARIMGUI_BACKEND_OBJS += imgui_impl_glfw.o imgui_impl_opengl3.o
 endif
 
@@ -146,6 +146,13 @@ ifeq ($(DEARIMGUI_BACKEND_OBJS),)
 $(error "Define BACKEND either as RayLib or GLFW3")
 endif
 
+ifeq ($(ARCHI),Emscripten)
+ifneq ($(BACKEND),RayLib)
+$(warning "Force RayLib backend for compiling with Emscripten")
+BACKEND := RayLib
+endif
+endif
+
 ###################################################
 # Embed assets for web version. Assets shall be
 # present inside $(BUILD) folder.
@@ -170,16 +177,19 @@ endif
 ###################################################
 # Make the list of compiled files for the application
 #
+LIB_OBJS += Path.o Howard.o TimedTokens.o Receptivities.o
+LIB_OBJS += PetriNet.o Algorithms.o Simulation.o
+LIB_OBJS += ImportJSON.o ExportJSON.o ExportSymfony.o ExportPnEditor.o
+LIB_OBJS += ExportPetriLaTeX.o ExportJulia.o ExportGraphviz.o ExportDrawIO.o
+LIB_OBJS += ExportGrafcetCpp.o
 OBJS += $(DEARIMGUI_BACKEND_OBJS) $(DEARIMGUI_OBJS)
-OBJS += Path.o Application.o PetriNet.o PetriEditor.o Howard.o Algorithms.o main.o
-OBJS += ImportJSON.o ExportJSON.o ExportSymfony.o ExportPnEditor.o
-OBJS += ExportPetriLaTeX.o ExportJulia.o ExportGraphviz.o ExportDrawIO.o
-OBJS += ExportGrafcetCpp.o
+OBJS += $(LIB_OBJS)
+OBJS += Application.o PetriEditor.o main.o
 
 ###################################################
 # Compile the project, the static and shared libraries
 .PHONY: all
-all: copy-emscripten-assets $(TARGET)
+all: copy-emscripten-assets $(STATIC_LIB_TARGET) $(SHARED_LIB_TARGET) $(PKG_FILE) $(TARGET)
 
 ###################################################
 #
@@ -210,7 +220,7 @@ ifeq ($(ARCHI),Linux)
 ###################################################
 # Install project. You need to be root.
 .PHONY: install
-install: $(TARGET)
+install: $(TARGET) $(STATIC_LIB_TARGET) $(SHARED_LIB_TARGET) $(PKG_FILE)
 	@$(call INSTALL_BINARY)
 	@$(call INSTALL_DOCUMENTATION)
 	@$(call INSTALL_PROJECT_LIBRARIES)

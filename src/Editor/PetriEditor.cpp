@@ -18,8 +18,8 @@
 // along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.
 //=============================================================================
 
-#include "Renderer/PetriEditor.hpp"
-#include "Renderer/KeyBindings.hpp"
+#include "Editor/PetriEditor.hpp"
+#include "Editor/KeyBindings.hpp"
 #include "TimedPetriNetEditor/Algorithms.hpp"
 #include "Net/Formats/Exports.hpp"
 #include "Net/Formats/Imports.hpp"
@@ -89,6 +89,13 @@ static inline float norm(const float xa, const float ya, const float xb, const f
 static inline ImVec2 ImRotate(const ImVec2 &v, float cos_a, float sin_a)
 {
     return ImVec2(v.x * cos_a - v.y * sin_a, v.x * sin_a + v.y * cos_a);
+}
+
+static float random(int lower, int upper)
+{
+    auto const t = static_cast<unsigned int>(time(NULL));
+    srand(t);
+    return float(rand() % (upper - lower + 1)) + float(lower);
 }
 
 //------------------------------------------------------------------------------
@@ -676,7 +683,8 @@ static void menu(Editor& editor)
 //--------------------------------------------------------------------------
 Editor::Editor(size_t const width, size_t const height,
                std::string const& title, std::string const& filename)
-    : Application(width, height, title), m_filename(filename)
+    : Application(width, height, title), m_filename(filename),
+      m_simulation(m_net, m_simulating, m_messages)
 {}
 
 //------------------------------------------------------------------------------
@@ -781,6 +789,17 @@ void Editor::drawPetriNet()
 //------------------------------------------------------------------------------
 void Editor::onDraw()
 {
+#if 0
+    if (m_net.modified)
+    {
+        m_renderer.setTitle(m_title + " **");
+    }
+    else
+    {
+        m_renderer.setTitle(m_title);
+    }
+#endif
+
     ImGui::DockSpaceOverViewport();
 
     ::tpne::menu(*this);

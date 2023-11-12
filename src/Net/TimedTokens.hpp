@@ -18,11 +18,12 @@
 // along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.
 //=============================================================================
 
-#ifndef ANIMATED_TOKENS_HPP
-#  define ANIMATED_TOKENS_HPP
+#ifndef TIMED_TOKENS_HPP
+#  define TIMED_TOKENS_HPP
 
-#  include "PetriNet.hpp"
-#  include "utils/Utils.hpp"
+#  include "TimedPetriNetEditor/PetriNet.hpp"
+
+namespace tpne {
 
 // *****************************************************************************
 //! \brief Tokens are systems resources. Places indicate how many tokens they
@@ -33,7 +34,7 @@
 //! with the number of tokens carried as caption. Since we are working on timed
 //! petri nets arcs have a duration which is also constrain their velocity.
 // *****************************************************************************
-struct AnimatedToken
+struct TimedToken
 {
     //--------------------------------------------------------------------------
     //! \brief Constructor.
@@ -42,46 +43,7 @@ struct AnimatedToken
     //! \param[in] tokens_: the number of tokens it shall carry.
     //! \param[in] type_: Type of the net (Petri, timed Petri, GRAFCET ...)
     //--------------------------------------------------------------------------
-    AnimatedToken(Arc& arc_, size_t tokens_, PetriNet::Type type_)
-        : arc(arc_), x(arc_.from.x), y(arc_.from.y), tokens(tokens_), type(type_)
-    {
-        assert(arc.from.type == Node::Type::Transition);
-        assert(arc.to.type == Node::Type::Place);
-
-        // Note: we are supposing the norm and duration is never updated by
-        // the user during the simulation.
-        if (type != PetriNet::Type::TimedEventGraph)
-        {
-            magnitude = norm(arc.from.x, arc.from.y, arc.to.x, arc.to.y);
-        }
-        else
-        {
-            // With graph event we have to skip implicit places.
-            assert(arc.to.arcsOut.size() == 1u && "malformed graph event");
-            Node& next = arc.to.arcsOut[0]->to;
-            magnitude = norm(arc.from.x, arc.from.y, next.x, next.y);
-        }
-
-        // Set the token animation speed. Depending on the type of Petri net,
-        // and for pure entertainment reason, override the arc duration to
-        // avoid unpleasant instaneous transitions (teleportation effect).
-        switch (type_)
-        {
-        case PetriNet::Type::TimedPetri:
-        case PetriNet::Type::TimedEventGraph:
-            speed = magnitude / std::max(0.000001f, arc.duration);
-            break;
-            // In theory duration is 0 but nicer for the user to see animation.
-        case PetriNet::Type::Petri:
-            speed = magnitude / 0.2f;
-            break;
-            // In theory duration is 0 but nicer for the user to see animation.
-        case PetriNet::Type::GRAFCET:
-            speed = magnitude / 1.5f;
-            break;
-        default: assert(false && "Unknown type of net"); break;
-        }
-    }
+    TimedToken(Arc& arc_, size_t const tokens_, TypeOfNet const type_);
 
     // I dunno why the code in the #else branch seems to make buggy animations
     // with tokens that disapear. Cannot catch it by unit tests.
@@ -91,50 +53,50 @@ struct AnimatedToken
     //--------------------------------------------------------------------------
     //! \brief Hack needed because of references
     //--------------------------------------------------------------------------
-    AnimatedToken& operator=(const AnimatedToken& obj)
+    TimedToken& operator=(const TimedToken& obj)
     {
-        this->~AnimatedToken(); // destroy
-        new (this) AnimatedToken(obj); // copy construct in place
+        this->~TimedToken(); // destroy
+        new (this) TimedToken(obj); // copy construct in place
         return *this;
     }
 
-    AnimatedToken(const AnimatedToken&) = default;
-    AnimatedToken(AnimatedToken&&) = default;
-    AnimatedToken& operator=(AnimatedToken&&) = default;
+    TimedToken(const TimedToken&) = default;
+    TimedToken(TimedToken&&) = default;
+    TimedToken& operator=(TimedToken&&) = default;
 
 #else
 
     //--------------------------------------------------------------------------
     //! \brief Hack needed because of references
     //--------------------------------------------------------------------------
-    AnimatedToken& operator=(AnimatedToken const& other)
+    TimedToken& operator=(TimedToken const& other)
     {
-        this->~AnimatedToken(); // destroy
-        new (this) AnimatedToken(other); // copy construct in place
+        this->~TimedToken(); // destroy
+        new (this) TimedToken(other); // copy construct in place
         return *this;
     }
 
     //--------------------------------------------------------------------------
     //! \brief Needed to remove compilation warnings
     //--------------------------------------------------------------------------
-    AnimatedToken(AnimatedToken const& other)
-        : AnimatedToken(other.arc, other.tokens)
+    TimedToken(TimedToken const& other)
+        : TimedToken(other.arc, other.tokens)
     {}
 
     //--------------------------------------------------------------------------
     //! \brief Needed to remove compilation warnings
     //--------------------------------------------------------------------------
-    AnimatedToken(AnimatedToken&& other)
-        : AnimatedToken(other.arc, other.tokens)
+    TimedToken(TimedToken&& other)
+        : TimedToken(other.arc, other.tokens)
     {}
 
     //--------------------------------------------------------------------------
     //! \brief Needed to remove compilation warnings
     //--------------------------------------------------------------------------
-    AnimatedToken& operator=(AnimatedToken&& other)
+    TimedToken& operator=(TimedToken&& other)
     {
-        this->~AnimatedToken(); // destroy
-        new (this) AnimatedToken(other); // copy construct in place
+        this->~TimedToken(); // destroy
+        new (this) TimedToken(other); // copy construct in place
         return *this;
     }
 
@@ -145,18 +107,7 @@ struct AnimatedToken
     //! \param[in] dt: the delta time (in seconds) from the previous call.
     //! \return true when arriving to the destination node (Place) else false.
     //--------------------------------------------------------------------------
-    bool update(float const dt)
-    {
-        // With graph event we have to skip implicit places.
-        Node& next = (type != PetriNet::Type::TimedEventGraph)
-                   ? arc.to : arc.to.arcsOut[0]->to;
-
-        offset += dt * speed / magnitude;
-        x = arc.from.x + (next.x - arc.from.x) * offset;
-        y = arc.from.y + (next.y - arc.from.y) * offset;
-
-        return (offset >= 1.0);
-    }
+    bool update(float const dt);
 
     //--------------------------------------------------------------------------
     //! \brief Return the reference of the destination node casted as a Place.
@@ -177,7 +128,7 @@ struct AnimatedToken
     //! \brief Number of carried tokens.
     size_t tokens;
     //! \brief
-    PetriNet::Type type;
+    TypeOfNet type;
     //! \brief The length of the arc.
     float magnitude;
     //! \brief The speed of the token moving along the arc.
@@ -186,5 +137,7 @@ struct AnimatedToken
     //! position, 100%: destination position).
     float offset = 0.0f;
 };
+
+} // namespace tpne
 
 #endif

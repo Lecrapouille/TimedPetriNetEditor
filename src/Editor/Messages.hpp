@@ -21,7 +21,6 @@
 #ifndef MESSAGES_HPP
 #  define MESSAGES_HPP
 
-#  include "Utils.hpp"
 #  include <cassert>
 
 // *****************************************************************************
@@ -95,6 +94,16 @@ public:
     void clear() { m_messages.clear(); }
 
 protected:
+
+    //--------------------------------------------------------------------------
+    const char* current_time()
+    {
+        static char buffer[32];
+
+        time_t current_time = ::time(nullptr);
+        strftime(buffer, sizeof (buffer), "[%H:%M:%S] ", localtime(&current_time));
+        return buffer;
+    }
 
     //--------------------------------------------------------------------------
     //! \brief

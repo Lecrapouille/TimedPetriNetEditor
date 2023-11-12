@@ -595,17 +595,17 @@ public:
 
     //--------------------------------------------------------------------------
     //! \brief Set tokens in all places.
-    //! \param[in] marks the vector holding tokens for each places (P0, P1 .. Pn).
+    //! \param[in] tokens_ the vector holding tokens for each places (P0, P1 .. Pn).
     //! \return true if the length of the vector matchs the number of places,
     //! return false else and you shall call message() to get the error message.
     //--------------------------------------------------------------------------
-    bool setTokens(std::vector<size_t> const& tokens);
+    bool tokens(std::vector<size_t> const& tokens_);
 
     //--------------------------------------------------------------------------
     //! \brief Get tokens from all places.
-    //! \param[out] marks the vector holding tokens for each places (P0, P1 .. Pn).
+    //! \return the vector holding tokens for each places (P0, P1 .. Pn).
     //--------------------------------------------------------------------------
-    void getTokens(std::vector<size_t>& tokens) const;
+    std::vector<size_t> tokens() const;
 
     //--------------------------------------------------------------------------
     //! \brief Add a new Petri Transition. To be called when the user clicked on

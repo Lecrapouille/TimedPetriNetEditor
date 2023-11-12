@@ -28,7 +28,7 @@
 #include "implot.h"
 #include "ImGuiFileDialog.h"
 
-#include "Utils/Path.hpp"
+#include "Editor/Path.hpp" // FIXME
 
 #include <string>
 

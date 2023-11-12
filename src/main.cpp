@@ -1,4 +1,4 @@
-#include "Renderer/PetriEditor.hpp"
+#include "Editor/PetriEditor.hpp"
 #include <iostream>
 #include <unistd.h>
 

@@ -18,7 +18,7 @@
 // along with MyLogger.  If not, see <http://www.gnu.org/licenses/>.
 //=====================================================================
 
-#include "Utils/Path.hpp"
+#include "Editor/Path.hpp"
 #include <sstream>
 #include <sys/stat.h>
 #ifdef __APPLE__

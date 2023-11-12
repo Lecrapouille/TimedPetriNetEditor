@@ -20,8 +20,8 @@
 
 #include "TimedPetriNetEditor/PetriNet.hpp"
 #include "TimedPetriNetEditor/Algorithms.hpp"
-#include "Imports.hpp"
-#include "Exports.hpp"
+#include "Net/Formats/Imports.hpp"
+#include "Net/Formats/Exports.hpp"
 
 #include <iomanip>
 #include <iostream>
@@ -195,19 +195,21 @@ bool Net::convertTo(TypeOfNet const type, std::vector<Arc*>& erroneous_arcs)
 }
 
 //------------------------------------------------------------------------------
-void Net::getTokens(std::vector<size_t>& tokens) const
+std::vector<size_t> Net::tokens() const
 {
-    tokens.resize(m_places.size());
+    std::vector<size_t> tokens_;
+    tokens_.resize(m_places.size());
     for (auto& place: m_places)
     {
-        tokens[place.id] = place.tokens;
+        tokens_[place.id] = place.tokens;
     }
+    return tokens_;
 }
 
 //------------------------------------------------------------------------------
-bool Net::setTokens(std::vector<size_t> const& tokens)
+bool Net::tokens(std::vector<size_t> const& tokens_)
 {
-    if (m_places.size() != tokens.size())
+    if (m_places.size() != tokens_.size())
     {
         m_message.str("");
         m_message << "the container dimension holding tokens does not match the number of places"
@@ -215,10 +217,10 @@ bool Net::setTokens(std::vector<size_t> const& tokens)
         return false;
     }
 
-    size_t i = tokens.size();
+    size_t i = tokens_.size();
     while (i--)
     {
-        m_places[i].tokens = tokens[i];
+        m_places[i].tokens = tokens_[i];
     }
 
     return true;
