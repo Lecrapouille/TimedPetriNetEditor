@@ -1188,8 +1188,8 @@ function dbg(text) {
 // === Body ===
 
 var ASM_CONSTS = {
-  534368: ($0) => { navigator.clipboard.writeText(UTF8ToString($0)); },  
- 534421: ($0) => { document.getElementById("canvas").style.cursor = UTF8ToString($0); }
+  534496: ($0) => { navigator.clipboard.writeText(UTF8ToString($0)); },  
+ 534549: ($0) => { document.getElementById("canvas").style.cursor = UTF8ToString($0); }
 };
 function GetWindowInnerWidth() { return window.innerWidth; }
 function GetWindowInnerHeight() { return window.innerHeight; }
@@ -10676,8 +10676,8 @@ var _asyncify_start_unwind = createExportWrapper('asyncify_start_unwind');
 var _asyncify_stop_unwind = createExportWrapper('asyncify_stop_unwind');
 var _asyncify_start_rewind = createExportWrapper('asyncify_start_rewind');
 var _asyncify_stop_rewind = createExportWrapper('asyncify_stop_rewind');
-var ___start_em_js = Module['___start_em_js'] = 534490;
-var ___stop_em_js = Module['___stop_em_js'] = 534563;
+var ___start_em_js = Module['___start_em_js'] = 534618;
+var ___stop_em_js = Module['___stop_em_js'] = 534691;
 
 // include: postamble.js
 // === Auto-generated postamble setup entry stuff ===
