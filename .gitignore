@@ -8,9 +8,6 @@ build/
 doc/coverage/
 external/*/
 
-# Visual Studio code
-.vscode
-
 # LaTeX
 *.aux
 *.dvi
