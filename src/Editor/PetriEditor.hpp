@@ -78,6 +78,7 @@ public: //private:
     void exportTo(Exporter const& exporter);
     void saveAs();
     void close();
+    void toogleStartSimulation();
 
     void onHandleInput();
     void onDragged(ImVec2 const& mouse_delta); // Grid
@@ -104,6 +105,7 @@ public: //private:
 private: // Inheritnace from Application class
 
     virtual void onStartUp() override;
+    virtual void onUpdate(float const dt) override;
     virtual void onDraw() override;
 
 private: // A deplacer dans Renderer:

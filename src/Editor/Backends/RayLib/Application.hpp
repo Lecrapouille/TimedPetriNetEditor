@@ -61,6 +61,7 @@ private:
 
     virtual void onStartUp() = 0;
     virtual void onDraw() = 0;
+    virtual void onUpdate(float const dt) = 0;
 
 protected:
 

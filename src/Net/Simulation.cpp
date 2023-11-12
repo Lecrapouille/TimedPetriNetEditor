@@ -110,7 +110,8 @@ void Simulation::starting()
 
     // Reset states of the simulator
     m_initial_tokens = m_net.tokens();
-    m_animated_tokens.clear();
+    shuffle_transitions(true);
+    m_timed_tokens.clear();
 
     //
     std::cout << current_time() << "Simulation has started!" << std::endl;
@@ -139,7 +140,7 @@ void Simulation::halting()
 
     // Restore burnt tokens from the simulation
     m_net.tokens(m_initial_tokens);
-    m_animated_tokens.clear();
+    m_timed_tokens.clear();
     m_state = Simulation::State::Idle;
 }
 
@@ -243,7 +244,7 @@ void Simulation::simulating(float const dt)
                             << a.count << " token"
                             << (a.count == 1u ? "" : "s")
                             << std::endl;
-                m_animated_tokens.push_back(TimedToken(a, a.count, m_net.type()));
+                m_timed_tokens.push_back(TimedToken(a, a.count, m_net.type()));
                 //TODO a.fading.restart();
                 a.count = 0u;
             }
@@ -251,12 +252,12 @@ void Simulation::simulating(float const dt)
     }
 
     // Tokens Transition --> Places are transitioning.
-    if (m_animated_tokens.size() > 0u)
+    if (m_timed_tokens.size() > 0u)
     {
-        size_t i = m_animated_tokens.size();
+        size_t i = m_timed_tokens.size();
         while (i--)
         {
-            TimedToken& an = m_animated_tokens[i];
+            TimedToken& an = m_timed_tokens[i];
             if (an.update(dt))
             {
                 // Animated token reached its ddestination: Place
@@ -283,13 +284,12 @@ void Simulation::simulating(float const dt)
                 }
 
                 // Remove it
-                m_animated_tokens[i] = m_animated_tokens[m_animated_tokens.size() - 1u];
-                m_animated_tokens.pop_back();
+                m_timed_tokens[i] = m_timed_tokens[m_timed_tokens.size() - 1u];
+                m_timed_tokens.pop_back();
             }
         }
     }
-    else if ((m_net.type() != TypeOfNet::PetriNet) &&
-                (m_net.type() != TypeOfNet::GRAFCET))
+    else if ((m_net.type() != TypeOfNet::PetriNet) && (m_net.type() != TypeOfNet::GRAFCET))
     {
         std::cout << current_time() << "The simulation cannot burn tokens."
                     << std::endl;

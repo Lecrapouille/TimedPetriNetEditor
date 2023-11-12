@@ -418,10 +418,10 @@ static void menu(Editor& editor)
                 do_screenshot = true;
             }
             ImGui::Separator();
-            //if (ImGui::MenuItem("Run", nullptr, false)) TODO
-            //    editor.run();
-            //if (ImGui::MenuItem("Stop", nullptr, false)) TODO
-            //    editor.stop();
+            if (ImGui::MenuItem(editor.m_simulating ? "Stop simulation" : "Start simulation", nullptr, false))
+            {
+                editor.toogleStartSimulation();
+            }
             ImGui::EndMenu();
         }
 
@@ -785,9 +785,23 @@ void Editor::drawPetriNet()
     for (auto const& it: m_net.transitions())
         drawTransition(it);
 
+    // Draw all tokens transiting from Transitions to Places
+    for (auto const& at: m_simulation.timedTokens())
+        drawToken(at.x, at.y);
+
+    // Draw critical cycle
+    //for (auto& a: m_marked_arcs)
+    //    draw(*a, 255);
+
     draw_list->PopClipRect();
 
     ImGui::End();
+}
+
+//------------------------------------------------------------------------------
+void Editor::onUpdate(float const dt)
+{
+    m_simulation.step(dt);
 }
 
 //------------------------------------------------------------------------------
@@ -1027,6 +1041,23 @@ void Editor::clear()
 }
 
 //------------------------------------------------------------------------------
+void Editor::toogleStartSimulation()
+{
+    m_simulating = m_simulating ^ true;
+
+    // Note: in GUI.cpp in the Application constructor, I set
+    // the window to have slower framerate in the aim to have a
+    // bigger discrete time and therefore AnimatedToken moving
+    // with a bigger step range and avoid them to overlap when
+    // i.e. two of them, carying 1 token, are arriving at almost
+    // the same moment but separated by one call of this method
+    // update() producing two AnimatedToken carying 1 token that
+    // will be displayed at the same position instead of a
+    // single AnimatedToken carying 2 tokens.
+    framerate(m_simulating ? 30 : 60); // FPS
+}
+
+//------------------------------------------------------------------------------
 bool Editor::changeTypeOfNet(TypeOfNet const type)
 {
     if (m_simulating)
@@ -1175,7 +1206,6 @@ void Editor::screenshot()
         if (ImGuiFileDialog::Instance()->IsOk())
         {
             auto const path = ImGuiFileDialog::Instance()->GetFilePathName();
-            std::cout << "ghhghgh\n";
             if (Application::screenshot(path))
             {
                 m_messages.setInfo("Screenshot taken as file '" + path + "'");
@@ -1371,18 +1401,7 @@ void Editor::onHandleInput()
         else if (ImGui::IsKeyPressed(KEY_BINDING_RUN_SIMULATION) ||
                  ImGui::IsKeyPressed(KEY_BINDING_RUN_SIMULATION_ALT))
         {
-            m_simulating = m_simulating ^ true;
-
-            // Note: in GUI.cpp in the Application constructor, I set
-            // the window to have slower framerate in the aim to have a
-            // bigger discrete time and therefore AnimatedToken moving
-            // with a bigger step range and avoid them to overlap when
-            // i.e. two of them, carying 1 token, are arriving at almost
-            // the same moment but separated by one call of this method
-            // update() producing two AnimatedToken carying 1 token that
-            // will be displayed at the same position instead of a
-            // single AnimatedToken carying 2 tokens.
-            framerate(m_simulating ? 30 : 60); // FPS
+            toogleStartSimulation();
         }
     }
 }

@@ -46,6 +46,10 @@ public:
 
     Simulation(Net& net, std::atomic<bool>& simulating, Messages& m_messages);
     void step(float const dt);
+    std::vector<TimedToken> const& timedTokens() const
+    {
+        return m_timed_tokens;
+    }
 
 private:
 
@@ -66,7 +70,7 @@ private:
     //! \brief List of shuffled Transitions.
     std::vector<Transition*> m_shuffled_transitions;
     //! \brief Animation of tokens when transitioning from Transitions to Places.
-    std::vector<TimedToken> m_animated_tokens;
+    std::vector<TimedToken> m_timed_tokens;
     //! \brief Memorize initial number of tokens in places.
     std::vector<size_t> m_initial_tokens;
     //! \brief State machine for the simulation.

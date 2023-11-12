@@ -24,6 +24,7 @@
 #include <cstdlib>
 #include <functional>
 #include <iostream>
+#include <chrono>
 #include <stdio.h>
 
 #ifdef __APPLE__
@@ -37,6 +38,31 @@
 #else
 #  define FONT_SIZE 13.0f
 #endif
+
+class Timer
+{
+public:
+    Timer()
+        : m_begin(Clock::now())
+    {}
+
+    float restart()
+    {
+        float res = elapsed();
+        m_begin = Clock::now();
+        return res;
+    }
+
+    float elapsed() const
+    {
+        return std::chrono::duration_cast<Second>(Clock::now() - m_begin).count();
+    }
+
+private:
+    typedef std::chrono::steady_clock Clock;
+    typedef std::chrono::duration<float, std::ratio<1>> Second;
+    std::chrono::time_point<Clock> m_begin;
+};
 
 //------------------------------------------------------------------------------
 Application::Application(size_t const width, size_t const height, std::string const& title)
@@ -92,6 +118,9 @@ void Application::run()
     // Initialize the underlying app
     onStartUp();
 
+    //Timer timer;
+    //float timeSinceLastUpdate = 0.0f;
+    const float time_per_frame = 1.0f / m_framerate;
     while (!m_exit_window && !WindowShouldClose())
     {
         ImGui_ImplRaylib_ProcessEvents();
@@ -100,6 +129,14 @@ void Application::run()
         ImGui_ImplRaylib_NewFrame();
         ImGui::NewFrame();
 
+        // Process events at fixed time steps
+        //timeSinceLastUpdate += timer.restart();
+        //while (timeSinceLastUpdate > time_per_frame)
+        //{
+            //timeSinceLastUpdate -= time_per_frame;
+            onUpdate(time_per_frame);
+        //}
+
         // Main loop of the underlying app
         onDraw();
 
@@ -107,7 +144,6 @@ void Application::run()
         ImGui::Render();
         BeginDrawing(); // Start raylib content
         ClearBackground(WHITE);//gui->background_color);
-
 
         ImGui_ImplRaylib_RenderDrawData(ImGui::GetDrawData());
         EndDrawing(); // Stop raylib content
