@@ -23,9 +23,12 @@
 
 #include <cstdlib>
 #include <functional>
-#include <iostream>
 #include <chrono>
 #include <stdio.h>
+
+#include <fstream>
+#include <iostream>
+#include <cstdio>
 
 #ifdef __APPLE__
 #  define GET_DATA_PATH osx_get_resources_dir("data")
@@ -158,8 +161,10 @@ void Application::framerate(size_t const framerate)
 }
 
 //------------------------------------------------------------------------------
-bool Application::screenshot(std::string const& screenshot_path)
+// Siiiiiight! Poor RayLib API. Only manage file name not file path :(
+// TakeScreenshot has been hot patched to use with absolute path.
+bool Application::screenshot(std::string const& path)
 {
-    TakeScreenshot(screenshot_path.c_str());
-    return true; // FIXME always ?
+    TakeScreenshot(path.c_str());
+    return FileExists(path.c_str());
 }

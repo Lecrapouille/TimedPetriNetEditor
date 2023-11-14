@@ -33,10 +33,14 @@ source ../.makefile/compile-external-libs.sh
 print-compile raylib
 (
  cd raylib/src
+
+ # Fucking poor API !!!!! Need to hot patch
+ sed -i 's/ExportImage(image, path)/ExportImage(image, fileName)/g' rcore.c
+
  mkdir -p $ARCHI
  call-make clean
  if [ "$ARCHI" != "Emscripten" ]; then
-   call-make PLATFORM=PLATFORM_DESKTOP RAYLIB_RELEASE_PATH=$ARCHI
+   call-make PLATFORM=PLATFORM_DESKTOP RAYLIB_RELEASE_PATH=$ARCHI RAYLIB_BUILD_MODE=DEBUG
  else
    call-make PLATFORM=PLATFORM_WEB RAYLIB_RELEASE_PATH=$ARCHI
  fi

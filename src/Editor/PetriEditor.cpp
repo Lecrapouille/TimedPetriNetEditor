@@ -1196,16 +1196,17 @@ void Editor::saveAs()
 //------------------------------------------------------------------------------
 void Editor::screenshot()
 {
+    std::string path;
     ImGuiFileDialog::Instance()->OpenDialog("ChooseFileDlgKey",
-                                            "Choose the JPEG file to save the screenshot",
-                                            ".jpg", ".", 1, nullptr,
+                                            "Choose the PNG file to save the screenshot",
+                                            ".png", ".", 1, nullptr,
                                             ImGuiFileDialogFlags_Modal | ImGuiFileDialogFlags_ConfirmOverwrite);
 
     if (ImGuiFileDialog::Instance()->Display("ChooseFileDlgKey"))
     {
         if (ImGuiFileDialog::Instance()->IsOk())
         {
-            auto const path = ImGuiFileDialog::Instance()->GetFilePathName();
+            path = ImGuiFileDialog::Instance()->GetFilePathName();
             if (Application::screenshot(path))
             {
                 m_messages.setInfo("Screenshot taken as file '" + path + "'");
