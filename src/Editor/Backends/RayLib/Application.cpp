@@ -67,6 +67,30 @@ private:
     std::chrono::time_point<Clock> m_begin;
 };
 
+static void ReloadFonts()
+{
+	ImGuiIO& io = ImGui::GetIO();
+	unsigned char* pixels = nullptr;
+
+	int width;
+	int height;
+	io.Fonts->GetTexDataAsRGBA32(&pixels, &width, &height, nullptr);
+	Image image = GenImageColor(width, height, BLANK);
+	memcpy(image.data, pixels, width * height * 4);
+
+	Texture2D* fontTexture = (Texture2D*)io.Fonts->TexID;
+	if (fontTexture && fontTexture->id != 0)
+	{
+		UnloadTexture(*fontTexture);
+		MemFree(fontTexture);
+	}
+
+	fontTexture = (Texture2D*)MemAlloc(sizeof(Texture2D));
+	*fontTexture = LoadTextureFromImage(image);
+	UnloadImage(image);
+	io.Fonts->TexID = fontTexture;
+}
+
 //------------------------------------------------------------------------------
 Application::Application(size_t const width, size_t const height, std::string const& title)
     : m_path(GET_DATA_PATH)
@@ -96,6 +120,7 @@ Application::Application(size_t const width, size_t const height, std::string co
 
     // Setup fonts
     io.Fonts->AddFontFromFileTTF(m_path.expand("font.ttf").c_str(), FONT_SIZE);
+    ReloadFonts();
 
     // Setup Dear ImGui style
     ImGui::StyleColorsDark();
