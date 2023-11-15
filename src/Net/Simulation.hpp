@@ -44,7 +44,7 @@ public:
         Halting,    //! Restore states after the simulation.
     };
 
-    Simulation(Net& net, std::atomic<bool>& simulating, Messages& m_messages);
+    Simulation(Net& net, Messages& m_messages);
     void step(float const dt);
     std::vector<TimedToken> const& timedTokens() const
     {
@@ -54,17 +54,20 @@ public:
 private:
 
     std::vector<Transition*> const& shuffle_transitions(bool const reset = false);
-    void starting();
-    void simulating(float const dt);
-    void halting();
+    void stateStarting();
+    void stateSimulating(float const dt);
+    void stateHalting();
+
+public:
+
+    //! \brief Set true for starting the simulation the Petri net and to
+    //! maintain the simulation running. Set false to halt the simulation.
+    std::atomic<bool> simulating = false;
 
 private:
 
     //! \brief The single Petri net we are simulating
     Net& m_net;
-    //! \brief Set true for starting the simulation the Petri net and to
-    //! maintain the simulation running. Set false to halt the simulation.
-    std::atomic<bool>& m_simulating;
     //! \brief Used for error messages.
     Messages& m_messages;
     //! \brief List of shuffled Transitions.
@@ -74,7 +77,7 @@ private:
     //! \brief Memorize initial number of tokens in places.
     std::vector<size_t> m_initial_tokens;
     //! \brief State machine for the simulation.
-    std::atomic<Simulation::State> m_state{Simulation::State::Idle};
+    Simulation::State m_state{Simulation::State::Idle};
 
     // FIXME: ajouter les receptivites ici ?????,
 };

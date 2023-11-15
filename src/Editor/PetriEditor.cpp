@@ -29,52 +29,18 @@
 
 namespace tpne {
 
-//------------------------------------------------------------------------------
-// states for dear im gui
-static bool is_dragging = false;
-static bool disable_dragging = false;
-static bool do_dater = false;
-static bool do_counter = false;
-static bool do_find_critical_cycle = false;
-static bool do_syslin = false;
-static bool do_adjency = false;
-static bool do_load = false;
-static bool do_save_as = false;
-static bool do_screenshot = false;
-static Exporter const* do_export_to = nullptr;
-static bool show_about = false;
-static bool show_help = false;
-static bool show_place_captions = false;
-static bool show_transition_captions = false;
+namespace theme
+{
+    static const float TRANS_WIDTH = 36.0f;  // Rectangle width for rendering Transitions
+    static const float TRANS_HEIGHT = TRANS_WIDTH / 2.0f;  // Rectangle height for rendering Transitions
+    static const float PLACE_RADIUS = TRANS_WIDTH / 2.0f; // Circle radius for rendering Places
+    static const float TOKEN_RADIUS = 2.0f;  // Circle radius for rendering tokens
+    static const float CAPTION_FONT_SIZE = 12;
 
-static std::vector<Exporter> const exporters = {
-    { "Grafcet C++", ".hpp,.h,.hh,.h++", exportToGrafcetCpp },
-    { "Symfony", ".yaml", exportToSymfony },
-    { "Julia", ".jl", exportToJulia },
-    { "Draw.io", ".drawio.xml", exportToDrawIO },
-    { "Graphviz", ".gv,.dot", exportToGraphviz },
-    { "PN-Editor", ".pns,.pnl,.pnk,.pnkp", exportToPNEditor },
-    { "Petri-LaTeX", ".tex", exportToPetriLaTeX },
-    //{ "Codesys", ".codesys.xml", exportToCodesys },
-    //{ "Grafcet-LaTeX", ".tex", exportToGrafcetLaTeX },
-};
-
-//------------------------------------------------------------------------------
-// Config for rendering the Petri net
-static float thickness = 1.0f;
-static float sz = 36.0f;
-static const float TRANS_WIDTH = 36.0f;  // Rectangle width for rendering Transitions
-static const float TRANS_HEIGHT = TRANS_WIDTH / 2.0f;  // Rectangle height for rendering Transitions
-static const float PLACE_RADIUS = TRANS_WIDTH / 2.0f; // Circle radius for rendering Places
-static const float TOKEN_RADIUS = 2.0f;  // Circle radius for rendering tokens
-static const float CAPTION_FONT_SIZE = 12;
-#define FILL_COLOR(a) IM_COL32(255, 165, 0, (a))
-#define OUTLINE_COLOR IM_COL32(165, 42, 42, 255) // Arcs, Places, Transitions
-#define CRITICAL_COLOR IM_COL32(255, 0, 0, 255)
-
-static const uint8_t alpha = 255; // FIXME
-static float font_size_pixels = 16.0f;
-static ImFont* font1 = nullptr;
+    #define FILL_COLOR(a) IM_COL32(255, 165, 0, (a))
+    #define OUTLINE_COLOR IM_COL32(165, 42, 42, 255) // Arcs, Places, Transitions
+    #define CRITICAL_COLOR IM_COL32(255, 0, 0, 255)
+}
 
 //------------------------------------------------------------------------------
 // helper functions
@@ -87,11 +53,13 @@ static inline float norm(const float xa, const float ya, const float xb, const f
     return sqrtf((xb - xa) * (xb - xa) + (yb - ya) * (yb - ya));
 }
 
+//------------------------------------------------------------------------------
 static inline ImVec2 ImRotate(const ImVec2 &v, float cos_a, float sin_a)
 {
     return ImVec2(v.x * cos_a - v.y * sin_a, v.x * sin_a + v.y * cos_a);
 }
 
+//------------------------------------------------------------------------------
 static float random(int lower, int upper)
 {
     auto const t = static_cast<unsigned int>(time(NULL));
@@ -100,7 +68,396 @@ static float random(int lower, int upper)
 }
 
 //------------------------------------------------------------------------------
-static void about()
+static void inputInteger(std::string const& title, size_t& tokens)
+{
+    ImGui::AlignTextToFramePadding();
+    ImGui::Text("%zu", tokens);
+    ImGui::SameLine();
+
+    float spacing = ImGui::GetStyle().ItemInnerSpacing.x;
+    ImGui::PushButtonRepeat(true);
+    if (ImGui::ArrowButton("##left", ImGuiDir_Left))
+    {
+        tokens = std::max(size_t(1), tokens);
+        --tokens;
+    }
+    ImGui::SameLine(0.0f, spacing);
+    if (ImGui::ArrowButton("##right", ImGuiDir_Right))
+    {
+        tokens = std::min(Net::Settings::maxTokens, ++tokens);
+    }
+    ImGui::PopButtonRepeat();
+    ImGui::SameLine();
+    ImGui::Text("%s", title.c_str());
+}
+
+//--------------------------------------------------------------------------
+Editor::Editor(size_t const width, size_t const height,
+               std::string const& title, std::string const& filename)
+    : Application(width, height, title),
+      m_simulation(m_net, m_simulating, m_messages),
+      m_filename(filename)
+{
+    m_exporters = {
+        { "Grafcet C++", ".hpp,.h,.hh,.h++", exportToGrafcetCpp },
+        { "Symfony", ".yaml", exportToSymfony },
+        { "Julia", ".jl", exportToJulia },
+        { "Draw.io", ".drawio.xml", exportToDrawIO },
+        { "Graphviz", ".gv,.dot", exportToGraphviz },
+        { "PN-Editor", ".pns,.pnl,.pnk,.pnkp", exportToPNEditor },
+        { "Petri-LaTeX", ".tex", exportToPetriLaTeX },
+        //{ "Codesys", ".codesys.xml", exportToCodesys },
+        //{ "Grafcet-LaTeX", ".tex", exportToGrafcetLaTeX },
+    };
+}
+
+//------------------------------------------------------------------------------
+void Editor::menu()
+{
+    if (ImGui::BeginMainMenuBar())
+    {
+        if (ImGui::BeginMenu("File"))
+        {
+            if (ImGui::MenuItem("New", nullptr, false)) {
+                // TODO
+            }
+
+            ImGui::Separator();
+            if (ImGui::MenuItem("Open", nullptr, false)) {
+                m_states.do_load = true;
+            }
+            if (ImGui::BeginMenu("Import")) {
+                // TODO
+                ImGui::EndMenu();
+            }
+
+            ImGui::Separator();
+            if (ImGui::MenuItem("Save", nullptr, false))
+            {
+                if (m_net.filename() == "") {
+                    m_states.do_save_as = true;
+                } else {
+                    m_net.saveAs(m_net.filename());
+                }
+            }
+            if (ImGui::MenuItem("Save As", nullptr, false)) {
+                m_states.do_save_as = true;
+            }
+            if (ImGui::BeginMenu("Export to"))
+            {
+                for (auto const& it: m_exporters)
+                {
+                    if (ImGui::MenuItem(it.format.c_str(), nullptr, false)) {
+                        m_states.do_export_to = &it;
+                    }
+                }
+                ImGui::EndMenu();
+            }
+
+            ImGui::Separator();
+            if (ImGui::MenuItem("Exit", nullptr, false)) {
+                this->close();
+            }
+            ImGui::EndMenu();
+        }
+        if (ImGui::BeginMenu("Actions"))
+        {
+            if (ImGui::BeginMenu("Type of net"))
+            {
+                static int current_type = int(m_net.type());
+                ImGui::RadioButton("Petri net", &current_type, 0);
+                ImGui::RadioButton("Timed Petri net", &current_type, 1);
+                ImGui::RadioButton("Timed event graph", &current_type, 2);
+                ImGui::RadioButton("GRAFCET", &current_type, 3);
+                changeTypeOfNet(TypeOfNet(current_type));
+                ImGui::EndMenu();
+            }
+            ImGui::Separator();
+
+            if (ImGui::MenuItem("Clear net", nullptr, false)) {
+                clear();
+            }
+            if (ImGui::MenuItem("Align nodes", nullptr, false)) {
+                //editor.align();
+            }
+            if (ImGui::MenuItem("Show grid", nullptr, false)) {
+                m_layout_config.grid.enable ^= true;
+            }
+            if (ImGui::MenuItem("Take screenshot", nullptr, false)) {
+                m_states.do_screenshot = true;
+            }
+            ImGui::Separator();
+            if (ImGui::MenuItem(m_simulating ? "Stop simulation" : "Start simulation", nullptr, false)) {
+                toogleStartSimulation();
+            }
+            ImGui::EndMenu();
+        }
+
+        if ((m_net.type() == TypeOfNet::TimedEventGraph) || (isEventGraph(m_net)))
+        {
+            if (ImGui::BeginMenu("Graph Events"))
+            {
+                if (ImGui::MenuItem("Show critical circuit", nullptr, false)) {
+                    m_states.do_find_critical_cycle = true;
+                }
+                if (ImGui::MenuItem("Show (max, +) dynamic linear system", nullptr, false)) {
+                    m_states.do_syslin = true;
+                }
+                if (ImGui::MenuItem("Show Dater equation", nullptr, false)) {
+                    m_states.do_dater = true;
+                }
+                if (ImGui::MenuItem("Show Counter equation", nullptr, false)) {
+                    m_states.do_counter = true;
+                }
+                if (ImGui::MenuItem("Show adjacency matrices", nullptr, false)) {
+                    m_states.do_adjency = true;
+                }
+                ImGui::EndMenu();
+            }
+        }
+        if (ImGui::BeginMenu("Help"))
+        {
+            if (ImGui::MenuItem("Help", nullptr, false)) {
+                m_states.show_help = true;
+            }
+            ImGui::Separator();
+            if (ImGui::MenuItem("About", nullptr, false)) {
+                m_states.show_about = true;
+            }
+            ImGui::EndMenu();
+        }
+        ImGui::EndMainMenuBar();
+    }
+
+    m_states.viewport_center = ImGui::GetMainViewport()->GetCenter();
+
+    if (m_states.show_help) { help(); }
+    if (m_states.show_about) { about(); }
+    if (m_states.do_load) { load(); }
+    if (m_states.do_save_as) { saveAs(); }
+    if (m_states.do_export_to != nullptr) { exportTo(*m_states.do_export_to); }
+    if (m_states.do_screenshot) { screenshot(); }
+    if (m_states.do_adjency) { showAdjacencyMatrices(); }
+    if (m_states.do_counter || m_states.do_dater) { showCounterOrDaterequation(); }
+    if (m_states.do_syslin) { showDynamicLinearSystem(); }
+    if (m_states.do_find_critical_cycle) { showCriticalCycles(); }
+}
+
+//------------------------------------------------------------------------------
+void Editor::showAdjacencyMatrices() const
+{
+    ImGui::OpenPopup("Show adjacency matrices");
+    ImGui::SetNextWindowPos(m_states.viewport_center, ImGuiCond_Appearing, ImVec2(0.5f, 0.5f));
+    if (ImGui::BeginPopupModal("Show adjacency matrices",
+                                NULL, ImGuiWindowFlags_AlwaysAutoResize))
+    {
+        ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(0, 0));
+        ImGui::Checkbox("Dense matrix", &SparseMatrix<double>::display_as_dense);
+        SparseMatrix<double>::display_for_julia = false;
+        ImGui::PopStyleVar();
+
+        SparseMatrix<double> tokens; SparseMatrix<double> durations;
+        toAdjacencyMatrices(m_net, tokens, durations);
+
+        ImGuiTabBarFlags tab_bar_flags = ImGuiTabBarFlags_None;
+        if (ImGui::BeginTabBar("adjacency", tab_bar_flags))
+        {
+            if (ImGui::BeginTabItem("Durations"))
+            {
+                std::stringstream txt; txt << durations;
+                ImGui::Text("%s", txt.str().c_str());
+                ImGui::EndTabItem();
+            }
+            if (ImGui::BeginTabItem("Tokens"))
+            {
+                std::stringstream txt; txt << tokens;
+                ImGui::Text("%s", txt.str().c_str());
+                ImGui::EndTabItem();
+            }
+            ImGui::EndTabBar();
+        }
+
+        if (ImGui::Button("OK", ImVec2(120, 0)))
+        {
+            ImGui::CloseCurrentPopup();
+            m_states.do_adjency = false;
+        }
+        ImGui::EndPopup();
+    }
+}
+
+//------------------------------------------------------------------------------
+void Editor::showCounterOrDaterequation() const
+{
+    const char* title = m_states.do_counter ? "Counter Equation": "Dater Equation";
+    ImGui::OpenPopup(title);
+    ImGui::SetNextWindowPos(m_states.viewport_center, ImGuiCond_Appearing, ImVec2(0.5f, 0.5f));
+    if (ImGui::BeginPopupModal(title, NULL, ImGuiWindowFlags_AlwaysAutoResize))
+    {
+        static bool use_caption = false;
+        static bool maxplus_notation = false;
+        static bool show_matrix = false;
+        ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(0, 0));
+        ImGui::Checkbox(m_states.do_counter ? "Use (min,+) operator" : "Use (max,+) operator", &maxplus_notation);
+        ImGui::SameLine();
+        ImGui::Checkbox("Use caption", &use_caption);
+        ImGui::PopStyleVar();
+
+        ImGui::Separator();
+        if (m_states.do_counter)
+        {
+            ImGui::Text("%s", showCounterEquation(
+                m_net, "", use_caption, maxplus_notation).str().c_str());
+        }
+        else
+        {
+            ImGui::Text("%s", showDaterEquation(
+                m_net, "", use_caption, maxplus_notation).str().c_str());
+        }
+
+        if (ImGui::Button("OK", ImVec2(120, 0)))
+        {
+            ImGui::CloseCurrentPopup();
+            m_states.do_counter = m_states.do_dater = false;
+        }
+        ImGui::EndPopup();
+    }
+}
+
+//------------------------------------------------------------------------------
+void Editor::showDynamicLinearSystem() const
+{
+    ImGui::OpenPopup("(max, +) dynamic linear system");
+    ImGui::SetNextWindowPos(m_states.viewport_center, ImGuiCond_Appearing, ImVec2(0.5f, 0.5f));
+    if (ImGui::BeginPopupModal("(max, +) dynamic linear system", NULL, ImGuiWindowFlags_AlwaysAutoResize))
+    {
+        ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(0, 0));
+        ImGui::Checkbox("Dense matrix", &SparseMatrix<double>::display_as_dense);
+        ImGui::PopStyleVar();
+
+        SparseMatrix<double> D; SparseMatrix<double> A; SparseMatrix<double> B; SparseMatrix<double> C;
+        toSysLin(m_net, D, A, B, C);
+        SparseMatrix<double>::display_for_julia = false;
+        ImGui::Text(u8"%s", "X(n) = D . X(n) ⨁ A . X(n-1) ⨁ B . U(n)\nY(n) = C . X(n)");
+        ImGuiTabBarFlags tab_bar_flags = ImGuiTabBarFlags_None;
+        if (ImGui::BeginTabBar("syslin", tab_bar_flags))
+        {
+            if (ImGui::BeginTabItem("D"))
+            {
+                std::stringstream txt; txt << D;
+                ImGui::Text("%s", txt.str().c_str());
+                ImGui::EndTabItem();
+            }
+            if (ImGui::BeginTabItem("A"))
+            {
+                std::stringstream txt; txt << A;
+                ImGui::Text("%s", txt.str().c_str());
+                ImGui::EndTabItem();
+            }
+            if (ImGui::BeginTabItem("B"))
+            {
+                std::stringstream txt; txt << B;
+                ImGui::Text("%s", txt.str().c_str());
+                ImGui::EndTabItem();
+            }
+            if (ImGui::BeginTabItem("C"))
+            {
+                std::stringstream txt; txt << C;
+                ImGui::Text("%s", txt.str().c_str());
+                ImGui::EndTabItem();
+            }
+            ImGui::EndTabBar();
+        }
+
+        if (ImGui::Button("OK", ImVec2(120, 0)))
+        {
+            ImGui::CloseCurrentPopup();
+            m_states.do_syslin = false;
+        }
+        ImGui::EndPopup();
+    }
+}
+
+//------------------------------------------------------------------------------
+void Editor::showCriticalCycles() const
+{
+    ImGui::OpenPopup("Critical Cycle");
+    ImGui::SetNextWindowPos(m_states.viewport_center, ImGuiCond_Appearing, ImVec2(0.5f, 0.5f));
+    if (ImGui::BeginPopupModal("Critical Cycle", NULL, ImGuiWindowFlags_AlwaysAutoResize))
+    {
+        CriticalCycleResult critical_cycle = findCriticalCycle(m_net);
+        if (!critical_cycle.success)
+        {
+            ImGui::Text(u8"%s", critical_cycle.message.str().c_str());
+        }
+        else
+        {
+            ImGuiTabBarFlags tab_bar_flags = ImGuiTabBarFlags_None;
+            if (ImGui::BeginTabBar("CriticalCycleResult", tab_bar_flags))
+            {
+                if (ImGui::BeginTabItem("Critical cycle"))
+                {
+                    std::stringstream txt;
+                    if (m_net.type() == TypeOfNet::TimedEventGraph)
+                    {
+                        // Only show transitions
+                        for (auto const& it: critical_cycle.arcs)
+                        {
+                            if (it->from.type == Node::Type::Transition)
+                                txt << it->from.key << " -> ";
+                            if (it->to.type == Node::Type::Transition)
+                                txt << it->to.key << std::endl;
+                        }
+                    }
+                    else
+                    {
+                        // Show transitions and places
+                        for (auto const& it: critical_cycle.arcs)
+                        {
+                            txt << it->from.key << " -> " << it->to.key << std::endl;
+                        }
+                    }
+                    ImGui::Text("%s", txt.str().c_str());
+                    ImGui::EndTabItem();
+                }
+                if (ImGui::BeginTabItem("Cycle time"))
+                {
+                    const auto& tr = m_net.transitions();
+                    std::stringstream txt;
+                    for (size_t i = 0u; i < critical_cycle.cycle_time.size(); ++i)
+                    {
+                        txt << tr[i].key << ": " << critical_cycle.cycle_time[i]
+                            << " unit of time" << std::endl;
+                    }
+                    ImGui::Text("%s", txt.str().c_str());
+                    ImGui::EndTabItem();
+                }
+                if (ImGui::BeginTabItem("Eigenvector"))
+                {
+                    std::stringstream txt;
+                    for (auto const& it: critical_cycle.eigenvector)
+                    {
+                        txt << it << std::endl;
+                    }
+                    ImGui::Text("%s", txt.str().c_str());
+                    ImGui::EndTabItem();
+                }
+                ImGui::EndTabBar();
+            }
+        }
+
+        ImGui::Separator();
+        if (ImGui::Button("OK", ImVec2(120, 0)))
+        {
+            ImGui::CloseCurrentPopup();
+            m_states.do_find_critical_cycle = false;
+        }
+        ImGui::EndPopup();
+    }
+}
+
+//------------------------------------------------------------------------------
+void Editor::about() const
 {
     ImVec2 center = ImGui::GetMainViewport()->GetCenter();
     ImGui::OpenPopup("About TimedPetriNetEditor");
@@ -131,7 +488,7 @@ static void about()
         if (ImGui::Button("OK", ImVec2(120, 0)))
         {
             ImGui::CloseCurrentPopup();
-            show_about = false;
+            m_states.show_about = false;
         }
 
         ImGui::EndPopup();
@@ -139,7 +496,7 @@ static void about()
 }
 
 //------------------------------------------------------------------------------
-static void help()
+void Editor::help() const
 {
     ImVec2 center = ImGui::GetMainViewport()->GetCenter();
     ImGui::OpenPopup("Help TimedPetriNetEditor");
@@ -182,7 +539,7 @@ static void help()
         if (ImGui::Button("OK", ImVec2(120, 0)))
         {
             ImGui::CloseCurrentPopup();
-            show_help = false;
+            m_states.show_help = false;
         }
 
         ImGui::EndPopup();
@@ -190,17 +547,37 @@ static void help()
 }
 
 //------------------------------------------------------------------------------
-static void console(Editor& editor)
+std::string Editor::getError() const
+{
+    if (m_messages.getMessages().empty())
+        return {};
+    return m_messages.getMessage().message;
+}
+
+//------------------------------------------------------------------------------
+std::vector<Messages::TimedMessage> const& Editor::getLogs() const
+{
+    return m_messages.getMessages();
+}
+
+//------------------------------------------------------------------------------
+void Editor::clearLogs()
+{
+    m_messages.clear();
+}
+
+//------------------------------------------------------------------------------
+void Editor::console()
 {
     ImGui::Begin("Console");
     ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, 6.f);
     if (ImGui::Button("Clear##console_clear")) {
-        editor.clearLogs();
+        clearLogs();
     }
 
     ImGui::PopStyleVar();
     ImGui::Spacing();
-    auto const& logs = editor.getLogs();
+    auto const& logs = getLogs();
     size_t i = logs.size();
     while (i--)
     {
@@ -225,62 +602,38 @@ static void console(Editor& editor)
 }
 
 //------------------------------------------------------------------------------
-static void messagebox(Editor const& editor)
+void Editor::messagebox()
 {
     ImGui::Begin("Message");
-    ImGui::Text("%s", editor.getError().c_str()); // FIXME: by copy
+    ImGui::Text("%s", getError().c_str());
     ImGui::End();
 }
 
 //------------------------------------------------------------------------------
-static void inputInteger(std::string const& title, size_t& tokens)
-{
-    ImGui::AlignTextToFramePadding();
-    ImGui::Text("%zu", tokens);
-    ImGui::SameLine();
-
-    float spacing = ImGui::GetStyle().ItemInnerSpacing.x;
-    ImGui::PushButtonRepeat(true);
-    if (ImGui::ArrowButton("##left", ImGuiDir_Left))
-    {
-        tokens = std::max(size_t(1), tokens);
-        --tokens;
-    }
-    ImGui::SameLine(0.0f, spacing);
-    if (ImGui::ArrowButton("##right", ImGuiDir_Right))
-    {
-        tokens = std::min(Net::Settings::maxTokens, ++tokens);
-    }
-    ImGui::PopButtonRepeat();
-    ImGui::SameLine();
-    ImGui::Text("%s", title.c_str());
-}
-
-//------------------------------------------------------------------------------
-static void inspector(Editor& editor)
+void Editor::inspector()
 {
     // Do not allow editing when running simulation
-    const auto readonly = editor.m_simulating ? ImGuiInputTextFlags_ReadOnly : ImGuiInputTextFlags_None;
+    const auto readonly = m_simulating ? ImGuiInputTextFlags_ReadOnly : ImGuiInputTextFlags_None;
 
     // Place captions and tokens
     {
         ImGui::Begin("Places");
         ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(0, 0));
-        ImGui::Checkbox(show_place_captions ? "Show place identifiers" : "Show place captions", &show_place_captions);
+        ImGui::Checkbox(m_states.show_place_captions ? "Show place identifiers" : "Show place captions", &show_place_captions);
         ImGui::PopStyleVar();
 
         ImGui::Separator();
 
         // TODO pour event graph: afficher ImGui::InputText("T1 P0 T2", &p.places);
         ImGui::Text("%s", "Captions:");
-        for (auto& place: editor.m_net.places())
+        for (auto& place: m_net.places())
         {
             ImGui::InputText(place.key.c_str(), &place.caption, readonly);
         }
 
         ImGui::Separator();
         ImGui::Text("%s", "Tokens:");
-        for (auto& place: editor.m_net.places())
+        for (auto& place: m_net.places())
         {
             inputInteger(show_place_captions ? place.caption.c_str() : place.key.c_str(), place.tokens);
         }
@@ -293,18 +646,18 @@ static void inspector(Editor& editor)
         // FIXME parse and clear sensors if and only if we modified entrytext
         ImGui::Begin("Transitions");
         ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(0, 0));
-        ImGui::Checkbox(show_transition_captions ? "Show transition identifiers" : "Show transition captions", &show_transition_captions);
-        ImGui::DragFloat("Thickness", &thickness, 0.05f, 1.0f, 8.0f, "%.02f");
-        ImGui::DragFloat("Size", &sz, 0.2f, 2.0f, 100.0f, "%.0f");
+        ImGui::Checkbox(m_states.show_transition_captions ?
+            "Show transition identifiers" :
+            "Show transition captions", &m_states.show_transition_captions);
         ImGui::PopStyleVar();
         ImGui::Separator();
         //if (!editor.m_simulating)
         //    editor.m_net.m_sensors.clear();
         ImGui::Text("%s", "Captions:");
-        for (auto& transition: editor.m_net.transitions())
+        for (auto& transition: m_net.transitions())
         {
             ImGui::InputText(transition.key.c_str(), &transition.caption, readonly);
-            if (!editor.m_simulating)
+            if (!m_simulating)
             {
                 //std::string err = editor.m_net.parse(transition, true);
                 //if (!err.empty())
@@ -327,7 +680,7 @@ static void inspector(Editor& editor)
     {
         ImGui::Begin("Arcs");
         ImGui::Text("%s", "Durations:");
-        for (auto& arc: editor.m_net.arcs())
+        for (auto& arc: m_net.arcs())
         {
             if (arc.from.type == Node::Type::Transition)
             {
@@ -338,358 +691,6 @@ static void inspector(Editor& editor)
         ImGui::End();
     }
 }
-
-//------------------------------------------------------------------------------
-static void menu(Editor& editor)
-{
-    if (ImGui::BeginMainMenuBar())
-    {
-        if (ImGui::BeginMenu("File"))
-        {
-            if (ImGui::MenuItem("New", nullptr, false)) {
-                // TODO
-            }
-
-            ImGui::Separator();
-            if (ImGui::MenuItem("Open", nullptr, false)) {
-                do_load = true;
-            }
-            if (ImGui::BeginMenu("Import"))
-            {
-                // TODO
-                ImGui::EndMenu();
-            }
-
-            ImGui::Separator();
-            if (ImGui::MenuItem("Save", nullptr, false))
-            {
-                if (editor.m_net.filename() == "") {
-                    do_save_as = true;
-                } else {
-                    editor.m_net.saveAs(editor.m_net.filename());
-                }
-            }
-            if (ImGui::MenuItem("Save As", nullptr, false)) {
-                do_save_as = true;
-            }
-            if (ImGui::BeginMenu("Export to"))
-            {
-                for (auto const& it: exporters)
-                {
-                    if (ImGui::MenuItem(it.format.c_str(), nullptr, false))
-                    {
-                        do_export_to = &it;
-                    }
-                }
-                ImGui::EndMenu();
-            }
-
-            ImGui::Separator();
-            if (ImGui::MenuItem("Exit", nullptr, false)) {
-                editor.close();
-            }
-            ImGui::EndMenu();
-        }
-        if (ImGui::BeginMenu("Actions"))
-        {
-            if (ImGui::BeginMenu("Type of net"))
-            {
-                static int current_type = int(editor.m_net.type());
-
-                ImGui::RadioButton("Petri net", &current_type, 0);
-                ImGui::RadioButton("Timed Petri net", &current_type, 1);
-                ImGui::RadioButton("Timed event graph", &current_type, 2);
-                ImGui::RadioButton("GRAFCET", &current_type, 3);
-                editor.changeTypeOfNet(TypeOfNet(current_type));
-                ImGui::EndMenu();
-            }
-            ImGui::Separator();
-
-            if (ImGui::MenuItem("Clear net", nullptr, false)) {
-                editor.clear();
-            }
-            if (ImGui::MenuItem("Align nodes", nullptr, false))
-            {}//editor.align();
-            if (ImGui::MenuItem("Show grid", nullptr, false)) {
-                editor.m_layout_config.grid.enable ^= true;
-            }
-            if (ImGui::MenuItem("Take screenshot", nullptr, false))
-            {
-                do_screenshot = true;
-            }
-            ImGui::Separator();
-            if (ImGui::MenuItem(editor.m_simulating ? "Stop simulation" : "Start simulation", nullptr, false))
-            {
-                editor.toogleStartSimulation();
-            }
-            ImGui::EndMenu();
-        }
-
-        if ((editor.m_net.type() == TypeOfNet::TimedEventGraph) ||
-            (isEventGraph(editor.m_net)))
-        {
-            if (ImGui::BeginMenu("Graph Events"))
-            {
-                if (ImGui::MenuItem("Show critical circuit", nullptr, false))
-                {
-                    do_find_critical_cycle = true;
-                }
-                if (ImGui::MenuItem("Show (max, +) dynamic linear system", nullptr, false))
-                {
-                    do_syslin = true;
-                }
-                if (ImGui::MenuItem("Show Dater equation", nullptr, false))
-                {
-                    do_dater = true;
-                }
-                if (ImGui::MenuItem("Show Counter equation", nullptr, false))
-                {
-                    do_counter = true;
-                }
-                if (ImGui::MenuItem("Show adjacency matrices", nullptr, false))
-                {
-                    do_adjency = true;
-                }
-                ImGui::EndMenu();
-            }
-        }
-        if (ImGui::BeginMenu("Help"))
-        {
-            if (ImGui::MenuItem("Help", nullptr, false)) {
-                show_help = true;
-            }
-            ImGui::Separator();
-            if (ImGui::MenuItem("About", nullptr, false)) {
-                show_about = true;
-            }
-            ImGui::EndMenu();
-        }
-        ImGui::EndMainMenuBar();
-    }
-
-    if (show_help) { help(); }
-    if (show_about) { about(); }
-    if (do_load) { editor.load(); }
-    if (do_save_as) { editor.saveAs(); }
-    if (do_export_to != nullptr) { editor.exportTo(*do_export_to); }
-    if (do_screenshot) { editor.screenshot(); }
-
-    ImVec2 center = ImGui::GetMainViewport()->GetCenter();
-
-    if (do_adjency)
-    {
-        ImGui::OpenPopup("Show adjacency matrices");
-        ImGui::SetNextWindowPos(center, ImGuiCond_Appearing, ImVec2(0.5f, 0.5f));
-        if (ImGui::BeginPopupModal("Show adjacency matrices",
-                                   NULL, ImGuiWindowFlags_AlwaysAutoResize))
-        {
-            ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(0, 0));
-            ImGui::Checkbox("Dense matrix", &SparseMatrix<double>::display_as_dense);
-            SparseMatrix<double>::display_for_julia = false;
-            ImGui::PopStyleVar();
-
-            SparseMatrix<double> tokens; SparseMatrix<double> durations;
-            toAdjacencyMatrices(editor.m_net, tokens, durations);
-
-            ImGuiTabBarFlags tab_bar_flags = ImGuiTabBarFlags_None;
-            if (ImGui::BeginTabBar("adjacency", tab_bar_flags))
-            {
-                if (ImGui::BeginTabItem("Durations"))
-                {
-                    std::stringstream txt; txt << durations;
-                    ImGui::Text("%s", txt.str().c_str());
-                    ImGui::EndTabItem();
-                }
-                if (ImGui::BeginTabItem("Tokens"))
-                {
-                    std::stringstream txt; txt << tokens;
-                    ImGui::Text("%s", txt.str().c_str());
-                    ImGui::EndTabItem();
-                }
-                ImGui::EndTabBar();
-            }
-
-            if (ImGui::Button("OK", ImVec2(120, 0)))
-            {
-                ImGui::CloseCurrentPopup();
-                do_adjency = false;
-            }
-            ImGui::EndPopup();
-        }
-    }
-
-    if (do_counter || do_dater)
-    {
-        const char* title = do_counter ? "Counter Equation": "Dater Equation";
-        ImGui::OpenPopup(title);
-        ImGui::SetNextWindowPos(center, ImGuiCond_Appearing, ImVec2(0.5f, 0.5f));
-        if (ImGui::BeginPopupModal(title, NULL, ImGuiWindowFlags_AlwaysAutoResize))
-        {
-            static bool use_caption = false;
-            static bool maxplus_notation = false;
-            static bool show_matrix = false;
-            ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(0, 0));
-            ImGui::Checkbox(do_counter ? "Use (min,+) operator" : "Use (max,+) operator", &maxplus_notation);
-            ImGui::SameLine();
-            ImGui::Checkbox("Use caption", &use_caption);
-            ImGui::PopStyleVar();
-
-            ImGui::Separator();
-            if (do_counter)
-            {
-                ImGui::Text("%s", showCounterEquation(editor.m_net, "", use_caption, maxplus_notation).str().c_str());
-            }
-            else
-            {
-                ImGui::Text("%s", showDaterEquation(editor.m_net, "", use_caption, maxplus_notation).str().c_str());
-            }
-
-            if (ImGui::Button("OK", ImVec2(120, 0)))
-            {
-                ImGui::CloseCurrentPopup();
-                do_counter = do_dater = false;
-            }
-            ImGui::EndPopup();
-        }
-    }
-
-    if (do_syslin)
-    {
-        ImGui::OpenPopup("(max, +) dynamic linear system");
-        ImGui::SetNextWindowPos(center, ImGuiCond_Appearing, ImVec2(0.5f, 0.5f));
-        if (ImGui::BeginPopupModal("(max, +) dynamic linear system", NULL, ImGuiWindowFlags_AlwaysAutoResize))
-        {
-            ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(0, 0));
-            ImGui::Checkbox("Dense matrix", &SparseMatrix<double>::display_as_dense);
-            ImGui::PopStyleVar();
-
-            SparseMatrix<double> D; SparseMatrix<double> A; SparseMatrix<double> B; SparseMatrix<double> C;
-            toSysLin(editor.m_net, D, A, B, C);
-            SparseMatrix<double>::display_for_julia = false;
-            ImGui::Text(u8"%s", "X(n) = D . X(n) ⨁ A . X(n-1) ⨁ B . U(n)\nY(n) = C . X(n)");
-            ImGuiTabBarFlags tab_bar_flags = ImGuiTabBarFlags_None;
-            if (ImGui::BeginTabBar("syslin", tab_bar_flags))
-            {
-                if (ImGui::BeginTabItem("D"))
-                {
-                    std::stringstream txt; txt << D;
-                    ImGui::Text("%s", txt.str().c_str());
-                    ImGui::EndTabItem();
-                }
-                if (ImGui::BeginTabItem("A"))
-                {
-                    std::stringstream txt; txt << A;
-                    ImGui::Text("%s", txt.str().c_str());
-                    ImGui::EndTabItem();
-                }
-                if (ImGui::BeginTabItem("B"))
-                {
-                    std::stringstream txt; txt << B;
-                    ImGui::Text("%s", txt.str().c_str());
-                    ImGui::EndTabItem();
-                }
-                if (ImGui::BeginTabItem("C"))
-                {
-                    std::stringstream txt; txt << C;
-                    ImGui::Text("%s", txt.str().c_str());
-                    ImGui::EndTabItem();
-                }
-                ImGui::EndTabBar();
-            }
-
-            if (ImGui::Button("OK", ImVec2(120, 0)))
-            {
-                ImGui::CloseCurrentPopup();
-                do_syslin = false;
-            }
-            ImGui::EndPopup();
-        }
-    }
-
-    if (do_find_critical_cycle)
-    {
-        ImGui::OpenPopup("Critical Cycle");
-        ImGui::SetNextWindowPos(center, ImGuiCond_Appearing, ImVec2(0.5f, 0.5f));
-        if (ImGui::BeginPopupModal("Critical Cycle", NULL, ImGuiWindowFlags_AlwaysAutoResize))
-        {
-            CriticalCycleResult critical_cycle = findCriticalCycle(editor.m_net);
-            if (!critical_cycle.success)
-            {
-                ImGui::Text(u8"%s", critical_cycle.message.str().c_str());
-            }
-            else
-            {
-                ImGuiTabBarFlags tab_bar_flags = ImGuiTabBarFlags_None;
-                if (ImGui::BeginTabBar("CriticalCycleResult", tab_bar_flags))
-                {
-                    if (ImGui::BeginTabItem("Critical cycle"))
-                    {
-                        std::stringstream txt;
-                        if (editor.m_net.type() == TypeOfNet::TimedEventGraph)
-                        {
-                            // Only show transitions
-                            for (auto const& it: critical_cycle.arcs)
-                            {
-                                if (it->from.type == Node::Type::Transition)
-                                    txt << it->from.key << " -> ";
-                                if (it->to.type == Node::Type::Transition)
-                                    txt << it->to.key << std::endl;
-                            }
-                        }
-                        else
-                        {
-                            // Show transitions and places
-                            for (auto const& it: critical_cycle.arcs)
-                            {
-                                txt << it->from.key << " -> " << it->to.key << std::endl;
-                            }
-                        }
-                        ImGui::Text("%s", txt.str().c_str());
-                        ImGui::EndTabItem();
-                    }
-                    if (ImGui::BeginTabItem("Cycle time"))
-                    {
-                        const auto& tr = editor.m_net.transitions();
-                        std::stringstream txt;
-                        for (size_t i = 0u; i < critical_cycle.cycle_time.size(); ++i)
-                        {
-                            txt << tr[i].key << ": " << critical_cycle.cycle_time[i]
-                                << " unit of time" << std::endl;
-                        }
-                        ImGui::Text("%s", txt.str().c_str());
-                        ImGui::EndTabItem();
-                    }
-                    if (ImGui::BeginTabItem("Eigenvector"))
-                    {
-                        std::stringstream txt;
-                        for (auto const& it: critical_cycle.eigenvector)
-                        {
-                            txt << it << std::endl;
-                        }
-                        ImGui::Text("%s", txt.str().c_str());
-                        ImGui::EndTabItem();
-                    }
-                    ImGui::EndTabBar();
-                }
-            }
-
-            ImGui::Separator();
-            if (ImGui::Button("OK", ImVec2(120, 0)))
-            {
-                ImGui::CloseCurrentPopup();
-                do_find_critical_cycle = false;
-            }
-            ImGui::EndPopup();
-        }
-    }
-}
-
-//--------------------------------------------------------------------------
-Editor::Editor(size_t const width, size_t const height,
-               std::string const& title, std::string const& filename)
-    : Application(width, height, title), m_filename(filename),
-      m_simulation(m_net, m_simulating, m_messages)
-{}
 
 //------------------------------------------------------------------------------
 void Editor::onStartUp()
@@ -707,8 +708,10 @@ void Editor::onStartUp()
     }
 }
 
+
+
 //------------------------------------------------------------------------------
-void Editor::reshape()
+void Editor::View::reshape()
 {
     // ImDrawList API uses screen coordinates!
     canvas_p0 = ImGui::GetCursorScreenPos();
@@ -1035,7 +1038,7 @@ void Editor::drawTransition(Transition const& transition)
 //------------------------------------------------------------------------------
 void Editor::clear()
 {
-    m_simulating = false;
+    m_simulator.simulating = false;
     m_net.clear(m_net.type());
     //TODO m_animated_tokens.clear();
 }
@@ -1043,7 +1046,7 @@ void Editor::clear()
 //------------------------------------------------------------------------------
 void Editor::toogleStartSimulation()
 {
-    m_simulating = m_simulating ^ true;
+    m_simulator.simulating ^= true;
 
     // Note: in GUI.cpp in the Application constructor, I set
     // the window to have slower framerate in the aim to have a
@@ -1054,13 +1057,13 @@ void Editor::toogleStartSimulation()
     // update() producing two AnimatedToken carying 1 token that
     // will be displayed at the same position instead of a
     // single AnimatedToken carying 2 tokens.
-    framerate(m_simulating ? 30 : 60); // FPS
+    framerate(m_simulator.simulating ? 30 : 60); // FPS
 }
 
 //------------------------------------------------------------------------------
 bool Editor::changeTypeOfNet(TypeOfNet const type)
 {
-    if (m_simulating)
+    if (m_simulator.simulating)
         return false;
 
     std::vector<Arc*> arcs;
@@ -1113,7 +1116,7 @@ Transition* Editor::getTransition(float const x, float const y)
 //------------------------------------------------------------------------------
 void Editor::load()
 {
-    if (m_simulating)
+    if (m_simulator.simulating)
     {
         m_messages.setError("Cannot load during the simulation!");
         return ;
@@ -1144,7 +1147,7 @@ void Editor::load()
         //}
 
         // close
-        do_load = false;
+        m_states.do_load = false;
         ImGuiFileDialog::Instance()->Close();
     }
 }
@@ -1152,7 +1155,7 @@ void Editor::load()
 //------------------------------------------------------------------------------
 void Editor::exportTo(Exporter const& exporter)
 {
-    if (m_simulating)
+    if (m_simulator.simulating)
     {
         m_messages.setError("Cannot save during the simulation!");
         return ;
@@ -1180,8 +1183,8 @@ void Editor::exportTo(Exporter const& exporter)
         }
 
         // close.
-        do_save_as = false;
-        do_export_to = nullptr; // FIXME think proper code: export vs save as
+        m_states.do_save_as = false;
+        m_states.do_export_to = nullptr; // FIXME think proper code: export vs save as
         ImGuiFileDialog::Instance()->Close();
     }
 }
@@ -1218,7 +1221,7 @@ void Editor::screenshot()
         }
 
         // close.
-        do_screenshot = false;
+        m_states.do_screenshot = false;
         ImGuiFileDialog::Instance()->Close();
     }
 }

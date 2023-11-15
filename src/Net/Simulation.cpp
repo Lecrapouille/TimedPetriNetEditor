@@ -33,8 +33,8 @@ static const char* current_time() // FIXME defined several times
 }
 
 //------------------------------------------------------------------------------
-Simulation::Simulation(Net& net, std::atomic<bool>& simulating, Messages& messages)
-    : m_net(net), m_simulating(simulating), m_messages(messages)
+Simulation::Simulation(Net& net, Messages& messages)
+    : m_net(net), m_messages(messages)
 {}
 
 //------------------------------------------------------------------------------
@@ -63,13 +63,13 @@ void Simulation::step(float const dt)
     switch (m_state)
     {
     case Simulation::State::Idle:
-        starting();
+        stateStarting();
         break;
     case Simulation::State::Simulating:
-        simulating(dt);
+        stateSimulating(dt);
         break;
     case Simulation::State::Halting:
-        halting();
+        stateHalting();
         break;
     default:
         std::cerr << "Odd state in the state machine doing the "
