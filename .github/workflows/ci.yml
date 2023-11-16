@@ -1,9 +1,5 @@
 name: Non regression tests for TimedPetriNetEditor
 on:
-  workflow_dispatch:
-    branches:
-      - master
-      - dev-refactor
   push:
     branches:
       - master
@@ -34,17 +30,6 @@ jobs:
           make download-external-libs
           emmake make compile-external-libs
           emmake make -j`nproc --all`
-      - name: Deploy
-        run: |
-          git config --global user.name 'GitHub CI'
-          git config --global user.email 'github-ci@users.noreply.github.com'
-          git remote set-url origin https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}
-          git fetch --all
-          git checkout gh-pages
-          cp build/TimedPetriNetEditor.* .
-          git add TimedPetriNetEditor.*
-          git commit -m "Automated commit"
-          git push
 
   non_regression_linux:
     name: Non regression tests on Linux

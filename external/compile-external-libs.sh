@@ -35,7 +35,8 @@ print-compile raylib
  cd raylib/src
 
  # Fucking poor API !!!!! Need to hot patch
- sed -i 's/ExportImage(image, path)/ExportImage(image, fileName)/g' rcore.c
+ # Concerning .backup see https://www.themoderncoder.com/fix-sed-i-error-macos/
+ sed -i.backup 's/ExportImage(image, path)/ExportImage(image, fileName)/g' rcore.c
 
  mkdir -p $ARCHI
  call-make clean

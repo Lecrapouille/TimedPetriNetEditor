@@ -1,0 +1,43 @@
+name: Publish TimedPetriNetEditor on GitHub page
+on:
+  push:
+    branches:
+      - master
+      - dev-refactor
+  workflow_dispatch:
+    branches:
+      - master
+      - dev-refactor
+
+jobs:
+  build_html5:
+    name: Publish on gh-pages
+    runs-on: ubuntu-20.04
+    steps:
+      - name: Install system packages
+        run: |
+          sudo apt-get update
+          sudo apt-get install pkg-config libmosquitto-dev libx11-dev libxinerama-dev
+          sudo apt-get install libasound2-dev libx11-dev libxrandr-dev libxi-dev libgl1-mesa-dev libglu1-mesa-dev libxcursor-dev libxinerama-dev
+      - name: Install Emscripten
+        uses: mymindstorm/setup-emsdk@v11
+      - name: Checkout TimedPetriNetEditor
+        uses: actions/checkout@v4
+        with:
+          submodules: true
+      - name: Compile TimedPetriNetEditor
+        run: |
+          make download-external-libs
+          emmake make compile-external-libs
+          emmake make -j`nproc --all`
+      - name: Deploy
+        run: |
+          git config --global user.name 'GitHub CI'
+          git config --global user.email 'github-ci@users.noreply.github.com'
+          git remote set-url origin https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}
+          git fetch --all
+          git checkout gh-pages
+          cp build/TimedPetriNetEditor.* .
+          git add TimedPetriNetEditor.*
+          git commit -m "Automated commit"
+          git push
