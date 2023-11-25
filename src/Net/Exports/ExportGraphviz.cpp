@@ -18,7 +18,7 @@
 // along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.
 //=============================================================================
 
-#include "Exports.hpp"
+#include "Net/Exports/Exports.hpp"
 #include "TimedPetriNetEditor/PetriNet.hpp"
 #include <fstream>
 #include <cstring>
@@ -26,7 +26,7 @@
 namespace tpne {
 
 //------------------------------------------------------------------------------
-std::string exportToSymfony(Net const& net, std::string const& filename)
+std::string exportToGraphviz(Net const& net, std::string const& filename)
 {
     std::ofstream file(filename);
     if (!file)
@@ -37,57 +37,51 @@ std::string exportToSymfony(Net const& net, std::string const& filename)
         return error.str();
     }
 
-    file << R"PN(framework:
-    workflows:
-)PN";
-    file << "        " << net.name << ":";
-    file << R"PN(
-            type: 'workflow'
-            audit_trail:
-                enabled: true
-            marking_store:
-                type: 'method'
-                property: 'currentPlace'
-            initial_marking:
-)PN";
-
-    // Initial places
-    for (auto const& p: net.places())
-    {
-        if (p.tokens > 0u)
-        {
-            file << "                - " << p.caption << std::endl;
-        }
-    }
+    file << "digraph G {" << std::endl;
 
     // Places
-    file << "            places:" << std::endl;
+    file << "node [shape=circle, color=blue]" << std::endl;
     for (auto const& p: net.places())
     {
-        file << "                - " << p.caption << std::endl;
+        file << "  " << p.key << " [label=\"" << p.caption;
+        if (p.tokens > 0u)
+        {
+            file << "\\n" << p.tokens << "&bull;";
+        }
+        file << "\"];" << std::endl;
     }
 
     // Transitions
-    file << "            transitions:" << std::endl;
+    file << "node [shape=box, color=red]" << std::endl;
     for (auto const& t: net.transitions())
     {
-        // From
-        file << "                " << t.caption << ":" << std::endl;
-        file << "                    from:" << std::endl;
-
-        for (auto const& it: t.arcsIn)
+        if (t.canFire())
         {
-            file << "                        - " << it->from.caption << std::endl;
+            file << "  " << t.key << " [label=\""
+                 << t.caption << "\", color=green];"
+                 << std::endl;
         }
-
-
-        // To
-        file << "                    to:" << std::endl;
-        for (auto const& it: t.arcsOut)
+        else
         {
-            file << "                        - " << it->to.caption << std::endl;
+            file << "  " << t.key << " [label=\""
+                 << t.caption << "\"];"
+                 << std::endl;
         }
     }
+
+    // Arcs
+    file << "edge [style=\"\"]" << std::endl;
+    for (auto const& a: net.arcs())
+    {
+        file << "  " << a.from.key << " -> " << a.to.key;
+        if (a.from.type == Node::Type::Transition)
+        {
+            file << " [label=\"" << a.duration << "\"]";
+        }
+        file << ";" << std::endl;
+    }
+
+    file << "}" << std::endl;
     return {};
 }
 

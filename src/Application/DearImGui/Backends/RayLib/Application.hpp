@@ -27,10 +27,10 @@
 #include "imgui.h"
 #include "implot.h"
 #include "ImGuiFileDialog.h"
-
-#include "Editor/Path.hpp" // FIXME
+#include "rlImGui.h"
 
 #include <string>
+#include <functional>
 
 // *****************************************************************************
 //! \brief
@@ -57,15 +57,15 @@ public:
     //--------------------------------------------------------------------------
     bool screenshot(std::string const& screenshot_path);
 
+    //--------------------------------------------------------------------------
+    //! \brief Set title.
+    //--------------------------------------------------------------------------
+    void title(std::string const& title_);
+
 private:
 
-    virtual void onStartUp() = 0;
     virtual void onDraw() = 0;
     virtual void onUpdate(float const dt) = 0;
-
-protected:
-
-    Path m_path;
 
 private:
 
@@ -74,5 +74,8 @@ private:
     bool m_exit_window = false;
     size_t m_framerate = 60u;
 };
+
+//------------------------------------------------------------------------------
+void reloadFonts();
 
 #endif

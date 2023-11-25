@@ -18,7 +18,7 @@
 // along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.
 //=============================================================================
 
-#include "Editor/Backends/GLFW3/Application.hpp"
+#include "Application/DearImGui/Backends/GLFW3/Application.hpp"
 
 #include <cstdlib>
 #include <functional>
@@ -69,9 +69,6 @@ Application::Application(size_t const width, size_t const height, std::string co
     ImGuiIO& io = ImGui::GetIO();
     io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;   // Enable Keyboard Controls
     io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;       // Enable Docking
-
-    // Add custom fonts
-    io.Fonts->AddFontFromFileTTF("/home/qq/MyGitHub/TimedPetriNetEditor-dev/data/Ruda.ttf", 13.0f);
 }
 
 Application::~Application()

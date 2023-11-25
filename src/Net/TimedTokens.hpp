@@ -21,9 +21,11 @@
 #ifndef TIMED_TOKENS_HPP
 #  define TIMED_TOKENS_HPP
 
-#  include "TimedPetriNetEditor/PetriNet.hpp"
-
 namespace tpne {
+
+class Arc;
+class Place;
+enum TypeOfNet;
 
 // *****************************************************************************
 //! \brief Tokens are systems resources. Places indicate how many tokens they

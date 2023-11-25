@@ -18,70 +18,73 @@
 // along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.
 //=============================================================================
 
-#include "Exports.hpp"
+#include "Net/Exports/Exports.hpp"
 #include "TimedPetriNetEditor/PetriNet.hpp"
+#include "nlohmann/json.hpp"
 #include <fstream>
 #include <cstring>
 
 namespace tpne {
 
 //------------------------------------------------------------------------------
-std::string exportToGraphviz(Net const& net, std::string const& filename)
+std::string exportToJSON(Net const& net, std::string const& filename)
 {
+    std::string separator("\n");
+
     std::ofstream file(filename);
     if (!file)
     {
         std::stringstream error;
-        error << "Failed to export the Petri net to '" << filename
+        error << "Failed saving the Petri net in '" << filename
               << "'. Reason was " << strerror(errno) << std::endl;
         return error.str();
     }
 
-    file << "digraph G {" << std::endl;
+    // TODO sensors
+
+    file << "{" << std::endl;
+    file << "  \"revision\": 3," << std::endl;
+    file << "  \"type\": \"" << to_str(net.type()) << "\"," << std::endl;
+    file << "  \"nets\": [\n    {" << std::endl;
+    file << "       \"name\": \"" << net.name << "\"," << std::endl;
 
     // Places
-    file << "node [shape=circle, color=blue]" << std::endl;
+    file << "       \"places\": [";
     for (auto const& p: net.places())
     {
-        file << "  " << p.key << " [label=\"" << p.caption;
-        if (p.tokens > 0u)
-        {
-            file << "\\n" << p.tokens << "&bull;";
-        }
-        file << "\"];" << std::endl;
+        file << separator; separator = ",\n";
+        file << "            { \"id\": " << p.id << ", \"caption\": \"" << p.caption
+             << "\", \"tokens\": " << p.tokens << ", \"x\": " << p.x
+             << ", \"y\": " << p.y << " }";
     }
 
     // Transitions
-    file << "node [shape=box, color=red]" << std::endl;
+    separator = "\n";
+    file << "\n       ],\n       \"transitions\": [";
     for (auto const& t: net.transitions())
     {
-        if (t.canFire())
-        {
-            file << "  " << t.key << " [label=\""
-                 << t.caption << "\", color=green];"
-                 << std::endl;
-        }
-        else
-        {
-            file << "  " << t.key << " [label=\""
-                 << t.caption << "\"];"
-                 << std::endl;
-        }
+        file << separator; separator = ",\n";
+        file << "            { \"id\": " << t.id << ", \"caption\": \"" << t.caption << "\", \"x\": "
+             << t.x << ", \"y\": " << t.y << ", \"angle\": " << t.angle << " }";
     }
 
     // Arcs
-    file << "edge [style=\"\"]" << std::endl;
+    separator = "\n";
+    file << "\n       ],\n       \"arcs\": [";
     for (auto const& a: net.arcs())
     {
-        file << "  " << a.from.key << " -> " << a.to.key;
+        file << separator; separator = ",\n";
+        file << "            { \"from\": \"" << a.from.key << "\", " << "\"to\": \"" << a.to.key
+             << "\"";
         if (a.from.type == Node::Type::Transition)
-        {
-            file << " [label=\"" << a.duration << "\"]";
-        }
-        file << ";" << std::endl;
+            file << ", \"duration\": " << a.duration;
+        file << " }";
     }
-
+    file << "\n       ]" << std::endl;
+    file << "    }" << std::endl;
+    file << "  ]" << std::endl;
     file << "}" << std::endl;
+
     return {};
 }
 

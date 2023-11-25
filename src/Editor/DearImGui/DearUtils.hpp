@@ -18,17 +18,25 @@
 // along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.
 //=============================================================================
 
-#ifndef IMPORTS_HPP
-#  define IMPORTS_HPP
+#ifndef DEAR_IMGUI_UTILS_HPP
+#  define DEAR_IMGUI_UTILS_HPP
 
-#include <string>
+#  include <string>
+#  include "imgui.h"
 
-namespace tpne {
+//------------------------------------------------------------------------------
+static inline ImVec2 operator+(ImVec2 const& lhs, ImVec2 const& rhs)
+{
+    return ImVec2(lhs.x + rhs.x, lhs.y + rhs.y);
+}
 
-class Net;
+//------------------------------------------------------------------------------
+static inline ImVec2 operator-(ImVec2 const& lhs, ImVec2 const& rhs)
+{
+    return ImVec2(lhs.x - rhs.x, lhs.y - rhs.y);
+}
 
-std::string importFromJSON(Net& net, std::string const& filename);
-
-} // namespace tpne
+//------------------------------------------------------------------------------
+void inputInteger(std::string const& title, size_t const maxTokens, size_t& tokens);
 
 #endif

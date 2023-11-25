@@ -21,15 +21,14 @@
 #ifndef SPARSE_MATRIX_HPP
 #  define SPARSE_MATRIX_HPP
 
+#  include "Net/TropicalAlgebra.hpp"
+
 // FIXME Add template and manage (max,+) types
 //#  include <cstdint>
 #  include <vector>
 #  include <iostream>
 
 namespace tpne {
-
-template<typename T> T zero();
-template<typename T> T one();
 
 //------------------------------------------------------------------------------
 //! \brief Helper structure for building sparse matrix for the exportation of

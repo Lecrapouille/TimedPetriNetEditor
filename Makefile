@@ -23,8 +23,9 @@ include $(M)/Makefile.header
 ###################################################
 # Inform Makefile where to find *.cpp files
 #
-VPATH += $(P)/include $(P)/src $(P)/src/Net
-VPATH += $(P)/src/Net/Formats $(P)/src/Editor
+VPATH += $(P)/include $(P)/src $(P)/src/Utils $(P)/src/Net
+VPATH += $(P)/src/Net/Imports VPATH += $(P)/src/Net/Exports
+VPATH += $(P)/src/Application $(P)/src/Editor $(P)/src/Editor/DearImGui
 
 ###################################################
 # Inform Makefile where to find header files
@@ -73,9 +74,9 @@ endif
 #
 ifeq ($(BACKEND),RayLib)
 VPATH += $(THIRDPART)/rlImGui
-VPATH += $(P)/src/Editor/Backends/RayLib
+VPATH += $(P)/src/Application/DearImGui/Backends/RayLib
 INCLUDES += -I$(THIRDPART)/rlImGui
-INCLUDES += -I$(P)/src/Editor/Backends/RayLib
+INCLUDES += -I$(P)/src/Application/DearImGui/Backends/RayLib
 DEARIMGUI_BACKEND_OBJS += rlImGui.o
 endif
 
@@ -83,8 +84,8 @@ endif
 # Dear ImGui backends: OpenGL/GLFW3
 #
 ifeq ($(BACKEND),GLFW3)
-VPATH += $(P)/src/Editor/Backends/GLFW3
-INCLUDES += -I$(P)/src/Editor/Backends/GLFW3
+VPATH += $(P)/src/Application/DearImGui/Backends/GLFW3
+INCLUDES += -I$(P)/src/Application/DearImGui/Backends/GLFW3
 DEARIMGUI_BACKEND_OBJS += imgui_impl_glfw.o imgui_impl_opengl3.o
 endif
 
@@ -177,14 +178,14 @@ endif
 ###################################################
 # Make the list of compiled files for the application
 #
-LIB_OBJS += Path.o Howard.o TimedTokens.o Receptivities.o
+LIB_OBJS += Path.o Howard.o Utils.o TimedTokens.o Receptivities.o
 LIB_OBJS += PetriNet.o Algorithms.o Simulation.o
 LIB_OBJS += ImportJSON.o ExportJSON.o ExportSymfony.o ExportPnEditor.o
 LIB_OBJS += ExportPetriLaTeX.o ExportJulia.o ExportGraphviz.o ExportDrawIO.o
 LIB_OBJS += ExportGrafcetCpp.o
 OBJS += $(DEARIMGUI_BACKEND_OBJS) $(DEARIMGUI_OBJS)
 OBJS += $(LIB_OBJS)
-OBJS += Application.o PetriEditor.o main.o
+OBJS += DearUtils.o Drawable.o Application.o PetriEditor.o main.o
 
 ###################################################
 # Compile the project, the static and shared libraries

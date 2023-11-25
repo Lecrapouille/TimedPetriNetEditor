@@ -31,10 +31,6 @@ namespace tpne {
 template<> bool SparseMatrix<double>::display_for_julia = true;
 template<> bool SparseMatrix<double>::display_as_dense = false;
 
-
-template<> double   zero<double>()  { return 0.0; }
-template<> double   one<double>()   { return 1.0; }
-
 //------------------------------------------------------------------------------
 bool isEventGraph(Net const& net, std::string& error, std::vector<Arc*>& erroneous_arcs)
 {

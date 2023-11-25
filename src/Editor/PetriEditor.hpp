@@ -21,43 +21,39 @@
 #ifndef PETRIEDITOR_HPP
 #  define PETRIEDITOR_HPP
 
-#  include "Application.hpp" // Path defined in the Makefile
-#  include "TimedPetriNetEditor/PetriNet.hpp"
+#  include "Application.hpp" // Selected by Makefile
 #  include "Net/Simulation.hpp"
-#  include "Editor/Messages.hpp"
+#  include "Net/Exports/Exports.hpp"
+#  include "Net/Imports/Imports.hpp"
+#  include "Utils/Path.hpp"
 
 namespace tpne {
 
-struct Exporter;
-
-// *****************************************************************************
+// ****************************************************************************
 //! \brief Graphical representation and manipulation of the Petri net using the
 //! SFML library for the rendering.
-// *****************************************************************************
+// ****************************************************************************
 class Editor: public Application
 {
 public:
 
-    //--------------------------------------------------------------------------
+    //-------------------------------------------------------------------------
     //! \brief Constructor.
-    //! \param[in] project_path the path of the Petri net fil to load. Let it
+    //-------------------------------------------------------------------------
+    Editor(size_t const width, size_t const height, std::string const& title);
+
+    //-------------------------------------------------------------------------
+    //! \brief starts up the Petri net editor and call the infinite loop.
+    //! \param[in] petri_file the path of the Petri net fil to load. Let it
     //! dummy if you do not want to open a file.
-    //--------------------------------------------------------------------------
-    Editor(size_t const width, size_t const height, std::string const& title,
-           std::string const& project_path = {});
+    //-------------------------------------------------------------------------
+    void startUp(std::string const& petri_file);
 
-private: // Inheritnace from Application class
+private: // Inheritance from Application class
 
-    virtual void onStartUp() override;
     virtual void onUpdate(float const dt) override;
     virtual void onDraw() override;
-
-private: // Show results from Petri algorithms
-
-    void showCriticalCycles() const;
-    void showDynamicLinearSystem() const;
-    void showCounterOrDaterequation() const;
-    void showAdjacencyMatrices() const;
+    void close();
 
 private: // Widgets
 
@@ -67,8 +63,16 @@ private: // Widgets
     void console();
     void messagebox();
     void inspector();
+    void view();
 
-private:
+private: // Show results from Petri algorithms
+
+    void showCriticalCycles() const;
+    void showDynamicLinearSystem() const;
+    void showCounterOrDaterequation() const;
+    void showAdjacencyMatrices() const;
+
+private: // Petri net services
 
     Node* getNode(float const x, float const y);
     Place* getPlace(float const x, float const y);
@@ -90,53 +94,12 @@ private: // Error logs
 
 private:
 
-    struct GridLayout
-    {
-
-    };
-
-    class View
-    {
-    public:
-
-        void reshape();
-        void drawGrill();
-        void drawArc(Arc const& arc);
-        void drawPlace(Place const& place);
-        void drawTransition(Transition const& transition);
-        void drawPetriNet();
-        void drawToken(float const x, float const y);
-
-    private:
-        Layout m_layout;
-        ImVec2 scrolling{0.0f, 0.0f};
-        ImVec2 canvas_p0;
-        ImVec2 canvas_p1;
-        ImVec2 canvas_sz;
-        ImVec2 origin;
-    };
-
-    struct MouseSelection
-    {
-        //! \brief Mouse cursor position.
-        ImVec2 m_mouse;
-        //! \brief Selected origin node (place or transition) by the user when
-        //! adding an arc.
-        Node* m_node_from = nullptr;
-        //! \brief Selected destination node (place or transition) by the user when
-        //! adding an arc.
-        Node* m_node_to = nullptr;
-        //! \brief The user has select a node to be displaced.
-        std::vector<Node*> m_selected_modes;
-        // Ugly stuffs needed when trying to determine which node the user wants to
-        // create.
-        ImVec2 m_click_position; bool m_arc_from_unknown_node = false;
-    };
-
+    // ************************************************************************
+    //! \brief Since we are using immediate mode GUI we need to memorize states
+    //! controling which widgets/modal windows to show.
+    // ************************************************************************
     struct States
     {
-        bool is_dragging = false;
-        bool disable_dragging = false;
         bool do_dater = false;
         bool do_counter = false;
         bool do_find_critical_cycle = false;
@@ -151,92 +114,110 @@ private:
         bool show_place_captions = false;
         bool show_transition_captions = false;
         ImVec2 viewport_center;
+        std::string title;
     };
 
-    //! \brief The single Petri net the editor can edit
-    Net m_net; // TODO faire plusieurs pour le GRAFCET
-    //! \brief
-    Simulation m_simulation;
-    //! \brief
+    // ************************************************************************
+    //! \brief Graphical representation of the Petri net using and its
+    //! interaction with the user.
+    // ************************************************************************
+    class PetriView
+    {
+    public:
+
+        // ********************************************************************
+        //! \brief
+        // ********************************************************************
+        struct GridLayout
+        {
+            float step = 64.0f;
+            bool  show = true;
+            bool  menu = true;
+        } grid;
+
+        PetriView(Editor& editor);
+        void reshape();
+        void onHandleInput();
+        void drawPetriNet(Net& net, Simulation& simulation);
+        inline ImVec2 const& origin() const { return m_canvas.origin; };
+
+    private:
+
+        bool isMouseClicked(ImGuiMouseButton& key, bool& dragging);
+        bool isMouseReleased(ImGuiMouseButton& key);
+        void handleAddNode(ImGuiMouseButton button);
+        void handleArcOrigin();
+        void handleMoveNode();
+        void handleArcDestination();
+        void drawGrid(ImDrawList* draw_list, ImU32 const& color);
+
+    private:
+
+        Editor& m_editor;
+
+        // ********************************************************************
+        //! \brief
+        // ********************************************************************
+        struct Canvas
+        {
+            ImVec2 corners[2];
+            ImVec2 size;
+            ImVec2 origin;
+            ImVec2 scrolling{0.0f, 0.0f};
+            ImDrawList* draw_list;
+
+            ImVec2 getMousePosition();
+            void reshape();
+            void push();
+            void pop();
+        } m_canvas;
+
+        // ********************************************************************
+        //! \brief
+        // ********************************************************************
+        class MouseSelection
+        {
+        public:
+            //! \brief Mouse cursor position.
+            ImVec2 position;
+            //! \brief
+            bool is_dragging = false;
+            bool disable_dragging = false; // FIXME
+            //! \brief Selected origin node (place or transition) by the user when
+            //! adding an arc.
+            Node* from = nullptr;
+            //! \brief Selected destination node (place or transition) by the user when
+            //! adding an arc.
+            Node* to = nullptr;
+            //! \brief The user has select a node to be displaced.
+            std::vector<Node*> selection;
+            // Ugly stuffs needed when trying to determine which node the user wants to
+            // create.
+            ImVec2 click_position; bool arc_from_unknown_node = false;
+        } m_mouse;
+    };
+
+private:
+
+    //! \brief Heper instance to find files like Linux $PATH environment variable.
+    //! Used for example for loading font files.
+    Path m_path;
+    //! \brief Container of file formats we can export the net to (LaTeX, Symfony, Dot ...).
     std::vector<Exporter> m_exporters;
-    //! \brief Path of the Petri net file: not empty when the net was loaded
-    //! from file, else empty when created from scratch.
-    std::string m_filename;
+    //! \brief Container of file formats we can import the net from.
+    std::vector<Importer> m_m_importers;
+    //! \brief Single Petri net the editor can edit.
+    //! \fixme Manage several nets (like done with GEMMA).
+    Net m_net;
+    //! \brief Instance allowing to do timed simulation.
+    Simulation m_simulation;
+    //! \brief Visualize the net and do the interaction with the user.
+    PetriView m_view;
     //! \brief
     Messages m_messages;
     //! \brief
     mutable States m_states;
-    //! \brief
-    ImDrawList* draw_list;
-
-
-
-
-
-
-    // ************************************************************************
-    //! \brief Look and fell of the editor.
-    // ************************************************************************
-    struct LayoutConfig
-    {
-        struct Grid
-        {
-            float step = 64.0f;
-            bool  enable = true;
-            bool  menu = true;
-        };
-
-        struct Color
-        {
-            // selected
-        };
-
-        Grid grid;
-    };
-
-public: //private:
-
-
-
-    void onHandleInput();
-    void onDragged(ImVec2 const& mouse_delta); // Grid
-    ImVec2 getMousePosition();
-    void handleArcOrigin();
-    void handleArcDestination();
-    void handleAddNode(ImGuiMouseButton button);
-    void handleMoveNode();
-    bool IsMouseClicked(ImGuiMouseButton& button, bool& dragging);
-    bool IsMouseReleased(ImGuiMouseButton& key);
-
-
-
-
-
-
-
-
-
-    int node_hovered_in_list = -1;
-    int node_hovered_in_scene = -1;
-
-private: // gestion de la souris
-
-
-private:
-
-    //! \brief Some algorithms indicate arcs (i.e. critical cycles, or
-    //! if a Petri net is an event graph).
-    std::vector<Arc*> m_selected_arcs;
-
-
-
-public: // FIXME
-
-
 };
-
-// FIXME export mandatory because of friendship
-//void menu(Editor& editor);
 
 } // namespace tpne
 

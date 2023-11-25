@@ -23,7 +23,7 @@
 
 #  include "TimedPetriNetEditor/PetriNet.hpp"
 #  include "Net/TimedTokens.hpp"
-#  include "Editor/Messages.hpp"
+#  include "Utils/Messages.hpp"
 
 namespace tpne {
 
@@ -62,7 +62,7 @@ public:
 
     //! \brief Set true for starting the simulation the Petri net and to
     //! maintain the simulation running. Set false to halt the simulation.
-    std::atomic<bool> simulating = false;
+    std::atomic<bool> running{false};
 
 private:
 

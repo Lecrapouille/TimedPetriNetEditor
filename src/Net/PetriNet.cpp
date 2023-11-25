@@ -20,8 +20,8 @@
 
 #include "TimedPetriNetEditor/PetriNet.hpp"
 #include "TimedPetriNetEditor/Algorithms.hpp"
-#include "Net/Formats/Imports.hpp"
-#include "Net/Formats/Exports.hpp"
+#include "Net/Imports/Imports.hpp"
+#include "Net/Exports/Exports.hpp"
 
 #include <iomanip>
 #include <iostream>

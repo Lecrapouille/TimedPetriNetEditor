@@ -18,7 +18,7 @@
 // along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.
 //=============================================================================
 
-#include "Exports.hpp"
+#include "Net/Exports/Exports.hpp"
 #include "TimedPetriNetEditor/PetriNet.hpp"
 #include <fstream>
 #include <cstring>

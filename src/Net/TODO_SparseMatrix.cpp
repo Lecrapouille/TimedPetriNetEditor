@@ -33,11 +33,6 @@
 
 namespace tpne {
 
-template<> double   zero<double>()  { return 0.0; }
-template<> double   one<double>()   { return 1.0; }
-template<> MaxPlus  zero<MaxPlus>() { return -std::numeric_limits<double>::infinity(); }
-template<> MaxPlus  one<MaxPlus>()  { return 0.0; }
-
 template<typename T> bool SparseMatrix<T>::display_for_julia = true;
 template<typename T> bool SparseMatrix<T>::display_as_dense = false;
 

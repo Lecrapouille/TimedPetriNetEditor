@@ -18,8 +18,10 @@
 // along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.
 //=============================================================================
 
-#ifndef MAXPLUS_HPP
-#  define MAXPLUS_HPP
+#ifndef TROPICAL_ALGEBRA_HPP
+#  define TROPICAL_ALGEBRA_HPP
+
+#  include "Net/ZeroOne.hpp"
 
 #  include <cmath>
 #  include <ostream>
@@ -28,6 +30,9 @@
 
 namespace tpne {
 
+// *****************************************************************************
+//! \brief (max,+) algebra
+// *****************************************************************************
 class MaxPlus
 {
 public:
@@ -53,14 +58,51 @@ public:
     double val;
 };
 
+template<> inline MaxPlus zero<MaxPlus>() { return -std::numeric_limits<double>::infinity(); }
+template<> inline MaxPlus one<MaxPlus>()  { return 0.0; }
+
 inline std::ostream& operator<<(std::ostream& os, MaxPlus const& m)
 {
     std::cout << m.val;
     return os;
 }
 
-template<class T> T one()           { return T(1); }
-template<class T> T zero()          { return T(0); }
+// *****************************************************************************
+//! \brief (min,+) algebra
+// *****************************************************************************
+class MinPlus
+{
+public:
+
+    MinPlus() : val() {};
+    MinPlus(const MinPlus & d) : val(d.val){}
+    MinPlus(const double t) : val(t){}
+    inline bool operator==(const MinPlus &rhs) const { return val == rhs.val; }
+    inline bool operator==(const double &rhs) const { return val == rhs; }
+    inline MinPlus & operator=(const MinPlus & rhs) { val = rhs.val; return *this;}
+    inline MinPlus & operator=(const double rhs) { val = rhs; return *this;}
+    inline double operator*=(const MinPlus & rhs) { val += rhs.val; return val; }
+    inline double operator+=(const MinPlus & rhs) { val = std::min(val, rhs.val); return val; }
+    inline double operator*(const MinPlus & rhs) const { return val + rhs.val; }
+    inline double operator+(const MinPlus & rhs) const { return std::min(val, rhs.val); }
+    inline double operator/(const MinPlus & rhs) const { return val - rhs.val; }
+    inline double operator-(const MinPlus & rhs) const { return val - rhs.val; }
+    inline double operator-() const { return -val; }
+    inline double operator+() const { return val; }
+    //inline operator double const& () const { return val; }
+    //inline operator double& () { return val; }
+
+    double val;
+};
+
+template<> inline MinPlus zero<MinPlus>() { return std::numeric_limits<double>::infinity(); }
+template<> inline MinPlus one<MinPlus>()  { return 0.0; }
+
+inline std::ostream& operator<<(std::ostream& os, MinPlus const& m)
+{
+    std::cout << m.val;
+    return os;
+}
 
 } // namespace tpne
 

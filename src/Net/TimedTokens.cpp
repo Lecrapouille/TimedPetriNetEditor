@@ -18,15 +18,11 @@
 // along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.
 //=============================================================================
 
+#include "TimedPetriNetEditor/PetriNet.hpp"
 #include "Net/TimedTokens.hpp"
+#include "Utils/Utils.hpp"
 
 namespace tpne {
-
-//------------------------------------------------------------------------------
-static inline float norm(const float xa, const float ya, const float xb, const float yb)
-{
-    return sqrtf((xb - xa) * (xb - xa) + (yb - ya) * (yb - ya));
-}
 
 //------------------------------------------------------------------------------
 TimedToken::TimedToken(Arc& arc_,size_t const tokens_, TypeOfNet const type_)
@@ -39,14 +35,14 @@ TimedToken::TimedToken(Arc& arc_,size_t const tokens_, TypeOfNet const type_)
     // the user during the simulation.
     if (type != TypeOfNet::TimedEventGraph)
     {
-        magnitude = norm(arc.from.x, arc.from.y, arc.to.x, arc.to.y);
+        magnitude = norm(arc.from, arc.to);
     }
     else
     {
         // With graph event we have to skip implicit places.
         assert(arc.to.arcsOut.size() == 1u && "malformed graph event");
         Node& next = arc.to.arcsOut[0]->to;
-        magnitude = norm(arc.from.x, arc.from.y, next.x, next.y);
+        magnitude = norm(arc.from, next);
     }
 
     // Set the token animation speed. Depending on the type of Petri net,

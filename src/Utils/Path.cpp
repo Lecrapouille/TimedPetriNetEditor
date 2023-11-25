@@ -18,55 +18,10 @@
 // along with MyLogger.  If not, see <http://www.gnu.org/licenses/>.
 //=====================================================================
 
-#include "Editor/Path.hpp"
+#include "Utils/Path.hpp"
+#include "Utils/Utils.hpp"
 #include <sstream>
 #include <sys/stat.h>
-#ifdef __APPLE__
-#  include <CoreFoundation/CFBundle.h>
-#endif
-
-//------------------------------------------------------------------------------
-#ifdef __APPLE__
-std::string osx_get_resources_dir(std::string const& file)
-{
-    struct stat exists; // folder exists ?
-    std::string path;
-
-    CFURLRef resourceURL = CFBundleCopyResourcesDirectoryURL(CFBundleGetMainBundle());
-    char resourcePath[PATH_MAX];
-    if (CFURLGetFileSystemRepresentation(resourceURL, true,
-                                         reinterpret_cast<UInt8 *>(resourcePath),
-                                         PATH_MAX))
-    {
-        if (resourceURL != NULL)
-        {
-            CFRelease(resourceURL);
-        }
-
-        path = std::string(resourcePath) + "/" + file;
-        if (stat(path.c_str(), &exists) == 0)
-        {
-            return path;
-        }
-    }
-
-#ifdef DATADIR
-    path = std::string(DATADIR) + "/" + file;
-    if (stat(path.c_str(), &exists) == 0)
-    {
-        return path;
-    }
-#endif
-
-    path = "data/" + file;
-    if (stat(path.c_str(), &exists) == 0)
-    {
-        return path;
-    }
-
-    return file;
-}
-#endif
 
 //------------------------------------------------------------------------------
 Path::Path(std::string const& path, char const delimiter)

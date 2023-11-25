@@ -34,8 +34,9 @@ print-compile raylib
 (
  cd raylib/src
 
- # Fucking poor API !!!!! Need to hot patch
- # Concerning .backup see https://www.themoderncoder.com/fix-sed-i-error-macos/
+ # Need to patch TakeScreenshot() function because it only accepts file name instead
+ # of file path which is the poorest idea ever!
+ # Note: Concerning .backup see https://www.themoderncoder.com/fix-sed-i-error-macos/
  sed -i.backup 's/ExportImage(image, path)/ExportImage(image, fileName)/g' rcore.c
 
  mkdir -p $ARCHI

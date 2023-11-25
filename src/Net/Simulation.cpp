@@ -80,17 +80,17 @@ void Simulation::step(float const dt)
 }
 
 //------------------------------------------------------------------------------
-void Simulation::starting()
+void Simulation::stateStarting()
 {
     // The user has requested to start the simulation ?
-    if (!m_simulating)
+    if (!running)
         return;
 
     // Dummy Petri net: nothing to simulate
     if (m_net.isEmpty())
     {
         m_messages.setWarning("Starting simulation request ignored because the net is empty");
-        m_simulating = false;
+        running = false;
         return ;
     }
 
@@ -102,7 +102,7 @@ void Simulation::starting()
         if (!m_net.hasValidTransitivities())
         {
             m_messages.setWarning("transitivites have syntax error");
-            m_simulating = false;
+            running = false;
             return ;
         }
     }
@@ -132,7 +132,7 @@ void Simulation::starting()
 }
 
 //------------------------------------------------------------------------------
-void Simulation::halting()
+void Simulation::stateHalting()
 {
     m_messages.setInfo("Simulation has ended!");
     std::cout << current_time() << "Simulation has ended!"
@@ -145,13 +145,13 @@ void Simulation::halting()
 }
 
 //------------------------------------------------------------------------------
-void Simulation::simulating(float const dt)
+void Simulation::stateSimulating(float const dt)
 {
     bool burnt = false;
     bool burning = false;
 
     // The user has requested to halt the simulation ?
-    if (!m_simulating)
+    if (!running)
     {
         m_state = Simulation::State::Halting;
         return ;
@@ -293,7 +293,7 @@ void Simulation::simulating(float const dt)
     {
         std::cout << current_time() << "The simulation cannot burn tokens."
                     << std::endl;
-        m_simulating = false;
+        running = false;
         m_state = Simulation::State::Halting;
     }
 }

@@ -1,6 +1,5 @@
 #include "Editor/PetriEditor.hpp"
-#include <iostream>
-#include <unistd.h>
+#include <unistd.h> // getopt
 
 //------------------------------------------------------------------------------
 static void usage(const char* name)
@@ -40,6 +39,7 @@ int main(int argc, char* argv[])
         filename = argv[optind];
     }
 
-    tpne::Editor editor(1024, 768, "Petri Net Editor", filename);
+    tpne::Editor editor(1024, 768, "Petri Net Editor");
+    editor.startUp(filename);
     editor.run();
 }
