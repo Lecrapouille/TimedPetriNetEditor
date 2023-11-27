@@ -26,15 +26,18 @@
 
 namespace tpne {
 
+static const float ARROW_WIDTH = 14.0f;
+static const float ARROW_SPACING = 10.0f;
 static const float TRANS_WIDTH = 36.0f;  // Rectangle width for rendering Transitions
-static const float TRANS_HEIGHT = TRANS_WIDTH / 2.0f;  // Rectangle height for rendering Transitions
+static const float TRANS_HEIGHT = TRANS_WIDTH / 1.0f;  // Rectangle height for rendering Transitions
 static const float PLACE_RADIUS = TRANS_WIDTH / 2.0f; // Circle radius for rendering Places
 static const float TOKEN_RADIUS = 2.0f;  // Circle radius for rendering tokens
 
-void drawArc(ImDrawList* draw_list, Arc const& arc, TypeOfNet const type, ImVec2 const& origin, uint8_t const alpha);
+
+void drawArc(ImDrawList* draw_list, Arc const& arc, TypeOfNet const type, ImVec2 const& origin, float const alpha);
 void drawToken(ImDrawList* draw_list, float const x, float const y);
-void drawPlace(ImDrawList* draw_list, Place const& place, TypeOfNet const type, ImVec2 const& origin, bool const show_caption, uint8_t const alpha);
-void drawTransition(ImDrawList* draw_list, Transition const& transition, TypeOfNet const type, ImVec2 const& origin, bool const show_caption, uint8_t const alpha);
+void drawPlace(ImDrawList* draw_list, Place const& place, TypeOfNet const type, ImVec2 const& origin, bool const show_caption, float const alpha);
+void drawTransition(ImDrawList* draw_list, Transition const& transition, TypeOfNet const type, ImVec2 const& origin, bool const show_caption, float const alpha);
 
 } // namespace tpne
 

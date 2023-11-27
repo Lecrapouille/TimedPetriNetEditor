@@ -25,7 +25,7 @@ namespace tpne {
 
 class Arc;
 class Place;
-enum TypeOfNet;
+enum class TypeOfNet;
 
 // *****************************************************************************
 //! \brief Tokens are systems resources. Places indicate how many tokens they

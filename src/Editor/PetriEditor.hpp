@@ -30,15 +30,14 @@
 namespace tpne {
 
 // ****************************************************************************
-//! \brief Graphical representation and manipulation of the Petri net using the
-//! SFML library for the rendering.
+//! \brief Graphical User interface for manipulating and simulating Petri net.
 // ****************************************************************************
 class Editor: public Application
 {
 public:
 
     //-------------------------------------------------------------------------
-    //! \brief Constructor.
+    //! \brief Constructor. No additional actions are made here.
     //-------------------------------------------------------------------------
     Editor(size_t const width, size_t const height, std::string const& title);
 
@@ -74,12 +73,13 @@ private: // Show results from Petri algorithms
 
 private: // Petri net services
 
-    Node* getNode(float const x, float const y);
-    Place* getPlace(float const x, float const y);
-    Transition* getTransition(float const x, float const y);
+    Node* getNode(ImVec2 const& position);
+    Place* getPlace(ImVec2 const& position);
+    Transition* getTransition(ImVec2 const& position);
     bool switchOfNet(TypeOfNet const type);
-    void loadNetFile();
     void exportNetTo(Exporter const& exporter);
+    void importNetTo(Importer const& importer);
+    void loadNetFile();
     void saveNetAs();
     void closeNet();
     void toogleStartSimulation();
@@ -109,10 +109,11 @@ private:
         bool do_save_as = false;
         bool do_screenshot = false;
         Exporter const* do_export_to = nullptr;
+        Importer const* do_import_to = nullptr;
         bool show_about = false;
         bool show_help = false;
-        bool show_place_captions = false;
-        bool show_transition_captions = false;
+        bool show_place_captions = true;
+        bool show_transition_captions = true;
         ImVec2 viewport_center;
         std::string title;
     };
@@ -149,7 +150,7 @@ private:
         void handleArcOrigin();
         void handleMoveNode();
         void handleArcDestination();
-        void drawGrid(ImDrawList* draw_list, ImU32 const& color);
+        void drawGrid(ImDrawList* draw_list, bool const running);
 
     private:
 

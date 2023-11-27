@@ -25,58 +25,64 @@
 
 namespace tpne {
 
-#define FILL_COLOR(a) IM_COL32(255, 165, 0, (a))
-#define OUTLINE_COLOR IM_COL32(165, 42, 42, 255) // Arcs, Places, Transitions
-#define CRITICAL_COLOR IM_COL32(255, 0, 0, 255)
+#define FILL_COLOR(alpha) ImGui::GetColorU32(ImGuiCol_FrameBg, alpha)
+#define OUTLINE_COLOR     ImGui::GetColorU32(ImGuiCol_FrameBgActive)
+#define CAPTION_COLOR     ImGui::GetColorU32(ImGuiCol_Text)
+#define DURATION_COLOR    ImGui::GetColorU32(ImGuiCol_FrameBgActive)
+#define TOKEN_COLOR       ImGui::GetColorU32(ImGuiCol_Text)
+#define CRITICAL_COLOR    ImGui::GetColorU32(ImGuiCol_PlotLinesHovered)
+#define FIREABLE_COLOR    IM_COL32(0, 255, 0, 255)
 
 //------------------------------------------------------------------------------
 static void drawArrow(ImDrawList* draw_list, ImVec2 const& A, ImVec2 const& B,
                       const ImU32 color)
 {
+    constexpr float pi = 3.14159265358979323846f;
+
     // Orientation
-    const float teta = (B.y - A.y) / (B.x - A.x);
-    const float arrowAngle = std::atan(teta);
+    const float arrowAngle = std::atan((B.y - A.y) / (B.x - A.x));
+    // + (B.x < A.x) ? pi : ((B.y < A.y) ? (2.0f * pi) : 0.0f);
     const float cos_a = std::cos(arrowAngle);
     const float sin_a = std::sin(arrowAngle);
 
-    // Arc magnitude
-    const float arrowLength = norm(A, B);
-
+    // Tail of the arrow.
     // Reduce the arrow magnitude to avoid entering in the place and having
     // a mush of pixels when multiple arrows are pointing on the same
     // position. To get full scaled arrow comment this block of code and
     // uncomment A.x, B.x, A.y, B.y and tailSize.
-    const float r = arrowLength - PLACE_RADIUS;
-    const float dx = ((B.x - A.x) * r) / arrowLength;
-    const float dy = ((B.y - A.y) * r) / arrowLength;
-    const float a1 = B.x - dx;
-    const float b1 = B.y - dy;
-    const float a2 = A.x + dx;
-    const float b2 = A.y + dy;
+    const float length = norm(A, B);
+    float r = length - PLACE_RADIUS - ARROW_SPACING;
+    float dx = ((B.x - A.x) * r) / length;
+    float dy = ((B.y - A.y) * r) / length;
+    const ImVec2 from(B.x - dx, B.y - dy);
+    const ImVec2 to(A.x + dx, A.y + dy);
+
+    // Reduce the head size to avoid overlapping the line and head of the
+    // arrow. With the transparency this is noticable.
+    r = length - PLACE_RADIUS - ARROW_WIDTH - ARROW_SPACING;
+    dx = ((B.x - A.x) * r) / length;
+    dy = ((B.y - A.y) * r) / length;
+    const ImVec2 to2(A.x + dx, A.y + dy);
+    draw_list->AddLine(from, to2, color, 2.0f);
 
     // Head of the arrow
-    const ImVec2 arrowHeadSize(14.0f, 14.0f);
+    const ImVec2 head(-ARROW_WIDTH, -ARROW_WIDTH / 2.0f);
     std::vector<ImVec2> points = {
-        ImVec2(a2, b2 /*B.x, B.y*/) + rotate(ImVec2(0.0f, 0.0f), cos_a, sin_a),
-        ImVec2(a2, b2 /*B.x, B.y*/) + rotate(ImVec2(arrowHeadSize.x, arrowHeadSize.y / 2.0f), cos_a, sin_a),
-        ImVec2(a2, b2 /*B.x, B.y*/) + rotate(ImVec2(0.0f, arrowHeadSize.y), cos_a, sin_a)
+        to + rotate(head + ImVec2(0.0f, 0.0f), cos_a, sin_a),
+        to + rotate(head + ImVec2(ARROW_WIDTH, ARROW_WIDTH / 2.0f), cos_a, sin_a),
+        to + rotate(head + ImVec2(0.0f, ARROW_WIDTH), cos_a, sin_a)
     };
     draw_list->AddConvexPolyFilled(points.data(), points.size(), color);
-
-    // Tail of the arrow.
-    //const sf::Vector2f tailSize{ arrowLength - arrowHeadSize.x, 2.f };
-    const ImVec2 tailSize(r - arrowHeadSize.x - 15.0f, 2.0f);
-    draw_list->AddLine(A, B, color, 2.0f);
 }
 
 //------------------------------------------------------------------------------
-void drawArc(ImDrawList* draw_list, Arc const& arc, TypeOfNet const type, ImVec2 const& origin, uint8_t const alpha)
+void drawArc(ImDrawList* draw_list, Arc const& arc, TypeOfNet const type, ImVec2 const& origin, float const alpha)
 {
     ImU32 color;
 
-    if (alpha >= 0u)
+    if (alpha >= 0.0f)
     {
-        color = FILL_COLOR(alpha);
+        color = OUTLINE_COLOR; // FIXME FILL_COLOR(alpha);
     }
     else
     {
@@ -103,7 +109,7 @@ void drawArc(ImDrawList* draw_list, Arc const& arc, TypeOfNet const type, ImVec2
         std::stringstream stream;
         stream << std::fixed << std::setprecision(2) << arc.duration << ", "
                << arc.to.key << "(" << reinterpret_cast<Place&>(arc.to).tokens << ")";
-        draw_list->AddText(ImVec2(x, y), IM_COL32(0, 0, 0, 255), stream.str().c_str());
+        draw_list->AddText(ImVec2(x, y), DURATION_COLOR, stream.str().c_str());
     }
     else
     {
@@ -118,7 +124,7 @@ void drawArc(ImDrawList* draw_list, Arc const& arc, TypeOfNet const type, ImVec2
             float y = origin.y + arc.from.y + (arc.to.y - arc.from.y) / 2.0f - 15.0f;
             std::stringstream stream;
             stream << std::fixed << std::setprecision(2) << arc.duration;
-            draw_list->AddText(ImVec2(x, y), IM_COL32(0, 0, 0, 255), stream.str().c_str());
+            draw_list->AddText(ImVec2(x, y), DURATION_COLOR, stream.str().c_str());
         }
     }
 }
@@ -126,12 +132,12 @@ void drawArc(ImDrawList* draw_list, Arc const& arc, TypeOfNet const type, ImVec2
 //------------------------------------------------------------------------------
 void drawToken(ImDrawList* draw_list, float const x, float const y)
 {
-    draw_list->AddCircleFilled(ImVec2(x, y), TOKEN_RADIUS, IM_COL32(0, 0, 0, 255));
+    draw_list->AddCircleFilled(ImVec2(x, y), TOKEN_RADIUS, TOKEN_COLOR);
 }
 
 // TODO a virer en utilisant un wrapper RenderablePlace avec fading (alpha)
 //------------------------------------------------------------------------------
-void drawPlace(ImDrawList* draw_list, Place const& place, TypeOfNet const type, ImVec2 const& origin, bool const show_caption, uint8_t const alpha)
+void drawPlace(ImDrawList* draw_list, Place const& place, TypeOfNet const type, ImVec2 const& origin, bool const show_caption, float const alpha)
 {
     // In graph event we "compress" the graph by not displaying places.
     if (type == TypeOfNet::TimedEventGraph)
@@ -142,13 +148,13 @@ void drawPlace(ImDrawList* draw_list, Place const& place, TypeOfNet const type, 
 
     // Draw the place
     draw_list->AddCircleFilled(p, PLACE_RADIUS, FILL_COLOR(alpha), 64);
-    draw_list->AddCircle(p, PLACE_RADIUS, OUTLINE_COLOR, 64);
+    draw_list->AddCircle(p, PLACE_RADIUS, OUTLINE_COLOR, 64, 2.5f);
 
     // Draw the caption
-    ImVec2 dim = ImGui::CalcTextSize(place.key.c_str());
+    const char* text = show_caption ? place.caption.c_str() : place.key.c_str();
+    ImVec2 dim = ImGui::CalcTextSize(text);
     ImVec2 ptext = p - ImVec2(dim.x / 2.0f, PLACE_RADIUS + dim.y);
-    draw_list->AddText(ptext, IM_COL32(0, 0, 0, 255),
-                       show_caption ? place.caption.c_str() : place.key.c_str());
+    draw_list->AddText(ptext, CAPTION_COLOR, text);
 
     // Draw the number of tokens
     if (place.tokens == 0u)
@@ -188,12 +194,12 @@ void drawPlace(ImDrawList* draw_list, Place const& place, TypeOfNet const type, 
     else
     {
         std::string tokens = std::to_string(place.tokens);
-        draw_list->AddText(ImVec2(p.x, p.y), IM_COL32(0, 0, 0, 255), tokens.c_str());
+        draw_list->AddText(ImVec2(p.x, p.y), CAPTION_COLOR, tokens.c_str());
     }
 }
 
 //------------------------------------------------------------------------------
-void drawTransition(ImDrawList* draw_list, Transition const& transition, TypeOfNet const type, ImVec2 const& origin, bool const show_caption, uint8_t const alpha)
+void drawTransition(ImDrawList* draw_list, Transition const& transition, TypeOfNet const type, ImVec2 const& origin, bool const show_caption, float const alpha)
 {
     //const uint8_t alpha = 255; // TODO m_fading[place.key]
     const ImVec2 p = origin + ImVec2(transition.x, transition.y);
@@ -201,26 +207,34 @@ void drawTransition(ImDrawList* draw_list, Transition const& transition, TypeOfN
     // Color of the transition: green if validated else yellow if enabled
     // else color is fadding value.
     ImU32 color;
-    if ((type == TypeOfNet::PetriNet) && (transition.isValidated()))
-    {
-        color = IM_COL32(255, 0, 0, 255);
-    }
+    //if (type == TypeOfNet::PetriNet)
+    //{
+        if (transition.canFire())
+        {
+            color = FIREABLE_COLOR;
+        }
+        else if (transition.isValidated() || transition.isEnabled())
+        {
+            color = IM_COL32(255, 165, 0, 255);
+        }
+    //}
+    //else if
     else
     {
-        color = FILL_COLOR(transition.isEnabled() ? 0 : alpha);
+        color = FILL_COLOR(alpha);
     }
 
     // Draw the transition
     const ImVec2 pmin(p.x - TRANS_WIDTH / 2.0f, p.y - TRANS_HEIGHT / 2.0f);
     const ImVec2 pmax(p.x + TRANS_WIDTH / 2.0f, p.y + TRANS_HEIGHT / 2.0f);
     draw_list->AddRectFilled(pmin, pmax, color);
-    draw_list->AddRect(pmin, pmax, OUTLINE_COLOR, 1.0f, ImDrawFlags_RoundCornersTopLeft | ImDrawFlags_RoundCornersBottomRight, 1.0f);
+    draw_list->AddRect(pmin, pmax, OUTLINE_COLOR, 0.0f, ImDrawFlags_None, 2.5f);
 
     // Draw the caption
-    ImVec2 dim = ImGui::CalcTextSize(transition.key.c_str());
-    ImVec2 ptext = p - ImVec2(dim.x / 2.0f, TRANS_HEIGHT + dim.y);
-    draw_list->AddText(ptext, IM_COL32(0, 0, 0, 255),
-                       show_caption ? transition.caption.c_str() : transition.key.c_str());
+    const char* text = show_caption ? transition.caption.c_str() : transition.key.c_str();
+    ImVec2 dim = ImGui::CalcTextSize(text);
+    ImVec2 ptext = p - ImVec2(dim.x / 2.0f, TRANS_HEIGHT / 2.0f + dim.y);
+    draw_list->AddText(ptext, CAPTION_COLOR, text);
 }
 
 } // namespace tpne
