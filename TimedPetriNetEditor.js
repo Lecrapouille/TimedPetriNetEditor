@@ -191,7 +191,7 @@ Module['FS_createPath']("/", "examples", true, true);
     }
 
     }
-    loadPackage({"files": [{"filename": "/data/font.ttf", "start": 0, "end": 171792}, {"filename": "/examples/AppelsDurgence.json", "start": 171792, "end": 175501}, {"filename": "/examples/Coffee.json", "start": 175501, "end": 177086}, {"filename": "/examples/EventGraph.json", "start": 177086, "end": 178792}, {"filename": "/examples/FourRoadJunctions.json", "start": 178792, "end": 184189}, {"filename": "/examples/GRAFCET.json", "start": 184189, "end": 185303}, {"filename": "/examples/Howard1.json", "start": 185303, "end": 186338}, {"filename": "/examples/Howard2.json", "start": 186338, "end": 187696}, {"filename": "/examples/Infinite.json", "start": 187696, "end": 188267}, {"filename": "/examples/InputsOutputs.json", "start": 188267, "end": 189945}, {"filename": "/examples/JPQ.json", "start": 189945, "end": 191477}, {"filename": "/examples/Philosophers.json", "start": 191477, "end": 194053}, {"filename": "/examples/ProducerConsumer.json", "start": 194053, "end": 195452}, {"filename": "/examples/TrafficLights.json", "start": 195452, "end": 197435}, {"filename": "/examples/dualband.json", "start": 197435, "end": 200742}, {"filename": "/imgui.ini", "start": 200742, "end": 204889}], "remote_package_size": 204889});
+    loadPackage({"files": [{"filename": "/data/font.ttf", "start": 0, "end": 171792}, {"filename": "/examples/AppelsDurgence.json", "start": 171792, "end": 175501}, {"filename": "/examples/Coffee.json", "start": 175501, "end": 177086}, {"filename": "/examples/EventGraph.json", "start": 177086, "end": 178792}, {"filename": "/examples/FourRoadJunctions.json", "start": 178792, "end": 184189}, {"filename": "/examples/GRAFCET.json", "start": 184189, "end": 185303}, {"filename": "/examples/Howard1.json", "start": 185303, "end": 186338}, {"filename": "/examples/Howard2.json", "start": 186338, "end": 187696}, {"filename": "/examples/Infinite.json", "start": 187696, "end": 188267}, {"filename": "/examples/InputsOutputs.json", "start": 188267, "end": 189945}, {"filename": "/examples/JPQ.json", "start": 189945, "end": 191477}, {"filename": "/examples/Philosophers.json", "start": 191477, "end": 194053}, {"filename": "/examples/ProducerConsumer.json", "start": 194053, "end": 195452}, {"filename": "/examples/TrafficLights.json", "start": 195452, "end": 197435}, {"filename": "/examples/dualband.json", "start": 197435, "end": 200742}, {"filename": "/imgui.ini", "start": 200742, "end": 202289}], "remote_package_size": 202289});
 
   })();
 
@@ -1188,8 +1188,8 @@ function dbg(text) {
 // === Body ===
 
 var ASM_CONSTS = {
-  297104: ($0) => { navigator.clipboard.writeText(UTF8ToString($0)); },  
- 297157: ($0) => { document.getElementById("canvas").style.cursor = UTF8ToString($0); }
+  297256: ($0) => { navigator.clipboard.writeText(UTF8ToString($0)); },  
+ 297309: ($0) => { document.getElementById("canvas").style.cursor = UTF8ToString($0); }
 };
 function GetWindowInnerWidth() { return window.innerWidth; }
 function GetWindowInnerHeight() { return window.innerHeight; }
@@ -10728,8 +10728,8 @@ var dynCall_viii = Module['dynCall_viii'] = createExportWrapper('dynCall_viii');
 var dynCall_viiiiiiiii = Module['dynCall_viiiiiiiii'] = createExportWrapper('dynCall_viiiiiiiii');
 var dynCall_vif = Module['dynCall_vif'] = createExportWrapper('dynCall_vif');
 var dynCall_viiiiii = Module['dynCall_viiiiii'] = createExportWrapper('dynCall_viiiiii');
-var dynCall_iiiiffi = Module['dynCall_iiiiffi'] = createExportWrapper('dynCall_iiiiffi');
 var dynCall_v = Module['dynCall_v'] = createExportWrapper('dynCall_v');
+var dynCall_iiiiffi = Module['dynCall_iiiiffi'] = createExportWrapper('dynCall_iiiiffi');
 var dynCall_viiiii = Module['dynCall_viiiii'] = createExportWrapper('dynCall_viiiii');
 var dynCall_vidd = Module['dynCall_vidd'] = createExportWrapper('dynCall_vidd');
 var dynCall_vffff = Module['dynCall_vffff'] = createExportWrapper('dynCall_vffff');
@@ -10759,8 +10759,8 @@ var _asyncify_start_unwind = createExportWrapper('asyncify_start_unwind');
 var _asyncify_stop_unwind = createExportWrapper('asyncify_stop_unwind');
 var _asyncify_start_rewind = createExportWrapper('asyncify_start_rewind');
 var _asyncify_stop_rewind = createExportWrapper('asyncify_stop_rewind');
-var ___start_em_js = Module['___start_em_js'] = 297226;
-var ___stop_em_js = Module['___stop_em_js'] = 297299;
+var ___start_em_js = Module['___start_em_js'] = 297378;
+var ___stop_em_js = Module['___stop_em_js'] = 297451;
 
 // include: postamble.js
 // === Auto-generated postamble setup entry stuff ===
