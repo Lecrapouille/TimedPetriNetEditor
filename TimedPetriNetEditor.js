@@ -1188,8 +1188,8 @@ function dbg(text) {
 // === Body ===
 
 var ASM_CONSTS = {
-  297256: ($0) => { navigator.clipboard.writeText(UTF8ToString($0)); },  
- 297309: ($0) => { document.getElementById("canvas").style.cursor = UTF8ToString($0); }
+  194080: ($0) => { navigator.clipboard.writeText(UTF8ToString($0)); },  
+ 194133: ($0) => { document.getElementById("canvas").style.cursor = UTF8ToString($0); }
 };
 function GetWindowInnerWidth() { return window.innerWidth; }
 function GetWindowInnerHeight() { return window.innerHeight; }
@@ -10721,7 +10721,6 @@ var dynCall_vi = Module['dynCall_vi'] = createExportWrapper('dynCall_vi');
 var dynCall_vii = Module['dynCall_vii'] = createExportWrapper('dynCall_vii');
 var dynCall_ii = Module['dynCall_ii'] = createExportWrapper('dynCall_ii');
 var dynCall_iii = Module['dynCall_iii'] = createExportWrapper('dynCall_iii');
-var dynCall_fii = Module['dynCall_fii'] = createExportWrapper('dynCall_fii');
 var dynCall_iiii = Module['dynCall_iiii'] = createExportWrapper('dynCall_iiii');
 var dynCall_viiii = Module['dynCall_viiii'] = createExportWrapper('dynCall_viiii');
 var dynCall_viii = Module['dynCall_viii'] = createExportWrapper('dynCall_viii');
@@ -10759,8 +10758,8 @@ var _asyncify_start_unwind = createExportWrapper('asyncify_start_unwind');
 var _asyncify_stop_unwind = createExportWrapper('asyncify_stop_unwind');
 var _asyncify_start_rewind = createExportWrapper('asyncify_start_rewind');
 var _asyncify_stop_rewind = createExportWrapper('asyncify_stop_rewind');
-var ___start_em_js = Module['___start_em_js'] = 297378;
-var ___stop_em_js = Module['___stop_em_js'] = 297451;
+var ___start_em_js = Module['___start_em_js'] = 194202;
+var ___stop_em_js = Module['___stop_em_js'] = 194275;
 
 // include: postamble.js
 // === Auto-generated postamble setup entry stuff ===
