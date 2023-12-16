@@ -21,18 +21,21 @@
 #include "main.hpp"
 #define protected public
 #define private public
-#  include "src/utils/AnimatedTokens.hpp"
+#  include "TimedPetriNetEditor/PetriNet.hpp"
+#  include "Net/TimedTokens.hpp"
 #undef protected
 #undef private
 
+using namespace ::tpne;
+
 //------------------------------------------------------------------------------
-TEST(TestPetriNet, TestAnimatedTokenCreation)
+TEST(TestPetriNet, TestTimedTokenCreation)
 {
-    // Reminder: AnimatedToken not made for Place -> Transition
+    // Reminder: TimedToken not made for Place -> Transition
     Transition t1(42u, "", 3.5f, 4.0f, 45u, true);
     Place p1(43u, "", 4.6f, 5.1f, 13u);
     Arc a1(t1, p1, 10.0f);
-    AnimatedToken at1(a1, 3u, PetriNet::Type::TimedPetri);
+    TimedToken at1(a1, 3u, TypeOfNet::TimedPetriNet);
     float norm = sqrtf((3.5f - 4.6f) * (3.5f - 4.6f) + (4.0f - 5.1f) * (4.0f - 5.1f));
 
     ASSERT_EQ(at1.x, 3.5f);
@@ -49,7 +52,7 @@ TEST(TestPetriNet, TestAnimatedTokenCreation)
     ASSERT_EQ(at1.offset, 0.0f);
     ASSERT_EQ(&at1.toPlace(), &p1);
 
-    AnimatedToken at2(at1);
+    TimedToken at2(at1);
     ASSERT_EQ(at2.x, 3.5f);
     ASSERT_EQ(at2.y, 4.0f);
     ASSERT_EQ(at2.tokens, 3u);
@@ -67,7 +70,7 @@ TEST(TestPetriNet, TestAnimatedTokenCreation)
     Transition t2(45u, "", 13.5f, 14.0f, 145u, true);
     Place p2(46u, "", 14.6f, 15.1f, 113u);
     Arc a2(t2, p2, 110.0f);
-    AnimatedToken at3(a2, 13u, PetriNet::Type::TimedPetri);
+    TimedToken at3(a2, 13u, TypeOfNet::TimedPetriNet);
     ASSERT_EQ(at3.x, 13.5f);
     ASSERT_EQ(at3.y, 14.0f);
     ASSERT_EQ(at3.tokens, 13u);
@@ -96,13 +99,13 @@ TEST(TestPetriNet, TestAnimatedTokenCreation)
 }
 
 //------------------------------------------------------------------------------
-TEST(TestPetriNet, TestAnimatedTokenUpdate)
+TEST(TestPetriNet, TestTimedTokenUpdate)
 {
     // T1 --> P1 is 20 unit of distance along the X-axis
     Transition t1(42u, "", 0.0f, 0.0f, 45u, true);
     Place p1(43u, "", 20.0f, 0.0f, 13u);
     Arc a1(t1, p1, 10.0f); // Duration: 10 units of time
-    AnimatedToken at1(a1, 3u, PetriNet::Type::TimedPetri);
+    TimedToken at1(a1, 3u, TypeOfNet::TimedPetriNet);
     ASSERT_EQ(at1.magnitude, 20.0f);
     ASSERT_EQ(at1.speed, 2.0f); // 20 units of distance / 10 units of time
 

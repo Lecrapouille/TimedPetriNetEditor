@@ -21,31 +21,34 @@
 #include "main.hpp"
 #define protected public
 #define private public
-#  include "src/PetriNet.hpp"
-#  include "src/utils/Utils.hpp"
+#  include "TimedPetriNetEditor/PetriNet.hpp"
+#  include "TimedPetriNetEditor/Algorithms.hpp"
+#  include "TimedPetriNetEditor/SparseMatrix.hpp"
 #undef protected
 #undef private
+
+using namespace ::tpne;
 
 //------------------------------------------------------------------------------
 TEST(TestEventGraph, TestHoward2)
 {
+    std::string error;
     std::vector<Arc*> erroneous_arcs;
 
-    PetriNet net(PetriNet::Type::TimedPetri);
-    PetriNet canonic(PetriNet::Type::TimedPetri);
+    Net net(TypeOfNet::TimedPetriNet);
+    Net canonic(TypeOfNet::TimedPetriNet);
 
     ASSERT_EQ(net.load("data/Howard2.json"), true);
     ASSERT_EQ(net.isEmpty(), false);
-    ASSERT_EQ(net.isEventGraph(erroneous_arcs), true);
+    ASSERT_EQ(isEventGraph(net), true);
     ASSERT_EQ(erroneous_arcs.empty(), true);
 
-    net.toCanonicalForm(canonic); // FIXME shall return bool isEventGraph() ?
-    canonic.generateArcsInArcsOut(); // FIXME
-
+    toCanonicalForm(net, canonic);
     ASSERT_EQ(canonic.isEmpty(), false);
-    ASSERT_EQ(canonic.isEventGraph(erroneous_arcs), true);
+    ASSERT_EQ(isEventGraph(canonic, error, erroneous_arcs), true);
+    ASSERT_STREQ(error.c_str(), "");
     ASSERT_EQ(erroneous_arcs.empty(), true);
-    ASSERT_EQ(canonic.save("/tmp/canonic.json"), true);
+    ASSERT_EQ(canonic.saveAs("/tmp/canonic.json"), true);
     ASSERT_EQ(canonic.m_next_place_id, 6u);
     ASSERT_EQ(canonic.m_next_transition_id, 5u);
     ASSERT_EQ(canonic.m_places.size(), 6u);
@@ -64,20 +67,20 @@ TEST(TestEventGraph, TestHoward2)
 TEST(TestEventGraph, TestToSysLinNoInputNoOutput)
 {
     std::vector<Arc*> erroneous_arcs;
-    PetriNet net(PetriNet::Type::TimedPetri);
+    Net net(TypeOfNet::TimedPetriNet);
 
     ASSERT_EQ(net.load("data/Howard2.json"), true); // FIXME shall call generateArcsInArcsOut ?
     net.generateArcsInArcsOut(); // FIXME
 
-    ASSERT_EQ(net.isEventGraph(erroneous_arcs), true);
+    ASSERT_EQ(isEventGraph(net), true);
     ASSERT_EQ(erroneous_arcs.empty(), true);
 
-    SparseMatrix D;
-    SparseMatrix A;
-    SparseMatrix B;
-    SparseMatrix C;
+    SparseMatrix<double> D;
+    SparseMatrix<double> A;
+    SparseMatrix<double> B;
+    SparseMatrix<double> C;
 
-    ASSERT_EQ(net.toSysLin(D, A, B, C), true);
+    ASSERT_EQ(toSysLin(net, D, A, B, C), true);
     //
     //       j
     //   i | .  .  .  .  . |       | .  .  .  .  5 |
@@ -121,20 +124,19 @@ TEST(TestEventGraph, TestToSysLinNoInputNoOutput)
 TEST(TestEventGraph, TestToSysLinInputOutput)
 {
     std::vector<Arc*> erroneous_arcs;
-    PetriNet net(PetriNet::Type::TimedPetri);
+    Net net(TypeOfNet::TimedPetriNet);
 
     ASSERT_EQ(net.load("data/JPQ.json"), true); // FIXME shall call generateArcsInArcsOut ?
     net.generateArcsInArcsOut(); // FIXME
 
-    ASSERT_EQ(net.isEventGraph(erroneous_arcs), true);
-    ASSERT_EQ(erroneous_arcs.empty(), true);
+    ASSERT_EQ(isEventGraph(net), true);
 
-    SparseMatrix D;
-    SparseMatrix A;
-    SparseMatrix B;
-    SparseMatrix C;
+    SparseMatrix<double> D;
+    SparseMatrix<double> A;
+    SparseMatrix<double> B;
+    SparseMatrix<double> C;
 
-    ASSERT_EQ(net.toSysLin(D, A, B, C), true);
+    ASSERT_EQ(toSysLin(net, D, A, B, C), true);
 
     //     | .  . |      | 3  7 |      | . |
     // D = | .  . |, A = | 2  4 |, B = | 1 |, C = | 3 . |
@@ -177,12 +179,11 @@ TEST(TestEventGraph, TestToSysLinInputOutput)
 // Chapter 5.2 A Comparison Between Counter and Dater Descriptions
 TEST(TestEventGraph, TestToDaterEquation)
 {
-    std::vector<Arc*> erroneous_arcs;
-    PetriNet net(PetriNet::Type::TimedPetri);
+    Net net(TypeOfNet::TimedPetriNet);
 
     ASSERT_EQ(net.load("data/EventGraph.json"), true);
     net.generateArcsInArcsOut(); // FIXME
-    ASSERT_EQ(net.isEventGraph(erroneous_arcs), true);
+    ASSERT_EQ(isEventGraph(net), true);
 
     std::stringstream expected, obtained;
 
@@ -192,7 +193,7 @@ TEST(TestEventGraph, TestToDaterEquation)
         "# T1(n) = max(1 + T0(n), 1 + T2(n - 1), 1 + T1(n - 2))\n"
         "# T2(n) = max(1 + T1(n - 1), 2 + T0(n))\n"
         "# T3(n) = max(T1(n), T2(n))\n");
-    obtained = net.showDaterEquation("# ", false, false);
+    obtained = showDaterEquation(net, "# ", false, false);
     ASSERT_STREQ(obtained.str().c_str(), expected.str().c_str());
 
     // --
@@ -201,7 +202,7 @@ TEST(TestEventGraph, TestToDaterEquation)
         "# x1(n) = max(1 + u(n), 1 + x2(n - 1), 1 + x1(n - 2))\n"
         "# x2(n) = max(1 + x1(n - 1), 2 + u(n))\n"
         "# y(n) = max(x1(n), x2(n))\n");
-    obtained = net.showDaterEquation("# ", true, false);
+    obtained = showDaterEquation(net, "# ", true, false);
     ASSERT_STREQ(obtained.str().c_str(), expected.str().c_str());
 
     // --
@@ -210,7 +211,7 @@ TEST(TestEventGraph, TestToDaterEquation)
         "# T1(n) = 1 T0(n) ⨁ 1 T2(n - 1) ⨁ 1 T1(n - 2)\n"
         "# T2(n) = 1 T1(n - 1) ⨁ 2 T0(n)\n"
         "# T3(n) = T1(n) ⨁ T2(n)\n");
-    obtained = net.showDaterEquation("# ", false, true);
+    obtained = showDaterEquation(net, "# ", false, true);
     ASSERT_STREQ(obtained.str().c_str(), expected.str().c_str());
 
     // --
@@ -219,7 +220,7 @@ TEST(TestEventGraph, TestToDaterEquation)
         "# x1(n) = 1 u(n) ⨁ 1 x2(n - 1) ⨁ 1 x1(n - 2)\n"
         "# x2(n) = 1 x1(n - 1) ⨁ 2 u(n)\n"
         "# y(n) = x1(n) ⨁ x2(n)\n");
-    obtained = net.showDaterEquation("# ", true, true);
+    obtained = showDaterEquation(net, "# ", true, true);
     ASSERT_STREQ(obtained.str().c_str(), expected.str().c_str());
 }
 
@@ -228,12 +229,11 @@ TEST(TestEventGraph, TestToDaterEquation)
 // Chapter 5.2 A Comparison Between Counter and Dater Descriptions
 TEST(TestEventGraph, TestToCounterEquation)
 {
-    std::vector<Arc*> erroneous_arcs;
-    PetriNet net(PetriNet::Type::TimedPetri);
+    Net net(TypeOfNet::TimedPetriNet);
 
     ASSERT_EQ(net.load("data/EventGraph.json"), true);
     net.generateArcsInArcsOut(); // FIXME
-    ASSERT_EQ(net.isEventGraph(erroneous_arcs), true);
+    ASSERT_EQ(isEventGraph(net), true);
 
     std::stringstream expected, obtained;
 
@@ -243,7 +243,7 @@ TEST(TestEventGraph, TestToCounterEquation)
         "# T1(t) = min(T0(t - 1), 1 + T2(t - 1), 2 + T1(t - 1))\n"
         "# T2(t) = min(1 + T1(t - 1), T0(t - 2))\n"
         "# T3(t) = min(T1(t), T2(t))\n");
-    obtained = net.showCounterEquation("# ", false, false);
+    obtained = showCounterEquation(net, "# ", false, false);
     ASSERT_STREQ(obtained.str().c_str(), expected.str().c_str());
 
     // --
@@ -252,7 +252,7 @@ TEST(TestEventGraph, TestToCounterEquation)
         "# x1(t) = min(u(t - 1), 1 + x2(t - 1), 2 + x1(t - 1))\n"
         "# x2(t) = min(1 + x1(t - 1), u(t - 2))\n"
         "# y(t) = min(x1(t), x2(t))\n");
-    obtained = net.showCounterEquation("# ", true, false);
+    obtained = showCounterEquation(net, "# ", true, false);
     ASSERT_STREQ(obtained.str().c_str(), expected.str().c_str());
 
     // --
@@ -261,7 +261,7 @@ TEST(TestEventGraph, TestToCounterEquation)
         "# T1(t) = T0(t - 1) ⨁ 1 T2(t - 1) ⨁ 2 T1(t - 1)\n"
         "# T2(t) = 1 T1(t - 1) ⨁ T0(t - 2)\n"
         "# T3(t) = T1(t) ⨁ T2(t)\n");
-    obtained = net.showCounterEquation("# ", false, true);
+    obtained = showCounterEquation(net, "# ", false, true);
     ASSERT_STREQ(obtained.str().c_str(), expected.str().c_str());
 
     // --
@@ -270,6 +270,6 @@ TEST(TestEventGraph, TestToCounterEquation)
         "# x1(t) = u(t - 1) ⨁ 1 x2(t - 1) ⨁ 2 x1(t - 1)\n"
         "# x2(t) = 1 x1(t - 1) ⨁ u(t - 2)\n"
         "# y(t) = x1(t) ⨁ x2(t)\n");
-    obtained = net.showCounterEquation("# ", true, true);
+    obtained = showCounterEquation(net, "# ", true, true);
     ASSERT_STREQ(obtained.str().c_str(), expected.str().c_str());
 }

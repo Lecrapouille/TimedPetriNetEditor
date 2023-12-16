@@ -123,7 +123,7 @@ void drawArc(ImDrawList* draw_list, Arc const& arc, TypeOfNet const type, ImVec2
             float x = origin.x + arc.from.x + (arc.to.x - arc.from.x) / 2.0f;
             float y = origin.y + arc.from.y + (arc.to.y - arc.from.y) / 2.0f - 15.0f;
             std::stringstream stream;
-            stream << std::fixed << std::setprecision(2) << arc.duration;
+            stream << std::fixed << std::setprecision(1) << arc.duration;
             draw_list->AddText(ImVec2(x, y), DURATION_COLOR, stream.str().c_str());
         }
     }
@@ -193,6 +193,7 @@ void drawPlace(ImDrawList* draw_list, Place const& place, TypeOfNet const type, 
     }
     else
     {
+        drawToken(draw_list, p.x, p.y);
         std::string tokens = std::to_string(place.tokens);
         draw_list->AddText(ImVec2(p.x, p.y), CAPTION_COLOR, tokens.c_str());
     }
@@ -207,18 +208,22 @@ void drawTransition(ImDrawList* draw_list, Transition const& transition, TypeOfN
     // Color of the transition: green if validated else yellow if enabled
     // else color is fadding value.
     ImU32 color;
-    //if (type == TypeOfNet::PetriNet)
-    //{
-        if (transition.canFire())
-        {
-            color = FIREABLE_COLOR;
-        }
-        else if (transition.isValidated() || transition.isEnabled())
+    if (transition.key == "T0")
+    {
+        color = IM_COL32(255, 165, 10, 255);
+    }
+
+    if (transition.canFire())
+    {
+        color = FIREABLE_COLOR;
+    }
+    else if (type == TypeOfNet::GRAFCET)
+    {
+        if (transition.isValidated() || transition.isEnabled())
         {
             color = IM_COL32(255, 165, 0, 255);
         }
-    //}
-    //else if
+    }
     else
     {
         color = FILL_COLOR(alpha);

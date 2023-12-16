@@ -18,13 +18,14 @@
 // along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.
 //=============================================================================
 
+#include "TimedPetriNetEditor/PetriNet.hpp"
+#include "TimedPetriNetEditor/Algorithms.hpp"
+#include "TimedPetriNetEditor/SparseMatrix.hpp"
 #include "Editor/PetriEditor.hpp"
 #include "Editor/DearImGui/Drawable.hpp"
 #include "Editor/DearImGui/DearUtils.hpp"
 #include "Editor/DearImGui/KeyBindings.hpp"
-#include "Net/SparseMatrix.hpp"
 #include "Utils/Utils.hpp"
-#include "TimedPetriNetEditor/Algorithms.hpp"
 
 namespace tpne {
 
@@ -763,7 +764,8 @@ bool Editor::switchOfNet(TypeOfNet const type)
         return false;
 
     std::vector<Arc*> arcs;
-    if (m_net.convertTo(type, arcs))
+    std::string error;
+    if (m_net.convertTo(type, error, arcs))
         return true;
 
     m_messages.setError(m_net.error());
@@ -1332,15 +1334,35 @@ void Editor::PetriView::onHandleInput()
 
     if (ImGui::IsItemHovered())
     {
-        if (ImGui::IsKeyPressed(KEY_BINDING_MOVE_PETRI_NODE, false))
+        if (ImGui::IsKeyPressed(KEY_MOVE_PETRI_NODE, false))
         {
             handleMoveNode();
         }
         // Run the animation of the Petri net
-        else if (ImGui::IsKeyPressed(KEY_BINDING_RUN_SIMULATION) ||
-                 ImGui::IsKeyPressed(KEY_BINDING_RUN_SIMULATION_ALT))
+        else if (ImGui::IsKeyPressed(KEY_RUN_SIMULATION) ||
+                 ImGui::IsKeyPressed(KEY_RUN_SIMULATION_ALT))
         {
             m_editor.toogleStartSimulation();
+        }
+        // Increment the number of tokens in the place.
+        else if (ImGui::IsKeyPressed(KEY_INCREMENT_TOKENS))
+        {
+            Node* node = m_editor.getNode(m_mouse.position);
+            if ((node != nullptr) && (node->type == Node::Type::Place))
+            {
+                reinterpret_cast<Place*>(node)->increment(1u);
+                m_editor.m_net.modified = true;
+            }
+        }
+        // Decrement the number of tokens in the place.
+        else if (ImGui::IsKeyPressed(KEY_DECREMENT_TOKENS))
+        {
+            Node* node = m_editor.getNode(m_mouse.position);
+            if ((node != nullptr) && (node->type == Node::Type::Place))
+            {
+                reinterpret_cast<Place*>(node)->decrement(1u);
+                m_editor.m_net.modified = true;
+            }
         }
     }
 }

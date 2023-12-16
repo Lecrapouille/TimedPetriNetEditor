@@ -20,7 +20,7 @@
 
 #include "TimedPetriNetEditor/PetriNet.hpp"
 #include "TimedPetriNetEditor/Algorithms.hpp"
-#include "Net/SparseMatrix.hpp"
+#include "TimedPetriNetEditor/SparseMatrix.hpp"
 #include "Net/Howard.h"
 
 namespace tpne {
@@ -35,6 +35,7 @@ template<> bool SparseMatrix<double>::display_as_dense = false;
 bool isEventGraph(Net const& net, std::string& error, std::vector<Arc*>& erroneous_arcs)
 {
     erroneous_arcs.clear();
+    error.clear();
     if (net.isEmpty())
     {
         error = "Empty Petri net is not an event graph";

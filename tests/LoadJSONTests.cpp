@@ -21,43 +21,65 @@
 #include "main.hpp"
 #define protected public
 #define private public
-#  include "src/PetriNet.hpp"
+#  include "TimedPetriNetEditor/PetriNet.hpp"
 #undef protected
 #undef private
+
+using namespace ::tpne;
 
 //------------------------------------------------------------------------------
 // New JSON format
 TEST(TestJSONLoader, DummyTransitions)
 {
-    PetriNet net(PetriNet::Type::TimedPetri);
+    Net net(TypeOfNet::TimedPetriNet);
 
     ASSERT_EQ(net.load("data/DummyTransitions.json"), true);
-    ASSERT_EQ(net.type(), PetriNet::Type::TimedPetri);
+    ASSERT_EQ(net.type(), TypeOfNet::TimedPetriNet);
     ASSERT_EQ(net.m_places.size(), 1u);
     ASSERT_EQ(net.m_transitions.size(), 0u);
     ASSERT_EQ(net.m_arcs.size(), 0u);
 }
 
 //------------------------------------------------------------------------------
+TEST(TestJSONLoader, TestLoadedInvalidNetTimedPetri)
+{
+    Net net(TypeOfNet::TimedPetriNet);
+
+    ASSERT_EQ(net.load("doesnotexist"), false);
+    ASSERT_STREQ(net.error().c_str(), "Failed opening 'doesnotexist'."
+    " Reason was 'No such file or directory'\n");
+    ASSERT_EQ(net.isEmpty(), true);
+
+    ASSERT_EQ(net.load("data/BadJSON/BadType.json"), false);
+    ASSERT_STREQ(net.error().c_str(), "Failed parsing 'data/BadJSON/BadType.json'."
+    " Reason was 'Unknown type of net: Timed event graphe'\n");
+    ASSERT_EQ(net.isEmpty(), true);
+
+    ASSERT_EQ(net.load("data/BadJSON/NoName.json"), false);
+    ASSERT_STREQ(net.error().c_str(), "Failed parsing 'data/BadJSON/NoName.json'."
+    " Reason was 'Missing JSON net name'\n");
+    ASSERT_EQ(net.isEmpty(), true);
+}
+
+//------------------------------------------------------------------------------
 TEST(TestJSONLoader, LoadJSONfile)
 {
-    PetriNet net(PetriNet::Type::TimedPetri);
+    Net net(TypeOfNet::TimedPetriNet);
 
     ASSERT_EQ(net.load("data/GRAFCET.json"), true);
-    ASSERT_EQ(net.type(), PetriNet::Type::GRAFCET);
+    ASSERT_EQ(net.type(), TypeOfNet::GRAFCET);
     ASSERT_EQ(net.m_places.size(), 13u);
     ASSERT_EQ(net.m_transitions.size(), 11u);
     ASSERT_EQ(net.m_arcs.size(), 29u);
 }
 
 //------------------------------------------------------------------------------
-// Compared to TEST(TestJSONLoader, WithCarriageReturn) places have max 1 token.
 TEST(TestJSONLoader, LoadAsGrafcet)
 {
-    PetriNet net(PetriNet::Type::GRAFCET);
+    Net net(TypeOfNet::GRAFCET);
 
     ASSERT_EQ(net.load("data/TrafficLights.json"), true);
-    ASSERT_EQ(net.type(), PetriNet::Type::TimedPetri);
+    ASSERT_EQ(net.type(), TypeOfNet::TimedPetriNet);
     ASSERT_EQ(net.m_places.size(), 7u);
     ASSERT_EQ(net.m_transitions.size(), 6u);
     ASSERT_EQ(net.m_arcs.size(), 16u);
@@ -73,15 +95,64 @@ TEST(TestJSONLoader, LoadAsGrafcet)
 }
 
 //------------------------------------------------------------------------------
+TEST(TestJSONLoader, CheckMarks)
+{
+    Net net(TypeOfNet::GRAFCET);
+    ASSERT_EQ(net.load("data/TrafficLights.json"), true);
+    ASSERT_EQ(net.type(), TypeOfNet::TimedPetriNet);
+
+    std::vector<size_t> tokens;
+    tokens = net.tokens();
+    ASSERT_EQ(tokens.size(), 7u);
+    ASSERT_EQ(tokens[0], 1u);
+    ASSERT_EQ(tokens[1], 0u);
+    ASSERT_EQ(tokens[2], 0u);
+    ASSERT_EQ(tokens[3], 1u);
+    ASSERT_EQ(tokens[4], 0u);
+    ASSERT_EQ(tokens[5], 0u);
+    ASSERT_EQ(tokens[6], 1u);
+
+    tokens[1] = 2u; tokens[2] = 3u; tokens[4] = 4u; tokens[5] = 5u;
+    ASSERT_EQ(net.tokens(tokens), true);
+    ASSERT_STREQ(net.error().c_str(), "");
+    tokens = net.tokens();
+    ASSERT_EQ(tokens.size(), 7u);
+    ASSERT_EQ(tokens[0], 1u);
+    ASSERT_EQ(tokens[1], 2u);
+    ASSERT_EQ(tokens[2], 3u);
+    ASSERT_EQ(tokens[3], 1u);
+    ASSERT_EQ(tokens[4], 4u);
+    ASSERT_EQ(tokens[5], 5u);
+    ASSERT_EQ(tokens[6], 1u);
+
+    tokens.clear();
+    ASSERT_EQ(net.tokens(tokens), false);
+    ASSERT_STREQ(net.error().c_str(), "The container dimension holding tokens does not match the number of places\n");
+    tokens = net.tokens();
+    ASSERT_EQ(tokens.size(), 7u);
+    ASSERT_EQ(tokens[0], 1u);
+    ASSERT_EQ(tokens[1], 2u);
+    ASSERT_EQ(tokens[2], 3u);
+    ASSERT_EQ(tokens[3], 1u);
+    ASSERT_EQ(tokens[4], 4u);
+    ASSERT_EQ(tokens[5], 5u);
+    ASSERT_EQ(tokens[6], 1u);
+}
+
+//------------------------------------------------------------------------------
 TEST(TestJSONLoader, SaveAndLoadFile)
 {
-    PetriNet net(PetriNet::Type::TimedPetri);
+    std::string error;
+    std::vector<Arc*> erroneous_arcs;
+    Net net(TypeOfNet::TimedPetriNet);
 
     ASSERT_EQ(net.load("data/AppelsDurgence.json"), true);
-    net.type(PetriNet::Type::Petri);
-    ASSERT_EQ(net.save("/tmp/foo.json"), true);
+    net.convertTo(TypeOfNet::PetriNet, error, erroneous_arcs);
+    ASSERT_STREQ(error.c_str(), "");
+    ASSERT_EQ(erroneous_arcs.size(), 0u);
+    ASSERT_EQ(net.saveAs("/tmp/foo.json"), true);
     ASSERT_EQ(net.load("/tmp/foo.json"), true);
-    ASSERT_EQ(net.type(), PetriNet::Type::Petri);
+    ASSERT_EQ(net.type(), TypeOfNet::PetriNet);
     ASSERT_EQ(net.m_places.size(), 13u);
     ASSERT_EQ(net.m_transitions.size(), 11u);
     ASSERT_EQ(net.m_arcs.size(), 29u);
@@ -93,14 +164,14 @@ TEST(TestJSONLoader, SaveAndLoadFile)
 //------------------------------------------------------------------------------
 TEST(TestJSONLoader, SaveAndLoadDummyNet)
 {
-    PetriNet net(PetriNet::Type::TimedPetri);
+    Net net(TypeOfNet::TimedPetriNet);
 
-    ASSERT_EQ(net.save("/tmp/foo.json"), true);
+    ASSERT_EQ(net.saveAs("/tmp/foo.json"), true);
     net.addPlace(1.0, 1.0, 2u);
     ASSERT_EQ(net.m_places.size(), 1u);
 
     ASSERT_EQ(net.load("/tmp/foo.json"), true);
-    ASSERT_EQ(net.type(), PetriNet::Type::TimedPetri);
+    ASSERT_EQ(net.type(), TypeOfNet::TimedPetriNet);
     ASSERT_EQ(net.m_places.size(), 0u);
     ASSERT_EQ(net.m_transitions.size(), 0u);
     ASSERT_EQ(net.m_arcs.size(), 0u);
@@ -109,6 +180,6 @@ TEST(TestJSONLoader, SaveAndLoadDummyNet)
 //------------------------------------------------------------------------------
 TEST(TestJSONLoader, LoadUnexistingFile)
 {
-    PetriNet net(PetriNet::Type::TimedPetri);
+    Net net(TypeOfNet::TimedPetriNet);
     ASSERT_EQ(net.load("foooobar.json"), false);
 }

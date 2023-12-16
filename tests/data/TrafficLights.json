@@ -1,9 +1,9 @@
 {
-  "revision": 2,
+  "revision": 3,
+  "type": "Timed Petri net",
   "nets": [
     {
-       "name": "TrafficLight",
-       "type": "Timed Petri net",
+       "name": "TrafficLights",
        "places": [
             { "id": 0, "caption": "Red1", "tokens": 1, "x": 146, "y": 250 },
             { "id": 1, "caption": "Green1", "tokens": 0, "x": 389, "y": 173 },

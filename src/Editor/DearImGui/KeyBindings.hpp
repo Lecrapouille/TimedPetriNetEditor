@@ -22,11 +22,13 @@
 #  define KEY_BINDINGS_HPP
 
 // -----------------------------------------------------------------------------
-#  define KEY_BINDING_QUIT_APPLICATION      ImGuiKey_Escape
-#  define KEY_BINDING_RUN_SIMULATION        ImGuiKey_Space
-#  define KEY_BINDING_RUN_SIMULATION_ALT    ImGuiKey_R
-#  define KEY_BINDING_ROTATE_CW             ImGuiKey_PageUp
-#  define KEY_BINDING_ROTATE_CCW            ImGuiKey_PageDown
-#  define KEY_BINDING_MOVE_PETRI_NODE       ImGuiKey_Semicolon
+#  define KEY_QUIT_APPLICATION      ImGuiKey_Escape
+#  define KEY_RUN_SIMULATION        ImGuiKey_Space
+#  define KEY_RUN_SIMULATION_ALT    ImGuiKey_R
+#  define KEY_ROTATE_CW             ImGuiKey_PageUp
+#  define KEY_ROTATE_CCW            ImGuiKey_PageDown
+#  define KEY_MOVE_PETRI_NODE       ImGuiKey_Semicolon
+#  define KEY_INCREMENT_TOKENS      ImGuiKey_KeypadAdd
+#  define KEY_DECREMENT_TOKENS      ImGuiKey_KeypadSubtract
 
 #endif

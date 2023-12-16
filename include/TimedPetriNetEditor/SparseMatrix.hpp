@@ -21,7 +21,7 @@
 #ifndef SPARSE_MATRIX_HPP
 #  define SPARSE_MATRIX_HPP
 
-#  include "Net/TropicalAlgebra.hpp"
+#  include "TimedPetriNetEditor/TropicalAlgebra.hpp"
 
 // FIXME Add template and manage (max,+) types
 //#  include <cstdint>

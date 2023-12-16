@@ -54,22 +54,44 @@ std::string importFromJSON(Net& net, std::string const& filename)
         return error.str();
     }
 
-    std::string type = std::string(json["type"]);
-    if (type == "GRAFCET") {
-        net.clear(TypeOfNet::GRAFCET);
-    } else if (type == "Petri net") {
-        net.clear(TypeOfNet::PetriNet);
-    } else if (type == "Timed Petri net") {
-        net.clear(TypeOfNet::TimedPetriNet);
-    } else if (type == "Timed event graph") {
-        net.clear(TypeOfNet::TimedEventGraph);
-    } else {
+    if (json.contains("type"))
+    {
+        std::string type = std::string(json["type"]);
+        if (type == "GRAFCET") {
+            net.clear(TypeOfNet::GRAFCET);
+        } else if (type == "Petri net") {
+            net.clear(TypeOfNet::PetriNet);
+        } else if (type == "Timed Petri net") {
+            net.clear(TypeOfNet::TimedPetriNet);
+        } else if (type == "Timed event graph") {
+            net.clear(TypeOfNet::TimedEventGraph);
+        } else {
+            error << "Failed parsing '" << filename << "'. Reason was '"
+                << "Unknown type of net: " << type << "'" << std::endl;
+            return error.str();
+        }
+    }
+    else
+    {
         error << "Failed parsing '" << filename << "'. Reason was '"
-              << "Unknown type of net: " << type << "'" << std::endl;
+              << "Missing type of Net'" << std::endl;
         return error.str();
     }
 
+    if (!json.contains("nets"))
+    {
+        error << "Failed parsing '" << filename << "'. Reason was '"
+              << "Missing JSON nets field'" << std::endl;
+        return error.str();
+    }
     nlohmann::json const& jnet = json["nets"][0];
+
+    if (!jnet.contains("name"))
+    {
+        error << "Failed parsing '" << filename << "'. Reason was '"
+              << "Missing JSON net name'" << std::endl;
+        return error.str();
+    }
     net.name = std::string(jnet["name"]);
 
     // Places

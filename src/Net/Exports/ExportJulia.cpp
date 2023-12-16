@@ -18,10 +18,10 @@
 // along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.
 //=============================================================================
 
-#include "Net/Exports/Exports.hpp"
 #include "TimedPetriNetEditor/PetriNet.hpp"
 #include "TimedPetriNetEditor/Algorithms.hpp"
-#include "Net/SparseMatrix.hpp"
+#include "TimedPetriNetEditor/SparseMatrix.hpp"
+#include "Net/Exports/Exports.hpp"
 #include <fstream>
 #include <cstring>
 

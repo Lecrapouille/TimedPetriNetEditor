@@ -192,6 +192,16 @@ public:
     }
 
     //--------------------------------------------------------------------------
+    //! \brief Increment the number of token constrained by the type of net.
+    //--------------------------------------------------------------------------
+    size_t increment(size_t const count = 1u);
+
+    //--------------------------------------------------------------------------
+    //! \brief Decrement the number of token constrained by the type of net.
+    //--------------------------------------------------------------------------
+    size_t decrement(size_t const count = 1u);
+
+    //--------------------------------------------------------------------------
     //! \brief For debug purpose only.
     //--------------------------------------------------------------------------
     inline friend std::ostream& operator<<(std::ostream& os, Place const& p)
@@ -501,7 +511,7 @@ public:
     //--------------------------------------------------------------------------
     //! \brief Copy constructor. Needed to remove compilation warnings.
     //--------------------------------------------------------------------------
-    Net(Net const& other) { *this = other; }
+    Net(Net const& other);
 
     //--------------------------------------------------------------------------
     //! \brief Copy operator. Needed to remove compilation warnings.
@@ -534,7 +544,7 @@ public:
     //! timed graph even, etc.
     //! \return false if the net cannot be changed (i.e. to graph event).
     //--------------------------------------------------------------------------
-    bool convertTo(TypeOfNet const type, std::vector<Arc*>& erroneous_arcs);
+    bool convertTo(TypeOfNet const type, std::string& error, std::vector<Arc*>& erroneous_arcs);
 
     //--------------------------------------------------------------------------
     //! \brief Load the Petri net from a JSON file. The current net is cleared

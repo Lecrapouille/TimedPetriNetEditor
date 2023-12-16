@@ -65,6 +65,20 @@ Place::Place(size_t const id_, std::string const& caption_, float const x_,
 }
 
 //------------------------------------------------------------------------------
+size_t Place::increment(size_t const count)
+{
+    tokens = std::min(Net::Settings::maxTokens, tokens + count);
+    return tokens;
+}
+
+//------------------------------------------------------------------------------
+size_t Place::decrement(size_t const count)
+{
+    tokens = std::max(tokens, count) - count;
+    return tokens;
+}
+
+//------------------------------------------------------------------------------
 bool Transition::isEnabled() const
 {
     // Transition source will always produce tokens.
@@ -115,10 +129,13 @@ Net::Net(TypeOfNet const type)
 {}
 
 //------------------------------------------------------------------------------
-Net& Net::operator=(Net const& other)
+Net::Net(Net const& other)
 {
-    this->~Net(); // destroy
-    new (this) Net(other); // copy construct in place
+    if (this == &other)
+        return ;
+    m_type = other.m_type;
+    m_places = other.m_places;
+    m_transitions = other.m_transitions;
 
     // For arcs: we have to redo references to nodes
     m_arcs.clear();
@@ -133,6 +150,22 @@ Net& Net::operator=(Net const& other)
         m_arcs.push_back(Arc(from, to, it.duration));
     }
     generateArcsInArcsOut();
+
+    m_next_place_id = other.m_next_place_id;
+    m_next_transition_id = other.m_next_transition_id;
+    m_filename = other.m_filename;
+    modified = false;
+    name = other.name;
+}
+
+//------------------------------------------------------------------------------
+Net& Net::operator=(Net const& other)
+{
+    if (this == &other)
+        return *this;
+
+    this->~Net(); // destroy
+    new (this) Net(other); // copy construct in place
     return *this;
 }
 
@@ -152,7 +185,7 @@ void Net::clear(TypeOfNet const type)
 }
 
 //------------------------------------------------------------------------------
-bool Net::convertTo(TypeOfNet const type, std::vector<Arc*>& erroneous_arcs)
+bool Net::convertTo(TypeOfNet const type, std::string& error, std::vector<Arc*>& erroneous_arcs)
 {
     if (m_type == type)
         return true;
@@ -162,6 +195,13 @@ bool Net::convertTo(TypeOfNet const type, std::vector<Arc*>& erroneous_arcs)
     case TypeOfNet::GRAFCET:
         Net::Settings::maxTokens = 1u;
         Net::Settings::firing = Net::Settings::Fire::OneByOne;
+        // Constrain the number of tokens.
+        // TBD: not constraining the number of tokens allow us to save the
+        // net (json format) without loosing number of tokens for other nets.
+        for (auto& place: m_places)
+        {
+            place.tokens = std::min(Net::Settings::maxTokens, place.tokens);
+        }
         // FIXME
         //m_sensors.clear();
         //for (auto& transition: m_transitions)
@@ -179,7 +219,7 @@ bool Net::convertTo(TypeOfNet const type, std::vector<Arc*>& erroneous_arcs)
         break;
     case TypeOfNet::TimedEventGraph:
         // Check conditions of a well formed event graph
-        if ((!isEmpty()) && (!isEventGraph(*this)))
+        if ((!isEmpty()) && (!isEventGraph(*this, error, erroneous_arcs)))
             return false;
         Net::Settings::maxTokens = std::numeric_limits<size_t>::max();
         Net::Settings::firing = Net::Settings::Fire::OneByOne;
@@ -189,8 +229,10 @@ bool Net::convertTo(TypeOfNet const type, std::vector<Arc*>& erroneous_arcs)
         break;
     }
 
-    // Place this at the end because of possible return false.
+    // Set the new type of net at the end of this method because of possible
+    // previous "return false" preventing to change of type.
     m_type = type;
+
     return true;
 }
 
@@ -209,10 +251,10 @@ std::vector<size_t> Net::tokens() const
 //------------------------------------------------------------------------------
 bool Net::tokens(std::vector<size_t> const& tokens_)
 {
+    m_message.str("");
     if (m_places.size() != tokens_.size())
     {
-        m_message.str("");
-        m_message << "the container dimension holding tokens does not match the number of places"
+        m_message << "The container dimension holding tokens does not match the number of places"
                   << std::endl;
         return false;
     }
@@ -220,7 +262,7 @@ bool Net::tokens(std::vector<size_t> const& tokens_)
     size_t i = tokens_.size();
     while (i--)
     {
-        m_places[i].tokens = tokens_[i];
+        m_places[i].tokens = std::min(Net::Settings::maxTokens, tokens_[i]);
     }
 
     return true;
@@ -471,8 +513,7 @@ Node const* Net::findNode(std::string const& key) const
         }
         return nullptr;
     }
-
-    if (key[0] == 'T')
+    else if (key[0] == 'T')
     {
         for (auto& t: m_transitions)
         {
@@ -646,9 +687,9 @@ bool Net::load(std::string const& filepath)
 
         // Get the name from path
         size_t lastindex = filepath.find_last_of(".");
-        std::string name = filepath.substr(0, lastindex);
-        lastindex = name.find_last_of("/");
-        name = name.substr(lastindex + 1u);
+        std::string _name = filepath.substr(0, lastindex);
+        lastindex = _name.find_last_of("/");
+        _name = _name.substr(lastindex + 1u);
 
         m_message.str("");
         m_message << error;

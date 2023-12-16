@@ -109,6 +109,7 @@ void Simulation::stateStarting()
 #endif
 
     // Reset states of the simulator
+    m_net.generateArcsInArcsOut();
     m_initial_tokens = m_net.tokens();
     shuffle_transitions(true);
     m_timed_tokens.clear();
