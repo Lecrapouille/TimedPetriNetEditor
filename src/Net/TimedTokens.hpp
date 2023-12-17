@@ -47,27 +47,6 @@ struct TimedToken
     //--------------------------------------------------------------------------
     TimedToken(Arc& arc_, size_t const tokens_, TypeOfNet const type_);
 
-    // I dunno why the code in the #else branch seems to make buggy animations
-    // with tokens that disapear. Cannot catch it by unit tests.
-    // https://github.com/Lecrapouille/TimedPetriNetEditor/issues/2
-# if 1
-
-    //--------------------------------------------------------------------------
-    //! \brief Hack needed because of references
-    //--------------------------------------------------------------------------
-    TimedToken& operator=(const TimedToken& obj)
-    {
-        this->~TimedToken(); // destroy
-        new (this) TimedToken(obj); // copy construct in place
-        return *this;
-    }
-
-    TimedToken(const TimedToken&) = default;
-    TimedToken(TimedToken&&) = default;
-    TimedToken& operator=(TimedToken&&) = default;
-
-#else
-
     //--------------------------------------------------------------------------
     //! \brief Hack needed because of references
     //--------------------------------------------------------------------------
@@ -82,14 +61,14 @@ struct TimedToken
     //! \brief Needed to remove compilation warnings
     //--------------------------------------------------------------------------
     TimedToken(TimedToken const& other)
-        : TimedToken(other.arc, other.tokens)
+        : TimedToken(other.arc, other.tokens, other.type)
     {}
 
     //--------------------------------------------------------------------------
     //! \brief Needed to remove compilation warnings
     //--------------------------------------------------------------------------
     TimedToken(TimedToken&& other)
-        : TimedToken(other.arc, other.tokens)
+        : TimedToken(other.arc, other.tokens, other.type)
     {}
 
     //--------------------------------------------------------------------------
@@ -101,8 +80,6 @@ struct TimedToken
         new (this) TimedToken(other); // copy construct in place
         return *this;
     }
-
-#endif
 
     //--------------------------------------------------------------------------
     //! \brief Update position on the screen.

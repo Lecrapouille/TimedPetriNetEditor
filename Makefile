@@ -30,7 +30,7 @@ VPATH += $(P)/src/Application $(P)/src/Editor $(P)/src/Editor/DearImGui
 ###################################################
 # Inform Makefile where to find header files
 #
-INCLUDES += -I$(P)/include -I$(P)/src
+INCLUDES += -I$(P)/include -I$(P)/src -I$(P)/external
 
 ###################################################
 # Project defines
@@ -95,7 +95,7 @@ endif
 INCLUDES += -I$(THIRDPART)/imgui -I$(THIRDPART)/imgui/backends -I$(THIRDPART)/imgui/misc/cpp
 VPATH += $(THIRDPART)/imgui $(THIRDPART)/imgui/backends $(THIRDPART)/imgui/misc/cpp
 DEARIMGUI_OBJS += imgui_widgets.o imgui_draw.o imgui_tables.o imgui.o imgui_stdlib.o
-DEARIMGUI_OBJS += imgui_demo.o
+# DEARIMGUI_OBJS += imgui_demo.o
 
 ###################################################
 # Set thirdpart Dear ImGui Plot
@@ -113,11 +113,13 @@ DEARIMGUI_OBJS += ImGuiFileDialog.o
 ###################################################
 # Set MQTT Library.
 #
+ifneq ($(ARCHI),Emscripten)
 INCLUDES += -I$(THIRDPART) -I$(THIRDPART)/MQTT/include
 VPATH += $(THIRDPART)/MQTT/src
 DEFINES += -DMQTT_BROKER_ADDR=\"localhost\"
 DEFINES += -DMQTT_BROKER_PORT=1883
 PKG_LIBS += libmosquitto
+endif
 
 ###################################################
 # Set json Library.
