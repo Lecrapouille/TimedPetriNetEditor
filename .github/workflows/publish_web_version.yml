@@ -1,4 +1,4 @@
-name: Publish TimedPetriNetEditor on GitHub page
+name: Publish the online TimedPetriNetEditor version on GitHub page
 on:
   push:
     branches:
