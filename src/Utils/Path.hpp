@@ -108,9 +108,9 @@ public:
     std::string expand(std::string const& filename) const;
 
     //--------------------------------------------------------------------------
-    //! \brief Return the path as string. The first path is always ".:"
+    //! \brief Return pathes as string. The first path is always ".:"
     //--------------------------------------------------------------------------
-    std::string const& toString();
+    std::string pathes() const;
 
     bool open(std::string& filename, std::ifstream& ifs,
               std::ios_base::openmode mode = std::ios_base::in) const;
@@ -119,11 +119,6 @@ public:
     bool open(std::string& filename, std::fstream& ifs,
               std::ios_base::openmode mode = std::ios_base::in | std::ios_base::out) const;
 protected:
-
-    //--------------------------------------------------------------------------
-    //! \brief From m_search_paths rebuild m_string_path
-    //--------------------------------------------------------------------------
-    void update();
 
     //--------------------------------------------------------------------------
     //! \brief Slipt paths separated by delimiter char into std::list
@@ -142,11 +137,6 @@ protected:
     const char m_delimiter = ':';
     //! \brief the list of pathes.
     std::list<std::string> m_search_paths;
-    //! \brief the list of pathes converted as a string. Pathes are separated by
-    //! the m_delimiter char.
-    std::string m_string_path;
-    //! \brief redo update() when dirty
-    bool m_dirty = false;
 };
 
 #endif // UTILS_PATH_HPP

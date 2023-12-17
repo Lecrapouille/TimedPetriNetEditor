@@ -50,15 +50,12 @@ void Path::reset(std::string const& path)
 void Path::clear()
 {
     m_search_paths.clear();
-    m_string_path.clear();
-    m_dirty = false;
 }
 
 //------------------------------------------------------------------------------
 void Path::remove(std::string const& path)
 {
     m_search_paths.remove(path);
-    m_dirty = true;
 }
 
 //------------------------------------------------------------------------------
@@ -165,29 +162,21 @@ bool Path::open(std::string& filename, std::fstream& fs, std::ios_base::openmode
 }
 
 //------------------------------------------------------------------------------
-std::string const& Path::toString()
+std::string Path::pathes() const
 {
-    update();
-    return m_string_path;
-}
+    std::string string_path;
 
-//------------------------------------------------------------------------------
-void Path::update()
-{
-    if (m_dirty)
+    string_path += ".";
+    string_path += m_delimiter;
+
+    for (auto const& it: m_search_paths)
     {
-        m_string_path.clear();
-        m_string_path += ".";
-        m_string_path += m_delimiter;
-
-        for (auto const& it: m_search_paths)
-        {
-            m_string_path += it;
-            m_string_path.pop_back(); // Remove the '/' char
-            m_string_path += m_delimiter;
-        }
-        m_dirty = false;
+        string_path += it;
+        string_path.pop_back(); // Remove the '/' char
+        string_path += m_delimiter;
     }
+
+    return string_path;
 }
 
 //------------------------------------------------------------------------------
@@ -206,5 +195,4 @@ void Path::split(std::string const& path)
         else
             m_search_paths.push_back(directory + "/");
     }
-    m_dirty = true;
 }

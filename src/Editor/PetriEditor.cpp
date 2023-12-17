@@ -590,7 +590,7 @@ void Editor::help() const
             }
             if (ImGui::BeginTabItem("Pathes"))
             {
-                ImGui::Text("Data path: %s", project::info::data_path.c_str());
+                ImGui::Text("Data path: %s", m_path.pathes().c_str());
                 ImGui::Text("Temporary path: %s", project::info::tmp_path.c_str());
                 ImGui::Text("Log path: %s", project::info::log_path.c_str());
                 ImGui::EndTabItem();
