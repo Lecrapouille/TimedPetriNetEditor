@@ -672,30 +672,41 @@ void Editor::inspector()
     // Place captions and tokens
     {
         ImGui::Begin("Places");
+
+        // Options
         ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(0, 0));
         ImGui::Checkbox(m_states.show_place_captions ?
                         "Show place identifiers" : "Show place captions",
                         &m_states.show_place_captions);
         ImGui::PopStyleVar();
-
         ImGui::Separator();
 
-        // TODO pour event graph: afficher ImGui::InputText("T1 P0 T2", &p.places);
-        ImGui::Text("%s", "Captions:");
         for (auto& place: m_net.places())
         {
+            ImGui::PushID(place.key.c_str());
+            ImGui::AlignTextToFramePadding();
             ImGui::InputText(place.key.c_str(), &place.caption, readonly);
-        }
 
-        ImGui::Separator();
-        ImGui::Text("%s", "Tokens:");
-        for (auto& place: m_net.places())
-        {
-            inputInteger(m_states.show_place_captions ?
-                         place.caption.c_str() : place.key.c_str(),
-                         Net::Settings::maxTokens, place.tokens);
-        }
+            // Increment/decrement tokens
+            ImGui::SameLine();
+            ImGui::PushButtonRepeat(true);
+            if (ImGui::ArrowButton("##left", ImGuiDir_Left))
+            {
+                place.decrement();
+            }
+            ImGui::SameLine();
+            if (ImGui::ArrowButton("##right", ImGuiDir_Right))
+            {
+                place.increment();
+            }
+            ImGui::PopButtonRepeat();
 
+            // Caption edition
+            ImGui::SameLine();
+            ImGui::Text("%zu", place.tokens);
+
+            ImGui::PopID();
+        }
         ImGui::End();
     }
 
