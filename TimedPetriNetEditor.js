@@ -785,9 +785,7 @@ function getUniqueRunDependency(id) {
 function addRunDependency(id) {
   runDependencies++;
 
-  if (Module['monitorRunDependencies']) {
-    Module['monitorRunDependencies'](runDependencies);
-  }
+  Module['monitorRunDependencies']?.(runDependencies);
 
   if (id) {
     assert(!runDependencyTracking[id]);
@@ -821,9 +819,7 @@ function addRunDependency(id) {
 function removeRunDependency(id) {
   runDependencies--;
 
-  if (Module['monitorRunDependencies']) {
-    Module['monitorRunDependencies'](runDependencies);
-  }
+  Module['monitorRunDependencies']?.(runDependencies);
 
   if (id) {
     assert(runDependencyTracking[id]);
@@ -846,9 +842,7 @@ function removeRunDependency(id) {
 
 /** @param {string|number=} what */
 function abort(what) {
-  if (Module['onAbort']) {
-    Module['onAbort'](what);
-  }
+  Module['onAbort']?.(what);
 
   what = 'Aborted(' + what + ')';
   // TODO(sbc): Should we remove printing and leave it up to whoever
@@ -1188,8 +1182,40 @@ function dbg(text) {
 // === Body ===
 
 var ASM_CONSTS = {
-  194080: ($0) => { navigator.clipboard.writeText(UTF8ToString($0)); },  
- 194133: ($0) => { document.getElementById("canvas").style.cursor = UTF8ToString($0); }
+  193808: () => { if (document.fullscreenElement) return 1; },  
+ 193854: () => { return document.getElementById('canvas').width; },  
+ 193906: () => { return parseInt(document.getElementById('canvas').style.width); },  
+ 193974: () => { document.exitFullscreen(); },  
+ 194001: () => { setTimeout(function() { Module.requestFullscreen(false, false); }, 100); },  
+ 194074: () => { if (document.fullscreenElement) return 1; },  
+ 194120: () => { return document.getElementById('canvas').width; },  
+ 194172: () => { return screen.width; },  
+ 194197: () => { document.exitFullscreen(); },  
+ 194224: () => { setTimeout(function() { Module.requestFullscreen(false, true); setTimeout(function() { canvas.style.width="unset"; }, 100); }, 100); },  
+ 194357: () => { if (document.fullscreenElement) return 1; },  
+ 194403: () => { return document.getElementById('canvas').width; },  
+ 194455: () => { return parseInt(document.getElementById('canvas').style.width); },  
+ 194523: () => { if (document.fullscreenElement) return 1; },  
+ 194569: () => { return document.getElementById('canvas').width; },  
+ 194621: () => { return screen.width; },  
+ 194646: () => { if (document.fullscreenElement) return 1; },  
+ 194692: () => { return document.getElementById('canvas').width; },  
+ 194744: () => { return screen.width; },  
+ 194769: () => { document.exitFullscreen(); },  
+ 194796: () => { if (document.fullscreenElement) return 1; },  
+ 194842: () => { return document.getElementById('canvas').width; },  
+ 194894: () => { return parseInt(document.getElementById('canvas').style.width); },  
+ 194962: () => { document.exitFullscreen(); },  
+ 194989: () => { return screen.width; },  
+ 195014: () => { return screen.height; },  
+ 195040: () => { return window.screenX; },  
+ 195067: () => { return window.screenY; },  
+ 195094: ($0) => { navigator.clipboard.writeText(UTF8ToString($0)); },  
+ 195147: ($0) => { document.getElementById("canvas").style.cursor = UTF8ToString($0); },  
+ 195218: () => { document.getElementById('canvas').style.cursor = 'none'; },  
+ 195275: ($0) => { document.getElementById('canvas').style.cursor = UTF8ToString($0); },  
+ 195346: () => { if (document.fullscreenElement) return 1; },  
+ 195392: () => { if (document.pointerLockElement) return 1; }
 };
 function GetWindowInnerWidth() { return window.innerWidth; }
 function GetWindowInnerHeight() { return window.innerHeight; }
@@ -1262,7 +1288,7 @@ function GetWindowInnerHeight() { return window.innerHeight; }
   }
 
   var warnOnce = (text) => {
-      if (!warnOnce.shown) warnOnce.shown = {};
+      warnOnce.shown ||= {};
       if (!warnOnce.shown[text]) {
         warnOnce.shown[text] = 1;
         if (ENVIRONMENT_IS_NODE) text = 'warning: ' + text;
@@ -1890,55 +1916,53 @@ function GetWindowInnerHeight() { return window.innerHeight; }
           // no supported
           throw new FS.ErrnoError(63);
         }
-        if (!MEMFS.ops_table) {
-          MEMFS.ops_table = {
-            dir: {
-              node: {
-                getattr: MEMFS.node_ops.getattr,
-                setattr: MEMFS.node_ops.setattr,
-                lookup: MEMFS.node_ops.lookup,
-                mknod: MEMFS.node_ops.mknod,
-                rename: MEMFS.node_ops.rename,
-                unlink: MEMFS.node_ops.unlink,
-                rmdir: MEMFS.node_ops.rmdir,
-                readdir: MEMFS.node_ops.readdir,
-                symlink: MEMFS.node_ops.symlink
-              },
-              stream: {
-                llseek: MEMFS.stream_ops.llseek
-              }
+        MEMFS.ops_table ||= {
+          dir: {
+            node: {
+              getattr: MEMFS.node_ops.getattr,
+              setattr: MEMFS.node_ops.setattr,
+              lookup: MEMFS.node_ops.lookup,
+              mknod: MEMFS.node_ops.mknod,
+              rename: MEMFS.node_ops.rename,
+              unlink: MEMFS.node_ops.unlink,
+              rmdir: MEMFS.node_ops.rmdir,
+              readdir: MEMFS.node_ops.readdir,
+              symlink: MEMFS.node_ops.symlink
             },
-            file: {
-              node: {
-                getattr: MEMFS.node_ops.getattr,
-                setattr: MEMFS.node_ops.setattr
-              },
-              stream: {
-                llseek: MEMFS.stream_ops.llseek,
-                read: MEMFS.stream_ops.read,
-                write: MEMFS.stream_ops.write,
-                allocate: MEMFS.stream_ops.allocate,
-                mmap: MEMFS.stream_ops.mmap,
-                msync: MEMFS.stream_ops.msync
-              }
-            },
-            link: {
-              node: {
-                getattr: MEMFS.node_ops.getattr,
-                setattr: MEMFS.node_ops.setattr,
-                readlink: MEMFS.node_ops.readlink
-              },
-              stream: {}
-            },
-            chrdev: {
-              node: {
-                getattr: MEMFS.node_ops.getattr,
-                setattr: MEMFS.node_ops.setattr
-              },
-              stream: FS.chrdev_stream_ops
+            stream: {
+              llseek: MEMFS.stream_ops.llseek
             }
-          };
-        }
+          },
+          file: {
+            node: {
+              getattr: MEMFS.node_ops.getattr,
+              setattr: MEMFS.node_ops.setattr
+            },
+            stream: {
+              llseek: MEMFS.stream_ops.llseek,
+              read: MEMFS.stream_ops.read,
+              write: MEMFS.stream_ops.write,
+              allocate: MEMFS.stream_ops.allocate,
+              mmap: MEMFS.stream_ops.mmap,
+              msync: MEMFS.stream_ops.msync
+            }
+          },
+          link: {
+            node: {
+              getattr: MEMFS.node_ops.getattr,
+              setattr: MEMFS.node_ops.setattr,
+              readlink: MEMFS.node_ops.readlink
+            },
+            stream: {}
+          },
+          chrdev: {
+            node: {
+              getattr: MEMFS.node_ops.getattr,
+              setattr: MEMFS.node_ops.setattr
+            },
+            stream: FS.chrdev_stream_ops
+          }
+        };
         var node = FS.createNode(parent, name, mode, dev);
         if (FS.isDir(node.mode)) {
           node.node_ops = MEMFS.ops_table.dir.node;
@@ -2081,10 +2105,7 @@ function GetWindowInnerHeight() { return window.innerHeight; }
         },
   readdir(node) {
           var entries = ['.', '..'];
-          for (var key in node.contents) {
-            if (!node.contents.hasOwnProperty(key)) {
-              continue;
-            }
+          for (var key of Object.keys(node.contents)) {
             entries.push(key);
           }
           return entries;
@@ -2252,15 +2273,15 @@ function GetWindowInnerHeight() { return window.innerHeight; }
       var dep = getUniqueRunDependency(`cp ${fullname}`); // might have several active requests for the same fullname
       function processData(byteArray) {
         function finish(byteArray) {
-          if (preFinish) preFinish();
+          preFinish?.();
           if (!dontCreateFile) {
             FS_createDataFile(parent, name, byteArray, canRead, canWrite, canOwn);
           }
-          if (onload) onload();
+          onload?.();
           removeRunDependency(dep);
         }
         if (FS_handledByPreloadPlugin(byteArray, fullname, finish, () => {
-          if (onerror) onerror();
+          onerror?.();
           removeRunDependency(dep);
         })) {
           return;
@@ -2876,9 +2897,7 @@ function GetWindowInnerHeight() { return window.innerHeight; }
           // override node's stream ops with the device's
           stream.stream_ops = device.stream_ops;
           // forward the open call
-          if (stream.stream_ops.open) {
-            stream.stream_ops.open(stream);
-          }
+          stream.stream_ops.open?.(stream);
         },
   llseek() {
           throw new FS.ErrnoError(70);
@@ -3900,7 +3919,7 @@ function GetWindowInnerHeight() { return window.innerHeight; }
           },
           close(stream) {
             // flush any pending line data
-            if (output && output.buffer && output.buffer.length) {
+            if (output?.buffer?.length) {
               output(10);
             }
           },
@@ -4355,9 +4374,7 @@ function GetWindowInnerHeight() { return window.innerHeight; }
   try {
   
       var stream = SYSCALLS.getStreamFromFD(fd)
-      if (!stream.getdents) {
-        stream.getdents = FS.readdir(stream.path);
-      }
+      stream.getdents ||= FS.readdir(stream.path);
   
       var struct_size = 280;
       var pos = 0;
@@ -4843,7 +4860,7 @@ function GetWindowInnerHeight() { return window.innerHeight; }
         if (!target) return '';
         if (target == window) return '#window';
         if (target == screen) return '#screen';
-        return (target && target.nodeName) ? target.nodeName : '';
+        return target?.nodeName || '';
       },
   fullscreenEnabled() {
         return document.fullscreenEnabled
@@ -4912,7 +4929,6 @@ function GetWindowInnerHeight() { return window.innerHeight; }
     };
   var _emscripten_get_gamepad_status = (index, gamepadState) => {
       if (!JSEvents.lastGamepadState) throw 'emscripten_get_gamepad_status() can only be called after having first called emscripten_sample_gamepad_data() and that function has returned EMSCRIPTEN_RESULT_SUCCESS!';
-  
       // INVALID_PARAM is returned on a Gamepad index that never was there.
       if (index < 0 || index >= JSEvents.lastGamepadState.length) return -5;
   
@@ -5044,6 +5060,47 @@ function GetWindowInnerHeight() { return window.innerHeight; }
   
         var handle = GL.registerContext(ctx, webGLContextAttributes);
   
+        // If end user enables *glGetProcAddress() functionality, then we must filter out
+        // all future WebGL extensions from being passed to the user, and only restrict to advertising
+        // extensions that the *glGetProcAddress() function knows to handle.
+        var _allSupportedExtensions = ctx.getSupportedExtensions;
+        var supportedExtensionsForGetProcAddress = [
+          // WebGL 1 extensions
+          'ANGLE_instanced_arrays',
+          'EXT_blend_minmax',
+          'EXT_disjoint_timer_query',
+          'EXT_frag_depth',
+          'EXT_shader_texture_lod',
+          'EXT_sRGB',
+          'OES_element_index_uint',
+          'OES_fbo_render_mipmap',
+          'OES_standard_derivatives',
+          'OES_texture_float',
+          'OES_texture_half_float',
+          'OES_texture_half_float_linear',
+          'OES_vertex_array_object',
+          'WEBGL_color_buffer_float',
+          'WEBGL_depth_texture',
+          'WEBGL_draw_buffers',
+          // WebGL 1 and WebGL 2 extensions
+          'EXT_color_buffer_half_float',
+          'EXT_float_blend',
+          'EXT_texture_compression_bptc',
+          'EXT_texture_compression_rgtc',
+          'EXT_texture_filter_anisotropic',
+          'KHR_parallel_shader_compile',
+          'OES_texture_float_linear',
+          'WEBGL_compressed_texture_s3tc',
+          'WEBGL_compressed_texture_s3tc_srgb',
+          'WEBGL_debug_renderer_info',
+          'WEBGL_debug_shaders',
+          'WEBGL_lose_context',
+          'WEBGL_multi_draw',
+        ];
+        ctx.getSupportedExtensions = function() {
+          return (_allSupportedExtensions.apply(this) || []).filter(ext => supportedExtensionsForGetProcAddress.includes(ext));
+        }
+  
         return handle;
       },
   registerContext:(ctx, webGLContextAttributes) => {
@@ -5072,7 +5129,7 @@ function GetWindowInnerHeight() { return window.innerHeight; }
         // Active Emscripten GL layer context object.
         GL.currentContext = GL.contexts[contextHandle];
         // Active WebGL context object.
-        Module.ctx = GLctx = GL.currentContext && GL.currentContext.GLctx;
+        Module.ctx = GLctx = GL.currentContext?.GLctx;
         return !(contextHandle && !GLctx);
       },
   getContext:(contextHandle) => {
@@ -5097,7 +5154,7 @@ function GetWindowInnerHeight() { return window.innerHeight; }
   initExtensions:(context) => {
         // If this function is called without a specific context object, init the
         // extensions of the currently active context.
-        if (!context) context = GL.currentContext;
+        context ||= GL.currentContext;
   
         if (context.initExtensionsDone) return;
         context.initExtensionsDone = true;
@@ -7022,8 +7079,20 @@ function GetWindowInnerHeight() { return window.innerHeight; }
       eval(UTF8ToString(ptr));
     };
 
+  
+  /** @suppress {checkTypes} */
+  var disableGamepadApiIfItThrows = () => {
+      try {
+        navigator.getGamepads();
+      } catch(e) {
+        err(`navigator.getGamepads() exists, but failed to execute with exception ${e}. Disabling Gamepad access.`);
+        navigator.getGamepads = null; // Disable getGamepads() so that other functions will not attempt to use it.
+        return 1;
+      }
+    };
   var _emscripten_sample_gamepad_data = () => {
-      return (JSEvents.lastGamepadState = (navigator.getGamepads ? navigator.getGamepads() : (navigator.webkitGetGamepads ? navigator.webkitGetGamepads() : null)))
+      if (!navigator.getGamepads || disableGamepadApiIfItThrows()) return -1;
+      return (JSEvents.lastGamepadState = navigator.getGamepads())
         ? 0 : -1;
     };
 
@@ -7106,7 +7175,7 @@ function GetWindowInnerHeight() { return window.innerHeight; }
       // If transitioning to windowed mode, report info about the element that just was fullscreen.
       var reportedElement = isFullscreen ? fullscreenElement : JSEvents.previousFullscreenElement;
       var nodeName = JSEvents.getNodeNameForTarget(reportedElement);
-      var id = (reportedElement && reportedElement.id) ? reportedElement.id : '';
+      var id = reportedElement?.id || '';
       stringToUTF8(nodeName, eventStruct + 8, 128);
       stringToUTF8(id, eventStruct + 136, 128);
       HEAP32[(((eventStruct)+(264))>>2)] = reportedElement ? reportedElement.clientWidth : 0;
@@ -7176,14 +7245,68 @@ function GetWindowInnerHeight() { return window.innerHeight; }
       };
       return JSEvents.registerOrRemoveHandler(eventHandler);
     };
+  
   var _emscripten_set_gamepadconnected_callback_on_thread = (userData, useCapture, callbackfunc, targetThread) => {
-      if (!navigator.getGamepads && !navigator.webkitGetGamepads) return -1;
+      if (!navigator.getGamepads || disableGamepadApiIfItThrows()) return -1;
       return registerGamepadEventCallback(2, userData, useCapture, callbackfunc, 26, "gamepadconnected", targetThread);
     };
 
+  
   var _emscripten_set_gamepaddisconnected_callback_on_thread = (userData, useCapture, callbackfunc, targetThread) => {
-      if (!navigator.getGamepads && !navigator.webkitGetGamepads) return -1;
+      if (!navigator.getGamepads || disableGamepadApiIfItThrows()) return -1;
       return registerGamepadEventCallback(2, userData, useCapture, callbackfunc, 27, "gamepaddisconnected", targetThread);
+    };
+
+  
+  
+  
+  var fillPointerlockChangeEventData = (eventStruct) => {
+      var pointerLockElement = document.pointerLockElement || document.mozPointerLockElement || document.webkitPointerLockElement || document.msPointerLockElement;
+      var isPointerlocked = !!pointerLockElement;
+      // Assigning a boolean to HEAP32 with expected type coercion.
+      /** @suppress{checkTypes} */
+      HEAP32[((eventStruct)>>2)] = isPointerlocked;
+      var nodeName = JSEvents.getNodeNameForTarget(pointerLockElement);
+      var id = pointerLockElement?.id || '';
+      stringToUTF8(nodeName, eventStruct + 4, 128);
+      stringToUTF8(id, eventStruct + 132, 128);
+    };
+  
+  
+  var registerPointerlockChangeEventCallback = (target, userData, useCapture, callbackfunc, eventTypeId, eventTypeString, targetThread) => {
+      if (!JSEvents.pointerlockChangeEvent) JSEvents.pointerlockChangeEvent = _malloc(260);
+  
+      var pointerlockChangeEventHandlerFunc = (e = event) => {
+        var pointerlockChangeEvent = JSEvents.pointerlockChangeEvent;
+        fillPointerlockChangeEventData(pointerlockChangeEvent);
+  
+        if (((a1, a2, a3) => dynCall_iiii.apply(null, [callbackfunc, a1, a2, a3]))(eventTypeId, pointerlockChangeEvent, userData)) e.preventDefault();
+      };
+  
+      var eventHandler = {
+        target,
+        eventTypeString,
+        callbackfunc,
+        handlerFunc: pointerlockChangeEventHandlerFunc,
+        useCapture
+      };
+      return JSEvents.registerOrRemoveHandler(eventHandler);
+    };
+  
+  
+  /** @suppress {missingProperties} */
+  var _emscripten_set_pointerlockchange_callback_on_thread = (target, userData, useCapture, callbackfunc, targetThread) => {
+      // TODO: Currently not supported in pthreads or in --proxy-to-worker mode. (In pthreads mode, document object is not defined)
+      if (!document || !document.body || (!document.body.requestPointerLock && !document.body.mozRequestPointerLock && !document.body.webkitRequestPointerLock && !document.body.msRequestPointerLock)) {
+        return -1;
+      }
+  
+      target = findEventTarget(target);
+      if (!target) return -4;
+      registerPointerlockChangeEventCallback(target, userData, useCapture, callbackfunc, 20, "mozpointerlockchange", targetThread);
+      registerPointerlockChangeEventCallback(target, userData, useCapture, callbackfunc, 20, "webkitpointerlockchange", targetThread);
+      registerPointerlockChangeEventCallback(target, userData, useCapture, callbackfunc, 20, "mspointerlockchange", targetThread);
+      return registerPointerlockChangeEventCallback(target, userData, useCapture, callbackfunc, 20, "pointerlockchange", targetThread);
     };
 
   
@@ -7475,7 +7598,7 @@ function GetWindowInnerHeight() { return window.innerHeight; }
         // to queue the newest produced audio samples.
         // TODO: Consider adding pre- and post- rAF callbacks so that GL.newRenderingFrameStarted() and SDL.audio.queueNewAudioData()
         //       do not need to be hardcoded into this function, but can be more generic.
-        if (typeof SDL == 'object' && SDL.audio && SDL.audio.queueNewAudioData) SDL.audio.queueNewAudioData();
+        if (typeof SDL == 'object') SDL.audio?.queueNewAudioData?.();
   
         Browser.mainLoop.scheduler();
       }
@@ -7521,7 +7644,7 @@ function GetWindowInnerHeight() { return window.innerHeight; }
   var _proc_exit = (code) => {
       EXITSTATUS = code;
       if (!keepRuntimeAlive()) {
-        if (Module['onExit']) Module['onExit'](code);
+        Module['onExit']?.(code);
         ABORT = true;
       }
       quit_(code, new ExitStatus(code));
@@ -7632,7 +7755,7 @@ function GetWindowInnerHeight() { return window.innerHeight; }
             }
           }
           callUserCallback(func);
-          if (Module['postMainLoop']) Module['postMainLoop']();
+          Module['postMainLoop']?.();
         },
   },
   isFullscreen:false,
@@ -7673,11 +7796,11 @@ function GetWindowInnerHeight() { return window.innerHeight; }
             ctx.drawImage(img, 0, 0);
             preloadedImages[name] = canvas;
             URL.revokeObjectURL(url);
-            if (onload) onload(byteArray);
+            onload?.(byteArray);
           };
           img.onerror = (event) => {
             err(`Image ${url} could not be decoded`);
-            if (onerror) onerror();
+            onerror?.();
           };
           img.src = url;
         };
@@ -7693,13 +7816,13 @@ function GetWindowInnerHeight() { return window.innerHeight; }
             if (done) return;
             done = true;
             preloadedAudios[name] = audio;
-            if (onload) onload(byteArray);
+            onload?.(byteArray);
           }
           function fail() {
             if (done) return;
             done = true;
             preloadedAudios[name] = new Audio(); // empty shim
-            if (onerror) onerror();
+            onerror?.();
           }
           var b = new Blob([byteArray], { type: Browser.getMimetype(name) });
           var url = URL.createObjectURL(b); // XXX we never revoke this!
@@ -7865,8 +7988,8 @@ function GetWindowInnerHeight() { return window.innerHeight; }
               Browser.updateCanvasDimensions(canvas);
             }
           }
-          if (Module['onFullScreen']) Module['onFullScreen'](Browser.isFullscreen);
-          if (Module['onFullscreen']) Module['onFullscreen'](Browser.isFullscreen);
+          Module['onFullScreen']?.(Browser.isFullscreen);
+          Module['onFullscreen']?.(Browser.isFullscreen);
         }
   
         if (!Browser.fullscreenHandlersInstalled) {
@@ -7958,10 +8081,8 @@ function GetWindowInnerHeight() { return window.innerHeight; }
         }[name.substr(name.lastIndexOf('.')+1)];
       },
   getUserMedia(func) {
-        if (!window.getUserMedia) {
-          window.getUserMedia = navigator['getUserMedia'] ||
+        window.getUserMedia ||= navigator['getUserMedia'] ||
                                 navigator['mozGetUserMedia'];
-        }
         window.getUserMedia(func);
       },
   getMovementX(event) {
@@ -8019,6 +8140,39 @@ function GetWindowInnerHeight() { return window.innerHeight; }
   },
   lastTouches:{
   },
+  calculateMouseCoords(pageX, pageY) {
+        // Calculate the movement based on the changes
+        // in the coordinates.
+        var rect = Module["canvas"].getBoundingClientRect();
+        var cw = Module["canvas"].width;
+        var ch = Module["canvas"].height;
+  
+        // Neither .scrollX or .pageXOffset are defined in a spec, but
+        // we prefer .scrollX because it is currently in a spec draft.
+        // (see: http://www.w3.org/TR/2013/WD-cssom-view-20131217/)
+        var scrollX = ((typeof window.scrollX != 'undefined') ? window.scrollX : window.pageXOffset);
+        var scrollY = ((typeof window.scrollY != 'undefined') ? window.scrollY : window.pageYOffset);
+        // If this assert lands, it's likely because the browser doesn't support scrollX or pageXOffset
+        // and we have no viable fallback.
+        assert((typeof scrollX != 'undefined') && (typeof scrollY != 'undefined'), 'Unable to retrieve scroll position, mouse positions likely broken.');
+        var adjustedX = pageX - (scrollX + rect.left);
+        var adjustedY = pageY - (scrollY + rect.top);
+  
+        // the canvas might be CSS-scaled compared to its backbuffer;
+        // SDL-using content will want mouse coordinates in terms
+        // of backbuffer units.
+        adjustedX = adjustedX * (cw / rect.width);
+        adjustedY = adjustedY * (ch / rect.height);
+  
+        return { x: adjustedX, y: adjustedY };
+      },
+  setMouseCoords(pageX, pageY) {
+        const {x, y} = Browser.calculateMouseCoords(pageX, pageY);
+        Browser.mouseMovementX = x - Browser.mouseX;
+        Browser.mouseMovementY = y - Browser.mouseY;
+        Browser.mouseX = x;
+        Browser.mouseY = y;
+      },
   calculateMouseEvent(event) { // event should be mousemove, mousedown or mouseup
         if (Browser.pointerLock) {
           // When the pointer is locked, calculate the coordinates
@@ -8043,60 +8197,27 @@ function GetWindowInnerHeight() { return window.innerHeight; }
             Browser.mouseY += Browser.mouseMovementY;
           }
         } else {
-          // Otherwise, calculate the movement based on the changes
-          // in the coordinates.
-          var rect = Module["canvas"].getBoundingClientRect();
-          var cw = Module["canvas"].width;
-          var ch = Module["canvas"].height;
-  
-          // Neither .scrollX or .pageXOffset are defined in a spec, but
-          // we prefer .scrollX because it is currently in a spec draft.
-          // (see: http://www.w3.org/TR/2013/WD-cssom-view-20131217/)
-          var scrollX = ((typeof window.scrollX != 'undefined') ? window.scrollX : window.pageXOffset);
-          var scrollY = ((typeof window.scrollY != 'undefined') ? window.scrollY : window.pageYOffset);
-          // If this assert lands, it's likely because the browser doesn't support scrollX or pageXOffset
-          // and we have no viable fallback.
-          assert((typeof scrollX != 'undefined') && (typeof scrollY != 'undefined'), 'Unable to retrieve scroll position, mouse positions likely broken.');
-  
           if (event.type === 'touchstart' || event.type === 'touchend' || event.type === 'touchmove') {
             var touch = event.touch;
             if (touch === undefined) {
               return; // the "touch" property is only defined in SDL
   
             }
-            var adjustedX = touch.pageX - (scrollX + rect.left);
-            var adjustedY = touch.pageY - (scrollY + rect.top);
-  
-            adjustedX = adjustedX * (cw / rect.width);
-            adjustedY = adjustedY * (ch / rect.height);
-  
-            var coords = { x: adjustedX, y: adjustedY };
+            var coords = Browser.calculateMouseCoords(touch.pageX, touch.pageY);
   
             if (event.type === 'touchstart') {
               Browser.lastTouches[touch.identifier] = coords;
               Browser.touches[touch.identifier] = coords;
             } else if (event.type === 'touchend' || event.type === 'touchmove') {
               var last = Browser.touches[touch.identifier];
-              if (!last) last = coords;
+              last ||= coords;
               Browser.lastTouches[touch.identifier] = last;
               Browser.touches[touch.identifier] = coords;
             }
             return;
           }
   
-          var x = event.pageX - (scrollX + rect.left);
-          var y = event.pageY - (scrollY + rect.top);
-  
-          // the canvas might be CSS-scaled compared to its backbuffer;
-          // SDL-using content will want mouse coordinates in terms
-          // of backbuffer units.
-          x = x * (cw / rect.width);
-          y = y * (ch / rect.height);
-  
-          Browser.mouseMovementX = x - Browser.mouseX;
-          Browser.mouseMovementY = y - Browser.mouseY;
-          Browser.mouseX = x;
-          Browser.mouseY = y;
+          Browser.setMouseCoords(event.pageX, event.pageY);
         }
       },
   resizeListeners:[],
@@ -8412,7 +8533,7 @@ function GetWindowInnerHeight() { return window.innerHeight; }
   
   
   /** @constructor */
-  function GLFW_Window(id, width, height, title, monitor, share) {
+  function GLFW_Window(id, width, height, framebufferWidth, framebufferHeight, title, monitor, share) {
         this.id = id;
         this.x = 0;
         this.y = 0;
@@ -8421,12 +8542,14 @@ function GetWindowInnerHeight() { return window.innerHeight; }
         this.storedY = 0; // Used to store Y before fullscreen
         this.width = width;
         this.height = height;
+        this.framebufferWidth = framebufferWidth;
+        this.framebufferHeight = framebufferHeight;
         this.storedWidth = width; // Used to store width before fullscreen
         this.storedHeight = height; // Used to store height before fullscreen
         this.title = title;
         this.monitor = monitor;
         this.share = share;
-        this.attributes = GLFW.hints;
+        this.attributes = Object.assign({}, GLFW.hints);
         this.inputModes = {
           0x00033001:0x00034001, // GLFW_CURSOR (GLFW_CURSOR_NORMAL)
           0x00033002:0, // GLFW_STICKY_KEYS
@@ -8475,7 +8598,9 @@ function GetWindowInnerHeight() { return window.innerHeight; }
   versionString:null,
   initialTime:null,
   extensions:null,
+  devicePixelRatioMQL:null,
   hints:null,
+  primaryTouchId:null,
   defaultHints:{
   131073:0,
   131074:0,
@@ -8701,7 +8826,31 @@ function GetWindowInnerHeight() { return window.innerHeight; }
   onMousemove:(event) => {
         if (!GLFW.active) return;
   
-        Browser.calculateMouseEvent(event);
+        if (event.type === 'touchmove') {
+          // Handling for touch events that are being converted to mouse input.
+  
+          // Don't let the browser fire a duplicate mouse event.
+          event.preventDefault();
+  
+          let primaryChanged = false;
+          for (let i of event.changedTouches) {
+            // If our chosen primary touch moved, update Browser mouse coords
+            if (GLFW.primaryTouchId === i.identifier) {
+              Browser.setMouseCoords(i.pageX, i.pageY);
+              primaryChanged = true;
+              break;
+            }
+          }
+  
+          if (!primaryChanged) {
+            // Do not send mouse events if some touch other than the primary triggered this.
+            return;
+          }
+  
+        } else {
+          // Handling for non-touch mouse input events.
+          Browser.calculateMouseEvent(event);
+        }
   
         if (event.target != Module["canvas"] || !GLFW.active.cursorPosFunc) return;
   
@@ -8743,11 +8892,51 @@ function GetWindowInnerHeight() { return window.innerHeight; }
   onMouseButtonChanged:(event, status) => {
         if (!GLFW.active) return;
   
-        Browser.calculateMouseEvent(event);
-  
         if (event.target != Module["canvas"]) return;
   
-        var eventButton = GLFW.DOMToGLFWMouseButton(event);
+        // Is this from a touch event?
+        const isTouchType = event.type === 'touchstart' || event.type === 'touchend' || event.type === 'touchcancel';
+  
+        // Only emulating mouse left-click behavior for touches.
+        let eventButton = 0;
+        if (isTouchType) {
+          // Handling for touch events that are being converted to mouse input.
+  
+          // Don't let the browser fire a duplicate mouse event.
+          event.preventDefault();
+  
+          let primaryChanged = false;
+  
+          // Set a primary touch if we have none.
+          if (GLFW.primaryTouchId === null && event.type === 'touchstart' && event.targetTouches.length > 0) {
+            // Pick the first touch that started in the canvas and treat it as primary.
+            const chosenTouch = event.targetTouches[0];
+            GLFW.primaryTouchId = chosenTouch.identifier;
+  
+            Browser.setMouseCoords(chosenTouch.pageX, chosenTouch.pageY);
+            primaryChanged = true;
+          } else if (event.type === 'touchend' || event.type === 'touchcancel') {
+            // Clear the primary touch if it ended.
+            for (let i of event.changedTouches) {
+              // If our chosen primary touch ended, remove it.
+              if (GLFW.primaryTouchId === i.identifier) {
+                GLFW.primaryTouchId = null;
+                primaryChanged = true;
+                break;
+              }
+            }
+          }
+  
+          if (!primaryChanged) {
+            // Do not send mouse events if some touch other than the primary triggered this.
+            return;
+          }
+  
+        } else {
+          // Handling for non-touch mouse input events.
+          Browser.calculateMouseEvent(event);
+          eventButton = GLFW.DOMToGLFWMouseButton(event);
+        }
   
         if (status == 1) { // GLFW_PRESS
           GLFW.active.buttons |= (1 << eventButton);
@@ -8758,6 +8947,7 @@ function GetWindowInnerHeight() { return window.innerHeight; }
           GLFW.active.buttons &= ~(1 << eventButton);
         }
   
+        // Send mouse event to GLFW.
         if (GLFW.active.mouseButtonFunc) {
           ((a1, a2, a3, a4) => dynCall_viiii.apply(null, [GLFW.active.mouseButtonFunc, a1, a2, a3, a4]))(GLFW.active.id, eventButton, status, GLFW.getModBits(GLFW.active));
         }
@@ -8789,44 +8979,46 @@ function GetWindowInnerHeight() { return window.innerHeight; }
   
         event.preventDefault();
       },
-  onCanvasResize:(width, height) => {
+  onCanvasResize:(width, height, framebufferWidth, framebufferHeight) => {
         if (!GLFW.active) return;
   
-        var resizeNeeded = true;
+        var resizeNeeded = false;
   
         // If the client is requesting fullscreen mode
         if (document["fullscreen"] || document["fullScreen"] || document["mozFullScreen"] || document["webkitIsFullScreen"]) {
-          GLFW.active.storedX = GLFW.active.x;
-          GLFW.active.storedY = GLFW.active.y;
-          GLFW.active.storedWidth = GLFW.active.width;
-          GLFW.active.storedHeight = GLFW.active.height;
-          GLFW.active.x = GLFW.active.y = 0;
-          GLFW.active.width = screen.width;
-          GLFW.active.height = screen.height;
-          GLFW.active.fullscreen = true;
-  
+          if (!GLFW.active.fullscreen) {
+            resizeNeeded = width != screen.width || height != screen.height;
+            GLFW.active.storedX = GLFW.active.x;
+            GLFW.active.storedY = GLFW.active.y;
+            GLFW.active.storedWidth = GLFW.active.width;
+            GLFW.active.storedHeight = GLFW.active.height;
+            GLFW.active.x = GLFW.active.y = 0;
+            GLFW.active.width = screen.width;
+            GLFW.active.height = screen.height;
+            GLFW.active.fullscreen = true;
+          }
         // If the client is reverting from fullscreen mode
         } else if (GLFW.active.fullscreen == true) {
+          resizeNeeded = width != GLFW.active.storedWidth || height != GLFW.active.storedHeight;
           GLFW.active.x = GLFW.active.storedX;
           GLFW.active.y = GLFW.active.storedY;
           GLFW.active.width = GLFW.active.storedWidth;
           GLFW.active.height = GLFW.active.storedHeight;
           GLFW.active.fullscreen = false;
-  
-        // If the width/height values do not match current active window sizes
-        } else if (GLFW.active.width != width || GLFW.active.height != height) {
-            GLFW.active.width = width;
-            GLFW.active.height = height;
-        } else {
-          resizeNeeded = false;
         }
   
-        // If any of the above conditions were true, we need to resize the canvas
         if (resizeNeeded) {
-          // resets the canvas size to counter the aspect preservation of Browser.updateCanvasDimensions
-          Browser.setCanvasSize(GLFW.active.width, GLFW.active.height, true);
-          // TODO: Client dimensions (clientWidth/clientHeight) vs pixel dimensions (width/height) of
-          // the canvas should drive window and framebuffer size respectfully.
+          // width or height is changed (fullscreen / exit fullscreen) which will call this listener back
+          // with proper framebufferWidth/framebufferHeight
+          Browser.setCanvasSize(GLFW.active.width, GLFW.active.height);
+        } else if (GLFW.active.width != width ||
+                   GLFW.active.height != height ||
+                   GLFW.active.framebufferWidth != framebufferWidth ||
+                   GLFW.active.framebufferHeight != framebufferHeight) {
+          GLFW.active.width = width;
+          GLFW.active.height = height;
+          GLFW.active.framebufferWidth = framebufferWidth;
+          GLFW.active.framebufferHeight = framebufferHeight;
           GLFW.onWindowSizeChanged();
           GLFW.onFramebufferSizeChanged();
         }
@@ -8842,7 +9034,7 @@ function GetWindowInnerHeight() { return window.innerHeight; }
         if (!GLFW.active) return;
   
         if (GLFW.active.framebufferSizeFunc) {
-          ((a1, a2, a3) => dynCall_viii.apply(null, [GLFW.active.framebufferSizeFunc, a1, a2, a3]))(GLFW.active.id, GLFW.active.width, GLFW.active.height);
+          ((a1, a2, a3) => dynCall_viii.apply(null, [GLFW.active.framebufferSizeFunc, a1, a2, a3]))(GLFW.active.id, GLFW.active.framebufferWidth, GLFW.active.framebufferHeight);
         }
       },
   onWindowContentScaleChanged:(scale) => {
@@ -8876,7 +9068,7 @@ function GetWindowInnerHeight() { return window.innerHeight; }
   refreshJoysticks:() => {
         // Produce a new Gamepad API sample if we are ticking a new game frame, or if not using emscripten_set_main_loop() at all to drive animation.
         if (Browser.mainLoop.currentFrameNumber !== GLFW.lastGamepadStateFrame || !Browser.mainLoop.currentFrameNumber) {
-          GLFW.lastGamepadState = navigator.getGamepads ? navigator.getGamepads() : (navigator.webkitGetGamepads ? navigator.webkitGetGamepads : []);
+          GLFW.lastGamepadState = navigator.getGamepads ? navigator.getGamepads() : (navigator.webkitGetGamepads || []);
           GLFW.lastGamepadStateFrame = Browser.mainLoop.currentFrameNumber;
   
           for (var joy = 0; joy < GLFW.lastGamepadState.length; ++joy) {
@@ -9169,14 +9361,11 @@ function GetWindowInnerHeight() { return window.innerHeight; }
         if (!win) return;
   
         if (GLFW.active.id == win.id) {
-          Browser.setCanvasSize(width, height);
-          win.width = width;
-          win.height = height;
+          Browser.setCanvasSize(width, height); // triggers the listener (onCanvasResize) + windowSizeFunc
         }
-  
-        if (win.windowSizeFunc) {
-          ((a1, a2, a3) => dynCall_viii.apply(null, [win.windowSizeFunc, a1, a2, a3]))(win.id, width, height);
-        }
+      },
+  defaultWindowHints:() => {
+        GLFW.hints = Object.assign({}, GLFW.defaultHints);
       },
   createWindow:(width, height, title, monitor, share) => {
         var i, id;
@@ -9220,7 +9409,8 @@ function GetWindowInnerHeight() { return window.innerHeight; }
         if (!Module.ctx && useWebGL) return 0;
   
         // Get non alive id
-        var win = new GLFW_Window(id, width, height, title, monitor, share);
+        const canvas = Module['canvas'];
+        var win = new GLFW_Window(id, canvas.clientWidth, canvas.clientHeight, canvas.width, canvas.height, title, monitor, share);
   
         // Set window to array
         if (id - 1 == GLFW.windows.length) {
@@ -9230,6 +9420,7 @@ function GetWindowInnerHeight() { return window.innerHeight; }
         }
   
         GLFW.active = win;
+        GLFW.adjustCanvasDimensions();
         return win.id;
       },
   destroyWindow:(winid) => {
@@ -9251,6 +9442,165 @@ function GetWindowInnerHeight() { return window.innerHeight; }
         Module.ctx = Browser.destroyContext(Module['canvas'], true, true);
       },
   swapBuffers:(winid) => {
+      },
+  requestFullscreen(lockPointer, resizeCanvas) {
+        Browser.lockPointer = lockPointer;
+        Browser.resizeCanvas = resizeCanvas;
+        if (typeof Browser.lockPointer == 'undefined') Browser.lockPointer = true;
+        if (typeof Browser.resizeCanvas == 'undefined') Browser.resizeCanvas = false;
+  
+        var canvas = Module['canvas'];
+        function fullscreenChange() {
+          Browser.isFullscreen = false;
+          var canvasContainer = canvas.parentNode;
+          if ((document['fullscreenElement'] || document['mozFullScreenElement'] ||
+            document['msFullscreenElement'] || document['webkitFullscreenElement'] ||
+            document['webkitCurrentFullScreenElement']) === canvasContainer) {
+            canvas.exitFullscreen = Browser.exitFullscreen;
+            if (Browser.lockPointer) canvas.requestPointerLock();
+            Browser.isFullscreen = true;
+            if (Browser.resizeCanvas) {
+              Browser.setFullscreenCanvasSize();
+            } else {
+              Browser.updateCanvasDimensions(canvas);
+              Browser.updateResizeListeners();
+            }
+          } else {
+            // remove the full screen specific parent of the canvas again to restore the HTML structure from before going full screen
+            canvasContainer.parentNode.insertBefore(canvas, canvasContainer);
+            canvasContainer.parentNode.removeChild(canvasContainer);
+  
+            if (Browser.resizeCanvas) {
+              Browser.setWindowedCanvasSize();
+            } else {
+              Browser.updateCanvasDimensions(canvas);
+              Browser.updateResizeListeners();
+            }
+          }
+          if (Module['onFullScreen']) Module['onFullScreen'](Browser.isFullscreen);
+          if (Module['onFullscreen']) Module['onFullscreen'](Browser.isFullscreen);
+        }
+  
+        if (!Browser.fullscreenHandlersInstalled) {
+          Browser.fullscreenHandlersInstalled = true;
+          document.addEventListener('fullscreenchange', fullscreenChange, false);
+          document.addEventListener('mozfullscreenchange', fullscreenChange, false);
+          document.addEventListener('webkitfullscreenchange', fullscreenChange, false);
+          document.addEventListener('MSFullscreenChange', fullscreenChange, false);
+        }
+  
+        // create a new parent to ensure the canvas has no siblings. this allows browsers to optimize full screen performance when its parent is the full screen root
+        var canvasContainer = document.createElement("div");
+        canvas.parentNode.insertBefore(canvasContainer, canvas);
+        canvasContainer.appendChild(canvas);
+  
+        // use parent of canvas as full screen root to allow aspect ratio correction (Firefox stretches the root to screen size)
+        canvasContainer.requestFullscreen = canvasContainer['requestFullscreen'] ||
+          canvasContainer['mozRequestFullScreen'] ||
+          canvasContainer['msRequestFullscreen'] ||
+          (canvasContainer['webkitRequestFullscreen'] ? () => canvasContainer['webkitRequestFullscreen'](Element['ALLOW_KEYBOARD_INPUT']) : null) ||
+          (canvasContainer['webkitRequestFullScreen'] ? () => canvasContainer['webkitRequestFullScreen'](Element['ALLOW_KEYBOARD_INPUT']) : null);
+  
+        canvasContainer.requestFullscreen();
+      },
+  updateCanvasDimensions(canvas, wNative, hNative) {
+        const scale = GLFW.getHiDPIScale();
+  
+        if (wNative && hNative) {
+          canvas.widthNative = wNative;
+          canvas.heightNative = hNative;
+        } else {
+          wNative = canvas.widthNative;
+          hNative = canvas.heightNative;
+        }
+        var w = wNative;
+        var h = hNative;
+        if (Module['forcedAspectRatio'] && Module['forcedAspectRatio'] > 0) {
+          if (w/h < Module['forcedAspectRatio']) {
+            w = Math.round(h * Module['forcedAspectRatio']);
+          } else {
+            h = Math.round(w / Module['forcedAspectRatio']);
+          }
+        }
+        if (((document['fullscreenElement'] || document['mozFullScreenElement'] ||
+          document['msFullscreenElement'] || document['webkitFullscreenElement'] ||
+          document['webkitCurrentFullScreenElement']) === canvas.parentNode) && (typeof screen != 'undefined')) {
+          var factor = Math.min(screen.width / w, screen.height / h);
+          w = Math.round(w * factor);
+          h = Math.round(h * factor);
+        }
+        if (Browser.resizeCanvas) {
+          wNative = w;
+          hNative = h;
+        }
+        const wNativeScaled = Math.floor(wNative * scale);
+        const hNativeScaled = Math.floor(hNative * scale);
+        if (canvas.width  != wNativeScaled) canvas.width  = wNativeScaled;
+        if (canvas.height != hNativeScaled) canvas.height = hNativeScaled;
+        if (typeof canvas.style != 'undefined') {
+          if (wNativeScaled != wNative || hNativeScaled != hNative) {
+            canvas.style.setProperty( "width", wNative + "px", "important");
+            canvas.style.setProperty("height", hNative + "px", "important");
+          } else {
+            canvas.style.removeProperty( "width");
+            canvas.style.removeProperty("height");
+          }
+        }
+      },
+  calculateMouseCoords(pageX, pageY) {
+        // Calculate the movement based on the changes
+        // in the coordinates.
+        var rect = Module["canvas"].getBoundingClientRect();
+        var cw = Module["canvas"].clientWidth;
+        var ch = Module["canvas"].clientHeight;
+  
+        // Neither .scrollX or .pageXOffset are defined in a spec, but
+        // we prefer .scrollX because it is currently in a spec draft.
+        // (see: http://www.w3.org/TR/2013/WD-cssom-view-20131217/)
+        var scrollX = ((typeof window.scrollX != 'undefined') ? window.scrollX : window.pageXOffset);
+        var scrollY = ((typeof window.scrollY != 'undefined') ? window.scrollY : window.pageYOffset);
+        // If this assert lands, it's likely because the browser doesn't support scrollX or pageXOffset
+        // and we have no viable fallback.
+        assert((typeof scrollX != 'undefined') && (typeof scrollY != 'undefined'), 'Unable to retrieve scroll position, mouse positions likely broken.');
+        var adjustedX = pageX - (scrollX + rect.left);
+        var adjustedY = pageY - (scrollY + rect.top);
+  
+        // the canvas might be CSS-scaled compared to its backbuffer;
+        // SDL-using content will want mouse coordinates in terms
+        // of backbuffer units.
+        adjustedX = adjustedX * (cw / rect.width);
+        adjustedY = adjustedY * (ch / rect.height);
+  
+        return { x: adjustedX, y: adjustedY };
+      },
+  setWindowAttrib:(winid, attrib, value) => {
+        var win = GLFW.WindowFromId(winid);
+        if (!win) return;
+        const isHiDPIAware = GLFW.isHiDPIAware();
+        win.attributes[attrib] = value;
+        if (isHiDPIAware !== GLFW.isHiDPIAware())
+          GLFW.adjustCanvasDimensions();
+      },
+  getDevicePixelRatio() {
+        return (typeof devicePixelRatio == 'number' && devicePixelRatio) || 1.0;
+      },
+  isHiDPIAware() {
+        if (GLFW.active)
+          return GLFW.active.attributes[0x0002200C] > 0; // GLFW_SCALE_TO_MONITOR
+        else
+          return false;
+      },
+  adjustCanvasDimensions() {
+        const canvas = Module['canvas'];
+        Browser.updateCanvasDimensions(canvas, canvas.clientWidth, canvas.clientHeight);
+        Browser.updateResizeListeners();
+      },
+  getHiDPIScale() {
+        return GLFW.isHiDPIAware() ? GLFW.scale : 1.0;
+      },
+  onDevicePixelRatioChange() {
+        GLFW.onWindowContentScaleChanged(GLFW.getDevicePixelRatio());
+        GLFW.adjustCanvasDimensions();
       },
   GLFW2ParamToGLFW3Param:(param) => {
         var table = {
@@ -9290,9 +9640,7 @@ function GetWindowInnerHeight() { return window.innerHeight; }
   };
   var _glfwCreateWindow = (width, height, title, monitor, share) => GLFW.createWindow(width, height, title, monitor, share);
 
-  var _glfwDefaultWindowHints = () => {
-      GLFW.hints = GLFW.defaultHints;
-    };
+  var _glfwDefaultWindowHints = () => GLFW.defaultWindowHints();
 
   var _glfwDestroyWindow = (winid) => GLFW.destroyWindow(winid);
 
@@ -9305,20 +9653,16 @@ function GetWindowInnerHeight() { return window.innerHeight; }
       return 0;
     };
 
-  var _emscripten_get_device_pixel_ratio = () => {
-      return (typeof devicePixelRatio == 'number' && devicePixelRatio) || 1.0;
-    };
-  
   
   
   var _glfwInit = () => {
       if (GLFW.windows) return 1; // GL_TRUE
   
       GLFW.initialTime = GLFW.getTime();
-      GLFW.hints = GLFW.defaultHints;
+      GLFW.defaultWindowHints();
       GLFW.windows = new Array()
       GLFW.active = null;
-      GLFW.scale  = _emscripten_get_device_pixel_ratio();
+      GLFW.scale  = GLFW.getDevicePixelRatio();
   
       window.addEventListener("gamepadconnected", GLFW.onGamepadConnected, true);
       window.addEventListener("gamepaddisconnected", GLFW.onGamepadDisconnected, true);
@@ -9326,13 +9670,11 @@ function GetWindowInnerHeight() { return window.innerHeight; }
       window.addEventListener("keypress", GLFW.onKeyPress, true);
       window.addEventListener("keyup", GLFW.onKeyup, true);
       window.addEventListener("blur", GLFW.onBlur, true);
-      // from https://stackoverflow.com/a/70514686/7484780 . maybe add this to browser.js?
-      // no idea how to remove this listener.
-      (function updatePixelRatio(){
-        window.matchMedia("(resolution: " + window.devicePixelRatio + "dppx)")
-        .addEventListener('change', updatePixelRatio, {once: true});
-        GLFW.onWindowContentScaleChanged(_emscripten_get_device_pixel_ratio());
-        })();
+  
+      // watch for devicePixelRatio changes
+      GLFW.devicePixelRatioMQL = window.matchMedia('(resolution: ' + GLFW.getDevicePixelRatio() + 'dppx)');
+      GLFW.devicePixelRatioMQL.addEventListener('change', GLFW.onDevicePixelRatioChange);
+  
       Module["canvas"].addEventListener("touchmove", GLFW.onMousemove, true);
       Module["canvas"].addEventListener("touchstart", GLFW.onMouseButtonDown, true);
       Module["canvas"].addEventListener("touchcancel", GLFW.onMouseButtonUp, true);
@@ -9347,9 +9689,20 @@ function GetWindowInnerHeight() { return window.innerHeight; }
       Module["canvas"].addEventListener('drop', GLFW.onDrop, true);
       Module["canvas"].addEventListener('dragover', GLFW.onDragover, true);
   
+      // Overriding implementation to account for HiDPI
+      Browser.requestFullscreen = GLFW.requestFullscreen;
+      Browser.calculateMouseCoords = GLFW.calculateMouseCoords;
+      Browser.updateCanvasDimensions = GLFW.updateCanvasDimensions;
+  
       Browser.resizeListeners.push((width, height) => {
-         GLFW.onCanvasResize(width, height);
+        if (GLFW.isHiDPIAware()) {
+          var canvas = Module['canvas'];
+          GLFW.onCanvasResize(canvas.clientWidth, canvas.clientHeight, width, height);
+        } else {
+          GLFW.onCanvasResize(width, height, width, height);
+        }
       });
+  
       return 1; // GL_TRUE
     };
 
@@ -9429,6 +9782,9 @@ function GetWindowInnerHeight() { return window.innerHeight; }
       Module["canvas"].removeEventListener('mouseleave', GLFW.onMouseleave, true);
       Module["canvas"].removeEventListener('drop', GLFW.onDrop, true);
       Module["canvas"].removeEventListener('dragover', GLFW.onDragover, true);
+  
+      if (GLFW.devicePixelRatioMQL)
+        GLFW.devicePixelRatioMQL.removeEventListener('change', GLFW.onDevicePixelRatioChange);
   
       Module["canvas"].width = Module["canvas"].height = 1;
       GLFW.windows = null;
@@ -9797,63 +10153,57 @@ function GetWindowInnerHeight() { return window.innerHeight; }
   instrumentWasmImports(imports) {
         var importPattern = /^(invoke_.*|__asyncjs__.*)$/;
   
-        for (var x in imports) {
-          (function(x) {
-            var original = imports[x];
-            var sig = original.sig;
-            if (typeof original == 'function') {
-              var isAsyncifyImport = original.isAsync || importPattern.test(x);
-              imports[x] = function() {
-                var originalAsyncifyState = Asyncify.state;
-                try {
-                  return original.apply(null, arguments);
-                } finally {
-                  // Only asyncify-declared imports are allowed to change the
-                  // state.
-                  // Changing the state from normal to disabled is allowed (in any
-                  // function) as that is what shutdown does (and we don't have an
-                  // explicit list of shutdown imports).
-                  var changedToDisabled =
-                        originalAsyncifyState === Asyncify.State.Normal &&
-                        Asyncify.state        === Asyncify.State.Disabled;
-                  // invoke_* functions are allowed to change the state if we do
-                  // not ignore indirect calls.
-                  var ignoredInvoke = x.startsWith('invoke_') &&
-                                      true;
-                  if (Asyncify.state !== originalAsyncifyState &&
-                      !isAsyncifyImport &&
-                      !changedToDisabled &&
-                      !ignoredInvoke) {
-                    throw new Error(`import ${x} was not in ASYNCIFY_IMPORTS, but changed the state`);
-                  }
+        for (let [x, original] of Object.entries(imports)) {
+          let sig = original.sig;
+          if (typeof original == 'function') {
+            let isAsyncifyImport = original.isAsync || importPattern.test(x);
+            imports[x] = function() {
+              var originalAsyncifyState = Asyncify.state;
+              try {
+                return original.apply(null, arguments);
+              } finally {
+                // Only asyncify-declared imports are allowed to change the
+                // state.
+                // Changing the state from normal to disabled is allowed (in any
+                // function) as that is what shutdown does (and we don't have an
+                // explicit list of shutdown imports).
+                var changedToDisabled =
+                      originalAsyncifyState === Asyncify.State.Normal &&
+                      Asyncify.state        === Asyncify.State.Disabled;
+                // invoke_* functions are allowed to change the state if we do
+                // not ignore indirect calls.
+                var ignoredInvoke = x.startsWith('invoke_') &&
+                                    true;
+                if (Asyncify.state !== originalAsyncifyState &&
+                    !isAsyncifyImport &&
+                    !changedToDisabled &&
+                    !ignoredInvoke) {
+                  throw new Error(`import ${x} was not in ASYNCIFY_IMPORTS, but changed the state`);
                 }
-              };
-            }
-          })(x);
+              }
+            };
+          }
         }
       },
   instrumentWasmExports(exports) {
         var ret = {};
-        for (var x in exports) {
-          (function(x) {
-            var original = exports[x];
-            if (typeof original == 'function') {
-              ret[x] = function() {
-                Asyncify.exportCallStack.push(x);
-                try {
-                  return original.apply(null, arguments);
-                } finally {
-                  if (!ABORT) {
-                    var y = Asyncify.exportCallStack.pop();
-                    assert(y === x);
-                    Asyncify.maybeStopUnwind();
-                  }
+        for (let [x, original] of Object.entries(exports)) {
+          if (typeof original == 'function') {
+            ret[x] = function() {
+              Asyncify.exportCallStack.push(x);
+              try {
+                return original.apply(null, arguments);
+              } finally {
+                if (!ABORT) {
+                  var y = Asyncify.exportCallStack.pop();
+                  assert(y === x);
+                  Asyncify.maybeStopUnwind();
                 }
-              };
-            } else {
-              ret[x] = original;
-            }
-          })(x);
+              }
+            };
+          } else {
+            ret[x] = original;
+          }
         }
         return ret;
       },
@@ -10511,6 +10861,8 @@ var wasmImports = {
   /** @export */
   emscripten_set_gamepaddisconnected_callback_on_thread: _emscripten_set_gamepaddisconnected_callback_on_thread,
   /** @export */
+  emscripten_set_pointerlockchange_callback_on_thread: _emscripten_set_pointerlockchange_callback_on_thread,
+  /** @export */
   emscripten_set_resize_callback_on_thread: _emscripten_set_resize_callback_on_thread,
   /** @export */
   emscripten_set_touchcancel_callback_on_thread: _emscripten_set_touchcancel_callback_on_thread,
@@ -10758,8 +11110,8 @@ var _asyncify_start_unwind = createExportWrapper('asyncify_start_unwind');
 var _asyncify_stop_unwind = createExportWrapper('asyncify_stop_unwind');
 var _asyncify_start_rewind = createExportWrapper('asyncify_start_rewind');
 var _asyncify_stop_rewind = createExportWrapper('asyncify_stop_rewind');
-var ___start_em_js = Module['___start_em_js'] = 194202;
-var ___stop_em_js = Module['___stop_em_js'] = 194275;
+var ___start_em_js = Module['___start_em_js'] = 195439;
+var ___stop_em_js = Module['___stop_em_js'] = 195512;
 
 // include: postamble.js
 // === Auto-generated postamble setup entry stuff ===
@@ -10847,8 +11199,6 @@ var missingLibrarySymbols = [
   'setLetterbox',
   'softFullscreenResizeWebGLRenderTarget',
   'doRequestFullscreen',
-  'fillPointerlockChangeEventData',
-  'registerPointerlockChangeEventCallback',
   'registerPointerlockErrorEventCallback',
   'requestPointerLock',
   'fillVisibilityChangeEventData',
@@ -10873,6 +11223,7 @@ var missingLibrarySymbols = [
   'idsToPromises',
   'makePromiseCallback',
   'findMatchingCatch',
+  'Browser_asyncPrepareDataCounter',
   'getSocketFromFD',
   'getSocketAddress',
   'FS_mkdirTree',
@@ -10990,9 +11341,12 @@ var unexportedSymbols = [
   'registerFullscreenChangeEventCallback',
   'currentFullscreenStrategy',
   'restoreOldWindowedStyle',
+  'fillPointerlockChangeEventData',
+  'registerPointerlockChangeEventCallback',
   'registerTouchEventCallback',
   'fillGamepadEventData',
   'registerGamepadEventCallback',
+  'disableGamepadApiIfItThrows',
   'demangle',
   'demangleAll',
   'ExitStatus',
@@ -11184,7 +11538,7 @@ function checkUnflushedContent() {
       var stream = info.object;
       var rdev = stream.rdev;
       var tty = TTY.ttys[rdev];
-      if (tty && tty.output && tty.output.length) {
+      if (tty?.output?.length) {
         has = true;
       }
     });
