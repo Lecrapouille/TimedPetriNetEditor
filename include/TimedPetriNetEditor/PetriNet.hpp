@@ -728,6 +728,13 @@ public:
     //--------------------------------------------------------------------------
     void generateArcsInArcsOut(); // FIXME a placer dana protected
 
+    //--------------------------------------------------------------------------
+    //! \brief Set to false the receptivity for all transitions.
+    //! \return false if in GRAFCET mode and if at least one transition has an
+    //! invalid syntaxt in its recepetivity.
+    //--------------------------------------------------------------------------
+    bool resetReceptivies(); // FIXME a placer dana protected
+
 protected:
 
     //--------------------------------------------------------------------------

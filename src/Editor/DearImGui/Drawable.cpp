@@ -31,7 +31,9 @@ namespace tpne {
 #define DURATION_COLOR    ImGui::GetColorU32(ImGuiCol_FrameBgActive)
 #define TOKEN_COLOR       ImGui::GetColorU32(ImGuiCol_Text)
 #define CRITICAL_COLOR    ImGui::GetColorU32(ImGuiCol_PlotLinesHovered)
-#define FIREABLE_COLOR    IM_COL32(0, 255, 0, 255)
+#define TRANS_FIREABLE_COLOR    IM_COL32(0, 255, 0, 255)
+#define TRANS_VALIDATED_COLOR   IM_COL32(205, 205, 60, 255)
+#define TRANS_ENABLED_COLOR     IM_COL32(205, 205, 60, 255)
 
 //------------------------------------------------------------------------------
 static void drawArrow(ImDrawList* draw_list, ImVec2 const& A, ImVec2 const& B,
@@ -135,7 +137,13 @@ void drawToken(ImDrawList* draw_list, float const x, float const y)
     draw_list->AddCircleFilled(ImVec2(x, y), TOKEN_RADIUS, TOKEN_COLOR);
 }
 
-// TODO a virer en utilisant un wrapper RenderablePlace avec fading (alpha)
+//------------------------------------------------------------------------------
+void drawTimedToken(ImDrawList* draw_list, size_t tokens, float const x, float const y)
+{
+    draw_list->AddCircleFilled(ImVec2(x, y), TOKEN_RADIUS, TOKEN_COLOR);
+    draw_list->AddText(ImVec2(x, y), CAPTION_COLOR, std::to_string(tokens).c_str());
+}
+
 //------------------------------------------------------------------------------
 void drawPlace(ImDrawList* draw_list, Place const& place, TypeOfNet const type, ImVec2 const& origin, bool const show_caption, float const alpha)
 {
@@ -200,7 +208,9 @@ void drawPlace(ImDrawList* draw_list, Place const& place, TypeOfNet const type, 
 }
 
 //------------------------------------------------------------------------------
-void drawTransition(ImDrawList* draw_list, Transition const& transition, TypeOfNet const type, ImVec2 const& origin, bool const show_caption, float const alpha)
+void drawTransition(ImDrawList* draw_list, Transition const& transition,
+                    TypeOfNet const type, ImVec2 const& origin,
+                    bool const show_caption, float const alpha)
 {
     //const uint8_t alpha = 255; // TODO m_fading[place.key]
     const ImVec2 p = origin + ImVec2(transition.x, transition.y);
@@ -215,14 +225,17 @@ void drawTransition(ImDrawList* draw_list, Transition const& transition, TypeOfN
 
     if (transition.canFire())
     {
-        color = FIREABLE_COLOR;
+        color = TRANS_FIREABLE_COLOR;
     }
-    else if (type == TypeOfNet::GRAFCET)
+    else if (transition.isEnabled())
     {
-        if (transition.isValidated() || transition.isEnabled())
-        {
-            color = IM_COL32(255, 165, 0, 255);
-        }
+        color = (type == TypeOfNet::GRAFCET)
+              ? TRANS_ENABLED_COLOR : TRANS_FIREABLE_COLOR;
+    }
+    else if (transition.isValidated())
+    {
+        color = (type == TypeOfNet::PetriNet)
+              ? TRANS_VALIDATED_COLOR : FILL_COLOR(alpha);
     }
     else
     {

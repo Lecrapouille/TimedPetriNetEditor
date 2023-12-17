@@ -109,6 +109,7 @@ void Simulation::stateStarting()
 #endif
 
     // Reset states of the simulator
+    m_net.resetReceptivies();
     m_net.generateArcsInArcsOut();
     m_initial_tokens = m_net.tokens();
     shuffle_transitions(true);
@@ -141,6 +142,7 @@ void Simulation::stateHalting()
 
     // Restore burnt tokens from the simulation
     m_net.tokens(m_initial_tokens);
+    m_net.resetReceptivies();
     m_timed_tokens.clear();
     m_state = Simulation::State::Idle;
 }

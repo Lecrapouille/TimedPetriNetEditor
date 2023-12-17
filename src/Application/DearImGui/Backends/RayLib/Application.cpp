@@ -19,6 +19,7 @@
 //=============================================================================
 
 #include "Application/DearImGui/Backends/RayLib/Application.hpp"
+#include "Utils/Utils.hpp"
 
 #include <cstdlib>
 #include <cstdio>
@@ -66,7 +67,7 @@ Application::Application(size_t const width, size_t const height, std::string co
 
     Vector2 windowPosition = {500, 200};
     SetWindowPosition(windowPosition.x, windowPosition.y);
-    SetTargetFPS(60);
+    SetTargetFPS(m_framerate);
 
     // Setup Dear ImGui context
     ImGui::CreateContext();
@@ -94,14 +95,22 @@ Application::~Application()
     CloseWindow(); // Stop raylib
 }
 
+static uint64_t timeSinceEpochMillisec()
+{
+  using namespace std::chrono;
+  return duration_cast<milliseconds>(system_clock::now().time_since_epoch()).count();
+}
+
 //------------------------------------------------------------------------------
 void Application::run()
 {
-    // Timer timer;
-    // float timeSinceLastUpdate = 0.0f;
+    tpne::Timer timer;
+    float timeSinceLastUpdate = 0.0f;
+
     const float time_per_frame = 1.0f / m_framerate;
     while (!m_exit_window && !WindowShouldClose())
     {
+        //uint64_t b = timeSinceEpochMillisec();
         ImGui_ImplRaylib_ProcessEvents();
 
         // Start the Dear ImGui frame
@@ -109,12 +118,12 @@ void Application::run()
         ImGui::NewFrame();
 
         // Process events at fixed time steps
-        // timeSinceLastUpdate += timer.restart();
-        // while (timeSinceLastUpdate > time_per_frame)
-        //{
-        // timeSinceLastUpdate -= time_per_frame;
-        onUpdate(time_per_frame);
-        //}
+        timeSinceLastUpdate += timer.restart();
+        while (timeSinceLastUpdate > time_per_frame)
+        {
+            timeSinceLastUpdate -= time_per_frame;
+            onUpdate(time_per_frame);
+        }
 
         // Main loop of the underlying app
         onDraw();
@@ -126,6 +135,8 @@ void Application::run()
 
         ImGui_ImplRaylib_RenderDrawData(ImGui::GetDrawData());
         EndDrawing(); // Stop raylib content
+        //uint64_t e = timeSinceEpochMillisec();
+        //std::cout << (e - b) << " " << m_framerate << std::endl;
     }
 }
 

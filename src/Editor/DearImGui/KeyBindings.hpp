@@ -32,6 +32,7 @@
 #  define KEY_MOVE_PETRI_NODE       ImGuiKey_Semicolon
 #  define KEY_INCREMENT_TOKENS      ImGuiKey_KeypadAdd
 #  define KEY_DECREMENT_TOKENS      ImGuiKey_KeypadSubtract
+#  define KEY_DELETE_NODE           ImGuiKey_Delete
 #  define KEY_UNDO                  ImGuiKey_W // remapping for Z
 #  define KEY_REDO                  ImGuiKey_Y
 

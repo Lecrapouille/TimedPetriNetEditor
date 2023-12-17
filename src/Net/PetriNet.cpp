@@ -229,6 +229,13 @@ bool Net::convertTo(TypeOfNet const type, std::string& error, std::vector<Arc*>&
         break;
     }
 
+    // For GRAFCET we check validity of the syntax of transitivities
+    if (!resetReceptivies())
+    {
+        error = "Invalid syntax in receptivities";
+        return false;
+    }
+
     // Set the new type of net at the end of this method because of possible
     // previous "return false" preventing to change of type.
     m_type = type;
@@ -697,8 +704,52 @@ bool Net::load(std::string const& filepath)
     }
 
     m_filename = filepath;
-    //resetReceptivies();
+    modified = false;
     return true;
+}
+
+//------------------------------------------------------------------------------
+bool Net::resetReceptivies()
+{
+    bool res = true;
+
+    // Receptivities for GRAFCET are defined by sensors.
+    if (m_type == TypeOfNet::GRAFCET)
+    {
+#if 0 // FIXME
+        m_sensors.clear();
+        for (auto& transition: m_transitions)
+        {
+            std::string err = parse(transition, true);
+            if (!err.empty())
+            {
+                m_error.str("");
+                m_error << err;
+                res = false;
+            }
+        }
+#endif
+    }
+    // For PetriNet set receptivities to false since we want the
+    // user to click on desired transitions.
+    else if (m_type == TypeOfNet::PetriNet)
+    {
+        for (auto& transition: m_transitions)
+        {
+            transition.receptivity = false;
+        }
+    }
+    // For other type of nets (timed Petri net, graph events) the
+    // receptiviites are always true.
+    else
+    {
+        for (auto& transition: m_transitions)
+        {
+            transition.receptivity = true;
+        }
+    }
+
+    return res;
 }
 
 //------------------------------------------------------------------------------

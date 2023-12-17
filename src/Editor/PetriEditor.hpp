@@ -119,6 +119,7 @@ private:
         bool show_transition_captions = true;
         ImVec2 viewport_center;
         std::string title;
+        bool request_quitting = false;
     };
 
     // ************************************************************************

@@ -86,11 +86,11 @@ void Editor::onUpdate(float const dt)
 {
     if (m_net.modified)
     {
-        title(m_states.title + " **");
+        title(m_states.title + " -- " + m_net.name + " **");
     }
     else
     {
-        title(m_states.title);
+        title(m_states.title + " -- " + m_net.name);
     }
 
     m_simulation.step(dt);
@@ -128,7 +128,9 @@ void Editor::view()
 //------------------------------------------------------------------------------
 void Editor::close()
 {
-    // TODO
+    m_simulation.running = false;
+    m_states.do_save_as = m_net.modified;
+    m_states.request_quitting = true;
 }
 
 //------------------------------------------------------------------------------
@@ -302,6 +304,12 @@ void Editor::menu()
     if (m_states.do_counter || m_states.do_dater) { showCounterOrDaterequation(); }
     if (m_states.do_syslin) { showDynamicLinearSystem(); }
     if (m_states.do_find_critical_cycle) { showCriticalCycles(); }
+    if (m_states.request_quitting)
+    {
+        // Request to save the modified net before quitting, else quit the
+        // application.
+        if (m_net.modified) { m_states.do_save_as = true; } else { halt(); }
+    }
 }
 
 //------------------------------------------------------------------------------
@@ -594,7 +602,12 @@ void Editor::help() const
             if (ImGui::BeginTabItem("Keyboard actions"))
             {
                 std::stringstream help;
-                help << "Not yet implemented" << std::endl;
+                help << "R: start or stop the simulation" << std::endl
+                     << "Space: start or stop the simulation" << std::endl
+                     << "M: move the selected place or transition" << std::endl
+                     << "Delete: suppress the selected place or transition" << std::endl
+                     << "+: increment the number of tokens in the selected place" << std::endl
+                     << "-: decrement the number of tokens in the selected place" << std::endl;
 
                 ImGui::Text("%s", help.str().c_str());
                 ImGui::EndTabItem();
@@ -836,6 +849,13 @@ Transition* Editor::getTransition(ImVec2 const& position)
 }
 
 //------------------------------------------------------------------------------
+void Editor::loadNetFile()
+{
+    static Importer importer{"TimedPetriNetEditor", ".json", importFromJSON};
+    importNetTo(importer);
+}
+
+//------------------------------------------------------------------------------
 void Editor::importNetTo(Importer const& importer)
 {
     if (m_simulation.running)
@@ -854,28 +874,34 @@ void Editor::importNetTo(Importer const& importer)
     {
         if (ImGuiFileDialog::Instance()->IsOk())
         {
-            if (m_net.load(ImGuiFileDialog::Instance()->GetFilePathName()))
+            auto const path = ImGuiFileDialog::Instance()->GetFilePathName();
+            std::string error = importer.importFct(m_net, path);
+            if (error.empty())
             {
-                m_messages.setInfo("loaded with success " +
-                                   ImGuiFileDialog::Instance()->GetFilePathName());
+                if (m_states.do_import_to)
+                    m_messages.setInfo("Imported with success from '" + path + "'");
+                else
+                    m_messages.setInfo("Loaded with success '" + path + "'");
             }
             else
             {
-                m_messages.setError(m_net.error());
+                m_messages.setError(error);
+                m_net.modified = true;
             }
         }
 
         // close
         m_states.do_load = false;
+        m_states.do_import_to = nullptr; // FIXME think proper code: export vs save as
         ImGuiFileDialog::Instance()->Close();
     }
 }
 
-//------------------------------------------------------------------------------
-void Editor::loadNetFile()
+//--------------------------------------------------------------------------
+void Editor::saveNetAs()
 {
-    static Importer importer{"TimedPetriNetEditor", ".json", importFromJSON};
-    importNetTo(importer);
+    static Exporter exporter{"TimedPetriNetEditor", ".json", exportToJSON};
+    exportNetTo(exporter);
 }
 
 //------------------------------------------------------------------------------
@@ -887,9 +913,25 @@ void Editor::exportNetTo(Exporter const& exporter)
         return ;
     }
 
+    if (m_net.isEmpty())
+    {
+        if (m_states.request_quitting)
+        {
+            m_states.request_quitting = false;
+            halt();
+        }
+        else
+        {
+            m_messages.setError("Cannot save dummy net!");
+        }
+        return ;
+    }
+
     ImGuiFileDialog::Instance()->OpenDialog(
         "ChooseFileDlgKey",
-        "Choose the Petri file to save",
+        m_states.do_export_to ? "Choose the Petri file to save"
+          : (m_states.request_quitting ? "Choose the Petri file to save before quitting"
+          : "Choose the Petri file to save"),
         exporter.extensions.c_str(), ".", 1, nullptr,
         ImGuiFileDialogFlags_Modal | ImGuiFileDialogFlags_ConfirmOverwrite);
 
@@ -901,26 +943,36 @@ void Editor::exportNetTo(Exporter const& exporter)
             std::string error = exporter.exportFct(m_net, path);
             if (error.empty())
             {
-                m_messages.setInfo("saved with success '" + path + "'");
+                if (m_states.do_export_to)
+                    m_messages.setInfo("Exported with success '" + path + "'");
+                else
+                    m_messages.setInfo("Saved with success '" + path + "'");
+                m_net.modified = false;
+                if (m_states.request_quitting)
+                {
+                    m_states.request_quitting = false;
+                    halt();
+                }
             }
             else
             {
                 m_messages.setError(error);
+                m_net.modified = true;
             }
         }
 
-        // close.
+        // Close or Cancel button.
         m_states.do_save_as = false;
         m_states.do_export_to = nullptr; // FIXME think proper code: export vs save as
+        if (m_states.request_quitting)
+        {
+            m_states.do_save_as = true;
+            m_states.request_quitting = false;
+            // FIXME ajouter une pop: voulez vous vraiment perdre votre document ?
+            halt();
+        }
         ImGuiFileDialog::Instance()->Close();
     }
-}
-
-//--------------------------------------------------------------------------
-void Editor::saveNetAs()
-{
-    static Exporter exporter{"TimedPetriNetEditor", ".json", exportToJSON};
-    exportNetTo(exporter);
 }
 
 //--------------------------------------------------------------------------
@@ -1454,6 +1506,15 @@ void Editor::PetriView::onHandleInput()
                 m_editor.m_net.modified = true;
             }
         }
+        // Remove a node
+        else if (ImGui::IsKeyPressed(KEY_DELETE_NODE))
+        {
+            Node* node = m_editor.getNode(m_mouse.position);
+            if (node != nullptr)
+            {
+                m_editor.m_net.removeNode(*node);
+            }
+        }
     }
 }
 
@@ -1487,7 +1548,7 @@ void Editor::PetriView::drawPetriNet(Net& net, Simulation& simulation)
     // Draw all tokens transiting from Transitions to Places
     for (auto const& it: simulation.timedTokens())
     {
-        drawToken(m_canvas.draw_list, origin.x + it.x, origin.y + it.y);
+        drawTimedToken(m_canvas.draw_list, it.tokens, origin.x + it.x, origin.y + it.y);
     }
 
     // Update node positions the user is currently moving
