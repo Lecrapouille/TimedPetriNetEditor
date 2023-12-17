@@ -40,8 +40,8 @@ static void drawArrow(ImDrawList* draw_list, ImVec2 const& A, ImVec2 const& B,
     constexpr float pi = 3.14159265358979323846f;
 
     // Orientation
-    const float arrowAngle = std::atan((B.y - A.y) / (B.x - A.x));
-    // + (B.x < A.x) ? pi : ((B.y < A.y) ? (2.0f * pi) : 0.0f);
+    const float arrowAngle = std::atan((B.y - A.y) / (B.x - A.x))
+        + ((B.x < A.x) ? pi : ((B.y < A.y) ? (2.0f * pi) : 0.0f));
     const float cos_a = std::cos(arrowAngle);
     const float sin_a = std::sin(arrowAngle);
 
