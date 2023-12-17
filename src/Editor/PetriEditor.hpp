@@ -25,6 +25,7 @@
 #  include "Net/Simulation.hpp"
 #  include "Net/Exports/Exports.hpp"
 #  include "Net/Imports/Imports.hpp"
+#  include "Utils/History.hpp"
 #  include "Utils/Path.hpp"
 
 namespace tpne {
@@ -85,6 +86,8 @@ private: // Petri net services
     void toogleStartSimulation();
     void takeScreenshot();
     void clearNet();
+    void undo();
+    void redo();
 
 private: // Error logs
 
@@ -196,6 +199,38 @@ private:
             // create.
             ImVec2 click_position; bool arc_from_unknown_node = false;
         } m_mouse;
+    }; // class PetriView
+
+    // ************************************************************************
+    //! \brief Quick and dirty net memorization for performing undo/redo.
+    //! \fixme this is memory usage consuption by saving two nets. It's better
+    //! to memorize only command. but the remove command make change nodes ID
+    //! so history will become false.
+    // ************************************************************************
+    class NetModifaction : public History::Action
+    {
+    public:
+        NetModifaction(Editor& editor) : m_editor(editor) {}
+        void before(Net& net) { m_before = net; }
+        void after(Net& net) { m_after = net; }
+
+        virtual bool undo() override
+        {
+            m_editor.m_net = m_before;
+            return true;
+        }
+
+        virtual bool redo() override
+        {
+            m_editor.m_net = m_after;
+            return true;
+        }
+
+    private:
+
+        Editor& m_editor;
+        Net m_before;
+        Net m_after;
     };
 
 private:
@@ -210,6 +245,8 @@ private:
     //! \brief Single Petri net the editor can edit.
     //! \fixme Manage several nets (like done with GEMMA).
     Net m_net;
+    //! \brief History of modifications of the net.
+    History m_history;
     //! \brief Instance allowing to do timed simulation.
     Simulation m_simulation;
     //! \brief Visualize the net and do the interaction with the user.

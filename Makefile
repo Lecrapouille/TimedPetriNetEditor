@@ -179,7 +179,7 @@ endif
 # Make the list of compiled files for the application
 #
 LIB_OBJS += Path.o Howard.o Utils.o TimedTokens.o Receptivities.o
-LIB_OBJS += PetriNet.o Algorithms.o Simulation.o
+LIB_OBJS += PetriNet.o Algorithms.o Simulation.o History.o
 LIB_OBJS += ImportJSON.o ExportJSON.o ExportSymfony.o ExportPnEditor.o
 LIB_OBJS += ExportPetriLaTeX.o ExportJulia.o ExportGraphviz.o ExportDrawIO.o
 LIB_OBJS += ExportGrafcetCpp.o

@@ -207,8 +207,19 @@ void Editor::menu()
                 switchOfNet(TypeOfNet(current_type));
                 ImGui::EndMenu();
             }
-            ImGui::Separator();
 
+            ImGui::Separator();
+            if (ImGui::MenuItem("Undo", "Ctrl+Z", false))
+            {
+                undo();
+            }
+
+            if (ImGui::MenuItem("Redo", "Ctrl+Y", false))
+            {
+                redo();
+            }
+
+            ImGui::Separator();
             if (ImGui::MenuItem("Clear net", nullptr, false))
             {
                 clearNet();
@@ -961,6 +972,34 @@ void Editor::clearLogs()
 }
 
 //--------------------------------------------------------------------------
+void Editor::undo()
+{
+    if (!m_history.undo())
+    {
+        m_messages.setInfo("Cannot do more undos!");
+    }
+    else
+    {
+        m_messages.setInfo("Undo!");
+    }
+    m_net.modified = true;
+}
+
+//--------------------------------------------------------------------------
+void Editor::redo()
+{
+    if (!m_history.redo())
+    {
+        m_messages.setInfo("Cannot do more redos!");
+    }
+    else
+    {
+        m_messages.setInfo("Redo!");
+    }
+    m_net.modified = true;
+}
+
+//--------------------------------------------------------------------------
 Editor::PetriView::PetriView(Editor& editor)
     : m_editor(editor)
 {}
@@ -1135,6 +1174,8 @@ void Editor::PetriView::handleAddNode(ImGuiMouseButton button)
         // present.
         if (m_editor.getNode(m_mouse.position) == nullptr)
         {
+            auto action = std::make_unique<NetModifaction>(m_editor);
+            action->before(m_editor.m_net);
             if (button == ImGuiMouseButton_Left)
             {
                 m_editor.m_net.addPlace(m_mouse.position.x,
@@ -1145,6 +1186,8 @@ void Editor::PetriView::handleAddNode(ImGuiMouseButton button)
                 m_editor.m_net.addTransition(m_mouse.position.x,
                                              m_mouse.position.y);
             }
+            action->after(m_editor.m_net);
+            m_editor.m_history.add(std::move(action));
         }
     }
     else if (m_editor.m_net.type() == TypeOfNet::PetriNet)
@@ -1185,6 +1228,9 @@ void Editor::PetriView::handleArcDestination()
                 float x = m_mouse.to->x + (m_mouse.from->x - m_mouse.to->x) / 2.0f;
                 float y = m_mouse.to->y + (m_mouse.from->y - m_mouse.to->y) / 2.0f;
                 float duration = random(1, 5);
+
+                auto action = std::make_unique<NetModifaction>(m_editor);
+                action->before(m_editor.m_net);
                 if (m_mouse.to->type == Node::Type::Place)
                 {
                     Transition &n = m_editor.m_net.addTransition(x, y);
@@ -1203,6 +1249,8 @@ void Editor::PetriView::handleArcDestination()
                     }
                     m_mouse.from = &n;
                 }
+                action->after(m_editor.m_net);
+                m_editor.m_history.add(std::move(action));
             }
         }
         else
@@ -1211,6 +1259,8 @@ void Editor::PetriView::handleArcDestination()
             // create the origin node before creating the arc.
             if (m_mouse.arc_from_unknown_node)
             {
+                auto action = std::make_unique<NetModifaction>(m_editor);
+                action->before(m_editor.m_net);
                 if (m_mouse.to->type == Node::Type::Place)
                 {
                     m_mouse.from = &m_editor.m_net.addTransition(
@@ -1221,6 +1271,8 @@ void Editor::PetriView::handleArcDestination()
                     m_mouse.from = &m_editor.m_net.addPlace(
                         m_mouse.click_position.x, m_mouse.click_position.y);
                 }
+                action->after(m_editor.m_net);
+                m_editor.m_history.add(std::move(action));
             }
         }
     }
@@ -1236,29 +1288,45 @@ void Editor::PetriView::handleArcDestination()
             float px = x + (m_mouse.from->x - x) / 2.0f;
             float py = y + (m_mouse.from->y - y) / 2.0f;
             float duration = random(1, 5);
+            auto action = std::make_unique<NetModifaction>(m_editor);
+            action->before(m_editor.m_net);
             Place &n = m_editor.m_net.addPlace(px, py);
             if (!m_editor.m_net.addArc(*m_mouse.from, n, duration))
             {
                 // m_message_bar.setError(m_net.message());
             }
             m_mouse.from = &n;
+            action->after(m_editor.m_net);
+            m_editor.m_history.add(std::move(action));
         }
         if (m_mouse.from->type == Node::Type::Place)
         {
+            auto action = std::make_unique<NetModifaction>(m_editor);
+            action->before(m_editor.m_net);
             m_mouse.to = &m_editor.m_net.addTransition(x, y);
+            action->after(m_editor.m_net);
+            m_editor.m_history.add(std::move(action));
         }
         else
         {
+            auto action = std::make_unique<NetModifaction>(m_editor);
+            action->before(m_editor.m_net);
             m_mouse.to = &m_editor.m_net.addPlace(x, y);
+            action->after(m_editor.m_net);
+            m_editor.m_history.add(std::move(action));
         }
     }
     // Create the arc. Note: the duration value is only used
     // for arc Transition --> Place.
+    auto action = std::make_unique<NetModifaction>(m_editor);
+    action->before(m_editor.m_net);
     float duration = random(1, 5);
     if (!m_editor.m_net.addArc(*m_mouse.from, *m_mouse.to, duration))
     {
         // m_message_bar.setError(m_petri_net.message());
     }
+    action->after(m_editor.m_net);
+    m_editor.m_history.add(std::move(action));
 
     // Reset states
     m_mouse.from = m_mouse.to = nullptr;
@@ -1334,7 +1402,18 @@ void Editor::PetriView::onHandleInput()
 
     if (ImGui::IsItemHovered())
     {
-        if (ImGui::IsKeyPressed(KEY_MOVE_PETRI_NODE, false))
+        if (ImGui::GetIO().KeyCtrl)
+        {
+            if (ImGui::IsKeyPressed(KEY_UNDO, false))
+            {
+                m_editor.undo();
+            }
+            else if (ImGui::IsKeyPressed(KEY_REDO, false))
+            {
+                m_editor.redo();
+            }
+        }
+        else if (ImGui::IsKeyPressed(KEY_MOVE_PETRI_NODE, false))
         {
             handleMoveNode();
         }
