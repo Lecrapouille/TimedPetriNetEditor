@@ -62,6 +62,8 @@ ifeq ($(ARCHI),Emscripten)
 LINKER_FLAGS += -s USE_GLFW=3
 # Add this flag ONLY in case we are using ASYNCIFY code
 LINKER_FLAGS += -s ASYNCIFY
+# For linking glfwGetProcAddress().
+LINKER_FLAGS += -s GL_ENABLE_GET_PROC_ADDRESS
 # All webs need a "shell" structure to load and run the game,
 # by default emscripten has a `shell.html` but we can provide
 # our own.
