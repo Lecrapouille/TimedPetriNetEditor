@@ -59,9 +59,15 @@ OBJS += PetriNet.o Algorithms.o Simulation.o
 OBJS += ImportJSON.o ExportJSON.o ExportSymfony.o ExportPnEditor.o
 OBJS += ExportPetriLaTeX.o ExportJulia.o ExportGraphviz.o ExportDrawIO.o
 OBJS += ExportGrafcetCpp.o
-
 OBJS += PetriNetTests.o LoadJSONTests.o HowardTests.o EventGraphTests.o
 OBJS += SparseMatrixTests.o TimedTokensTests.o main.o
+
+###################################################
+# MacOS X
+#
+ifeq ($(ARCHI),Darwin)
+LINKER_FLAGS += -framework CoreFoundation
+endif
 
 ###################################################
 # Set Libraries. For knowing which libraries
