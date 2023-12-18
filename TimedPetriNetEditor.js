@@ -1182,40 +1182,40 @@ function dbg(text) {
 // === Body ===
 
 var ASM_CONSTS = {
-  194208: () => { if (document.fullscreenElement) return 1; },  
- 194254: () => { return document.getElementById('canvas').width; },  
- 194306: () => { return parseInt(document.getElementById('canvas').style.width); },  
- 194374: () => { document.exitFullscreen(); },  
- 194401: () => { setTimeout(function() { Module.requestFullscreen(false, false); }, 100); },  
- 194474: () => { if (document.fullscreenElement) return 1; },  
- 194520: () => { return document.getElementById('canvas').width; },  
- 194572: () => { return screen.width; },  
- 194597: () => { document.exitFullscreen(); },  
- 194624: () => { setTimeout(function() { Module.requestFullscreen(false, true); setTimeout(function() { canvas.style.width="unset"; }, 100); }, 100); },  
- 194757: () => { if (document.fullscreenElement) return 1; },  
- 194803: () => { return document.getElementById('canvas').width; },  
- 194855: () => { return parseInt(document.getElementById('canvas').style.width); },  
- 194923: () => { if (document.fullscreenElement) return 1; },  
- 194969: () => { return document.getElementById('canvas').width; },  
- 195021: () => { return screen.width; },  
- 195046: () => { if (document.fullscreenElement) return 1; },  
- 195092: () => { return document.getElementById('canvas').width; },  
- 195144: () => { return screen.width; },  
- 195169: () => { document.exitFullscreen(); },  
- 195196: () => { if (document.fullscreenElement) return 1; },  
- 195242: () => { return document.getElementById('canvas').width; },  
- 195294: () => { return parseInt(document.getElementById('canvas').style.width); },  
- 195362: () => { document.exitFullscreen(); },  
- 195389: () => { return screen.width; },  
- 195414: () => { return screen.height; },  
- 195440: () => { return window.screenX; },  
- 195467: () => { return window.screenY; },  
- 195494: ($0) => { navigator.clipboard.writeText(UTF8ToString($0)); },  
- 195547: ($0) => { document.getElementById("canvas").style.cursor = UTF8ToString($0); },  
- 195618: () => { document.getElementById('canvas').style.cursor = 'none'; },  
- 195675: ($0) => { document.getElementById('canvas').style.cursor = UTF8ToString($0); },  
- 195746: () => { if (document.fullscreenElement) return 1; },  
- 195792: () => { if (document.pointerLockElement) return 1; }
+  197208: () => { if (document.fullscreenElement) return 1; },  
+ 197254: () => { return document.getElementById('canvas').width; },  
+ 197306: () => { return parseInt(document.getElementById('canvas').style.width); },  
+ 197374: () => { document.exitFullscreen(); },  
+ 197401: () => { setTimeout(function() { Module.requestFullscreen(false, false); }, 100); },  
+ 197474: () => { if (document.fullscreenElement) return 1; },  
+ 197520: () => { return document.getElementById('canvas').width; },  
+ 197572: () => { return screen.width; },  
+ 197597: () => { document.exitFullscreen(); },  
+ 197624: () => { setTimeout(function() { Module.requestFullscreen(false, true); setTimeout(function() { canvas.style.width="unset"; }, 100); }, 100); },  
+ 197757: () => { if (document.fullscreenElement) return 1; },  
+ 197803: () => { return document.getElementById('canvas').width; },  
+ 197855: () => { return parseInt(document.getElementById('canvas').style.width); },  
+ 197923: () => { if (document.fullscreenElement) return 1; },  
+ 197969: () => { return document.getElementById('canvas').width; },  
+ 198021: () => { return screen.width; },  
+ 198046: () => { if (document.fullscreenElement) return 1; },  
+ 198092: () => { return document.getElementById('canvas').width; },  
+ 198144: () => { return screen.width; },  
+ 198169: () => { document.exitFullscreen(); },  
+ 198196: () => { if (document.fullscreenElement) return 1; },  
+ 198242: () => { return document.getElementById('canvas').width; },  
+ 198294: () => { return parseInt(document.getElementById('canvas').style.width); },  
+ 198362: () => { document.exitFullscreen(); },  
+ 198389: () => { return screen.width; },  
+ 198414: () => { return screen.height; },  
+ 198440: () => { return window.screenX; },  
+ 198467: () => { return window.screenY; },  
+ 198494: ($0) => { navigator.clipboard.writeText(UTF8ToString($0)); },  
+ 198547: ($0) => { document.getElementById("canvas").style.cursor = UTF8ToString($0); },  
+ 198618: () => { document.getElementById('canvas').style.cursor = 'none'; },  
+ 198675: ($0) => { document.getElementById('canvas').style.cursor = UTF8ToString($0); },  
+ 198746: () => { if (document.fullscreenElement) return 1; },  
+ 198792: () => { if (document.pointerLockElement) return 1; }
 };
 function GetWindowInnerWidth() { return window.innerWidth; }
 function GetWindowInnerHeight() { return window.innerHeight; }
@@ -11080,6 +11080,7 @@ var dynCall_viiiiiiiii = Module['dynCall_viiiiiiiii'] = createExportWrapper('dyn
 var dynCall_vif = Module['dynCall_vif'] = createExportWrapper('dynCall_vif');
 var dynCall_viiiiii = Module['dynCall_viiiiii'] = createExportWrapper('dynCall_viiiiii');
 var dynCall_v = Module['dynCall_v'] = createExportWrapper('dynCall_v');
+var dynCall_iiiii = Module['dynCall_iiiii'] = createExportWrapper('dynCall_iiiii');
 var dynCall_iiiiffi = Module['dynCall_iiiiffi'] = createExportWrapper('dynCall_iiiiffi');
 var dynCall_viiiii = Module['dynCall_viiiii'] = createExportWrapper('dynCall_viiiii');
 var dynCall_vidd = Module['dynCall_vidd'] = createExportWrapper('dynCall_vidd');
@@ -11097,7 +11098,6 @@ var dynCall_viffff = Module['dynCall_viffff'] = createExportWrapper('dynCall_vif
 var dynCall_jiji = Module['dynCall_jiji'] = createExportWrapper('dynCall_jiji');
 var dynCall_iidiiii = Module['dynCall_iidiiii'] = createExportWrapper('dynCall_iidiiii');
 var dynCall_viijii = Module['dynCall_viijii'] = createExportWrapper('dynCall_viijii');
-var dynCall_iiiii = Module['dynCall_iiiii'] = createExportWrapper('dynCall_iiiii');
 var dynCall_iiiiii = Module['dynCall_iiiiii'] = createExportWrapper('dynCall_iiiiii');
 var dynCall_iiiiiiiii = Module['dynCall_iiiiiiiii'] = createExportWrapper('dynCall_iiiiiiiii');
 var dynCall_iiiiiii = Module['dynCall_iiiiiii'] = createExportWrapper('dynCall_iiiiiii');
@@ -11110,8 +11110,8 @@ var _asyncify_start_unwind = createExportWrapper('asyncify_start_unwind');
 var _asyncify_stop_unwind = createExportWrapper('asyncify_stop_unwind');
 var _asyncify_start_rewind = createExportWrapper('asyncify_start_rewind');
 var _asyncify_stop_rewind = createExportWrapper('asyncify_stop_rewind');
-var ___start_em_js = Module['___start_em_js'] = 195839;
-var ___stop_em_js = Module['___stop_em_js'] = 195912;
+var ___start_em_js = Module['___start_em_js'] = 198839;
+var ___stop_em_js = Module['___stop_em_js'] = 198912;
 
 // include: postamble.js
 // === Auto-generated postamble setup entry stuff ===
