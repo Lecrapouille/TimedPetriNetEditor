@@ -124,9 +124,15 @@ PKG_LIBS += libmosquitto
 endif
 
 ###################################################
-# Set json Library.
+# Set json ibrary.
 #
 INCLUDES += -I$(THIRDPART)/json/include
+
+###################################################
+# Set xml Library.
+#
+VPATH += $(THIRDPART)/tinyxml2
+LIB_OBJS += tinyxml2.o
 
 ###################################################
 # OpenGL: glfw and glew libraries
@@ -186,7 +192,7 @@ LIB_OBJS += Path.o Howard.o Utils.o TimedTokens.o Receptivities.o
 LIB_OBJS += PetriNet.o Algorithms.o Simulation.o History.o
 LIB_OBJS += ImportJSON.o ExportJSON.o ExportSymfony.o ExportPnEditor.o
 LIB_OBJS += ExportPetriLaTeX.o ExportJulia.o ExportGraphviz.o ExportDrawIO.o
-LIB_OBJS += ExportGrafcetCpp.o
+LIB_OBJS += ExportGrafcetCpp.o ImportPNML.o ExportPNML.o
 OBJS += $(DEARIMGUI_BACKEND_OBJS) $(DEARIMGUI_OBJS)
 OBJS += $(LIB_OBJS)
 OBJS += DearUtils.o Drawable.o Application.o PetriEditor.o main.o

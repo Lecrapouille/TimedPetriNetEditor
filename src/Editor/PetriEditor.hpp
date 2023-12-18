@@ -242,7 +242,7 @@ private:
     //! \brief Container of file formats we can export the net to (LaTeX, Symfony, Dot ...).
     std::vector<Exporter> m_exporters;
     //! \brief Container of file formats we can import the net from.
-    std::vector<Importer> m_m_importers;
+    std::vector<Importer> m_importers;
     //! \brief Single Petri net the editor can edit.
     //! \fixme Manage several nets (like done with GEMMA).
     Net m_net;

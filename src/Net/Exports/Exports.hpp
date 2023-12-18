@@ -35,6 +35,7 @@ std::string exportToGraphviz(Net const& net, std::string const& filename);
 std::string exportToPetriLaTeX(Net const& net, std::string const& filename);
 std::string exportToJulia(Net const& net, std::string const& filename);
 std::string exportToGrafcetCpp(Net const& net, std::string const& filename);
+std::string exportToPNML(Net const& net, std::string const& filename);
 
 typedef std::string (*ExportFunc)(Net const&, std::string const&);
 

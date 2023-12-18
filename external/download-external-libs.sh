@@ -31,6 +31,10 @@ cloning raylib-extras/rlImGui
 ### License: MIT
 cloning nlohmann/json
 
+### TinyXML2 is a simple, small, efficient, C++ XML parser.
+### License: Zlib
+cloning leethomason/tinyxml2
+
 ### Class wrapping client MQTT (mosquitto lib)
 ### License: MIT
 cloning Lecrapouille/MQTT

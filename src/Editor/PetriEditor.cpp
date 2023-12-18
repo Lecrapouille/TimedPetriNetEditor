@@ -46,11 +46,14 @@ Editor::Editor(size_t const width, size_t const height,
         { "Graphviz", ".gv,.dot", exportToGraphviz },
         { "PN-Editor", ".pns,.pnl,.pnk,.pnkp", exportToPNEditor },
         { "Petri-LaTeX", ".tex", exportToPetriLaTeX },
+        { "Petri Net Markup Language", ".pnml", exportToPNML },
         //{ "Codesys", ".codesys.xml", exportToCodesys },
         //{ "Grafcet-LaTeX", ".tex", exportToGrafcetLaTeX },
     };
 
-    // TODO m_importers = { };
+    m_importers = {
+        { "Petri Net Markup Language", ".pnml", importFromPNML },
+    };
 }
 
 //------------------------------------------------------------------------------
@@ -150,9 +153,9 @@ void Editor::menu()
             {
                 m_states.do_load = true;
             }
-            if (ImGui::BeginMenu("Import"))
+            if (ImGui::BeginMenu("Import from"))
             {
-                for (auto const& it: m_m_importers)
+                for (auto const& it: m_importers)
                 {
                     if (ImGui::MenuItem(it.format.c_str(), nullptr, false))
                     {
@@ -174,7 +177,7 @@ void Editor::menu()
                     m_net.saveAs(m_net.filename());
                 }
             }
-            if (ImGui::MenuItem("Save As", nullptr, false))
+            if (ImGui::MenuItem("Save as", nullptr, false))
             {
                 m_states.do_save_as = true;
             }

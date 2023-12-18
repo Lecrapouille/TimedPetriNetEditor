@@ -28,6 +28,7 @@ namespace tpne {
 class Net;
 
 std::string importFromJSON(Net& net, std::string const& filename);
+std::string importFromPNML(Net& net, std::string const& filename);
 
 typedef std::string (*ImportFunc)(Net&, std::string const&);
 
