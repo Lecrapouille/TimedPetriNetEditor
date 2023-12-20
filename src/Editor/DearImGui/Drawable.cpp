@@ -218,11 +218,6 @@ void drawTransition(ImDrawList* draw_list, Transition const& transition,
     // Color of the transition: green if validated else yellow if enabled
     // else color is fadding value.
     ImU32 color;
-    if (transition.key == "T0")
-    {
-        color = IM_COL32(255, 165, 10, 255);
-    }
-
     if (transition.canFire())
     {
         color = TRANS_FIREABLE_COLOR;

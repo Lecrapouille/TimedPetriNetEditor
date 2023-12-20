@@ -757,16 +757,18 @@ bool convertTo(Net& net, TypeOfNet const type, std::string& error, std::vector<A
         break;
     }
 
+    // Set the new type of net at the end of this method because of possible
+    // previous "return false" preventing to change of type. Place it before
+    // resetReceptivies() else the reset will be applied on the current type
+    // of net.
+    net.m_type = type;
+
     // For GRAFCET we check validity of the syntax of transitivities
     if (!net.resetReceptivies())
     {
         error = "Invalid syntax in receptivities";
         return false;
     }
-
-    // Set the new type of net at the end of this method because of possible
-    // previous "return false" preventing to change of type.
-    net.m_type = type;
 
     return true;
 }
