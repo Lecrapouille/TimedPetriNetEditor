@@ -114,6 +114,10 @@ void Simulation::stateStarting()
     m_initial_tokens = m_net.tokens();
     shuffle_transitions(true);
     m_timed_tokens.clear();
+    for (auto& a: m_net.arcs())
+    {
+        a.count = 0u;
+    }
 
     //
     std::cout << current_time() << "Simulation has started!" << std::endl;

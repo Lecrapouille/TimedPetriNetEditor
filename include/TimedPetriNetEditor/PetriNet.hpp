@@ -465,7 +465,7 @@ public:
     //! displayed. This sum is sensitive to the animation frame rate, a lower
     //! framerate is suggested to force bigger coordinate steps avoiding
     //! overlapping AnimatedToken.
-    size_t count = 0u;
+    size_t count = 0u; // FIXME to be moved to the Editor class
 };
 
 // *****************************************************************************
