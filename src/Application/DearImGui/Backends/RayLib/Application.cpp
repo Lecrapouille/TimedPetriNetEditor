@@ -108,7 +108,7 @@ void Application::run()
     float timeSinceLastUpdate = 0.0f;
 
     const float time_per_frame = 1.0f / m_framerate;
-    while (!m_exit_window && !WindowShouldClose())
+    while (!m_exit_window)
     {
         //uint64_t b = timeSinceEpochMillisec();
         ImGui_ImplRaylib_ProcessEvents();

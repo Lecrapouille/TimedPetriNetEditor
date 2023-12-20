@@ -1505,6 +1505,11 @@ void Editor::PetriView::onHandleInput()
             }
         }
     }
+
+    if (WindowShouldClose())
+    {
+        m_editor.close();
+    }
 }
 
 //--------------------------------------------------------------------------
