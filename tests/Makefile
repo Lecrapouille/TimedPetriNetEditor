@@ -37,7 +37,7 @@ include $(M)/Makefile.header
 ###################################################
 # Inform Makefile where to find header files
 #
-INCLUDES += -I$(P)/include -I$(P)/src
+INCLUDES += -I$(P)/include -I$(P)/src -I$(P)/external
 
 ###################################################
 # Inform Makefile where to find *.cpp and *.o files
@@ -52,13 +52,19 @@ VPATH += $(P)/src/Application $(P)/src/Editor $(P)/src/Editor/DearImGui
 INCLUDES += -I$(THIRDPART)/json/include
 
 ###################################################
+# Set xml Library.
+#
+VPATH += $(THIRDPART)/tinyxml2
+OBJS += tinyxml2.o
+
+###################################################
 # Make the list of compiled files for tests
 #
 OBJS += Path.o Howard.o Utils.o TimedTokens.o Receptivities.o
 OBJS += PetriNet.o Algorithms.o Simulation.o
-OBJS += ImportJSON.o ExportJSON.o ExportSymfony.o ExportPnEditor.o
+OBJS += ExportGrafcetCpp.o ExportJSON.o ExportSymfony.o ExportPnEditor.o
 OBJS += ExportPetriLaTeX.o ExportJulia.o ExportGraphviz.o ExportDrawIO.o
-OBJS += ExportGrafcetCpp.o
+OBJS += ExportPNML.o Exports.o ImportPNML.o ImportJSON.o Imports.o
 OBJS += PetriNetTests.o LoadJSONTests.o HowardTests.o EventGraphTests.o
 OBJS += SparseMatrixTests.o TimedTokensTests.o main.o
 

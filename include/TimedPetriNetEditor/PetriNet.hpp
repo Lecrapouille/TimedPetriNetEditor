@@ -37,7 +37,8 @@ namespace tpne {
 class Arc;
 
 //--------------------------------------------------------------------------
-//! \brief Configure the net as GRAFCET or timed Petri net or Petri net.
+//! \brief The type of net (GRAFCET, timed Petri net ...) controls the
+//! simulation (for example we cannot have more than one token in a Place).
 //--------------------------------------------------------------------------
 enum class TypeOfNet
 {
@@ -59,6 +60,7 @@ enum class TypeOfNet
     //! implemented: partial GRAFCET norm is respected, GUI does not allow
     //! to simulated actions and sensors.
     GRAFCET
+    // TODO state machine
 };
 
 // *****************************************************************************
@@ -467,13 +469,15 @@ public:
 };
 
 // *****************************************************************************
-//! \brief Container class holding and managing Places, Transitions and
-//! Arcs. This class does not manage simulation. FIXME to be defined: since
-//! currently the PetriEditor is doing the simulation which is mainly animations
-//! with some basic features such as burning tokens ...
+//! \brief Class storing and managing Places, Transitions and Arcs.
+//! This class does not offer method for the simulation but has to be seen as a
+//! a container with helper methods for implementing algorithms.
 // *****************************************************************************
 class Net
 {
+    friend bool convertTo(Net& net, TypeOfNet const type, std::string& error,
+                          std::vector<Arc*>& erroneous_arcs);
+
 public:
 
     using Places = std::deque<Place>;
@@ -525,46 +529,9 @@ public:
     void clear(TypeOfNet const type);
 
     //--------------------------------------------------------------------------
-    //! \brief Return the name of net.
-    //--------------------------------------------------------------------------
-    //std::string const& name() const { return m_name; }
-
-    //--------------------------------------------------------------------------
-    //! \brief Return the file of net to save.
-    //--------------------------------------------------------------------------
-    std::string const& filename() const { return m_filename; }
-
-    //--------------------------------------------------------------------------
     //! \brief Get the type of net: GRAFCET, Petri, Timed Petri ...
     //--------------------------------------------------------------------------
     inline TypeOfNet type() const { return m_type; }
-
-    //--------------------------------------------------------------------------
-    //! \brief Convert to the desired type of net: GRAFCET, Petri, timed Petri,
-    //! timed graph even, etc.
-    //! \return false if the net cannot be changed (i.e. to graph event).
-    //--------------------------------------------------------------------------
-    bool convertTo(TypeOfNet const type, std::string& error, std::vector<Arc*>& erroneous_arcs);
-
-    //--------------------------------------------------------------------------
-    //! \brief Load the Petri net from a JSON file. The current net is cleared
-    //! before the loading. If the loading failed (missing file or invalid
-    //! syntax) the net is set dummy.
-    //! \param[in] filename: the file path in where a Petri net has been
-    //! saved. Should have the .json extension.
-    //! \return true if the Petri net has been loaded with success. Return false
-    //! in case of failure.
-    //--------------------------------------------------------------------------
-    bool load(std::string const& filename);
-
-    //--------------------------------------------------------------------------
-    //! \brief Save the Petri net in a JSON file.
-    //! \param[in] filename: the file path in where to save the Petri net.
-    //! Should have the .json extension.
-    //! \return true if the Petri net has been saved with success. Return false
-    //! in case of failure.
-    //--------------------------------------------------------------------------
-    bool saveAs(std::string const& filename) const;
 
     //--------------------------------------------------------------------------
     //! \brief Return true if the Petri nets has no nodes (no places and no
@@ -762,8 +729,6 @@ private:
     size_t m_next_transition_id = 0u;
     //! \brief Store current info/error message to the Petri net editor.
     mutable std::stringstream m_message;
-    //! \brief File used to load the net.
-    std::string m_filename;
 
 public:
 
@@ -773,10 +738,35 @@ public:
     std::string name;
 };
 
-//--------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
 //! \brief Return the string of the type of Petri net.
-//--------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
 std::string to_str(TypeOfNet const type);
+
+//-----------------------------------------------------------------------------
+//! \brief Convert to the desired type of net: GRAFCET, Petri, timed Petri,
+//! timed graph even, etc.
+//! \return false if the net cannot be changed (i.e. to graph event).
+//-----------------------------------------------------------------------------
+bool convertTo(Net& net, TypeOfNet const type, std::string& error, std::vector<Arc*>& erroneous_arcs);
+
+//-----------------------------------------------------------------------------
+//! \brief Load the Petri net from a JSON file. The current net is cleared
+//! before the loading. If the loading failed (missing file or invalid
+//! syntax) the net is set dummy.
+//! \param[in] filename: the file path in where a Petri net has been
+//! saved. Should have the .json extension.
+//! \return error message in case of failure, else return dummy string.
+//-----------------------------------------------------------------------------
+std::string loadFromFile(Net& net, std::string const& filepath);
+
+//-----------------------------------------------------------------------------
+//! \brief Save the Petri net in a JSON file.
+//! \param[in] filename: the file path in where to save the Petri net.
+//! Should have the .json extension.
+//! \return error message in case of failure, else return dummy string.
+//-----------------------------------------------------------------------------
+std::string saveToFile(Net const& net, std::string const& filename);
 
 } // namespace tpne
 

@@ -190,9 +190,10 @@ endif
 #
 LIB_OBJS += Path.o Howard.o Utils.o TimedTokens.o Receptivities.o
 LIB_OBJS += PetriNet.o Algorithms.o Simulation.o History.o
-LIB_OBJS += ImportJSON.o ExportJSON.o ExportSymfony.o ExportPnEditor.o
+LIB_OBJS += ExportJSON.o ExportSymfony.o ExportPnEditor.o
 LIB_OBJS += ExportPetriLaTeX.o ExportJulia.o ExportGraphviz.o ExportDrawIO.o
-LIB_OBJS += ExportGrafcetCpp.o ImportPNML.o ExportPNML.o
+LIB_OBJS += ExportGrafcetCpp.o ImportPNML.o ExportPNML.o Exports.o
+LIB_OBJS += ImportJSON.o Imports.o
 OBJS += $(DEARIMGUI_BACKEND_OBJS) $(DEARIMGUI_OBJS)
 OBJS += $(LIB_OBJS)
 OBJS += DearUtils.o Drawable.o Application.o PetriEditor.o main.o

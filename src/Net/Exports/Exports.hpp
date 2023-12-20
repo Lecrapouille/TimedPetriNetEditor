@@ -18,10 +18,11 @@
 // along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.
 //=============================================================================
 
-#ifndef EXPORTS_HPP
-#  define EXPORTS_HPP
+#ifndef PETRI_FILE_EXPORTERS_HPP
+#  define PETRI_FILE_EXPORTERS_HPP
 
 #include <string>
+#include <vector>
 
 namespace tpne {
 
@@ -38,13 +39,15 @@ std::string exportToGrafcetCpp(Net const& net, std::string const& filename);
 std::string exportToPNML(Net const& net, std::string const& filename);
 
 typedef std::string (*ExportFunc)(Net const&, std::string const&);
-
 struct Exporter
 {
     std::string format;
     std::string extensions;
     ExportFunc exportFct;
 };
+
+//! \brief Container of file formats we can export the net to (LaTeX, Symfony, Dot ...).
+std::vector<Exporter> const& exporters();
 
 } // namespace tpne
 

@@ -38,26 +38,10 @@ Editor::Editor(size_t const width, size_t const height,
       m_view(*this)
 {
     m_states.title = title;
-    m_exporters = {
-        { "Grafcet C++", ".hpp,.h,.hh,.h++", exportToGrafcetCpp },
-        { "Symfony", ".yaml", exportToSymfony },
-        { "Julia", ".jl", exportToJulia },
-        { "Draw.io", ".drawio.xml", exportToDrawIO },
-        { "Graphviz", ".gv,.dot", exportToGraphviz },
-        { "PN-Editor", ".pns,.pnl,.pnk,.pnkp", exportToPNEditor },
-        { "Petri-LaTeX", ".tex", exportToPetriLaTeX },
-        { "Petri Net Markup Language", ".pnml", exportToPNML },
-        //{ "Codesys", ".codesys.xml", exportToCodesys },
-        //{ "Grafcet-LaTeX", ".tex", exportToGrafcetLaTeX },
-    };
-
-    m_importers = {
-        { "Petri Net Markup Language", ".pnml", importFromPNML },
-    };
 }
 
 //------------------------------------------------------------------------------
-void Editor::startUp(std::string const& petri_file)
+void Editor::startUp(std::string const& filepath)
 {
 #ifdef __EMSCRIPTEN__
 #  define FONT_SIZE 18.0f
@@ -71,11 +55,13 @@ void Editor::startUp(std::string const& petri_file)
     reloadFonts();
 
     // Load Petri net file if passed with command line
-    if (!petri_file.empty())
+    if (!filepath.empty())
     {
-        if (m_net.load(petri_file))
+        std::string error = loadFromFile(m_net, filepath);
+        if (error.empty())
         {
-            m_messages.setInfo("loaded with success " + petri_file);
+            m_filepath = filepath;
+            m_messages.setInfo("loaded with success " + filepath);
         }
         else
         {
@@ -155,7 +141,7 @@ void Editor::menu()
             }
             if (ImGui::BeginMenu("Import from"))
             {
-                for (auto const& it: m_importers)
+                for (auto const& it: importers())
                 {
                     if (ImGui::MenuItem(it.format.c_str(), nullptr, false))
                     {
@@ -168,13 +154,13 @@ void Editor::menu()
             ImGui::Separator();
             if (ImGui::MenuItem("Save", nullptr, false))
             {
-                if (m_net.filename() == "")
+                if (m_filepath == "")
                 {
                     m_states.do_save_as = true;
                 }
                 else
                 {
-                    m_net.saveAs(m_net.filename());
+                    saveToFile(m_net, m_filepath);
                 }
             }
             if (ImGui::MenuItem("Save as", nullptr, false))
@@ -183,7 +169,7 @@ void Editor::menu()
             }
             if (ImGui::BeginMenu("Export to"))
             {
-                for (auto const& it: m_exporters)
+                for (auto const& it: exporters())
                 {
                     if (ImGui::MenuItem(it.format.c_str(), nullptr, false))
                     {
@@ -803,7 +789,7 @@ bool Editor::switchOfNet(TypeOfNet const type)
 
     std::vector<Arc*> arcs;
     std::string error;
-    if (m_net.convertTo(type, error, arcs))
+    if (convertTo(m_net, type, error, arcs))
         return true;
 
     m_messages.setError(m_net.error());

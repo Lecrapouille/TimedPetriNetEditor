@@ -239,10 +239,6 @@ private:
     //! \brief Heper instance to find files like Linux $PATH environment variable.
     //! Used for example for loading font files.
     Path m_path;
-    //! \brief Container of file formats we can export the net to (LaTeX, Symfony, Dot ...).
-    std::vector<Exporter> m_exporters;
-    //! \brief Container of file formats we can import the net from.
-    std::vector<Importer> m_importers;
     //! \brief Single Petri net the editor can edit.
     //! \fixme Manage several nets (like done with GEMMA).
     Net m_net;
@@ -252,10 +248,12 @@ private:
     Simulation m_simulation;
     //! \brief Visualize the net and do the interaction with the user.
     PetriView m_view;
-    //! \brief
+    //! \brief Messages to be displayed on the GUI.
     Messages m_messages;
-    //! \brief
+    //! \brief States controling the GUI
     mutable States m_states;
+    //! \brief Path of the loaded Petri file.
+    std::string m_filepath;
 };
 
 } // namespace tpne

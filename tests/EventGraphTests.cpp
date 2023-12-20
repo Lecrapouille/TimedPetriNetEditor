@@ -38,7 +38,7 @@ TEST(TestEventGraph, TestHoward2)
     Net net(TypeOfNet::TimedPetriNet);
     Net canonic(TypeOfNet::TimedPetriNet);
 
-    ASSERT_EQ(net.load("data/Howard2.json"), true);
+    ASSERT_STREQ(loadFromFile(net,"data/Howard2.json").c_str(), "");
     ASSERT_EQ(net.isEmpty(), false);
     ASSERT_EQ(isEventGraph(net), true);
     ASSERT_EQ(erroneous_arcs.empty(), true);
@@ -48,7 +48,7 @@ TEST(TestEventGraph, TestHoward2)
     ASSERT_EQ(isEventGraph(canonic, error, erroneous_arcs), true);
     ASSERT_STREQ(error.c_str(), "");
     ASSERT_EQ(erroneous_arcs.empty(), true);
-    ASSERT_EQ(canonic.saveAs("/tmp/canonic.json"), true);
+    ASSERT_STREQ(saveToFile(canonic,"/tmp/canonic.json").c_str(), "");
     ASSERT_EQ(canonic.m_next_place_id, 6u);
     ASSERT_EQ(canonic.m_next_transition_id, 5u);
     ASSERT_EQ(canonic.m_places.size(), 6u);
@@ -69,7 +69,7 @@ TEST(TestEventGraph, TestToSysLinNoInputNoOutput)
     std::vector<Arc*> erroneous_arcs;
     Net net(TypeOfNet::TimedPetriNet);
 
-    ASSERT_EQ(net.load("data/Howard2.json"), true); // FIXME shall call generateArcsInArcsOut ?
+    ASSERT_STREQ(loadFromFile(net,"data/Howard2.json").c_str(), "");
     net.generateArcsInArcsOut(); // FIXME
 
     ASSERT_EQ(isEventGraph(net), true);
@@ -126,7 +126,7 @@ TEST(TestEventGraph, TestToSysLinInputOutput)
     std::vector<Arc*> erroneous_arcs;
     Net net(TypeOfNet::TimedPetriNet);
 
-    ASSERT_EQ(net.load("data/JPQ.json"), true); // FIXME shall call generateArcsInArcsOut ?
+    ASSERT_STREQ(loadFromFile(net,"data/JPQ.json").c_str(), "");
     net.generateArcsInArcsOut(); // FIXME
 
     ASSERT_EQ(isEventGraph(net), true);
@@ -181,7 +181,7 @@ TEST(TestEventGraph, TestToDaterEquation)
 {
     Net net(TypeOfNet::TimedPetriNet);
 
-    ASSERT_EQ(net.load("data/EventGraph.json"), true);
+    ASSERT_STREQ(loadFromFile(net,"data/EventGraph.json").c_str(), "");
     net.generateArcsInArcsOut(); // FIXME
     ASSERT_EQ(isEventGraph(net), true);
 
@@ -231,7 +231,7 @@ TEST(TestEventGraph, TestToCounterEquation)
 {
     Net net(TypeOfNet::TimedPetriNet);
 
-    ASSERT_EQ(net.load("data/EventGraph.json"), true);
+    ASSERT_STREQ(loadFromFile(net,"data/EventGraph.json").c_str(), "");
     net.generateArcsInArcsOut(); // FIXME
     ASSERT_EQ(isEventGraph(net), true);
 

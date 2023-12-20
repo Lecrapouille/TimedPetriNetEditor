@@ -374,7 +374,6 @@ TEST(TestPetriNet, PetriNetDummy)
     ASSERT_EQ(net.m_next_transition_id, 0u);
 
     ASSERT_EQ(net.modified, false);
-    ASSERT_STREQ(net.m_filename.c_str(), "");
     ASSERT_STREQ(net.name.c_str(), to_str(net.type()).c_str());
 
     ASSERT_EQ(net.isEmpty(), true);
@@ -578,14 +577,14 @@ TEST(TestPetriNet, TestIncrTokens)
 
     std::vector<Arc*> erroneous_arcs;
     std::string error;
-    ASSERT_EQ(net.convertTo(TypeOfNet::GRAFCET, error, erroneous_arcs), true);
+    ASSERT_EQ(convertTo(net, TypeOfNet::GRAFCET, error, erroneous_arcs), true);
     ASSERT_EQ(error.empty(), true);
     ASSERT_EQ(erroneous_arcs.empty(), true);
     ASSERT_EQ(p0.tokens, 1u);
     p0.increment();
     ASSERT_EQ(p0.tokens, 1u);
 
-    ASSERT_EQ(net.convertTo(TypeOfNet::PetriNet, error, erroneous_arcs), true);
+    ASSERT_EQ(convertTo(net, TypeOfNet::PetriNet, error, erroneous_arcs), true);
     ASSERT_EQ(error.empty(), true);
     ASSERT_EQ(erroneous_arcs.empty(), true);
     ASSERT_EQ(p0.tokens, 1u);
@@ -729,7 +728,7 @@ TEST(TestPetriNet, TestLoadedNetTimedPetri)
 {
     Net net(TypeOfNet::TimedPetriNet);
 
-    ASSERT_EQ(net.load("data/Howard2.json"), true);
+    ASSERT_STREQ(loadFromFile(net, "data/Howard2.json").c_str(), "");
     ASSERT_STREQ(net.error().c_str(), "");
     ASSERT_EQ(net.type(), TypeOfNet::TimedEventGraph);
     ASSERT_EQ(net.isEmpty(), false);
@@ -1037,7 +1036,7 @@ TEST(TestPetriNet, TestLoadedNetGraphEvent)
 {
     Net net(TypeOfNet::TimedPetriNet);
 
-    ASSERT_EQ(net.load("data/EventGraph2.json"), true);
+    ASSERT_STREQ(loadFromFile(net, "data/EventGraph2.json").c_str(), "");
     ASSERT_STREQ(net.error().c_str(), "");
     ASSERT_EQ(net.type(), TypeOfNet::TimedEventGraph);
     ASSERT_EQ(net.isEmpty(), false);
@@ -1343,7 +1342,7 @@ TEST(TestPetriNet, TestRemoveNode)
 {
     Net net(TypeOfNet::TimedPetriNet);
 
-    ASSERT_EQ(net.load("data/Howard2.json"), true);
+    ASSERT_STREQ(loadFromFile(net, "data/Howard2.json").c_str(), "");
     ASSERT_STREQ(net.error().c_str(), "");
     ASSERT_EQ(net.type(), TypeOfNet::TimedEventGraph);
     ASSERT_EQ(net.m_next_place_id, 5u);
@@ -1658,9 +1657,9 @@ TEST(TestPetriNet, TestHowManyTokensCanBurnt)
 
     Net net(TypeOfNet::TimedPetriNet);
 
-    ASSERT_EQ(net.load("data/EventGraph.json"), true);
+    ASSERT_STREQ(loadFromFile(net, "data/EventGraph.json").c_str(), "");
     ASSERT_STREQ(net.error().c_str(), "");
-    ASSERT_EQ(net.convertTo(TypeOfNet::PetriNet, error, erroneous_arcs), true);
+    ASSERT_EQ(convertTo(net, TypeOfNet::PetriNet, error, erroneous_arcs), true);
 
     ASSERT_EQ(net.m_transitions.size(), 4u);
     //ASSERT_EQ(net.m_transitions[0].howManyTokensCanBurnt(), 1u); // u

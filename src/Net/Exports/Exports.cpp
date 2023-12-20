@@ -18,30 +18,27 @@
 // along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.
 //=============================================================================
 
-#ifndef IMPORTS_HPP
-#  define IMPORTS_HPP
-
-#include <string>
-#include <vector>
+#include "Net/Exports/Exports.hpp"
 
 namespace tpne {
 
-class Net;
-
-std::string importFromJSON(Net& net, std::string const& filename);
-std::string importFromPNML(Net& net, std::string const& filename);
-
-typedef std::string (*ImportFunc)(Net&, std::string const&);
-struct Importer
+std::vector<Exporter> const& exporters()
 {
-    std::string format;
-    std::string extensions;
-    ImportFunc importFct;
-};
+    static const std::vector<Exporter> s_exporters = {
+        { "JSON", ".json", exportToJSON },
+        { "Grafcet C++", ".hpp,.h,.hh,.h++", exportToGrafcetCpp },
+        { "Symfony", ".yaml", exportToSymfony },
+        { "Julia", ".jl", exportToJulia },
+        { "Draw.io", ".drawio.xml", exportToDrawIO },
+        { "Graphviz", ".gv,.dot", exportToGraphviz },
+        { "PN-Editor", ".pns,.pnl,.pnk,.pnkp", exportToPNEditor },
+        { "Petri-LaTeX", ".tex", exportToPetriLaTeX },
+        { "Petri Net Markup Language", ".pnml", exportToPNML },
+        //{ "Codesys", ".codesys.xml", exportToCodesys },
+        //{ "Grafcet-LaTeX", ".tex", exportToGrafcetLaTeX },
+    };
 
-//! \brief Container of file formats we can import the net from.
-std::vector<Importer> const& importers();
+    return s_exporters;
+}
 
 } // namespace tpne
-
-#endif

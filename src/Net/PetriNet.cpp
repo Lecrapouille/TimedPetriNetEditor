@@ -55,6 +55,7 @@ std::string to_str(TypeOfNet const type)
         return "Undefined type of net";
     }
 }
+
 //------------------------------------------------------------------------------
 Place::Place(size_t const id_, std::string const& caption_, float const x_,
              float const y_, size_t const tokens_)
@@ -153,7 +154,6 @@ Net::Net(Net const& other)
 
     m_next_place_id = other.m_next_place_id;
     m_next_transition_id = other.m_next_transition_id;
-    m_filename = other.m_filename;
     modified = false;
     name = other.name;
 }
@@ -173,7 +173,6 @@ Net& Net::operator=(Net const& other)
 void Net::clear(TypeOfNet const type)
 {
     name = to_str(m_type);
-    m_filename.clear();
     m_places.clear();
     m_transitions.clear();
     m_arcs.clear();
@@ -182,65 +181,6 @@ void Net::clear(TypeOfNet const type)
     modified = true;
     m_type = type;
     m_message.str("");
-}
-
-//------------------------------------------------------------------------------
-bool Net::convertTo(TypeOfNet const type, std::string& error, std::vector<Arc*>& erroneous_arcs)
-{
-    if (m_type == type)
-        return true;
-
-    switch (type)
-    {
-    case TypeOfNet::GRAFCET:
-        Net::Settings::maxTokens = 1u;
-        Net::Settings::firing = Net::Settings::Fire::OneByOne;
-        // Constrain the number of tokens.
-        // TBD: not constraining the number of tokens allow us to save the
-        // net (json format) without loosing number of tokens for other nets.
-        for (auto& place: m_places)
-        {
-            place.tokens = std::min(Net::Settings::maxTokens, place.tokens);
-        }
-        // FIXME
-        //m_sensors.clear();
-        //for (auto& transition: m_transitions)
-        //{
-        //    parse(transition);
-        //}
-        break;
-    case TypeOfNet::PetriNet:
-        Net::Settings::maxTokens = std::numeric_limits<size_t>::max();
-        Net::Settings::firing = Net::Settings::Fire::MaxPossible;
-        break;
-    case TypeOfNet::TimedPetriNet:
-        Net::Settings::maxTokens = std::numeric_limits<size_t>::max();
-        Net::Settings::firing = Net::Settings::Fire::OneByOne;
-        break;
-    case TypeOfNet::TimedEventGraph:
-        // Check conditions of a well formed event graph
-        if ((!isEmpty()) && (!isEventGraph(*this, error, erroneous_arcs)))
-            return false;
-        Net::Settings::maxTokens = std::numeric_limits<size_t>::max();
-        Net::Settings::firing = Net::Settings::Fire::OneByOne;
-        break;
-    default:
-        assert(false && "Undefined Petri behavior");
-        break;
-    }
-
-    // For GRAFCET we check validity of the syntax of transitivities
-    if (!resetReceptivies())
-    {
-        error = "Invalid syntax in receptivities";
-        return false;
-    }
-
-    // Set the new type of net at the end of this method because of possible
-    // previous "return false" preventing to change of type.
-    m_type = type;
-
-    return true;
 }
 
 //------------------------------------------------------------------------------
@@ -684,31 +624,6 @@ void Net::removeNode(Node& node)
 }
 
 //------------------------------------------------------------------------------
-bool Net::load(std::string const& filepath)
-{
-    std::string error = importFromJSON(*this, filepath);
-    if (!error.empty())
-    {
-        clear(m_type);
-        m_filename = filepath;
-
-        // Get the name from path
-        size_t lastindex = filepath.find_last_of(".");
-        std::string _name = filepath.substr(0, lastindex);
-        lastindex = _name.find_last_of("/");
-        _name = _name.substr(lastindex + 1u);
-
-        m_message.str("");
-        m_message << error;
-        return false;
-    }
-
-    m_filename = filepath;
-    modified = false;
-    return true;
-}
-
-//------------------------------------------------------------------------------
 bool Net::resetReceptivies()
 {
     bool res = true;
@@ -753,17 +668,107 @@ bool Net::resetReceptivies()
 }
 
 //------------------------------------------------------------------------------
-bool Net::saveAs(std::string const& filename) const
+std::string saveToFile(Net const& net, std::string const& filename)
 {
-    std::string error = exportToJSON(*this, filename);
-    if (error.empty())
+    std::string extension = filename.substr(filename.find_last_of("."));
+
+    for (auto const& it: exporters())
     {
-        return true;
+        // split all extensions
+        std::stringstream ss(it.extensions);
+        std::string ext;
+        while (!ss.eof())
+        {
+            std::getline(ss, ext, ',');
+            if (extension == ext)
+            {
+                return it.exportFct(net, filename);
+            }
+        }
     }
 
-    m_message.str("");
-    m_message << error;
-    return false;
+    return std::string("Failed to export '") + filename +
+        std::string(": unsuported file extension");
+}
+
+//------------------------------------------------------------------------------
+std::string loadFromFile(Net& net, std::string const& filepath)
+{
+    std::string error = importFromJSON(net, filepath);
+    if (!error.empty())
+    {
+        net.clear(net.type());
+
+        // Get the name from path
+        size_t lastindex = filepath.find_last_of(".");
+        std::string _name = filepath.substr(0, lastindex);
+        lastindex = _name.find_last_of("/");
+        _name = _name.substr(lastindex + 1u);
+
+        return error;
+    }
+
+    net.modified = false;
+    return {};
+}
+
+//------------------------------------------------------------------------------
+bool convertTo(Net& net, TypeOfNet const type, std::string& error, std::vector<Arc*>& erroneous_arcs)
+{
+    if (net.type() == type)
+        return true;
+
+    switch (type)
+    {
+    case TypeOfNet::GRAFCET:
+        Net::Settings::maxTokens = 1u;
+        Net::Settings::firing = Net::Settings::Fire::OneByOne;
+        // Constrain the number of tokens.
+        // TBD: not constraining the number of tokens allow us to save the
+        // net (json format) without loosing number of tokens for other nets.
+        for (auto& place: net.places())
+        {
+            place.tokens = std::min(Net::Settings::maxTokens, place.tokens);
+        }
+        // FIXME
+        //m_sensors.clear();
+        //for (auto& transition: m_transitions)
+        //{
+        //    parse(transition);
+        //}
+        break;
+    case TypeOfNet::PetriNet:
+        Net::Settings::maxTokens = std::numeric_limits<size_t>::max();
+        Net::Settings::firing = Net::Settings::Fire::MaxPossible;
+        break;
+    case TypeOfNet::TimedPetriNet:
+        Net::Settings::maxTokens = std::numeric_limits<size_t>::max();
+        Net::Settings::firing = Net::Settings::Fire::OneByOne;
+        break;
+    case TypeOfNet::TimedEventGraph:
+        // Check conditions of a well formed event graph
+        if ((!net.isEmpty()) && (!isEventGraph(net, error, erroneous_arcs)))
+            return false;
+        Net::Settings::maxTokens = std::numeric_limits<size_t>::max();
+        Net::Settings::firing = Net::Settings::Fire::OneByOne;
+        break;
+    default:
+        assert(false && "Undefined Petri behavior");
+        break;
+    }
+
+    // For GRAFCET we check validity of the syntax of transitivities
+    if (!net.resetReceptivies())
+    {
+        error = "Invalid syntax in receptivities";
+        return false;
+    }
+
+    // Set the new type of net at the end of this method because of possible
+    // previous "return false" preventing to change of type.
+    net.m_type = type;
+
+    return true;
 }
 
 } // namespace tpne

@@ -18,30 +18,18 @@
 // along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.
 //=============================================================================
 
-#ifndef IMPORTS_HPP
-#  define IMPORTS_HPP
-
-#include <string>
-#include <vector>
+#include "Net/Imports/Imports.hpp"
 
 namespace tpne {
 
-class Net;
-
-std::string importFromJSON(Net& net, std::string const& filename);
-std::string importFromPNML(Net& net, std::string const& filename);
-
-typedef std::string (*ImportFunc)(Net&, std::string const&);
-struct Importer
+std::vector<Importer> const& importers()
 {
-    std::string format;
-    std::string extensions;
-    ImportFunc importFct;
-};
+    static const std::vector<Importer> s_importers = {
+        { "JSON", ".json", importFromJSON },
+        { "Petri Net Markup Language", ".pnml", importFromPNML },
+    };
 
-//! \brief Container of file formats we can import the net from.
-std::vector<Importer> const& importers();
+    return s_importers;
+}
 
 } // namespace tpne
-
-#endif
