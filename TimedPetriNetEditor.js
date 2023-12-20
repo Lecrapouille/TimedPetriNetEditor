@@ -1182,40 +1182,40 @@ function dbg(text) {
 // === Body ===
 
 var ASM_CONSTS = {
-  197208: () => { if (document.fullscreenElement) return 1; },  
- 197254: () => { return document.getElementById('canvas').width; },  
- 197306: () => { return parseInt(document.getElementById('canvas').style.width); },  
- 197374: () => { document.exitFullscreen(); },  
- 197401: () => { setTimeout(function() { Module.requestFullscreen(false, false); }, 100); },  
- 197474: () => { if (document.fullscreenElement) return 1; },  
- 197520: () => { return document.getElementById('canvas').width; },  
- 197572: () => { return screen.width; },  
- 197597: () => { document.exitFullscreen(); },  
- 197624: () => { setTimeout(function() { Module.requestFullscreen(false, true); setTimeout(function() { canvas.style.width="unset"; }, 100); }, 100); },  
- 197757: () => { if (document.fullscreenElement) return 1; },  
- 197803: () => { return document.getElementById('canvas').width; },  
- 197855: () => { return parseInt(document.getElementById('canvas').style.width); },  
- 197923: () => { if (document.fullscreenElement) return 1; },  
- 197969: () => { return document.getElementById('canvas').width; },  
- 198021: () => { return screen.width; },  
- 198046: () => { if (document.fullscreenElement) return 1; },  
- 198092: () => { return document.getElementById('canvas').width; },  
- 198144: () => { return screen.width; },  
- 198169: () => { document.exitFullscreen(); },  
- 198196: () => { if (document.fullscreenElement) return 1; },  
- 198242: () => { return document.getElementById('canvas').width; },  
- 198294: () => { return parseInt(document.getElementById('canvas').style.width); },  
- 198362: () => { document.exitFullscreen(); },  
- 198389: () => { return screen.width; },  
- 198414: () => { return screen.height; },  
- 198440: () => { return window.screenX; },  
- 198467: () => { return window.screenY; },  
- 198494: ($0) => { navigator.clipboard.writeText(UTF8ToString($0)); },  
- 198547: ($0) => { document.getElementById("canvas").style.cursor = UTF8ToString($0); },  
- 198618: () => { document.getElementById('canvas').style.cursor = 'none'; },  
- 198675: ($0) => { document.getElementById('canvas').style.cursor = UTF8ToString($0); },  
- 198746: () => { if (document.fullscreenElement) return 1; },  
- 198792: () => { if (document.pointerLockElement) return 1; }
+  197256: () => { if (document.fullscreenElement) return 1; },  
+ 197302: () => { return document.getElementById('canvas').width; },  
+ 197354: () => { return parseInt(document.getElementById('canvas').style.width); },  
+ 197422: () => { document.exitFullscreen(); },  
+ 197449: () => { setTimeout(function() { Module.requestFullscreen(false, false); }, 100); },  
+ 197522: () => { if (document.fullscreenElement) return 1; },  
+ 197568: () => { return document.getElementById('canvas').width; },  
+ 197620: () => { return screen.width; },  
+ 197645: () => { document.exitFullscreen(); },  
+ 197672: () => { setTimeout(function() { Module.requestFullscreen(false, true); setTimeout(function() { canvas.style.width="unset"; }, 100); }, 100); },  
+ 197805: () => { if (document.fullscreenElement) return 1; },  
+ 197851: () => { return document.getElementById('canvas').width; },  
+ 197903: () => { return parseInt(document.getElementById('canvas').style.width); },  
+ 197971: () => { if (document.fullscreenElement) return 1; },  
+ 198017: () => { return document.getElementById('canvas').width; },  
+ 198069: () => { return screen.width; },  
+ 198094: () => { if (document.fullscreenElement) return 1; },  
+ 198140: () => { return document.getElementById('canvas').width; },  
+ 198192: () => { return screen.width; },  
+ 198217: () => { document.exitFullscreen(); },  
+ 198244: () => { if (document.fullscreenElement) return 1; },  
+ 198290: () => { return document.getElementById('canvas').width; },  
+ 198342: () => { return parseInt(document.getElementById('canvas').style.width); },  
+ 198410: () => { document.exitFullscreen(); },  
+ 198437: () => { return screen.width; },  
+ 198462: () => { return screen.height; },  
+ 198488: () => { return window.screenX; },  
+ 198515: () => { return window.screenY; },  
+ 198542: ($0) => { navigator.clipboard.writeText(UTF8ToString($0)); },  
+ 198595: ($0) => { document.getElementById("canvas").style.cursor = UTF8ToString($0); },  
+ 198666: () => { document.getElementById('canvas').style.cursor = 'none'; },  
+ 198723: ($0) => { document.getElementById('canvas').style.cursor = UTF8ToString($0); },  
+ 198794: () => { if (document.fullscreenElement) return 1; },  
+ 198840: () => { if (document.pointerLockElement) return 1; }
 };
 function GetWindowInnerWidth() { return window.innerWidth; }
 function GetWindowInnerHeight() { return window.innerHeight; }
@@ -11110,8 +11110,8 @@ var _asyncify_start_unwind = createExportWrapper('asyncify_start_unwind');
 var _asyncify_stop_unwind = createExportWrapper('asyncify_stop_unwind');
 var _asyncify_start_rewind = createExportWrapper('asyncify_start_rewind');
 var _asyncify_stop_rewind = createExportWrapper('asyncify_stop_rewind');
-var ___start_em_js = Module['___start_em_js'] = 198839;
-var ___stop_em_js = Module['___stop_em_js'] = 198912;
+var ___start_em_js = Module['___start_em_js'] = 198887;
+var ___stop_em_js = Module['___stop_em_js'] = 198960;
 
 // include: postamble.js
 // === Auto-generated postamble setup entry stuff ===
