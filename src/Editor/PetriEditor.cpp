@@ -160,7 +160,15 @@ void Editor::menu()
                 }
                 else
                 {
-                    saveToFile(m_net, m_filepath);
+                    std::string error = saveToFile(m_net, m_filepath);
+                    if (error.empty())
+                    {
+                        m_net.modified = false;
+                    }
+                    else
+                    {
+                        m_messages.setError(error);
+                    }
                 }
             }
             if (ImGui::MenuItem("Save as", nullptr, false))
