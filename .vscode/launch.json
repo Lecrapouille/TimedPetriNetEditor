@@ -6,12 +6,19 @@
             "type": "cppdbg",
             "request": "launch",
             "program": "${workspaceFolder}/build/TimedPetriNetEditor",
-            "args": [ "${workspaceFolder}/data/examples/AppelsDurgence.json" ],
+            "args": [ "${workspaceFolder}/data/examples/Howard2.json" ],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}",
             "environment": [],
             "externalConsole": true,
-            "MIMode": "gdb"
+            "MIMode": "gdb",
+            "setupCommands": [
+                {
+                    "description": "Enable pretty-printing for gdb",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": false
+                }
+            ]
         }
     ]
 }
