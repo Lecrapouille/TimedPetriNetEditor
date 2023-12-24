@@ -273,13 +273,13 @@ void Simulation::stateSimulating(float const dt)
             {
                 // Animated token reached its ddestination: Place
                 std::cout << current_time()
-                            << "Place " << an.arc.to.caption
+                            << "Place " << an.arc->to.caption
                             << " got " << an.tokens << " token"
                             << (an.tokens == 1u ? "" : "s")
                             << std::endl;
 
                 // Drop the number of tokens it was carrying.
-                an.arc.tokensOut() += an.tokens;
+                an.arc->tokensOut() += an.tokens;
 
                 // Transition source. In Petri net we keep using the mouse to
                 // fire source transition to generate a single token by mouse
@@ -287,7 +287,7 @@ void Simulation::stateSimulating(float const dt)
                 // animation ends.
                 if (m_net.type() != TypeOfNet::PetriNet)
                 {
-                    Transition& t = reinterpret_cast<Transition&>(an.arc.from);
+                    Transition& t = reinterpret_cast<Transition&>(an.arc->from);
                     if (t.isInput())
                     {
                         t.receptivity = true;

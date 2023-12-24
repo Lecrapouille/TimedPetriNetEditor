@@ -46,7 +46,7 @@ struct TimedToken
     //! \param[in] type_: Type of the net (Petri, timed Petri, GRAFCET ...)
     //--------------------------------------------------------------------------
     TimedToken(Arc& arc_, size_t const tokens_, TypeOfNet const type_);
-
+#if 0
     //--------------------------------------------------------------------------
     //! \brief Hack needed because of references
     //--------------------------------------------------------------------------
@@ -80,7 +80,7 @@ struct TimedToken
         new (this) TimedToken(other); // copy construct in place
         return *this;
     }
-
+#endif
     //--------------------------------------------------------------------------
     //! \brief Update position on the screen.
     //! \param[in] dt: the delta time (in seconds) from the previous call.
@@ -95,11 +95,11 @@ struct TimedToken
     //--------------------------------------------------------------------------
     inline Place& toPlace()
     {
-        return *reinterpret_cast<Place*>(&(arc.to));
+        return *reinterpret_cast<Place*>(&(arc->to));
     }
 
     //! \brief In which arc the token is moving along.
-    Arc& arc;
+    Arc* arc;
     //! \brief X-axis coordinate in the window used for the display.
     float x;
     //! \brief Y-axis coordinate in the window used for the display.
