@@ -35,7 +35,9 @@ static const char* current_time() // FIXME defined several times
 //------------------------------------------------------------------------------
 Simulation::Simulation(Net& net, Messages& messages)
     : m_net(net), m_messages(messages)
-{}
+{
+    m_timed_tokens.reserve(128u);
+}
 
 //------------------------------------------------------------------------------
 std::vector<Transition*> const& Simulation::shuffle_transitions(bool const reset)
@@ -191,9 +193,11 @@ void Simulation::stateSimulating(float const dt)
             // The theory would burn the maximum possibe of tokens that
             // we can in a single action but we can also try to burn tokens
             // one by one and randomize the transitions.
-            size_t tokens = (Net::Settings::firing == Net::Settings::Fire::OneByOne)
-                            ? size_t(trans->canFire()) // [0 .. 1] tokens
-                            : trans->howManyTokensCanBurnt(); // [0 .. N] tokens
+            size_t tokens = 0u;
+            if (trans->canFire())
+            {
+                tokens = trans->howManyTokensCanBurnt();
+            }
 
             if (tokens > 0u)
             {
@@ -251,7 +255,7 @@ void Simulation::stateSimulating(float const dt)
                             << a.count << " token"
                             << (a.count == 1u ? "" : "s")
                             << std::endl;
-                m_timed_tokens.push_back(TimedToken(a, a.count, m_net.type()));
+                m_timed_tokens.emplace_back(a, a.count, m_net.type());
                 //TODO a.fading.restart();
                 a.count = 0u;
             }
