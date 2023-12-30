@@ -35,7 +35,7 @@ INCLUDES += -I$(P)/include -I$(P)/src -I$(P)/external
 ###################################################
 # Project defines
 #
-DEFINES += -DDATADIR=\"$(DATADIR)\"
+DEFINES += -DDATADIR=\"$(DATADIR):$(abspath $(P))/data/:data/\"
 
 ###################################################
 # Reduce warnings
@@ -169,7 +169,6 @@ endif
 # present inside $(BUILD) folder.
 #
 ifeq ($(ARCHI),Emscripten)
-LINKER_FLAGS += --preload-file imgui.ini
 LINKER_FLAGS += --preload-file examples
 LINKER_FLAGS += --preload-file data
 LINKER_FLAGS += -s FORCE_FILESYSTEM=1
@@ -201,19 +200,19 @@ OBJS += DearUtils.o Drawable.o Application.o PetriEditor.o main.o
 ###################################################
 # Compile the project, the static and shared libraries
 .PHONY: all
-all: copy-emscripten-assets $(STATIC_LIB_TARGET) $(SHARED_LIB_TARGET) $(PKG_FILE) $(TARGET)
+all: copy-assets $(STATIC_LIB_TARGET) $(SHARED_LIB_TARGET) $(PKG_FILE) $(TARGET)
 
 ###################################################
-#
-.PHONY: copy-emscripten-assets
-copy-emscripten-assets: | $(BUILD)
+# Copy data inside BUILD to allow emscripten to embedded them
+.PHONY: copy-assets
+copy-assets: | $(BUILD)
 ifeq ($(ARCHI),Emscripten)
 	@$(call print-to,"Copying assets","$(TARGET)","$(BUILD)","")
 	@mkdir -p $(BUILD)/data
 	@mkdir -p $(BUILD)/examples
 	@cp $(P)/data/examples/*.json $(BUILD)/examples
 	@cp $(P)/data/font.ttf $(BUILD)/data
-	@cp $(P)/imgui.ini $(BUILD)
+	@cp $(P)/data/imgui.ini $(BUILD)/data
 endif
 
 ###################################################

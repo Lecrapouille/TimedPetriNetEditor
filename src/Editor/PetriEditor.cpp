@@ -49,8 +49,15 @@ void Editor::startUp(std::string const& filepath)
 #  define FONT_SIZE 13.0f
 #endif
 
-    // Setup fonts
+    std::cout << "Path: " << m_path.toString() << std::endl;
+
+    // Set imgui.ini loading/saving location
     ImGuiIO &io = ImGui::GetIO();
+    m_states.ini_filename = m_path.expand("imgui.ini").c_str();
+    io.IniFilename = m_states.ini_filename.c_str();
+    std::cout << "imgui.ini path: " << io.IniFilename << std::endl;
+
+    // Setup fonts
     io.Fonts->AddFontFromFileTTF(m_path.expand("font.ttf").c_str(), FONT_SIZE);
     reloadFonts();
 

@@ -33,12 +33,15 @@ std::string osx_get_resources_dir(std::string const& file);
 #  endif
 
 //------------------------------------------------------------------------------
+#  ifndef DATADIR
+#    define GET_DATA_PATH project::info::data_path
+#  endif
 #  if defined(__APPLE__)
-#    define GET_DATA_PATH   osx_get_resources_dir("")
+#    define GET_DATA_PATH   DATADIR":" + osx_get_resources_dir("")
 #  elif defined(__EMSCRIPTEN__)
 #    define GET_DATA_PATH   "data/"
 #  else
-#    define GET_DATA_PATH   project::info::data_path
+#    define GET_DATA_PATH   DATADIR
 #  endif
 
 // *****************************************************************************
@@ -108,9 +111,14 @@ public:
     std::string expand(std::string const& filename) const;
 
     //--------------------------------------------------------------------------
+    //! \brief Return the container of path
+    //--------------------------------------------------------------------------
+    std::vector<std::string> pathes() const;
+
+    //--------------------------------------------------------------------------
     //! \brief Return pathes as string. The first path is always ".:"
     //--------------------------------------------------------------------------
-    std::string toString() const;
+    std::string toString() const;  
 
     bool open(std::string& filename, std::ifstream& ifs,
               std::ios_base::openmode mode = std::ios_base::in) const;

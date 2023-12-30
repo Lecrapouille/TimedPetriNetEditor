@@ -162,6 +162,19 @@ bool Path::open(std::string& filename, std::fstream& fs, std::ios_base::openmode
 }
 
 //------------------------------------------------------------------------------
+std::vector<std::string> Path::pathes() const
+{
+    std::vector<std::string> res;
+    res.reserve(m_search_paths.size());
+    for (auto const& it: m_search_paths)
+    {
+        res.push_back(it);
+    }
+
+    return res;
+}
+
+//------------------------------------------------------------------------------
 std::string Path::toString() const
 {
     std::string string_path;
