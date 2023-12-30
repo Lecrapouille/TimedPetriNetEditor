@@ -110,7 +110,7 @@ public:
     //--------------------------------------------------------------------------
     //! \brief Return pathes as string. The first path is always ".:"
     //--------------------------------------------------------------------------
-    std::string pathes() const;
+    std::string toString() const;
 
     bool open(std::string& filename, std::ifstream& ifs,
               std::ios_base::openmode mode = std::ios_base::in) const;

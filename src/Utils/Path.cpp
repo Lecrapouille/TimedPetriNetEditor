@@ -162,7 +162,7 @@ bool Path::open(std::string& filename, std::fstream& fs, std::ios_base::openmode
 }
 
 //------------------------------------------------------------------------------
-std::string Path::pathes() const
+std::string Path::toString() const
 {
     std::string string_path;
 
