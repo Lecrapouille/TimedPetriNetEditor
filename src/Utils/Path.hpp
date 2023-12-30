@@ -34,9 +34,9 @@ std::string osx_get_resources_dir(std::string const& file);
 
 //------------------------------------------------------------------------------
 #  if defined(__APPLE__)
-#    define GET_DATA_PATH   osx_get_resources_dir("data")
+#    define GET_DATA_PATH   osx_get_resources_dir("")
 #  elif defined(__EMSCRIPTEN__)
-#    define GET_DATA_PATH   "data"
+#    define GET_DATA_PATH   "data/"
 #  else
 #    define GET_DATA_PATH   project::info::data_path
 #  endif

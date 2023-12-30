@@ -51,14 +51,6 @@ std::string osx_get_resources_dir(std::string const& file)
         }
     }
 
-#ifdef DATADIR
-    path = std::string(DATADIR) + "/" + file;
-    if (stat(path.c_str(), &exists) == 0)
-    {
-        return path;
-    }
-#endif
-
     path = "data/" + file;
     if (stat(path.c_str(), &exists) == 0)
     {
