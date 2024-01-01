@@ -96,19 +96,23 @@ void Simulation::stateStarting()
         return ;
     }
 
-#if 0 // TODO
     // Check for GRAFCET if boolean expressions in transitivities have
     // not syntaxical errors.
     if (m_net.type() == TypeOfNet::GRAFCET)
     {
-        if (!m_net.hasValidTransitivities())
+        m_receptivities.clear();
+        m_receptivities.resize(m_net.transitions().size());
+        for (auto const& it: m_net.transitions())
         {
-            m_messages.setWarning("transitivites have syntax error");
-            running = false;
-            return ;
+            std::string error = m_receptivities[it.id].compile(it.caption, m_net);
+            if (!error.empty())
+            {
+                m_messages.setWarning(error);
+                running = false;
+                return ;  
+            }
         }
     }
-#endif
 
     // Reset states of the simulator
     m_net.resetReceptivies();
@@ -149,6 +153,7 @@ void Simulation::stateHalting()
     // Restore burnt tokens from the simulation
     m_net.tokens(m_initial_tokens);
     m_net.resetReceptivies();
+    m_receptivities.clear();
     m_timed_tokens.clear();
     m_state = Simulation::State::Idle;
 }
@@ -166,14 +171,14 @@ void Simulation::stateSimulating(float const dt)
         return ;
     }
 
-#if 0 // TODO
-    // Interpret the code of receptivities
+    // Interpret the code of receptivities.
     if (m_net.type() == TypeOfNet::GRAFCET)
     {
+        // TODO if (Sensors::modified) {
         for (auto& t: m_net.transitions())
-            t.evaluate(m_net.m_sensors);
+            t.receptivity = m_receptivities[t.id].evaluate();
+        // }  Sensors::modified = false;
     }
-#endif
 
     // For each transition check if it is activated (all incoming Places
     // have at least one token to burn. Note: since here we care Petri but

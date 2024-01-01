@@ -22,6 +22,7 @@
 #  define SIMULATION_NET_HPP
 
 #  include "TimedPetriNetEditor/PetriNet.hpp"
+#  include "Net/Receptivities.hpp"
 #  include "Net/TimedTokens.hpp"
 #  include "Utils/Messages.hpp"
 
@@ -76,6 +77,8 @@ private:
     std::vector<TimedToken> m_timed_tokens;
     //! \brief Memorize initial number of tokens in places.
     std::vector<size_t> m_initial_tokens;
+    //! \brief For GRAFCET boolean expressions in transitions
+    std::vector<Receptivity> m_receptivities;
     //! \brief State machine for the simulation.
     Simulation::State m_state{Simulation::State::Idle};
 

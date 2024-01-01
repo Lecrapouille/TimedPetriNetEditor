@@ -25,65 +25,76 @@
 namespace tpne {
 
 //-----------------------------------------------------------------------------
-Receptivity::StepExp::StepExp(Net& net, std::string const& token)
+Receptivity::StepExp::StepExp(Net& net, std::string const& name)
     : m_net(net)
 {
-    assert(token[0] == 'X' && "Incorrect state identifier");
-    m_id = std::stoi(&token[1]);
+    assert((name[0] == 'X') && "Incorrect place identifier");
+    m_id = std::stoi(&name[1]); // FIXME better error management
 }
 
 //-----------------------------------------------------------------------------
-bool Receptivity::StepExp::evaluate(Sensors const& sensors) const
+bool Receptivity::StepExp::evaluate() const
 {
     Place* p = m_net.findPlace(m_id);
-    if (p == nullptr)
+    assert((p != nullptr) && "Unknowm place id");
+    return !!(p->tokens); // size_t to boolean conversion
+}
+
+//-----------------------------------------------------------------------------
+bool Receptivity::VariableExp::evaluate() const
+{
+    try {
+        return Sensors::get(m_name);
+    } 
+    catch (...) {
+        assert("Unkown variable");
         return false;
-    return !!(p->tokens);
+    }
+}
+
+//-----------------------------------------------------------------------------
+Receptivity::ConstExp::ConstExp(std::string const& operand)
+{
+    if (operand == "true") {
+        m_operand = true;
+    } else if (operand == "false") {
+        m_operand = false;
+    } else {
+        assert("Unkown const operand");
+    }
+}
+
+//-----------------------------------------------------------------------------
+static bool findToken(std::vector<std::string> const& tokens,
+                      std::string const& token)
+{
+    for (auto const& it: tokens)
+    {
+        if (token == it)
+            return true;
+    }
+    return false;
 }
 
 //-----------------------------------------------------------------------------
 bool Receptivity::Parser::isBinaryOperator(std::string const& token)
 {
-    static const std::vector<std::string> operators = {
-        ".", "+"
-    };
-
-    for (auto const& it: operators)
-    {
-        if (token == it)
-            return true;
-    }
-    return false;
+    static const std::vector<std::string> operators = { ".", "+" };
+    return findToken(operators, token);
 }
 
 //-----------------------------------------------------------------------------
 bool Receptivity::Parser::isUnitaryOperator(std::string const& token)
 {
-    static const std::vector<std::string> operators = {
-        "!"
-    };
-
-    for (auto const& it: operators)
-    {
-        if (token == it)
-            return true;
-    }
-    return false;
+    static const std::vector<std::string> operators = { "!" };
+    return findToken(operators, token);
 }
 
 //-----------------------------------------------------------------------------
 bool Receptivity::Parser::isConst(std::string const& token)
 {
-    static const std::vector<std::string> operators = {
-        "true", "false"
-    };
-
-    for (auto const& it: operators)
-    {
-        if (token == it)
-            return true;
-    }
-    return false;
+    static const std::vector<std::string> operators = { "true", "false" };
+    return findToken(operators, token);
 }
 
 //-----------------------------------------------------------------------------
@@ -225,7 +236,8 @@ std::string Receptivity::Parser::translate(std::string const& code, std::string 
 }
 
 //-----------------------------------------------------------------------------
-std::shared_ptr<Receptivity::BooleanExp> Receptivity::Parser::parse(Net& net, std::string const& code, std::string& error)
+std::shared_ptr<Receptivity::BooleanExp> Receptivity::Parser::compile(
+    std::string const& code, Net& net, std::string& error)
 {
     error.clear();
 
@@ -300,13 +312,26 @@ std::shared_ptr<Receptivity::BooleanExp> Receptivity::Parser::parse(Net& net, st
 }
 
 //-----------------------------------------------------------------------------
-bool Receptivity::Parser::evaluate(Receptivity const recept, Sensors const& sensors)
+std::string Receptivity::compile(std::string const& code, Net& net)
 {
-    // No expression means always TRUE receptivity
-    if (recept.expression == nullptr)
-        return recept.valid;
+    m_error.clear();
+    m_ast = Receptivity::Parser::compile(code, net, m_error);
+    m_valid = !m_error.empty();
+    return m_error;
+}
 
-    return recept.expression->evaluate(sensors);
+//-----------------------------------------------------------------------------
+bool Receptivity::evaluate()
+{
+    // Invalid syntaxt
+    if (!m_valid)
+        return false;
+
+    // No expression means always TRUE receptivity
+    if (m_ast == nullptr)
+        return true;
+
+    return m_ast->evaluate();
 }
 
 } // namespace tpne

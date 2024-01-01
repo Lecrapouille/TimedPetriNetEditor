@@ -242,7 +242,7 @@ public:
     //! \param[in] x_: X-axis coordinate in the window needed for the display.
     //! \param[in] y_: Y-axis coordinate in the window needed for the display.
     //! \param[in] angle_: angle in degree of rotation for the display.
-    //! \param[in] recep_: receptivity of the transition.
+    //! \param[in] recep_: initial receptivity value.
     //--------------------------------------------------------------------------
     Transition(size_t const id_, std::string const& caption_, float const x_,
                float const y_, int const angle_, bool const recep_)
@@ -700,7 +700,7 @@ public:
     //! \return false if in GRAFCET mode and if at least one transition has an
     //! invalid syntaxt in its recepetivity.
     //--------------------------------------------------------------------------
-    bool resetReceptivies(); // FIXME a placer dana protected
+    bool resetReceptivies(); // FIXME a placer dans protected
 
 protected:
 

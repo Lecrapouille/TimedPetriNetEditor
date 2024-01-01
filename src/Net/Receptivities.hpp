@@ -33,59 +33,75 @@ namespace tpne {
 class Net;
 
 // ****************************************************************************
-//! \brief Container of sensors.
+//! \brief Quick and dirty container of sensor boolean values.
+//! \fixme should store analogical value.
 // ****************************************************************************
 class Sensors
 {
 public:
-
-    bool lookup(std::string const& key) const { return values.at(key); }
-    void assign(std::string const& key, int const value) { values[key] = value; }
-    std::map<const std::string, int>& database() { return values; }
-    std::map<const std::string, int> const& database() const { return values; }
-    void clear() { values.clear(); }
+    //! \brief Get the value of the given sensor. Throw if the sensor is unkown.
+    static bool get(std::string const& sensor) { return m_values.at(sensor); modified = true; }
+    static void set(std::string const& sensor, int const value) { m_values[sensor] = value; }
+    static std::map<const std::string, int> const& database() { return m_values; }
+    static void clear() { m_values.clear(); modified = false; }
 
 private:
 
-    std::map<const std::string, int> values;
+    static std::map<const std::string, int> m_values;
+
+public:
+    static bool modified;// = false;
 };
 
 // *****************************************************************************
-//! \brief
+//! \brief Receptivity is the boolean expression stored in GRAFCET transitions
+//! that make a tramsition fireable or not. This class allows to parse simple
+//! boolean expressions and create an abstrqct syntaxt tree (AST). For simplicity
+//! reasons the syntax use reversed polish notation (RPN). Therefore expression
+//! such as "(a or b) and X0" will be written as "a b or X0 and".
 // *****************************************************************************
 class Receptivity
 {
 public:
 
+    std::string compile(std::string const& code, Net& net);
+    bool evaluate();
+
     // *************************************************************************
-    //! \brief
+    //! \brief Base class of boolean expression used as AST node.
     // *************************************************************************
     class BooleanExp
     {
     public:
 
         virtual ~BooleanExp() = default;
-        virtual bool evaluate(Sensors const&) const = 0;
+        virtual bool evaluate() const = 0;
     };
 
     // *************************************************************************
-    //! \brief
+    //! \brief Expression for GRAFCET place state. In GRAFCET places are named
+    //! steps and are named X0, X1 ... (while inside the editor places ID are
+    //! named P0, P1, ...) we are following the GRAFCET standard.
+    //! \note the GRAFCET net shall no remove the place !
     // *************************************************************************
     class StepExp : public BooleanExp
     {
     public:
 
-        StepExp(Net& net, std::string const& token);
-        virtual bool evaluate(Sensors const& sensors) const override;
+        //! \param[in] name Step (aka place0 name, i.e. "X0".
+        StepExp(Net& net, std::string const& name);
+        virtual bool evaluate() const override;
 
     private:
 
         Net& m_net;
-        size_t m_id; // Place id
+        //! \brief Place ID. The GRAFCET net shall no remove the place t let this
+        //! ID valid.
+        size_t m_id;
     };
 
     // *************************************************************************
-    //! \brief
+    //! \brief Expression for sensor variable name (i.e. "foo")
     // *************************************************************************
     class VariableExp : public BooleanExp
     {
@@ -95,10 +111,7 @@ public:
             : m_name(name)
         {}
 
-        virtual bool evaluate(Sensors const& sensors) const override
-        {
-            return sensors.lookup(m_name);
-        }
+        virtual bool evaluate() const override;
 
     private:
 
@@ -106,51 +119,44 @@ public:
     };
 
     // *************************************************************************
-    //! \brief
+    //! \brief Expression for constant (i.e. "true" and "false")
     // *************************************************************************
     class ConstExp : public BooleanExp
     {
     public:
 
-        ConstExp(std::string const& op1)
-        {
-            if (op1 == "true")
-                m_operand1 = true;
-            else
-                m_operand1 = false;
-        }
-
+        ConstExp(std::string const& operand);
         virtual ~ConstExp() = default;
-        virtual bool evaluate(Sensors const& sensors) const override
+        virtual bool evaluate() const override
         {
-            return m_operand1;
+            return m_operand;
         }
 
     private:
 
-        bool m_operand1;
+        bool m_operand;
     };
 
     // *************************************************************************
-    //! \brief
+    //! \brief Expression for negation (i.e. "foo !")
     // *************************************************************************
     class NotExp : public BooleanExp
     {
     public:
 
-        NotExp(std::shared_ptr<BooleanExp> op1)
-            : m_operand1(op1)
+        NotExp(std::shared_ptr<BooleanExp> operand)
+            : m_operand(operand)
         {}
 
         virtual ~NotExp() = default;
-        virtual bool evaluate(Sensors const& sensors) const override
+        virtual bool evaluate() const override
         {
-            return !m_operand1->evaluate(sensors);
+            return !m_operand->evaluate();
         }
 
     private:
 
-        std::shared_ptr<BooleanExp> m_operand1;
+        std::shared_ptr<BooleanExp> m_operand;
     };
 
     // *************************************************************************
@@ -165,9 +171,9 @@ public:
         {}
 
         virtual ~AndExp() = default;
-        virtual bool evaluate(Sensors const& sensors) const override
+        virtual bool evaluate() const override
         {
-            return m_operand1->evaluate(sensors) && m_operand2->evaluate(sensors);
+            return m_operand1->evaluate() && m_operand2->evaluate();
         }
 
     private:
@@ -188,9 +194,9 @@ public:
         {}
 
         virtual ~OrExp() = default;
-        virtual bool evaluate(Sensors const& sensors) const override
+        virtual bool evaluate() const override
         {
-            return m_operand1->evaluate(sensors) || m_operand2->evaluate(sensors);
+            return m_operand1->evaluate() || m_operand2->evaluate();
         }
 
     private:
@@ -200,26 +206,26 @@ public:
     };
 
     // *****************************************************************************
-    //! \brief
+    //! \brief Quick Reverse Polish Notation parser of boolean expression set inside
+    //! GRAFCET transitions (i.e. "a b . X0 + !" for "not((a and b) or X0)").
+    //! \fixme Currently management of bad syntax is not made (assert and throw).
     // *****************************************************************************
     class Parser
     {
     public:
 
         //--------------------------------------------------------------------------
-        //! \brief Rranslate the code of the receptivity to a given language.
+        //! \brief Translate the given RPN code of the receptivity to a desired
+        //! language. Currently supported languages are:
+        //!  - C language "C"
+        //!  - Structure Text language "ST".
         //--------------------------------------------------------------------------
         static std::string translate(std::string const& code, std::string const& lang);
 
         //--------------------------------------------------------------------------
         //! \brief Parse a postfix notation into an AST.
         //--------------------------------------------------------------------------
-        static std::shared_ptr<BooleanExp> parse(Net& net, std::string const& code, std::string& error);
-
-        //--------------------------------------------------------------------------
-        //! \brief Parse a postfix notation into an AST.
-        //--------------------------------------------------------------------------
-        static bool evaluate(Receptivity const recept, Sensors const& sensors);
+        static std::shared_ptr<BooleanExp> compile(std::string const& code, Net& net, std::string& error);
 
     private:
 
@@ -238,15 +244,21 @@ public:
         static std::vector<std::string> tokenizer(std::string const& s, std::string const& delimiter);
 
         //--------------------------------------------------------------------------
-        //! brief
+        //! brief Convert a token from the reverse polish notation into the desired
+        //! language (currently: C language or Structure Text language). If not found
+        //! the token is returned as it. 
         //--------------------------------------------------------------------------
         static std::string convert(std::string const& token, std::string const& lang);
     };
 
-public:
+private:
 
-    std::shared_ptr<BooleanExp> expression;
-    bool valid = false;
+    //! \brief Valid or invalid syntax (invalid may also mean not parsed).
+    bool m_valid = false;
+    //! \brief Abstract syntax tree of the boolean expression (GRAFCET transitivity).
+    std::shared_ptr<BooleanExp> m_ast;
+    //! \brief Parsing error
+    std::string m_error;
 };
 
 } // namespace tpne
