@@ -18,8 +18,9 @@
 // along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.
 //=============================================================================
 
-#include "Net/Exports/Exports.hpp"
 #include "TimedPetriNetEditor/PetriNet.hpp"
+#include "Net/Exports/Exports.hpp"
+#include "Net/Receptivities.hpp"
 #include <fstream>
 #include <cstring>
 
@@ -233,9 +234,7 @@ private:
         file << "    //-------------------------------------------------------------------------" << std::endl;
         if (net.type() == TypeOfNet::GRAFCET)
         {
-            // FIXME
-            file << "TODO Receptivity" << std::endl;
-            //file << "    bool T" << t.id << "() { return " << Receptivity::Parser::translate(t.caption, "C") << "; } const";
+            file << "    bool T" << t.id << "() { return " << Receptivity::Parser::translate(t.caption, "C") << "; } const";
         }
         else
         {
@@ -261,13 +260,11 @@ private:
     file << "    bool T[MAX_TRANSITIONS];" << std::endl;
     file << "    //! \\brief MQTT topic to communicate with the Petri net editor"  << std::endl;
     file << "    std::string m_topic = \"pneditor/" << name_space << "\";" << std::endl;
-    //FIXME
-    file << "TODO sensors" << std::endl;
-    //for (auto const& s: m_sensors.database())
-    //{
-    //    file << "    //! \\brief"  << std::endl;
-    //    file << "    bool " << s.first << " = " << s.second << ";" << std::endl;
-    //}
+    for (auto const& s: Sensors::instance().database())
+    {
+        file << "    //! \\brief"  << std::endl;
+        file << "    bool " << s.first << " = " << s.second << ";" << std::endl;
+    }
     file << "};" << std::endl;
     file << "" << std::endl;
     file << "} // namespace " << name_space << std::endl;

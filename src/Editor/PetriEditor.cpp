@@ -729,7 +729,6 @@ void Editor::inspector()
 
     // Transition captions and GRAFCET transitivities
     {
-        // FIXME parse and clear sensors if and only if we modified entrytext
         ImGui::Begin("Transitions");
         ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(0, 0));
         ImGui::Checkbox(m_states.show_transition_captions
@@ -738,29 +737,35 @@ void Editor::inspector()
                         &m_states.show_transition_captions);
         ImGui::PopStyleVar();
         ImGui::Separator();
-        //if (!editor.m_simulation.running)
-        //    editor.m_net.m_sensors.clear();
         ImGui::Text("%s", "Captions:");
-        for (auto& transition: m_net.transitions())
+        for (auto& t: m_net.transitions())
         {
-            ImGui::InputText(transition.key.c_str(), &transition.caption, readonly);
-            if (!m_simulation.running)
+            ImGui::InputText(t.key.c_str(), &t.caption, readonly);
+            std::vector<Receptivity> const& receptivities = m_simulation.receptivities();
+            if ((m_net.type() == TypeOfNet::GRAFCET) && (!receptivities.empty()) && (!m_simulation.running))
             {
-                //std::string err = editor.m_net.parse(transition, true);
-                //if (!err.empty())
-                //{
-                //    ImGui::TextColored(ImVec4(1.0f, 0.0f, 0.0f, 1.0f), "%s", err.c_str());
-                //}
+                Receptivity const& recp = receptivities[t.id];
+                // FIXME parse and clear sensors if and only if we modified entrytext
+                if (!recp.isValid()) // && recp.compiled()
+                {
+                    ImGui::TextColored(ImVec4(1.0f, 0.0f, 0.0f, 1.0f), "%s", recp.error().c_str());
+                }
             }
         }
         ImGui::End();
 
-        //ImGui::Begin("Sensors");
-        //for (auto const& it: editor.m_net.m_sensors.database())
-        //{
-        //    ImGui::SliderInt(it.first.c_str(), &it.second, 0, 1);
-        //}
-        //ImGui::End();
+        if (m_net.type() == TypeOfNet::GRAFCET)
+        {
+            if (m_simulation.running)
+            {
+                ImGui::Begin("Sensors");
+                for (auto& it: Sensors::instance().database())
+                {
+                    ImGui::SliderInt(it.first.c_str(), &it.second, 0, 1);
+                }
+                ImGui::End();
+            }
+        }
     }
 
     // Arc durations

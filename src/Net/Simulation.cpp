@@ -96,10 +96,22 @@ void Simulation::stateStarting()
         return ;
     }
 
+    // Reset states of the simulator
+    m_net.generateArcsInArcsOut();
+    m_initial_tokens = m_net.tokens();
+    shuffle_transitions(true);
+    m_timed_tokens.clear();
+    for (auto& a: m_net.arcs())
+    {
+        a.count = 0u;
+    }
+    m_net.resetReceptivies();
+
     // Check for GRAFCET if boolean expressions in transitivities have
     // not syntaxical errors.
     if (m_net.type() == TypeOfNet::GRAFCET)
     {
+        Sensors::instance().clear();
         m_receptivities.clear();
         m_receptivities.resize(m_net.transitions().size());
         for (auto const& it: m_net.transitions())
@@ -109,20 +121,9 @@ void Simulation::stateStarting()
             {
                 m_messages.setWarning(error);
                 running = false;
-                return ;  
+                return ;
             }
         }
-    }
-
-    // Reset states of the simulator
-    m_net.resetReceptivies();
-    m_net.generateArcsInArcsOut();
-    m_initial_tokens = m_net.tokens();
-    shuffle_transitions(true);
-    m_timed_tokens.clear();
-    for (auto& a: m_net.arcs())
-    {
-        a.count = 0u;
     }
 
     //
@@ -155,6 +156,7 @@ void Simulation::stateHalting()
     m_net.resetReceptivies();
     m_receptivities.clear();
     m_timed_tokens.clear();
+    Sensors::instance().clear();
     m_state = Simulation::State::Idle;
 }
 

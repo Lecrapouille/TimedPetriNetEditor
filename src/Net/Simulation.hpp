@@ -47,10 +47,8 @@ public:
 
     Simulation(Net& net, Messages& m_messages);
     void step(float const dt);
-    std::vector<TimedToken> const& timedTokens() const
-    {
-        return m_timed_tokens;
-    }
+    inline std::vector<TimedToken> const& timedTokens() const { return m_timed_tokens; }
+    inline std::vector<Receptivity> const& receptivities() const { return m_receptivities; }
 
 private:
 

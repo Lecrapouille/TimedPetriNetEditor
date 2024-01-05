@@ -635,26 +635,9 @@ bool Net::resetReceptivies()
 {
     bool res = true;
 
-    // Receptivities for GRAFCET are defined by sensors.
-    if (m_type == TypeOfNet::GRAFCET)
-    {
-#if 0 // FIXME
-        m_sensors.clear();
-        for (auto& transition: m_transitions)
-        {
-            std::string err = parse(transition, true);
-            if (!err.empty())
-            {
-                m_error.str("");
-                m_error << err;
-                res = false;
-            }
-        }
-#endif
-    }
     // For PetriNet set receptivities to false since we want the
     // user to click on desired transitions.
-    else if (m_type == TypeOfNet::PetriNet)
+    if (m_type == TypeOfNet::PetriNet)
     {
         for (auto& transition: m_transitions)
         {
@@ -662,7 +645,8 @@ bool Net::resetReceptivies()
         }
     }
     // For other type of nets (timed Petri net, graph events) the
-    // receptiviites are always true.
+    // receptivities are always true. For GRAFCET transition.receptivity
+    // is set by the simulation depending on the boolean expression.
     else
     {
         for (auto& transition: m_transitions)

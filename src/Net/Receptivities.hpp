@@ -39,18 +39,25 @@ class Net;
 class Sensors
 {
 public:
+
+    static Sensors& instance() { static Sensors sensor; return sensor; }
+
     //! \brief Get the value of the given sensor. Throw if the sensor is unkown.
-    static bool get(std::string const& sensor) { return m_values.at(sensor); modified = true; }
-    static void set(std::string const& sensor, int const value) { m_values[sensor] = value; }
-    static std::map<const std::string, int> const& database() { return m_values; }
-    static void clear() { m_values.clear(); modified = false; }
+    bool get(std::string const& sensor) { return m_values.at(sensor); modified = true; }
+    void set(std::string const& sensor, int const value) { m_values[sensor] = value; }
+    std::map<const std::string, int>& database() { return m_values; }
+    void clear() { m_values.clear(); modified = false; }
 
 private:
 
-    static std::map<const std::string, int> m_values;
+    Sensors() = default;
+
+private:
+
+    std::map<const std::string, int> m_values;
 
 public:
-    static bool modified;// = false;
+    bool modified = false;
 };
 
 // *****************************************************************************
@@ -65,6 +72,8 @@ class Receptivity
 public:
 
     std::string compile(std::string const& code, Net& net);
+    inline bool isValid() const { return m_valid; }
+    inline std::string const& error() const { return m_error; }
     bool evaluate();
 
     // *************************************************************************
@@ -246,7 +255,7 @@ public:
         //--------------------------------------------------------------------------
         //! brief Convert a token from the reverse polish notation into the desired
         //! language (currently: C language or Structure Text language). If not found
-        //! the token is returned as it. 
+        //! the token is returned as it.
         //--------------------------------------------------------------------------
         static std::string convert(std::string const& token, std::string const& lang);
     };

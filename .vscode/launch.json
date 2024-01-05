@@ -6,7 +6,7 @@
             "type": "cppdbg",
             "request": "launch",
             "program": "${workspaceFolder}/build/TimedPetriNetEditor",
-            "args": [ "${workspaceFolder}/data/examples/Howard2.json" ],
+            "args": [ "${workspaceFolder}/data/examples/GRAFCET.json" ],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}",
             "environment": [],

@@ -44,8 +44,8 @@ bool Receptivity::StepExp::evaluate() const
 bool Receptivity::VariableExp::evaluate() const
 {
     try {
-        return Sensors::get(m_name);
-    } 
+        return Sensors::instance().get(m_name);
+    }
     catch (...) {
         assert("Unkown variable");
         return false;
@@ -298,7 +298,7 @@ std::shared_ptr<Receptivity::BooleanExp> Receptivity::Parser::compile(
         }
         else if (isVariable(it))
         {
-            // TODO net.m_sensors.assign(it, false); // Default value
+            Sensors::instance().set(it, false); // Default value
             exprs.push(std::make_shared<VariableExp>(it));
         }
         else
@@ -316,7 +316,7 @@ std::string Receptivity::compile(std::string const& code, Net& net)
 {
     m_error.clear();
     m_ast = Receptivity::Parser::compile(code, net, m_error);
-    m_valid = !m_error.empty();
+    m_valid = m_error.empty();
     return m_error;
 }
 
