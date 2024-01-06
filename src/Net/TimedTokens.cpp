@@ -66,8 +66,6 @@ TimedToken::TimedToken(Arc& arc_,size_t const tokens_, TypeOfNet const type_)
         assert(false && "Unknown type of net");
         break;
     }
-
-    std::cout << "Magnitude: " << magnitude << " speed: " << speed << std::endl;
 }
 
 //------------------------------------------------------------------------------
@@ -80,7 +78,6 @@ bool TimedToken::update(float const dt)
     offset += dt * speed / magnitude;
     x = arc->from.x + (next.x - arc->from.x) * offset;
     y = arc->from.y + (next.y - arc->from.y) * offset;
-        std::cout << x << ", " << y << std::endl;
     return (offset >= 1.0);
 }
 
