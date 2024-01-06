@@ -29,6 +29,10 @@
 
 namespace tpne {
 
+//! \brief path of the file storing dear imgui widgets. Cannot be placed
+//! as member variable of Editor class.
+static std::string g_ini_filename = "imgui.ini";
+
 //--------------------------------------------------------------------------
 Editor::Editor(size_t const width, size_t const height,
                std::string const& title)
@@ -53,8 +57,8 @@ void Editor::startUp(std::string const& filepath)
 
     // Set imgui.ini loading/saving location
     ImGuiIO &io = ImGui::GetIO();
-    m_states.ini_filename = m_path.expand("imgui.ini").c_str();
-    io.IniFilename = m_states.ini_filename.c_str();
+    g_ini_filename = m_path.expand("imgui.ini").c_str();
+    io.IniFilename = g_ini_filename.c_str();
     std::cout << "imgui.ini path: " << io.IniFilename << std::endl;
 
     // Setup fonts

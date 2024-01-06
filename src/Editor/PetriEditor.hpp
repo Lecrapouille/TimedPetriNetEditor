@@ -120,7 +120,6 @@ private:
         ImVec2 viewport_center;
         std::string title;
         bool request_quitting = false;
-        std::string ini_filename = "imgui.ini";
     };
 
     // ************************************************************************
