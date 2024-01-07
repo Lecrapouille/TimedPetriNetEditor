@@ -1,22 +1,22 @@
 {
-  "revision": 2,
+  "revision": 3,
+  "type": "Timed Petri net",
   "nets": [
     {
        "name": "JPQ",
-       "type": "Timed event graph",
        "places": [
-            { "id": 0, "caption": "P0", "tokens": 1, "x": 375, "y": 288 },
-            { "id": 1, "caption": "P1", "tokens": 1, "x": 372, "y": 173 },
-            { "id": 2, "caption": "P2", "tokens": 1, "x": 138, "y": 211 },
-            { "id": 3, "caption": "P3", "tokens": 0, "x": 201, "y": 304 },
-            { "id": 4, "caption": "P4", "tokens": 1, "x": 621, "y": 211 },
-            { "id": 5, "caption": "P5", "tokens": 0, "x": 613, "y": 114 }
+            { "id": 0, "caption": "P0", "tokens": 1, "x": 291, "y": 171 },
+            { "id": 1, "caption": "P1", "tokens": 1, "x": 295, "y": 77 },
+            { "id": 2, "caption": "P2", "tokens": 1, "x": 85, "y": 82 },
+            { "id": 3, "caption": "P3", "tokens": 0, "x": 144, "y": 159 },
+            { "id": 4, "caption": "P4", "tokens": 1, "x": 546, "y": 164 },
+            { "id": 5, "caption": "P5", "tokens": 0, "x": 459, "y": 90 }
        ],
        "transitions": [
-            { "id": 0, "caption": "T0", "x": 216, "y": 111, "angle": 0 },
-            { "id": 1, "caption": "T1", "x": 380, "y": 111, "angle": 0 },
-            { "id": 2, "caption": "T2", "x": 102, "y": 111, "angle": 0 },
-            { "id": 3, "caption": "T3", "x": 516, "y": 111, "angle": 0 }
+            { "id": 0, "caption": "Node 0", "x": 216, "y": 111, "angle": 0 },
+            { "id": 1, "caption": "Node 1", "x": 380, "y": 111, "angle": 0 },
+            { "id": 2, "caption": "y(k)", "x": 86, "y": 159, "angle": 0 },
+            { "id": 3, "caption": "u(k)", "x": 546, "y": 76, "angle": 0 }
        ],
        "arcs": [
             { "from": "T0", "to": "P0", "duration": 2 },

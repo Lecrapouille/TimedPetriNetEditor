@@ -11,19 +11,34 @@ source ../.makefile/download-external-libs.sh
 ### License: MIT
 cloning ocornut/imgui -b docking
 
-### Dear ImGui backend for use with SFML
+### Immediate Mode Plotting
 ### License: MIT
-cloning SFML/imgui-sfml
-cp imgui-sfml/imconfig-SFML.h imgui/imconfig.h
+cloning epezent/implot
+
+### File Dialog for Dear ImGui
+### License: MIT
+cloning aiekick/ImGuiFileDialog
+
+### A simple and easy-to-use library to enjoy videogames programming
+### License: Zlib
+cloning raysan5/raylib
+
+### A Raylib integration with DearImGui
+### License: Zlib
+cloning raylib-extras/rlImGui
+
+### JSON for Modern C++
+### License: MIT
+cloning nlohmann/json
+
+### TinyXML2 is a simple, small, efficient, C++ XML parser.
+### License: Zlib
+cloning leethomason/tinyxml2
 
 ### Class wrapping client MQTT (mosquitto lib)
 ### License: MIT
 cloning Lecrapouille/MQTT
 
-### Portable GUI dialogs library, C++11, single-header
-### License: WTFPL
-cloning samhocevar/portable-file-dialogs
-
-### JSON for Modern C++
-### License: MIT
-cloning nlohmann/json
+### C++ implementation of sparse matrix using CRS (Compressed Row Storage) format
+### License: none
+#cloning uestla/Sparse-Matrix

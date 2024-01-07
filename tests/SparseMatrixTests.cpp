@@ -21,16 +21,18 @@
 #include "main.hpp"
 #define protected public
 #define private public
-#  include "src/utils/Utils.hpp"
+#  include "TimedPetriNetEditor/SparseMatrix.hpp"
 #undef protected
 #undef private
 
+using namespace ::tpne;
+
 //------------------------------------------------------------------------------
-static std::string stream(SparseMatrix const& M, bool display_for_julia)
+static std::string stream(SparseMatrix<double> const& M, bool display_for_julia)
 {
     std::stringstream ss;
-    SparseMatrix::display_for_julia = display_for_julia;
-    SparseMatrix::display_as_dense = false;
+    SparseMatrix<double>::display_for_julia = display_for_julia;
+    SparseMatrix<double>::display_as_dense = false;
     ss << M;
     return ss.str();
 }
@@ -38,7 +40,7 @@ static std::string stream(SparseMatrix const& M, bool display_for_julia)
 //------------------------------------------------------------------------------
 TEST(TestEventGraph, TestSparseMatrixConstructor)
 {
-    SparseMatrix M;
+    SparseMatrix<double> M;
 
     ASSERT_EQ(M.i.size(), 0u);
     ASSERT_EQ(M.j.size(), 0u);
@@ -48,7 +50,7 @@ TEST(TestEventGraph, TestSparseMatrixConstructor)
     ASSERT_STREQ(stream(M, true).c_str(), "[], [], MP([]), 0, 0");
     ASSERT_STREQ(stream(M, false).c_str(), "0x0 sparse (max,+) matrix with 0 stored entry:\n[], [], MP([])");
 
-    M.dim(4u, 5u);
+    M.reshape(4u, 5u);
     ASSERT_EQ(M.i.size(), 0u);
     ASSERT_EQ(M.j.size(), 0u);
     ASSERT_EQ(M.d.size(), 0u);
@@ -57,7 +59,7 @@ TEST(TestEventGraph, TestSparseMatrixConstructor)
     ASSERT_STREQ(stream(M, true).c_str(), "[], [], MP([]), 5, 4");
     ASSERT_STREQ(stream(M, false).c_str(), "5x4 sparse (max,+) matrix with 0 stored entry:\n[], [], MP([])");
 
-    M.add(0u, 0u, 42.0);
+    M.set(0u, 0u, 42.0);
     ASSERT_EQ(M.i.size(), 1u);
     ASSERT_EQ(M.j.size(), 1u);
     ASSERT_EQ(M.d.size(), 1u);
@@ -69,7 +71,7 @@ TEST(TestEventGraph, TestSparseMatrixConstructor)
     ASSERT_STREQ(stream(M, true).c_str(), "[1], [1], MP([42]), 5, 4");
     ASSERT_STREQ(stream(M, false).c_str(), "5x4 sparse (max,+) matrix with 1 stored entry:\n[0], [0], MP([42])");
 
-    M.add(4u, 5u, 43.0);
+    M.set(4u, 5u, 43.0);
     ASSERT_EQ(M.i.size(), 2u);
     ASSERT_EQ(M.j.size(), 2u);
     ASSERT_EQ(M.d.size(), 2u);
@@ -85,7 +87,7 @@ TEST(TestEventGraph, TestSparseMatrixConstructor)
     ASSERT_STREQ(stream(M, false).c_str(), "5x4 sparse (max,+) matrix with 2 stored entry:\n[0, 4], [0, 5], MP([42, 43])");
 
     // Check double insertion is possible (no security check)
-    M.add(4u, 5u, 44.0);
+    M.set(4u, 5u, 44.0);
     ASSERT_EQ(M.i.size(), 3u);
     ASSERT_EQ(M.j.size(), 3u);
     ASSERT_EQ(M.d.size(), 3u);

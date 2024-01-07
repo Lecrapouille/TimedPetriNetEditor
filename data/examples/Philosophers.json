@@ -1,9 +1,9 @@
 {
-  "revision": 2,
+  "revision": 3,
+  "type": "Petri net",
   "nets": [
     {
        "name": "Philosophers",
-       "type": "Petri net",
        "places": [
             { "id": 0, "caption": "Phi0 Not Eating", "tokens": 1, "x": 150, "y": 100 },
             { "id": 1, "caption": "Phi1 Eating", "tokens": 0, "x": 300, "y": 350 },

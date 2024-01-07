@@ -1,9 +1,9 @@
 {
-  "revision": 2,
+  "revision": 3,
+  "type": "Petri net",
   "nets": [
     {
        "name": "FourRoadJunctions",
-       "type": "Petri net",
        "places": [
             { "id": 0, "caption": "P0", "tokens": 3, "x": 200, "y": 125 },
             { "id": 1, "caption": "P1", "tokens": 0, "x": 125, "y": 275 },

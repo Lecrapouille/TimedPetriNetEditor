@@ -37,48 +37,49 @@ include $(M)/Makefile.header
 ###################################################
 # Inform Makefile where to find header files
 #
-INCLUDES += -I$(P) -I$(P)/src -I$(P)/src/utils
-INCLUDES += -I$(P)/src/Renderer
-INCLUDES += -I$(P)/external/imgui -I$(P)/external/imgui-sfml
-INCLUDES += -I$(P)/external/MQTT/include -I$(P)/external
-INCLUDES += -I$(P)/external/portable-file-dialogs
-INCLUDES += -I$(P)/external/json/include
+INCLUDES += -I$(P)/include -I$(P)/src -I$(P)/external
 
 ###################################################
 # Inform Makefile where to find *.cpp and *.o files
 #
-VPATH += $(P)/src $(P)/src/utils $(P)/src/julia
-VPATH += $(P)/src/Renderer $(P)/external/MQTT/src
-VPATH += $(P)/external/imgui $(P)/external/imgui-sfml
+VPATH += $(P)/include $(P)/src $(P)/src/Utils $(P)/src/Net
+VPATH += $(P)/src/Net/Imports VPATH += $(P)/src/Net/Exports
+VPATH += $(P)/src/Application $(P)/src/Editor $(P)/src/Editor/DearImGui
 
 ###################################################
-# Reduce warnings
+# Set json Library.
 #
-#DEFINES += -Wno-undef -Wno-switch-enum -Wno-sign-conversion -Wno-float-equal -Wno-shadow
-#DEFINES += -Wno-keyword-macro -Wno-defaulted-function-deleted
+INCLUDES += -I$(THIRDPART)/json/include
 
 ###################################################
-# Reduce warnings
+# Set xml Library.
 #
-DEFINES += -Wno-undef -Wno-switch-enum -Wno-sign-conversion -Wno-float-equal
-DEFINES += -Wno-deprecated-copy-dtor -Wno-defaulted-function-deleted
-# Aaaargf needed because of imgui warnings
-DEFINES += -Wno-old-style-cast -Wno-unused-parameter
-DEFINES += -Wno-conversion -Wno-cast-qual
+VPATH += $(THIRDPART)/tinyxml2
+OBJS += tinyxml2.o
 
 ###################################################
 # Make the list of compiled files for tests
 #
-OBJS += Receptivities.o PetriNet.o Howard.o
-OBJS += PetriNetTests.o AnimationTests.o EventGraphTests.o
-OBJS += LoadJSONTests.o HowardTests.o SparseMatrixTests.o
-OBJS += main.o
+OBJS += Path.o Howard.o Utils.o TimedTokens.o Receptivities.o
+OBJS += PetriNet.o Algorithms.o Simulation.o
+OBJS += ExportGrafcetCpp.o ExportJSON.o ExportSymfony.o ExportPnEditor.o
+OBJS += ExportPetriLaTeX.o ExportJulia.o ExportGraphviz.o ExportDrawIO.o
+OBJS += ExportPNML.o Exports.o ImportPNML.o ImportJSON.o Imports.o
+OBJS += PetriNetTests.o LoadJSONTests.o HowardTests.o EventGraphTests.o
+OBJS += SparseMatrixTests.o TimedTokensTests.o main.o
+
+###################################################
+# MacOS X
+#
+ifeq ($(ARCHI),Darwin)
+LINKER_FLAGS += -framework CoreFoundation
+endif
 
 ###################################################
 # Set Libraries. For knowing which libraries
 # is needed please read the external/README.md file.
 #
-PKG_LIBS += sfml-graphics gtest gmock
+PKG_LIBS += gtest gmock
 
 ###################################################
 # Compile the project

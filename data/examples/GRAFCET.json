@@ -1,9 +1,9 @@
 {
-  "revision": 2,
+  "revision": 3,
+  "type": "GRAFCET",
   "nets": [
     {
        "name": "GRAFCET",
-       "type": "GRAFCET",
        "places": [
             { "id": 0, "caption": "P0", "tokens": 1, "x": 332, "y": 87 },
             { "id": 1, "caption": "P1", "tokens": 0, "x": 246, "y": 252 },

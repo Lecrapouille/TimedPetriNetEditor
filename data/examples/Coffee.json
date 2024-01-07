@@ -1,13 +1,13 @@
 {
-  "revision": 2,
+  "revision": 3,
+  "type": "Timed Petri net",
   "nets": [
     {
        "name": "Coffee",
-       "type": "Timed Petri net",
        "places": [
             { "id": 0, "caption": "Cold", "tokens": 1, "x": 239, "y": 104 },
             { "id": 1, "caption": "Hot", "tokens": 0, "x": 245, "y": 251 },
-            { "id": 2, "caption": "Ready", "tokens": 0, "x": 392, "y": 90 },
+            { "id": 2, "caption": "Ready", "tokens": 1, "x": 392, "y": 90 },
             { "id": 3, "caption": "Coin Inserted", "tokens": 0, "x": 598, "y": 172 },
             { "id": 4, "caption": "Accepted", "tokens": 0, "x": 387, "y": 250 }
        ],

@@ -1,6 +1,8 @@
 ??? 2023: version 0.4.0 (WIP)
         * Major code refacto
-        * Use DearIMGui for the IHM
+        * Use DearIMGui for the IHM, no longer SFML
+        * Compile with Emscripten for online version
+        * Fix bug in JSON format
 
 May 2023: version 0.3.0
         * More export formats

@@ -1,31 +1,17 @@
-##=====================================================================
-## TimedPetriNetEditor: A timed Petri net editor.
-## Copyright 2021 -- 2023 Quentin Quadrat <lecrapouille@gmail.com>
-##
-## This file is part of PetriEditor.
-##
-## PetriEditor is free software: you can redistribute it and/or modify it
-## under the terms of the GNU General Public License as published by
-## the Free Software Foundation, either version 3 of the License, or
-## (at your option) any later version.
-##
-## This program is distributed in the hope that it will be useful, but
-## WITHOUT ANY WARRANTY; without even the implied warranty of
-## MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-## General Public License for more details.
-##
-## You should have received a copy of the GNU General Public License
-## along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.
-##=====================================================================
-
 ###################################################
 # Project definition
 #
 PROJECT = TimedPetriNetEditor
 TARGET = $(PROJECT)
 DESCRIPTION = Timed Petri Net Editor
-STANDARD = --std=c++11
+STANDARD = --std=c++14
 BUILD_TYPE = debug
+
+###################################################
+# Select backend for dear im gui: RayLib or GLFW3
+#
+BACKEND ?= RayLib
+# BACKEND ?= GLFW3
 
 ###################################################
 # Location of the project directory and Makefiles
@@ -35,77 +21,157 @@ M := $(P)/.makefile
 include $(M)/Makefile.header
 
 ###################################################
-# Inform Makefile where to find header files
+# Inform Makefile where to find *.cpp files
 #
-INCLUDES += -I$(P) -I$(P)/src -I$(P)/src/utils
-INCLUDES += -I$(P)/src/Renderer
-INCLUDES += -I$(P)/external/imgui -I$(P)/external/imgui/misc/cpp
-INCLUDES += -I$(P)/external/imgui-sfml
-INCLUDES += -I$(P)/external/MQTT/include -I$(P)/external
-INCLUDES += -I$(P)/external/portable-file-dialogs
-INCLUDES += -I$(P)/external/json/include
+VPATH += $(P)/include $(P)/src $(P)/src/Utils $(P)/src/Net
+VPATH += $(P)/src/Net/Imports VPATH += $(P)/src/Net/Exports
+VPATH += $(P)/src/Application $(P)/src/Editor $(P)/src/Editor/DearImGui
 
 ###################################################
-# Inform Makefile where to find *.cpp and *.o files
+# Inform Makefile where to find header files
 #
-VPATH += $(P)/src $(P)/src/utils $(P)/src/julia
-VPATH += $(P)/src/Renderer $(P)/external/MQTT/src
-VPATH += $(P)/external/imgui $(P)/external/imgui-sfml
-VPATH += $(P)/external/imgui/misc/cpp
+INCLUDES += -I$(P)/include -I$(P)/src -I$(P)/external
 
 ###################################################
 # Project defines
 #
-DEFINES += -DDATADIR=\"$(DATADIR)\"
+DEFINES += -DDATADIR=\"$(DATADIR):$(abspath $(P))/data/:data/\"
 
 ###################################################
 # Reduce warnings
 #
 CCFLAGS += -Wno-sign-conversion -Wno-float-equal
-CXXFLAGS += -Wno-undef -Wno-switch-enum
+CXXFLAGS += -Wno-undef -Wno-switch-enum -Wno-enum-compare
 
 ###################################################
-# Make the list of compiled files used both by the
-# library and application
+# Linkage
 #
-IMGUI_OBJS = imgui_stdlib.o imgui.o imgui_widgets.o imgui_draw.o imgui_tables.o imgui-SFML.o DearImGui.o
-COMMON_OBJS = MQTT.o Howard.o KeyBindings.o Application.o Receptivities.o PetriNet.o HMI.o PetriEditor.o
+LINKER_FLAGS += -ldl -lpthread
 
 ###################################################
-# Make the list of compiled files for the library
+# Set thirdpart Raylib
 #
-LIB_OBJS += $(COMMON_OBJS) Julia.o
+ifeq ($(BACKEND),RayLib)
+INCLUDES += -I$(THIRDPART)/raylib/src
+THIRDPART_LIBS += $(abspath $(THIRDPART)/raylib/src/$(ARCHI)/libraylib.a)
+
+ifeq ($(ARCHI),Emscripten)
+# We tell the linker that the game/library uses GLFW3
+# library internally, it must be linked automatically
+# (emscripten provides the implementation)
+LINKER_FLAGS += -s USE_GLFW=3
+# Add this flag ONLY in case we are using ASYNCIFY code
+LINKER_FLAGS += -s ASYNCIFY
+# For linking glfwGetProcAddress().
+LINKER_FLAGS += -s GL_ENABLE_GET_PROC_ADDRESS
+# All webs need a "shell" structure to load and run the game,
+# by default emscripten has a `shell.html` but we can provide
+# our own.
+LINKER_FLAGS += --shell-file $(THIRDPART)/raylib/src/shell.html
+endif
+endif
 
 ###################################################
-# Make the list of compiled files for the application
+# Dear ImGui backends: Raylib
 #
-OBJS += $(IMGUI_OBJS) $(COMMON_OBJS) main.o
+ifeq ($(BACKEND),RayLib)
+VPATH += $(THIRDPART)/rlImGui
+VPATH += $(P)/src/Application/DearImGui/Backends/RayLib
+INCLUDES += -I$(THIRDPART)/rlImGui
+INCLUDES += -I$(P)/src/Application/DearImGui/Backends/RayLib
+DEARIMGUI_BACKEND_OBJS += rlImGui.o
+endif
 
 ###################################################
-# Set SFML Library.
+# Dear ImGui backends: OpenGL/GLFW3
 #
-PKG_LIBS += sfml-graphics
+ifeq ($(BACKEND),GLFW3)
+VPATH += $(P)/src/Application/DearImGui/Backends/GLFW3
+INCLUDES += -I$(P)/src/Application/DearImGui/Backends/GLFW3
+DEARIMGUI_BACKEND_OBJS += imgui_impl_glfw.o imgui_impl_opengl3.o
+endif
+
+###################################################
+# Set thirdpart Dear ImGui
+#
+INCLUDES += -I$(THIRDPART)/imgui -I$(THIRDPART)/imgui/backends -I$(THIRDPART)/imgui/misc/cpp
+VPATH += $(THIRDPART)/imgui $(THIRDPART)/imgui/backends $(THIRDPART)/imgui/misc/cpp
+DEARIMGUI_OBJS += imgui_widgets.o imgui_draw.o imgui_tables.o imgui.o imgui_stdlib.o
+# DEARIMGUI_OBJS += imgui_demo.o
+
+###################################################
+# Set thirdpart Dear ImGui Plot
+#
+VPATH += $(THIRDPART)/implot
+INCLUDES += -I$(THIRDPART)/implot
+DEARIMGUI_OBJS += implot_items.o implot.o
+
+###################################################
+# Set thirdpart file dialog
+VPATH += $(THIRDPART)/ImGuiFileDialog
+INCLUDES += -I$(THIRDPART)/ImGuiFileDialog
+DEARIMGUI_OBJS += ImGuiFileDialog.o
 
 ###################################################
 # Set MQTT Library.
 #
+ifneq ($(ARCHI),Emscripten)
+INCLUDES += -I$(THIRDPART) -I$(THIRDPART)/MQTT/include
+VPATH += $(THIRDPART)/MQTT/src
 DEFINES += -DMQTT_BROKER_ADDR=\"localhost\"
 DEFINES += -DMQTT_BROKER_PORT=1883
 PKG_LIBS += libmosquitto
+endif
 
 ###################################################
-# Link OpenGL needed by imgui-sfml
+# Set json ibrary.
+#
+INCLUDES += -I$(THIRDPART)/json/include
+
+###################################################
+# Set xml Library.
+#
+VPATH += $(THIRDPART)/tinyxml2
+LIB_OBJS += tinyxml2.o
+
+###################################################
+# OpenGL: glfw and glew libraries
 #
 ifeq ($(ARCHI),Darwin)
-DEFINES += -DGL_SILENCE_DEPRECATION
 INCLUDES += -I/usr/local/include -I/opt/local/include
 LINKER_FLAGS += -framework OpenGL -framework Cocoa
 LINKER_FLAGS += -framework IOKit -framework CoreVideo
 LINKER_FLAGS += -L/usr/local/lib -L/opt/local/lib
+LINKER_FLAGS += -lGLEW -lglfw
 else ifeq ($(ARCHI),Linux)
-LINKER_FLAGS += -lGLU -lGL
-else
-$(error Unknown architecture)
+LINKER_FLAGS += -lGL
+PKG_LIBS += --static glfw3
+else ifneq ($(ARCHI),Emscripten)
+$(error Unknown architecture $(ARCHI) for OpenGL)
+endif
+
+###################################################
+# Check if Dear im gui backend has been set
+#
+ifeq ($(DEARIMGUI_BACKEND_OBJS),)
+$(error "Define BACKEND either as RayLib or GLFW3")
+endif
+
+ifeq ($(ARCHI),Emscripten)
+ifneq ($(BACKEND),RayLib)
+$(warning "Force RayLib backend for compiling with Emscripten")
+BACKEND := RayLib
+endif
+endif
+
+###################################################
+# Embed assets for web version. Assets shall be
+# present inside $(BUILD) folder.
+#
+ifeq ($(ARCHI),Emscripten)
+LINKER_FLAGS += --preload-file examples
+LINKER_FLAGS += --preload-file data
+LINKER_FLAGS += -s FORCE_FILESYSTEM=1
 endif
 
 ###################################################
@@ -119,9 +185,35 @@ LINKER_FLAGS += -framework CoreFoundation
 endif
 
 ###################################################
+# Make the list of compiled files for the application
+#
+LIB_OBJS += Path.o Howard.o Utils.o TimedTokens.o Receptivities.o
+LIB_OBJS += PetriNet.o Algorithms.o Simulation.o History.o
+LIB_OBJS += ExportJSON.o ExportSymfony.o ExportPnEditor.o
+LIB_OBJS += ExportPetriLaTeX.o ExportJulia.o ExportGraphviz.o ExportDrawIO.o
+LIB_OBJS += ExportGrafcetCpp.o ImportPNML.o ExportPNML.o Exports.o
+LIB_OBJS += ImportJSON.o Imports.o
+OBJS += $(DEARIMGUI_BACKEND_OBJS) $(DEARIMGUI_OBJS)
+OBJS += $(LIB_OBJS)
+OBJS += DearUtils.o Drawable.o Application.o PetriEditor.o main.o
+
+###################################################
 # Compile the project, the static and shared libraries
 .PHONY: all
-all: $(TARGET) $(STATIC_LIB_TARGET) $(SHARED_LIB_TARGET) $(PKG_FILE)
+all: copy-assets $(STATIC_LIB_TARGET) $(SHARED_LIB_TARGET) $(PKG_FILE) $(TARGET)
+
+###################################################
+# Copy data inside BUILD to allow emscripten to embedded them
+.PHONY: copy-assets
+copy-assets: | $(BUILD)
+ifeq ($(ARCHI),Emscripten)
+	@$(call print-to,"Copying assets","$(TARGET)","$(BUILD)","")
+	@mkdir -p $(BUILD)/data
+	@mkdir -p $(BUILD)/examples
+	@cp $(P)/data/examples/*.json $(BUILD)/examples
+	@cp $(P)/data/font.ttf $(BUILD)/data
+	@cp $(P)/data/imgui.ini $(BUILD)/data
+endif
 
 ###################################################
 # Compile and launch unit tests and generate the code coverage html report.
