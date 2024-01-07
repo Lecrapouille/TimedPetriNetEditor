@@ -3,11 +3,9 @@ on:
   push:
     branches:
       - master
-      - dev-refactor
   pull_request:
     branches:
       - master
-      - dev-refactor
 
 jobs:
   non_regression_linux:
