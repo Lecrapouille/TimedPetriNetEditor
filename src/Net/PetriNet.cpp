@@ -83,7 +83,7 @@ size_t Place::decrement(size_t const count)
 }
 
 //------------------------------------------------------------------------------
-bool Transition::isEnabled() const
+bool Transition::isValidated() const
 {
     // Transition source will always produce tokens.
     if (arcsIn.size() == 0u)
@@ -101,7 +101,7 @@ bool Transition::isEnabled() const
 }
 
 //------------------------------------------------------------------------------
-size_t Transition::howManyTokensCanBurnt() const
+size_t Transition::countBurnableTokens() const
 {
     // Transition source will fire one token iff the animated token transitioning
     // along the arcs has reached the Place (in this receptivity becomes true ...

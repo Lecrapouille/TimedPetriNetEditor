@@ -201,9 +201,9 @@ void Simulation::stateSimulating(float const dt)
             // we can in a single action but we can also try to burn tokens
             // one by one and randomize the transitions.
             size_t tokens = 0u;
-            if (trans->canFire())
+            if (trans->isFireable())
             {
-                tokens = trans->howManyTokensCanBurnt();
+                tokens = trans->countBurnableTokens();
             }
 
             if (tokens > 0u)

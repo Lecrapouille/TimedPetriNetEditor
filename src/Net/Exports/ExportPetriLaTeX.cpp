@@ -67,7 +67,7 @@ std::string exportToPetriLaTeX(Net const& net, std::string const& filename)
     file << std::endl << "% Transitions" << std::endl;
     for (auto const& t: net.transitions())
     {
-        std::string color = (t.canFire() ? "green" : "red");
+        std::string color = (t.isFireable() ? "green" : "red");
 
         file << "\\node[transition, "
              << "label=above:$" << t.caption << "$, "

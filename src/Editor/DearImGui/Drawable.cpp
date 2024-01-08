@@ -229,19 +229,19 @@ void drawTransition(ImDrawList* draw_list, Transition const& transition,
     // Color of the transition: green if validated else yellow if enabled
     // else color is fadding value.
     ImU32 color;
-    if (transition.canFire())
+    if (transition.isFireable())
     {
         color = TRANS_FIREABLE_COLOR;
-    }
-    else if (transition.isEnabled())
-    {
-        color = (type == TypeOfNet::GRAFCET)
-              ? TRANS_ENABLED_COLOR : TRANS_FIREABLE_COLOR;
     }
     else if (transition.isValidated())
     {
         color = (type == TypeOfNet::PetriNet)
               ? TRANS_VALIDATED_COLOR : FILL_COLOR(alpha);
+    }
+    else if (transition.receptivity)
+    {
+        color = (type == TypeOfNet::GRAFCET)
+              ? TRANS_ENABLED_COLOR : TRANS_FIREABLE_COLOR;
     }
     else
     {

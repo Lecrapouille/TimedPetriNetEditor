@@ -68,7 +68,7 @@ std::string exportToDrawIO(Net const& net, std::string const& filename)
     // Transitions
     for (auto const& t: net.transitions())
     {
-        std::string color = (t.canFire() ? "green" : "red");
+        std::string color = (t.isFireable() ? "green" : "red");
 
         file << "        <mxCell id=\"" << t.key << "\" value=\"" << t.caption
              << "\" style=\"whiteSpace=wrap;html=1;aspect=fixed;\" vertex=\"1\" parent=\"1\">\n"

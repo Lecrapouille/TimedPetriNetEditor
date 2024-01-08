@@ -43,5 +43,6 @@ You have to git clone and install it manually.
 
 ## Export to C++ code
 
-If your net is a GRAFCET (SFC in English) you can generate the C++ code.
+If your net is a GRAFCET (GRAphe Fonctionnel de Commande Etapes-Transitions in French,
+aka Sequential Function Chart (SFC) in English) you can generate the C++ code.
 More details [here](grafcet.md).
