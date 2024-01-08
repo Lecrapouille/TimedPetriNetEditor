@@ -55,7 +55,7 @@ std::string exportToGraphviz(Net const& net, std::string const& filename)
     file << "node [shape=box, color=red]" << std::endl;
     for (auto const& t: net.transitions())
     {
-        if (t.canFire())
+        if (t.isFireable())
         {
             file << "  " << t.key << " [label=\""
                  << t.caption << "\", color=green];"

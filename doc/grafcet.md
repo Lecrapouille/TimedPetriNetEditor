@@ -1,5 +1,8 @@
 # Generate C++ code file (GRAFCET aka sequential function chart)
 
+GRAFCET (GRAphe Fonctionnel de Commande Etapes-Transitions in French),
+aka SFC (Sequential Function Chart) in English.
+
 After watching this nice French YouTube video https://youtu.be/v5FwJvtGaEw, in
 which GRAFCET is created manually in C for Arduino, I extended my editor for
 generating GRAFCET in a single C++ header file. Since my project mainly concerns

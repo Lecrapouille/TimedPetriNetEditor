@@ -36,29 +36,35 @@ namespace tpne {
 
 class Arc;
 
-//--------------------------------------------------------------------------
-//! \brief The type of net (GRAFCET, timed Petri net ...) controls the
-//! simulation (for example we cannot have more than one token in a Place).
-//--------------------------------------------------------------------------
+//------------------------------------------------------------------------------
+//! \brief Enum determining the type of net (GRAFCET, timed Petri net ...) and
+//! defining the type of simulation (for example, GRAFCET cannot have more than
+//! one token in a step ...).
+//! \note: We do not use inheritance, if-then-else on the type of net is used
+//! to modify the behavior.
+//------------------------------------------------------------------------------
 enum class TypeOfNet
 {
-    //! \brief The user has to click on transitions to fire.
-    //! Tokens are burnt one by one.
+    //! \brief The user has to click on fireable transitions to burn tokens.
+    //! Tokens in incoming places are burnt one by one.
     PetriNet,
-    //! \brief Is a Petri with duration on arcs transition -> place. When
-    //! transitions are enables, firing is automatic, on divergence
-    //! transition, the firing is shuffle and the maximum of tokens are
-    //! burnt in once. The user cannot click to transitions to fire.
+    //! \brief Is a Petri with duration on arcs transition -> place.
+    //! Receptivities are set to true. When transitions are enabled (when all
+    //! immediate incoming places have at least one token), the fire is
+    //! automaticaly made (The user cannot click to transitions to fire). The
+    //! policy concerning divergence transitions: the maximum of tokens are
+    //! burnt in once but tokens are shuffled along arcs.
     TimedPetriNet,
     //! \brief Is a timed Petri where all places have a single input arc and
-    //! a single output arc. TODO This mode is not yet implemented: the
-    //! editor shall not display places.
+    //! a single output arc. TODO currently the net is displayed ugly!
     TimedEventGraph,
-    //! \brief Is a Petri net used for making automata: Places do actions
-    //! and receptivities are linked to sensors. Steps (the name for Places)
-    //! have at maximum one token (1-S net). TODO This mode is partially
-    //! implemented: partial GRAFCET norm is respected, GUI does not allow
-    //! to simulated actions and sensors.
+    //! \brief Is a Petri net used for making industrial automata (productive):
+    //! Places are named Steps and do discrete actions. Transitions have boolean
+    //! expression (named receptivities aka conditions) linked to sensors
+    //! (i.e. door closed and alarm off). Steps have at maximum one token (aka
+    //! 1-S net). TODO This mode is partially implemented: partial GRAFCET norm
+    //! is respected, GUI does not allow to simulated actions inside the
+    //! simulator.
     GRAFCET
     // TODO state machine
 };
@@ -105,21 +111,21 @@ public:
     }
 
     //--------------------------------------------------------------------------
-    //! \brief Needed to remove compilation warnings with clang++ and MacOSx.
+    //! \brief Needed because this class has constant member variables.
     //--------------------------------------------------------------------------
     Node(Node const& other)
         : Node(other.type, other.id, other.caption, other.x, other.y)
     {}
 
     //--------------------------------------------------------------------------
-    //! \brief Needed to remove compilation warnings with clang++ and MacOSx.
+    //! \brief Needed because this class has constant member variables.
     //--------------------------------------------------------------------------
     Node(Node&& other)
         : Node(other.type, other.id, other.caption, other.x, other.y)
     {}
 
     //--------------------------------------------------------------------------
-    //! \brief Needed to remove compilation warnings with clang++ and MacOSx.
+    //! \brief Needed because this class has constant member variables.
     //--------------------------------------------------------------------------
     Node& operator=(Node&& other)
     {
@@ -130,40 +136,43 @@ public:
 
 public:
 
-    //! \brief Type of nodes: Petri Place or Petri Transition .Once created it is
-    //! not supposed to be changed.
+    //! \brief Type of nodes: Petri Place or Petri Transition. Once created, it
+    //! is not supposed to be changed.
     Type const type;
     //! \brief Unique identifier (auto-incremented from 0 by the derived class).
-    //! Once created it is not supposed to be changed.
+    //! Once created, it is not supposed to be changed.
     size_t const id;
     //! \brief Unique node identifier as string. It is formed by the 'P' char
     //! for place or by the 'T' char for transition followed by the unique
-    //! identifier (i.e. "P0", "P1", "T0", "T1", ...). Once created it is not
+    //! identifier (i.e. "P0", "P1", "T0", "T1", ...). Once created, it is not
     //! supposed to be changed.
+    //! \fixme: TBD to be replaced by a method instead ?
     std::string const key;
     //! \brief Position inside the window needed for the display.
+    //! \fixme: TBD to be moved inside the editor since we do not care of
+    //! position.
     float x;
     //! \brief Position in the window needed for the display.
+    //! \fixme: TBD to be moved inside the editor since we do not care of
+    //! position.
     float y;
     //! \brief Text displayed near a node the user can modify. Defaut value is
     //! the tring unique \c key.
     std::string caption;
     //! \brief Hold the incoming arcs to access to previous nodes.
-    //! \note this vector is updated by the method
-    //! Net::generateArcsInArcsOut() and posible evolution could be to
-    //! update dynamicaly this vector when editing the net through the GUI.
+    //! \note this vector is not updated by this class but shall be made by
+    //! the caller.
     std::vector<Arc*> arcsIn;
     //! \brief Hold the outcoming arcs to access to successor nodes.
-    //! \note this vector is updated by the method
-    //! Net::generateArcsInArcsOut() and posible evolution could be to
-    //! update dynamicaly this vector when editing the net through the GUI.
+    //! \note this vector is not updated by this class but shall be made by
+    //! the caller.
     std::vector<Arc*> arcsOut;
 };
 
 // *****************************************************************************
 //! \brief Petri Place node. Places represent system states. Places hold tokens
-//! (resources). In Grafcet, Place has only one token and when they are
-//! activated actions are performed. This class does not managed Grafcet.
+//! (resources). In GRAFCET, Places are nammed Steps and have at max one token.
+//! When steps are activated actions are performed.
 // *****************************************************************************
 class Place : public Node
 {
@@ -173,9 +182,9 @@ public:
     friend class Net;
 
     //--------------------------------------------------------------------------
-    //! \brief Constructor. To be used when loading a Petri net from JSON file.
+    //! \brief Constructor. To be used when loading a Petri net from a file.
     //! \param[in] id_: unique node identifier. Shall be unique (responsability
-    //!   given to the caller class).
+    //! given to the caller class).
     //! \param[in] caption_: Displayed text under the node.
     //! \param[in] x_: X-axis coordinate in the window needed for the display.
     //! \param[in] y_: Y-axis coordinate in the window needed for the display.
@@ -194,12 +203,12 @@ public:
     }
 
     //--------------------------------------------------------------------------
-    //! \brief Increment the number of token constrained by the type of net.
+    //! \brief Increment the number of token but constrained by the type of net.
     //--------------------------------------------------------------------------
     size_t increment(size_t const count = 1u);
 
     //--------------------------------------------------------------------------
-    //! \brief Decrement the number of token constrained by the type of net.
+    //! \brief Decrement the number of token but constrained to 0.
     //--------------------------------------------------------------------------
     size_t decrement(size_t const count = 1u);
 
@@ -221,11 +230,15 @@ public:
 };
 
 // *****************************************************************************
-//! \brief Petri Transition node. In Petri transitivities are always true and
-//! when in each above Places, all of them have at least one token they let pass
-//! tokens. In Grafcet, transitivities have guards (boolean expression, usually
-//! depending on external systems events (inputs, sensors, alarm ...).
-//! FIXME This class does not managed Grafcet.
+//! \brief Petri Transition node. A boolean condition (named receptivity) is set
+//! but differ with the type of net (Petri: when the user click on the
+//! transition, timed Petri net: always set to true, GRAFCER depend on boolean
+//! expression with sensors). When the receptivity is true and the transition is
+//! enabled (meaning that all incoming places have at least one token each) the
+//! transition is fired and tokens in incoming places burnt and placed in
+//! outcoming places.
+//! \note There is currently no method for burning tokens because this is made
+//! by the simulator with animation.
 // *****************************************************************************
 class Transition : public Node
 {
@@ -235,9 +248,9 @@ public:
     friend class Net;
 
     //--------------------------------------------------------------------------
-    //! \brief Constructor. To be used when loading a Petri net from JSON file.
+    //! \brief Constructor. To be used when loading a Petri net from a file.
     //! \param[in] id_: unique node identifier. Shall be unique (responsability
-    //!   given to the caller class).
+    //! given to the caller class).
     //! \param[in] caption_: Displayed text under the node.
     //! \param[in] x_: X-axis coordinate in the window needed for the display.
     //! \param[in] y_: Y-axis coordinate in the window needed for the display.
@@ -260,36 +273,29 @@ public:
     }
 
     //--------------------------------------------------------------------------
-    //! \brief Check if the transition is validated (meaning if the receptivity
-    //! is true) or not validated (meaning if the receptivity is false).
+    //! \brief Check if all immediatly incoming places have at least one token
+    //! on each of them.
     //--------------------------------------------------------------------------
-    inline bool isValidated() const { return receptivity; }
+    bool isValidated() const;
 
     //--------------------------------------------------------------------------
-    //! \brief Check if all previous places have all at leat one token (meaning
-    //! if all previous places (steps for GRAFCET) are activated.
-    //--------------------------------------------------------------------------
-    bool isEnabled() const;
-
-    //--------------------------------------------------------------------------
-    //! \brief Check if the transition is validated and all previous places have
-    //! all at leat one token. In this case the transition can burn tokens in all
-    //! previous places.
+    //! \brief Check if the transition has all its immediatly incoming places
+    //! with at leat one token and if the transitivity (bool expression) is
+    //! true.
     //! \note The burning of tokens is made by the PetriEditor class during the
     //! animation.
     //! \return true if can fire else return false.
     //--------------------------------------------------------------------------
-    bool canFire() const { return isValidated() && isEnabled(); }
+    bool isFireable() const { return receptivity && isValidated(); }
 
     //--------------------------------------------------------------------------
-    //! \brief Return the maximum possibe of tokens that can be burnt in
-    //!   previous places iff canFire() is true.
-    //! \note This method does not modify the number of tokens in previous places.
-    //! \return the max number of tokens that be burnt or 0u if cannot fire. This
-    //! number can be > 1 even for GRAFCET because the saturation shall be done
-    //! after by the caller.
+    //! \brief Return the maximum number of tokens that can be burn in
+    //! immediatly incoming places if and only if isFireable() is true.
+    //! \note This method does not modify the number of tokens in previous
+    //! places.
+    //! \return the max number of tokens that be burnt or 0u if cannot fire.
     //--------------------------------------------------------------------------
-    size_t howManyTokensCanBurnt() const;
+    size_t countBurnableTokens() const;
 
     //--------------------------------------------------------------------------
     //! \brief Return true if the transition comes from an input place.
@@ -344,17 +350,19 @@ public:
 
 public:
 
-    //! \brief Transitions are depicted by rectangles. We allow to rotate it
-    //! to have horizontal, vertical or diagonal shape transitions when rendering
+    //! \brief Transitions are depicted by rectangles. We allow to rotate it to
+    //! have horizontal, vertical or diagonal shape transitions when rendering
     //! transitions.
+    //! \fixme: TBD to be moved inside the editor since we do not care of
+    //! displayed here.
     int angle = 0;
 
-    //! \brief In petri net mode, the user has to click to validate the
-    //! receptivity of the transition. If previous places have all at least one
-    //! token, the transition is fired, burning tokens in previous places and
-    //! create tokens in the successor places. In timed Petri net receptivities
-    //! are always true. In GRAFCET receptivity depends on boolean logic on
-    //! sensors (i.e. urgency button pressed).
+    //! \brief Store the result of the transition condition (boolean expression
+    //! of sensors for GRAFCET; always true for timed Petri net; false by
+    //! default execept if the user clicks on it for Petri).
+    //! \note This structure does not store the boolean expression directly but
+    //! the result. The simulation will hold boolean expressions. This allows
+    //! to separate things.
     bool receptivity = false;
 };
 
@@ -362,6 +370,8 @@ public:
 //! \brief Two Petri nodes are directed by arcs. Origin and destination nodes
 //! shall be of different types. Therefore arcs only make the link between Place
 //! to Transition or Transition to Place.
+//! \note With timed event graph, we "compress graphically" the net by not
+//! drawing places and merging the incoming arc with the outcoming arc).
 // *****************************************************************************
 class Arc
 {
@@ -373,7 +383,7 @@ public:
     //! \param[in] from_: Origin node (Place or Transition).
     //! \param[in] to_: Destination node (Place or Transition).
     //! \param[in] duration_: Duration of the process (in unit of time) if \c to_
-    //! is a Place (else the duration is forced to 0).
+    //! is a Place (else the duration is forced to NaN).
     //! \note Nodes shall have different types. Assertion is made here.
     //--------------------------------------------------------------------------
     Arc(Node& from_, Node& to_, float duration_ = 0.0f)
@@ -384,7 +394,7 @@ public:
     }
 
     //--------------------------------------------------------------------------
-    //! \brief Hack needed because of references
+    //! \brief Needed because of usage of references.
     //--------------------------------------------------------------------------
     Arc& operator=(Arc const& other)
     {
@@ -394,21 +404,21 @@ public:
     }
 
     //--------------------------------------------------------------------------
-    //! \brief Needed to remove compilation warnings
+    //! \brief Needed because of usage of references.
     //--------------------------------------------------------------------------
     Arc(Arc const& other)
         : Arc(other.from, other.to, other.duration)
     {}
 
     //--------------------------------------------------------------------------
-    //! \brief Needed to remove compilation warnings
+    //! \brief Needed because of usage of references.
     //--------------------------------------------------------------------------
     Arc(Arc&& other)
         : Arc(other.from, other.to, other.duration)
     {}
 
     //--------------------------------------------------------------------------
-    //! \brief Needed to remove compilation warnings
+    //! \brief Needed because of usage of references.
     //--------------------------------------------------------------------------
     Arc& operator=(Arc&& other)
     {
@@ -484,21 +494,21 @@ public:
     using Transitions = std::deque<Transition>;
     using Arcs = std::deque<Arc>;
 
-    // *****************************************************************************
+    // *************************************************************************
     //! \brief Settings for defining the type of net (GRAFCET, Petri net, timed
-    //! petri net, timed graph event ...). This structure is global for the current
-    //! net and is used by the Net class.
-    // *****************************************************************************
+    //! petri net, timed graph event ...). This structure is global for the
+    //! current net and is used by the Net class.
+    // *************************************************************************
     struct Settings
     {
-        //! \brief Max number of tokens in places. For GRAFCET: 1. For other nets:
-        //! std::numeric_limits<size_t>::max().
+        //! \brief Max number of tokens in places. For GRAFCET: 1. For other
+        //! nets: +infinity (aka std::numeric_limits<size_t>::max()).
         static size_t maxTokens;
 
-        //! \brief The theory would burn the maximum possibe of tokens that we can
-        //! within a single action (Fire::MaxPossible) but we can also try to burn
-        //! tokens one by one and randomize the transitions (Fire::OneByOne). This
-        //! will favor dispatching tokens along arcs.
+        //! \brief The theory would burn the maximum possibe of tokens that we
+        //! can within a single action (Fire::MaxPossible) but we can also try
+        //! to burn tokens one by one and randomize the transitions
+        //! (Fire::OneByOne). This will favor dispatching tokens along arcs.
         enum class Fire { OneByOne, MaxPossible };
 
         //! \brief Burn tokens one by one or as many as possible.
@@ -524,12 +534,13 @@ public:
 
     //--------------------------------------------------------------------------
     //! \brief Remove all nodes and arcs. Reset counters for unique identifiers.
-    //! \note the type of net (timed, classic ... ) stay the same.
+    //! Change the type of net for the new one. Reset the name of the net (give
+    //! the name of type of net).
     //--------------------------------------------------------------------------
     void clear(TypeOfNet const type);
 
     //--------------------------------------------------------------------------
-    //! \brief Get the type of net: GRAFCET, Petri, Timed Petri ...
+    //! \brief Return the type of net: GRAFCET, Petri, Timed Petri ...
     //--------------------------------------------------------------------------
     inline TypeOfNet type() const { return m_type; }
 
@@ -548,18 +559,18 @@ public:
     //! \param[in] x: X-axis coordinate in the window needed for the display.
     //! \param[in] y: Y-axis coordinate in the window needed for the display.
     //! \param[in] tokens: Initial number of tokens in the place.
-    //! \return the reference of the inserted place.
+    //! \return the reference of the created place.
     //--------------------------------------------------------------------------
     Place& addPlace(float const x, float const y, size_t const tokens = 0u);
 
     //--------------------------------------------------------------------------
     //! \brief Add a new Petri Place. To be used when loading a Petri net from
-    //! JSON file.
+    //! a file.
     //! \param[in] id: unique node identifier.
     //! \param[in] x: X-axis coordinate in the window needed for the display.
     //! \param[in] y: Y-axis coordinate in the window needed for the display.
     //! \param[in] tokens: Initial number of tokens in the place.
-    //! \return the reference of the inserted place.
+    //! \return the reference of the created place.
     //--------------------------------------------------------------------------
     Place& addPlace(size_t const id, std::string const& caption, float const x,
                     float const y, size_t const tokens);
@@ -568,18 +579,20 @@ public:
     //! \brief Const getter. Return the reference to the container of Places.
     //--------------------------------------------------------------------------
     inline Places const& places() const { return m_places; }
-    inline Places& places() { return m_places; } // FIXME: because of toCanonicalForm(), inspector
+    // FIXME: because of toCanonicalForm(), inspector
+    inline Places& places() { return m_places; }
 
     //--------------------------------------------------------------------------
-    //! \brief Set tokens in all places.
-    //! \param[in] tokens_ the vector holding tokens for each places (P0, P1 .. Pn).
+    //! \brief Set tokens in all places (aka markings). Can be used for GRAFCET
+    //! forcage.
+    //! \param[in] tokens_ the vector holding tokens for each places (P0 .. Pn).
     //! \return true if the length of the vector matchs the number of places,
     //! return false else and you shall call message() to get the error message.
     //--------------------------------------------------------------------------
     bool tokens(std::vector<size_t> const& tokens_);
 
     //--------------------------------------------------------------------------
-    //! \brief Get tokens from all places.
+    //! \brief Return marking (number tokens for each places).
     //! \return the vector holding tokens for each places (P0, P1 .. Pn).
     //--------------------------------------------------------------------------
     std::vector<size_t> tokens() const;
@@ -589,19 +602,19 @@ public:
     //! the GUI.
     //! \param[in] x: X-axis coordinate in the window needed for the display.
     //! \param[in] y: Y-axis coordinate in the window needed for the display.
-    //! \return the reference of the inserted element.
+    //! \return the reference of the created element.
     //--------------------------------------------------------------------------
     Transition& addTransition(float const x, float const y);
 
     //--------------------------------------------------------------------------
     //! \brief Add a new Petri Transition. To be used when loading a Petri net
-    //! from JSON file.
+    //! from a file.
     //! \param[in] id: unique node identifier.
     //! \param[in] caption: node description.
     //! \param[in] x: X-axis coordinate in the window needed for the display.
     //! \param[in] y: Y-axis coordinate in the window needed for the display.
     //! \param[in] angle: angle of rotation of the displayed rectangle.
-    //! \return the reference of the inserted element.
+    //! \return the reference of the created element.
     //--------------------------------------------------------------------------
     Transition& addTransition(size_t const id, std::string const& caption,
                               float const x, float const y, int const angle);
@@ -610,7 +623,8 @@ public:
     //! \brief Const getter. Return the reference to the container of Transitions.
     //--------------------------------------------------------------------------
     inline Transitions const& transitions() const { return m_transitions; }
-    inline Transitions& transitions() { return m_transitions; } // FIXME because of inspector
+    // FIXME because of inspector
+    inline Transitions& transitions() { return m_transitions; }
 
     //--------------------------------------------------------------------------
     //! \brief Search and return a place or a transition by its unique
@@ -732,10 +746,10 @@ private:
 
 public:
 
-    //! \brief Editor has changed content and save is needed.
-    bool modified = false;
     //! \brief Name of Petri net given by its filename once load() has been called.
     std::string name;
+    //! \brief Editor has changed content and save is needed.
+    bool modified = false;
 };
 
 //-----------------------------------------------------------------------------
@@ -751,7 +765,7 @@ std::string to_str(TypeOfNet const type);
 bool convertTo(Net& net, TypeOfNet const type, std::string& error, std::vector<Arc*>& erroneous_arcs);
 
 //-----------------------------------------------------------------------------
-//! \brief Load the Petri net from a JSON file. The current net is cleared
+//! \brief Load the Petri net from a a file. The current net is cleared
 //! before the loading. If the loading failed (missing file or invalid
 //! syntax) the net is set dummy.
 //! \param[in] filename: the file path in where a Petri net has been
@@ -761,7 +775,7 @@ bool convertTo(Net& net, TypeOfNet const type, std::string& error, std::vector<A
 std::string loadFromFile(Net& net, std::string const& filepath);
 
 //-----------------------------------------------------------------------------
-//! \brief Save the Petri net in a JSON file.
+//! \brief Save the Petri net in a a file.
 //! \param[in] filename: the file path in where to save the Petri net.
 //! Should have the .json extension.
 //! \return error message in case of failure, else return dummy string.

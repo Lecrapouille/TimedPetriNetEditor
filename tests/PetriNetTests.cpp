@@ -156,7 +156,7 @@ TEST(TestPetriNet, TestTransitionCreation)
     ASSERT_STREQ(t1.caption.c_str(), "Hello");
     ASSERT_EQ(t1.arcsIn.size(), 0u);
     ASSERT_EQ(t1.arcsOut.size(), 0u);
-    ASSERT_EQ(t1.canFire(), false);
+    ASSERT_EQ(t1.isFireable(), false);
     ASSERT_EQ(t1.isInput(), false);
     ASSERT_EQ(t1.isOutput(), false);
     ASSERT_EQ(t1.isState(), false);
@@ -173,7 +173,7 @@ TEST(TestPetriNet, TestTransitionCreation)
     ASSERT_STREQ(t2.caption.c_str(), "Hello");
     ASSERT_EQ(t2.arcsIn.size(), 0u);
     ASSERT_EQ(t2.arcsOut.size(), 0u);
-    ASSERT_EQ(t2.canFire(), false);
+    ASSERT_EQ(t2.isFireable(), false);
     ASSERT_EQ(t2.isInput(), false);
     ASSERT_EQ(t2.isOutput(), false);
     ASSERT_EQ(t2.isState(), false);
@@ -197,7 +197,7 @@ TEST(TestPetriNet, TestTransitionCreation)
     ASSERT_STREQ(t3.caption.c_str(), "Hello");
     ASSERT_EQ(t3.arcsIn.size(), 0u);
     ASSERT_EQ(t3.arcsOut.size(), 0u);
-    ASSERT_EQ(t3.canFire(), false);
+    ASSERT_EQ(t3.isFireable(), false);
     ASSERT_EQ(t3.isInput(), false);
     ASSERT_EQ(t3.isOutput(), false);
     ASSERT_EQ(t3.isState(), false);
@@ -1011,23 +1011,23 @@ TEST(TestPetriNet, TestLoadedNetTimedPetri)
     ASSERT_STREQ(arc->to.key.c_str(), "T2");
 
     // At least one token
-    ASSERT_EQ(net.m_transitions[0].isEnabled(), true);
-    ASSERT_EQ(net.m_transitions[1].isEnabled(), false);
-    ASSERT_EQ(net.m_transitions[2].isEnabled(), false);
-    ASSERT_EQ(net.m_transitions[3].isEnabled(), false);
+    ASSERT_EQ(net.m_transitions[0].isValidated(), true);
+    ASSERT_EQ(net.m_transitions[1].isValidated(), false);
+    ASSERT_EQ(net.m_transitions[2].isValidated(), false);
+    ASSERT_EQ(net.m_transitions[3].isValidated(), false);
 
 #if 0 // FIXMEEEEEEEEEE A FINALISER
     // Receptivity
-    ASSERT_EQ(net.m_transitions[0].isValidated(), true);
-    ASSERT_EQ(net.m_transitions[1].isValidated(), true);
-    ASSERT_EQ(net.m_transitions[2].isValidated(), true);
-    ASSERT_EQ(net.m_transitions[3].isValidated(), true);
+    ASSERT_EQ(net.m_transitions[0].isEnabled(), true);
+    ASSERT_EQ(net.m_transitions[1].isEnabled(), true);
+    ASSERT_EQ(net.m_transitions[2].isEnabled(), true);
+    ASSERT_EQ(net.m_transitions[3].isEnabled(), true);
 
     // Can fire ? (Version 1)
-    ASSERT_EQ(net.m_transitions[0].canFire(), true);
-    ASSERT_EQ(net.m_transitions[1].canFire(), false);
-    ASSERT_EQ(net.m_transitions[2].canFire(), false);
-    ASSERT_EQ(net.m_transitions[3].canFire(), false);
+    ASSERT_EQ(net.m_transitions[0].isFireable(), true);
+    ASSERT_EQ(net.m_transitions[1].isFireable(), false);
+    ASSERT_EQ(net.m_transitions[2].isFireable(), false);
+    ASSERT_EQ(net.m_transitions[3].isFireable(), false);
 #endif
 }
 
@@ -1317,23 +1317,23 @@ TEST(TestPetriNet, TestLoadedNetGraphEvent)
     ASSERT_STREQ(arc->to.key.c_str(), "T2");
 
     // At least one token
-    ASSERT_EQ(net.m_transitions[0].isEnabled(), true);
-    ASSERT_EQ(net.m_transitions[1].isEnabled(), false);
-    ASSERT_EQ(net.m_transitions[2].isEnabled(), false);
-    ASSERT_EQ(net.m_transitions[3].isEnabled(), false);
+    ASSERT_EQ(net.m_transitions[0].isValidated(), true);
+    ASSERT_EQ(net.m_transitions[1].isValidated(), false);
+    ASSERT_EQ(net.m_transitions[2].isValidated(), false);
+    ASSERT_EQ(net.m_transitions[3].isValidated(), false);
 
 #if 0 // FIXMEEEEEEEEEEEEEEE
     // Receptivity
-    ASSERT_EQ(net.m_transitions[0].isValidated(), true);
-    ASSERT_EQ(net.m_transitions[1].isValidated(), true);
-    ASSERT_EQ(net.m_transitions[2].isValidated(), true);
-    ASSERT_EQ(net.m_transitions[3].isValidated(), true);
+    ASSERT_EQ(net.m_transitions[0].isEnabled(), true);
+    ASSERT_EQ(net.m_transitions[1].isEnabled(), true);
+    ASSERT_EQ(net.m_transitions[2].isEnabled(), true);
+    ASSERT_EQ(net.m_transitions[3].isEnabled(), true);
 
     // Can fire ? (Version 1)
-    ASSERT_EQ(net.m_transitions[0].canFire(), true);
-    ASSERT_EQ(net.m_transitions[1].canFire(), false);
-    ASSERT_EQ(net.m_transitions[2].canFire(), false);
-    ASSERT_EQ(net.m_transitions[3].canFire(), false);
+    ASSERT_EQ(net.m_transitions[0].isFireable(), true);
+    ASSERT_EQ(net.m_transitions[1].isFireable(), false);
+    ASSERT_EQ(net.m_transitions[2].isFireable(), false);
+    ASSERT_EQ(net.m_transitions[3].isFireable(), false);
 #endif
 }
 
@@ -1650,7 +1650,7 @@ TEST(TestPetriNet, TestRemoveNode)
 }
 
 //------------------------------------------------------------------------------
-TEST(TestPetriNet, TestHowManyTokensCanBurnt)
+TEST(TestPetriNet, TestcountBurnableTokens)
 {
     std::vector<Arc*> erroneous_arcs;
     std::string error;
@@ -1662,14 +1662,14 @@ TEST(TestPetriNet, TestHowManyTokensCanBurnt)
     ASSERT_EQ(convertTo(net, TypeOfNet::PetriNet, error, erroneous_arcs), true);
 
     ASSERT_EQ(net.m_transitions.size(), 4u);
-    //ASSERT_EQ(net.m_transitions[0].howManyTokensCanBurnt(), 1u); // u
-    ASSERT_EQ(net.m_transitions[1].howManyTokensCanBurnt(), 0u); // x1
-    ASSERT_EQ(net.m_transitions[2].howManyTokensCanBurnt(), 0u); // x2
-    ASSERT_EQ(net.m_transitions[3].howManyTokensCanBurnt(), 0u); // y
+    //ASSERT_EQ(net.m_transitions[0].countBurnableTokens(), 1u); // u
+    ASSERT_EQ(net.m_transitions[1].countBurnableTokens(), 0u); // x1
+    ASSERT_EQ(net.m_transitions[2].countBurnableTokens(), 0u); // x2
+    ASSERT_EQ(net.m_transitions[3].countBurnableTokens(), 0u); // y
 
     // TODO ASSERT_EQ(net.m_transitions[0].fire());
-    //ASSERT_EQ(net.m_transitions[0].howManyTokensCanBurnt(), 1u); // u
-    //ASSERT_EQ(net.m_transitions[1].howManyTokensCanBurnt(), 2u); // x1
-    //ASSERT_EQ(net.m_transitions[2].howManyTokensCanBurnt(), 2u); // x2
-    //ASSERT_EQ(net.m_transitions[3].howManyTokensCanBurnt(), 0u); // y
+    //ASSERT_EQ(net.m_transitions[0].countBurnableTokens(), 1u); // u
+    //ASSERT_EQ(net.m_transitions[1].countBurnableTokens(), 2u); // x1
+    //ASSERT_EQ(net.m_transitions[2].countBurnableTokens(), 2u); // x2
+    //ASSERT_EQ(net.m_transitions[3].countBurnableTokens(), 0u); // y
 }
