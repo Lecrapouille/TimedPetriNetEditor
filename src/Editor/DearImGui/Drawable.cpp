@@ -119,9 +119,9 @@ void drawArc(ImDrawList* draw_list, Arc const& arc, TypeOfNet const type, ImVec2
         drawArrow(draw_list, origin + ImVec2(arc.from.x, arc.from.y),
                   origin + ImVec2(arc.to.x, arc.to.y), color);
 
+        // Print the duration for timed petri net
         if ((arc.from.type == Node::Type::Transition) && (type == TypeOfNet::TimedPetriNet))
         {
-            // Print the timing for timed petri net
             float x = origin.x + arc.from.x + (arc.to.x - arc.from.x) / 2.0f;
             float y = origin.y + arc.from.y + (arc.to.y - arc.from.y) / 2.0f - 15.0f;
             std::stringstream stream;
@@ -154,9 +154,20 @@ void drawPlace(ImDrawList* draw_list, Place const& place, TypeOfNet const type, 
     //const uint8_t alpha = 255; // TODO m_fading[place.key]
     const ImVec2 p = origin + ImVec2(place.x, place.y);
 
-    // Draw the place
-    draw_list->AddCircleFilled(p, PLACE_RADIUS, FILL_COLOR(alpha), 64);
-    draw_list->AddCircle(p, PLACE_RADIUS, OUTLINE_COLOR, 64, 2.5f);
+    if (type != TypeOfNet::GRAFCET)
+    {
+        // Draw the place as circle
+        draw_list->AddCircleFilled(p, PLACE_RADIUS, FILL_COLOR(alpha), 64);
+        draw_list->AddCircle(p, PLACE_RADIUS, OUTLINE_COLOR, 64, 2.5f);
+    }
+    else
+    {
+        // Draw the transition
+        const ImVec2 pmin(p.x - TRANS_WIDTH / 2.0f, p.y - TRANS_WIDTH / 2.0f);
+        const ImVec2 pmax(p.x + TRANS_WIDTH / 2.0f, p.y + TRANS_WIDTH / 2.0f);
+        draw_list->AddRectFilled(pmin, pmax, FILL_COLOR(alpha));
+        draw_list->AddRect(pmin, pmax, OUTLINE_COLOR, 0.0f, ImDrawFlags_None, 2.5f);
+    }
 
     // Draw the caption
     const char* text = show_caption ? place.caption.c_str() : place.key.c_str();
