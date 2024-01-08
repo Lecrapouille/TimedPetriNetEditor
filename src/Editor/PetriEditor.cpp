@@ -692,7 +692,7 @@ void Editor::inspector()
 
     // Place captions and tokens
     {
-        ImGui::Begin("Places");
+        ImGui::Begin(m_net.type() == TypeOfNet::GRAFCET ? "Steps" : "Places");
 
         // Options
         ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(0, 0));
@@ -773,6 +773,8 @@ void Editor::inspector()
     }
 
     // Arc durations
+    if ((m_net.type() == TypeOfNet::TimedEventGraph) ||
+        (m_net.type() == TypeOfNet::TimedPetriNet))
     {
         ImGui::Begin("Arcs");
         ImGui::Text("%s", "Durations:");
