@@ -164,7 +164,7 @@ void Simulation::stateHalting()
 void Simulation::stateSimulating(float const dt)
 {
     bool burnt = false;
-    bool burning = false;
+    size_t burning = 0u;
 
     // The user has requested to halt the simulation ?
     if (!running)
@@ -194,7 +194,7 @@ void Simulation::stateSimulating(float const dt)
         // TODO: filter the list to speed up ?
         auto& transitions = shuffle_transitions();
 
-        burning = false;
+        burning = 0u;
         for (auto& trans: transitions)
         {
             // The theory would burn the maximum possibe of tokens that
@@ -211,13 +211,13 @@ void Simulation::stateSimulating(float const dt)
                 assert(tokens <= Net::Settings::maxTokens);
                 //TODO trans->fading.restart();
 
-                burning = true; // keep iterating on this loop
+                burning = tokens; // keep iterating on this loop
                 burnt = true; // At least one place has been fired
 
                 // Transition source
                 if (trans->isInput())
                 {
-                    burning = false;
+                    burning = 0u;
                     trans->receptivity = false;
                 }
                 else
@@ -247,7 +247,7 @@ void Simulation::stateSimulating(float const dt)
                 }
             }
         }
-    } while (burning);
+    } while (burning != 0u);
 
     // Create animated tokens with the correct number of tokens they are
     // carrying.
