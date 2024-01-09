@@ -49,7 +49,7 @@ static void applyNewNetSettings(TypeOfNet const type)
         break;
     case TypeOfNet::PetriNet:
         Net::Settings::maxTokens = std::numeric_limits<size_t>::max();
-        Net::Settings::firing = Net::Settings::Fire::MaxPossible;
+        Net::Settings::firing = Net::Settings::Fire::OneByOne;
         break;
     case TypeOfNet::TimedPetriNet:
         Net::Settings::maxTokens = std::numeric_limits<size_t>::max();
