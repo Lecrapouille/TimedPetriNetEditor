@@ -358,9 +358,9 @@ std::stringstream showCounterEquation(Net const& net, std::string const& comment
                 {
                     ss << "(t)";
                 }
-                separator2 = (minplus_notation ? " ⨁ " : ", ");
+                separator2 = (minplus_notation ? " (+) " : ", ");
             }
-            separator1 = (minplus_notation ? " ⨁ " : ", ");
+            separator1 = (minplus_notation ? " (+) " : ", ");
         }
         ss << (minplus_notation ? "" : ")") << std::endl;
     }
@@ -403,9 +403,9 @@ std::stringstream showDaterEquation(Net const& net, std::string const& comment,
                 }
                 ss << ")";
 
-                separator2 = (maxplus_notation ? " ⨁ " : ", ");
+                separator2 = (maxplus_notation ? " (+) " : ", ");
             }
-            separator1 = (maxplus_notation ? " ⨁ " : ", ");
+            separator1 = (maxplus_notation ? " (+) " : ", ");
         }
         ss << (maxplus_notation ? "" : ")") << std::endl;
     }
