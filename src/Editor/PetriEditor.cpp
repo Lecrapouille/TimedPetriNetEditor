@@ -1600,6 +1600,11 @@ void Editor::PetriView::drawPetriNet(Net& net, Simulation& simulation)
         it->y = m_mouse.position.y;
     }
 
+    // Show the arc we are creating
+    drawArc(m_canvas.draw_list, m_mouse.from, m_mouse.to,
+            m_mouse.arc_from_unknown_node ? &m_mouse.click_position : nullptr,
+            origin, m_mouse.position);
+
     // Draw critical cycle
     //for (auto& a: m_marked_arcs)
     //    draw(*a, 255);
