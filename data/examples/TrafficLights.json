@@ -5,12 +5,12 @@
     {
        "name": "TrafficLights",
        "places": [
-            { "id": 0, "caption": "Red1", "tokens": 1, "x": 146, "y": 250 },
-            { "id": 1, "caption": "Green1", "tokens": 0, "x": 389, "y": 173 },
-            { "id": 2, "caption": "Orange1", "tokens": 0, "x": 615, "y": 173 },
-            { "id": 3, "caption": "Red2", "tokens": 1, "x": 153, "y": 408 },
-            { "id": 4, "caption": "Green2", "tokens": 0, "x": 397, "y": 444 },
-            { "id": 5, "caption": "Orange2", "tokens": 0, "x": 639, "y": 444 },
+            { "id": 0, "caption": "Light 1 Red", "tokens": 1, "x": 146, "y": 250 },
+            { "id": 1, "caption": "Light 1 Green", "tokens": 0, "x": 389, "y": 173 },
+            { "id": 2, "caption": "Light 1 Orange", "tokens": 0, "x": 615, "y": 173 },
+            { "id": 3, "caption": "Light 2 Red", "tokens": 1, "x": 153, "y": 408 },
+            { "id": 4, "caption": "Light 2 Green", "tokens": 0, "x": 397, "y": 444 },
+            { "id": 5, "caption": "Light 2 Orange", "tokens": 0, "x": 639, "y": 444 },
             { "id": 6, "caption": "P6", "tokens": 1, "x": 209, "y": 318 }
        ],
        "transitions": [
