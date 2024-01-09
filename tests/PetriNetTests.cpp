@@ -575,6 +575,7 @@ TEST(TestPetriNet, TestIncrTokens)
     p0.increment();
     ASSERT_EQ(p0.tokens, 3u);
 
+    // Convert to GRAFCET, check if max number of tokens (= 1) have been respected
     std::vector<Arc*> erroneous_arcs;
     std::string error;
     ASSERT_EQ(convertTo(net, TypeOfNet::GRAFCET, error, erroneous_arcs), true);
