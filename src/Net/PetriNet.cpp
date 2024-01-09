@@ -720,7 +720,7 @@ std::string loadFromFile(Net& net, std::string const& filepath)
         size_t lastindex = filepath.find_last_of(".");
         std::string _name = filepath.substr(0, lastindex);
         lastindex = _name.find_last_of("/");
-        _name = _name.substr(lastindex + 1u);
+        net.name = _name.substr(lastindex + 1u);
 
         return error;
     }

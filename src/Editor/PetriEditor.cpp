@@ -72,7 +72,7 @@ void Editor::startUp(std::string const& filepath)
         if (error.empty())
         {
             m_filepath = filepath;
-            m_messages.setInfo("loaded with success " + filepath);
+            m_messages.setInfo("Loaded with success " + filepath);
         }
         else
         {
@@ -174,6 +174,7 @@ void Editor::menu()
                     std::string error = saveToFile(m_net, m_filepath);
                     if (error.empty())
                     {
+                        m_messages.setInfo("Saved with success " + m_filepath);
                         m_net.modified = false;
                     }
                     else
@@ -897,6 +898,8 @@ void Editor::importNetTo(Importer const& importer)
                     m_messages.setInfo("Imported with success from '" + path + "'");
                 else
                     m_messages.setInfo("Loaded with success '" + path + "'");
+                m_filepath = path;
+                m_net.modified = false;
             }
             else
             {
@@ -1025,8 +1028,16 @@ void Editor::takeScreenshot()
 //--------------------------------------------------------------------------
 void Editor::clearNet()
 {
-    m_simulation.running = false;
+    if (m_simulation.running)
+        return ;
+
+    auto action = std::make_unique<NetModifaction>(*this);
+    action->before(m_net);
+
     m_net.clear(m_net.type());
+
+    action->after(m_net);
+    m_history.add(std::move(action));
 }
 
 //--------------------------------------------------------------------------
@@ -1047,11 +1058,15 @@ std::vector<Messages::TimedMessage> const& Editor::getLogs() const
 void Editor::clearLogs()
 {
     m_messages.clear();
+
 }
 
 //--------------------------------------------------------------------------
 void Editor::undo()
 {
+    if (m_simulation.running)
+        return ;
+
     if (!m_history.undo())
     {
         m_messages.setInfo("Cannot do more undos!");
@@ -1066,6 +1081,9 @@ void Editor::undo()
 //--------------------------------------------------------------------------
 void Editor::redo()
 {
+    if (m_simulation.running)
+        return ;
+
     if (!m_history.redo())
     {
         m_messages.setInfo("Cannot do more redos!");
@@ -1527,7 +1545,11 @@ void Editor::PetriView::onHandleInput()
             Node* node = m_editor.getNode(m_mouse.position);
             if (node != nullptr)
             {
+                auto action = std::make_unique<NetModifaction>(m_editor);
+                action->before(m_editor.m_net);
                 m_editor.m_net.removeNode(*node);
+                action->after(m_editor.m_net);
+                m_editor.m_history.add(std::move(action));
             }
         }
     }
