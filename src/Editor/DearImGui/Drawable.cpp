@@ -78,6 +78,32 @@ static void drawArrow(ImDrawList* draw_list, ImVec2 const& A, ImVec2 const& B,
 }
 
 //------------------------------------------------------------------------------
+void drawArc(ImDrawList* draw_list, Node* from, Node* to, ImVec2* click_position, ImVec2 const& origin, ImVec2 const& cursor)
+{
+    if (from != nullptr)
+    {
+        drawArrow(draw_list,
+                  origin + ImVec2(from->x, from->y),
+                  origin + ImVec2(cursor.x, cursor.y),
+                  OUTLINE_COLOR);
+    }
+    else if (to != nullptr)
+    {
+        drawArrow(draw_list,
+                  origin + ImVec2(cursor.x, cursor.y),
+                  origin + ImVec2(to->x, to->y),
+                  OUTLINE_COLOR);
+    }
+    else if (click_position != nullptr)
+    {
+        drawArrow(draw_list,
+                  origin + ImVec2(click_position->x, click_position->y),
+                  origin + ImVec2(cursor.x, cursor.y),
+                  OUTLINE_COLOR);
+    }
+}
+
+//------------------------------------------------------------------------------
 void drawArc(ImDrawList* draw_list, Arc const& arc, TypeOfNet const type, ImVec2 const& origin, float const alpha)
 {
     ImU32 color;

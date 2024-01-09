@@ -33,7 +33,7 @@ static const float TRANS_HEIGHT = TRANS_WIDTH / 3.0f;  // Rectangle height for r
 static const float PLACE_RADIUS = TRANS_WIDTH / 2.0f; // Circle radius for rendering Places
 static const float TOKEN_RADIUS = 2.0f;  // Circle radius for rendering tokens
 
-
+void drawArc(ImDrawList* draw_list, Node* from, Node* to, ImVec2* click_position, ImVec2 const& origin, ImVec2 const& cursor);
 void drawArc(ImDrawList* draw_list, Arc const& arc, TypeOfNet const type, ImVec2 const& origin, float const alpha);
 void drawToken(ImDrawList* draw_list, float const x, float const y);
 void drawTimedToken(ImDrawList* draw_list, size_t tokens, float const x, float const y);
