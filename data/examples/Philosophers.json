@@ -5,23 +5,23 @@
     {
        "name": "Philosophers",
        "places": [
-            { "id": 0, "caption": "Phi0 Not Eating", "tokens": 1, "x": 150, "y": 100 },
-            { "id": 1, "caption": "Phi1 Eating", "tokens": 0, "x": 300, "y": 350 },
-            { "id": 2, "caption": "Phi1 Not Eating", "tokens": 1, "x": 450, "y": 100 },
-            { "id": 3, "caption": "Phi0 Eating", "tokens": 0, "x": 0, "y": 350 },
-            { "id": 4, "caption": "Phi2 Not Eating", "tokens": 1, "x": 750, "y": 100 },
-            { "id": 5, "caption": "Phi2 Eating", "tokens": 0, "x": 600, "y": 350 },
-            { "id": 6, "caption": "Fork", "tokens": 1, "x": 225, "y": 225 },
-            { "id": 7, "caption": "Knife", "tokens": 1, "x": 525, "y": 225 },
-            { "id": 8, "caption": "Knife", "tokens": 1, "x": 400, "y": 500 }
+            { "id": 0, "caption": "Phi0 Not Eating", "tokens": 1, "x": -82, "y": 189 },
+            { "id": 1, "caption": "Phi1 Eating", "tokens": 0, "x": 138, "y": 105 },
+            { "id": 2, "caption": "Phi1 Not Eating", "tokens": 1, "x": 227, "y": 184 },
+            { "id": 3, "caption": "Phi0 Eating", "tokens": 0, "x": -185, "y": 100 },
+            { "id": 4, "caption": "Phi2 Not Eating", "tokens": 1, "x": 539, "y": 186 },
+            { "id": 5, "caption": "Phi2 Eating", "tokens": 0, "x": 453, "y": 111 },
+            { "id": 6, "caption": "Fork", "tokens": 1, "x": 138, "y": 386 },
+            { "id": 7, "caption": "Knife", "tokens": 1, "x": 451, "y": 386 },
+            { "id": 8, "caption": "Knife", "tokens": 1, "x": -189, "y": 386 }
        ],
        "transitions": [
             { "id": 0, "caption": "T0", "x": 0, "y": 100, "angle": 225 },
-            { "id": 1, "caption": "T1", "x": 150, "y": 350, "angle": 90 },
-            { "id": 2, "caption": "T2", "x": 300, "y": 100, "angle": 135 },
-            { "id": 3, "caption": "T3", "x": 450, "y": 350, "angle": 90 },
-            { "id": 4, "caption": "T4", "x": 600, "y": 100, "angle": 315 },
-            { "id": 5, "caption": "T5", "x": 750, "y": 350, "angle": 270 }
+            { "id": 1, "caption": "T1", "x": -186, "y": 262, "angle": 90 },
+            { "id": 2, "caption": "T2", "x": 321, "y": 104, "angle": 135 },
+            { "id": 3, "caption": "T3", "x": 137, "y": 261, "angle": 90 },
+            { "id": 4, "caption": "T4", "x": 640, "y": 110, "angle": 315 },
+            { "id": 5, "caption": "T5", "x": 452, "y": 259, "angle": 270 }
        ],
        "arcs": [
             { "from": "P0", "to": "T0" },
