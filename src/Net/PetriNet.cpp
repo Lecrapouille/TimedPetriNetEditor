@@ -32,14 +32,38 @@
 
 namespace tpne {
 
-//FIXME
-static void FIXMEForceconvertTo(TypeOfNet const type);
-
 //------------------------------------------------------------------------------
 // Default net configuration: timed petri net. To change the type of nets, call
 // Net::changeTypeOfNet(Net::TypeOfNet const)
 size_t Net::Settings::maxTokens = std::numeric_limits<size_t>::max();
 Net::Settings::Fire Net::Settings::firing = Net::Settings::Fire::OneByOne;
+
+//------------------------------------------------------------------------------
+static void applyNewNetSettings(TypeOfNet const type)
+{
+    switch (type)
+    {
+    case TypeOfNet::GRAFCET:
+        Net::Settings::maxTokens = 1u;
+        Net::Settings::firing = Net::Settings::Fire::OneByOne;
+        break;
+    case TypeOfNet::PetriNet:
+        Net::Settings::maxTokens = std::numeric_limits<size_t>::max();
+        Net::Settings::firing = Net::Settings::Fire::MaxPossible;
+        break;
+    case TypeOfNet::TimedPetriNet:
+        Net::Settings::maxTokens = std::numeric_limits<size_t>::max();
+        Net::Settings::firing = Net::Settings::Fire::OneByOne;
+        break;
+    case TypeOfNet::TimedEventGraph:
+        Net::Settings::maxTokens = std::numeric_limits<size_t>::max();
+        Net::Settings::firing = Net::Settings::Fire::OneByOne;
+        break;
+    default:
+        assert(false && "Undefined Petri behavior");
+        break;
+    }
+}
 
 //------------------------------------------------------------------------------
 std::string to_str(TypeOfNet const type)
@@ -131,7 +155,7 @@ size_t Transition::countBurnableTokens() const
 Net::Net(TypeOfNet const type)
     : m_type(type), name(to_str(type))
 {
-   FIXMEForceconvertTo(type);
+   applyNewNetSettings(type);
 }
 
 //------------------------------------------------------------------------------
@@ -139,7 +163,9 @@ Net::Net(Net const& other)
 {
     if (this == &other)
         return ;
+
     m_type = other.m_type;
+    applyNewNetSettings(m_type);
     m_places = other.m_places;
     m_transitions = other.m_transitions;
 
@@ -159,10 +185,9 @@ Net::Net(Net const& other)
 
     m_next_place_id = other.m_next_place_id;
     m_next_transition_id = other.m_next_transition_id;
-    modified = false;
     name = other.name;
-    FIXMEForceconvertTo(other.type()); m_type = other.type();
-    //FIXM convertTo(*this, other.type());
+    m_message.str(std::string());
+    modified = false;
 }
 
 //------------------------------------------------------------------------------
@@ -179,7 +204,8 @@ Net& Net::operator=(Net const& other)
 //------------------------------------------------------------------------------
 void Net::clear(TypeOfNet const type)
 {
-    FIXMEForceconvertTo(type); m_type = type;
+    m_type = type;
+    applyNewNetSettings(type);
     name = to_str(type);
     m_places.clear();
     m_transitions.clear();
@@ -709,11 +735,27 @@ bool convertTo(Net& net, TypeOfNet const type, std::string& error, std::vector<A
     if (net.type() == type)
         return true;
 
-    switch (type)
+    // Check conditions of a well formed event graph
+    if (type == TypeOfNet::TimedEventGraph)
     {
-    case TypeOfNet::GRAFCET:
-        Net::Settings::maxTokens = 1u;
-        Net::Settings::firing = Net::Settings::Fire::OneByOne;
+        if ((!net.isEmpty()) && (!isEventGraph(net, error, erroneous_arcs)))
+            return false;
+    }
+    else if (type == TypeOfNet::GRAFCET)
+    {
+        // For GRAFCET we check validity of the syntax of transitivities
+        if (!net.resetReceptivies())
+        {
+            error = "Invalid syntax in receptivities";
+            return false;
+        }
+    }
+
+    net.m_type = type;
+    applyNewNetSettings(type);
+
+    if (type == TypeOfNet::GRAFCET)
+    {
         // Constrain the number of tokens.
         // TBD: not constraining the number of tokens allow us to save the
         // net (json format) without loosing number of tokens for other nets.
@@ -721,74 +763,9 @@ bool convertTo(Net& net, TypeOfNet const type, std::string& error, std::vector<A
         {
             place.tokens = std::min(Net::Settings::maxTokens, place.tokens);
         }
-        // FIXME
-        //m_sensors.clear();
-        //for (auto& transition: m_transitions)
-        //{
-        //    parse(transition);
-        //}
-        break;
-    case TypeOfNet::PetriNet:
-        Net::Settings::maxTokens = std::numeric_limits<size_t>::max();
-        Net::Settings::firing = Net::Settings::Fire::MaxPossible;
-        break;
-    case TypeOfNet::TimedPetriNet:
-        Net::Settings::maxTokens = std::numeric_limits<size_t>::max();
-        Net::Settings::firing = Net::Settings::Fire::OneByOne;
-        break;
-    case TypeOfNet::TimedEventGraph:
-        // Check conditions of a well formed event graph
-        if ((!net.isEmpty()) && (!isEventGraph(net, error, erroneous_arcs)))
-            return false;
-        Net::Settings::maxTokens = std::numeric_limits<size_t>::max();
-        Net::Settings::firing = Net::Settings::Fire::OneByOne;
-        break;
-    default:
-        assert(false && "Undefined Petri behavior");
-        break;
-    }
-
-    // Set the new type of net at the end of this method because of possible
-    // previous "return false" preventing to change of type. Place it before
-    // resetReceptivies() else the reset will be applied on the current type
-    // of net.
-    net.m_type = type;
-
-    // For GRAFCET we check validity of the syntax of transitivities
-    if (!net.resetReceptivies())
-    {
-        error = "Invalid syntax in receptivities";
-        return false;
     }
 
     return true;
-}
-
-//------------------------------------------------------------------------------
-void FIXMEForceconvertTo(TypeOfNet const type)
-{
-    switch (type)
-    {
-    case TypeOfNet::GRAFCET:
-        Net::Settings::maxTokens = 1u;
-        Net::Settings::firing = Net::Settings::Fire::OneByOne;
-        break;
-    case TypeOfNet::PetriNet:
-        Net::Settings::maxTokens = std::numeric_limits<size_t>::max();
-        Net::Settings::firing = Net::Settings::Fire::MaxPossible;
-        break;
-    case TypeOfNet::TimedPetriNet:
-        Net::Settings::maxTokens = std::numeric_limits<size_t>::max();
-        Net::Settings::firing = Net::Settings::Fire::OneByOne;
-        break;
-    case TypeOfNet::TimedEventGraph:
-        Net::Settings::maxTokens = std::numeric_limits<size_t>::max();
-        Net::Settings::firing = Net::Settings::Fire::OneByOne;
-        break;
-    default:
-        assert(false && "Undefined Petri behavior");
-        break;
-    }
 }
 
 } // namespace tpne
