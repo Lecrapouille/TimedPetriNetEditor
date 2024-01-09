@@ -880,11 +880,13 @@ void Editor::importNetTo(Importer const& importer)
         return ;
     }
 
+    IGFD::FileDialogConfig config;
+    config.path = ".";
+    config.flags = ImGuiFileDialogFlags_Modal;
     ImGuiFileDialog::Instance()->OpenDialog(
         "ChooseFileDlgKey",
         "Choose the Petri file to load",
-        importer.extensions.c_str(), ".", 1, nullptr,
-        ImGuiFileDialogFlags_Modal);
+        importer.extensions.c_str(), config);
 
     if (ImGuiFileDialog::Instance()->Display("ChooseFileDlgKey"))
     {
@@ -945,13 +947,15 @@ void Editor::exportNetTo(Exporter const& exporter)
         return ;
     }
 
+    IGFD::FileDialogConfig config;
+    config.path = ".";
+    config.flags = ImGuiFileDialogFlags_Modal | ImGuiFileDialogFlags_ConfirmOverwrite;
     ImGuiFileDialog::Instance()->OpenDialog(
         "ChooseFileDlgKey",
         m_states.do_export_to ? "Choose the Petri file to save"
           : (m_states.request_quitting ? "Choose the Petri file to save before quitting"
           : "Choose the Petri file to save"),
-        exporter.extensions.c_str(), ".", 1, nullptr,
-        ImGuiFileDialogFlags_Modal | ImGuiFileDialogFlags_ConfirmOverwrite);
+        exporter.extensions.c_str(), config);
 
     if (ImGuiFileDialog::Instance()->Display("ChooseFileDlgKey"))
     {
@@ -997,11 +1001,13 @@ void Editor::exportNetTo(Exporter const& exporter)
 void Editor::takeScreenshot()
 {
     std::string path;
+    IGFD::FileDialogConfig config;
+    config.path = ".";
+    config.flags = ImGuiFileDialogFlags_Modal | ImGuiFileDialogFlags_ConfirmOverwrite;
     ImGuiFileDialog::Instance()->OpenDialog(
         "ChooseFileDlgKey",
         "Choose the PNG file to save the screenshot",
-        ".png", ".", 1, nullptr,
-        ImGuiFileDialogFlags_Modal | ImGuiFileDialogFlags_ConfirmOverwrite);
+        ".png", config);
 
     if (ImGuiFileDialog::Instance()->Display("ChooseFileDlgKey"))
     {
