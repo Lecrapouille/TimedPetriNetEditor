@@ -208,18 +208,18 @@ TEST(TestEventGraph, TestToDaterEquation)
     // --
     expected.str(
         "# Timed event graph represented as dater equation (max-plus algebra):\n"
-        "# T1(n) = 1 T0(n) ⨁ 1 T2(n - 1) ⨁ 1 T1(n - 2)\n"
-        "# T2(n) = 1 T1(n - 1) ⨁ 2 T0(n)\n"
-        "# T3(n) = T1(n) ⨁ T2(n)\n");
+        "# T1(n) = 1 T0(n) (+) 1 T2(n - 1) (+) 1 T1(n - 2)\n"
+        "# T2(n) = 1 T1(n - 1) (+) 2 T0(n)\n"
+        "# T3(n) = T1(n) (+) T2(n)\n");
     obtained = showDaterEquation(net, "# ", false, true);
     ASSERT_STREQ(obtained.str().c_str(), expected.str().c_str());
 
     // --
     expected.str(
         "# Timed event graph represented as dater equation (max-plus algebra):\n"
-        "# x1(n) = 1 u(n) ⨁ 1 x2(n - 1) ⨁ 1 x1(n - 2)\n"
-        "# x2(n) = 1 x1(n - 1) ⨁ 2 u(n)\n"
-        "# y(n) = x1(n) ⨁ x2(n)\n");
+        "# x1(n) = 1 u(n) (+) 1 x2(n - 1) (+) 1 x1(n - 2)\n"
+        "# x2(n) = 1 x1(n - 1) (+) 2 u(n)\n"
+        "# y(n) = x1(n) (+) x2(n)\n");
     obtained = showDaterEquation(net, "# ", true, true);
     ASSERT_STREQ(obtained.str().c_str(), expected.str().c_str());
 }
@@ -258,18 +258,18 @@ TEST(TestEventGraph, TestToCounterEquation)
     // --
     expected.str(
         "# Timed event graph represented as counter equation (min-plus algebra):\n"
-        "# T1(t) = T0(t - 1) ⨁ 1 T2(t - 1) ⨁ 2 T1(t - 1)\n"
-        "# T2(t) = 1 T1(t - 1) ⨁ T0(t - 2)\n"
-        "# T3(t) = T1(t) ⨁ T2(t)\n");
+        "# T1(t) = T0(t - 1) (+) 1 T2(t - 1) (+) 2 T1(t - 1)\n"
+        "# T2(t) = 1 T1(t - 1) (+) T0(t - 2)\n"
+        "# T3(t) = T1(t) (+) T2(t)\n");
     obtained = showCounterEquation(net, "# ", false, true);
     ASSERT_STREQ(obtained.str().c_str(), expected.str().c_str());
 
     // --
     expected.str(
         "# Timed event graph represented as counter equation (min-plus algebra):\n"
-        "# x1(t) = u(t - 1) ⨁ 1 x2(t - 1) ⨁ 2 x1(t - 1)\n"
-        "# x2(t) = 1 x1(t - 1) ⨁ u(t - 2)\n"
-        "# y(t) = x1(t) ⨁ x2(t)\n");
+        "# x1(t) = u(t - 1) (+) 1 x2(t - 1) (+) 2 x1(t - 1)\n"
+        "# x2(t) = 1 x1(t - 1) (+) u(t - 2)\n"
+        "# y(t) = x1(t) (+) x2(t)\n");
     obtained = showCounterEquation(net, "# ", true, true);
     ASSERT_STREQ(obtained.str().c_str(), expected.str().c_str());
 }

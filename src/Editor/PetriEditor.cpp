@@ -422,7 +422,7 @@ void Editor::showDynamicLinearSystem() const
         SparseMatrix<double> B; SparseMatrix<double> C;
         toSysLin(m_net, D, A, B, C);
         SparseMatrix<double>::display_for_julia = false;
-        ImGui::Text(u8"%s", "X(n) = D . X(n) ⨁ A . X(n-1) ⨁ B . U(n)\nY(n) = C . X(n)");
+        ImGui::Text(u8"%s", "X(n) = D . X(n) (+) A . X(n-1) (+) B . U(n)\nY(n) = C . X(n)");
         ImGuiTabBarFlags tab_bar_flags = ImGuiTabBarFlags_None;
         if (ImGui::BeginTabBar("syslin", tab_bar_flags))
         {
