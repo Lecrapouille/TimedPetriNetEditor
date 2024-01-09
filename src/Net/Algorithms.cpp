@@ -350,7 +350,7 @@ std::stringstream showCounterEquation(Net const& net, std::string const& comment
             {
                 ss << separator2;
                 ss << (use_caption ? ao->from.caption : ao->from.key);
-                if (ao->duration != 0u)
+                if (ao->duration != 0.0f)
                 {
                     ss << "(t - " << ao->duration << ")";
                 }
@@ -392,7 +392,7 @@ std::stringstream showDaterEquation(Net const& net, std::string const& comment,
             for (auto const& ao: ai->from.arcsIn)
             {
                 ss << separator2;
-                if (ao->duration != 0u)
+                if (ao->duration != 0.0f)
                 {
                     ss << ao->duration << (maxplus_notation ? " " : " + ");
                 }
