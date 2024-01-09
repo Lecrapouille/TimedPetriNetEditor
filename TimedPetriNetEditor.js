@@ -191,7 +191,7 @@ Module['FS_createPath']("/", "examples", true, true);
     }
 
     }
-    loadPackage({"files": [{"filename": "/data/font.ttf", "start": 0, "end": 171792}, {"filename": "/data/imgui.ini", "start": 171792, "end": 174096}, {"filename": "/examples/AppelsDurgence.json", "start": 174096, "end": 177805}, {"filename": "/examples/Coffee.json", "start": 177805, "end": 179390}, {"filename": "/examples/EventGraph.json", "start": 179390, "end": 181096}, {"filename": "/examples/FourRoadJunctions.json", "start": 181096, "end": 186493}, {"filename": "/examples/GRAFCET.json", "start": 186493, "end": 187607}, {"filename": "/examples/Howard1.json", "start": 187607, "end": 188642}, {"filename": "/examples/Howard2.json", "start": 188642, "end": 190000}, {"filename": "/examples/Infinite.json", "start": 190000, "end": 190571}, {"filename": "/examples/InputsOutputs.json", "start": 190571, "end": 192249}, {"filename": "/examples/JPQ.json", "start": 192249, "end": 193781}, {"filename": "/examples/Philosophers.json", "start": 193781, "end": 196357}, {"filename": "/examples/ProducerConsumer.json", "start": 196357, "end": 197756}, {"filename": "/examples/TrafficLights.json", "start": 197756, "end": 199739}, {"filename": "/examples/dualband.json", "start": 199739, "end": 203046}], "remote_package_size": 203046});
+    loadPackage({"files": [{"filename": "/data/font.ttf", "start": 0, "end": 171792}, {"filename": "/data/imgui.ini", "start": 171792, "end": 174684}, {"filename": "/examples/AppelsDurgence.json", "start": 174684, "end": 178415}, {"filename": "/examples/Coffee.json", "start": 178415, "end": 180000}, {"filename": "/examples/EventGraph.json", "start": 180000, "end": 181706}, {"filename": "/examples/FourRoadJunctions.json", "start": 181706, "end": 187103}, {"filename": "/examples/GRAFCET.json", "start": 187103, "end": 188217}, {"filename": "/examples/Howard1.json", "start": 188217, "end": 189252}, {"filename": "/examples/Howard2.json", "start": 189252, "end": 190610}, {"filename": "/examples/Infinite.json", "start": 190610, "end": 191181}, {"filename": "/examples/InputsOutputs.json", "start": 191181, "end": 192859}, {"filename": "/examples/JPQ.json", "start": 192859, "end": 194391}, {"filename": "/examples/Philosophers.json", "start": 194391, "end": 196972}, {"filename": "/examples/ProducerConsumer.json", "start": 196972, "end": 198371}, {"filename": "/examples/TrafficLights.json", "start": 198371, "end": 200396}, {"filename": "/examples/dualband.json", "start": 200396, "end": 203703}], "remote_package_size": 203703});
 
   })();
 
@@ -1182,40 +1182,40 @@ function dbg(text) {
 // === Body ===
 
 var ASM_CONSTS = {
-  211688: () => { if (document.fullscreenElement) return 1; },  
- 211734: () => { return document.getElementById('canvas').width; },  
- 211786: () => { return parseInt(document.getElementById('canvas').style.width); },  
- 211854: () => { document.exitFullscreen(); },  
- 211881: () => { setTimeout(function() { Module.requestFullscreen(false, false); }, 100); },  
- 211954: () => { if (document.fullscreenElement) return 1; },  
- 212000: () => { return document.getElementById('canvas').width; },  
- 212052: () => { return screen.width; },  
- 212077: () => { document.exitFullscreen(); },  
- 212104: () => { setTimeout(function() { Module.requestFullscreen(false, true); setTimeout(function() { canvas.style.width="unset"; }, 100); }, 100); },  
- 212237: () => { if (document.fullscreenElement) return 1; },  
- 212283: () => { return document.getElementById('canvas').width; },  
- 212335: () => { return parseInt(document.getElementById('canvas').style.width); },  
- 212403: () => { if (document.fullscreenElement) return 1; },  
- 212449: () => { return document.getElementById('canvas').width; },  
- 212501: () => { return screen.width; },  
- 212526: () => { if (document.fullscreenElement) return 1; },  
- 212572: () => { return document.getElementById('canvas').width; },  
- 212624: () => { return screen.width; },  
- 212649: () => { document.exitFullscreen(); },  
- 212676: () => { if (document.fullscreenElement) return 1; },  
- 212722: () => { return document.getElementById('canvas').width; },  
- 212774: () => { return parseInt(document.getElementById('canvas').style.width); },  
- 212842: () => { document.exitFullscreen(); },  
- 212869: () => { return screen.width; },  
- 212894: () => { return screen.height; },  
- 212920: () => { return window.screenX; },  
- 212947: () => { return window.screenY; },  
- 212974: ($0) => { navigator.clipboard.writeText(UTF8ToString($0)); },  
- 213027: ($0) => { document.getElementById("canvas").style.cursor = UTF8ToString($0); },  
- 213098: () => { document.getElementById('canvas').style.cursor = 'none'; },  
- 213155: ($0) => { document.getElementById('canvas').style.cursor = UTF8ToString($0); },  
- 213226: () => { if (document.fullscreenElement) return 1; },  
- 213272: () => { if (document.pointerLockElement) return 1; }
+  211768: () => { if (document.fullscreenElement) return 1; },  
+ 211814: () => { return document.getElementById('canvas').width; },  
+ 211866: () => { return parseInt(document.getElementById('canvas').style.width); },  
+ 211934: () => { document.exitFullscreen(); },  
+ 211961: () => { setTimeout(function() { Module.requestFullscreen(false, false); }, 100); },  
+ 212034: () => { if (document.fullscreenElement) return 1; },  
+ 212080: () => { return document.getElementById('canvas').width; },  
+ 212132: () => { return screen.width; },  
+ 212157: () => { document.exitFullscreen(); },  
+ 212184: () => { setTimeout(function() { Module.requestFullscreen(false, true); setTimeout(function() { canvas.style.width="unset"; }, 100); }, 100); },  
+ 212317: () => { if (document.fullscreenElement) return 1; },  
+ 212363: () => { return document.getElementById('canvas').width; },  
+ 212415: () => { return parseInt(document.getElementById('canvas').style.width); },  
+ 212483: () => { if (document.fullscreenElement) return 1; },  
+ 212529: () => { return document.getElementById('canvas').width; },  
+ 212581: () => { return screen.width; },  
+ 212606: () => { if (document.fullscreenElement) return 1; },  
+ 212652: () => { return document.getElementById('canvas').width; },  
+ 212704: () => { return screen.width; },  
+ 212729: () => { document.exitFullscreen(); },  
+ 212756: () => { if (document.fullscreenElement) return 1; },  
+ 212802: () => { return document.getElementById('canvas').width; },  
+ 212854: () => { return parseInt(document.getElementById('canvas').style.width); },  
+ 212922: () => { document.exitFullscreen(); },  
+ 212949: () => { return screen.width; },  
+ 212974: () => { return screen.height; },  
+ 213000: () => { return window.screenX; },  
+ 213027: () => { return window.screenY; },  
+ 213054: ($0) => { navigator.clipboard.writeText(UTF8ToString($0)); },  
+ 213107: ($0) => { document.getElementById("canvas").style.cursor = UTF8ToString($0); },  
+ 213178: () => { document.getElementById('canvas').style.cursor = 'none'; },  
+ 213235: ($0) => { document.getElementById('canvas').style.cursor = UTF8ToString($0); },  
+ 213306: () => { if (document.fullscreenElement) return 1; },  
+ 213352: () => { if (document.pointerLockElement) return 1; }
 };
 function GetWindowInnerWidth() { return window.innerWidth; }
 function GetWindowInnerHeight() { return window.innerHeight; }
@@ -11076,17 +11076,17 @@ var dynCall_iii = Module['dynCall_iii'] = createExportWrapper('dynCall_iii');
 var dynCall_iiii = Module['dynCall_iiii'] = createExportWrapper('dynCall_iiii');
 var dynCall_viiii = Module['dynCall_viiii'] = createExportWrapper('dynCall_viiii');
 var dynCall_viii = Module['dynCall_viii'] = createExportWrapper('dynCall_viii');
-var dynCall_viiiiiiiii = Module['dynCall_viiiiiiiii'] = createExportWrapper('dynCall_viiiiiiiii');
+var dynCall_viiiii = Module['dynCall_viiiii'] = createExportWrapper('dynCall_viiiii');
 var dynCall_vif = Module['dynCall_vif'] = createExportWrapper('dynCall_vif');
 var dynCall_viiiiii = Module['dynCall_viiiiii'] = createExportWrapper('dynCall_viiiiii');
 var dynCall_v = Module['dynCall_v'] = createExportWrapper('dynCall_v');
 var dynCall_iiiii = Module['dynCall_iiiii'] = createExportWrapper('dynCall_iiiii');
 var dynCall_iiiiffi = Module['dynCall_iiiiffi'] = createExportWrapper('dynCall_iiiiffi');
-var dynCall_viiiii = Module['dynCall_viiiii'] = createExportWrapper('dynCall_viiiii');
 var dynCall_vidd = Module['dynCall_vidd'] = createExportWrapper('dynCall_vidd');
 var dynCall_vffff = Module['dynCall_vffff'] = createExportWrapper('dynCall_vffff');
 var dynCall_vf = Module['dynCall_vf'] = createExportWrapper('dynCall_vf');
 var dynCall_viiiiiiii = Module['dynCall_viiiiiiii'] = createExportWrapper('dynCall_viiiiiiii');
+var dynCall_viiiiiiiii = Module['dynCall_viiiiiiiii'] = createExportWrapper('dynCall_viiiiiiiii');
 var dynCall_i = Module['dynCall_i'] = createExportWrapper('dynCall_i');
 var dynCall_vff = Module['dynCall_vff'] = createExportWrapper('dynCall_vff');
 var dynCall_viiiiiii = Module['dynCall_viiiiiii'] = createExportWrapper('dynCall_viiiiiii');
@@ -11110,8 +11110,8 @@ var _asyncify_start_unwind = createExportWrapper('asyncify_start_unwind');
 var _asyncify_stop_unwind = createExportWrapper('asyncify_stop_unwind');
 var _asyncify_start_rewind = createExportWrapper('asyncify_start_rewind');
 var _asyncify_stop_rewind = createExportWrapper('asyncify_stop_rewind');
-var ___start_em_js = Module['___start_em_js'] = 213319;
-var ___stop_em_js = Module['___stop_em_js'] = 213392;
+var ___start_em_js = Module['___start_em_js'] = 213399;
+var ___stop_em_js = Module['___stop_em_js'] = 213472;
 
 // include: postamble.js
 // === Auto-generated postamble setup entry stuff ===
