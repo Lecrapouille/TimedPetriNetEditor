@@ -10,8 +10,8 @@ BUILD_TYPE = debug
 ###################################################
 # Select backend for dear im gui: RayLib or GLFW3
 #
-BACKEND ?= RayLib
-# BACKEND ?= GLFW3
+#BACKEND ?= RayLib
+BACKEND ?= GLFW3
 
 ###################################################
 # Location of the project directory and Makefiles
