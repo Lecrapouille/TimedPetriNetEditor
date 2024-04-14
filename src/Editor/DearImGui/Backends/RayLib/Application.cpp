@@ -18,7 +18,7 @@
 // along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.
 //=============================================================================
 
-#include "Application/DearImGui/Backends/RayLib/Application.hpp"
+#include "Editor/DearImGui/Backends/RayLib/Application.hpp"
 #include "Utils/Utils.hpp"
 
 #include <cstdlib>
