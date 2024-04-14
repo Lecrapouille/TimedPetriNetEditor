@@ -25,11 +25,19 @@
 #include <iostream>
 #include <stdio.h>
 
+//------------------------------------------------------------------------------
+void reloadFonts()
+{
+    std::cerr << "reloadFonts: Not implemented yet" << std::endl;
+}
+
+//------------------------------------------------------------------------------
 static void error_callback(int error, const char* description)
 {
     fprintf(stderr, "Glfw Error %d: %s\n", error, description);
 }
 
+//------------------------------------------------------------------------------
 Application::Application(size_t const width, size_t const height, std::string const& title)
     : m_clear_color(ImVec4(0.1058, 0.1137f, 0.1255f, 1.00f))
 {
@@ -38,9 +46,11 @@ Application::Application(size_t const width, size_t const height, std::string co
     if (!glfwInit())
         std::exit(1);
 
-    const char* glsl_version = "#version 130";
+    const char* glsl_version = "#version 150";
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 0);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 2);
+    glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE); // Required on Mac: 3.2+ only
+    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
     // Create window with graphics context
     m_window = glfwCreateWindow(width, height, title.c_str(), nullptr, nullptr);
@@ -71,6 +81,7 @@ Application::Application(size_t const width, size_t const height, std::string co
     io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;       // Enable Docking
 }
 
+//------------------------------------------------------------------------------
 Application::~Application()
 {
     // Cleanup
@@ -83,36 +94,77 @@ Application::~Application()
     glfwTerminate();
 }
 
+//------------------------------------------------------------------------------
 void Application::run()
 {
-    // Initialize the underlying app
-    onStartUp();
+    m_lastUpdateTime = 0.0;
+    m_lastFrameTime = 0.0;
+    const double time_per_frame = 1.0 / double(m_framerate);
 
-    while (!glfwWindowShouldClose(m_window))
+    while (!m_exit_window)//!glfwWindowShouldClose(m_window))
     {
+        // For the display framerate
+        double now = glfwGetTime();
+        double deltaTime = now - m_lastUpdateTime;
+
         // Poll events like key presses, mouse movements etc.
         glfwPollEvents();
 
-        // Start the Dear ImGui frame
-        ImGui_ImplOpenGL3_NewFrame();
-        ImGui_ImplGlfw_NewFrame();
-        ImGui::NewFrame();
+        if ((now - m_lastFrameTime) >= time_per_frame)
+        {
+            // Start the Dear ImGui frame
+            ImGui_ImplOpenGL3_NewFrame();
+            ImGui_ImplGlfw_NewFrame();
+            ImGui::NewFrame();
 
-        // Main loop of the underlying app
-        onDraw();
+            onUpdate(time_per_frame);
 
-        // Rendering
-        ImGui::Render();
-        int display_w, display_h;
-        glfwGetFramebufferSize(m_window, &display_w, &display_h);
-        glViewport(0, 0, display_w, display_h);
-        glClearColor(m_clear_color.x * m_clear_color.w,
-                     m_clear_color.y * m_clear_color.w,
-                     m_clear_color.z * m_clear_color.w,
-                     m_clear_color.w);
-        glClear(GL_COLOR_BUFFER_BIT);
-        ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+            // Main loop of the underlying app
+            onDraw();
 
-        glfwSwapBuffers(m_window);
+            // Rendering
+            ImGui::Render();
+            int display_w, display_h;
+            glfwGetFramebufferSize(m_window, &display_w, &display_h);
+            glViewport(0, 0, display_w, display_h);
+            glClearColor(m_clear_color.x * m_clear_color.w,
+                        m_clear_color.y * m_clear_color.w,
+                        m_clear_color.z * m_clear_color.w,
+                        m_clear_color.w);
+            glClear(GL_COLOR_BUFFER_BIT);
+            ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+
+            glfwSwapBuffers(m_window);
+            m_lastFrameTime = now;
+        }
+
+        m_lastUpdateTime = now;
     }
+}
+
+//------------------------------------------------------------------------------
+void Application::framerate(size_t const framerate)
+{
+    m_framerate = framerate;
+    m_lastUpdateTime = 0.0;
+    m_lastFrameTime = 0.0;
+}
+
+//------------------------------------------------------------------------------
+bool Application::screenshot(std::string const& path)
+{
+    std::cerr << "Application::screenshot: Not implemented yet" << std::endl;
+    return false;
+}
+
+//------------------------------------------------------------------------------
+void Application::title(std::string const& title_)
+{
+    glfwSetWindowTitle(m_window, title_.c_str());
+}
+
+//------------------------------------------------------------------------------
+bool Application::windowShouldClose()
+{
+    return glfwWindowShouldClose(m_window);
 }

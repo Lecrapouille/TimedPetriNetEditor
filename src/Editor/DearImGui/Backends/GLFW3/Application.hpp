@@ -29,6 +29,9 @@
 #include "ImGuiFileDialog.h"
 #include <GLFW/glfw3.h>
 
+//------------------------------------------------------------------------------
+void reloadFonts();
+
 // *****************************************************************************
 //! \brief
 // *****************************************************************************
@@ -54,15 +57,34 @@ public:
     //--------------------------------------------------------------------------
     bool screenshot(std::string const& screenshot_path);
 
+    //--------------------------------------------------------------------------
+    //! \brief Set title.
+    //--------------------------------------------------------------------------
+    void title(std::string const& title_);
+
+    //--------------------------------------------------------------------------
+    //! \brief Request halting.
+    //--------------------------------------------------------------------------
+    void halt() { m_exit_window = true; }
+
+    //--------------------------------------------------------------------------
+    //! \brief
+    //--------------------------------------------------------------------------
+    bool windowShouldClose(); // FIXME: doublon with halt()
+
 private:
 
-    virtual void onStartUp() = 0;
     virtual void onDraw() = 0;
+    virtual void onUpdate(float const dt) = 0;
 
 private:
 
     GLFWwindow* m_window = nullptr;
     ImVec4 m_clear_color;
+    bool m_exit_window = false;
+    size_t m_framerate = 60u;
+    double m_lastUpdateTime = 0.0;  // number of seconds since the last loop
+    double m_lastFrameTime = 0.0;   // number of seconds since the last frame
 };
 
 #endif
