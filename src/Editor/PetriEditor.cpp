@@ -1560,7 +1560,7 @@ void Editor::PetriView::onHandleInput()
         }
     }
 
-    if (WindowShouldClose())
+    if (m_editor.windowShouldClose())
     {
         m_editor.close();
     }

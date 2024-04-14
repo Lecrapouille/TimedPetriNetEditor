@@ -32,26 +32,26 @@
 //------------------------------------------------------------------------------
 void reloadFonts()
 {
-	ImGuiIO& io = ImGui::GetIO();
-	unsigned char* pixels = nullptr;
+    ImGuiIO& io = ImGui::GetIO();
+    unsigned char* pixels = nullptr;
 
-	int width;
-	int height;
-	io.Fonts->GetTexDataAsRGBA32(&pixels, &width, &height, nullptr);
-	Image image = GenImageColor(width, height, BLANK);
-	memcpy(image.data, pixels, width * height * 4);
+    int width;
+    int height;
+    io.Fonts->GetTexDataAsRGBA32(&pixels, &width, &height, nullptr);
+    Image image = GenImageColor(width, height, BLANK);
+    memcpy(image.data, pixels, width * height * 4);
 
-	Texture2D* fontTexture = (Texture2D*)io.Fonts->TexID;
-	if (fontTexture && fontTexture->id != 0)
-	{
-		UnloadTexture(*fontTexture);
-		MemFree(fontTexture);
-	}
+    Texture2D* fontTexture = (Texture2D*)io.Fonts->TexID;
+    if (fontTexture && fontTexture->id != 0)
+    {
+        UnloadTexture(*fontTexture);
+        MemFree(fontTexture);
+    }
 
-	fontTexture = (Texture2D*)MemAlloc(sizeof(Texture2D));
-	*fontTexture = LoadTextureFromImage(image);
-	UnloadImage(image);
-	io.Fonts->TexID = fontTexture;
+    fontTexture = (Texture2D*)MemAlloc(sizeof(Texture2D));
+    *fontTexture = LoadTextureFromImage(image);
+    UnloadImage(image);
+    io.Fonts->TexID = fontTexture;
 }
 
 //------------------------------------------------------------------------------
@@ -95,6 +95,7 @@ Application::~Application()
     CloseWindow(); // Stop raylib
 }
 
+//------------------------------------------------------------------------------
 static uint64_t timeSinceEpochMillisec()
 {
   using namespace std::chrono;
@@ -104,10 +105,11 @@ static uint64_t timeSinceEpochMillisec()
 //------------------------------------------------------------------------------
 void Application::run()
 {
+    // Iterate update()
     tpne::Timer timer;
     float timeSinceLastUpdate = 0.0f;
+    const float time_per_frame = 1.0f / float(m_framerate);;
 
-    const float time_per_frame = 1.0f / m_framerate;
     while (!m_exit_window)
     {
         //uint64_t b = timeSinceEpochMillisec();
@@ -160,4 +162,10 @@ bool Application::screenshot(std::string const& path)
 void Application::title(std::string const& title_)
 {
     SetWindowTitle(title_.c_str());
+}
+
+//------------------------------------------------------------------------------
+bool Application::windowShouldClose()
+{
+    return WindowShouldClose();
 }
