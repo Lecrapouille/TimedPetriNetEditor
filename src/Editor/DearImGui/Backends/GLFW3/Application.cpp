@@ -18,7 +18,7 @@
 // along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.
 //=============================================================================
 
-#include "Application/DearImGui/Backends/GLFW3/Application.hpp"
+#include "Editor/DearImGui/Backends/GLFW3/Application.hpp"
 
 #include <cstdlib>
 #include <functional>

@@ -25,7 +25,7 @@ include $(M)/Makefile.header
 #
 VPATH += $(P)/include $(P)/src $(P)/src/Utils $(P)/src/Net
 VPATH += $(P)/src/Net/Imports VPATH += $(P)/src/Net/Exports
-VPATH += $(P)/src/Application $(P)/src/Editor $(P)/src/Editor/DearImGui
+VPATH += $(P)/src/Editor $(P)/src/Editor/DearImGui
 
 ###################################################
 # Inform Makefile where to find header files
@@ -76,9 +76,9 @@ endif
 #
 ifeq ($(BACKEND),RayLib)
 VPATH += $(THIRDPART)/rlImGui
-VPATH += $(P)/src/Application/DearImGui/Backends/RayLib
+VPATH += $(P)/src/Editor/DearImGui/Backends/RayLib
 INCLUDES += -I$(THIRDPART)/rlImGui
-INCLUDES += -I$(P)/src/Application/DearImGui/Backends/RayLib
+INCLUDES += -I$(P)/src/Editor/DearImGui/Backends/RayLib
 DEARIMGUI_BACKEND_OBJS += rlImGui.o
 endif
 
@@ -86,8 +86,8 @@ endif
 # Dear ImGui backends: OpenGL/GLFW3
 #
 ifeq ($(BACKEND),GLFW3)
-VPATH += $(P)/src/Application/DearImGui/Backends/GLFW3
-INCLUDES += -I$(P)/src/Application/DearImGui/Backends/GLFW3
+VPATH += $(P)/src/Editor/DearImGui/Backends/GLFW3
+INCLUDES += -I$(P)/src/Editor/DearImGui/Backends/GLFW3
 DEARIMGUI_BACKEND_OBJS += imgui_impl_glfw.o imgui_impl_opengl3.o
 endif
 
