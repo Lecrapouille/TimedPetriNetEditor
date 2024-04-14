@@ -21,6 +21,16 @@ M := $(P)/.makefile
 include $(M)/Makefile.header
 
 ###################################################
+# Check selected backend for dear im gui if compiled for html5
+# Be sure to place this section after including MyMakefile
+ifeq ($(ARCHI),Emscripten)
+ifneq ($(BACKEND),RayLib)
+$(warning Force RayLib backend for compiling with Emscripten)
+BACKEND = RayLib
+endif
+endif
+
+###################################################
 # Inform Makefile where to find *.cpp files
 #
 VPATH += $(P)/include $(P)/src $(P)/src/Utils $(P)/src/Net
@@ -155,13 +165,6 @@ endif
 #
 ifeq ($(DEARIMGUI_BACKEND_OBJS),)
 $(error "Define BACKEND either as RayLib or GLFW3")
-endif
-
-ifeq ($(ARCHI),Emscripten)
-ifneq ($(BACKEND),RayLib)
-$(warning "Force RayLib backend for compiling with Emscripten")
-BACKEND := RayLib
-endif
 endif
 
 ###################################################
