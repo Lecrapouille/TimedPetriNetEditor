@@ -621,6 +621,23 @@ void Editor::help() const
                 ImGui::Text("%s", help.str().c_str());
                 ImGui::EndTabItem();
             }
+            if (ImGui::BeginTabItem("Transitivity Syntax"))
+            {
+                std::stringstream help;
+                help << "Transitivities are boolean expression beteween sensors and states of GRAFCET steps." << std::endl
+                     << "The syntax used for expression is Reverse Polish Notation (RPN): operators follow their operands." << std::endl
+                     << "  And operator:         ." << std::endl
+                     << "  Or operator:          +" << std::endl
+                     << "  Negation operator:    !" << std::endl
+                     << "  State of Step 42:     X42" << std::endl
+                     << "  Sensor name:          any consecutive char" << std::endl
+                     << "  true operand:         true" << std::endl
+                     << "  false operand:        false" << std::endl
+                     << "Example:\n  X42 sensor-temp + sensor2 ! .\nmeans:\n . (Step42 or sensor-temp) and (not sensor2)" << std::endl;
+
+                ImGui::Text("%s", help.str().c_str());
+                ImGui::EndTabItem();
+            }
             if (ImGui::BeginTabItem("Pathes"))
             {
                 ImGui::Text("Data path: %s", m_path.toString().c_str());
@@ -742,7 +759,9 @@ void Editor::inspector()
                         &m_states.show_transition_captions);
         ImGui::PopStyleVar();
         ImGui::Separator();
-        ImGui::Text("%s", "Captions:");
+        ImGui::Text("%s", (m_net.type() == TypeOfNet::GRAFCET) ? "Transitivities:" : "Captions:");
+
+        // Show contents of transitivities
         for (auto& t: m_net.transitions())
         {
             ImGui::InputText(t.key.c_str(), &t.caption, readonly);

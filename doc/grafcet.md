@@ -7,16 +7,24 @@ After watching this nice French YouTube video https://youtu.be/v5FwJvtGaEw, in
 which GRAFCET is created manually in C for Arduino, I extended my editor for
 generating GRAFCET in a single C++ header file. Since my project mainly concerns
 timed Petri net, the editor is not intended to follow all the GRAFCET norms
-(consider it as a bonus while GitHub pull requests are welcome) and therefore
-cannot edit transitivities and simulate inputs.
+(GitHub pull requests are welcome).
 
-Inside the editor, set your net type to GRAFCET and you can add code inside
-transitions caption in postfix notation (i.e. `a b ! .` will means `and(a, not(b))`).
+Inside the editor, set your net type to GRAFCET and you can add code inside transitions caption using the postfix notation aka Reverse Polish Notation (RPN): operators follow their operands.
 
-Note: Tempo, raising or falling edge and states of steps are not yet managed. Actions code
-are not yet managed.
+| Operator name     | Symbol |
+| And operator      |   .    |
+| Or operator       |   +    |
+| Negation operator |   !    |
+| Step 42           |   X42  |
+| Sensor name       | any consecutive char |
+| True operand      | true   |
+| False operand:    | false  |
 
-As consequence, you will have to write manually the missing methods in your own C++ file:
+Example `a X0 ! .` means `and(a, not(X0))`.
+
+Note: Tempo, raising or falling edge and states of steps are not yet managed. Actions code are not yet managed by the editor.
+
+Once the C++ code generated, you will have to write manually the missing methods in your own C++ file:
 - `P0()`, `P1()` ... to let you add the code for actions when places are
   activated (usually to update actuators). You have to implement one method
   for each place.
