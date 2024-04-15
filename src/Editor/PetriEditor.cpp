@@ -599,11 +599,16 @@ void Editor::help() const
             if (ImGui::BeginTabItem("Mouse actions"))
             {
                 std::stringstream help;
-                help << "Left button pressed: add a place" << std::endl
-                     << "Right button pressed: add a transition" << std::endl
-                     << "Middle button pressed: add an arc with the selected place or transition as origin" << std::endl
-                     << "Middle button release: end the arc with the selected place or transition as destination" << std::endl
-                     << "Middle button pressed: move the view is no place or transitions are selected" << std::endl;
+                help << "Left button pressed: add a new place." << std::endl
+                     << "Right button pressed: add a new transition." << std::endl
+                     << "Middle button pressed outside a node followed by middle button released on a selected node:" << std::endl
+                     << "  - the arc is created as well as the origin node where its type is determined by the destination node." << std::endl
+                     << "Middle button pressed on an initial selected node followed by middle button released on any node:" << std::endl
+                     << "  - the arc is created as well as the destination node where its type is determined by the origin node." << std::endl
+                     << "Middle button pressed on a first node followed by middle button released on a second node:" << std::endl
+                     << "  - if nodes have not the same type then a simple arc is created." << std::endl
+                     << "  - if nodes have the same type then an arc is created and split by an intermediate node." << std::endl
+                     << "Middle button pressed and released without selecting an node: move the view." << std::endl;
 
                 ImGui::Text("%s", help.str().c_str());
                 ImGui::EndTabItem();
