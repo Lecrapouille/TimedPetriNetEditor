@@ -43,11 +43,12 @@ public:
     Editor(size_t const width, size_t const height, std::string const& title);
 
     //-------------------------------------------------------------------------
-    //! \brief starts up the Petri net editor and call the infinite loop.
-    //! \param[in] petri_file the path of the Petri net fil to load. Let it
-    //! dummy if you do not want to open a file.
+    //! \brief Starts the Petri net editor up, load the Petri file if given not
+    //! empty. Then call the infinite loop of the GUI.
+    //! \param[in] petri_file the path of the Petri net fil to load. Pass dummy
+    //! string if you do not want to load a Petri net file.
     //-------------------------------------------------------------------------
-    void startUp(std::string const& petri_file);
+    void run(std::string const& petri_file);
 
 private: // Inheritance from Application class
 
