@@ -150,8 +150,9 @@ private:
 
     private:
 
-        bool isMouseClicked(ImGuiMouseButton& key, bool& dragging);
+        bool isMouseClicked(ImGuiMouseButton& key);
         bool isMouseReleased(ImGuiMouseButton& key);
+        bool isMouseDraggingView(ImGuiMouseButton const& key);
         void handleAddNode(ImGuiMouseButton button);
         void handleArcOrigin();
         void handleMoveNode();
@@ -182,25 +183,25 @@ private:
         // ********************************************************************
         //! \brief
         // ********************************************************************
-        class MouseSelection
+        class MouseState
         {
         public:
-            //! \brief Mouse cursor position.
+            //! \brief Memorize the mouse cursor position when the user has moved it.
             ImVec2 position;
-            //! \brief
-            bool is_dragging = false;
-            bool disable_dragging = false; // FIXME
+            //! \brief Memorize the mouse cursor position when the user has clicked.
+            ImVec2 clicked_at;
+            //! \brief The user is dragging the view
+            bool is_dragging_view = false;
             //! \brief Selected origin node (place or transition) by the user when
             //! adding an arc.
             Node* from = nullptr;
+            //
+            bool arc_from_unknown_node = false; // FIXME
             //! \brief Selected destination node (place or transition) by the user when
             //! adding an arc.
             Node* to = nullptr;
             //! \brief The user has select a node to be displaced.
             std::vector<Node*> selection;
-            // Ugly stuffs needed when trying to determine which node the user wants to
-            // create.
-            ImVec2 click_position; bool arc_from_unknown_node = false;
         } m_mouse;
     }; // class PetriView
 
@@ -236,7 +237,7 @@ private:
         Net m_after;
     };
 
-private:
+private: // FIXME m_marked_arcs (critical cycles ...)
 
     //! \brief Heper instance to find files like Linux $PATH environment variable.
     //! Used for example for loading font files.
