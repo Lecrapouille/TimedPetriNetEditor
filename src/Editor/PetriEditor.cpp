@@ -41,12 +41,6 @@ Editor::Editor(size_t const width, size_t const height,
       m_simulation(m_net, m_messages),
       m_view(*this)
 {
-    m_states.title = title;
-}
-
-//------------------------------------------------------------------------------
-void Editor::startUp(std::string const& filepath)
-{
 #ifdef __EMSCRIPTEN__
 #  define FONT_SIZE 18.0f
 #else
@@ -54,6 +48,8 @@ void Editor::startUp(std::string const& filepath)
 #endif
 
     std::cout << "Path: " << m_path.toString() << std::endl;
+
+    m_states.title = title;
 
     // Set imgui.ini loading/saving location
     ImGuiIO &io = ImGui::GetIO();
@@ -64,7 +60,11 @@ void Editor::startUp(std::string const& filepath)
     // Setup fonts
     io.Fonts->AddFontFromFileTTF(m_path.expand("font.ttf").c_str(), FONT_SIZE);
     reloadFonts();
+}
 
+//------------------------------------------------------------------------------
+void Editor::run(std::string const& filepath)
+{
     // Load Petri net file if passed with command line
     if (!filepath.empty())
     {
@@ -79,6 +79,9 @@ void Editor::startUp(std::string const& filepath)
             m_messages.setError(m_net.error());
         }
     }
+
+    // Start the infinite loop
+    Application::run();
 }
 
 //------------------------------------------------------------------------------

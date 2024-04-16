@@ -40,6 +40,5 @@ int main(int argc, char* argv[])
     }
 
     tpne::Editor editor(1024, 768, "Petri Net Editor");
-    editor.startUp(filename);
-    editor.run();
+    editor.run(filename);
 }
