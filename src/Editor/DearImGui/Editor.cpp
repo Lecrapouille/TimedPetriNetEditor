@@ -1205,7 +1205,7 @@ bool Editor::PetriView::isMouseReleased(ImGuiMouseButton& key)
 }
 
 //--------------------------------------------------------------------------
-bool Editor::PetriView::isMouseClicked(ImGuiMouseButton& key, bool& dragging)
+bool Editor::PetriView::isMouseClicked(ImGuiMouseButton& key)
 {
     ImGuiIO &io = ImGui::GetIO();
     if ((io.MousePos.x >= m_canvas.corners[0].x) &&
@@ -1216,34 +1216,40 @@ bool Editor::PetriView::isMouseClicked(ImGuiMouseButton& key, bool& dragging)
         if (ImGui::IsMouseClicked(ImGuiMouseButton_Middle))
         {
             key = ImGuiMouseButton_Middle;
-            if (m_editor.getNode(m_mouse.position) != nullptr)
-                m_mouse.disable_dragging = true;
-            dragging = false;
             return true;
         }
         if (ImGui::IsMouseClicked(ImGuiMouseButton_Left))
         {
             key = ImGuiMouseButton_Left;
-            dragging = false;
             return true;
         }
         if (ImGui::IsMouseClicked(ImGuiMouseButton_Right))
         {
             key = ImGuiMouseButton_Right;
-            dragging = false;
             return true;
         }
+    }
 
+    return false;
+}
+
+//--------------------------------------------------------------------------
+bool Editor::PetriView::isMouseDraggingView(ImGuiMouseButton const& button)
+{
+    if (button != ImGuiMouseButton_Middle)
+        return false;
+
+    // We are already displacingg node
+    //if (m_mouse.selection.size() != 0u)
+    //    return false;
+
+    Node* node = m_editor.getNode(m_mouse.position);
+    if (node == nullptr)
+    {
         const float mouse_threshold_for_pan = grid.menu ? -1.0f : 0.0f;
-        if (!m_mouse.disable_dragging)
+        if (ImGui::IsMouseDragging(ImGuiMouseButton_Middle, mouse_threshold_for_pan))
         {
-            if (ImGui::IsMouseDragging(ImGuiMouseButton_Middle,
-                                       mouse_threshold_for_pan))
-            {
-                key = ImGuiMouseButton_Middle;
-                dragging = true;
-                return true;
-            }
+            return true;
         }
     }
 
@@ -1253,7 +1259,6 @@ bool Editor::PetriView::isMouseClicked(ImGuiMouseButton& key, bool& dragging)
 //--------------------------------------------------------------------------
 void Editor::PetriView::handleArcOrigin()
 {
-    // TODO m_marked_arcs.clear();
     m_mouse.selection.clear();
 
     // Get a place or a transition from the mouse cursor
@@ -1265,7 +1270,7 @@ void Editor::PetriView::handleArcOrigin()
         {
             // We do not yet know the type of the destination node so create
             // intermediate information.
-            m_mouse.click_position = m_mouse.position;
+            m_mouse.clicked_at = m_mouse.position;
             m_mouse.arc_from_unknown_node = true;
         }
     }
@@ -1295,8 +1300,6 @@ void Editor::PetriView::handleMoveNode()
 //--------------------------------------------------------------------------
 void Editor::PetriView::handleAddNode(ImGuiMouseButton button)
 {
-    // TODO m_marked_arcs.clear();
-
     if (!m_editor.m_simulation.running)
     {
         // Add a new Place or a new Transition only if a node is not already
@@ -1393,12 +1396,12 @@ void Editor::PetriView::handleArcDestination()
                 if (m_mouse.to->type == Node::Type::Place)
                 {
                     m_mouse.from = &m_editor.m_net.addTransition(
-                        m_mouse.click_position.x, m_mouse.click_position.y);
+                        m_mouse.clicked_at.x, m_mouse.clicked_at.y);
                 }
                 else
                 {
                     m_mouse.from = &m_editor.m_net.addPlace(
-                        m_mouse.click_position.x, m_mouse.click_position.y);
+                        m_mouse.clicked_at.x, m_mouse.clicked_at.y);
                 }
                 action->after(m_editor.m_net);
                 m_editor.m_history.add(std::move(action));
@@ -1476,21 +1479,11 @@ void Editor::PetriView::onHandleInput()
     ImGuiMouseButton button;
     if (ImGui::IsItemActive() && ImGui::IsItemHovered())
     {
-        if (isMouseClicked(button, m_mouse.is_dragging))
+        if (isMouseClicked(button))
         {
-            // The 'M' key was pressed.
-            // Reset the state but do not add new node!
-            if (m_mouse.selection.size() != 0u)
-            {
-                m_mouse.from = m_mouse.to = nullptr;
-                m_mouse.selection.clear();
-                if (button == ImGuiMouseButton_Middle)
-                {
-                    return;
-                }
-            }
+            // TODO m_marked_arcs.clear();
 
-            if (m_mouse.is_dragging)
+            if (isMouseDraggingView(button))
             {
                 ImGuiIO& io = ImGui::GetIO();
                 m_canvas.scrolling.x += io.MouseDelta.x;
@@ -1509,7 +1502,7 @@ void Editor::PetriView::onHandleInput()
 
     if (isMouseReleased(button))
     {
-        m_mouse.is_dragging = m_mouse.disable_dragging = false;
+        m_mouse.is_dragging_view = false;
 
         // The 'M' key was pressed for moving selected nodes.
         // Reset the state but do not add new node!
@@ -1635,10 +1628,10 @@ void Editor::PetriView::drawPetriNet(Net& net, Simulation& simulation)
 
     // Show the arc we are creating
     drawArc(m_canvas.draw_list, m_mouse.from, m_mouse.to,
-            m_mouse.arc_from_unknown_node ? &m_mouse.click_position : nullptr,
+            m_mouse.arc_from_unknown_node ? &m_mouse.clicked_at : nullptr,
             origin, m_mouse.position);
 
-    // Draw critical cycle
+    // FIXME Draw critical cycle
     //for (auto& a: m_marked_arcs)
     //    draw(*a, 255);
 
