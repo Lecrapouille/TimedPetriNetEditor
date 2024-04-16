@@ -21,7 +21,7 @@
 #include "TimedPetriNetEditor/PetriNet.hpp"
 #include "TimedPetriNetEditor/Algorithms.hpp"
 #include "TimedPetriNetEditor/SparseMatrix.hpp"
-#include "Editor/PetriEditor.hpp"
+#include "Editor/DearImGui/Editor.hpp"
 #include "Editor/DearImGui/Drawable.hpp"
 #include "Editor/DearImGui/DearUtils.hpp"
 #include "Editor/DearImGui/KeyBindings.hpp"
