@@ -8,12 +8,6 @@ STANDARD = --std=c++14
 BUILD_TYPE = debug
 
 ###################################################
-# Select backend for dear im gui: RayLib or GLFW3
-#
-#BACKEND ?= RayLib
-BACKEND ?= GLFW3
-
-###################################################
 # Location of the project directory and Makefiles
 #
 P := .
@@ -21,12 +15,21 @@ M := $(P)/.makefile
 include $(M)/Makefile.header
 
 ###################################################
+# Editor using Dear ImGui backend.
+# Select backend for dear im gui: RayLib or GLFW3
+#
+#DEAR_IMGUI_BACKEND ?= RayLib
+DEAR_IMGUI_BACKEND ?= GLFW3
+VPATH += $(P)/src/Editor/DearImGui
+INCLUDES += -I$(P)/src/Editor/DearImGui
+
+###################################################
 # Check selected backend for dear im gui if compiled for html5
 # Be sure to place this section after including MyMakefile
 ifeq ($(ARCHI),Emscripten)
-ifneq ($(BACKEND),RayLib)
+ifneq ($(DEAR_IMGUI_BACKEND),RayLib)
 $(warning Force RayLib backend for compiling with Emscripten)
-BACKEND = RayLib
+DEAR_IMGUI_BACKEND = RayLib
 endif
 endif
 
@@ -35,7 +38,6 @@ endif
 #
 VPATH += $(P)/include $(P)/src $(P)/src/Utils $(P)/src/Net
 VPATH += $(P)/src/Net/Imports VPATH += $(P)/src/Net/Exports
-VPATH += $(P)/src/Editor $(P)/src/Editor/DearImGui
 
 ###################################################
 # Inform Makefile where to find header files
@@ -61,7 +63,7 @@ LINKER_FLAGS += -ldl -lpthread
 ###################################################
 # Set thirdpart Raylib
 #
-ifeq ($(BACKEND),RayLib)
+ifeq ($(DEAR_IMGUI_BACKEND),RayLib)
 INCLUDES += -I$(THIRDPART)/raylib/src
 THIRDPART_LIBS += $(abspath $(THIRDPART)/raylib/src/$(ARCHI)/libraylib.a)
 
@@ -84,21 +86,21 @@ endif
 ###################################################
 # Dear ImGui backends: Raylib
 #
-ifeq ($(BACKEND),RayLib)
+ifeq ($(DEAR_IMGUI_BACKEND),RayLib)
 VPATH += $(THIRDPART)/rlImGui
 VPATH += $(P)/src/Editor/DearImGui/Backends/RayLib
 INCLUDES += -I$(THIRDPART)/rlImGui
 INCLUDES += -I$(P)/src/Editor/DearImGui/Backends/RayLib
-DEARIMGUI_BACKEND_OBJS += rlImGui.o
+DEARIMGUI_DEAR_IMGUI_BACKEND_OBJS += rlImGui.o
 endif
 
 ###################################################
 # Dear ImGui backends: OpenGL/GLFW3
 #
-ifeq ($(BACKEND),GLFW3)
+ifeq ($(DEAR_IMGUI_BACKEND),GLFW3)
 VPATH += $(P)/src/Editor/DearImGui/Backends/GLFW3
 INCLUDES += -I$(P)/src/Editor/DearImGui/Backends/GLFW3
-DEARIMGUI_BACKEND_OBJS += imgui_impl_glfw.o imgui_impl_opengl3.o
+DEARIMGUI_DEAR_IMGUI_BACKEND_OBJS += imgui_impl_glfw.o imgui_impl_opengl3.o
 endif
 
 ###################################################
@@ -163,8 +165,8 @@ endif
 ###################################################
 # Check if Dear im gui backend has been set
 #
-ifeq ($(DEARIMGUI_BACKEND_OBJS),)
-$(error "Define BACKEND either as RayLib or GLFW3")
+ifeq ($(DEARIMGUI_DEAR_IMGUI_BACKEND_OBJS),)
+$(error "Define DEAR_IMGUI_BACKEND either as RayLib or GLFW3")
 endif
 
 ###################################################
@@ -196,9 +198,9 @@ LIB_OBJS += ExportJSON.o ExportSymfony.o ExportPnEditor.o
 LIB_OBJS += ExportPetriLaTeX.o ExportJulia.o ExportGraphviz.o ExportDrawIO.o
 LIB_OBJS += ExportGrafcetCpp.o ImportPNML.o ExportPNML.o Exports.o
 LIB_OBJS += ImportJSON.o Imports.o
-OBJS += $(DEARIMGUI_BACKEND_OBJS) $(DEARIMGUI_OBJS)
+OBJS += $(DEARIMGUI_DEAR_IMGUI_BACKEND_OBJS) $(DEARIMGUI_OBJS)
 OBJS += $(LIB_OBJS)
-OBJS += DearUtils.o Drawable.o Application.o PetriEditor.o main.o
+OBJS += DearUtils.o Drawable.o Application.o Editor.o main.o
 
 ###################################################
 # Compile the project, the static and shared libraries

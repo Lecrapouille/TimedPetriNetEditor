@@ -1,4 +1,4 @@
-#include "Editor/PetriEditor.hpp"
+#include "Editor.hpp" // Selected by Makefile
 #include <unistd.h> // getopt
 
 //------------------------------------------------------------------------------

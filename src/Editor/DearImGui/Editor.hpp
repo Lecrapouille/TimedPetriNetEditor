@@ -18,10 +18,11 @@
 // along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.
 //=============================================================================
 
-#ifndef PETRIEDITOR_HPP
-#  define PETRIEDITOR_HPP
+#ifndef DEAR_IMGUI_PETRI_NET_EDITOR_HPP
+#  define DEAR_IMGUI_PETRI_NET_EDITOR_HPP
 
 #  include "Application.hpp" // Selected by Makefile
+#  include "TimedPetriNetEditor/PetriEditor.hpp"
 #  include "Net/Simulation.hpp"
 #  include "Net/Exports/Exports.hpp"
 #  include "Net/Imports/Imports.hpp"
@@ -33,7 +34,7 @@ namespace tpne {
 // ****************************************************************************
 //! \brief Graphical User interface for manipulating and simulating Petri net.
 // ****************************************************************************
-class Editor: public Application
+class Editor: public PetriNetEditor, public Application
 {
 public:
 
@@ -48,7 +49,7 @@ public:
     //! \param[in] petri_file the path of the Petri net fil to load. Pass dummy
     //! string if you do not want to load a Petri net file.
     //-------------------------------------------------------------------------
-    void run(std::string const& petri_file);
+    virtual void run(std::string const& petri_file) override;
 
 private: // Inheritance from Application class
 
