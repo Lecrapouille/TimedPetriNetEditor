@@ -195,8 +195,8 @@ private:
             //! \brief Selected origin node (place or transition) by the user when
             //! adding an arc.
             Node* from = nullptr;
-            //
-            bool arc_from_unknown_node = false; // FIXME
+            //! \brief The user is creating an arc ?
+            bool handling_arc = false;
             //! \brief Selected destination node (place or transition) by the user when
             //! adding an arc.
             Node* to = nullptr;

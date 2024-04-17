@@ -611,7 +611,7 @@ void Editor::help() const
                      << "Middle button pressed on a first node followed by middle button released on a second node:" << std::endl
                      << "  - if nodes have not the same type then a simple arc is created." << std::endl
                      << "  - if nodes have the same type then an arc is created and split by an intermediate node." << std::endl
-                     << "Middle button pressed and released without selecting an node: move the view." << std::endl;
+                     << "Ctrl + Middle button pressed: move the view." << std::endl;
 
                 ImGui::Text("%s", help.str().c_str());
                 ImGui::EndTabItem();
@@ -1236,47 +1236,13 @@ bool Editor::PetriView::isMouseClicked(ImGuiMouseButton& key)
 //--------------------------------------------------------------------------
 bool Editor::PetriView::isMouseDraggingView(ImGuiMouseButton const& button)
 {
-    if (button != ImGuiMouseButton_Middle)
-        return false;
-
-    // We are already displacingg node
-    //if (m_mouse.selection.size() != 0u)
-    //    return false;
-
-    Node* node = m_editor.getNode(m_mouse.position);
-    if (node == nullptr)
+    const float mouse_threshold_for_pan = grid.menu ? -1.0f : 0.0f;
+    if (ImGui::IsMouseDragging(ImGuiMouseButton_Middle, mouse_threshold_for_pan))
     {
-        const float mouse_threshold_for_pan = grid.menu ? -1.0f : 0.0f;
-        if (ImGui::IsMouseDragging(ImGuiMouseButton_Middle, mouse_threshold_for_pan))
-        {
-            return true;
-        }
+        return true; // m_editor.getNode(m_mouse.position) == nullptr;
     }
 
     return false;
-}
-
-//--------------------------------------------------------------------------
-void Editor::PetriView::handleArcOrigin()
-{
-    m_mouse.selection.clear();
-
-    // Get a place or a transition from the mouse cursor
-    m_mouse.from = m_editor.getNode(m_mouse.position);
-    if (m_mouse.from == nullptr)
-    {
-        if ((m_editor.m_net.places().size() != 0u) ||
-            (m_editor.m_net.transitions().size() != 0u))
-        {
-            // We do not yet know the type of the destination node so create
-            // intermediate information.
-            m_mouse.clicked_at = m_mouse.position;
-            m_mouse.arc_from_unknown_node = true;
-        }
-    }
-
-    // Reset states
-    m_mouse.to = nullptr;
 }
 
 //--------------------------------------------------------------------------
@@ -1324,7 +1290,7 @@ void Editor::PetriView::handleAddNode(ImGuiMouseButton button)
     }
     else if (m_editor.m_net.type() == TypeOfNet::PetriNet)
     {
-        // Click to fire a transition
+        // Click to fire a transition during the simulation
         Transition* transition = m_editor.getTransition(m_mouse.position);
         if (transition != nullptr)
         {
@@ -1334,136 +1300,53 @@ void Editor::PetriView::handleAddNode(ImGuiMouseButton button)
 }
 
 //--------------------------------------------------------------------------
+void Editor::PetriView::handleArcOrigin()
+{
+    if (m_editor.m_simulation.running)
+        return ;
+
+    m_mouse.clicked_at = m_mouse.position;
+    m_mouse.from = m_editor.getNode(m_mouse.position);
+    m_mouse.handling_arc = !ImGui::GetIO().KeyCtrl;
+    m_mouse.to = nullptr;
+}
+
+//--------------------------------------------------------------------------
 void Editor::PetriView::handleArcDestination()
 {
     // Finish the creation of the arc (destination node) from the mouse cursor
     m_mouse.to = m_editor.getNode(m_mouse.position);
+    m_mouse.handling_arc = false;
 
-    // The user grab no nodes: abort
-    if ((m_mouse.from == nullptr) && (m_mouse.to == nullptr))
-        return;
-
-    // Arc to itself
+    // Arc to itself (or both nodes nullptr)
     if (m_mouse.from == m_mouse.to)
         return ;
 
-    // Reached the destination node
-    if (m_mouse.to != nullptr)
-    {
-        if (m_mouse.from != nullptr)
-        {
-            if (m_mouse.to->type == m_mouse.from->type)
-            {
-                // The user tried to link two nodes of the same type: this is
-                // forbidden but we allow it by creating the intermediate node
-                // of oposing type.
-                float x = m_mouse.to->x + (m_mouse.from->x - m_mouse.to->x) / 2.0f;
-                float y = m_mouse.to->y + (m_mouse.from->y - m_mouse.to->y) / 2.0f;
-                float duration = random(1, 5);
-
-                auto action = std::make_unique<NetModifaction>(m_editor);
-                action->before(m_editor.m_net);
-                if (m_mouse.to->type == Node::Type::Place)
-                {
-                    Transition &n = m_editor.m_net.addTransition(x, y);
-                    if (!m_editor.m_net.addArc(*m_mouse.from, n, duration))
-                    {
-                        // m_message_bar.setError(m_petri_net.message());
-                    }
-                    m_mouse.from = &n;
-                }
-                else
-                {
-                    Place &n = m_editor.m_net.addPlace(x, y);
-                    if (!m_editor.m_net.addArc(*m_mouse.from, n, duration))
-                    {
-                        // m_message_bar.setError(m_petri_net.message());
-                    }
-                    m_mouse.from = &n;
-                }
-                action->after(m_editor.m_net);
-                m_editor.m_history.add(std::move(action));
-            }
-        }
-        else
-        {
-            // The user did not click on a node but released mouse on a node. We
-            // create the origin node before creating the arc.
-            if (m_mouse.arc_from_unknown_node)
-            {
-                auto action = std::make_unique<NetModifaction>(m_editor);
-                action->before(m_editor.m_net);
-                if (m_mouse.to->type == Node::Type::Place)
-                {
-                    m_mouse.from = &m_editor.m_net.addTransition(
-                        m_mouse.clicked_at.x, m_mouse.clicked_at.y);
-                }
-                else
-                {
-                    m_mouse.from = &m_editor.m_net.addPlace(
-                        m_mouse.clicked_at.x, m_mouse.clicked_at.y);
-                }
-                action->after(m_editor.m_net);
-                m_editor.m_history.add(std::move(action));
-            }
-        }
-    }
-    else if (m_mouse.from != nullptr)
-    {
-        // The user did not click on a node but released mouse on a node. We
-        // create the origin node before creating the arc.
-        float x = m_mouse.position.x;
-        float y = m_mouse.position.y;
-        if (m_editor.m_net.type() == TypeOfNet::TimedEventGraph)
-        {
-            // With timed event graph we have to add implicit places.
-            float px = x + (m_mouse.from->x - x) / 2.0f;
-            float py = y + (m_mouse.from->y - y) / 2.0f;
-            float duration = random(1, 5);
-            auto action = std::make_unique<NetModifaction>(m_editor);
-            action->before(m_editor.m_net);
-            Place &n = m_editor.m_net.addPlace(px, py);
-            if (!m_editor.m_net.addArc(*m_mouse.from, n, duration))
-            {
-                // m_message_bar.setError(m_net.message());
-            }
-            m_mouse.from = &n;
-            action->after(m_editor.m_net);
-            m_editor.m_history.add(std::move(action));
-        }
-        if (m_mouse.from->type == Node::Type::Place)
-        {
-            auto action = std::make_unique<NetModifaction>(m_editor);
-            action->before(m_editor.m_net);
-            m_mouse.to = &m_editor.m_net.addTransition(x, y);
-            action->after(m_editor.m_net);
-            m_editor.m_history.add(std::move(action));
-        }
-        else
-        {
-            auto action = std::make_unique<NetModifaction>(m_editor);
-            action->before(m_editor.m_net);
-            m_mouse.to = &m_editor.m_net.addPlace(x, y);
-            action->after(m_editor.m_net);
-            m_editor.m_history.add(std::move(action));
-        }
-    }
-    // Create the arc. Note: the duration value is only used
-    // for arc Transition --> Place.
     auto action = std::make_unique<NetModifaction>(m_editor);
     action->before(m_editor.m_net);
-    float duration = random(1, 5);
-    if (!m_editor.m_net.addArc(*m_mouse.from, *m_mouse.to, duration))
+
+    if (m_mouse.from == nullptr)    
     {
-        // m_message_bar.setError(m_petri_net.message());
+        assert(m_mouse.to != nullptr);
+        m_mouse.from = &m_editor.m_net.addOppositeNode(m_mouse.to->type, m_mouse.clicked_at.x, m_mouse.clicked_at.y);
     }
+    else if (m_mouse.to == nullptr)
+    {
+        assert(m_mouse.from != nullptr);
+        m_mouse.to = &m_editor.m_net.addOppositeNode(m_mouse.from->type, m_mouse.position.x, m_mouse.position.y); 
+    }
+
+    assert(m_mouse.from != nullptr);
+    assert(m_mouse.to != nullptr);
+
+    // The case where two nodes have the same type is managed by addArc
+    m_editor.m_net.addArc(*m_mouse.from, *m_mouse.to, random(1, 5));
+
     action->after(m_editor.m_net);
     m_editor.m_history.add(std::move(action));
 
     // Reset states
     m_mouse.from = m_mouse.to = nullptr;
-    m_mouse.selection.clear();
-    m_mouse.arc_from_unknown_node = false;
 }
 
 //--------------------------------------------------------------------------
@@ -1482,14 +1365,9 @@ void Editor::PetriView::onHandleInput()
         if (isMouseClicked(button))
         {
             // TODO m_marked_arcs.clear();
+            m_mouse.selection.clear();
 
-            if (isMouseDraggingView(button))
-            {
-                ImGuiIO& io = ImGui::GetIO();
-                m_canvas.scrolling.x += io.MouseDelta.x;
-                m_canvas.scrolling.y += io.MouseDelta.y;
-            }
-            else if (button == ImGuiMouseButton_Middle)
+            if (button == ImGuiMouseButton_Middle)
             {
                 handleArcOrigin();
             }
@@ -1498,23 +1376,18 @@ void Editor::PetriView::onHandleInput()
                 handleAddNode(button);
             }
         }
+        else if (ImGui::GetIO().KeyCtrl && isMouseDraggingView(button))
+        {
+            ImGuiIO& io = ImGui::GetIO();
+            m_canvas.scrolling.x += io.MouseDelta.x;
+            m_canvas.scrolling.y += io.MouseDelta.y;
+        }
     }
 
     if (isMouseReleased(button))
     {
         m_mouse.is_dragging_view = false;
-
-        // The 'M' key was pressed for moving selected nodes.
-        // Reset the state but do not add new node!
-        if (m_mouse.selection.size() != 0u)
-        {
-            m_mouse.from = m_mouse.to = nullptr;
-            m_mouse.selection.clear();
-            if (button == ImGuiMouseButton_Middle)
-            {
-                return;
-            }
-        }
+        m_mouse.selection.clear();
 
         if (button == ImGuiMouseButton_Middle)
         {
@@ -1627,9 +1500,11 @@ void Editor::PetriView::drawPetriNet(Net& net, Simulation& simulation)
     }
 
     // Show the arc we are creating
-    drawArc(m_canvas.draw_list, m_mouse.from, m_mouse.to,
-            m_mouse.arc_from_unknown_node ? &m_mouse.clicked_at : nullptr,
-            origin, m_mouse.position);
+    if (m_mouse.handling_arc)
+    {
+        drawArc(m_canvas.draw_list, m_mouse.from, m_mouse.to, &m_mouse.clicked_at,
+                origin, m_mouse.position);
+    }
 
     // FIXME Draw critical cycle
     //for (auto& a: m_marked_arcs)
