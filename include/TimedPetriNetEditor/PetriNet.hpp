@@ -554,6 +554,17 @@ public:
     }
 
     //--------------------------------------------------------------------------
+    //! \brief Helper function to create either a place or a transition and
+    //! and returning the reference to the base class.
+    //--------------------------------------------------------------------------
+    Node& addOppositeNode(Node::Type const type, float const x, float const y, size_t const tokens = 0u)
+    {
+        if (type == Node::Type::Transition)
+            return addPlace(x, y, tokens);
+        return addTransition(x, y);
+    }
+
+    //--------------------------------------------------------------------------
     //! \brief Add a new Petri Place. To be used when the user clicked on the
     //! GUI.
     //! \param[in] x: X-axis coordinate in the window needed for the display.
@@ -651,8 +662,9 @@ public:
     Place* findPlace(size_t const id);
 
     //--------------------------------------------------------------------------
-    //! \brief Add a new arc between two Petri nodes (place or transition) and
-    //! a duration (only for Transition -> Place).
+    //! \brief Add a new arc between two Petri nodes (place or transition). The
+    //! duration is only applied for Transition -> Place. If nodes \from and \to
+    //! have the same type then an extra node and an extra arc is created.
     //! \param[in] from: source node (Place or Transition).
     //! \param[in] to: destination node (Place or Transition but not of the same
     //! type than the destination node).
@@ -663,8 +675,7 @@ public:
     //! if an arc is already present or nodes have the same type; call message()
     //! to get the exact reason.
     //--------------------------------------------------------------------------
-    bool addArc(Node& from, Node& to, float const duration = 0.0f,
-                bool const strict = true);
+    bool addArc(Node& from, Node& to, float const duration = 0.0f);
 
     //--------------------------------------------------------------------------
     //! \brief Return the address of the arc linking the two given nodes.
@@ -720,6 +731,9 @@ protected:
 
     //--------------------------------------------------------------------------
     //! \brief Helper function checking arguments.
+    //! \param[in] strict: if set true then types of nodes for \from and \to
+    //! shall differ (one shall be Transition, the other shall be Place). If set
+    //! to false then nodes can be of the same type.
     //--------------------------------------------------------------------------
     bool sanityArc(Node const& from, Node const& to, bool const strict) const;
 

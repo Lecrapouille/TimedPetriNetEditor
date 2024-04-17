@@ -345,59 +345,43 @@ bool Net::sanityArc(Node const& from, Node const& to, bool const strict) const
 }
 
 //------------------------------------------------------------------------------
-// FIXME: to faire l'equivalent de generateArcsInArcsOut
-bool Net::addArc(Node& from, Node& to, float const duration,
-                 bool const strict)
+// FIXME: faire l'equivalent de generateArcsInArcsOut
+bool Net::addArc(Node& from, Node& to, float const duration)
 {
-    if (!sanityArc(from, to, strict)) {
+    if (!sanityArc(from, to, false))
         return false;
-    }
 
-    if ((from.type == to.type) && (!strict))
-    {
-        // Option 2: We add the extra node of the good type and
-        // we add a second arc.
-        float x = to.x + (from.x - to.x) / 2.0f;
-        float y = to.y + (from.y - to.y) / 2.0f;
-        if (to.type == Node::Type::Place)
-        {
-            // Frist arc
-            Transition& n = addTransition(x, y);
-            m_arcs.push_back(Arc(from, n, duration));
-            from.arcsOut.push_back(&m_arcs.back());
-            n.arcsIn.push_back(&m_arcs.back());
-
-            // Second arc
-            m_arcs.push_back(Arc(n, to, duration));
-            n.arcsOut.push_back(&m_arcs.back());
-            to.arcsIn.push_back(&m_arcs.back());
-        }
-        else
-        {
-            // Frist arc
-            Place& n = addPlace(x, y);
-            m_arcs.push_back(Arc(from, n, duration));
-            from.arcsOut.push_back(&m_arcs.back());
-            n.arcsIn.push_back(&m_arcs.back());
-
-            // Second arc
-            m_arcs.push_back(Arc(n, to, duration));
-            n.arcsOut.push_back(&m_arcs.back());
-            to.arcsIn.push_back(&m_arcs.back());
-        }
-
-        modified = true;
-        return true;
-    }
-
-    // Arc Place -> Transition or arc Transition -> Place ? Add the arc
-    m_arcs.push_back(Arc(from, to, duration));
-    from.arcsOut.push_back(&m_arcs.back());
-    to.arcsIn.push_back(&m_arcs.back());
     modified = true;
 
-    generateArcsInArcsOut(); // FIXME a optimiser !!!
-    return true;
+    // Create an arc "Place -> Transition" or "Transition -> Place" 
+    if (from.type != to.type)
+    {
+        m_arcs.push_back(Arc(from, to, duration));
+        from.arcsOut.push_back(&m_arcs.back());
+        to.arcsIn.push_back(&m_arcs.back());
+        generateArcsInArcsOut(); // FIXME a optimiser !!!
+        return true;
+    }
+    else // Manage the case "Place -> Place" or "Transition -> Transition"
+    {
+        // Create the intermediate node
+        float x = from.x + (to.x - from.x) / 2.0f;
+        float y = from.y + (to.y - from.y) / 2.0f;
+        Node& n = addOppositeNode(to.type, x, y);
+
+        // Frist arc
+        m_arcs.push_back(Arc(from, n, duration));
+        from.arcsOut.push_back(&m_arcs.back());
+        n.arcsIn.push_back(&m_arcs.back());
+
+        // Second arc
+        m_arcs.push_back(Arc(n, to, duration));
+        n.arcsOut.push_back(&m_arcs.back());
+        to.arcsIn.push_back(&m_arcs.back());
+
+        generateArcsInArcsOut(); // FIXME a optimiser !!!
+        return true;
+    }
 }
 
 //------------------------------------------------------------------------------
