@@ -16,8 +16,8 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install libdw-dev pkg-config libmosquitto-dev libx11-dev libxinerama-dev
-          sudo apt-get install libasound2-dev libx11-dev libxrandr-dev libxi-dev libgl1-mesa-dev libglu1-mesa-dev libxcursor-dev
-          sudo apt-get install libwayland-dev libxkbcommon-x11-dev libglfw3-dev
+          sudo apt-get install libasound2-dev libxrandr-dev libxi-dev libgl1-mesa-dev libglu1-mesa-dev libxcursor-dev
+          sudo apt-get install libwayland-dev libxkbcommon-x11-dev libglfw3-dev libxcursor-dev libxinerama-dev
       - name: Checkout TimedPetriNetEditor
         uses: actions/checkout@v4
         with:
