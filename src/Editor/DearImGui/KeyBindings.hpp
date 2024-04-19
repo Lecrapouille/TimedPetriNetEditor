@@ -36,4 +36,13 @@
 #  define KEY_UNDO                  ImGuiKey_W // remapping for Z
 #  define KEY_REDO                  ImGuiKey_Y
 
+// -----------------------------------------------------------------------------
+#  define MOUSE_BOUTON_DRAGGING_VIEW   ImGuiMouseButton_Middle
+#  define MOUSE_BOUTON_ADD_PLACE       ImGuiMouseButton_Left
+#  define MOUSE_BOUTON_ADD_TRANSITION  ImGuiMouseButton_Right
+#  define MOUSE_BOUTON_HANDLE_ARC      ImGuiMouseButton_Middle
+
+#  define MOUSE_BOUTON_MOVE_NODE       ImGuiMouseButton_Left
+
+
 #endif
