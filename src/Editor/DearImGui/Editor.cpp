@@ -1237,7 +1237,7 @@ bool Editor::PetriView::isMouseClicked(ImGuiMouseButton& key)
 bool Editor::PetriView::isMouseDraggingView(ImGuiMouseButton const& button)
 {
     const float mouse_threshold_for_pan = grid.menu ? -1.0f : 0.0f;
-    if (ImGui::IsMouseDragging(ImGuiMouseButton_Middle, mouse_threshold_for_pan))
+    if (ImGui::IsMouseDragging(MOUSE_BOUTON_DRAGGING_VIEW, mouse_threshold_for_pan))
     {
         return true; // m_editor.getNode(m_mouse.position) == nullptr;
     }
@@ -1274,12 +1274,12 @@ void Editor::PetriView::handleAddNode(ImGuiMouseButton button)
         {
             auto action = std::make_unique<NetModifaction>(m_editor);
             action->before(m_editor.m_net);
-            if (button == ImGuiMouseButton_Left)
+            if (button == MOUSE_BOUTON_ADD_PLACE)
             {
                 m_editor.m_net.addPlace(m_mouse.position.x,
                                         m_mouse.position.y);
             }
-            else if (button == ImGuiMouseButton_Right)
+            else if (button == MOUSE_BOUTON_ADD_TRANSITION)
             {
                 m_editor.m_net.addTransition(m_mouse.position.x,
                                              m_mouse.position.y);
@@ -1367,7 +1367,7 @@ void Editor::PetriView::onHandleInput()
             // TODO m_marked_arcs.clear();
             m_mouse.selection.clear();
 
-            if (button == ImGuiMouseButton_Middle)
+            if (button == MOUSE_BOUTON_HANDLE_ARC)
             {
                 handleArcOrigin();
             }
@@ -1389,7 +1389,7 @@ void Editor::PetriView::onHandleInput()
         m_mouse.is_dragging_view = false;
         m_mouse.selection.clear();
 
-        if (button == ImGuiMouseButton_Middle)
+        if (button == MOUSE_BOUTON_HANDLE_ARC)
         {
             handleArcDestination();
         }
