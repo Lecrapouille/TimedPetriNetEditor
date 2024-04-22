@@ -69,7 +69,7 @@ private: // Widgets
 
 private: // Show results from Petri algorithms
 
-    void showCriticalCycles() const;
+    void showCriticalCycles();// const;
     void showDynamicLinearSystem() const;
     void showCounterOrDaterequation() const;
     void showAdjacencyMatrices() const;
@@ -237,7 +237,7 @@ private:
         Net m_after;
     };
 
-private: // FIXME m_marked_arcs (critical cycles ...)
+private:
 
     //! \brief Heper instance to find files like Linux $PATH environment variable.
     //! Used for example for loading font files.
@@ -249,6 +249,9 @@ private: // FIXME m_marked_arcs (critical cycles ...)
     History m_history;
     //! \brief Instance allowing to do timed simulation.
     Simulation m_simulation;
+    //! \brief Critical cycle found by Howard algorithm. Also used to show
+    //! where are erroneous arcs making the Petri net not be a graph event.
+    std::vector<Arc*> m_marked_arcs;
     //! \brief Visualize the net and do the interaction with the user.
     PetriView m_view;
     //! \brief Messages to be displayed on the GUI.

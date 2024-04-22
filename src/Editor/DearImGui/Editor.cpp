@@ -467,7 +467,7 @@ void Editor::showDynamicLinearSystem() const
 }
 
 //------------------------------------------------------------------------------
-void Editor::showCriticalCycles() const
+void Editor::showCriticalCycles() //const
 {
     ImGui::OpenPopup("Critical Cycle");
     ImGui::SetNextWindowPos(m_states.viewport_center, ImGuiCond_Appearing,
@@ -481,6 +481,7 @@ void Editor::showCriticalCycles() const
         }
         else
         {
+            m_marked_arcs = critical_cycle.arcs;
             ImGuiTabBarFlags tab_bar_flags = ImGuiTabBarFlags_None;
             if (ImGui::BeginTabBar("CriticalCycleResult", tab_bar_flags))
             {
@@ -1364,8 +1365,7 @@ void Editor::PetriView::onHandleInput()
     {
         if (isMouseClicked(button))
         {
-            // TODO m_marked_arcs.clear();
-            m_mouse.selection.clear();
+            m_editor.m_marked_arcs.clear();
 
             if (button == MOUSE_BOUTON_HANDLE_ARC)
             {
@@ -1506,9 +1506,11 @@ void Editor::PetriView::drawPetriNet(Net& net, Simulation& simulation)
                 origin, m_mouse.position);
     }
 
-    // FIXME Draw critical cycle
-    //for (auto& a: m_marked_arcs)
-    //    draw(*a, 255);
+    // Draw critical cycle
+    for (auto& it: m_editor.m_marked_arcs)
+    {
+        drawArc(m_canvas.draw_list, *it, net.type(), origin, -1.0f);
+    }
 
     m_canvas.pop();
 }
