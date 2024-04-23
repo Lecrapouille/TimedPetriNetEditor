@@ -15,114 +15,17 @@ M := $(P)/.makefile
 include $(M)/Makefile.header
 
 ###################################################
-# Editor using Dear ImGui backend.
-# Select backend for dear im gui: RayLib or GLFW3
+# The application is using Dear ImGui for the human
+# interface.
 #
-#DEAR_IMGUI_BACKEND ?= RayLib
-DEAR_IMGUI_BACKEND ?= GLFW3
-VPATH += $(P)/src/Editor/DearImGui
-INCLUDES += -I$(P)/src/Editor/DearImGui
+include $(P)/src/Editor/DearImGui/Makefile.imgui
 
 ###################################################
-# Check selected backend for dear im gui if compiled for html5
-# Be sure to place this section after including MyMakefile
-ifeq ($(ARCHI),Emscripten)
-ifneq ($(DEAR_IMGUI_BACKEND),RayLib)
-$(warning Force RayLib backend for compiling with Emscripten)
-DEAR_IMGUI_BACKEND = RayLib
+# Check if objects have been set for the GUI.
+#
+ifeq ($(GUI_OBJS),)
+$(error "No .o files have been defined for the graphical interface")
 endif
-endif
-
-###################################################
-# Inform Makefile where to find *.cpp files
-#
-VPATH += $(P)/include $(P)/src $(P)/src/Utils $(P)/src/Net
-VPATH += $(P)/src/Net/Imports VPATH += $(P)/src/Net/Exports
-
-###################################################
-# Inform Makefile where to find header files
-#
-INCLUDES += -I$(P)/include -I$(P)/src -I$(P)/external
-
-###################################################
-# Project defines
-#
-DEFINES += -DDATADIR=\"$(DATADIR):$(abspath $(P))/data/:data/\"
-
-###################################################
-# Reduce warnings
-#
-CCFLAGS += -Wno-sign-conversion -Wno-float-equal
-CXXFLAGS += -Wno-undef -Wno-switch-enum -Wno-enum-compare
-
-###################################################
-# Linkage
-#
-LINKER_FLAGS += -ldl -lpthread
-
-###################################################
-# Set thirdpart Raylib
-#
-ifeq ($(DEAR_IMGUI_BACKEND),RayLib)
-INCLUDES += -I$(THIRDPART)/raylib/src
-THIRDPART_LIBS += $(abspath $(THIRDPART)/raylib/src/$(ARCHI)/libraylib.a)
-
-ifeq ($(ARCHI),Emscripten)
-# We tell the linker that the game/library uses GLFW3
-# library internally, it must be linked automatically
-# (emscripten provides the implementation)
-LINKER_FLAGS += -s USE_GLFW=3
-# Add this flag ONLY in case we are using ASYNCIFY code
-LINKER_FLAGS += -s ASYNCIFY
-# For linking glfwGetProcAddress().
-LINKER_FLAGS += -s GL_ENABLE_GET_PROC_ADDRESS
-# All webs need a "shell" structure to load and run the game,
-# by default emscripten has a `shell.html` but we can provide
-# our own.
-LINKER_FLAGS += --shell-file $(THIRDPART)/raylib/src/shell.html
-endif
-endif
-
-###################################################
-# Dear ImGui backends: Raylib
-#
-ifeq ($(DEAR_IMGUI_BACKEND),RayLib)
-VPATH += $(THIRDPART)/rlImGui
-VPATH += $(P)/src/Editor/DearImGui/Backends/RayLib
-INCLUDES += -I$(THIRDPART)/rlImGui
-INCLUDES += -I$(P)/src/Editor/DearImGui/Backends/RayLib
-DEARIMGUI_DEAR_IMGUI_BACKEND_OBJS += rlImGui.o
-endif
-
-###################################################
-# Dear ImGui backends: OpenGL/GLFW3
-#
-ifeq ($(DEAR_IMGUI_BACKEND),GLFW3)
-VPATH += $(P)/src/Editor/DearImGui/Backends/GLFW3
-INCLUDES += -I$(P)/src/Editor/DearImGui/Backends/GLFW3
-DEARIMGUI_DEAR_IMGUI_BACKEND_OBJS += imgui_impl_glfw.o imgui_impl_opengl3.o
-endif
-
-###################################################
-# Set thirdpart Dear ImGui
-#
-INCLUDES += -I$(THIRDPART)/imgui -I$(THIRDPART)/imgui/backends -I$(THIRDPART)/imgui/misc/cpp
-VPATH += $(THIRDPART)/imgui $(THIRDPART)/imgui/backends $(THIRDPART)/imgui/misc/cpp
-DEARIMGUI_OBJS += imgui_widgets.o imgui_draw.o imgui_tables.o imgui.o imgui_stdlib.o
-# DEARIMGUI_OBJS += imgui_demo.o
-
-###################################################
-# Set thirdpart Dear ImGui Plot
-#
-VPATH += $(THIRDPART)/implot
-INCLUDES += -I$(THIRDPART)/implot
-DEARIMGUI_OBJS += implot_items.o implot.o
-
-###################################################
-# Set thirdpart file dialog
-VPATH += $(THIRDPART)/ImGuiFileDialog
-INCLUDES += -I$(THIRDPART)/ImGuiFileDialog
-DEARIMGUI_OBJS += ImGuiFileDialog.o
 
 ###################################################
 # Set MQTT Library.
@@ -163,13 +66,6 @@ $(error Unknown architecture $(ARCHI) for OpenGL)
 endif
 
 ###################################################
-# Check if Dear im gui backend has been set
-#
-ifeq ($(DEARIMGUI_DEAR_IMGUI_BACKEND_OBJS),)
-$(error "Define DEAR_IMGUI_BACKEND either as RayLib or GLFW3")
-endif
-
-###################################################
 # Embed assets for web version. Assets shall be
 # present inside $(BUILD) folder.
 #
@@ -180,7 +76,7 @@ LINKER_FLAGS += -s FORCE_FILESYSTEM=1
 endif
 
 ###################################################
-# MacOS X
+# Create a MacOS X bundle application.
 #
 ifeq ($(ARCHI),Darwin)
 BUILD_MACOS_APP_BUNDLE = 1
@@ -190,17 +86,47 @@ LINKER_FLAGS += -framework CoreFoundation
 endif
 
 ###################################################
-# Make the list of compiled files for the application
+# Inform Makefile where to find *.cpp files
 #
+VPATH += $(P)/include $(P)/src $(P)/src/Utils $(P)/src/Net
+VPATH += $(P)/src/Net/Imports VPATH += $(P)/src/Net/Exports
+
+###################################################
+# Inform Makefile where to find header files
+#
+INCLUDES += -I$(P)/include -I$(P)/src -I$(P)/external
+
+###################################################
+# Project defines
+#
+DEFINES += -DDATADIR=\"$(DATADIR):$(abspath $(P))/data/:data/\"
+
+###################################################
+# Reduce warnings
+#
+CCFLAGS += -Wno-sign-conversion -Wno-float-equal
+CXXFLAGS += -Wno-undef -Wno-switch-enum -Wno-enum-compare
+
+###################################################
+# Linkage
+#
+LINKER_FLAGS += -ldl -lpthread
+
+###################################################
+# Make the list of compiled files for the library
+#
+IMPORT_FORMATS += ImportJSON.o ImportPNML.o
+EXPORT_FORMATS += ExportJSON.o ExportPNML.o ExportSymfony.o ExportPnEditor.o
+EXPORT_FORMATS += ExportPetriLaTeX.o ExportJulia.o ExportGraphviz.o ExportDrawIO.o
+EXPORT_FORMATS += ExportGrafcetCpp.o
 LIB_OBJS += Path.o Howard.o Utils.o TimedTokens.o Receptivities.o
 LIB_OBJS += PetriNet.o Algorithms.o Simulation.o History.o
-LIB_OBJS += ExportJSON.o ExportSymfony.o ExportPnEditor.o
-LIB_OBJS += ExportPetriLaTeX.o ExportJulia.o ExportGraphviz.o ExportDrawIO.o
-LIB_OBJS += ExportGrafcetCpp.o ImportPNML.o ExportPNML.o Exports.o
-LIB_OBJS += ImportJSON.o Imports.o
-OBJS += $(DEARIMGUI_DEAR_IMGUI_BACKEND_OBJS) $(DEARIMGUI_OBJS)
-OBJS += $(LIB_OBJS)
-OBJS += DearUtils.o Drawable.o Application.o Editor.o main.o
+LIB_OBJS += $(IMPORT_FORMATS) Imports.o $(EXPORT_FORMATS) Exports.o
+
+###################################################
+# Make the list of compiled files for the application
+#
+OBJS += $(LIB_OBJS) $(GUI_OBJS) Drawable.o Application.o Editor.o main.o
 
 ###################################################
 # Compile the project, the static and shared libraries
