@@ -106,6 +106,7 @@ DEFINES += -DDATADIR=\"$(DATADIR):$(abspath $(P))/data/:data/\"
 #
 CCFLAGS += -Wno-sign-conversion -Wno-float-equal
 CXXFLAGS += -Wno-undef -Wno-switch-enum -Wno-enum-compare
+CXXFLAGS += -Wshadow
 
 ###################################################
 # Linkage
