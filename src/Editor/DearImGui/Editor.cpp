@@ -489,14 +489,16 @@ void Editor::showCriticalCycles() //const
                             ImVec2(0.5f, 0.5f));
     if (ImGui::BeginPopupModal("Critical Cycle", NULL, ImGuiWindowFlags_AlwaysAutoResize))
     {
-        CriticalCycleResult critical_cycle = findCriticalCycle(m_net);
-        if (!critical_cycle.success)
+        CriticalCycleResult res = findCriticalCycle(m_net);
+        if (!res.success)
         {
-            ImGui::Text(u8"%s", critical_cycle.message.str().c_str());
+            ImGui::Text(u8"%s", res.message.str().c_str());
         }
         else
         {
-            m_marked_arcs = critical_cycle.arcs;
+            ImGui::Text("Found %zu connected components of the optimal policy", res.cycles);
+
+            m_marked_arcs = res.arcs;
             ImGuiTabBarFlags tab_bar_flags = ImGuiTabBarFlags_None;
             if (ImGui::BeginTabBar("CriticalCycleResult", tab_bar_flags))
             {
@@ -506,35 +508,37 @@ void Editor::showCriticalCycles() //const
                     if (m_net.type() == TypeOfNet::TimedEventGraph)
                     {
                         // Only show transitions
-                        for (auto const& it: critical_cycle.arcs)
+                        for (size_t it = 0u; it < res.arcs.size(); it += 2u)
                         {
-                            if (it->from.type == Node::Type::Transition)
-                                txt << it->from.key << " -> ";
-                            if (it->to.type == Node::Type::Transition)
-                                txt << it->to.key << std::endl;
+                            txt << res.arcs[it]->from.key << " -> "
+                                << res.arcs[it + 1u]->to.key
+                                << std::endl;
                         }
                     }
                     else
                     {
                         // Show transitions and places
-                        for (auto const& it: critical_cycle.arcs)
+                        for (size_t it = 0u; it < res.arcs.size(); it += 2u)
                         {
-                            txt << it->from.key << " -> "
-                                << it->to.key
+                            txt << res.arcs[it]->from.key << " -> "
+                                << res.arcs[it]->to.key << " -> "
+                                << res.arcs[it + 1u]->to.key
                                 << std::endl;
                         }
                     }
                     ImGui::Text("%s", txt.str().c_str());
                     ImGui::EndTabItem();
                 }
-                if (ImGui::BeginTabItem("Cycle time"))
+                if (ImGui::BeginTabItem("Cycle durations"))
                 {
                     const auto& tr = m_net.transitions();
                     std::stringstream txt;
-                    for (size_t i = 0u; i < critical_cycle.cycle_time.size(); ++i)
+                    for (size_t i = 0u; i < res.durations.size(); ++i)
                     {
-                        txt << tr[i].key << ": " << critical_cycle.cycle_time[i]
-                            << " unit of time" << std::endl;
+                        txt << "From " << tr[i].key << ": "
+                            << res.durations[i]
+                            << " units of time"
+                            << std::endl;
                     }
                     ImGui::Text("%s", txt.str().c_str());
                     ImGui::EndTabItem();
@@ -542,7 +546,7 @@ void Editor::showCriticalCycles() //const
                 if (ImGui::BeginTabItem("Eigenvector"))
                 {
                     std::stringstream txt;
-                    for (auto const& it: critical_cycle.eigenvector)
+                    for (auto const& it: res.eigenvector)
                     {
                         txt << it << std::endl;
                     }

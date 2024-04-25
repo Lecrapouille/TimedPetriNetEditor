@@ -91,21 +91,20 @@ bool toAdjacencyMatrices(Net const& net, SparseMatrix<double>& tokens, SparseMat
 //--------------------------------------------------------------------------
 struct CriticalCycleResult
 {
-    //! \brief In case of failure only the field message can be used indicating
-    //! the reason of the failure.
+    //! \brief Has the algorithm found an optimal policy ? In case of failure
+    //! all results are cleared.
     bool success = false;
-    //! \brief
-    std::vector<double> eigenvector;
-    //! \brief Sum of durations divided by the number of tokens.
-    std::vector<double> cycle_time;
-    //! \brief
-    std::vector<int> optimal_policy;
-    //! \brief List of selected arcs defining the critical cycle (to be used for
-    //! the display).
-    std::vector<Arc*> arcs;
-    //! \brief In case of failure, holds the reason of the failure. In case of
-    //! success hold all result in human readable format.
+    //! \brief In case of failure, holds the reason of the failure.
+    //! In case of success hold all result in human readable format.
     std::stringstream message;
+    //! \brief Number of connected components of the optimal policy.
+    size_t cycles = 0u;
+    //! \brief List of arcs defining the optimal policy.
+    std::vector<Arc*> arcs; // TODO std::vector<std::vector<Arc*>> where size of vector == cycles
+    //! \brief Eigenvector: Bias vectors.
+    std::vector<double> eigenvector;
+    //! \brief Eigenvalues: Durations of the cycle starting for each transitions.
+    std::vector<double> durations;
 };
 
 //--------------------------------------------------------------------------

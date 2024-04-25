@@ -457,55 +457,64 @@ CriticalCycleResult findCriticalCycle(Net const& net)
     }
 
     result.eigenvector.resize(nnodes);
-    result.cycle_time.resize(nnodes);
-    result.optimal_policy.resize(nnodes); // optimal policy
+    result.durations.resize(nnodes);
+    std::vector<int> optimal_policy;
+    optimal_policy.resize(nnodes);
     int ncomponents; // Number of connected components of the optimal policy
     int niterations; // Number of iteration needed by the algorithm
     int verbosemode = 0; // No verbose
     int res = Semi_Howard(IJ.data(), T.data(), N.data(),
                           int(nnodes), int(narcs),
-                          result.cycle_time.data(), result.eigenvector.data(),
-                          result.optimal_policy.data(),
+                          result.durations.data(), result.eigenvector.data(),
+                          optimal_policy.data(),
                           &niterations, &ncomponents, verbosemode);
 
+    result.cycles = size_t(ncomponents);
     if ((res != 0) || (ncomponents == 0))
     {
         result.eigenvector.clear();
-        result.cycle_time.clear();
-        result.optimal_policy.clear();
+        result.durations.clear();
+        result.cycles = 0u;
         result.arcs.clear();
-        result.message << "No policy found";
+        result.message << "No optimal policy found";
         result.success = false;
         return result;
     }
 
-    size_t to = 0u;
     result.arcs.reserve(nnodes);
-    result.message << "Critical cycle:" << std::endl;
-    for (auto const& from: result.optimal_policy)
+    result.message << "Found " << ncomponents
+        << " connected components of the optimal policy:"
+        << std::endl;
+
+    // optimal_policy returns a list of transitions. Reconstruct cycles
+    // to our internal format (including places).
+    for (size_t to = 0u; to < optimal_policy.size(); ++to)
     {
+        size_t from = size_t(optimal_policy[to]);
         result.message << "  T" << from << " -> T" << to << std::endl;
-        auto const& arcsOut = net.transitions()[size_t(from)].arcsOut;
-        for (auto const& it: arcsOut)
+        // Search for all places that link our transitions.
+        for (auto const& p: net.places())
         {
-            // Since we are working on an Event Graph we can directly access
-            // Place -> arcsOut[0] -> Transition without checks.
-            assert(it->to.arcsOut[0] != nullptr);
-            assert(it->to.arcsOut[0]->to.type == Node::Type::Transition);
-            if (it->to.arcsOut[0]->to.id == to)
+            assert(p.arcsIn.size() == 1u);
+            assert(p.arcsOut.size() == 1u);
+            Node* t0 = &p.arcsIn[0]->from;
+            Node* t1 = &p.arcsOut[0]->to;
+            assert(t0->type == Node::Type::Transition);
+            assert(t1->type == Node::Type::Transition);
+            if ((t0->id == from) && (t1->id == to))
             {
-                result.arcs.push_back(it);
-                result.arcs.push_back(it->to.arcsOut[0]);
+                result.arcs.push_back(p.arcsIn[0]);
+                result.arcs.push_back(p.arcsOut[0]);
                 break;
             }
         }
-        to += 1u;
     }
 
-    result.message << "Cycle time [unit of time]:" << std::endl;
-    for (auto const& it: result.cycle_time)
+    result.message << "Cycle durations [unit of time]:" << std::endl;
+    for (size_t i = 0u; i < result.durations.size(); ++i)
     {
-        result.message << "  " << it << std::endl;
+        result.message << "  T" << i << ": "
+            << result.durations[i] << std::endl;
     }
 
     result.message << "Eigenvector:" << std::endl;
