@@ -30,6 +30,8 @@ class Net;
 
 //! \brief JSON is the main format used for saving Petri by this editor.
 std::string exportToJSON(Net const& net, std::string const& filename);
+//! \brief Import http://www.cmap.polytechnique.fr/~gaubert/HOWARD2.html
+std::string exportToTimedEventGraph(Net const& net, std::string const& filename);
 //! \brief
 std::string exportToSymfony(Net const& net, std::string const& filename);
 //! \brief Import https://gitlab.com/porky11/pn-editor

@@ -20,6 +20,7 @@
 
 #include "Net/Imports/Imports.hpp"
 #include <sstream>
+#include <iostream>
 namespace tpne {
 
 std::vector<Importer> const& importers()
@@ -27,6 +28,8 @@ std::vector<Importer> const& importers()
     static const std::vector<Importer> s_importers = {
         { "JSON", ".json", importFromJSON },
         { "Petri Net Markup Language", ".pnml", importFromPNML },
+        // FIXME add a filter to eliminate it in the case the net is not event graph
+        { "Timed Event Graph", ".teg", importFromTimedEventGraph }
     };
 
     return s_importers;
