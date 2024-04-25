@@ -922,6 +922,7 @@ void Editor::importNetTo(Importer const& importer)
         {
             auto const path = ImGuiFileDialog::Instance()->GetFilePathName();
             std::string error = importer.importFct(m_net, path);
+            m_net.clear();
             if (error.empty())
             {
                 if (m_states.do_import_to)
@@ -934,6 +935,7 @@ void Editor::importNetTo(Importer const& importer)
             else
             {
                 m_messages.setError(error);
+                m_net.clear();
                 m_net.modified = true;
             }
         }
@@ -1068,7 +1070,7 @@ void Editor::clearNet()
     auto action = std::make_unique<NetModifaction>(*this);
     action->before(m_net);
 
-    m_net.clear(m_net.type());
+    m_net.reset(m_net.type());
 
     action->after(m_net);
     m_history.add(std::move(action));

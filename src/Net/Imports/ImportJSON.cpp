@@ -58,13 +58,13 @@ std::string importFromJSON(Net& net, std::string const& filename)
     {
         std::string type = std::string(json["type"]);
         if (type == "GRAFCET") {
-            net.clear(TypeOfNet::GRAFCET);
+            net.reset(TypeOfNet::GRAFCET);
         } else if (type == "Petri net") {
-            net.clear(TypeOfNet::PetriNet);
+            net.reset(TypeOfNet::PetriNet);
         } else if (type == "Timed Petri net") {
-            net.clear(TypeOfNet::TimedPetriNet);
+            net.reset(TypeOfNet::TimedPetriNet);
         } else if (type == "Timed event graph") {
-            net.clear(TypeOfNet::TimedEventGraph);
+            net.reset(TypeOfNet::TimedEventGraph);
         } else {
             error << "Failed parsing '" << filename << "'. Reason was '"
                 << "Unknown type of net: " << type << "'" << std::endl;
