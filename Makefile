@@ -115,7 +115,7 @@ LINKER_FLAGS += -ldl -lpthread
 ###################################################
 # Make the list of compiled files for the library
 #
-IMPORT_FORMATS += ImportJSON.o ImportPNML.o
+IMPORT_FORMATS += ImportJSON.o ImportPNML.o ImportTimedEventGraph.o ExportTimedEventGraph.o
 EXPORT_FORMATS += ExportJSON.o ExportPNML.o ExportSymfony.o ExportPnEditor.o
 EXPORT_FORMATS += ExportPetriLaTeX.o ExportJulia.o ExportGraphviz.o ExportDrawIO.o
 EXPORT_FORMATS += ExportGrafcetCpp.o

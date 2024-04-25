@@ -66,6 +66,7 @@ private: // Widgets
     void messagebox();
     void inspector();
     void view();
+    inline ImVec2 viewSize() const { return m_view.size(); }
 
 private: // Show results from Petri algorithms
 
@@ -138,16 +139,17 @@ private:
         // ********************************************************************
         struct GridLayout
         {
-            float step = 64.0f;
+            float step = 50.0f;
             bool  show = true;
             bool  menu = true;
         } grid;
 
         PetriView(Editor& editor);
-        void reshape();
+        ImVec2 reshape();
         void onHandleInput();
         void drawPetriNet(Net& net, Simulation& simulation);
         inline ImVec2 const& origin() const { return m_canvas.origin; };
+        inline ImVec2 const& size() const { return m_canvas.size; };
 
     private:
 
@@ -176,7 +178,7 @@ private:
             ImDrawList* draw_list;
 
             ImVec2 getMousePosition();
-            void reshape();
+            ImVec2 reshape();
             void push();
             void pop();
         } m_canvas;

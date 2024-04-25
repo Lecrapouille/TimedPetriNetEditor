@@ -1166,7 +1166,7 @@ void Editor::PetriView::Canvas::pop()
 }
 
 //--------------------------------------------------------------------------
-void Editor::PetriView::Canvas::reshape()
+ImVec2 Editor::PetriView::Canvas::reshape()
 {
     // ImDrawList API uses screen coordinates!
     corners[0] = ImGui::GetCursorScreenPos();
@@ -1179,12 +1179,13 @@ void Editor::PetriView::Canvas::reshape()
 
     // Lock scrolled origin
     origin = corners[0] + scrolling;
+    return size;
 }
 
 //--------------------------------------------------------------------------
-void Editor::PetriView::reshape()
+ImVec2 Editor::PetriView::reshape()
 {
-    m_canvas.reshape();
+    return m_canvas.reshape();
 }
 
 //--------------------------------------------------------------------------

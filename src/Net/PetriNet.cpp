@@ -353,6 +353,30 @@ bool Net::sanityArc(Node const& from, Node const& to, bool const strict) const
 
 //------------------------------------------------------------------------------
 // FIXME: faire l'equivalent de generateArcsInArcsOut
+bool Net::addArc(Transition& from, Transition& to, size_t const tokens, float const duration)
+{
+    // Create the intermediate node
+    float x = from.x + (to.x - from.x) / 2.0f;
+    float y = from.y + (to.y - from.y) / 2.0f;
+    Place& n = addPlace(x, y, tokens);
+
+    // Frist arc
+    m_arcs.push_back(Arc(from, n, duration));
+    from.arcsOut.push_back(&m_arcs.back());
+    n.arcsIn.push_back(&m_arcs.back());
+
+    // Second arc
+    m_arcs.push_back(Arc(n, to, duration));
+    n.arcsOut.push_back(&m_arcs.back());
+    to.arcsIn.push_back(&m_arcs.back());
+
+    generateArcsInArcsOut(); // FIXME a optimiser !!!
+    modified = true;
+    return true;
+}
+
+//------------------------------------------------------------------------------
+// FIXME: faire l'equivalent de generateArcsInArcsOut
 bool Net::addArc(Node& from, Node& to, float const duration)
 {
     if (!sanityArc(from, to, false))
@@ -366,8 +390,6 @@ bool Net::addArc(Node& from, Node& to, float const duration)
         m_arcs.push_back(Arc(from, to, duration));
         from.arcsOut.push_back(&m_arcs.back());
         to.arcsIn.push_back(&m_arcs.back());
-        generateArcsInArcsOut(); // FIXME a optimiser !!!
-        return true;
     }
     else // Manage the case "Place -> Place" or "Transition -> Transition"
     {
@@ -385,10 +407,10 @@ bool Net::addArc(Node& from, Node& to, float const duration)
         m_arcs.push_back(Arc(n, to, duration));
         n.arcsOut.push_back(&m_arcs.back());
         to.arcsIn.push_back(&m_arcs.back());
-
-        generateArcsInArcsOut(); // FIXME a optimiser !!!
-        return true;
     }
+
+    generateArcsInArcsOut(); // FIXME a optimiser !!!
+    return true;
 }
 
 //------------------------------------------------------------------------------

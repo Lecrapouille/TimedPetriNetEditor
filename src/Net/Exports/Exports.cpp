@@ -36,6 +36,7 @@ std::vector<Exporter> const& exporters()
         { "PN-Editor", ".pns,.pnl,.pnk,.pnkp", exportToPNEditor },
         { "Petri-LaTeX", ".tex", exportToPetriLaTeX },
         { "Petri Net Markup Language", ".pnml", exportToPNML },
+        { "Timed Event Graph", ".teg", exportToTimedEventGraph },
         //{ "Codesys", ".codesys.xml", exportToCodesys },
         //{ "Grafcet-LaTeX", ".tex", exportToGrafcetLaTeX },
     };
