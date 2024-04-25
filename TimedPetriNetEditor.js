@@ -2,7 +2,7 @@
 // The Module object: Our interface to the outside world. We import
 // and export values on it. There are various ways Module can be used:
 // 1. Not defined. We create it here
-// 2. A function parameter, function(Module) { ..generated code.. }
+// 2. A function parameter, function(moduleArg) => Promise<Module>
 // 3. pre-run appended it, var Module = {}; ..generated code..
 // 4. External script tag defines var Module.
 // We need to check if Module already exists (e.g. case 3 above).
@@ -14,19 +14,44 @@
 // can continue to use Module afterwards as well.
 var Module = typeof Module != 'undefined' ? Module : {};
 
+// Determine the runtime environment we are in. You can customize this by
+// setting the ENVIRONMENT setting at compile time (see settings.js).
+
+// Attempt to auto-detect the environment
+var ENVIRONMENT_IS_WEB = typeof window == 'object';
+var ENVIRONMENT_IS_WORKER = typeof importScripts == 'function';
+// N.b. Electron.js environment is simultaneously a NODE-environment, but
+// also a web environment.
+var ENVIRONMENT_IS_NODE = typeof process == 'object' && typeof process.versions == 'object' && typeof process.versions.node == 'string';
+var ENVIRONMENT_IS_SHELL = !ENVIRONMENT_IS_WEB && !ENVIRONMENT_IS_NODE && !ENVIRONMENT_IS_WORKER;
+
+if (Module['ENVIRONMENT']) {
+  throw new Error('Module.ENVIRONMENT has been deprecated. To force the environment, use the ENVIRONMENT compile-time option (for example, -sENVIRONMENT=web or -sENVIRONMENT=node)');
+}
+
+if (ENVIRONMENT_IS_NODE) {
+  // `require()` is no-op in an ESM module, use `createRequire()` to construct
+  // the require()` function.  This is only necessary for multi-environment
+  // builds, `-sENVIRONMENT=node` emits a static import declaration instead.
+  // TODO: Swap all `require()`'s with `import()`'s?
+
+}
+
 // --pre-jses are emitted after the Module integration code, so that they can
 // refer to Module (if they choose; they can also define Module)
-// include: /tmp/tmpvvbxvwb4.js
+// include: /tmp/tmprw7ivggk.js
 
   if (!Module.expectedDataFileDownloads) {
     Module.expectedDataFileDownloads = 0;
   }
 
   Module.expectedDataFileDownloads++;
-  (function() {
+  (() => {
     // Do not attempt to redownload the virtual filesystem data when in a pthread or a Wasm Worker context.
-    if (Module['ENVIRONMENT_IS_PTHREAD'] || Module['$ww']) return;
-    var loadPackage = function(metadata) {
+    var isPthread = typeof ENVIRONMENT_IS_PTHREAD != 'undefined' && ENVIRONMENT_IS_PTHREAD;
+    var isWasmWorker = typeof ENVIRONMENT_IS_WASM_WORKER != 'undefined' && ENVIRONMENT_IS_WASM_WORKER;
+    if (isPthread || isWasmWorker) return;
+    function loadPackage(metadata) {
 
       var PACKAGE_PATH = '';
       if (typeof window === 'object') {
@@ -196,21 +221,21 @@ Module['FS_createPath']("/", "examples", true, true);
 
   })();
 
-// end include: /tmp/tmpvvbxvwb4.js
-// include: /tmp/tmp07vdw087.js
+// end include: /tmp/tmprw7ivggk.js
+// include: /tmp/tmpgj8xpcx0.js
 
     // All the pre-js content up to here must remain later on, we need to run
     // it.
-    if (Module['ENVIRONMENT_IS_PTHREAD'] || Module['$ww']) Module['preRun'] = [];
+    if (Module['$ww'] || (typeof ENVIRONMENT_IS_PTHREAD != 'undefined' && ENVIRONMENT_IS_PTHREAD)) Module['preRun'] = [];
     var necessaryPreJSTasks = Module['preRun'].slice();
-  // end include: /tmp/tmp07vdw087.js
-// include: /tmp/tmpo8vdgyr3.js
+  // end include: /tmp/tmpgj8xpcx0.js
+// include: /tmp/tmpe2811teo.js
 
     if (!Module['preRun']) throw 'Module.preRun should exist because file support used it; did a pre-js delete it?';
     necessaryPreJSTasks.forEach(function(task) {
       if (Module['preRun'].indexOf(task) < 0) throw 'All preRun tasks that exist before user pre-js code should remain after; did you replace Module or modify Module.preRun?';
     });
-  // end include: /tmp/tmpo8vdgyr3.js
+  // end include: /tmp/tmpe2811teo.js
 
 
 // Sometimes an existing Module object exists with properties
@@ -225,21 +250,6 @@ var thisProgram = './this.program';
 var quit_ = (status, toThrow) => {
   throw toThrow;
 };
-
-// Determine the runtime environment we are in. You can customize this by
-// setting the ENVIRONMENT setting at compile time (see settings.js).
-
-// Attempt to auto-detect the environment
-var ENVIRONMENT_IS_WEB = typeof window == 'object';
-var ENVIRONMENT_IS_WORKER = typeof importScripts == 'function';
-// N.b. Electron.js environment is simultaneously a NODE-environment, but
-// also a web environment.
-var ENVIRONMENT_IS_NODE = typeof process == 'object' && typeof process.versions == 'object' && typeof process.versions.node == 'string';
-var ENVIRONMENT_IS_SHELL = !ENVIRONMENT_IS_WEB && !ENVIRONMENT_IS_NODE && !ENVIRONMENT_IS_WORKER;
-
-if (Module['ENVIRONMENT']) {
-  throw new Error('Module.ENVIRONMENT has been deprecated. To force the environment, use the ENVIRONMENT compile-time option (for example, -sENVIRONMENT=web or -sENVIRONMENT=node)');
-}
 
 // `/` should be present at the end if `scriptDirectory` is not empty
 var scriptDirectory = '';
@@ -266,10 +276,6 @@ if (ENVIRONMENT_IS_NODE) {
     throw new Error('This emscripten-generated code requires node v16.0.0 (detected v' + nodeVersion + ')');
   }
 
-  // `require()` is no-op in an ESM module, use `createRequire()` to construct
-  // the require()` function.  This is only necessary for multi-environment
-  // builds, `-sENVIRONMENT=node` emits a static import declaration instead.
-  // TODO: Swap all `require()`'s with `import()`'s?
   // These modules will usually be used on Node.js. Load them eagerly to avoid
   // the complexity of lazy-loading.
   var fs = require('fs');
@@ -359,8 +365,6 @@ if (ENVIRONMENT_IS_WEB || ENVIRONMENT_IS_WORKER) {
 
   if (!(typeof window == 'object' || typeof importScripts == 'function')) throw new Error('not compiled for this environment (did you build to HTML and try to run it not on the web, or set ENVIRONMENT to something - like node - and run it someplace else - like on the web?)');
 
-  // Differentiate the Web Worker from the Node Worker case, as reading must
-  // be done differently.
   {
 // include: web_or_worker_shell_read.js
 read_ = (url) => {
@@ -946,14 +950,22 @@ function instantiateAsync(binary, binaryFile, imports, callback) {
   return instantiateArrayBuffer(binaryFile, imports, callback);
 }
 
+function getWasmImports() {
+  // instrumenting imports is used in asyncify in two ways: to add assertions
+  // that check for proper import use, and for ASYNCIFY=2 we use them to set up
+  // the Promise API on the import side.
+  Asyncify.instrumentWasmImports(wasmImports);
+  // prepare imports
+  return {
+    'env': wasmImports,
+    'wasi_snapshot_preview1': wasmImports,
+  }
+}
+
 // Create the wasm instance.
 // Receives the wasm imports, returns the exports.
 function createWasm() {
-  // prepare imports
-  var info = {
-    'env': wasmImports,
-    'wasi_snapshot_preview1': wasmImports,
-  };
+  var info = getWasmImports();
   // Load the wasm module and create an instance of using native support in the JS engine.
   // handle a generated wasm instance, receiving its exports and
   // performing other necessary setup
@@ -1000,7 +1012,6 @@ function createWasm() {
   // Also pthreads and wasm workers initialize the wasm instance through this
   // path.
   if (Module['instantiateWasm']) {
-
     try {
       return Module['instantiateWasm'](info, receiveInstance);
     } catch(e) {
@@ -1119,40 +1130,40 @@ function dbg(...args) {
 // === Body ===
 
 var ASM_CONSTS = {
-  213952: () => { if (document.fullscreenElement) return 1; },  
- 213998: () => { return document.getElementById('canvas').width; },  
- 214050: () => { return parseInt(document.getElementById('canvas').style.width); },  
- 214118: () => { document.exitFullscreen(); },  
- 214145: () => { setTimeout(function() { Module.requestFullscreen(false, false); }, 100); },  
- 214218: () => { if (document.fullscreenElement) return 1; },  
- 214264: () => { return document.getElementById('canvas').width; },  
- 214316: () => { return screen.width; },  
- 214341: () => { document.exitFullscreen(); },  
- 214368: () => { setTimeout(function() { Module.requestFullscreen(false, true); setTimeout(function() { canvas.style.width="unset"; }, 100); }, 100); },  
- 214501: () => { if (document.fullscreenElement) return 1; },  
- 214547: () => { return document.getElementById('canvas').width; },  
- 214599: () => { return parseInt(document.getElementById('canvas').style.width); },  
- 214667: () => { if (document.fullscreenElement) return 1; },  
- 214713: () => { return document.getElementById('canvas').width; },  
- 214765: () => { return screen.width; },  
- 214790: () => { if (document.fullscreenElement) return 1; },  
- 214836: () => { return document.getElementById('canvas').width; },  
- 214888: () => { return screen.width; },  
- 214913: () => { document.exitFullscreen(); },  
- 214940: () => { if (document.fullscreenElement) return 1; },  
- 214986: () => { return document.getElementById('canvas').width; },  
- 215038: () => { return parseInt(document.getElementById('canvas').style.width); },  
- 215106: () => { document.exitFullscreen(); },  
- 215133: () => { return screen.width; },  
- 215158: () => { return screen.height; },  
- 215184: () => { return window.screenX; },  
- 215211: () => { return window.screenY; },  
- 215238: ($0) => { navigator.clipboard.writeText(UTF8ToString($0)); },  
- 215291: ($0) => { document.getElementById("canvas").style.cursor = UTF8ToString($0); },  
- 215362: () => { document.getElementById('canvas').style.cursor = 'none'; },  
- 215419: ($0) => { document.getElementById('canvas').style.cursor = UTF8ToString($0); },  
- 215490: () => { if (document.fullscreenElement) return 1; },  
- 215536: () => { if (document.pointerLockElement) return 1; }
+  214536: () => { if (document.fullscreenElement) return 1; },  
+ 214582: () => { return document.getElementById('canvas').width; },  
+ 214634: () => { return parseInt(document.getElementById('canvas').style.width); },  
+ 214702: () => { document.exitFullscreen(); },  
+ 214729: () => { setTimeout(function() { Module.requestFullscreen(false, false); }, 100); },  
+ 214802: () => { if (document.fullscreenElement) return 1; },  
+ 214848: () => { return document.getElementById('canvas').width; },  
+ 214900: () => { return screen.width; },  
+ 214925: () => { document.exitFullscreen(); },  
+ 214952: () => { setTimeout(function() { Module.requestFullscreen(false, true); setTimeout(function() { canvas.style.width="unset"; }, 100); }, 100); },  
+ 215085: () => { if (document.fullscreenElement) return 1; },  
+ 215131: () => { return document.getElementById('canvas').width; },  
+ 215183: () => { return parseInt(document.getElementById('canvas').style.width); },  
+ 215251: () => { if (document.fullscreenElement) return 1; },  
+ 215297: () => { return document.getElementById('canvas').width; },  
+ 215349: () => { return screen.width; },  
+ 215374: () => { if (document.fullscreenElement) return 1; },  
+ 215420: () => { return document.getElementById('canvas').width; },  
+ 215472: () => { return screen.width; },  
+ 215497: () => { document.exitFullscreen(); },  
+ 215524: () => { if (document.fullscreenElement) return 1; },  
+ 215570: () => { return document.getElementById('canvas').width; },  
+ 215622: () => { return parseInt(document.getElementById('canvas').style.width); },  
+ 215690: () => { document.exitFullscreen(); },  
+ 215717: () => { return screen.width; },  
+ 215742: () => { return screen.height; },  
+ 215768: () => { return window.screenX; },  
+ 215795: () => { return window.screenY; },  
+ 215822: ($0) => { navigator.clipboard.writeText(UTF8ToString($0)); },  
+ 215875: ($0) => { document.getElementById("canvas").style.cursor = UTF8ToString($0); },  
+ 215946: () => { document.getElementById('canvas').style.cursor = 'none'; },  
+ 216003: ($0) => { document.getElementById('canvas').style.cursor = UTF8ToString($0); },  
+ 216074: () => { if (document.fullscreenElement) return 1; },  
+ 216120: () => { if (document.pointerLockElement) return 1; }
 };
 function GetWindowInnerWidth() { return window.innerWidth; }
 function GetWindowInnerHeight() { return window.innerHeight; }
@@ -4652,13 +4663,6 @@ function GetWindowInnerHeight() { return window.innerHeight; }
 
   var _emscripten_date_now = () => Date.now();
 
-  
-  var withStackSave = (f) => {
-      var stack = stackSave();
-      var ret = f();
-      stackRestore(stack);
-      return ret;
-    };
   var JSEvents = {
   removeAllEventListeners() {
         while (JSEvents.eventHandlers.length) {
@@ -10339,9 +10343,9 @@ function checkIncomingModuleAPI() {
 }
 var wasmImports = {
   /** @export */
-  GetWindowInnerHeight: GetWindowInnerHeight,
+  GetWindowInnerHeight,
   /** @export */
-  GetWindowInnerWidth: GetWindowInnerWidth,
+  GetWindowInnerWidth,
   /** @export */
   __assert_fail: ___assert_fail,
   /** @export */
@@ -10921,12 +10925,11 @@ var wasmImports = {
   /** @export */
   strftime_l: _strftime_l
 };
-Asyncify.instrumentWasmImports(wasmImports);
 var wasmExports = createWasm();
 var ___wasm_call_ctors = createExportWrapper('__wasm_call_ctors', 0);
+var _free = createExportWrapper('free', 1);
 var _fflush = createExportWrapper('fflush', 1);
 var _malloc = createExportWrapper('malloc', 1);
-var _free = createExportWrapper('free', 1);
 var _main = Module['_main'] = createExportWrapper('__main_argc_argv', 2);
 var __emscripten_tempret_set = createExportWrapper('_emscripten_tempret_set', 1);
 var _emscripten_stack_init = () => (_emscripten_stack_init = wasmExports['emscripten_stack_init'])();
@@ -10937,19 +10940,19 @@ var __emscripten_stack_restore = (a0) => (__emscripten_stack_restore = wasmExpor
 var __emscripten_stack_alloc = (a0) => (__emscripten_stack_alloc = wasmExports['_emscripten_stack_alloc'])(a0);
 var _emscripten_stack_get_current = () => (_emscripten_stack_get_current = wasmExports['emscripten_stack_get_current'])();
 var ___cxa_is_pointer_type = createExportWrapper('__cxa_is_pointer_type', 1);
-var dynCall_vi = Module['dynCall_vi'] = createExportWrapper('dynCall_vi', 2);
-var dynCall_vii = Module['dynCall_vii'] = createExportWrapper('dynCall_vii', 3);
-var dynCall_ii = Module['dynCall_ii'] = createExportWrapper('dynCall_ii', 2);
 var dynCall_iii = Module['dynCall_iii'] = createExportWrapper('dynCall_iii', 3);
+var dynCall_ii = Module['dynCall_ii'] = createExportWrapper('dynCall_ii', 2);
+var dynCall_v = Module['dynCall_v'] = createExportWrapper('dynCall_v', 1);
+var dynCall_vi = Module['dynCall_vi'] = createExportWrapper('dynCall_vi', 2);
+var dynCall_iiiii = Module['dynCall_iiiii'] = createExportWrapper('dynCall_iiiii', 5);
+var dynCall_vii = Module['dynCall_vii'] = createExportWrapper('dynCall_vii', 3);
 var dynCall_iiii = Module['dynCall_iiii'] = createExportWrapper('dynCall_iiii', 4);
-var dynCall_viiii = Module['dynCall_viiii'] = createExportWrapper('dynCall_viiii', 5);
+var dynCall_iiiiffi = Module['dynCall_iiiiffi'] = createExportWrapper('dynCall_iiiiffi', 7);
 var dynCall_viii = Module['dynCall_viii'] = createExportWrapper('dynCall_viii', 4);
+var dynCall_viiii = Module['dynCall_viiii'] = createExportWrapper('dynCall_viiii', 5);
 var dynCall_viiiii = Module['dynCall_viiiii'] = createExportWrapper('dynCall_viiiii', 6);
 var dynCall_vif = Module['dynCall_vif'] = createExportWrapper('dynCall_vif', 3);
 var dynCall_viiiiii = Module['dynCall_viiiiii'] = createExportWrapper('dynCall_viiiiii', 7);
-var dynCall_v = Module['dynCall_v'] = createExportWrapper('dynCall_v', 1);
-var dynCall_iiiii = Module['dynCall_iiiii'] = createExportWrapper('dynCall_iiiii', 5);
-var dynCall_iiiiffi = Module['dynCall_iiiiffi'] = createExportWrapper('dynCall_iiiiffi', 7);
 var dynCall_viff = Module['dynCall_viff'] = createExportWrapper('dynCall_viff', 4);
 var dynCall_vidd = Module['dynCall_vidd'] = createExportWrapper('dynCall_vidd', 4);
 var dynCall_vffff = Module['dynCall_vffff'] = createExportWrapper('dynCall_vffff', 5);
@@ -10978,8 +10981,8 @@ var _asyncify_start_unwind = createExportWrapper('asyncify_start_unwind', 1);
 var _asyncify_stop_unwind = createExportWrapper('asyncify_stop_unwind', 0);
 var _asyncify_start_rewind = createExportWrapper('asyncify_start_rewind', 1);
 var _asyncify_stop_rewind = createExportWrapper('asyncify_stop_rewind', 0);
-var ___start_em_js = Module['___start_em_js'] = 215583;
-var ___stop_em_js = Module['___stop_em_js'] = 215656;
+var ___start_em_js = Module['___start_em_js'] = 216167;
+var ___stop_em_js = Module['___stop_em_js'] = 216240;
 
 // include: postamble.js
 // === Auto-generated postamble setup entry stuff ===
