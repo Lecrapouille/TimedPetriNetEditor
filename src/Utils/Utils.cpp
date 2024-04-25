@@ -26,6 +26,8 @@
 #  include <CoreFoundation/CFBundle.h>
 #endif
 
+#  include <algorithm> // std::transform
+
 //------------------------------------------------------------------------------
 #ifdef __APPLE__
 std::string osx_get_resources_dir(std::string const& file)
@@ -69,6 +71,31 @@ float random(int lower, int upper)
     auto const t = static_cast<unsigned int>(time(NULL));
     srand(t);
     return float(rand() % (upper - lower + 1)) + float(lower);
+}
+
+//------------------------------------------------------------------------------
+std::string extension(std::string const& path)
+{
+    std::string::size_type pos = path.find_last_of(".");
+    if (pos != std::string::npos)
+    {
+        std::string ext = path.substr(pos /*+ 1*/, std::string::npos);
+
+        // Ignore the ~ in the extension (ie. foo.txt~)
+        if ('~' == ext.back())
+            ext.pop_back();
+
+        // Get the file extension in lower case
+        std::transform(ext.begin(), ext.end(), ext.begin(), ::tolower);
+        return ext;
+    }
+    return "";
+}
+
+//------------------------------------------------------------------------------
+std::string baseName(std::string const& path)
+{
+    return path.substr(0, path.find_last_of("."));
 }
 
 } // namespace tpne

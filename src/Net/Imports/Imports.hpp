@@ -28,19 +28,35 @@ namespace tpne {
 
 class Net;
 
+//! \brief JSON is the main format used for saving Petri by this editor.
 std::string importFromJSON(Net& net, std::string const& filename);
+//! \brief Import https://gitlab.com/porky11/pn-editor
 std::string importFromPNML(Net& net, std::string const& filename);
 
-typedef std::string (*ImportFunc)(Net&, std::string const&);
+//! \brief Interface for importing a Petri file.
+//! \param[inout] net the net we are importing. Better to call net.clear()
+//! before importing the file.
+//! \param[in] filepath the path of the file to import. We do not check
+//! if the file format is the expected one for the importer.
+//! \return a dummy string in case of success, else return the error message.
+//! \note the net is not cleared in case of error.
+typedef std::string (*ImportFunc)(Net& net, std::string const& filepath);
+
+//! \brief
 struct Importer
 {
+    //! \brief Name of the file format (i.e. "JSON")
     std::string format;
+    //! \brief file extension with the dot (i.e. ".json")
     std::string extensions;
+    //! \brief the pointer function for importing (i.e. importFromJSON)
     ImportFunc importFct;
 };
 
-//! \brief Container of file formats we can import the net from.
+//! \brief Container of file formats we can import a Petri net from.
 std::vector<Importer> const& importers();
+
+Importer const* getImporter(std::string const& ext);
 
 } // namespace tpne
 

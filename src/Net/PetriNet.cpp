@@ -22,6 +22,7 @@
 #include "TimedPetriNetEditor/Algorithms.hpp"
 #include "Net/Imports/Imports.hpp"
 #include "Net/Exports/Exports.hpp"
+#include "Utils/Utils.hpp"
 
 #include <iomanip>
 #include <iostream>
@@ -675,48 +676,46 @@ bool Net::resetReceptivies()
 }
 
 //------------------------------------------------------------------------------
-std::string saveToFile(Net const& net, std::string const& filename)
+std::string saveToFile(Net const& net, std::string const& filepath)
 {
-    std::string extension = filename.substr(filename.find_last_of("."));
-
-    for (auto const& it: exporters())
+    Exporter const* exporter = getExporter(extension(filepath));
+    if (exporter == nullptr)
     {
-        // split all extensions
-        std::stringstream ss(it.extensions);
-        std::string ext;
-        while (!ss.eof())
-        {
-            std::getline(ss, ext, ',');
-            if (extension == ext)
-            {
-                return it.exportFct(net, filename);
-            }
-        }
+        return "Cannot export " + filepath + ". Reason: 'unknown file extension'\n";
     }
-
-    return std::string("Failed to export '") + filename +
-        std::string(": unsuported file extension");
+    return exporter->exportFct(net, filepath);
 }
 
 //------------------------------------------------------------------------------
 std::string loadFromFile(Net& net, std::string const& filepath)
 {
-    std::string error = importFromJSON(net, filepath);
+    // Search the importer
+    Importer const* importer = getImporter(extension(filepath));
+    if (importer == nullptr)
+    {
+        return "Cannot import " + filepath + ". Reason: 'unknown file extension'\n";
+    }
+
+    // Load the file
+    net.clear();
+    std::string error = importer->importFct(net, filepath);
     if (!error.empty())
     {
         net.reset(net.type());
+    }
 
-        // Get the name from path
+    // Get a name to the net
+    if (net.name == "")
+    {
         size_t lastindex = filepath.find_last_of(".");
         std::string _name = filepath.substr(0, lastindex);
         lastindex = _name.find_last_of("/");
         net.name = _name.substr(lastindex + 1u);
-
-        return error;
     }
 
     net.modified = false;
-    return {};
+
+    return error;
 }
 
 //------------------------------------------------------------------------------
