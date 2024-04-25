@@ -133,8 +133,7 @@ TEST(TestHoward, TestPetriNetSemiSimple)
     CriticalCycleResult res;
     ASSERT_EQ(res.success, false);
     ASSERT_EQ(res.eigenvector.size(), 0u);
-    ASSERT_EQ(res.cycle_time.size(), 0u);
-    ASSERT_EQ(res.optimal_policy.size(), 0u);
+    ASSERT_EQ(res.durations.size(), 0u);
     ASSERT_EQ(res.arcs.size(), 0u);
     ASSERT_STREQ(res.message.str().c_str(), "");
 
@@ -145,8 +144,7 @@ TEST(TestHoward, TestPetriNetSemiSimple)
     res = findCriticalCycle(net);
     ASSERT_EQ(res.success, false);
     ASSERT_EQ(res.eigenvector.size(), 0u);
-    ASSERT_EQ(res.cycle_time.size(), 0u);
-    ASSERT_EQ(res.optimal_policy.size(), 0u);
+    ASSERT_EQ(res.durations.size(), 0u);
     ASSERT_NE(res.arcs.size(), 0u);
     ASSERT_STREQ(res.message.str().c_str(), "The Petri net is not an event graph. Because:\n  P0 has more than one output arc: T0 T4 T8\n");
 
@@ -157,10 +155,9 @@ TEST(TestHoward, TestPetriNetSemiSimple)
     res = findCriticalCycle(net);
     ASSERT_EQ(res.success, false);
     ASSERT_EQ(res.eigenvector.size(), 0u);
-    ASSERT_EQ(res.cycle_time.size(), 0u);
-    ASSERT_EQ(res.optimal_policy.size(), 0u);
+    ASSERT_EQ(res.durations.size(), 0u);
     ASSERT_EQ(res.arcs.size(), 0u);
-    ASSERT_STREQ(res.message.str().c_str(), "No policy found");
+    ASSERT_STREQ(res.message.str().c_str(), "No optimal policy found");
 
     // Load a net that is an event graph
     ASSERT_STREQ(loadFromFile(net,"../data/examples/Howard2.json").c_str(), "");
@@ -173,14 +170,14 @@ TEST(TestHoward, TestPetriNetSemiSimple)
     ASSERT_EQ(res.eigenvector[1], 5.0f);
     ASSERT_EQ(res.eigenvector[2], 8.0f);
     ASSERT_EQ(res.eigenvector[3], 1.0f);
-    ASSERT_EQ(res.cycle_time.size(), 4u);
-    ASSERT_EQ(res.cycle_time[0], 6.5f);
-    ASSERT_EQ(res.cycle_time[1], 6.5f);
-    ASSERT_EQ(res.cycle_time[2], 6.5f);
-    ASSERT_EQ(res.cycle_time[3], 6.5f);
-    ASSERT_EQ(res.optimal_policy.size(), 4u);
-    ASSERT_EQ(res.optimal_policy[0], 2u);
-    ASSERT_EQ(res.optimal_policy[1], 0u);
+    ASSERT_EQ(res.durations.size(), 4u);
+    ASSERT_EQ(res.durations[0], 6.5f);
+    ASSERT_EQ(res.durations[1], 6.5f);
+    ASSERT_EQ(res.durations[2], 6.5f);
+    ASSERT_EQ(res.durations[3], 6.5f);
+    //ASSERT_EQ(res.optimal_policy.size(), 4u);
+    //ASSERT_EQ(res.optimal_policy[0], 2u);
+    //ASSERT_EQ(res.optimal_policy[1], 0u);
     ASSERT_EQ(res.arcs.size(), 8u);
     ASSERT_STREQ(res.arcs[0]->from.key.c_str(), "T2");
     ASSERT_STREQ(res.arcs[0]->to.key.c_str(), "P0");
@@ -198,5 +195,6 @@ TEST(TestHoward, TestPetriNetSemiSimple)
     ASSERT_STREQ(res.arcs[6]->to.key.c_str(), "P3");
     ASSERT_STREQ(res.arcs[7]->from.key.c_str(), "P3");
     ASSERT_STREQ(res.arcs[7]->to.key.c_str(), "T3");
-    ASSERT_STREQ(res.message.str().substr(0u, 14u).c_str(), "Critical cycle");
+    ASSERT_STREQ(res.message.str().substr(0u, 51u).c_str(),
+        "Found 1 connected components of the optimal policy:");
 }
