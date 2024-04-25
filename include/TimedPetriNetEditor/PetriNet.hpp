@@ -537,7 +537,12 @@ public:
     //! Change the type of net for the new one. Reset the name of the net (give
     //! the name of type of net).
     //--------------------------------------------------------------------------
-    void clear(TypeOfNet const type);
+    void reset(TypeOfNet const type);
+
+    //--------------------------------------------------------------------------
+    //! \brief Remove all nodes and arcs. Reset counters for unique identifiers.
+    //--------------------------------------------------------------------------
+    void clear();
 
     //--------------------------------------------------------------------------
     //! \brief Return the type of net: GRAFCET, Petri, Timed Petri ...
@@ -676,6 +681,12 @@ public:
     //! to get the exact reason.
     //--------------------------------------------------------------------------
     bool addArc(Node& from, Node& to, float const duration = 0.0f);
+
+    //--------------------------------------------------------------------------
+    //! \brief Add an arc with an intermediate place between the two given
+    //! transitions. This method is usefull for timed event graph.
+    //--------------------------------------------------------------------------
+    bool addArc(Transition& from, Transition& to, size_t const tokens, float const duration);
 
     //--------------------------------------------------------------------------
     //! \brief Return the address of the arc linking the two given nodes.

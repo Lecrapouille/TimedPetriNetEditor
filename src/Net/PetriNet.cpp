@@ -202,11 +202,17 @@ Net& Net::operator=(Net const& other)
 }
 
 //------------------------------------------------------------------------------
-void Net::clear(TypeOfNet const type)
+void Net::reset(TypeOfNet const type)
 {
     m_type = type;
     applyNewNetSettings(type);
+    clear();
     name = to_str(type);
+}
+
+//------------------------------------------------------------------------------
+void Net::clear()
+{
     m_places.clear();
     m_transitions.clear();
     m_arcs.clear();
@@ -698,7 +704,7 @@ std::string loadFromFile(Net& net, std::string const& filepath)
     std::string error = importFromJSON(net, filepath);
     if (!error.empty())
     {
-        net.clear(net.type());
+        net.reset(net.type());
 
         // Get the name from path
         size_t lastindex = filepath.find_last_of(".");
