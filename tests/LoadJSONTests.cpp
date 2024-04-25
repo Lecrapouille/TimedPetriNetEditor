@@ -46,8 +46,11 @@ TEST(TestJSONLoader, TestLoadedInvalidNetTimedPetri)
     Net net(TypeOfNet::TimedPetriNet);
 
     ASSERT_STREQ(loadFromFile(net,"doesnotexist").c_str(),
-        "Failed opening 'doesnotexist'."
-        " Reason was 'No such file or directory'\n");
+        "Cannot import doesnotexist. Reason: 'unknown file extension'\n");
+    ASSERT_EQ(net.isEmpty(), true);
+
+    ASSERT_STREQ(loadFromFile(net,"doesnotexist.foo").c_str(),
+        "Cannot import doesnotexist.foo. Reason: 'unknown file extension'\n");
     ASSERT_EQ(net.isEmpty(), true);
 
     ASSERT_STREQ(loadFromFile(net,"data/BadJSON/BadType.json").c_str(),

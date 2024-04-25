@@ -19,7 +19,7 @@
 //=============================================================================
 
 #include "Net/Imports/Imports.hpp"
-
+#include <sstream>
 namespace tpne {
 
 std::vector<Importer> const& importers()
@@ -30,6 +30,25 @@ std::vector<Importer> const& importers()
     };
 
     return s_importers;
+}
+
+Importer const* getImporter(std::string const& extension)
+{
+    for (auto const& it: importers())
+    {
+        // split all extensions
+        std::stringstream ss(it.extensions);
+        std::string ext;
+        while (!ss.eof())
+        {
+            std::getline(ss, ext, ',');
+            if (extension == ext)
+            {
+                return &it;
+            }
+        }
+    }
+    return nullptr;
 }
 
 } // namespace tpne

@@ -63,6 +63,21 @@ Editor::Editor(size_t const width, size_t const height,
 }
 
 //------------------------------------------------------------------------------
+void Editor::setSavePath(std::string const& filepath)
+{
+    // If we do not have exporters for the imported file format, use
+    // the default file format: json.
+#if 0
+    if (getExporter(extension(filepath)) == nullptr)
+        m_path_to_save = baseName(filepath) + ".json";
+    else
+        m_path_to_save = filepath;
+#else
+    m_path_to_save = baseName(filepath) + ".json";
+#endif
+}
+
+//------------------------------------------------------------------------------
 void Editor::run(std::string const& filepath)
 {
     // Load Petri net file if passed with command line
@@ -71,12 +86,12 @@ void Editor::run(std::string const& filepath)
         std::string error = loadFromFile(m_net, filepath);
         if (error.empty())
         {
-            m_filepath = filepath;
             m_messages.setInfo("Loaded with success " + filepath);
+            setSavePath(filepath);
         }
         else
         {
-            m_messages.setError(m_net.error());
+            m_messages.setError(error);
         }
     }
 
@@ -159,7 +174,7 @@ void Editor::menu()
                 {
                     if (ImGui::MenuItem(it.format.c_str(), nullptr, false))
                     {
-                        m_states.do_import_to = &it;
+                        m_states.do_import_from = &it;
                     }
                 }
                 ImGui::EndMenu();
@@ -168,16 +183,16 @@ void Editor::menu()
             ImGui::Separator();
             if (ImGui::MenuItem("Save", nullptr, false))
             {
-                if (m_filepath == "")
+                if (m_path_to_save == "")
                 {
                     m_states.do_save_as = true;
                 }
                 else
                 {
-                    std::string error = saveToFile(m_net, m_filepath);
+                    std::string error = saveToFile(m_net, m_path_to_save);
                     if (error.empty())
                     {
-                        m_messages.setInfo("Saved with success " + m_filepath);
+                        m_messages.setInfo("Saved with success " + m_path_to_save);
                         m_net.modified = false;
                     }
                     else
@@ -310,7 +325,7 @@ void Editor::menu()
     if (m_states.do_load) { loadNetFile(); }
     if (m_states.do_save_as) { saveNetAs(); }
     if (m_states.do_export_to != nullptr) { exportNetTo(*m_states.do_export_to); }
-    if (m_states.do_import_to != nullptr) { importNetTo(*m_states.do_import_to); }
+    if (m_states.do_import_from != nullptr) { importNetFrom(*m_states.do_import_from); }
     if (m_states.do_screenshot) { takeScreenshot(); }
     if (m_states.do_adjency) { showAdjacencyMatrices(); }
     if (m_states.do_counter || m_states.do_dater) { showCounterOrDaterequation(); }
@@ -896,11 +911,11 @@ Transition* Editor::getTransition(ImVec2 const& position)
 void Editor::loadNetFile()
 {
     static Importer importer{"TimedPetriNetEditor", ".json", importFromJSON};
-    importNetTo(importer);
+    importNetFrom(importer);
 }
 
 //------------------------------------------------------------------------------
-void Editor::importNetTo(Importer const& importer)
+void Editor::importNetFrom(Importer const& importer)
 {
     if (m_simulation.running)
     {
@@ -920,16 +935,16 @@ void Editor::importNetTo(Importer const& importer)
     {
         if (ImGuiFileDialog::Instance()->IsOk())
         {
-            auto const path = ImGuiFileDialog::Instance()->GetFilePathName();
-            std::string error = importer.importFct(m_net, path);
+            auto const filepath = ImGuiFileDialog::Instance()->GetFilePathName();
             m_net.clear();
+            std::string error = importer.importFct(m_net, filepath);
             if (error.empty())
             {
-                if (m_states.do_import_to)
-                    m_messages.setInfo("Imported with success from '" + path + "'");
+                if (m_states.do_import_from)
+                    m_messages.setInfo("Imported with success from '" + filepath + "'");
                 else
-                    m_messages.setInfo("Loaded with success '" + path + "'");
-                m_filepath = path;
+                    m_messages.setInfo("Loaded with success '" + filepath + "'");
+                setSavePath(filepath);
                 m_net.modified = false;
             }
             else
@@ -942,7 +957,7 @@ void Editor::importNetTo(Importer const& importer)
 
         // close
         m_states.do_load = false;
-        m_states.do_import_to = nullptr; // FIXME think proper code: export vs save as
+        m_states.do_import_from = nullptr; // FIXME think proper code: export vs save as
         ImGuiFileDialog::Instance()->Close();
     }
 }

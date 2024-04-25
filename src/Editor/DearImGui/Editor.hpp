@@ -81,7 +81,7 @@ private: // Petri net services
     Transition* getTransition(ImVec2 const& position);
     bool switchOfNet(TypeOfNet const type);
     void exportNetTo(Exporter const& exporter);
-    void importNetTo(Importer const& importer);
+    void importNetFrom(Importer const& importer);
     void loadNetFile();
     void saveNetAs();
     void closeNet();
@@ -93,6 +93,7 @@ private: // Petri net services
 
 private: // Error logs
 
+    void setSavePath(std::string const& filepath);
     std::string getError() const;  // FIXME: by copy
     std::vector<Messages::TimedMessage> const& getLogs() const;
     void clearLogs();
@@ -114,7 +115,7 @@ private:
         bool do_save_as = false;
         bool do_screenshot = false;
         Exporter const* do_export_to = nullptr;
-        Importer const* do_import_to = nullptr;
+        Importer const* do_import_from = nullptr;
         bool show_about = false;
         bool show_help = false;
         bool show_place_captions = true;
@@ -258,8 +259,8 @@ private:
     Messages m_messages;
     //! \brief States controling the GUI
     mutable States m_states;
-    //! \brief Path of the loaded Petri file.
-    std::string m_filepath;
+    //! \brief Cache the path to save the loaded Petri file.
+    std::string m_path_to_save;
 };
 
 } // namespace tpne

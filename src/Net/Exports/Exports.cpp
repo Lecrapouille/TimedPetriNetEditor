@@ -19,9 +19,11 @@
 //=============================================================================
 
 #include "Net/Exports/Exports.hpp"
+#include <sstream>
 
 namespace tpne {
 
+//------------------------------------------------------------------------------
 std::vector<Exporter> const& exporters()
 {
     static const std::vector<Exporter> s_exporters = {
@@ -39,6 +41,26 @@ std::vector<Exporter> const& exporters()
     };
 
     return s_exporters;
+}
+
+//------------------------------------------------------------------------------
+Exporter const* getExporter(std::string const& extension)
+{
+    for (auto const& it: exporters())
+    {
+        // split all extensions
+        std::stringstream ss(it.extensions);
+        std::string ext;
+        while (!ss.eof())
+        {
+            std::getline(ss, ext, ',');
+            if (extension == ext)
+            {
+                return &it;
+            }
+        }
+    }
+    return nullptr;
 }
 
 } // namespace tpne
