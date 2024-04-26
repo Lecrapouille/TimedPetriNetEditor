@@ -21,6 +21,7 @@
 #include "TimedPetriNetEditor/PetriNet.hpp"
 #include "TimedPetriNetEditor/Algorithms.hpp"
 #include "TimedPetriNetEditor/SparseMatrix.hpp"
+#include "TimedPetriNetEditor/TropicalAlgebra.hpp"
 #include "Net/Howard.h"
 
 namespace tpne {
@@ -28,8 +29,8 @@ namespace tpne {
 //------------------------------------------------------------------------------
 // FIXME pas au bon endroit
 // Used to control the behavior of operator<<.
-template<> bool SparseMatrix<double>::display_for_julia = true;
-template<> bool SparseMatrix<double>::display_as_dense = false;
+template<> bool SparseMatrix<MaxPlus>::display_for_julia = true;
+template<> bool SparseMatrix<MaxPlus>::display_as_dense = false;
 
 //------------------------------------------------------------------------------
 bool isEventGraph(Net const& net, std::string& error, std::vector<Arc*>& erroneous_arcs)
@@ -183,8 +184,8 @@ void toCanonicalForm(Net const& net, Net& canonic)
 
 //------------------------------------------------------------------------------
 void toSysLin(Net const& net,
-              SparseMatrix<double>& D, SparseMatrix<double>& A,
-              SparseMatrix<double>& B, SparseMatrix<double>& C,
+              SparseMatrix<MaxPlus>& D, SparseMatrix<MaxPlus>& A,
+              SparseMatrix<MaxPlus>& B, SparseMatrix<MaxPlus>& C,
               std::vector<size_t> const& indices, size_t const nb_inputs,
               size_t const nb_states, size_t const nb_outputs)
 {
@@ -241,8 +242,8 @@ void toSysLin(Net const& net,
 }
 
 //------------------------------------------------------------------------------
-bool toSysLin(Net const& net, SparseMatrix<double>& D, SparseMatrix<double>& A,
-              SparseMatrix<double>& B, SparseMatrix<double>& C)
+bool toSysLin(Net const& net, SparseMatrix<MaxPlus>& D, SparseMatrix<MaxPlus>& A,
+              SparseMatrix<MaxPlus>& B, SparseMatrix<MaxPlus>& C)
 {
     std::vector<Arc*> arcs;
     std::string error;
@@ -288,7 +289,7 @@ bool toSysLin(Net const& net, SparseMatrix<double>& D, SparseMatrix<double>& A,
 }
 
 //------------------------------------------------------------------------------
-bool toAdjacencyMatrices(Net const& net, SparseMatrix<double>& tokens, SparseMatrix<double>& durations)
+bool toAdjacencyMatrices(Net const& net, SparseMatrix<MaxPlus>& tokens, SparseMatrix<MaxPlus>& durations)
 {
     size_t const nnodes = net.transitions().size();
 
@@ -463,6 +464,7 @@ CriticalCycleResult findCriticalCycle(Net const& net)
     int ncomponents; // Number of connected components of the optimal policy
     int niterations; // Number of iteration needed by the algorithm
     int verbosemode = 0; // No verbose
+    // Note Semi_Howard is C code and use directly double instead of (max,+).
     int res = Semi_Howard(IJ.data(), T.data(), N.data(),
                           int(nnodes), int(narcs),
                           result.durations.data(), result.eigenvector.data(),

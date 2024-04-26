@@ -24,6 +24,7 @@
 namespace tpne {
 
 class Net;
+class MaxPlus;
 template<typename T> class SparseMatrix; // FIXME add (max,+) struct
 
 //--------------------------------------------------------------------------
@@ -56,15 +57,17 @@ bool isEventGraph(Net const& net);
 //! \return true if the Petri net was an graph event, else return false and
 //! erroneous arcs can be get by \c markedArcs().
 //--------------------------------------------------------------------------
-bool toSysLin(Net const& net, SparseMatrix<double>& D, SparseMatrix<double>& A, SparseMatrix<double>& B, SparseMatrix<double>& C);
+bool toSysLin(Net const& net, SparseMatrix<MaxPlus>& D,
+    SparseMatrix<MaxPlus>& A, SparseMatrix<MaxPlus>& B,
+    SparseMatrix<MaxPlus>& C);
 
 //--------------------------------------------------------------------------
 //! \brief Inner method for the entry point toSysLin() method.
 //! FIXME a mettre private
 //--------------------------------------------------------------------------
 void toSysLin(Net const& net,
-              SparseMatrix<double>& D, SparseMatrix<double>& A,
-              SparseMatrix<double>& B, SparseMatrix<double>& C,
+              SparseMatrix<MaxPlus>& D, SparseMatrix<MaxPlus>& A,
+              SparseMatrix<MaxPlus>& B, SparseMatrix<MaxPlus>& C,
               std::vector<size_t> const& indices, size_t const nb_inputs,
               size_t const nb_states, size_t const nb_outputs);
 
@@ -84,7 +87,8 @@ void toCanonicalForm(Net const& net, Net& canonic);
 //! \note This will work only if isEventGraph() returned true.
 //! \return false if the Petri net is not an event graph.
 //--------------------------------------------------------------------------
-bool toAdjacencyMatrices(Net const& net, SparseMatrix<double>& tokens, SparseMatrix<double>& durations);
+bool toAdjacencyMatrices(Net const& net, SparseMatrix<MaxPlus>& tokens,
+    SparseMatrix<MaxPlus>& durations);
 
 //--------------------------------------------------------------------------
 //! \brief Returned by findCriticalCycle()

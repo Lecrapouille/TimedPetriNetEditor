@@ -28,11 +28,11 @@
 using namespace ::tpne;
 
 //------------------------------------------------------------------------------
-static std::string stream(SparseMatrix<double> const& M, bool display_for_julia)
+static std::string stream(SparseMatrix<MaxPlus> const& M, bool display_for_julia)
 {
     std::stringstream ss;
-    SparseMatrix<double>::display_for_julia = display_for_julia;
-    SparseMatrix<double>::display_as_dense = false;
+    SparseMatrix<MaxPlus>::display_for_julia = display_for_julia;
+    SparseMatrix<MaxPlus>::display_as_dense = false;
     ss << M;
     return ss.str();
 }
@@ -40,7 +40,7 @@ static std::string stream(SparseMatrix<double> const& M, bool display_for_julia)
 //------------------------------------------------------------------------------
 TEST(TestEventGraph, TestSparseMatrixConstructor)
 {
-    SparseMatrix<double> M;
+    SparseMatrix<MaxPlus> M;
 
     ASSERT_EQ(M.i.size(), 0u);
     ASSERT_EQ(M.j.size(), 0u);
