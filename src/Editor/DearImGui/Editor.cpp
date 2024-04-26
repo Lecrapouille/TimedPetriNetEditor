@@ -349,11 +349,11 @@ void Editor::showAdjacencyMatrices() const
                                NULL, ImGuiWindowFlags_AlwaysAutoResize))
     {
         ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(0, 0));
-        ImGui::Checkbox("Dense matrix", &SparseMatrix<double>::display_as_dense);
-        SparseMatrix<double>::display_for_julia = false;
+        ImGui::Checkbox("Dense matrix", &SparseMatrix<MaxPlus>::display_as_dense);
+        SparseMatrix<MaxPlus>::display_for_julia = false;
         ImGui::PopStyleVar();
 
-        SparseMatrix<double> tokens; SparseMatrix<double> durations;
+        SparseMatrix<MaxPlus> tokens; SparseMatrix<MaxPlus> durations;
         toAdjacencyMatrices(m_net, tokens, durations);
 
         ImGuiTabBarFlags tab_bar_flags = ImGuiTabBarFlags_None;
@@ -434,13 +434,13 @@ void Editor::showDynamicLinearSystem() const
                                ImGuiWindowFlags_AlwaysAutoResize))
     {
         ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(0, 0));
-        ImGui::Checkbox("Dense matrix", &SparseMatrix<double>::display_as_dense);
+        ImGui::Checkbox("Dense matrix", &SparseMatrix<MaxPlus>::display_as_dense);
         ImGui::PopStyleVar();
 
-        SparseMatrix<double> D; SparseMatrix<double> A;
-        SparseMatrix<double> B; SparseMatrix<double> C;
+        SparseMatrix<MaxPlus> D; SparseMatrix<MaxPlus> A;
+        SparseMatrix<MaxPlus> B; SparseMatrix<MaxPlus> C;
         toSysLin(m_net, D, A, B, C);
-        SparseMatrix<double>::display_for_julia = false;
+        SparseMatrix<MaxPlus>::display_for_julia = false;
         ImGui::Text(u8"%s", "X(n) = D . X(n) (+) A . X(n-1) (+) B . U(n)\nY(n) = C . X(n)");
         ImGuiTabBarFlags tab_bar_flags = ImGuiTabBarFlags_None;
         if (ImGui::BeginTabBar("syslin", tab_bar_flags))

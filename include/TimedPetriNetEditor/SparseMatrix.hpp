@@ -71,7 +71,7 @@ struct SparseMatrix // FIXME: redo manage (max,+) type
         d.push_back(d_);
     }
 
-    double get(size_t i_, size_t j_) const
+    T get(size_t i_, size_t j_) const
     {
         size_t currCol;
 
@@ -96,8 +96,8 @@ struct SparseMatrix // FIXME: redo manage (max,+) type
 
     //! \brief (I,J) Coordinates
     std::vector<size_t> i, j;
-    //! \brief Non zero element (double to be usable by Julia)
-    std::vector<double> d;
+    //! \brief Non zero element
+    std::vector<T> d;
     //! \brief Matrix dimension
     size_t N, M;
 };
@@ -118,18 +118,21 @@ inline std::ostream & operator<<(std::ostream &os, SparseMatrix<T> const& matrix
                << std::endl;
         }
 
-        // FIXME: manage column alignement
-        for (size_t i = 0u; i < matrix.M; ++i)
+        if ((matrix.N != 0u) && (matrix.M != 0u))
         {
-            for (size_t j = 0u; j < matrix.N; ++j)
+            // FIXME: manage column alignement
+            for (size_t i = 0u; i < matrix.M; ++i)
             {
-                double d = matrix.get(i + 1u, j + 1u);
-                if (d != zero<T>())
-                    os << d << " ";
-                else
-                    os << ". ";
+                for (size_t j = 0u; j < matrix.N; ++j)
+                {
+                    T v = matrix.get(i + 1u, j + 1u);
+                    if (v != zero<T>())
+                        os << v << " ";
+                    else
+                        os << ". ";
+                }
+                os << std::endl;
             }
-            os << std::endl;
         }
     }
     else

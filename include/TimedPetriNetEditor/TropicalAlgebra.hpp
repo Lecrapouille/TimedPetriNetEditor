@@ -42,6 +42,8 @@ public:
     MaxPlus(const double t) : val(t){}
     inline bool operator==(const MaxPlus &rhs) const { return val == rhs.val; }
     inline bool operator==(const double &rhs) const { return val == rhs; }
+    inline bool operator!=(const MaxPlus &rhs) const { return val != rhs.val; }
+    inline bool operator!=(const double &rhs) const { return val != rhs; }
     inline MaxPlus & operator=(const MaxPlus & rhs) { val = rhs.val; return *this;}
     inline MaxPlus & operator=(const double rhs) { val = rhs; return *this;}
     inline double operator*=(const MaxPlus & rhs) { val += rhs.val; return val; }
@@ -60,12 +62,7 @@ public:
 
 template<> inline MaxPlus zero<MaxPlus>() { return -std::numeric_limits<double>::infinity(); }
 template<> inline MaxPlus one<MaxPlus>()  { return 0.0; }
-
-inline std::ostream& operator<<(std::ostream& os, MaxPlus const& m)
-{
-    std::cout << m.val;
-    return os;
-}
+inline std::ostream& operator<<(std::ostream& os, MaxPlus const& m) { return os << m.val; }
 
 // *****************************************************************************
 //! \brief (min,+) algebra
@@ -79,6 +76,8 @@ public:
     MinPlus(const double t) : val(t){}
     inline bool operator==(const MinPlus &rhs) const { return val == rhs.val; }
     inline bool operator==(const double &rhs) const { return val == rhs; }
+    inline bool operator!=(const MinPlus &rhs) const { return val != rhs.val; }
+    inline bool operator!=(const double &rhs) const { return val != rhs; }
     inline MinPlus & operator=(const MinPlus & rhs) { val = rhs.val; return *this;}
     inline MinPlus & operator=(const double rhs) { val = rhs; return *this;}
     inline double operator*=(const MinPlus & rhs) { val += rhs.val; return val; }
@@ -97,12 +96,7 @@ public:
 
 template<> inline MinPlus zero<MinPlus>() { return std::numeric_limits<double>::infinity(); }
 template<> inline MinPlus one<MinPlus>()  { return 0.0; }
-
-inline std::ostream& operator<<(std::ostream& os, MinPlus const& m)
-{
-    std::cout << m.val;
-    return os;
-}
+inline std::ostream& operator<<(std::ostream& os, MinPlus const& m) { return os << m.val; }
 
 } // namespace tpne
 

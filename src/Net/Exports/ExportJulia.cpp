@@ -118,7 +118,7 @@ std::string exportToJulia(Net const& net, std::string const& filename)
     file << "## Timed event graph depict as two graph adjacency matrices:" << std::endl;
     file << "# Nodes are Transitions." << std::endl;
     file << "# Arcs are Places and therefore have tokens and durations" << std::endl;
-    SparseMatrix<double> N; SparseMatrix<double> T;
+    SparseMatrix<MaxPlus> N; SparseMatrix<MaxPlus> T;
     bool res = toAdjacencyMatrices(canonic, N, T);
     assert(res == true);
     for (auto& p: canonic.places())
@@ -145,15 +145,15 @@ std::string exportToJulia(Net const& net, std::string const& filename)
     // Compute the syslin as Julia code using the Max-Plus package
     // X(n) = D X(n) ⨁ A X(n-1) ⨁ B U(n)
     // Y(n) = C X(n)
-    SparseMatrix<double> D; SparseMatrix<double> A; SparseMatrix<double> B; SparseMatrix<double> C;
+    SparseMatrix<MaxPlus> D; SparseMatrix<MaxPlus> A; SparseMatrix<MaxPlus> B; SparseMatrix<MaxPlus> C;
     toSysLin(canonic, D, A, B, C, indices, nb_inputs, nb_states, nb_outputs);
 
     file << std::endl;
     file << "## Max-Plus implicit linear dynamic system of the dater equation:" << std::endl;
     file << "# X(n) = D X(n) ⨁ A X(n-1) ⨁ B U(n)" << std::endl;
     file << "# Y(n) = C X(n)" << std::endl;
-    SparseMatrix<double>::display_for_julia = true;
-    SparseMatrix<double>::display_as_dense = false;
+    SparseMatrix<MaxPlus>::display_for_julia = true;
+    SparseMatrix<MaxPlus>::display_as_dense = false;
     file << "D = sparse(" << D << ") # States without tokens" << std::endl;
     file << "A = sparse(" << A << ") # States with 1 token" << std::endl;
     file << "B = sparse(" << B << ") # Inputs" << std::endl;
