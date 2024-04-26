@@ -1,13 +1,9 @@
 # Related lectures and projects
 
-- ![en](https://lecrapouille.github.io/icons/en.png) ![fr](https://lecrapouille.github.io/icons/fr.png) https://jpquadrat.github.io/ Some research based on timed Petri net
-  and (max,+) algebra.
-- ![en](https://lecrapouille.github.io/icons/en.png) ![fr](https://lecrapouille.github.io/icons/fr.png) https://github.com/Lecrapouille/MaxPlus.jl My (max,+) toolbox for
-  Julia, a portage of the http://www.scicoslab.org/ toolbox (since Scilab is no
-  longer maintained).
-- ![en](https://lecrapouille.github.io/icons/en.png) http://www.cmap.polytechnique.fr/~gaubert/HOWARD2.html is the algorithm used
-  for computing the (max,+) eigenvalue used in ScicosLab MaxPlus toolbox and
-  that I reused in this project.
+- ![en](https://lecrapouille.github.io/icons/en.png) ![fr](https://lecrapouille.github.io/icons/fr.png) https://jpquadrat.github.io/ Some research based on timed Petri net and (max,+) algebra.
+- ![en](https://lecrapouille.github.io/icons/en.png) ![fr](https://lecrapouille.github.io/icons/fr.png) https://github.com/Lecrapouille/MaxPlus.jl My (max,+) toolbox for Julia, a portage of the http://www.scicoslab.org/ toolbox (since Scilab is no longer maintained).
+- ![en](https://lecrapouille.github.io/icons/en.png) The book [SYNCHRONIZATION AND LINEARITY: An Algebra for Discrete Event Systems](https://www.rocq.inria.fr/metalau/cohen/SED/book-online.html) can be downloaded for free. The Scilab toolbox is based on this book.
+- ![en](https://lecrapouille.github.io/icons/en.png) http://www.cmap.polytechnique.fr/~gaubert/HOWARD2.html is the algorithm used for computing the (max,+) eigenvalue used in ScicosLab MaxPlus toolbox and that I reused in this project.
 - ![en](https://lecrapouille.github.io/icons/en.png) http://www.unice.fr/dgaffe/recherche/outils_grafcet.html GRAFCET editor.
 - ![fr](https://lecrapouille.github.io/icons/fr.png) [ENSIAME IMS](https://www.fichier-pdf.fr/2014/06/16/cours-api-ims-2014-v1/) by JC. Popieul.
 - ![fr](https://lecrapouille.github.io/icons/fr.png) https://sites.google.com/view/apimou/accueil A Grafcet editor and code
