@@ -139,7 +139,7 @@ TEST(TestHoward, TestPetriNetSemiSimple)
     ASSERT_STREQ(res.message.str().c_str(), "");
 
     // Load a net that is not event graph
-    ASSERT_STREQ(loadFromFile(net,"data/AppelsDurgence.json").c_str(), "");
+    ASSERT_STREQ(loadFromFile(net, "../data/examples/AppelsDurgence.json").c_str(), "");
     ASSERT_EQ(net.type(), TypeOfNet::TimedPetriNet);
     ASSERT_EQ(net.isEmpty(), false);
     res = findCriticalCycle(net);
@@ -151,7 +151,7 @@ TEST(TestHoward, TestPetriNetSemiSimple)
     ASSERT_STREQ(res.message.str().c_str(), "The Petri net is not an event graph. Because:\n  P0 has more than one output arc: T0 T4 T8\n");
 
     // Load a net that is an event graph but that Howard does find policy (FIXME while it should)
-    ASSERT_STREQ(loadFromFile(net,"data/EventGraph.json").c_str(), "");
+    ASSERT_STREQ(loadFromFile(net, "../data/examples/EventGraph.json").c_str(), "");
     ASSERT_EQ(net.type(), TypeOfNet::TimedEventGraph);
     ASSERT_EQ(net.isEmpty(), false);
     res = findCriticalCycle(net);
@@ -163,7 +163,7 @@ TEST(TestHoward, TestPetriNetSemiSimple)
     ASSERT_STREQ(res.message.str().c_str(), "No policy found");
 
     // Load a net that is an event graph
-    ASSERT_STREQ(loadFromFile(net,"data/Howard2.json").c_str(), "");
+    ASSERT_STREQ(loadFromFile(net,"../data/examples/Howard2.json").c_str(), "");
     ASSERT_EQ(net.type(), TypeOfNet::TimedEventGraph);
     ASSERT_EQ(net.isEmpty(), false);
     res = findCriticalCycle(net);

@@ -33,7 +33,7 @@ TEST(TestJSONLoader, DummyTransitions)
 {
     Net net(TypeOfNet::TimedPetriNet);
 
-    ASSERT_STREQ(loadFromFile(net,"data/DummyTransitions.json").c_str(), "");
+    ASSERT_STREQ(loadFromFile(net, "data/DummyTransitions.json").c_str(), "");
     ASSERT_EQ(net.type(), TypeOfNet::TimedPetriNet);
     ASSERT_EQ(net.m_places.size(), 1u);
     ASSERT_EQ(net.m_transitions.size(), 0u);
@@ -45,20 +45,20 @@ TEST(TestJSONLoader, TestLoadedInvalidNetTimedPetri)
 {
     Net net(TypeOfNet::TimedPetriNet);
 
-    ASSERT_STREQ(loadFromFile(net,"doesnotexist").c_str(),
+    ASSERT_STREQ(loadFromFile(net, "doesnotexist").c_str(),
         "Cannot import doesnotexist. Reason: 'unknown file extension'\n");
     ASSERT_EQ(net.isEmpty(), true);
 
-    ASSERT_STREQ(loadFromFile(net,"doesnotexist.foo").c_str(),
+    ASSERT_STREQ(loadFromFile(net, "doesnotexist.foo").c_str(),
         "Cannot import doesnotexist.foo. Reason: 'unknown file extension'\n");
     ASSERT_EQ(net.isEmpty(), true);
 
-    ASSERT_STREQ(loadFromFile(net,"data/BadJSON/BadType.json").c_str(),
+    ASSERT_STREQ(loadFromFile(net, "data/BadJSON/BadType.json").c_str(),
         "Failed parsing 'data/BadJSON/BadType.json'."
         " Reason was 'Unknown type of net: Timed event graphe'\n");
     ASSERT_EQ(net.isEmpty(), true);
 
-    ASSERT_STREQ(loadFromFile(net,"data/BadJSON/NoName.json").c_str(),
+    ASSERT_STREQ(loadFromFile(net, "data/BadJSON/NoName.json").c_str(),
     "Failed parsing 'data/BadJSON/NoName.json'."
     " Reason was 'Missing JSON net name'\n");
     ASSERT_EQ(net.isEmpty(), true);
@@ -69,7 +69,7 @@ TEST(TestJSONLoader, LoadJSONfile)
 {
     Net net(TypeOfNet::TimedPetriNet);
 
-    ASSERT_STREQ(loadFromFile(net,"data/GRAFCET.json").c_str(), "");
+    ASSERT_STREQ(loadFromFile(net, "data/GRAFCET.json").c_str(), "");
     ASSERT_EQ(net.type(), TypeOfNet::GRAFCET);
     ASSERT_EQ(net.m_places.size(), 13u);
     ASSERT_EQ(net.m_transitions.size(), 11u);
@@ -81,7 +81,7 @@ TEST(TestJSONLoader, LoadAsGrafcet)
 {
     Net net(TypeOfNet::GRAFCET);
 
-    ASSERT_STREQ(loadFromFile(net,"data/TrafficLights.json").c_str(), "");
+    ASSERT_STREQ(loadFromFile(net, "../data/examples/TrafficLights.json").c_str(), "");
     ASSERT_EQ(net.type(), TypeOfNet::TimedPetriNet);
     ASSERT_EQ(net.m_places.size(), 7u);
     ASSERT_EQ(net.m_transitions.size(), 6u);
@@ -101,7 +101,7 @@ TEST(TestJSONLoader, LoadAsGrafcet)
 TEST(TestJSONLoader, CheckMarks)
 {
     Net net(TypeOfNet::GRAFCET);
-    ASSERT_STREQ(loadFromFile(net,"data/TrafficLights.json").c_str(), "");
+    ASSERT_STREQ(loadFromFile(net, "../data/examples/TrafficLights.json").c_str(), "");
     ASSERT_EQ(net.type(), TypeOfNet::TimedPetriNet);
 
     std::vector<size_t> tokens;
@@ -149,7 +149,7 @@ TEST(TestJSONLoader, SaveAndLoadFile)
     std::vector<Arc*> erroneous_arcs;
     Net net(TypeOfNet::TimedPetriNet);
 
-    ASSERT_STREQ(loadFromFile(net,"data/AppelsDurgence.json").c_str(), "");
+    ASSERT_STREQ(loadFromFile(net, "../data/examples/AppelsDurgence.json").c_str(), "");
     convertTo(net, TypeOfNet::PetriNet, error, erroneous_arcs);
     ASSERT_STREQ(error.c_str(), "");
     ASSERT_EQ(erroneous_arcs.size(), 0u);
@@ -173,7 +173,7 @@ TEST(TestJSONLoader, SaveAndLoadDummyNet)
     net.addPlace(1.0, 1.0, 2u);
     ASSERT_EQ(net.m_places.size(), 1u);
 
-    ASSERT_STREQ(loadFromFile(net,"/tmp/foo.json").c_str(), "");
+    ASSERT_STREQ(loadFromFile(net, "/tmp/foo.json").c_str(), "");
     ASSERT_EQ(net.type(), TypeOfNet::TimedPetriNet);
     ASSERT_EQ(net.m_places.size(), 0u);
     ASSERT_EQ(net.m_transitions.size(), 0u);
@@ -184,6 +184,6 @@ TEST(TestJSONLoader, SaveAndLoadDummyNet)
 TEST(TestJSONLoader, LoadUnexistingFile)
 {
     Net net(TypeOfNet::TimedPetriNet);
-    ASSERT_STREQ(loadFromFile(net,"foooobar.json").c_str(),
+    ASSERT_STREQ(loadFromFile(net, "foooobar.json").c_str(),
     "Failed opening 'foooobar.json'. Reason was 'No such file or directory'\n");
 }

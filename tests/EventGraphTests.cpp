@@ -38,7 +38,7 @@ TEST(TestEventGraph, TestHoward2)
     Net net(TypeOfNet::TimedPetriNet);
     Net canonic(TypeOfNet::TimedPetriNet);
 
-    ASSERT_STREQ(loadFromFile(net,"data/Howard2.json").c_str(), "");
+    ASSERT_STREQ(loadFromFile(net,"../data/examples/Howard2.json").c_str(), "");
     ASSERT_EQ(net.isEmpty(), false);
     ASSERT_EQ(isEventGraph(net), true);
     ASSERT_EQ(erroneous_arcs.empty(), true);
@@ -69,7 +69,7 @@ TEST(TestEventGraph, TestToSysLinNoInputNoOutput)
     std::vector<Arc*> erroneous_arcs;
     Net net(TypeOfNet::TimedPetriNet);
 
-    ASSERT_STREQ(loadFromFile(net,"data/Howard2.json").c_str(), "");
+    ASSERT_STREQ(loadFromFile(net, "../data/examples/Howard2.json").c_str(), "");
     net.generateArcsInArcsOut(); // FIXME
 
     ASSERT_EQ(isEventGraph(net), true);
@@ -126,7 +126,7 @@ TEST(TestEventGraph, TestToSysLinInputOutput)
     std::vector<Arc*> erroneous_arcs;
     Net net(TypeOfNet::TimedPetriNet);
 
-    ASSERT_STREQ(loadFromFile(net,"data/JPQ.json").c_str(), "");
+    ASSERT_STREQ(loadFromFile(net, "../data/examples/JPQ.json").c_str(), "");
     net.generateArcsInArcsOut(); // FIXME
 
     ASSERT_EQ(isEventGraph(net), true);
@@ -181,7 +181,7 @@ TEST(TestEventGraph, TestToDaterEquation)
 {
     Net net(TypeOfNet::TimedPetriNet);
 
-    ASSERT_STREQ(loadFromFile(net,"data/EventGraph.json").c_str(), "");
+    ASSERT_STREQ(loadFromFile(net, "../data/examples/EventGraph.json").c_str(), "");
     net.generateArcsInArcsOut(); // FIXME
     ASSERT_EQ(isEventGraph(net), true);
 
@@ -231,7 +231,7 @@ TEST(TestEventGraph, TestToCounterEquation)
 {
     Net net(TypeOfNet::TimedPetriNet);
 
-    ASSERT_STREQ(loadFromFile(net,"data/EventGraph.json").c_str(), "");
+    ASSERT_STREQ(loadFromFile(net, "../data/examples/EventGraph.json").c_str(), "");
     net.generateArcsInArcsOut(); // FIXME
     ASSERT_EQ(isEventGraph(net), true);
 
