@@ -39,7 +39,7 @@ if (ENVIRONMENT_IS_NODE) {
 
 // --pre-jses are emitted after the Module integration code, so that they can
 // refer to Module (if they choose; they can also define Module)
-// include: /tmp/tmpk0iorb6o.js
+// include: /tmp/tmp30op_s76.js
 
   if (!Module.expectedDataFileDownloads) {
     Module.expectedDataFileDownloads = 0;
@@ -217,25 +217,25 @@ Module['FS_createPath']("/", "examples", true, true);
     }
 
     }
-    loadPackage({"files": [{"filename": "/data/font.ttf", "start": 0, "end": 171792}, {"filename": "/data/imgui.ini", "start": 171792, "end": 174684}, {"filename": "/examples/AppelsDurgence.json", "start": 174684, "end": 178415}, {"filename": "/examples/Coffee.json", "start": 178415, "end": 180000}, {"filename": "/examples/EventGraph.json", "start": 180000, "end": 181706}, {"filename": "/examples/FourRoadJunctions.json", "start": 181706, "end": 187103}, {"filename": "/examples/GRAFCET.json", "start": 187103, "end": 188217}, {"filename": "/examples/Howard1.json", "start": 188217, "end": 189252}, {"filename": "/examples/Howard2.json", "start": 189252, "end": 190610}, {"filename": "/examples/Infinite.json", "start": 190610, "end": 191181}, {"filename": "/examples/InputsOutputs.json", "start": 191181, "end": 192859}, {"filename": "/examples/JPQ.json", "start": 192859, "end": 194391}, {"filename": "/examples/Philosophers.json", "start": 194391, "end": 196972}, {"filename": "/examples/ProducerConsumer.json", "start": 196972, "end": 198371}, {"filename": "/examples/TrafficLights.json", "start": 198371, "end": 200396}, {"filename": "/examples/dualband.json", "start": 200396, "end": 203703}], "remote_package_size": 203703});
+    loadPackage({"files": [{"filename": "/data/font.ttf", "start": 0, "end": 171792}, {"filename": "/data/imgui.ini", "start": 171792, "end": 174684}, {"filename": "/examples/AppelsDurgence.json", "start": 174684, "end": 178744}, {"filename": "/examples/Coffee.json", "start": 178744, "end": 180329}, {"filename": "/examples/EventGraph.json", "start": 180329, "end": 182035}, {"filename": "/examples/FourRoadJunctions.json", "start": 182035, "end": 187432}, {"filename": "/examples/GRAFCET.json", "start": 187432, "end": 188546}, {"filename": "/examples/Howard1.json", "start": 188546, "end": 189581}, {"filename": "/examples/Howard2.json", "start": 189581, "end": 190939}, {"filename": "/examples/Infinite.json", "start": 190939, "end": 191510}, {"filename": "/examples/InputsOutputs.json", "start": 191510, "end": 193188}, {"filename": "/examples/JPQ.json", "start": 193188, "end": 194720}, {"filename": "/examples/Philosophers.json", "start": 194720, "end": 197301}, {"filename": "/examples/ProducerConsumer.json", "start": 197301, "end": 198700}, {"filename": "/examples/TrafficLights.json", "start": 198700, "end": 200725}, {"filename": "/examples/dualband.json", "start": 200725, "end": 204032}], "remote_package_size": 204032});
 
   })();
 
-// end include: /tmp/tmpk0iorb6o.js
-// include: /tmp/tmp_sluybz1.js
+// end include: /tmp/tmp30op_s76.js
+// include: /tmp/tmptwyt4b79.js
 
     // All the pre-js content up to here must remain later on, we need to run
     // it.
     if (Module['$ww'] || (typeof ENVIRONMENT_IS_PTHREAD != 'undefined' && ENVIRONMENT_IS_PTHREAD)) Module['preRun'] = [];
     var necessaryPreJSTasks = Module['preRun'].slice();
-  // end include: /tmp/tmp_sluybz1.js
-// include: /tmp/tmpb3ste02i.js
+  // end include: /tmp/tmptwyt4b79.js
+// include: /tmp/tmpwhqafpjn.js
 
     if (!Module['preRun']) throw 'Module.preRun should exist because file support used it; did a pre-js delete it?';
     necessaryPreJSTasks.forEach(function(task) {
       if (Module['preRun'].indexOf(task) < 0) throw 'All preRun tasks that exist before user pre-js code should remain after; did you replace Module or modify Module.preRun?';
     });
-  // end include: /tmp/tmpb3ste02i.js
+  // end include: /tmp/tmpwhqafpjn.js
 
 
 // Sometimes an existing Module object exists with properties
