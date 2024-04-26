@@ -201,15 +201,15 @@ void toSysLin(Net const& net,
         if (arc.from.type == Node::Type::Place)
             continue;
 
-        Transition& t = *reinterpret_cast<Transition*>(&(arc.from));
-        if (t.isInput())
+        Transition& from = *reinterpret_cast<Transition*>(&(arc.from));
+        if (from.isInput())
         {
             Place& p = *reinterpret_cast<Place*>(&(arc.to));
             for (auto& a: p.arcsOut)
             {
                 // System inputs: B U(n)
-                Transition& td = *reinterpret_cast<Transition*>(&(a->to));
-                B.set(indices[td.id], indices[t.id], float(arc.duration));
+                Transition& to = *reinterpret_cast<Transition*>(&(a->to));
+                B.set(indices[to.id], indices[from.id], float(arc.duration));
             }
         }
         else // States or outputs
@@ -217,23 +217,23 @@ void toSysLin(Net const& net,
             Place& p = *reinterpret_cast<Place*>(&(arc.to));
             for (auto& a: p.arcsOut)
             {
-                Transition& td = *reinterpret_cast<Transition*>(&(a->to));
-                if (td.isState())
+                Transition& to = *reinterpret_cast<Transition*>(&(a->to));
+                if (to.isState())
                 {
                     // Systems states: X(n) = D X(n) (+) A X(n-1)
                     if (p.tokens == 1u)
                     {
-                        A.set(indices[td.id], indices[t.id], arc.duration);
+                        A.set(indices[to.id], indices[from.id], arc.duration);
                     }
                     else
                     {
-                        D.set(indices[td.id], indices[t.id], arc.duration);
+                        D.set(indices[to.id], indices[from.id], arc.duration);
                     }
                 }
-                else if (td.isOutput())
+                else if (to.isOutput())
                 {
                     // System outputs: Y(n) = C X(n)
-                    C.set(indices[td.id], indices[t.id], arc.duration);
+                    C.set(indices[to.id], indices[from.id], arc.duration);
                 }
             }
         }
@@ -314,8 +314,8 @@ bool toAdjacencyMatrices(Net const& net, SparseMatrix<double>& tokens, SparseMat
 
         // Note origin and destination are inverted because we use the following
         // matrix product convension: M * x where x is a column vector.
-        durations.set(to.id, from.id, p.arcsIn[0]->duration);
-        tokens.set(to.id, from.id, float(p.tokens));
+        durations.set(from.id, to.id, p.arcsIn[0]->duration);
+        tokens.set(from.id, to.id, float(p.tokens));
     }
 
     return true;
@@ -450,8 +450,8 @@ CriticalCycleResult findCriticalCycle(Net const& net)
         Transition& from = *reinterpret_cast<Transition*>(&(p.arcsIn[0]->from));
         Transition& to = *reinterpret_cast<Transition*>(&(p.arcsOut[0]->to));
 
-        IJ.push_back(int(to.id)); // Transposed is needed
-        IJ.push_back(int(from.id));
+        IJ.push_back(int(from.id)); // Transposed is needed
+        IJ.push_back(int(to.id));
         T.push_back(p.arcsIn[0]->duration);
         N.push_back(double(p.tokens));
     }
@@ -501,7 +501,7 @@ CriticalCycleResult findCriticalCycle(Net const& net)
             Node* t1 = &p.arcsOut[0]->to;
             assert(t0->type == Node::Type::Transition);
             assert(t1->type == Node::Type::Transition);
-            if ((t0->id == from) && (t1->id == to))
+            if ((t1->id == from) && (t0->id == to))
             {
                 result.arcs.push_back(p.arcsIn[0]);
                 result.arcs.push_back(p.arcsOut[0]);

@@ -132,25 +132,24 @@ way to represent them: the counter form, and the dater form.
 
 - The counter form of the event graph in figure 2 is:
 ```
-T0(t) = min(2 + T2(t - 5))
-T1(t) = min(0 + T0(t - 5))
-T2(t) = min(0 + T1(t - 3), 0 + T3(t - 1))
-T3(t) = min(0 + T0(t - 1))
+T0(t) = min(0 + T3(t - 1), 0 + T1(t - 5))
+T1(t) = min(0 + T2(t - 3))
+T2(t) = min(2 + T0(t - 5))
+T3(t) = min(0 + T2(t - 1))
 ```
 
-where `t - 5`, `t - 3` and `t - 1` are delays implied by duration on arcs and
-`min(2 +` and `min(0 +` implied by tokens from incoming places.
+where `t - 5`, `t - 3` and `t - 1` are delays implied by duration on arcs and `min(2 +` and `min(0 +` implied by tokens from incoming places. `0 +` are just here to highlight the absence of tokens.
 
 - The dater form of the event graph in figure 2 is:
 ```
-T0(n) = max(5 + T2(n - 2))
-T1(n) = max(5 + T0(n - 0))
-T2(n) = max(3 + T1(n - 0), 1 + T3(n - 0))
-T3(n) = max(1 + T0(n - 0))
+T0(n) = max(1 + T3(n - 0), 5 + T1(n - 0))
+T1(n) = max(3 + T2(n - 0))
+T2(n) = max(5 + T0(n - 2))
+T3(n) = max(1 + T2(n - 0))
 ```
 
 where `n - 0` and `n - 2` are delays implied by tokens from incoming places and
-`max(5 +`, `max(3 + ` and `max(1 +` are implied by duration from incoming arcs.
+`max(5 +`, `max(3 + ` and `max(1 +` are implied by durations from incoming arcs.
 
 In both cases, these kinds of formulas are not easy to manipulate and the (max,+)
 algebra is here to simplify them. This algebra introduces the operator ⨁ instead
@@ -173,18 +172,18 @@ more friendly than the counter form for two reasons:
 
 - The counter form of the event graph in figure 2 is:
 ```
-T0(t) = 2 T2(t - 5)
-T1(t) = T0(t - 5)
-T2(t) = T1(t - 3) ⨁ T3(t - 1)
-T3(t) = T0(t - 1)
+T0(t) = T3(t - 1) ⨁ T1(t - 5)
+T1(t) = T2(t - 3)
+T2(t) = 2 T0(t - 5)
+T3(t) = T2(t - 1)
 ```
 
 - The dater form of the event graph in figure 2 is:
 ```
-T0(n) = 5 T2(n - 2)
-T1(n) = 5 T0(n)
-T2(n) = 3 T1(n) ⨁ 1 T3(n)
-T3(n) = 1 T0(n)
+T0(n) = 1 T3(n - 2) ⨁ 5 T1(n - 0) 
+T1(n) = 3 T0(n - 0)
+T2(n) = 5 T0(n - 2)
+T3(n) = 1 T2(n)
 ```
 
 ## Canonical Event Graph
@@ -227,39 +226,27 @@ Or using the compact syntax:
     Y(n) = C X(n)
 ```
 
-In where `A, B, C, D` are (max,+) matrices: `B` is named controlled matrix, `C`
-the observation matrix, `A` the state matrix (places with 1 token), and `D` the
-implicit matrix (places without token). `U` the column vector of system inputs
-(transitions with no predecessor), `Y` the system outputs (transitions with no
-successor), and `X` the systems states as a column vector (transitions with
-successor and predecessor), `n` in `X(n)`, `U(n)`, `Y(n)` are places with no
-token, and `n-1` in `X(n-1)` are places having a single token. Note: that is
-why, in the previous section, we said that canonical form has its input and
-output places with no token. This editor can generate these (max,+) sparse
-matrices (for Julia), for example from figure 3:
+In where `A, B, C, D` are (max,+) matrices: `B` is named controlled matrix, `C` the observation matrix, `A` the state matrix (places with 1 token), and `D` the implicit matrix (places without token). `U` the column vector of system inputs (transitions with no predecessor), `Y` the system outputs (transitions with no successor), and `X` the systems states as a column vector (transitions with successor and predecessor), `n` in `X(n)`, `U(n)`, `Y(n)` are places with no token, and `n-1` in `X(n-1)` are places having a single token. Note: that is why, in the previous section, we said that canonical form has its input and
+output places with no token. This editor can generate these (max,+) sparse matrices (for Julia), for example from figure 3:
 
 ```
-    | .  .  .  .  . |       | .  .  .  .  5 |
-    | 5  .  .  .  . |       | .  .  .  .  . |
-D = | .  3  .  1  . |,  A = | .  .  .  .  . |
-    | 1  .  .  .  . |       | .  .  .  .  . |
-    | .  .  .  .  . |       | .  .  0  .  . |
+    | .  5  .  1  . |       | .  .  .  .  . |
+    | .  .  3  .  . |       | .  .  .  .  . |
+D = | .  .  .  .  . |,  A = | .  .  .  .  5 |
+    | .  .  1  .  . |       | .  .  .  .  . |
+    | .  .  .  .  . |       | 0  .  .  .  . |
 
 ```
 
-Since this particular net has no input and outputs, there are no U, Y, B, or C
-matrices. Note: `.` is the compact form of the (max,+) number `ε` which is the
-`-∞` in classic algebra means that there is no existing arc (usually, these
-kinds of matrices are sparse since they can be huge but with few elements
-stored).  Let's suppose that matrix indices start from `0`, then `D[2,3]` holds
-the duration 1 (unit of times) and 0 tokens (the arc `T3 -> P4 -> T2`).  `A[0,4]`
-holds the duration 5 (unit of times) and 1 token (the arc `T4 -> P0 -> T0`).
+Matrix indices start from `0`. `[i,j]` (of matrices `A, B, C, D`) refers to the arc `Tj -> P -> Ti`. Note, the direction is inversed because of matrix multiplication `A x` convention.
 
-`[i,j]` (of matrices `A, B, C, D`) refers to the arc `Tj -> P -> Ti`. Note, the
-direction is inversed because of matrix multiplication `A x`.
+`D` ares for arcs transition to transition with places having no tokens. `D[2,3]` holds the duration 1 (unit of times) and means the arc `T2 -> P4 -> T3`).
 
-Let give an example with inputs and outputs. The following figure 5 show an network
-with one input and one output.
+`A` ares for arcs transition to transition with places having a single tokens. `A[4,2]` holds the duration 5 (unit of times) and 1 token (the arc `T4 -> P0 -> T2`).
+
+Since this particular net has no input and outputs, there are no U, Y, B, or C matrices. Note: `.` is the compact form of the (max,+) number `ε` which is the `-∞` in classic algebra means that there is no existing arc (usually, these kinds of matrices are sparse since they can be huge but with few elements stored).
+
+Let give an example with inputs and outputs. The following figure 5 show an network with one input and one output.
 
 ![JPQ](pics/JPQPetri.png)
 
@@ -277,12 +264,7 @@ D = | .  . |, A = | 2  4 |, B = | 1 |, C = | 3 . |
 ```
 
 
-These kinds of systems are interesting for real-time systems because they can show
-to the critical circuit of the system (in duration). The algorihm used is [Howard](http://www.cmap.polytechnique.fr/~gaubert/HOWARD2.html). This editor can show the
-a critical circuit as shown in the next figure 5 where the circuit `T0, T1, T2`
-will consume 13 units of time (5 + 5 + 3) for two tokens (in `P0`) and therefore
-6.5 units of time by token (this information is for the moment displayed on the
-console).
+These kinds of systems are interesting for real-time systems because they can show to the critical circuit of the system (in duration). The algorihm used is [Howard](http://www.cmap.polytechnique.fr/~gaubert/HOWARD2.html). This editor can show the critical circuit as shown in the next figure 5 where the circuit `T3, T0, T2, T1` will consume 13 units of time (5 + 5 + 3) for 2 tokens (in `P0`) and therefore 6.5 units of time by token (this information is for the moment displayed on the console). In this example there is a single connected components for the optimal policy.
 
 ![Circuit](pics/Circuit01.png)
 
@@ -290,23 +272,13 @@ console).
 
 ## Compact form of timed event graphs
 
-Thanks to the property of event graphs in which places have a single input arc
-and single arc, another way to represent event graphs in a more compact form, is
-to merge places with their unique incoming and unique out-coming arcs. From
-figure 2, we obtain the following figure 3, which is a more compact graph but
-equivalent. For example, the arc `5.00, P0(2)` means the place `P0` with 2 tokens
-and 2 units of time for the arc `T2 T1`.
+Thanks to the property of event graphs in which places have a single input arc and single arc, another way to represent event graphs in a more compact form, is to merge places with their unique incoming and unique out-coming arcs. From figure 2, we obtain the following figure 3, which is a more compact graph but equivalent. For example, the arc `5.00, P0(2)` means the place `P0` with 2 tokens and 2 units of time for the arc `T0 T2`.
 
 ![Graph](pics/Graph01.png)
 
 *Fig 3 - A compact form of figure 2 (made with this editor).*
 
-Since, graphs can be represented by adjacency matrices, and since, arcs hold two
-information (duration and tokens), event graphs can be represented by two
-matrices (generally sparse): one matrix for duration `N` and the second matrix
-for tokens `T`. And since, event graphs have good properties with the (max,+)
-algebra, this editor can generate this kind of matrix directly in this algebra
-which can be used by the [MaxPlus](https://github.com/Lecrapouille/MaxPlus.jl)
+Since, graphs can be represented by adjacency matrices, and since, arcs hold two information (duration and tokens), event graphs can be represented by two matrices (generally sparse): one matrix for duration `N` and the second matrix for tokens `T`. And since, event graphs have good properties with the (max,+) algebra, this editor can generate this kind of matrix directly in this algebra which can be used by the [MaxPlus](https://github.com/Lecrapouille/MaxPlus.jl)
 Julia package.
 
 ```
@@ -316,10 +288,6 @@ T = | .  0  .  0 |,  N = | .  3  .  1 |
     | 0  .  .  . |       | 1  .  .  . |
 ```
 
-Let suppose that matrix indices start from `0`, then `T[0,2]` holds the value 2
-token and `N[0,2]` holds the duration 5. The `[0,2]` means the arc `T2 -> T0` in
-the compact form (or arcs `T2 -> P0` and `P0 -> T0` in the classic Petri form).
-Note that origin and destination are inversed, this is because the matrix
-convention is generally the following: `M . x` with `x` a column vector. This
-editor can generate some Julia script. Note that `ε` in (max,+) algebra means
-that there is no existing arc.
+Let suppose that matrix indices start from `0`, then `T[0,2]` holds 2 tokens and `N[0,2]` holds the duration 5. The `[0,2]` means the arc `T0 -> T2` in the compact form (or arcs `T0 -> P0` and `P0 -> T2` in the classic Petri form).
+
+Note that origin and destination are inversed, this is because the matrix convention is generally the following: `M . x` with `x` a column vector. This editor can generate some Julia script. Note that `ε` in (max,+) algebra means that there is no existing arc.
