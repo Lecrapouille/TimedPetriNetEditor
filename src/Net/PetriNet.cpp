@@ -670,10 +670,8 @@ void Net::removeNode(Node& node)
 }
 
 //------------------------------------------------------------------------------
-bool Net::resetReceptivies()
+void Net::resetReceptivies()
 {
-    bool res = true;
-
     // For PetriNet set receptivities to false since we want the
     // user to click on desired transitions.
     if (m_type == TypeOfNet::PetriNet)
@@ -693,8 +691,6 @@ bool Net::resetReceptivies()
             transition.receptivity = true;
         }
     }
-
-    return res;
 }
 
 //------------------------------------------------------------------------------

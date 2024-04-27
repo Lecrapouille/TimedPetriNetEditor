@@ -139,12 +139,7 @@ std::string importFromJSON(Net& net, std::string const& filename)
         }
     }
 
-    if (!net.resetReceptivies())
-    {
-        error << "Invalid syntax in receptivities";
-        return error.str();
-    }
-
+    net.resetReceptivies();
     return {};
 }
 
