@@ -748,18 +748,11 @@ bool convertTo(Net& net, TypeOfNet const type, std::string& error, std::vector<A
         if ((!net.isEmpty()) && (!isEventGraph(net, error, erroneous_arcs)))
             return false;
     }
-    else if (type == TypeOfNet::GRAFCET)
-    {
-        // For GRAFCET we check validity of the syntax of transitivities
-        if (!net.resetReceptivies())
-        {
-            error = "Invalid syntax in receptivities";
-            return false;
-        }
-    }
+
+    applyNewNetSettings(type);
 
     net.m_type = type;
-    applyNewNetSettings(type);
+    net.resetReceptivies();
 
     if (type == TypeOfNet::GRAFCET)
     {
