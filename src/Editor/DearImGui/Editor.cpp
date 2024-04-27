@@ -233,7 +233,7 @@ void Editor::menu()
                 ImGui::RadioButton("Timed Petri net", &current_type, 1);
                 ImGui::RadioButton("Timed event graph", &current_type, 2);
                 ImGui::RadioButton("GRAFCET", &current_type, 3);
-                switchOfNet(TypeOfNet(current_type));
+                switchOfNet(TypeOfNet(current_type)); // FIXME pour Timed event graph => afficher les arcs
                 ImGui::EndMenu();
             }
 
@@ -1295,17 +1295,28 @@ void Editor::PetriView::handleAddNode(ImGuiMouseButton button)
         // present.
         if (m_editor.getNode(m_mouse.position) == nullptr)
         {
+            float const x = m_mouse.position.x;
+            float const y = m_mouse.position.y;
             auto action = std::make_unique<NetModifaction>(m_editor);
             action->before(m_editor.m_net);
-            if (button == MOUSE_BOUTON_ADD_PLACE)
+            if (m_editor.m_net.type() == TypeOfNet::TimedEventGraph)
             {
-                m_editor.m_net.addPlace(m_mouse.position.x,
-                                        m_mouse.position.y);
+                // In TimedEventGraph mode, we prefer avoiding creating
+                // places because they are not displayed. So only create
+                // transitions and arcs.
+                m_editor.m_net.addTransition(x, y);
             }
-            else if (button == MOUSE_BOUTON_ADD_TRANSITION)
+            else
             {
-                m_editor.m_net.addTransition(m_mouse.position.x,
-                                             m_mouse.position.y);
+                // In other mode, Petri nets have two types of nodes.
+                if (button == MOUSE_BOUTON_ADD_PLACE)
+                {
+                    m_editor.m_net.addPlace(x, y);
+                }
+                else if (button == MOUSE_BOUTON_ADD_TRANSITION)
+                {
+                    m_editor.m_net.addTransition(x, y);
+                }
             }
             action->after(m_editor.m_net);
             m_editor.m_history.add(std::move(action));
@@ -1341,22 +1352,40 @@ void Editor::PetriView::handleArcDestination()
     m_mouse.to = m_editor.getNode(m_mouse.position);
     m_mouse.handling_arc = false;
 
-    // Arc to itself (or both nodes nullptr)
-    if (m_mouse.from == m_mouse.to)
-        return ;
-
     auto action = std::make_unique<NetModifaction>(m_editor);
     action->before(m_editor.m_net);
 
-    if (m_mouse.from == nullptr)    
+    if (m_editor.m_net.type() == TypeOfNet::TimedEventGraph)
     {
-        assert(m_mouse.to != nullptr);
-        m_mouse.from = &m_editor.m_net.addOppositeNode(m_mouse.to->type, m_mouse.clicked_at.x, m_mouse.clicked_at.y);
+        // In TimedEventGraph mode we only create transitions since places are
+        // implicit and therefore not displayed.
+        if (m_mouse.from == nullptr)
+        {
+            assert(m_mouse.to != nullptr);
+            m_mouse.from = &m_editor.m_net.addTransition(m_mouse.clicked_at.x, m_mouse.clicked_at.y);
+        }
+        if (m_mouse.to == nullptr)
+        {
+            assert(m_mouse.from != nullptr);
+            m_mouse.to = &m_editor.m_net.addTransition(m_mouse.position.x, m_mouse.position.y);
+        }
     }
-    else if (m_mouse.to == nullptr)
+    else
     {
-        assert(m_mouse.from != nullptr);
-        m_mouse.to = &m_editor.m_net.addOppositeNode(m_mouse.from->type, m_mouse.position.x, m_mouse.position.y); 
+        // Arc to itself (or both nodes nullptr)
+        if ((m_mouse.from == nullptr) && (m_mouse.to == nullptr))
+            return ;
+
+        else if (m_mouse.from == nullptr)
+        {
+            assert(m_mouse.to != nullptr);
+            m_mouse.from = &m_editor.m_net.addOppositeNode(m_mouse.to->type, m_mouse.clicked_at.x, m_mouse.clicked_at.y);
+        }
+        else if (m_mouse.to == nullptr)
+        {
+            assert(m_mouse.from != nullptr);
+            m_mouse.to = &m_editor.m_net.addOppositeNode(m_mouse.from->type, m_mouse.position.x, m_mouse.position.y);
+        }
     }
 
     assert(m_mouse.from != nullptr);
@@ -1469,6 +1498,7 @@ void Editor::PetriView::onHandleInput()
                 auto action = std::make_unique<NetModifaction>(m_editor);
                 action->before(m_editor.m_net);
                 m_editor.m_net.removeNode(*node);
+                // FIXME: TimedEventGraph: supprimer aussi les places
                 action->after(m_editor.m_net);
                 m_editor.m_history.add(std::move(action));
             }
