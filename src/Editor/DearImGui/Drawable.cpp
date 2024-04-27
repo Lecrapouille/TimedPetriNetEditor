@@ -180,19 +180,19 @@ void drawPlace(ImDrawList* draw_list, Place const& place, TypeOfNet const type, 
     //const uint8_t alpha = 255; // TODO m_fading[place.key]
     const ImVec2 p = origin + ImVec2(place.x, place.y);
 
-    if (type != TypeOfNet::GRAFCET)
+    if (type == TypeOfNet::GRAFCET)
     {
-        // Draw the place as circle
-        draw_list->AddCircleFilled(p, PLACE_RADIUS, FILL_COLOR(alpha), 64);
-        draw_list->AddCircle(p, PLACE_RADIUS, OUTLINE_COLOR, 64, 2.5f);
-    }
-    else
-    {
-        // Draw the transition
+        // Draw the place as square
         const ImVec2 pmin(p.x - TRANS_WIDTH / 2.0f, p.y - TRANS_WIDTH / 2.0f);
         const ImVec2 pmax(p.x + TRANS_WIDTH / 2.0f, p.y + TRANS_WIDTH / 2.0f);
         draw_list->AddRectFilled(pmin, pmax, FILL_COLOR(alpha));
         draw_list->AddRect(pmin, pmax, OUTLINE_COLOR, 0.0f, ImDrawFlags_None, 2.5f);
+    }
+    else
+    {
+        // Draw the place as circle
+        draw_list->AddCircleFilled(p, PLACE_RADIUS, FILL_COLOR(alpha), 64);
+        draw_list->AddCircle(p, PLACE_RADIUS, OUTLINE_COLOR, 64, 2.5f);
     }
 
     // Draw the caption
