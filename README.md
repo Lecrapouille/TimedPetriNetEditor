@@ -82,7 +82,7 @@ counter (generic function with 1 method)
 julia> pn = petri_net()
 PetriNet(0)
 
-julia> editor!(pn)
+julia> petri_editor!(pn)
 ```
 
 If you do not desire to install TimedPetriNetEditor on your operating system,
@@ -91,4 +91,4 @@ you will have to adapt the `DEFINES` in Makefile to indicate the path of the
 Julia file to indicate the correct path of the shared library
 `libtimedpetrineteditor.so`.
 
-You can read this [document](doc/julia.md) concerning the API for Julia.
+You can read this [cheatsheet](doc/julia.md) concerning the API for Julia.

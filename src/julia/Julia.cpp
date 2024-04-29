@@ -19,13 +19,19 @@
 //=============================================================================
 
 #include "Julia.hpp"
+#include "TimedPetriNetEditor/PetriNet.hpp"
+#include "TimedPetriNetEditor/Algorithms.hpp"
+#include "TimedPetriNetEditor/SparseMatrix.hpp"
+#include "TimedPetriNetEditor/TropicalAlgebra.hpp"
+#include "Editor.hpp" // Selected by Makefile
 #include <iostream>
+#include <deque>
 #include <memory>
 
 //------------------------------------------------------------------------------
 //! \brief List of Petri nets.
 //------------------------------------------------------------------------------
-static std::deque<std::unique_ptr<PetriNet>> g_petri_nets;
+static std::deque<std::unique_ptr<tpne::Net>> g_petri_nets;
 
 //------------------------------------------------------------------------------
 //! \brief Check the validity of the Petri net handle (pn) and return an
@@ -43,8 +49,7 @@ static std::deque<std::unique_ptr<PetriNet>> g_petri_nets;
 //! erroneous arcs and return an error code.
 //------------------------------------------------------------------------------
 #define CHECK_IS_EVENT_GRAPH(pn, err_code)                                     \
-    std::vector<Arc*> erroneous_arcs;                                          \
-    if (!g_petri_nets[size_t(pn)]->isEventGraph(erroneous_arcs))               \
+    if (!isEventGraph(*g_petri_nets[size_t(pn)]))                              \
     {                                                                          \
         return err_code;                                                       \
     }
@@ -52,7 +57,7 @@ static std::deque<std::unique_ptr<PetriNet>> g_petri_nets;
 //------------------------------------------------------------------------------
 int64_t petri_create()
 {
-    g_petri_nets.push_back(std::make_unique<PetriNet>(PetriNet::Type::TimedPetri));
+    g_petri_nets.push_back(std::make_unique<tpne::Net>(tpne::TypeOfNet::TimedPetriNet));
     return int64_t(g_petri_nets.size() - 1u);
 }
 
@@ -61,7 +66,7 @@ int64_t petri_copy(int64_t const pn)
 {
     CHECK_VALID_PETRI_HANDLE(pn, -1);
 
-    g_petri_nets.push_back(std::make_unique<PetriNet>(*g_petri_nets[size_t(pn)]));
+    g_petri_nets.push_back(std::make_unique<tpne::Net>(*g_petri_nets[size_t(pn)]));
     return int64_t(g_petri_nets.size() - 1u);
 }
 
@@ -94,12 +99,12 @@ bool petri_editor(int64_t const pn)
 {
     CHECK_VALID_PETRI_HANDLE(pn, false);
 
-    Application application(800, 600, "Timed Petri Net Editor");
-    PetriEditor editor(application, *g_petri_nets[size_t(pn)]);
+    tpne::Editor editor(1024, 768, "Petri Net Editor");
 
     try
     {
-        application.loop(editor);
+        editor.run(*g_petri_nets[size_t(pn)]);
+        *g_petri_nets[size_t(pn)] = editor.net();
     }
     catch (std::string const& msg)
     {
@@ -123,7 +128,7 @@ bool petri_get_places(int64_t const pn, CPlace_t* places)
 {
     CHECK_VALID_PETRI_HANDLE(pn, false);
 
-    PetriNet::Places const& p = g_petri_nets[size_t(pn)]->places();
+    tpne::Net::Places const& p = g_petri_nets[size_t(pn)]->places();
     size_t i = 0;
     for (auto const& it: p)
     {
@@ -141,7 +146,7 @@ bool petri_get_place(int64_t const pn, int64_t const i, CPlace_t* place)
 {
     CHECK_VALID_PETRI_HANDLE(pn, false);
 
-    PetriNet::Places const& p = g_petri_nets[size_t(pn)]->places();
+    tpne::Net::Places const& p = g_petri_nets[size_t(pn)]->places();
     if ((i < 0) || (size_t(i) >= p.size()))
     {
         std::cerr << "Unkown Place " << i << std::endl;
@@ -161,7 +166,7 @@ int64_t petri_add_place(int64_t const pn, double const x, double const y,
 {
     CHECK_VALID_PETRI_HANDLE(pn, -1);
 
-    Place& p = g_petri_nets[size_t(pn)]->addPlace(float(x), float(y),
+    tpne::Place& p = g_petri_nets[size_t(pn)]->addPlace(float(x), float(y),
                                                       size_t(tokens));
     return int64_t(p.id);
 }
@@ -171,7 +176,7 @@ int64_t petri_add_transition(int64_t const pn, double const x, double const y)
 {
     CHECK_VALID_PETRI_HANDLE(pn, -1);
 
-    Transition& t = g_petri_nets[size_t(pn)]->addTransition(float(x), float(y));
+    tpne::Transition& t = g_petri_nets[size_t(pn)]->addTransition(float(x), float(y));
     return int64_t(t.id);
 }
 
@@ -184,14 +189,14 @@ int64_t petri_count_transitions(int64_t const pn)
 }
 
 //------------------------------------------------------------------------------
-// FIXME: to be replaced by PetriNet::setMarks()
+// FIXME: to be replaced by tpne::Net::setMarks()
 bool petri_set_marks(int64_t const pn, int64_t const* tokens)
 {
     CHECK_VALID_PETRI_HANDLE(pn, false);
     // FIXME unknown array size
     // tokens.size() == places.size()
 
-    PetriNet::Places& places = g_petri_nets[size_t(pn)]->places();
+    tpne::Net::Places& places = g_petri_nets[size_t(pn)]->places();
     size_t i = places.size();
     while (i--)
     {
@@ -205,7 +210,7 @@ bool petri_get_marks(int64_t const pn, int64_t* tokens)
 {
     CHECK_VALID_PETRI_HANDLE(pn, false);
 
-    PetriNet::Places const& places = g_petri_nets[size_t(pn)]->places();
+    tpne::Net::Places const& places = g_petri_nets[size_t(pn)]->places();
     size_t i = places.size();
     while (i--)
     {
@@ -219,7 +224,7 @@ bool petri_get_transitions(int64_t const pn, CTransition_t* transitions)
 {
     CHECK_VALID_PETRI_HANDLE(pn, false);
 
-    PetriNet::Transitions const& t = g_petri_nets[size_t(pn)]->transitions();
+    tpne::Net::Transitions const& t = g_petri_nets[size_t(pn)]->transitions();
     size_t i = 0;
     for (auto const& it: t)
     {
@@ -236,7 +241,7 @@ bool petri_get_transition(int64_t const pn, int64_t const i, CTransition_t* tran
 {
     CHECK_VALID_PETRI_HANDLE(pn, false);
 
-    PetriNet::Transitions const& t = g_petri_nets[size_t(pn)]->transitions();
+    tpne::Net::Transitions const& t = g_petri_nets[size_t(pn)]->transitions();
     if ((i < 0) || (size_t(i) >= t.size()))
     {
         std::cerr << "Unkown Transition " << i << std::endl;
@@ -257,8 +262,8 @@ bool petri_remove_place(int64_t const pn, int64_t const id)
     if ((id < 0) || (size_t(id) >= g_petri_nets[size_t(pn)]->places().size()))
         return false;
 
-    std::string strid = Place::to_str(size_t(id));
-    Node* node = g_petri_nets[size_t(pn)]->findNode(strid);
+    std::string strid = tpne::Place::to_str(size_t(id));
+    tpne::Node* node = g_petri_nets[size_t(pn)]->findNode(strid);
     if (node == nullptr)
         return false;
 
@@ -274,8 +279,8 @@ bool petri_remove_transition(int64_t const pn, int64_t const id)
     if ((id < 0) || (size_t(id) >= g_petri_nets[size_t(pn)]->transitions().size()))
         return false;
 
-    std::string strid = Transition::to_str(size_t(id));
-    Node* node = g_petri_nets[size_t(pn)]->findNode(strid);
+    std::string strid = tpne::Transition::to_str(size_t(id));
+    tpne::Node* node = g_petri_nets[size_t(pn)]->findNode(strid);
     if (node == nullptr)
         return false;
 
@@ -289,11 +294,11 @@ int64_t petri_add_arc(int64_t const pn,const char* from, const char* to,
 {
     CHECK_VALID_PETRI_HANDLE(pn, -1);
 
-    Node* node_from = g_petri_nets[size_t(pn)]->findNode(from);
+    tpne::Node* node_from = g_petri_nets[size_t(pn)]->findNode(from);
     if (node_from == nullptr)
         return -1;
 
-    Node* node_to = g_petri_nets[size_t(pn)]->findNode(to);
+    tpne::Node* node_to = g_petri_nets[size_t(pn)]->findNode(to);
     if (node_to == nullptr)
         return -1;
 
@@ -309,11 +314,11 @@ bool petri_remove_arc(int64_t const pn, const char* from, const char* to)
 {
     CHECK_VALID_PETRI_HANDLE(pn, false);
 
-    Node* node_from = g_petri_nets[size_t(pn)]->findNode(from);
+    tpne::Node* node_from = g_petri_nets[size_t(pn)]->findNode(from);
     if (node_from == nullptr)
         return false;
 
-    Node* node_to = g_petri_nets[size_t(pn)]->findNode(to);
+    tpne::Node* node_to = g_petri_nets[size_t(pn)]->findNode(to);
     if (node_to == nullptr)
         return false;
 
@@ -349,7 +354,12 @@ bool petri_save(int64_t const pn, const char* filepath)
 {
     CHECK_VALID_PETRI_HANDLE(pn, false);
 
-    return g_petri_nets[size_t(pn)]->save(filepath);
+    std::string err = tpne::saveToFile(*g_petri_nets[size_t(pn)], filepath);
+    if (err.empty())
+        return true;
+    std::cerr << "Failed saving net to " << filepath << "Reason is '"
+        << err << "'" << std::endl;
+    return false;
 }
 
 //------------------------------------------------------------------------------
@@ -357,7 +367,12 @@ bool petri_load(int64_t const pn, const char* filepath)
 {
     CHECK_VALID_PETRI_HANDLE(pn, false);
 
-    return g_petri_nets[size_t(pn)]->load(filepath);
+    std::string err = tpne::loadFromFile(*g_petri_nets[size_t(pn)], filepath);
+    if (err.empty())
+        return true;
+    std::cerr << "Failed loading net from " << filepath << "Reason is '"
+        << err << "'" << std::endl;
+    return false;
 }
 
 //------------------------------------------------------------------------------
@@ -370,8 +385,11 @@ bool petri_is_event_graph(int64_t const pn, bool* res)
         return false;
     }
 
-    std::vector<Arc*> erroneous_arcs;
-    *res = g_petri_nets[size_t(pn)]->isEventGraph(erroneous_arcs);
+    std::vector<tpne::Arc*> erroneous_arcs;
+    std::string error;
+    *res = isEventGraph(*g_petri_nets[size_t(pn)], error, erroneous_arcs);
+    if (!error.empty())
+        std::cerr << error << std::endl;
     return true;
 }
 
@@ -382,26 +400,27 @@ int64_t petri_to_canonical(int64_t const pn)
     CHECK_IS_EVENT_GRAPH(pn, -1);
 
     int64_t handle = petri_create();
-    g_petri_nets[size_t(pn)]->toCanonicalForm(*g_petri_nets[size_t(handle)]);
+    toCanonicalForm(*g_petri_nets[size_t(pn)], *g_petri_nets[size_t(handle)]);
     return handle;
 }
 
 //------------------------------------------------------------------------------
-static void reference(SparseMatrix& org, CSparseMatrix_t* dst)
+// Ok! Ok! Ugly but works since org are static variables
+static void convert(tpne::SparseMatrix<tpne::MaxPlus>& org, CSparseMatrix_t* dst)
 {
     dst->i = org.i.data();
     dst->j = org.j.data();
     dst->d = org.d.data();
     dst->size = org.d.size();
-    dst->N = org.N;
-    dst->M = org.M;
+    dst->N = org.M;
+    dst->M = org.N;
 }
 
 //------------------------------------------------------------------------------
 bool petri_to_adjacency_matrices(int64_t const pn, CSparseMatrix_t* pN, CSparseMatrix_t* pT)
 {
-    static SparseMatrix N;
-    static SparseMatrix T;
+    static tpne::SparseMatrix<tpne::MaxPlus> N;
+    static tpne::SparseMatrix<tpne::MaxPlus> T;
 
     if ((pN == nullptr) || (pT == nullptr))
     {
@@ -411,9 +430,9 @@ bool petri_to_adjacency_matrices(int64_t const pn, CSparseMatrix_t* pN, CSparseM
     CHECK_VALID_PETRI_HANDLE(pn, false);
     CHECK_IS_EVENT_GRAPH(pn, false);
 
-    g_petri_nets[size_t(pn)]->toAdjacencyMatrices(N, T);
-    reference(N, pN);
-    reference(T, pT);
+    if (tpne::toAdjacencyMatrices(*g_petri_nets[size_t(pn)], N, T))
+    convert(N, pN);
+    convert(T, pT);
     return true;
 }
 
@@ -421,31 +440,32 @@ bool petri_to_adjacency_matrices(int64_t const pn, CSparseMatrix_t* pN, CSparseM
 bool petri_to_sys_lin(int64_t const pn, CSparseMatrix_t* pD, CSparseMatrix_t* pA,
                       CSparseMatrix_t* pB, CSparseMatrix_t* pC)
 {
-    static SparseMatrix D; static SparseMatrix A;
-    static SparseMatrix B; static SparseMatrix C;
+    static tpne::SparseMatrix<tpne::MaxPlus> D;
+    static tpne::SparseMatrix<tpne::MaxPlus> A;
+    static tpne::SparseMatrix<tpne::MaxPlus> B;
+    static tpne::SparseMatrix<tpne::MaxPlus> C;
 
     CHECK_VALID_PETRI_HANDLE(pn, false);
     CHECK_IS_EVENT_GRAPH(pn, false);
 
-    g_petri_nets[size_t(pn)]->toSysLin(D, A, B, C);
-    reference(D, pD);
-    reference(A, pA);
-    reference(B, pB);
-    reference(C, pC);
+    D.clear(); A.clear();
+    tpne::toSysLin(*g_petri_nets[size_t(pn)], D, A, B, C);
+    convert(D, pD);
+    convert(A, pA);
+    convert(B, pB);
+    convert(C, pC);
 
     return true;
 }
 
 //------------------------------------------------------------------------------
-bool petri_dater_equation(int64_t const pn, bool use_caption)
+bool petri_dater_equation(int64_t const pn, bool use_caption, bool maxplus_notation)
 {
     CHECK_VALID_PETRI_HANDLE(pn, false);
     CHECK_IS_EVENT_GRAPH(pn, false);
 
     std::cout
-        << g_petri_nets[size_t(pn)]->showDaterEquation("", use_caption, false).str()
-        << std::endl
-        << g_petri_nets[size_t(pn)]->showDaterEquation("", use_caption, true).str()
+        << tpne::showDaterEquation(*g_petri_nets[size_t(pn)], "", use_caption, maxplus_notation).str()
         << std::endl;
     return true;
 }
@@ -457,9 +477,7 @@ bool petri_counter_equation(int64_t const pn, bool use_caption, bool minplus_not
     CHECK_IS_EVENT_GRAPH(pn, false);
 
     std::cout
-        << g_petri_nets[size_t(pn)]->showCounterEquation("", use_caption, false).str()
-        << std::endl
-        << g_petri_nets[size_t(pn)]->showCounterEquation("", use_caption, true).str()
+        << tpne::showCounterEquation(*g_petri_nets[size_t(pn)], "", use_caption, minplus_notation).str()
         << std::endl;
     return true;
 }

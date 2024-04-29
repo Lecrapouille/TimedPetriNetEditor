@@ -50,6 +50,8 @@ public:
     //! string if you do not want to load a Petri net file.
     //-------------------------------------------------------------------------
     virtual void run(std::string const& petri_file) override;
+    virtual void run(Net const& net) override;
+    inline Net& net() { return m_net; }
 
 private: // Inheritance from Application class
 

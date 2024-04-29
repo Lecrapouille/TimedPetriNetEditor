@@ -1,47 +1,3 @@
-# Interface with Julia
-
-*(The Julia API is still in gestation, API for arcs is missing).*
-
-For [Julia](https://github.com/JuliaLang/julia) developers, I made an API, to
-allows editing Petri nets either from function or allow to launch the graphical
-editor.
-
-To achieve it, first [MaxPlus](https://github.com/Lecrapouille/MaxPlus.jl) Julia
-package (for the moment you need the `dev` branch still in gestation).
-
-```julia
-import Pkg; Pkg.add("MaxPlus")
-```
-
-Then install the TimedPetriNetEditor with `make install` (need sudo rights)
-because the path of the shared library `libtimedpetrineteditor.so` has to be
-known to be used by Julia.
-
-The simplest way is to call the editor:
-
-```julia
-using SparseArrays, MaxPlus
-
-include("TimedPetriNetEditor.jl")
-
-pn0= load_petri("../../data/examples/JPQ.json")
-@assert pn0.handle == 0
-
-# Launch the GUI editor to edit the net graphically. Once pressed ESCAPE key,
-# the editor will quit and modifications applied on the net.
-petri_editor!(pn0)
-@assert ans == true
-
-# Safer version of editor!() because the Petri net is not modified but a new one
-# is created based on the original net.
-pn1 = petri_editor(pn0)
-@assert pn1.handle == 1
-```
-
-From your Julia REPL (call Julia at the root of the TimedPetriNetEditor
-repository), you can type this kind of code (consider this code as a cheatsheet):
-
-```julia
 using Suppressor, SparseArrays, MaxPlus
 
 # Note: soon will included in MaxPlus.jl
@@ -52,7 +8,7 @@ pn = petri_net()
 @assert pn.handle == 0
 
 # Or create new Petri net by loading it.
-pn1 = petri_net("data/examples/TrafficLights.json")
+pn1 = petri_net("../../data/examples/TrafficLights.json")
 @assert pn1.handle == 1
 
 # Duplicate the net
@@ -161,7 +117,7 @@ is_empty(pn3)
 @assert ans == true
 
 # Or create one
-pn4 = load_petri("data/examples/Howard2.json")
+pn4 = load_petri("../../data/examples/Howard2.json")
 @assert pn4.handle == 5 # FIXME should be ideally 4
 
 # Number of nodes and arcs
@@ -228,7 +184,7 @@ tokens!(pn4, [0; 1; 2; 3; 4])
 tokens(pn4)
 @assert ans == [0; 1; 2; 3; 4]
 
-pn6 = load_petri("data/examples/JPQ.json")
+pn6 = load_petri("../../data/examples/JPQ.json")
 @assert pn6.handle == 7
 is_event_graph(pn6)
 @assert ans == true
@@ -239,4 +195,15 @@ S = to_syslin(pn6)
 @assert full(S.B) == reshape([mp0; 1], 2, 1)
 @assert full(S.C) == reshape([MP(3) mp0], 1, 2)
 @assert full(S.x0) == reshape([mp0; mp0], 2, 1)
-```
+
+### UNCOMMENT for manual tests
+
+# Launch the GUI editor to edit the net graphically. Once pressed ESCAPE key,
+# the editor will quit and modifications applied on the net.
+#petri_editor!(pn6)
+#@assert ans == true
+
+# Safer version of editor!() because the Petri net is not modified but a new one
+# is created based on the original net.
+#pn3 = petri_editor(pn)
+#@assert pn3.handle == 3

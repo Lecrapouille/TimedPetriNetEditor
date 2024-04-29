@@ -78,6 +78,15 @@ void Editor::setSavePath(std::string const& filepath)
 }
 
 //------------------------------------------------------------------------------
+void Editor::run(Net const& net)
+{
+    m_net = net;
+
+    // Start the infinite loop
+    Application::run();
+}
+
+//------------------------------------------------------------------------------
 void Editor::run(std::string const& filepath)
 {
     // Load Petri net file if passed with command line

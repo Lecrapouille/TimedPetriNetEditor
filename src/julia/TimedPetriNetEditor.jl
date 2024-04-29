@@ -25,15 +25,14 @@ using MaxPlus, SparseArrays
 
 #export
 #    PetriNet, Place, Transition, Arc,
-#    petri_net, is_empty, clear!, editor!, editor, load!, save,
-#    add_place!, remove_place!, places, place, count_places,
+#    petri_net, is_empty, clear!, petri_editor!, petri_editor, load_petri,
+#    load_petri!, save_petri, add_place!, remove_place!, places, place, count_places,
 #    add_transition!, remove_transition!, transitions, count_transitions,
-#    transition, tokens, tokens!,
-#    is_event_graph, canonic
+#    transition, tokens, tokens!, is_event_graph, canonic
 
 # https://github.com/Lecrapouille/TimedPetriNetEditor
 # make && make install
-const libtpne = "/usr/lib/libtimedpetrineteditor.so"
+const libtpne = "/usr/local/lib/libtimedpetrinetjulia.so"
 
 """
     PetriNet
@@ -125,7 +124,7 @@ PetriNet
 """
 function petri_net(file::String)
     pn = petri_net()
-    load!(pn, file)
+    load_petri!(pn, file)
     return pn
 end
 
@@ -186,7 +185,7 @@ function clear!(pn::PetriNet)
 end
 
 """
-    editor
+petri_editor
 
 Launch the GUI editor to edit the net graphically. Once presed ESCAPE key,
 the editor will quit and modifications applied on the net. No cancel action
@@ -198,7 +197,8 @@ Throw an exception if the Petri net handle is invalid.
 julia> pn = petri_net()
 PetriNet(0)
 
-julia> editor!(pn)
+# Add manually 2 node i.e. then close the editor
+julia> petri_editor!(pn)
 true
 
 julia> places(pn)
@@ -207,19 +207,19 @@ julia> places(pn)
  Place(607.0, 266.0, 0)
 ```
 """
-function editor!(pn::PetriNet)
+function petri_editor!(pn::PetriNet)
     ccall((:petri_editor, libtpne), Bool, (Clonglong,), pn.handle) || throw_error()
 end
 
 """
-    editor
+petri_editor
 
 Duplicate the Petri net and launch the GUI editor to edit graphically the duplicated net.
 Once presed ESCAPE key, the editor will quit and modifications applied on the duplicated net
 while the original net is not modified.
 Throw an exception if the Petri net handle is invalid.
 """
-function editor(pn::PetriNet)
+function petri_editor(pn::PetriNet)
     pn1 = petri_net(pn)
     ccall((:petri_editor, libtpne), Bool, (Clonglong,), pn1.handle) || throw_error()
     return pn1
@@ -680,7 +680,7 @@ end
 # TODO arc
 
 """
-    save
+save_petri
 
 Save the Petri net to a json file.
 Throw an exception if the Petri net handle is invalid or a failure occured during
@@ -691,17 +691,17 @@ the saving.
 julia> pn = petri_net()
 PetriNet(0)
 
-julia> save(pn, "/home/qq/petri.json")
+julia> save_petri(pn, "/home/qq/petri.json")
 true
 ```
 """
-function save(pn::PetriNet, file::String)
+function save_petri(pn::PetriNet, file::String)
     ccall((:petri_save, libtpne), Bool, (Clonglong, Cstring), pn.handle, file) ||
     error("Invalid Petri net handle or failed saving in file")
 end
 
 """
-    load
+    load_petri
 
 Load the Petri net from a json file.
 Throw an exception if the Petri net handle is invalid or a failure occured during
@@ -712,17 +712,17 @@ the loading.
 julia> pn = petri_net()
 PetriNet(0)
 
-julia> load!(pn, "/home/qq/petri.json")
+julia> load_petri!(pn, "/home/qq/petri.json")
 true
 ```
 """
-function load!(pn::PetriNet, file::String)
+function load_petri!(pn::PetriNet, file::String)
     ccall((:petri_load, libtpne), Bool, (Clonglong, Cstring), pn.handle, file) ||
     error("Invalid Petri net handle or failed loading petri net from file")
 end
 
 """
-    load
+load_petri
 
 Load the Petri net from a json file.
 Throw an exception if the Petri net handle is invalid or a failure occured during
@@ -730,11 +730,11 @@ the loading.
 
 # Examples
 ```julia-repl
-julia> pn = load("/home/qq/petri.json")
+julia> pn = load_petri("/home/qq/petri.json")
 PetriNet(0)
 ```
 """
-function load(file::String)
+function load_petri(file::String)
     pn = petri_net()
     ccall((:petri_load, libtpne), Bool, (Clonglong, Cstring), pn.handle, file) ||
     error("Failed loading Petri net from file")
@@ -854,12 +854,12 @@ function to_graph(pn::PetriNet)
     ts = T[].size
     return (
         sparse(from_c_arr(N[].i, ns), from_c_arr(N[].j, ns), from_c_arr(N[].d, ns), N[].N, N[].M),
-        sparse(from_c_arr(T[].i, ts), from_c_arr(N[].j, ts), from_c_arr(T[].d, ts), N[].N, N[].M)
+        sparse(from_c_arr(T[].i, ts), from_c_arr(T[].j, ts), from_c_arr(T[].d, ts), T[].N, T[].M)
    )
 end
 
 """
-    to_graph
+    to_syslin
 
 If and only if the Petri net is an event graph then generate the implicit dynamic linear Max-Plus system.
 State space representation:
@@ -876,20 +876,27 @@ function to_syslin(pn::PetriNet)
            pn.handle, D, A, B, C) || error("Invalid Petri net handle")
 
     as = A[].size; bs = B[].size; cs = C[].size; ds = D[].size;
-    MPSysLin(
-        sparse(from_c_arr(A[].i, as), from_c_arr(A[].j, as), from_c_arr(A[].d, as), A[].N, A[].M),
-        sparse(from_c_arr(B[].i, bs), from_c_arr(B[].j, bs), from_c_arr(B[].d, bs), B[].N, B[].M),
-        sparse(from_c_arr(C[].i, cs), from_c_arr(C[].j, cs), from_c_arr(C[].d, cs), C[].N, C[].M),
-        sparse(from_c_arr(D[].i, ds), from_c_arr(D[].j, ds), from_c_arr(D[].d, ds), D[].N, D[].M)
-    )
+    SD = sparse(from_c_arr(D[].i, ds), from_c_arr(D[].j, ds), from_c_arr(D[].d, ds), D[].N, D[].M)
+    SA = sparse(from_c_arr(A[].i, as), from_c_arr(A[].j, as), from_c_arr(A[].d, as), A[].N, A[].M)
+    SB = sparse(from_c_arr(B[].i, bs), from_c_arr(B[].j, bs), from_c_arr(B[].d, bs), B[].N, B[].M)
+    SC = sparse(from_c_arr(C[].i, cs), from_c_arr(C[].j, cs), from_c_arr(C[].d, cs), C[].N, C[].M)
+    return MPSysLin(SA, SB, SC, SD) # FXME more logic MPSysLin(SD, SA, SB, SC)
 end
 
-function dater(pn::PetriNet)
-    ccall((:petri_dater_equation, libtpne), Bool, (Clonglong, Bool,), pn.handle) || error("Invalid Petri net handle")
+"""
+    show_dater_equation
+"""
+function show_dater_equation(pn::PetriNet, use_caption, maxplus_notation)
+    ccall((:petri_dater_equation, libtpne), Bool, (Clonglong,Bool,Bool,),
+        pn.handle, use_caption, maxplus_notation) || error("Invalid Petri net handle")
 end
 
-function counter(pn::PetriNet)
-    ccall((:petri_counter_equation, libtpne), Bool, (Clonglong, Bool,), pn.handle) || error("Invalid Petri net handle")
+"""
+    show_counter_equation
+"""
+function show_counter_equation(pn::PetriNet, use_caption, minplus_notation)
+    ccall((:petri_counter_equation, libtpne), Bool, (Clonglong,Bool,Bool,),
+        pn.handle, use_caption, minplus_notation) || error("Invalid Petri net handle")
 end
 
 #end # TimedPetriNetEditor module
