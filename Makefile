@@ -1,53 +1,27 @@
 ###################################################
-# Project definition
-#
-PROJECT = TimedPetriNetEditor
-TARGET = $(PROJECT)
-DESCRIPTION = Timed Petri Net Editor
-STANDARD = --std=c++14
-BUILD_TYPE = debug
-
-###################################################
 # Location of the project directory and Makefiles
 #
 P := .
 M := $(P)/.makefile
+
+###################################################
+# Project definition
+#
+include $(P)/Makefile.common
+TARGET = $(PROJECT)
+DESCRIPTION = Timed Petri Net Editor
+
+###################################################
+# Other targets
+#
+LIB_TPNE_CORE = $(abspath $(P)/src/Net/$(BUILD)/libtimedpetrinetcore.a)
+LIB_TPNE_GUI = $(abspath $(P)/src/Editor/$(BUILD)/libtimedpetrinetgui.a)
+LIB_TPNE_JULIA = $(abspath $(P)/src/julia/$(BUILD)/libtimedpetrinetjulia.a)
+
+###################################################
+# Sharable informations between all Makefiles
+#
 include $(M)/Makefile.header
-
-###################################################
-# The application is using Dear ImGui for the human
-# interface.
-#
-include $(P)/src/Editor/DearImGui/Makefile.imgui
-
-###################################################
-# Check if objects have been set for the GUI.
-#
-ifeq ($(GUI_OBJS),)
-$(error "No .o files have been defined for the graphical interface")
-endif
-
-###################################################
-# Set MQTT Library.
-#
-ifneq ($(ARCHI),Emscripten)
-INCLUDES += -I$(THIRDPART) -I$(THIRDPART)/MQTT/include
-VPATH += $(THIRDPART)/MQTT/src
-DEFINES += -DMQTT_BROKER_ADDR=\"localhost\"
-DEFINES += -DMQTT_BROKER_PORT=1883
-PKG_LIBS += libmosquitto
-endif
-
-###################################################
-# Set json ibrary.
-#
-INCLUDES += -I$(THIRDPART)/json/include
-
-###################################################
-# Set xml Library.
-#
-VPATH += $(THIRDPART)/tinyxml2
-LIB_OBJS += tinyxml2.o
 
 ###################################################
 # OpenGL: glfw and glew libraries
@@ -86,58 +60,50 @@ LINKER_FLAGS += -framework CoreFoundation
 endif
 
 ###################################################
-# Inform Makefile where to find *.cpp files
+# Stand-alone application.
 #
+include $(P)/src/Editor/DearImGui/Makefile.imgui
+THIRDPART_LIBS += $(LIB_TPNE_GUI) $(LIB_TPNE_CORE)
+THIRDPART_LIBS += $(LIB_TPNE_JULIA)
+LINKER_FLAGS += -ldl -lpthread
 VPATH += $(P)/include $(P)/src $(P)/src/Utils $(P)/src/Net
 VPATH += $(P)/src/Net/Imports VPATH += $(P)/src/Net/Exports
-
-###################################################
-# Inform Makefile where to find header files
-#
 INCLUDES += -I$(P)/include -I$(P)/src -I$(P)/external
+OBJS += main.o
 
 ###################################################
-# Project defines
-#
-DEFINES += -DDATADIR=\"$(DATADIR):$(abspath $(P))/data/:data/\"
-
-###################################################
-# Reduce warnings
-#
-CCFLAGS += -Wno-sign-conversion -Wno-float-equal
-CXXFLAGS += -Wno-undef -Wno-switch-enum -Wno-enum-compare
-CXXFLAGS += -Wshadow
-
-###################################################
-# Linkage
-#
-LINKER_FLAGS += -ldl -lpthread
-
-###################################################
-# Make the list of compiled files for the library
-#
-IMPORT_FORMATS += ImportJSON.o ImportPNML.o ImportTimedEventGraph.o ExportTimedEventGraph.o
-EXPORT_FORMATS += ExportJSON.o ExportPNML.o ExportSymfony.o ExportPnEditor.o
-EXPORT_FORMATS += ExportPetriLaTeX.o ExportJulia.o ExportGraphviz.o ExportDrawIO.o
-EXPORT_FORMATS += ExportGrafcetCpp.o
-LIB_OBJS += Path.o Howard.o Utils.o TimedTokens.o Receptivities.o
-LIB_OBJS += PetriNet.o Algorithms.o Simulation.o History.o
-LIB_OBJS += $(IMPORT_FORMATS) Imports.o $(EXPORT_FORMATS) Exports.o
-
-###################################################
-# Make the list of compiled files for the application
-#
-OBJS += $(LIB_OBJS) $(GUI_OBJS) Drawable.o Application.o Editor.o main.o
-
-###################################################
-# Compile the project, the static and shared libraries
+# Compile the stand-alone application
 .PHONY: all
-all: copy-assets $(STATIC_LIB_TARGET) $(SHARED_LIB_TARGET) $(PKG_FILE) $(TARGET)
+all: | $(LIB_TPNE_GUI) $(LIB_TPNE_CORE) $(LIB_TPNE_JULIA)
+all: $(TARGET) $(LIB_TPNE_GUI) $(LIB_TPNE_CORE) $(LIB_TPNE_JULIA) copy-emscripten-assets
+
+###################################################
+# Compile The Petri net core lib
+$(LIB_TPNE_CORE): src/Net/Makefile Makefile
+	@$(call print-from,"Compiling Petri net core lib",$(PROJECT),core)
+	@$(MAKE) -C src/Net all
+	@cp $(LIB_TPNE_CORE) $(BUILD)
+
+###################################################
+# Compile The Petri net gui lib 
+$(LIB_TPNE_GUI): | $(LIB_TPNE_CORE)
+$(LIB_TPNE_GUI): src/Editor/Makefile Makefile
+	@$(call print-from,"Compiling Petri net GUI lib",$(PROJECT),gui)
+	@$(MAKE) -C src/Editor all
+	@cp $(LIB_TPNE_GUI) $(BUILD)
+
+###################################################
+# Compile interface for Julia
+$(LIB_TPNE_JULIA): | $(LIB_TPNE_GUI)
+$(LIB_TPNE_JULIA): $(LIB_TPNE_GUI) $(LIB_TPNE_CORE) src/julia/Makefile Makefile
+	@$(call print-from,"Compiling Interface for Julia-lang",$(PROJECT),Julia-lang)
+	@$(MAKE) -C src/julia all
+	@cp $(LIB_TPNE_JULIA) $(BUILD)
 
 ###################################################
 # Copy data inside BUILD to allow emscripten to embedded them
 .PHONY: copy-assets
-copy-assets: | $(BUILD)
+copy-emscripten-assets: | $(BUILD)
 ifeq ($(ARCHI),Emscripten)
 	@$(call print-to,"Copying assets","$(TARGET)","$(BUILD)","")
 	@mkdir -p $(BUILD)/data
@@ -163,10 +129,12 @@ ifeq ($(ARCHI),Linux)
 ###################################################
 # Install project. You need to be root.
 .PHONY: install
-install: $(TARGET) $(STATIC_LIB_TARGET) $(SHARED_LIB_TARGET) $(PKG_FILE)
+install: $(TARGET)
+	@$(MAKE) --no-print-directory -C src/Net install
+	@$(MAKE) --no-print-directory -C src/Editor install
+	@$(MAKE) --no-print-directory -C src/julia install
 	@$(call INSTALL_BINARY)
 	@$(call INSTALL_DOCUMENTATION)
-	@$(call INSTALL_PROJECT_LIBRARIES)
 	@$(call INSTALL_PROJECT_HEADERS)
 endif
 
@@ -181,4 +149,13 @@ veryclean: clean
 
 ###################################################
 # Sharable informations between all Makefiles
+#
 include $(M)/Makefile.footer
+
+###################################################
+# Override clean the project
+.PHONY: clean
+clean::
+	@$(MAKE) --no-print-directory -C src/Net clean
+	@$(MAKE) --no-print-directory -C src/Editor clean
+	@$(MAKE) --no-print-directory -C src/julia clean

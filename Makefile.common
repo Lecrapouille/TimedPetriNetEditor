@@ -1,0 +1,18 @@
+###################################################
+# Project definition
+#
+PROJECT = TimedPetriNetEditor
+STANDARD = --std=c++14
+BUILD_TYPE = release
+
+###################################################
+# Reduce warnings
+#
+CCFLAGS += -Wno-sign-conversion -Wno-float-equal
+CXXFLAGS += -Wno-undef -Wno-switch-enum -Wno-enum-compare
+CXXFLAGS += -Wshadow
+
+###################################################
+# Project defines
+#
+DEFINES += -DDATADIR=\"$(DATADIR):$(abspath $(P))/data/:data/\"
