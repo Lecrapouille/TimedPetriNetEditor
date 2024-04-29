@@ -32,6 +32,8 @@ class PetriNetEditor
 {
 public:
 
+    virtual ~PetriNetEditor() = default;
+
     //-------------------------------------------------------------------------
     //! \brief Starts the Petri net editor up, load the Petri file if given not
     //! empty. Then call the infinite loop of the GUI.
