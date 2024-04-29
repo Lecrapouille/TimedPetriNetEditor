@@ -25,6 +25,8 @@
 
 namespace tpne {
 
+class Net;
+
 // ****************************************************************************
 //! \brief Graphical User interface for manipulating and simulating Petri net.
 // ****************************************************************************
@@ -41,6 +43,7 @@ public:
     //! string if you do not want to load a Petri net file.
     //-------------------------------------------------------------------------
     virtual void run(std::string const& petri_file) = 0;
+    virtual void run(Net const& net) = 0;
 };
 
 } // namespace tpne

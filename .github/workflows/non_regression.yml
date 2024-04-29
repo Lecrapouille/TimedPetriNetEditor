@@ -26,8 +26,8 @@ jobs:
         run: |
           make download-external-libs
           make compile-external-libs
-          make -j`nproc --all`
-          sudo make install
+          V=1 make -j`nproc --all`
+          V=1 sudo make install
       - name: Download, configure and install Google test
         run: |
           wget https://github.com/google/googletest/archive/release-1.11.0.tar.gz
@@ -38,13 +38,14 @@ jobs:
       - name: Do non regression tests
         run: |
           cd tests
-          make -j`nproc --all`
+          V=1 make -j`nproc --all`
           ./build/TimedPetriNetEditor-UnitTest
       - name: Check if the library can be linked against a project
         run: |
+          export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/lib/
           git clone https://github.com/Lecrapouille/LinkAgainstMyLibs.git --recurse-submodules --depth=1
           cd LinkAgainstMyLibs/TimedPetriNetEditor
-          make -j`nproc --all`
+          V=1 make -j`nproc --all`
           ./build/TimedPetriNetEditor
 
   non_regression_macos:

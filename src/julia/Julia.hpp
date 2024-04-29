@@ -18,14 +18,17 @@
 // along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.
 //=============================================================================
 
-#ifndef API_HPP
-#  define API_HPP
+#ifndef PETRI_NET_EDITOR_JULIA_API_HPP
+#  define PETRI_NET_EDITOR_JULIA_API_HPP
+
+#  include <cstdint>
+#  include <cstddef>
+
+namespace tpne { class MaxPlus; }
 
 // ****************************************************************************
 //! \file Export C functions into shared library for Julia.
 // ****************************************************************************
-
-#  include "PetriEditor.hpp"
 
 typedef struct CPlace
 {
@@ -41,7 +44,7 @@ typedef struct CSparseMatrix
 {
     size_t* i;
     size_t* j;
-    double* d;
+    tpne::MaxPlus* d;
     size_t size;
     size_t N;
     size_t M;
@@ -282,16 +285,24 @@ extern "C" int64_t petri_to_canonical(int64_t const pn);
 // ****************************************************************************
 //! \brief Display the event graph into its dater equation.
 //! \param[in] pn: the handle of the petri net created by create_petri_net().
+//! \param[in] use_caption: display node captions instead of node keys.
+//! \param[in] maxplus_notation: display (max,+) notation instead of classical
+//! algebra.
 //! \return false if the Petri net handle is invalid or return true.
 // ****************************************************************************
-extern "C" bool petri_dater_equation(int64_t const pn);
+extern "C" bool petri_dater_equation(int64_t const pn, bool use_caption,
+    bool maxplus_notation);
 
 // ****************************************************************************
 //! \brief Display the event graph into its counter equation.
 //! \param[in] pn: the handle of the petri net created by create_petri_net().
+//! \param[in] use_caption: display node captions instead of node keys.
+//! \param[in] minplus_notation: display (min,+) notation instead of classical
+//! algebra.
 //! \return false if the Petri net handle is invalid or return true.
 // ****************************************************************************
-extern "C" bool petri_counter_equation(int64_t const pn);
+extern "C" bool petri_counter_equation(int64_t const pn, bool use_caption,
+    bool minplus_notation);
 
 // ****************************************************************************
 //! \brief Show the critical cycle in the graph event.
