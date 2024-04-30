@@ -1015,10 +1015,15 @@ void Editor::exportNetTo(Exporter const& exporter)
             if (error.empty())
             {
                 if (m_states.do_export_to)
+                {
                     m_messages.setInfo("Exported with success '" + path + "'");
+                }
                 else
+                {
+                    setSavePath(path);
                     m_messages.setInfo("Saved with success '" + path + "'");
-                m_net.modified = false;
+                    m_net.modified = false;
+                }
                 if (m_states.request_quitting)
                 {
                     m_states.request_quitting = false;
