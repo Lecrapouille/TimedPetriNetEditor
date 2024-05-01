@@ -12,13 +12,6 @@ TARGET = $(PROJECT)
 DESCRIPTION = Timed Petri Net Editor
 
 ###################################################
-# Other targets
-#
-LIB_TPNE_CORE = $(abspath $(P)/src/Net/$(BUILD)/libtimedpetrinetcore.a)
-LIB_TPNE_GUI = $(abspath $(P)/src/Editor/$(BUILD)/libtimedpetrinetgui.a)
-LIB_TPNE_JULIA = $(abspath $(P)/src/julia/$(BUILD)/libtimedpetrinetjulia.a)
-
-###################################################
 # Sharable informations between all Makefiles
 #
 include $(M)/Makefile.header
@@ -63,8 +56,6 @@ endif
 # Stand-alone application.
 #
 include $(P)/src/Editor/DearImGui/Makefile.imgui
-THIRDPART_LIBS += $(LIB_TPNE_GUI) $(LIB_TPNE_CORE)
-THIRDPART_LIBS += $(LIB_TPNE_JULIA)
 LINKER_FLAGS += -ldl -lpthread
 VPATH += $(P)/include $(P)/src $(P)/src/Utils $(P)/src/Net
 VPATH += $(P)/src/Net/Imports VPATH += $(P)/src/Net/Exports
@@ -74,31 +65,26 @@ OBJS += main.o
 ###################################################
 # Compile the stand-alone application
 .PHONY: all
-all: | $(LIB_TPNE_GUI) $(LIB_TPNE_CORE) $(LIB_TPNE_JULIA)
-all: $(TARGET) $(LIB_TPNE_GUI) $(LIB_TPNE_CORE) $(LIB_TPNE_JULIA) copy-emscripten-assets
+all: $(TARGET) copy-emscripten-assets
 
 ###################################################
-# Compile The Petri net core lib
-$(LIB_TPNE_CORE): src/Net/Makefile Makefile
-	@$(call print-from,"Compiling Petri net core lib",$(PROJECT),core)
-	@$(MAKE) -C src/Net all
-	@cp $(LIB_TPNE_CORE) $(BUILD)
+# Internal libraries
+#
+LIB_TPNE_CORE = $(abspath $(P)/$(BUILD)/libtimedpetrinetcore.a)
+LIB_TPNE_GUI = $(abspath $(P)/$(BUILD)/libtimedpetrinetgui.a)
+LIB_TPNE_JULIA = $(abspath $(P)/$(BUILD)/libtimedpetrinetjulia.a)
+THIRDPART_LIBS += $(LIB_TPNE_CORE) $(LIB_TPNE_GUI) $(LIB_TPNE_JULIA)
+DIRS_WITH_MAKEFILE := src/Editor src/Net src/julia
 
-###################################################
-# Compile The Petri net gui lib 
-$(LIB_TPNE_GUI): | $(LIB_TPNE_CORE)
-$(LIB_TPNE_GUI): src/Editor/Makefile Makefile
-	@$(call print-from,"Compiling Petri net GUI lib",$(PROJECT),gui)
-	@$(MAKE) -C src/Editor all
-	@cp $(LIB_TPNE_GUI) $(BUILD)
+$(LIB_TPNE_GUI): src/Editor
 
-###################################################
-# Compile interface for Julia
-$(LIB_TPNE_JULIA): | $(LIB_TPNE_GUI)
-$(LIB_TPNE_JULIA): $(LIB_TPNE_GUI) $(LIB_TPNE_CORE) src/julia/Makefile Makefile
-	@$(call print-from,"Compiling Interface for Julia-lang",$(PROJECT),Julia-lang)
-	@$(MAKE) -C src/julia all
-	@cp $(LIB_TPNE_JULIA) $(BUILD)
+$(LIB_TPNE_CORE): src/Net
+
+$(LIB_TPNE_JULIA): src/julia
+
+src/julia: src/Editor
+
+src/Editor: src/Net
 
 ###################################################
 # Copy data inside BUILD to allow emscripten to embedded them
