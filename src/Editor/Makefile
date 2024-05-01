@@ -3,6 +3,7 @@
 #
 P := ../..
 M := $(P)/.makefile
+BUILD := $(P)/build
 
 ###################################################
 # Project definition
