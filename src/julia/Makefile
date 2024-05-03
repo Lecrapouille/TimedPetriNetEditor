@@ -16,20 +16,11 @@ DESCRIPTION = Timed Petri Net Editor interface for Julia
 # Location of the project directory and Makefiles
 #
 include $(M)/Makefile.header
-
-###################################################
-# Internal libraries since we can call the GUI from Julia REPL
-#
-LIB_TPNE_CORE = $(abspath $(P)/src/Net/$(BUILD)/libtimedpetrinetcore.a)
-LIB_TPNE_GUI = $(abspath $(P)/src/Editor/$(BUILD)/libtimedpetrinetgui.a)
-THIRDPART_LIBS += $(LIB_TPNE_GUI) $(LIB_TPNE_CORE)
-PKG_LIBS += --static glfw3
-LINKER_FLAGS += -lGL
+include $(P)/src/Editor/DearImGui/Makefile.imgui
 
 ###################################################
 # Inform Makefile where to find *.cpp files
 #
-include $(P)/src/Editor/DearImGui/Makefile.imgui
 VPATH += $(P)/include $(P)/src $(P)/src/Utils $(P)/src/Net
 VPATH += $(P)/src/Net/Imports VPATH += $(P)/src/Net/Exports
 
@@ -37,6 +28,16 @@ VPATH += $(P)/src/Net/Imports VPATH += $(P)/src/Net/Exports
 # Inform Makefile where to find header files
 #
 INCLUDES += -I$(P)/include -I$(P)/src -I$(P)/external
+
+###################################################
+# Internal libraries since we can call the GUI from Julia REPL
+#
+LIB_TPNE_CORE = $(abspath $(P)/src/Net/$(BUILD)/libtimedpetrinetcore.a)
+LIB_TPNE_GUI = $(abspath $(P)/src/Editor/$(BUILD)/libtimedpetrinetgui.a)
+PKG_LIBS += --static glfw3
+LINKER_FLAGS += -lGL
+# WARNING: do not use += since we do not want to include twice libraylib.a
+THIRDPART_LIBS := $(LIB_TPNE_GUI) $(LIB_TPNE_CORE)
 
 ###################################################
 # Make the list of compiled files for the library
