@@ -39,7 +39,7 @@ if (ENVIRONMENT_IS_NODE) {
 
 // --pre-jses are emitted after the Module integration code, so that they can
 // refer to Module (if they choose; they can also define Module)
-// include: /tmp/tmpzbgedxpc.js
+// include: /tmp/tmpj7hm1sq_.js
 
   if (!Module.expectedDataFileDownloads) {
     Module.expectedDataFileDownloads = 0;
@@ -221,21 +221,21 @@ Module['FS_createPath']("/", "examples", true, true);
 
   })();
 
-// end include: /tmp/tmpzbgedxpc.js
-// include: /tmp/tmpvjimvofo.js
+// end include: /tmp/tmpj7hm1sq_.js
+// include: /tmp/tmpjvv9pbcb.js
 
     // All the pre-js content up to here must remain later on, we need to run
     // it.
     if (Module['$ww'] || (typeof ENVIRONMENT_IS_PTHREAD != 'undefined' && ENVIRONMENT_IS_PTHREAD)) Module['preRun'] = [];
     var necessaryPreJSTasks = Module['preRun'].slice();
-  // end include: /tmp/tmpvjimvofo.js
-// include: /tmp/tmpeoo8ej_9.js
+  // end include: /tmp/tmpjvv9pbcb.js
+// include: /tmp/tmpur2yklg_.js
 
     if (!Module['preRun']) throw 'Module.preRun should exist because file support used it; did a pre-js delete it?';
     necessaryPreJSTasks.forEach(function(task) {
       if (Module['preRun'].indexOf(task) < 0) throw 'All preRun tasks that exist before user pre-js code should remain after; did you replace Module or modify Module.preRun?';
     });
-  // end include: /tmp/tmpeoo8ej_9.js
+  // end include: /tmp/tmpur2yklg_.js
 
 
 // Sometimes an existing Module object exists with properties
