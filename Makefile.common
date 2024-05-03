@@ -6,6 +6,11 @@ STANDARD = --std=c++14
 BUILD_TYPE = release
 
 ###################################################
+# Select the Dear ImGui backend: RayLib or GLFW3.
+#
+DEAR_IMGUI_BACKEND ?= RayLib
+
+###################################################
 # Reduce warnings
 #
 CCFLAGS += -Wno-sign-conversion -Wno-float-equal

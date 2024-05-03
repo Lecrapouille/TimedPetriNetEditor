@@ -1,9 +1,4 @@
 ###################################################
-# Select the Dear ImGui backend: RayLib or GLFW3.
-#
-DEAR_IMGUI_BACKEND ?= GLFW3
-
-###################################################
 # If compiling for HTML5 (Emscripten) then force
 # using Raylib backend since GLFW3 is not compilable.
 #
