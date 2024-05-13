@@ -32,7 +32,7 @@ namespace tpne {
 #define TOKEN_COLOR       ImGui::GetColorU32(ImGuiCol_Text)
 #define CRITICAL_COLOR    ImGui::GetColorU32(ImGuiCol_PlotLinesHovered)
 #define TRANS_FIREABLE_COLOR    IM_COL32(0, 255, 0, 255)
-#define TRANS_VALIDATED_COLOR   IM_COL32(205, 205, 60, 255)
+#define TRANS_VALIDATED_COLOR   IM_COL32(0, 255, 0, 255)
 #define TRANS_ENABLED_COLOR     IM_COL32(205, 205, 60, 255)
 
 //------------------------------------------------------------------------------
@@ -255,23 +255,25 @@ void drawTransition(ImDrawList* draw_list, Transition const& transition,
     // Color of the transition: green if validated else yellow if enabled
     // else color is fadding value.
     ImU32 color;
+
+    color = FILL_COLOR(alpha);
+    if (transition.receptivity)
+    {
+        // Disable for timed Petri net and timed event graph
+        // because receptivities are always true.
+        if ((type != TypeOfNet::TimedPetriNet) && (type != TypeOfNet::TimedEventGraph))
+            color = TRANS_ENABLED_COLOR;
+    }
     if (transition.isFireable())
     {
         color = TRANS_FIREABLE_COLOR;
     }
     else if (transition.isValidated())
     {
+        // Disable for timed Petri net and timed event graph
+        // because receptivities are always true.
         color = (type == TypeOfNet::PetriNet)
-              ? TRANS_VALIDATED_COLOR : FILL_COLOR(alpha);
-    }
-    else if (transition.receptivity)
-    {
-        color = (type == TypeOfNet::GRAFCET)
-              ? TRANS_ENABLED_COLOR : TRANS_FIREABLE_COLOR;
-    }
-    else
-    {
-        color = FILL_COLOR(alpha);
+            ? TRANS_FIREABLE_COLOR : TRANS_ENABLED_COLOR;
     }
 
     // Draw the transition
