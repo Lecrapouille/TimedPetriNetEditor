@@ -56,7 +56,7 @@ endif
 #
 VPATH += $(P)/src/Editor/DearImGui
 INCLUDES += -I$(P)/src/Editor/DearImGui
-GUI_OBJS += DearUtils.o
+GUI_OBJS += Theme.o DearUtils.o
 
 ###################################################
 # Editor using Dear ImGui for the human interface.

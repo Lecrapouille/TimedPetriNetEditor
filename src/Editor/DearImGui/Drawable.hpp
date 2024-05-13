@@ -21,17 +21,11 @@
 #ifndef PETRI_DRAWABLE_HPP
 #  define PETRI_DRAWABLE_HPP
 
-#include "TimedPetriNetEditor/PetriNet.hpp"
-#include "imgui.h"
+#  include "Editor/DearImGui/Theme.hpp"
+#  include "TimedPetriNetEditor/PetriNet.hpp"
+#  include "imgui.h"
 
 namespace tpne {
-
-static const float ARROW_WIDTH = 14.0f;
-static const float ARROW_SPACING = 10.0f;
-static const float TRANS_WIDTH = 36.0f;  // Rectangle width for rendering Transitions
-static const float TRANS_HEIGHT = TRANS_WIDTH / 3.0f;  // Rectangle height for rendering Transitions
-static const float PLACE_RADIUS = TRANS_WIDTH / 2.0f; // Circle radius for rendering Places
-static const float TOKEN_RADIUS = 2.0f;  // Circle radius for rendering tokens
 
 void drawArc(ImDrawList* draw_list, Node* from, Node* to, ImVec2* click_position, ImVec2 const& origin, ImVec2 const& cursor);
 void drawArc(ImDrawList* draw_list, Arc const& arc, TypeOfNet const type, ImVec2 const& origin, float const alpha);

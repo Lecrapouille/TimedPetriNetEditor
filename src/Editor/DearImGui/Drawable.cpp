@@ -25,15 +25,15 @@
 
 namespace tpne {
 
-#define FILL_COLOR(alpha) ImGui::GetColorU32(ImGuiCol_FrameBg, alpha)
-#define OUTLINE_COLOR     ImGui::GetColorU32(ImGuiCol_FrameBgActive)
-#define CAPTION_COLOR     ImGui::GetColorU32(ImGuiCol_Text)
-#define DURATION_COLOR    ImGui::GetColorU32(ImGuiCol_FrameBgActive)
-#define TOKEN_COLOR       ImGui::GetColorU32(ImGuiCol_Text)
-#define CRITICAL_COLOR    ImGui::GetColorU32(ImGuiCol_PlotLinesHovered)
-#define TRANS_FIREABLE_COLOR    IM_COL32(0, 255, 0, 255)
-#define TRANS_VALIDATED_COLOR   IM_COL32(0, 255, 0, 255)
-#define TRANS_ENABLED_COLOR     IM_COL32(205, 205, 60, 255)
+#define FILL_COLOR(alpha)      ((ThemeId::Light == theme()) ? LIGHT_THEME_FILL_COLOR(alpha) : DARK_THEME_FILL_COLOR(alpha))
+#define OUTLINE_COLOR          ((ThemeId::Light == theme()) ? LIGHT_THEME_OUTLINE_COLOR : DARK_THEME_OUTLINE_COLOR)
+#define CAPTION_COLOR          ((ThemeId::Light == theme()) ? LIGHT_THEME_CAPTION_COLOR : DARK_THEME_CAPTION_COLOR)
+#define DURATION_COLOR         ((ThemeId::Light == theme()) ? LIGHT_THEME_DURATION_COLOR : DARK_THEME_DURATION_COLOR)
+#define TOKEN_COLOR            ((ThemeId::Light == theme()) ? LIGHT_THEME_TOKEN_COLOR : DARK_THEME_TOKEN_COLOR)
+#define CRITICAL_COLOR         ((ThemeId::Light == theme()) ? LIGHT_THEME_CRITICAL_COLOR : DARK_THEME_CRITICAL_COLOR)
+#define TRANS_FIREABLE_COLOR   ((ThemeId::Light == theme()) ? LIGHT_THEME_TRANS_FIREABLE_COLOR : DARK_THEME_TRANS_FIREABLE_COLOR)
+#define TRANS_VALIDATED_COLOR  ((ThemeId::Light == theme()) ? LIGHT_THEME_TRANS_VALIDATED_COLOR : DARK_THEME_TRANS_VALIDATED_COLOR)
+#define TRANS_ENABLED_COLOR    ((ThemeId::Light == theme()) ? LIGHT_THEME_TRANS_ENABLED_COLOR : DARK_THEME_TRANS_ENABLED_COLOR)
 
 //------------------------------------------------------------------------------
 static void drawArrow(ImDrawList* draw_list, ImVec2 const& A, ImVec2 const& B,
@@ -191,7 +191,10 @@ void drawPlace(ImDrawList* draw_list, Place const& place, TypeOfNet const type, 
     else
     {
         // Draw the place as circle
-        draw_list->AddCircleFilled(p, PLACE_RADIUS, FILL_COLOR(alpha), 64);
+        if (place.tokens == 0u)
+            draw_list->AddCircleFilled(p, PLACE_RADIUS, FILL_COLOR(alpha), 64);
+        else
+            draw_list->AddCircleFilled(p, PLACE_RADIUS, FILL_COLOR(255), 64);
         draw_list->AddCircle(p, PLACE_RADIUS, OUTLINE_COLOR, 64, 2.5f);
     }
 
