@@ -672,9 +672,12 @@ void Net::removeNode(Node& node)
 //------------------------------------------------------------------------------
 void Net::resetReceptivies()
 {
-    // For PetriNet set receptivities to false since we want the
-    // user to click on desired transitions.
-    if (m_type == TypeOfNet::PetriNet)
+    // For PetriNet set receptivities to false since we want the user to click
+    // on desired transitions for firing. For GRAFCET receptivities are initially
+    // set to false since the syntax of the boolean expression is checked only when
+    // the user starts the simulation and their results are computed at each cycle of
+    // the simulation.
+    if ((m_type == TypeOfNet::PetriNet) || (m_type == TypeOfNet::GRAFCET))
     {
         for (auto& transition: m_transitions)
         {
@@ -682,8 +685,7 @@ void Net::resetReceptivies()
         }
     }
     // For other type of nets (timed Petri net, graph events) the
-    // receptivities are always true. For GRAFCET transition.receptivity
-    // is set by the simulation depending on the boolean expression.
+    // receptivities are always true.
     else
     {
         for (auto& transition: m_transitions)
@@ -747,6 +749,12 @@ bool convertTo(Net& net, TypeOfNet const type, std::string& error, std::vector<A
     {
         if ((!net.isEmpty()) && (!isEventGraph(net, error, erroneous_arcs)))
             return false;
+    }
+    else if (type == TypeOfNet::GRAFCET)
+    {
+        // Nothing to do! We do not check here validity of the boolean
+        // expression for receptivities (transitions). We will check it
+        // when the user wants to start its simulation.
     }
 
     applyNewNetSettings(type);
