@@ -60,6 +60,38 @@ Editor::Editor(size_t const width, size_t const height,
     // Setup fonts
     io.Fonts->AddFontFromFileTTF(m_path.expand("font.ttf").c_str(), FONT_SIZE);
     reloadFonts();
+
+    // Theme
+    ImGui::StyleColorsDark();
+}
+
+//------------------------------------------------------------------------------
+void Editor::showStyleSelector()
+{
+    ImGui::OpenPopup("Theme selector");
+    ImGui::SetNextWindowPos(m_states.viewport_center, ImGuiCond_Appearing,
+                            ImVec2(0.5f, 0.5f));
+    if (ImGui::BeginPopupModal("Theme selector",
+                               NULL, ImGuiWindowFlags_AlwaysAutoResize))
+    {
+        int idx = theme();
+        if (ImGui::Combo("Colors##Selector", &idx, "Dark\0Light\0Classic\0"))
+        {
+            theme() = ThemeId(idx);
+            switch (idx)
+            {
+            case ThemeId::Dark: ImGui::StyleColorsDark(); break;
+            case ThemeId::Light: ImGui::StyleColorsLight(); break;
+            case ThemeId::Calssic: ImGui::StyleColorsClassic(); break;
+            }
+        }
+        if (ImGui::Button("OK", ImVec2(120, 0)))
+        {
+            ImGui::CloseCurrentPopup();
+            m_states.show_theme = false;
+        }
+        ImGui::EndPopup();
+    }
 }
 
 //------------------------------------------------------------------------------
@@ -322,6 +354,10 @@ void Editor::menu()
             {
                 m_states.show_about = true;
             }
+            if (ImGui::MenuItem("Theme", nullptr, false))
+            {
+                m_states.show_theme = true;
+            }
             ImGui::EndMenu();
         }
         ImGui::EndMainMenuBar();
@@ -331,6 +367,7 @@ void Editor::menu()
 
     if (m_states.show_help) { help(); }
     if (m_states.show_about) { about(); }
+    if (m_states.show_theme) { showStyleSelector(); }
     if (m_states.do_load) { loadNetFile(); }
     if (m_states.do_save_as) { saveNetAs(); }
     if (m_states.do_export_to != nullptr) { exportNetTo(*m_states.do_export_to); }
@@ -1591,7 +1628,9 @@ void Editor::PetriView::drawGrid(ImDrawList* draw_list, bool const running)
 
     draw_list->ChannelsSetCurrent(0); // Background
     draw_list->AddRectFilled(m_canvas.corners[0], m_canvas.corners[1],
-                             IM_COL32(50, 50, 50, 255));
+        ((ThemeId::Light == theme())
+            ? LIGHT_THEME_PETRI_VIEW_COLOR
+            : DARK_THEME_PETRI_VIEW_COLOR));
     draw_list->AddRect(m_canvas.corners[0], m_canvas.corners[1],
                        border_color);
 

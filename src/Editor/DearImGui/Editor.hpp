@@ -100,6 +100,7 @@ private: // Error logs
     std::string getError() const;  // FIXME: by copy
     std::vector<Messages::TimedMessage> const& getLogs() const;
     void clearLogs();
+    void showStyleSelector();
 
 private:
 
@@ -121,6 +122,7 @@ private:
         Importer const* do_import_from = nullptr;
         bool show_about = false;
         bool show_help = false;
+        bool show_theme = false;
         bool show_place_captions = true;
         bool show_transition_captions = true;
         ImVec2 viewport_center;
