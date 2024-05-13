@@ -1500,7 +1500,10 @@ void Editor::PetriView::onHandleInput()
 
         if (button == MOUSE_BOUTON_HANDLE_ARC)
         {
-            handleArcDestination();
+            if (!ImGui::GetIO().KeyCtrl)
+            {
+                handleArcDestination();
+            }
         }
     }
 
