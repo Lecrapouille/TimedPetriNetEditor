@@ -926,10 +926,11 @@ bool Editor::switchOfNet(TypeOfNet const type)
 //------------------------------------------------------------------------------
 Node* Editor::getNode(ImVec2 const& position)
 {
-    Node *n = getPlace(position);
-    if (n != nullptr)
-        return n;
-    return getTransition(position);
+    Node *node = getTransition(position);
+    if (m_net.type() == TypeOfNet::TimedEventGraph)
+        return node;
+
+    return (node != nullptr) ? node : getPlace(position);
 }
 
 //------------------------------------------------------------------------------
