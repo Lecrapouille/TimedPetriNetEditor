@@ -39,7 +39,7 @@ if (ENVIRONMENT_IS_NODE) {
 
 // --pre-jses are emitted after the Module integration code, so that they can
 // refer to Module (if they choose; they can also define Module)
-// include: /tmp/tmp95tso5v6.js
+// include: /tmp/tmpbal3y1gg.js
 
   if (!Module.expectedDataFileDownloads) {
     Module.expectedDataFileDownloads = 0;
@@ -217,25 +217,25 @@ Module['FS_createPath']("/", "examples", true, true);
     }
 
     }
-    loadPackage({"files": [{"filename": "/data/font.ttf", "start": 0, "end": 171792}, {"filename": "/data/imgui.ini", "start": 171792, "end": 174684}, {"filename": "/examples/AppelsDurgence.json", "start": 174684, "end": 178744}, {"filename": "/examples/Coffee.json", "start": 178744, "end": 180329}, {"filename": "/examples/EventGraph.json", "start": 180329, "end": 182035}, {"filename": "/examples/FourRoadJunctions.json", "start": 182035, "end": 187432}, {"filename": "/examples/GRAFCET.json", "start": 187432, "end": 188546}, {"filename": "/examples/Howard1.json", "start": 188546, "end": 189581}, {"filename": "/examples/Howard2.json", "start": 189581, "end": 190939}, {"filename": "/examples/Infinite.json", "start": 190939, "end": 191510}, {"filename": "/examples/InputsOutputs.json", "start": 191510, "end": 193188}, {"filename": "/examples/JPQ.json", "start": 193188, "end": 194720}, {"filename": "/examples/Philosophers.json", "start": 194720, "end": 197301}, {"filename": "/examples/ProducerConsumer.json", "start": 197301, "end": 198700}, {"filename": "/examples/TrafficLights.json", "start": 198700, "end": 200725}, {"filename": "/examples/dualband.json", "start": 200725, "end": 204032}], "remote_package_size": 204032});
+    loadPackage({"files": [{"filename": "/data/font.ttf", "start": 0, "end": 171792}, {"filename": "/data/imgui.ini", "start": 171792, "end": 174684}, {"filename": "/examples/AppelsDurgence.json", "start": 174684, "end": 178744}, {"filename": "/examples/Coffee.json", "start": 178744, "end": 180329}, {"filename": "/examples/EventGraph.json", "start": 180329, "end": 182035}, {"filename": "/examples/FourRoadJunctions.json", "start": 182035, "end": 187432}, {"filename": "/examples/GRAFCET.json", "start": 187432, "end": 188546}, {"filename": "/examples/Howard1.json", "start": 188546, "end": 189581}, {"filename": "/examples/Howard2.json", "start": 189581, "end": 190939}, {"filename": "/examples/Infinite.json", "start": 190939, "end": 191510}, {"filename": "/examples/InputsOutputs.json", "start": 191510, "end": 193188}, {"filename": "/examples/JPQ.json", "start": 193188, "end": 194720}, {"filename": "/examples/Philosophers.json", "start": 194720, "end": 197301}, {"filename": "/examples/ProducerConsumer.json", "start": 197301, "end": 198700}, {"filename": "/examples/Simple.json", "start": 198700, "end": 200118}, {"filename": "/examples/TrafficLights.json", "start": 200118, "end": 202143}, {"filename": "/examples/dualband.json", "start": 202143, "end": 205450}], "remote_package_size": 205450});
 
   })();
 
-// end include: /tmp/tmp95tso5v6.js
-// include: /tmp/tmp7kl19uzu.js
+// end include: /tmp/tmpbal3y1gg.js
+// include: /tmp/tmpzod0y6gi.js
 
     // All the pre-js content up to here must remain later on, we need to run
     // it.
     if (Module['$ww'] || (typeof ENVIRONMENT_IS_PTHREAD != 'undefined' && ENVIRONMENT_IS_PTHREAD)) Module['preRun'] = [];
     var necessaryPreJSTasks = Module['preRun'].slice();
-  // end include: /tmp/tmp7kl19uzu.js
-// include: /tmp/tmpdz9v4du9.js
+  // end include: /tmp/tmpzod0y6gi.js
+// include: /tmp/tmp623e1taj.js
 
     if (!Module['preRun']) throw 'Module.preRun should exist because file support used it; did a pre-js delete it?';
     necessaryPreJSTasks.forEach(function(task) {
       if (Module['preRun'].indexOf(task) < 0) throw 'All preRun tasks that exist before user pre-js code should remain after; did you replace Module or modify Module.preRun?';
     });
-  // end include: /tmp/tmpdz9v4du9.js
+  // end include: /tmp/tmp623e1taj.js
 
 
 // Sometimes an existing Module object exists with properties
@@ -1132,40 +1132,40 @@ function dbg(...args) {
 // === Body ===
 
 var ASM_CONSTS = {
-  174592: () => { if (document.fullscreenElement) return 1; },  
- 174638: () => { return document.getElementById('canvas').width; },  
- 174690: () => { return parseInt(document.getElementById('canvas').style.width); },  
- 174758: () => { document.exitFullscreen(); },  
- 174785: () => { setTimeout(function() { Module.requestFullscreen(false, false); }, 100); },  
- 174858: () => { if (document.fullscreenElement) return 1; },  
- 174904: () => { return document.getElementById('canvas').width; },  
- 174956: () => { return screen.width; },  
- 174981: () => { document.exitFullscreen(); },  
- 175008: () => { setTimeout(function() { Module.requestFullscreen(false, true); setTimeout(function() { canvas.style.width="unset"; }, 100); }, 100); },  
- 175141: () => { if (document.fullscreenElement) return 1; },  
- 175187: () => { return document.getElementById('canvas').width; },  
- 175239: () => { return parseInt(document.getElementById('canvas').style.width); },  
- 175307: () => { if (document.fullscreenElement) return 1; },  
- 175353: () => { return document.getElementById('canvas').width; },  
- 175405: () => { return screen.width; },  
- 175430: () => { if (document.fullscreenElement) return 1; },  
- 175476: () => { return document.getElementById('canvas').width; },  
- 175528: () => { return screen.width; },  
- 175553: () => { document.exitFullscreen(); },  
- 175580: () => { if (document.fullscreenElement) return 1; },  
- 175626: () => { return document.getElementById('canvas').width; },  
- 175678: () => { return parseInt(document.getElementById('canvas').style.width); },  
- 175746: () => { document.exitFullscreen(); },  
- 175773: () => { return screen.width; },  
- 175798: () => { return screen.height; },  
- 175824: () => { return window.screenX; },  
- 175851: () => { return window.screenY; },  
- 175878: ($0) => { navigator.clipboard.writeText(UTF8ToString($0)); },  
- 175931: ($0) => { document.getElementById("canvas").style.cursor = UTF8ToString($0); },  
- 176002: () => { document.getElementById('canvas').style.cursor = 'none'; },  
- 176059: ($0) => { document.getElementById('canvas').style.cursor = UTF8ToString($0); },  
- 176130: () => { if (document.fullscreenElement) return 1; },  
- 176176: () => { if (document.pointerLockElement) return 1; }
+  174672: () => { if (document.fullscreenElement) return 1; },  
+ 174718: () => { return document.getElementById('canvas').width; },  
+ 174770: () => { return parseInt(document.getElementById('canvas').style.width); },  
+ 174838: () => { document.exitFullscreen(); },  
+ 174865: () => { setTimeout(function() { Module.requestFullscreen(false, false); }, 100); },  
+ 174938: () => { if (document.fullscreenElement) return 1; },  
+ 174984: () => { return document.getElementById('canvas').width; },  
+ 175036: () => { return screen.width; },  
+ 175061: () => { document.exitFullscreen(); },  
+ 175088: () => { setTimeout(function() { Module.requestFullscreen(false, true); setTimeout(function() { canvas.style.width="unset"; }, 100); }, 100); },  
+ 175221: () => { if (document.fullscreenElement) return 1; },  
+ 175267: () => { return document.getElementById('canvas').width; },  
+ 175319: () => { return parseInt(document.getElementById('canvas').style.width); },  
+ 175387: () => { if (document.fullscreenElement) return 1; },  
+ 175433: () => { return document.getElementById('canvas').width; },  
+ 175485: () => { return screen.width; },  
+ 175510: () => { if (document.fullscreenElement) return 1; },  
+ 175556: () => { return document.getElementById('canvas').width; },  
+ 175608: () => { return screen.width; },  
+ 175633: () => { document.exitFullscreen(); },  
+ 175660: () => { if (document.fullscreenElement) return 1; },  
+ 175706: () => { return document.getElementById('canvas').width; },  
+ 175758: () => { return parseInt(document.getElementById('canvas').style.width); },  
+ 175826: () => { document.exitFullscreen(); },  
+ 175853: () => { return screen.width; },  
+ 175878: () => { return screen.height; },  
+ 175904: () => { return window.screenX; },  
+ 175931: () => { return window.screenY; },  
+ 175958: ($0) => { navigator.clipboard.writeText(UTF8ToString($0)); },  
+ 176011: ($0) => { document.getElementById("canvas").style.cursor = UTF8ToString($0); },  
+ 176082: () => { document.getElementById('canvas').style.cursor = 'none'; },  
+ 176139: ($0) => { document.getElementById('canvas').style.cursor = UTF8ToString($0); },  
+ 176210: () => { if (document.fullscreenElement) return 1; },  
+ 176256: () => { if (document.pointerLockElement) return 1; }
 };
 function GetWindowInnerWidth() { return window.innerWidth; }
 function GetWindowInnerHeight() { return window.innerHeight; }
@@ -10982,8 +10982,8 @@ var _asyncify_start_unwind = createExportWrapper('asyncify_start_unwind', 1);
 var _asyncify_stop_unwind = createExportWrapper('asyncify_stop_unwind', 0);
 var _asyncify_start_rewind = createExportWrapper('asyncify_start_rewind', 1);
 var _asyncify_stop_rewind = createExportWrapper('asyncify_stop_rewind', 0);
-var ___start_em_js = Module['___start_em_js'] = 176223;
-var ___stop_em_js = Module['___stop_em_js'] = 176296;
+var ___start_em_js = Module['___start_em_js'] = 176303;
+var ___stop_em_js = Module['___stop_em_js'] = 176376;
 
 // include: postamble.js
 // === Auto-generated postamble setup entry stuff ===
