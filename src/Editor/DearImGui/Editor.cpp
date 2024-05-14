@@ -278,6 +278,13 @@ void Editor::menu()
                 ImGui::EndMenu();
             }
 
+            if (ImGui::MenuItem("To Canonical form"))
+            {
+                Net pn(m_net.type());
+                toCanonicalForm(m_net, pn);
+                m_net = pn;
+            }
+
             ImGui::Separator();
             if (ImGui::MenuItem("Undo", "Ctrl+Z", false))
             {
