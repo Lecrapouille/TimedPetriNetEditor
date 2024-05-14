@@ -1560,7 +1560,6 @@ void Editor::PetriView::onHandleInput()
                 auto action = std::make_unique<NetModifaction>(m_editor);
                 action->before(m_editor.m_net);
                 m_editor.m_net.removeNode(*node);
-                // FIXME: TimedEventGraph: supprimer aussi les places
                 action->after(m_editor.m_net);
                 m_editor.m_history.add(std::move(action));
             }

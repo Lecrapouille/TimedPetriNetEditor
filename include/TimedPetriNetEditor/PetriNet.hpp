@@ -746,6 +746,32 @@ protected:
     //--------------------------------------------------------------------------
     bool sanityArc(Node const& from, Node const& to, bool const strict) const;
 
+    //--------------------------------------------------------------------------
+    //! \brief Helper method removing a transition. This function does not care
+    //! of upstream/downstream arcs: they shall be removed.
+    //! For fastest deletion, we simply swap the undesired node with the
+    //! latest node in the container. To do that, we have to iterate from the end
+    //! of the container.
+    //--------------------------------------------------------------------------
+    void helperRemoveTransition(Node& node);
+
+    //--------------------------------------------------------------------------
+    //! \brief Helper method removing a place. This function does not care
+    //! of upstream/downstream arcs: they shall be removed.
+    //! For fastest deletion, we simply swap the undesired node with the
+    //! latest node in the container. To do that, we have to iterate from the end
+    //! of the container.
+    //--------------------------------------------------------------------------
+    void helperRemovePlace(Node& node);
+
+    //--------------------------------------------------------------------------
+    //! \brief Helper method removing all arcs linked to the given node.
+    //! Note: For fastest deletion, we simply swap the undesired arc with the
+    //! latest arc in the container. To do that, we have to iterate from the end
+    //! of the container.
+    //--------------------------------------------------------------------------
+    void helperRemoveArcFromNode(Node& node);
+
 private:
 
     //! \brief Type of net GRAFCET, Petri, Timed Petri ...
