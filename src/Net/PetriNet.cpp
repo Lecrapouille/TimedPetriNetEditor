@@ -550,6 +550,8 @@ bool Net::removeArc(Arc const& a)
 //------------------------------------------------------------------------------
 bool Net::removeArc(Node const& from, Node const& to)
 {
+// Supprimer les arcs qui touchent la place supprimee
+
     size_t i = m_arcs.size();
     while (i--)
     {
@@ -568,22 +570,128 @@ bool Net::removeArc(Node const& from, Node const& to)
 }
 
 //------------------------------------------------------------------------------
-void Net::removeNode(Node& node)
+void Net::helperRemovePlace(Node& node)
 {
-    // Remove all arcs linked to this node.
-    // Note: For fastest deletion, we simply swap the undesired arc with the
-    // latest arc in the container. To do that, we have to iterate from the end
-    // of the container.
+    size_t i = m_places.size();
+    while (i--)
+    {
+        // Found the undesired node: make the latest element take its
+        // location in the container. But before doing this we have to
+        // restore references on impacted arcs.
+        if (m_places[i].id == node.id)
+        {
+            // Swap element but keep the ID of the removed element
+            Place& pi = m_places[i];
+            Place& pe = m_places[m_places.size() - 1u];
+            if (pe.caption == pe.key)
+            {
+                m_places[i] = Place(pi.id, pi.key, pe.x, pe.y, pe.tokens);
+            }
+            else
+            {
+                m_places[i] = Place(pi.id, pe.caption, pe.x, pe.y, pe.tokens);
+            }
+            assert(m_next_place_id >= 1u);
+            m_next_place_id -= 1u;
+
+            // Update the references to nodes of the arc
+            for (auto& a: m_arcs) // TODO optim: use in/out arcs but they may not be generated
+            {
+                if (a.to.key == pe.key)
+                    a = Arc(a.from, m_places[i], a.duration);
+                if (a.from.key == pe.key)
+                    a = Arc(m_places[i], a.to, a.duration);
+            }
+
+            m_places.pop_back();
+        }
+    }
+}
+
+//------------------------------------------------------------------------------
+void Net::helperRemoveTransition(Node& node)
+{
+    size_t i = m_transitions.size();
+    while (i--)
+    {
+        // Found the undesired node: make the latest element take its
+        // location in the container. But before doing this we have to
+        // restore references on impacted arcs.
+        if (m_transitions[i].id == node.id)
+        {
+            Transition& ti = m_transitions[i];
+            Transition& te = m_transitions[m_transitions.size() - 1u];
+            if (te.caption == te.key)
+            {
+                m_transitions[i] = Transition(ti.id, ti.key, te.x, te.y, te.angle,
+                                                (m_type == TypeOfNet::TimedPetriNet)
+                                                ? true : false);
+            }
+            else
+            {
+                m_transitions[i] = Transition(ti.id, te.caption, te.x, te.y, te.angle,
+                                                (m_type == TypeOfNet::TimedPetriNet)
+                                                ? true : false);
+            }
+            assert(m_next_transition_id >= 1u);
+            m_next_transition_id -= 1u;
+
+            // Update the references to nodes of the arc
+            for (auto& a: m_arcs) // TODO optim: use in/out arcs but they may not be generated
+            {
+                if (a.to.key == te.key)
+                    a = Arc(a.from, m_transitions[i], a.duration);
+                if (a.from.key == te.key)
+                    a = Arc(m_transitions[i], a.to, a.duration);
+            }
+
+            m_transitions.pop_back();
+        }
+    }
+}
+
+//------------------------------------------------------------------------------
+void Net::helperRemoveArcFromNode(Node& node)
+{
     size_t s = m_arcs.size();
     size_t i = s;
     while (i--)
     {
         if ((m_arcs[i].to.key == node.key) || (m_arcs[i].from.key == node.key))
         {
-            // Found the undesired arc: make the latest element take its
-            // location in the container.
             m_arcs[i] = m_arcs[m_arcs.size() - 1u];
             m_arcs.pop_back();
+        }
+    }
+}
+
+//------------------------------------------------------------------------------
+void Net::removeNode(Node& node)
+{
+    std::vector<Node*> nodes_to_remove;
+    if (m_type != TypeOfNet::TimedEventGraph)
+    {
+        helperRemoveArcFromNode(node);
+    }
+    else
+    {
+        for (auto& a: m_transitions[node.id].arcsIn)
+        {
+            nodes_to_remove.push_back(&a->from);
+        }
+        for (auto& a: m_transitions[node.id].arcsOut)
+        {
+            nodes_to_remove.push_back(&a->to);
+        }
+
+        // Since we swap nodes inside the array before removing
+        // then, we have to start from greater id to lowest id. 
+        std::sort(nodes_to_remove.begin(), nodes_to_remove.end(),
+            [](Node* a, Node* b) { return a->id > b-> id; });
+
+        for (auto it: nodes_to_remove)
+        {
+            helperRemoveArcFromNode(*it);
         }
     }
 
@@ -593,80 +701,20 @@ void Net::removeNode(Node& node)
     // of the container.
     if (node.type == Node::Type::Place)
     {
-        i = m_places.size();
-        while (i--)
-        {
-            // Found the undesired node: make the latest element take its
-            // location in the container. But before doing this we have to
-            // restore references on impacted arcs.
-            if (m_places[i].id == node.id)
-            {
-                // Swap element but keep the ID of the removed element
-                Place& pi = m_places[i];
-                Place& pe = m_places[m_places.size() - 1u];
-                if (pe.caption == pe.key)
-                {
-                    m_places[i] = Place(pi.id, pi.key, pe.x, pe.y, pe.tokens);
-                }
-                else
-                {
-                    m_places[i] = Place(pi.id, pe.caption, pe.x, pe.y, pe.tokens);
-                }
-                assert(m_next_place_id >= 1u);
-                m_next_place_id -= 1u;
-
-                // Update the references to nodes of the arc
-                for (auto& a: m_arcs) // TODO optim: use in/out arcs but they may not be generated
-                {
-                    if (a.to.key == pe.key)
-                        a = Arc(a.from, m_places[i], a.duration);
-                    if (a.from.key == pe.key)
-                        a = Arc(m_places[i], a.to, a.duration);
-                }
-
-                m_places.pop_back();
-            }
-        }
+        helperRemovePlace(node);
     }
     else
     {
-        i = m_transitions.size();
-        while (i--)
+        helperRemoveTransition(node);
+        for (auto it: nodes_to_remove)
         {
-            if (m_transitions[i].id == node.id)
-            {
-                Transition& ti = m_transitions[i];
-                Transition& te = m_transitions[m_transitions.size() - 1u];
-                if (te.caption == te.key)
-                {
-                    m_transitions[i] = Transition(ti.id, ti.key, te.x, te.y, te.angle,
-                                                  (m_type == TypeOfNet::TimedPetriNet)
-                                                  ? true : false);
-                }
-                else
-                {
-                    m_transitions[i] = Transition(ti.id, te.caption, te.x, te.y, te.angle,
-                                                  (m_type == TypeOfNet::TimedPetriNet)
-                                                  ? true : false);
-                }
-                assert(m_next_transition_id >= 1u);
-                m_next_transition_id -= 1u;
-
-                for (auto& a: m_arcs) // TODO idem
-                {
-                    if (a.to.key == te.key)
-                        a = Arc(a.from, m_transitions[i], a.duration);
-                    if (a.from.key == te.key)
-                        a = Arc(m_transitions[i], a.to, a.duration);
-                }
-
-                m_transitions.pop_back();
-            }
+            helperRemovePlace(*it);
         }
     }
 
     // Restore in arcs and out arcs for each node
     generateArcsInArcsOut();
+    modified = true;
 }
 
 //------------------------------------------------------------------------------
