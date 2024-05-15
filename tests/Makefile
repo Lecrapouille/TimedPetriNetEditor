@@ -65,7 +65,7 @@ OBJS += PetriNet.o Algorithms.o Simulation.o
 OBJS += ExportGrafcetCpp.o ExportJSON.o ExportSymfony.o ExportPnEditor.o
 OBJS += ExportPetriLaTeX.o ExportJulia.o ExportGraphviz.o ExportDrawIO.o
 OBJS += ExportPNML.o Exports.o ImportPNML.o ImportJSON.o Imports.o
-OBJS += ImportTimedEventGraph.o ExportTimedEventGraph.o
+OBJS += ImportTimedEventGraph.o ExportTimedEventGraph.o ImportFlowshop.o
 OBJS += PetriNetTests.o LoadJSONTests.o HowardTests.o EventGraphTests.o
 OBJS += SparseMatrixTests.o TimedTokensTests.o main.o
 

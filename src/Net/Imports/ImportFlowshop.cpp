@@ -1,107 +1,171 @@
+//=============================================================================
+// TimedPetriNetEditor: A timed Petri net editor.
+// Copyright 2021 -- 2023 Quentin Quadrat <lecrapouille@gmail.com>
+//
+// This file is part of TimedPetriNetEditor.
+//
+// TimedPetriNetEditor is free software: you can redistribute it and/or modify it
+// under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful, but
+// WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+// General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.
+//=============================================================================
+
+#include "Imports.hpp"
+#include "TimedPetriNetEditor/PetriNet.hpp"
+#include <sstream>
+#include <fstream>
+#include <cstring>
+
+namespace tpne {
+
 //------------------------------------------------------------------------------
-// See http://jpquadrat.free.fr/chine.pdf flowshop_graph() function
-// TODO ./build/TimedPetriEditor foo.flowshop
-bool PetriNet::importFlowshop(std::string const& filename)
+std::vector<std::string> splitLine(std::ifstream& file)
 {
-    static_assert(std::numeric_limits<double>::is_iec559, "IEEE 754 required");
+    std::string s;
 
-    std::ifstream ifs{ filename };
-    if (!ifs)
+    std::getline(file, s);
+    std::cout << "Line " << s << std::endl;
+    std::stringstream ss(s);
+    std::vector<std::string> v;
+
+    while (std::getline(ss, s))
     {
-        std::cerr << "Could not open matrix file '"
-                  << filename << "' for reading"
-                  << std::endl;
-        return false;
+        std::cout << s << std::endl;
+        v.push_back(s);
     }
 
-    // Dense matrix
-    std::vector<std::vector<double>> matrix;
-    size_t rows, columns;
-
-    // Read the number of rows and columns and resize the vector of data
-    if (!(ifs >> rows >> columns))
-    {
-        m_message.str("");
-        m_message << "Malformed matrix dimension. Needed rows columns information"
-                  << std::endl;
-        return false;
-    }
-
-    // Read all data and store them into the matrix
-    matrix.resize(rows, std::vector<double>(columns));
-    for (std::vector<double>& row : matrix)
-    {
-        for (double& col : row)
-        {
-            std::string text;
-            ifs >> text;
-            col = std::stod(text.c_str());
-            std::cout << ' ' << col;
-        }
-        std::cout << std::endl;
-    }
-
-    // Construct the flowshop
-    float x, y;
-    const size_t machines = rows;
-    const size_t pieces = columns;
-    const float SPACING = 100.0f;
-    size_t id = 0u; // Place unique identifier
-    size_t m, p; // iterators
-    std::vector<Place*> places;
-
-    // Add places of the matrix
-    x = 2.0f * SPACING; y = SPACING - 50.0f;
-    for (m = 0u; m < machines; ++m) // TODO inverser l'ordre
-    {
-        x = 2.0f * SPACING;
-        for (p = 0u; p < pieces; ++p)
-        {
-            if (matrix[m][p] != -std::numeric_limits<double>::infinity())
-            {
-                // Place caption "m1p2" for "Machine1--Piece2"
-                //std::string caption("m" + std::to_string(m) + "p" + std::to_string(p));
-                std::string caption(std::to_string(id) + ": " + std::to_string(m * pieces + p));
-                places.push_back(&addPlace(id++, caption, x, y, 0u));
-            }
-            x += SPACING;
-        }
-        y += SPACING;
-    }
-
-    // Link arcs between places: this will add the transitions
-    for (m = 0u; m < 2u/*machines - 1u*/; ++m)
-    {
-        for (p = 0u; p < pieces - 1u; ++p)
-        {
-            size_t next = p + 1u;
-            while ((next < pieces - 1u) && (matrix[m][next] == -std::numeric_limits<double>::infinity()))
-            {
-                next += 1u;
-            }
-
-            Node* from = findNode(places[m * pieces + p]->key);
-            Node* to = findNode(places[m * pieces + next]->key);
-            std::cout << "M" << m << ": " <<
-            addArc(*from, *to, float(matrix[m][p]), false);
-        }
-    }
-
-    // Construct the flowshop: Place the machines (inputs)
-    x = SPACING; y = SPACING;
-    for (size_t i = 0u; i < machines; ++i)
-    {
-        addPlace(p++, "Machine " + std::to_string(i), x, y, 0u); // FIXME id
-        y += SPACING;
-    }
-
-    // Construct the flowshop: Place the pieces (inputs)
-    x += SPACING / 2.0f;
-    for (size_t i = 0u; i < pieces; ++i)
-    {
-        addPlace(p++, "Piece " + std::to_string(i), x, y, 0u); // FIXME id
-        x += SPACING;
-    }
-
-    return true;
+    return v;
 }
+
+//------------------------------------------------------------------------------
+std::string importFlowshop(Net& net, std::string const& filename)
+{
+    struct DataMatrix
+    {
+        std::vector<std::string> columnNames;
+        std::vector<std::string> rowNames;
+        std::vector<std::vector<float>> data;
+    };
+
+    DataMatrix matrix;
+    std::stringstream error;
+
+    // Check if file exists
+    std::ifstream file(filename);
+    if (!file)
+    {
+        error << "Failed opening '" << filename << "'. Reason was '"
+            << strerror(errno) << "'" << std::endl;
+        return error.str();
+    }
+
+    // Extract number of transitions and number of lines
+    size_t transitions, lines, rows;
+    std::string type;
+
+    if (!(file >> type >> rows >> lines))
+    {
+        error << "Malformed header. Needed 'Flowshop number_transitions number_lines'"
+            << std::endl;
+        return error.str();
+    }
+    if (type != "Flowshop")
+    {
+        error << "Malformed token. Expected to extract token 'TimedEventGraph'"
+            << std::endl;
+        return error.str();
+    }
+
+    // windows screen.
+    // FIXME: get the exact dimension Editor::viewSize()
+    // FIXME: initial frame iteration: the screen size is not at its final size
+    const size_t w = 600u; const size_t h = 600u;
+    const size_t margin = 50u;
+    // Since the file does not give position, we place them as square
+    size_t dx = (w - 2u * margin) / rows;
+    size_t dy = (h - 2u * margin) / lines;
+    size_t x = margin + dx; size_t y = margin + dy;
+
+    size_t id = 0u;
+    std::string line;
+
+    // End the current line
+    getline(file, line);
+
+    // Read the column names
+    if (getline(file, line))
+    {
+        std::istringstream columnNamesStream(line);
+        std::string columnName;
+        while (columnNamesStream >> columnName)
+        {
+            matrix.columnNames.push_back(columnName);
+        }
+    }
+
+    // Read the following lines to obtain the row names and the data
+    while (getline(file, line))
+    {
+        std::istringstream lineStream(line);
+        std::string rowName;
+        if (lineStream >> rowName)
+        {
+            matrix.rowNames.push_back(rowName);
+
+            std::vector<float> row;
+            std::string value;
+            while (lineStream >> value)
+            {
+                row.push_back(stof(value));
+
+                if (value != "nan")
+                {
+                    net.addPlace(id, Transition::to_str(id), x, y, 0);
+                    id++;
+                }
+                x += dx;
+            }
+            matrix.data.push_back(row);
+        }
+        else
+        {
+            error << "Malformed line '" << line << "'" << std::endl;
+            return error.str(); 
+        }
+        x = margin + dx;
+        y += dy;
+    }
+
+    float ymax = y;
+    float xmax = margin + dx + dx * rows;
+
+    // Place this code outside the getline() loop to have id of internal transitions
+    // starting from 0.
+    x = margin + dx - dx / 2.0f; y = margin;
+    for (const auto& columnName : matrix.columnNames)
+    {
+        net.addPlace(id++, columnName, x, y, 0);
+        //net.addPlace(id++, columnName, x, ymax, 0);
+        x += dx;
+    }
+
+    x = margin; y = margin + dy + dy / 2.0f;
+    for (const auto& rowName : matrix.rowNames)
+    {
+        net.addPlace(id++, rowName, x, y, 0);
+        //net.addPlace(id++, rowName, xmax, y, 0);
+        y += dy;
+    }
+
+    return {};
+}
+
+} // namespace tpne
