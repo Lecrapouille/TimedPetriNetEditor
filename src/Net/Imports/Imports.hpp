@@ -34,6 +34,8 @@ std::string importFromJSON(Net& net, std::string const& filename);
 std::string importFromTimedEventGraph(Net& net, std::string const& filename);
 //! \brief Import https://gitlab.com/porky11/pn-editor
 std::string importFromPNML(Net& net, std::string const& filename);
+//! \brief Import
+std::string importFlowshop(Net& net, std::string const& filename);
 
 //! \brief Interface for importing a Petri file.
 //! \param[inout] net the net we are importing. Better to call net.clear()

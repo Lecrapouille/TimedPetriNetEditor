@@ -28,7 +28,7 @@ std::vector<Importer> const& importers()
     static const std::vector<Importer> s_importers = {
         { "JSON", ".json", importFromJSON },
         { "Petri Net Markup Language", ".pnml", importFromPNML },
-        // FIXME add a filter to eliminate it in the case the net is not event graph
+        { "Flowshop", ".flowshop", importFlowshop },
         { "Timed Event Graph", ".teg", importFromTimedEventGraph }
     };
 

@@ -65,13 +65,13 @@ LINKER_FLAGS += -ldl -lpthread
 ###################################################
 # Make the list of compiled files for the library
 #
-IMPORT_FORMATS += ImportJSON.o ImportPNML.o ImportTimedEventGraph.o ExportTimedEventGraph.o
-EXPORT_FORMATS += ExportJSON.o ExportPNML.o ExportSymfony.o ExportPnEditor.o
-EXPORT_FORMATS += ExportPetriLaTeX.o ExportJulia.o ExportGraphviz.o ExportDrawIO.o
-EXPORT_FORMATS += ExportGrafcetCpp.o
+LIB_OBJS += ImportJSON.o ImportPNML.o ImportTimedEventGraph.o ExportTimedEventGraph.o
+LIB_OBJS += ExportJSON.o ExportPNML.o ExportSymfony.o ExportPnEditor.o
+LIB_OBJS += ExportPetriLaTeX.o ExportJulia.o ExportGraphviz.o ExportDrawIO.o
+LIB_OBJS += ExportGrafcetCpp.o ImportFlowshop.o
 LIB_OBJS += Path.o Howard.o Utils.o TimedTokens.o Receptivities.o
 LIB_OBJS += PetriNet.o Algorithms.o Simulation.o History.o
-LIB_OBJS += $(IMPORT_FORMATS) Imports.o $(EXPORT_FORMATS) Exports.o
+LIB_OBJS += Imports.o Exports.o
 
 ###################################################
 # Compile the project, the static and shared libraries
