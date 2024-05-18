@@ -28,6 +28,7 @@
 #include "implot.h"
 #include "ImGuiFileDialog.h"
 #include "rlImGui.h"
+#include "DearUtils.hpp"
 
 #include <string>
 #include <functional>

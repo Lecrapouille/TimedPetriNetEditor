@@ -525,10 +525,33 @@ void Editor::showDynamicLinearSystem() const
             ImGui::EndTabBar();
         }
 
+#if 0
+        if (m_states.plot.isEmpty())
+        {
+            //SparseMatrix<MaxPlus> X0;
+            //SparseMatrix<MaxPlus> X = X0;
+            //for (size_t i = 0; i < 10; i++)
+            //{
+            //    X = A * X + B * u[i,:];
+            //    Y = C * X;
+            //    m_states.plot.add(X, Y);
+            //}
+            for (size_t i = 0; i < 10; i++)
+            {
+                m_states.plot.add(i, 3*i);
+            }
+        }
+        else
+        {
+            drawPlot("aa", "bb", m_states.plot.x(), m_states.plot.y());
+        }
+#endif
+
         if (ImGui::Button("OK", ImVec2(120, 0)))
         {
             ImGui::CloseCurrentPopup();
             m_states.do_syslin = false;
+            m_states.plot.reset();
         }
         ImGui::EndPopup();
     }
