@@ -29,7 +29,7 @@ Receptivity::StepExp::StepExp(Net& net, std::string const& name)
     : m_net(net)
 {
     assert((name[0] == 'X') && "Incorrect place identifier");
-    m_id = std::stoi(&name[1]); // FIXME better error management
+    m_id = std::stoul(&name[1]); // FIXME better error management
 }
 
 //-----------------------------------------------------------------------------

@@ -38,7 +38,8 @@ void inputInteger(std::string const& title, size_t const maxTokens, size_t& toke
     ImGui::SameLine(0.0f, spacing);
     if (ImGui::ArrowButton("##right", ImGuiDir_Right))
     {
-        tokens = std::min(maxTokens, ++tokens);
+        ++tokens;
+        tokens = std::min(maxTokens, tokens);
     }
     ImGui::PopButtonRepeat();
     ImGui::SameLine();

@@ -1318,6 +1318,8 @@ bool Editor::PetriView::isMouseClicked(ImGuiMouseButton& key)
 //--------------------------------------------------------------------------
 bool Editor::PetriView::isMouseDraggingView(ImGuiMouseButton const& button)
 {
+    (void) button;
+
     const float mouse_threshold_for_pan = grid.menu ? -1.0f : 0.0f;
     if (ImGui::IsMouseDragging(MOUSE_BOUTON_DRAGGING_VIEW, mouse_threshold_for_pan))
     {

@@ -73,8 +73,6 @@ struct SparseMatrix // FIXME: redo manage (max,+) type
 
     T get(size_t i_, size_t j_) const
     {
-        size_t currCol;
-
         for (size_t pos = 0u; pos < i.size(); ++pos)
         {
             if (i[pos] == i_)

@@ -153,6 +153,7 @@ void Application::framerate(size_t const framerate)
 //------------------------------------------------------------------------------
 bool Application::screenshot(std::string const& path)
 {
+    (void) path;
     std::cerr << "Application::screenshot: Not implemented yet" << std::endl;
     return false;
 }
