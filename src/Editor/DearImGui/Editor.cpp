@@ -335,13 +335,9 @@ void Editor::menu()
                 {
                     m_states.do_syslin = true;
                 }
-                if (ImGui::MenuItem("Show Dater equation", nullptr, false))
+                if (ImGui::MenuItem("Show dater or counter equations", nullptr, false))
                 {
-                    m_states.do_dater = true;
-                }
-                if (ImGui::MenuItem("Show Counter equation", nullptr, false))
-                {
-                    m_states.do_counter = true;
+                    m_states.do_counter_or_dater = true;
                 }
                 if (ImGui::MenuItem("Show adjacency matrices", nullptr, false))
                 {
@@ -381,7 +377,7 @@ void Editor::menu()
     if (m_states.do_import_from != nullptr) { importNetFrom(*m_states.do_import_from); }
     if (m_states.do_screenshot) { takeScreenshot(); }
     if (m_states.do_adjency) { showAdjacencyMatrices(); }
-    if (m_states.do_counter || m_states.do_dater) { showCounterOrDaterequation(); }
+    if (m_states.do_counter_or_dater) { showCounterOrDaterEquation(); }
     if (m_states.do_syslin) { showDynamicLinearSystem(); }
     if (m_states.do_find_critical_cycle) { showCriticalCycles(); }
     if (m_states.request_quitting)
@@ -437,41 +433,46 @@ void Editor::showAdjacencyMatrices() const
 }
 
 //------------------------------------------------------------------------------
-void Editor::showCounterOrDaterequation() const
+void Editor::showCounterOrDaterEquation() const
 {
-    const char* title = m_states.do_counter ? "Counter Equation": "Dater Equation";
-    ImGui::OpenPopup(title);
+    static bool use_caption = false;
+    static bool tropical_notation = false;
+    static bool show_matrix = false;
+
+    ImGui::OpenPopup("Counter or dater equations");
     ImGui::SetNextWindowPos(m_states.viewport_center, ImGuiCond_Appearing,
                             ImVec2(0.5f, 0.5f));
-    if (ImGui::BeginPopupModal(title, NULL, ImGuiWindowFlags_AlwaysAutoResize))
+    if (ImGui::BeginPopupModal("Counter or dater equations", NULL,
+        ImGuiWindowFlags_AlwaysAutoResize))
     {
-        static bool use_caption = false;
-        static bool maxplus_notation = false;
-        static bool show_matrix = false;
         ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(0, 0));
-        ImGui::Checkbox(m_states.do_counter
-                        ? "Use (min,+) operator"
-                        : "Use (max,+) operator", &maxplus_notation);
+        ImGui::Checkbox("Use (min,+) operator", &tropical_notation);
         ImGui::SameLine();
         ImGui::Checkbox("Use caption", &use_caption);
         ImGui::PopStyleVar();
 
-        ImGui::Separator();
-        if (m_states.do_counter)
+        ImGuiTabBarFlags tab_bar_flags = ImGuiTabBarFlags_None;
+        if (ImGui::BeginTabBar("tab counter or dater", tab_bar_flags))
         {
-            ImGui::Text("%s", showCounterEquation(
-                            m_net, "", use_caption, maxplus_notation).str().c_str());
-        }
-        else
-        {
-            ImGui::Text("%s", showDaterEquation(
-                            m_net, "", use_caption, maxplus_notation).str().c_str());
+            if (ImGui::BeginTabItem("Counter"))
+            {
+                ImGui::Text("%s", showCounterEquation(m_net, "", use_caption, tropical_notation)
+                    .str().c_str());
+                ImGui::EndTabItem();
+            }
+            if (ImGui::BeginTabItem("Dater"))
+            {
+                ImGui::Text("%s", showDaterEquation(m_net, "", use_caption, tropical_notation)
+                    .str().c_str());
+                ImGui::EndTabItem();
+            }
+            ImGui::EndTabBar();
         }
 
         if (ImGui::Button("OK", ImVec2(120, 0)))
         {
             ImGui::CloseCurrentPopup();
-            m_states.do_counter = m_states.do_dater = false;
+            m_states.do_counter_or_dater = false;
         }
         ImGui::EndPopup();
     }

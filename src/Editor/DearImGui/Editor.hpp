@@ -75,7 +75,7 @@ private: // Show results from Petri algorithms
 
     void showCriticalCycles();// const;
     void showDynamicLinearSystem() const;
-    void showCounterOrDaterequation() const;
+    void showCounterOrDaterEquation() const;
     void showAdjacencyMatrices() const;
 
 private: // Petri net services
@@ -130,8 +130,7 @@ private:
     // ************************************************************************
     struct States
     {
-        bool do_dater = false;
-        bool do_counter = false;
+        bool do_counter_or_dater = false;
         bool do_find_critical_cycle = false;
         bool do_syslin = false;
         bool do_adjency = false;
