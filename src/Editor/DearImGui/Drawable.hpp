@@ -33,6 +33,7 @@ void drawToken(ImDrawList* draw_list, float const x, float const y);
 void drawTimedToken(ImDrawList* draw_list, size_t tokens, float const x, float const y);
 void drawPlace(ImDrawList* draw_list, Place const& place, TypeOfNet const type, ImVec2 const& origin, bool const show_caption, float const alpha);
 void drawTransition(ImDrawList* draw_list, Transition const& transition, TypeOfNet const type, ImVec2 const& origin, bool const show_caption, float const alpha);
+void drawPlot(const char* title, const char* label, std::vector<float> const& x, std::vector<float> const& y);
 
 } // namespace tpne
 

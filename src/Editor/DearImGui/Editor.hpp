@@ -106,6 +106,25 @@ private: // Error logs
 private:
 
     // ************************************************************************
+    //! \brief Hold X and Y data for plotting.
+    // ************************************************************************
+    class PlotData
+    {
+    public:
+
+        inline void add(float const x, float const y) { m_x_data.push_back(x); m_y_data.push_back(y); }
+        inline void reset() { m_x_data.clear(); m_y_data.clear(); }
+        inline bool isEmpty() const { return m_x_data.empty(); }
+        inline bool length() const { return m_x_data.size(); }
+        inline std::vector<float> const& x() const { return m_x_data; }
+        inline std::vector<float> const& y() const { return m_y_data; }
+
+    private:
+        std::vector<float> m_x_data;
+        std::vector<float> m_y_data;
+    };
+
+    // ************************************************************************
     //! \brief Since we are using immediate mode GUI we need to memorize states
     //! controling which widgets/modal windows to show.
     // ************************************************************************
@@ -129,6 +148,7 @@ private:
         ImVec2 viewport_center;
         std::string title;
         bool request_quitting = false;
+        PlotData plot;
     };
 
     // ************************************************************************

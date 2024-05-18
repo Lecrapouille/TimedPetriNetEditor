@@ -20,6 +20,7 @@
 
 #include "Editor/DearImGui/Drawable.hpp"
 #include "Editor/DearImGui/DearUtils.hpp"
+#include "implot.h"
 #include "Utils/Utils.hpp"
 #include <iomanip> // std::setprecision
 
@@ -290,6 +291,17 @@ void drawTransition(ImDrawList* draw_list, Transition const& transition,
     ImVec2 dim = ImGui::CalcTextSize(text);
     ImVec2 ptext = p - ImVec2(dim.x / 2.0f, TRANS_HEIGHT / 2.0f + dim.y);
     draw_list->AddText(ptext, CAPTION_COLOR, text);
+}
+
+//------------------------------------------------------------------------------
+void drawPlot(const char* title, const char* label, std::vector<float> const& x,
+    std::vector<float> const& y)
+{
+    if (ImPlot::BeginPlot(title))
+    {
+        ImPlot::PlotLine(label, x.data(), y.data(), x.size());
+        ImPlot::EndPlot();
+    }
 }
 
 } // namespace tpne
