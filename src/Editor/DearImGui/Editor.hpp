@@ -28,6 +28,7 @@
 #  include "Net/Imports/Imports.hpp"
 #  include "Utils/History.hpp"
 #  include "Utils/Path.hpp"
+#  include <vector>
 
 namespace tpne {
 

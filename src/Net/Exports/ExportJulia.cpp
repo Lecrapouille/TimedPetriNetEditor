@@ -120,7 +120,7 @@ std::string exportToJulia(Net const& net, std::string const& filename)
     file << "# Arcs are Places and therefore have tokens and durations" << std::endl;
     SparseMatrix<MaxPlus> N; SparseMatrix<MaxPlus> T;
     bool res = toAdjacencyMatrices(canonic, N, T);
-    assert(res == true);
+    assert(res == true); (void) res;
     for (auto& p: canonic.places())
     {
         Transition& from = *reinterpret_cast<Transition*>(&(p.arcsIn[0]->from));

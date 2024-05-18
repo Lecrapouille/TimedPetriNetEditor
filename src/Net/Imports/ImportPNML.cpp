@@ -80,7 +80,7 @@ std::string importFromPNML(Net& net, std::string const& filename)
                             ->Attribute("y"));
         }
 
-        net.addPlace(place_id, caption, x, y, tokens);
+        net.addPlace(place_id, caption, x, y, size_t(tokens));
         place_id++;
     }
 

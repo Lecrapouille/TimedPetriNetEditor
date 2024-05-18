@@ -51,7 +51,7 @@ std::string importFromTimedEventGraph(Net& net, std::string const& filename)
     }
 
     // Extract number of transitions and number of lines
-    size_t transitions, lines, rows;
+    size_t transitions, lines;
     char separator;
     std::string type;
 
@@ -74,7 +74,7 @@ std::string importFromTimedEventGraph(Net& net, std::string const& filename)
     size_t x = margin, y = margin;
     for (size_t id = 0u; id < transitions; ++id)
     {
-        net.addTransition(id, Transition::to_str(id), x, y, 0);
+        net.addTransition(id, Transition::to_str(id), float(x), float(y), 0);
         x += dx;
         if (x > w - margin) { x = margin; y += dy; }
     }
