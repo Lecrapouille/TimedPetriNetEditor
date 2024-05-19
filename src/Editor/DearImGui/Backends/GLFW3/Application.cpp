@@ -46,11 +46,17 @@ Application::Application(size_t const width, size_t const height, std::string co
     if (!glfwInit())
         std::exit(1);
 
+#ifdef EXAEQUOS
+    const char* glsl_version = "#version 300 es";
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 0);
+#else
     const char* glsl_version = "#version 150";
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 2);
     glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE); // Required on Mac: 3.2+ only
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+#endif
 
     // Create window with graphics context
     m_window = glfwCreateWindow(width, height, title.c_str(), nullptr, nullptr);
