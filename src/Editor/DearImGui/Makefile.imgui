@@ -3,10 +3,17 @@
 # using Raylib backend since GLFW3 is not compilable.
 #
 ifeq ($(ARCHI),Emscripten)
-ifneq ($(DEAR_IMGUI_BACKEND),RayLib)
-$(warning Force RayLib backend for compiling with Emscripten)
-DEAR_IMGUI_BACKEND = RayLib
-endif
+  ifneq ($(EXAEQUOS),)
+    ifneq ($(DEAR_IMGUI_BACKEND),GLFW3)
+       $(warning Force GLFW3 backend for compiling with ExaequOS)
+       DEAR_IMGUI_BACKEND = GLFW3
+    endif
+  else
+    ifneq ($(DEAR_IMGUI_BACKEND),RayLib)
+      $(warning Force RayLib backend for compiling with Emscripten)
+      DEAR_IMGUI_BACKEND = RayLib
+    endif
+  endif
 endif
 
 ###################################################
@@ -46,6 +53,9 @@ endif
 # Dear ImGui backends: OpenGL/GLFW3
 #
 ifeq ($(DEAR_IMGUI_BACKEND),GLFW3)
+ifneq ($(EXAEQUOS),)
+PKG_LIBS += --static glfw
+endif
 VPATH += $(P)/src/Editor/DearImGui/Backends/GLFW3
 INCLUDES += -I$(P)/src/Editor/DearImGui/Backends/GLFW3
 GUI_OBJS += imgui_impl_glfw.o imgui_impl_opengl3.o

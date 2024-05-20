@@ -20,16 +20,21 @@ include $(M)/Makefile.header
 # OpenGL: glfw and glew libraries
 #
 ifeq ($(ARCHI),Darwin)
-INCLUDES += -I/usr/local/include -I/opt/local/include
-LINKER_FLAGS += -framework OpenGL -framework Cocoa
-LINKER_FLAGS += -framework IOKit -framework CoreVideo
-LINKER_FLAGS += -L/usr/local/lib -L/opt/local/lib
-LINKER_FLAGS += -lGLEW -lglfw
+    INCLUDES += -I/usr/local/include -I/opt/local/include
+    LINKER_FLAGS += -framework OpenGL -framework Cocoa
+    LINKER_FLAGS += -framework IOKit -framework CoreVideo
+    LINKER_FLAGS += -L/usr/local/lib -L/opt/local/lib
+    LINKER_FLAGS += -lGLEW -lglfw
 else ifeq ($(ARCHI),Linux)
-LINKER_FLAGS += -lGL
-PKG_LIBS += --static glfw3
-else ifneq ($(ARCHI),Emscripten)
-$(error Unknown architecture $(ARCHI) for OpenGL)
+    LINKER_FLAGS += -lGL
+    PKG_LIBS += --static glfw3
+else ifeq ($(ARCHI),Emscripten)
+    ifneq ($(EXAEQUOS),)
+        LINKER_FLAGS += -sMIN_WEBGL_VERSION=2 -sMAX_WEBGL_VERSION=2 -sFULL_ES3
+        PKG_LIBS += exa-wayland --static glfw
+    endif
+else
+    $(error Unknown architecture $(ARCHI) for OpenGL)
 endif
 
 ###################################################
@@ -37,9 +42,11 @@ endif
 # present inside $(BUILD) folder.
 #
 ifeq ($(ARCHI),Emscripten)
+ifeq ($(EXAEQUOS),)
 LINKER_FLAGS += --preload-file examples
 LINKER_FLAGS += --preload-file data
 LINKER_FLAGS += -s FORCE_FILESYSTEM=1
+endif
 endif
 
 ###################################################
@@ -111,15 +118,15 @@ unit-tests:
 .PHONY: check
 check: unit-tests
 
-ifeq ($(ARCHI),Linux)
 ###################################################
 # Install project. You need to be root.
 .PHONY: install
 install: $(TARGET)
+	@$(call INSTALL_BINARY)
+ifeq ($(EXAEQUOS),)
 	@$(MAKE) --no-print-directory -C src/Net install
 	@$(MAKE) --no-print-directory -C src/Editor install
 	@$(MAKE) --no-print-directory -C src/julia install
-	@$(call INSTALL_BINARY)
 	@$(call INSTALL_DOCUMENTATION)
 	@$(call INSTALL_PROJECT_HEADERS)
 endif
