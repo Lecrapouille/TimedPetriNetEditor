@@ -34,8 +34,12 @@ INCLUDES += -I$(P)/include -I$(P)/src -I$(P)/external
 #
 LIB_TPNE_CORE = $(abspath $(P)/src/Net/$(BUILD)/libtimedpetrinetcore.a)
 LIB_TPNE_GUI = $(abspath $(P)/src/Editor/$(BUILD)/libtimedpetrinetgui.a)
+ifneq ($(EXAEQUOS),)
+PKG_LIBS += --static glfw
+else
 PKG_LIBS += --static glfw3
 LINKER_FLAGS += -lGL
+endif
 # WARNING: do not use += since we do not want to include twice libraylib.a
 THIRDPART_LIBS := $(LIB_TPNE_GUI) $(LIB_TPNE_CORE)
 
