@@ -898,8 +898,7 @@ void Editor::inspector()
     }
 
     // Arc durations
-    if ((m_net.type() == TypeOfNet::TimedEventGraph) ||
-        (m_net.type() == TypeOfNet::TimedPetriNet))
+    if (m_net.type() == TypeOfNet::TimedEventGraph)
     {
         ImGui::Begin("Arcs");
         ImGui::Text("%s", "Durations:");
@@ -907,9 +906,20 @@ void Editor::inspector()
         {
             if (arc.from.type == Node::Type::Transition)
             {
-                std::string text(arc.from.key + " -> " + arc.to.key);
+                std::string text(arc.from.key + " -> " + arc.to.arcsOut[0]->to.key);
                 ImGui::InputFloat(text.c_str(), &arc.duration, 0.01f, 1.0f, "%.3f", readonly);
             }
+        }
+        ImGui::End();
+    }
+    else if (m_net.type() == TypeOfNet::TimedPetriNet)
+    {
+        ImGui::Begin("Arcs");
+        ImGui::Text("%s", "Durations:");
+        for (auto& arc: m_net.arcs())
+        {
+            std::string text(arc.from.key + " -> " + arc.to.key);
+            ImGui::InputFloat(text.c_str(), &arc.duration, 0.01f, 1.0f, "%.3f", readonly);
         }
         ImGui::End();
     }
