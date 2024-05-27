@@ -68,7 +68,7 @@ std::string importFlowshop(Net& net, std::string const& filename)
     }
 
     // Extract number of transitions and number of lines
-    size_t transitions, lines, rows;
+    size_t lines, rows;
     std::string type;
 
     if (!(file >> type >> rows >> lines))
@@ -128,7 +128,7 @@ std::string importFlowshop(Net& net, std::string const& filename)
 
                 if (value != "nan")
                 {
-                    net.addPlace(id, Transition::to_str(id), x, y, 0);
+                    net.addPlace(id, Transition::to_str(id), float(x), float(y), 0);
                     id++;
                 }
                 x += dx;
@@ -144,23 +144,23 @@ std::string importFlowshop(Net& net, std::string const& filename)
         y += dy;
     }
 
-    float ymax = y;
-    float xmax = margin + dx + dx * rows;
+    //float ymax = float(y);
+    //float xmax = float(margin + dx + dx * rows);
 
     // Place this code outside the getline() loop to have id of internal transitions
     // starting from 0.
-    x = margin + dx - dx / 2.0f; y = margin;
+    x = margin + dx - dx / 2u; y = margin;
     for (const auto& columnName : matrix.columnNames)
     {
-        net.addPlace(id++, columnName, x, y, 0);
+        net.addPlace(id++, columnName, float(x), float(y), 0);
         //net.addPlace(id++, columnName, x, ymax, 0);
         x += dx;
     }
 
-    x = margin; y = margin + dy + dy / 2.0f;
+    x = margin; y = margin + dy + dy / 2u;
     for (const auto& rowName : matrix.rowNames)
     {
-        net.addPlace(id++, rowName, x, y, 0);
+        net.addPlace(id++, rowName, float(x), float(y), 0);
         //net.addPlace(id++, rowName, xmax, y, 0);
         y += dy;
     }

@@ -63,7 +63,7 @@ void History::addUndo(History::Action::Ptr action)
         m_undoList.pop_front();
     }
     m_undoList.push_back(std::move(action));
-    if ((m_nCleanCount < 0u) && (m_redoList.size() > 0u))
+    if (m_redoList.size() > 0u)
     {
         m_nCleanCount = m_undoList.size() + m_redoList.size() + 1u;
     }

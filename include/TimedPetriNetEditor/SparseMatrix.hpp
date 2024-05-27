@@ -44,8 +44,10 @@ namespace tpne {
 //! starting at 0.
 //------------------------------------------------------------------------------
 template<typename T>
-struct SparseMatrix // FIXME: redo manage (max,+) type
+class SparseMatrix // FIXME: redo manage (max,+) type
 {
+public:
+
     SparseMatrix(size_t const N_ = 0u, size_t const M_ = 0u)
         : N(N_), M(M_)
     {}

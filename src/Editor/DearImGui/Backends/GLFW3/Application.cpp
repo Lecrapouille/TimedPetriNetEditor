@@ -111,7 +111,7 @@ void Application::run()
     {
         // For the display framerate
         double now = glfwGetTime();
-        double deltaTime = now - m_lastUpdateTime;
+        //double deltaTime = now - m_lastUpdateTime;
 
         // Poll events like key presses, mouse movements etc.
         glfwPollEvents();
