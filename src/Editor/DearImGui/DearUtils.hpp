@@ -22,7 +22,15 @@
 #  define DEAR_IMGUI_UTILS_HPP
 
 #  include <string>
-#  include "imgui.h"
+#  include "imgui/imgui.h"
+
+//------------------------------------------------------------------------------
+static inline ImVec2& operator+=(ImVec2& lhs, const ImVec2& rhs)
+{
+    lhs.x += rhs.x;
+    lhs.y += rhs.y;
+    return lhs;
+}
 
 //------------------------------------------------------------------------------
 static inline ImVec2 operator+(ImVec2 const& lhs, ImVec2 const& rhs)
@@ -31,9 +39,29 @@ static inline ImVec2 operator+(ImVec2 const& lhs, ImVec2 const& rhs)
 }
 
 //------------------------------------------------------------------------------
+static inline ImVec2& operator-=(ImVec2& lhs, const ImVec2& rhs)
+{
+    lhs.x -= rhs.x;
+    lhs.y -= rhs.y;
+    return lhs;
+}
+
+//------------------------------------------------------------------------------
 static inline ImVec2 operator-(ImVec2 const& lhs, ImVec2 const& rhs)
 {
     return ImVec2(lhs.x - rhs.x, lhs.y - rhs.y);
+}
+
+//------------------------------------------------------------------------------
+static inline ImVec2 operator*(ImVec2 const& lhs, float const& rhs)
+{
+    return ImVec2(lhs.x * rhs, lhs.y * rhs);
+}
+
+//------------------------------------------------------------------------------
+static inline ImVec2 operator/(ImVec2 const& lhs, float const& rhs)
+{
+    return ImVec2(lhs.x / rhs, lhs.y / rhs);
 }
 
 //------------------------------------------------------------------------------

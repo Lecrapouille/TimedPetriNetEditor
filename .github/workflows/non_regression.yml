@@ -39,7 +39,7 @@ jobs:
         run: |
           cd tests
           V=1 make -j`nproc --all`
-          ./build/TimedPetriNetEditor-UnitTest
+          ../build/TimedPetriNetEditor-UnitTest
       - name: Check if the library can be linked against a project
         run: |
           export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/lib/
@@ -63,7 +63,7 @@ jobs:
         run: |
           make download-external-libs
           make compile-external-libs
-          make -j`sysctl -n hw.logicalcpu`
+          V=1 make -j`sysctl -n hw.logicalcpu`
       - name: Download, configure and install Google test
         run: |
           wget https://github.com/google/googletest/archive/release-1.11.0.tar.gz
@@ -74,8 +74,8 @@ jobs:
       - name: Do non regression tests
         run: |
           cd tests
-          make -j`sysctl -n hw.logicalcpu`
-          ./build/TimedPetriNetEditor-UnitTest
+          V=1 check -j`sysctl -n hw.logicalcpu`
+          ../build/TimedPetriNetEditor-UnitTest
       - name: Create the DMG file
         run: |
           hdiutil create -format UDZO -srcfolder build/TimedPetriNetEditor.app build/TimedPetriNetEditor.dmg

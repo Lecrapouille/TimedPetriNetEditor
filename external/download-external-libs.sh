@@ -5,8 +5,6 @@
 ### It replaces git submodules that I dislike.
 ###############################################################################
 
-source ../.makefile/download-external-libs.sh
-
 ### Dear ImGui: Bloat-free Graphical User interface for C++ with minimal dependencies
 ### License: MIT
 cloning ocornut/imgui -b docking

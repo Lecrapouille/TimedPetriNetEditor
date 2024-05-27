@@ -1,48 +1,49 @@
+##=====================================================================
+## TimedPetriNetEditor: A timed Petri net editor.
+## Copyright 2021 -- 2023 Quentin Quadrat <lecrapouille@gmail.com>
+##
+## This file is part of PetriEditor.
+##
+## PetriEditor is free software: you can redistribute it and/or modify it
+## under the terms of the GNU General Public License as published by
+## the Free Software Foundation, either version 3 of the License, or
+## (at your option) any later version.
+##
+## This program is distributed in the hope that it will be useful, but
+## WITHOUT ANY WARRANTY; without even the implied warranty of
+## MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+## General Public License for more details.
+##
+## You should have received a copy of the GNU General Public License
+## along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.
+##=====================================================================
+
 ###################################################
 # Location of the project directory and Makefiles
 #
 P := ../..
 M := $(P)/.makefile
-BUILD := $(P)/build
 
 ###################################################
 # Project definition
 #
 include $(P)/Makefile.common
-TARGET = TimedPetriNetGui
-DESCRIPTION = Library for the GUI of the Timed Petri Net Editor
-
-###################################################
-# Sharable informations between all Makefiles
-#
-include $(M)/Makefile.header
+TARGET_NAME :=  TimedPetriEditor
+TARGET_DESCRIPTION := Library Editor for Petri nets
+include $(M)/project/Makefile
 
 ###################################################
 # For the moment we only use Dear ImGui
 #
-include ./DearImGui/Makefile.imgui
+include ./DearImGui/Backends/Makefile
 
 ###################################################
 # Make the list of compiled files for the library
 #
-VPATH += $(P)/include $(P)/src $(P)/src/Utils $(P)/src/Net
-VPATH += $(P)/src/Net/Imports $(P)/src/Net/Exports
-INCLUDES += -I$(P)/include -I$(P)/src -I$(P)/external
-LIB_OBJS += $(GUI_OBJS) Drawable.o Application.o Editor.o
+INCLUDES += $(P)/src $(P)/include
+LIB_FILES += $(GUI_FILES)
 
 ###################################################
-# Compile the project, the static and shared libraries
+# Generic Makefile rules
 #
-.PHONY: all
-all: $(STATIC_LIB_TARGET) $(SHARED_LIB_TARGET) $(PKG_FILE) $(P)/Makefile $(P)/Makefile.common
-
-###################################################
-# Install project. You need to be root.
-.PHONY: install
-install: $(STATIC_LIB_TARGET) $(SHARED_LIB_TARGET) $(PKG_FILE)
-	@$(call INSTALL_PROJECT_LIBRARIES)
-
-###################################################
-# Sharable informations between all Makefiles
-#
-include $(M)/Makefile.footer
+include $(M)/rules/Makefile

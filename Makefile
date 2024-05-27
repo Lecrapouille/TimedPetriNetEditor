@@ -1,3 +1,23 @@
+##=====================================================================
+## TimedPetriNetEditor: A timed Petri net editor.
+## Copyright 2021 -- 2023 Quentin Quadrat <lecrapouille@gmail.com>
+##
+## This file is part of PetriEditor.
+##
+## PetriEditor is free software: you can redistribute it and/or modify it
+## under the terms of the GNU General Public License as published by
+## the Free Software Foundation, either version 3 of the License, or
+## (at your option) any later version.
+##
+## This program is distributed in the hope that it will be useful, but
+## WITHOUT ANY WARRANTY; without even the implied warranty of
+## MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+## General Public License for more details.
+##
+## You should have received a copy of the GNU General Public License
+## along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.
+##=====================================================================
+
 ###################################################
 # Location of the project directory and Makefiles
 #
@@ -8,93 +28,70 @@ M := $(P)/.makefile
 # Project definition
 #
 include $(P)/Makefile.common
-TARGET = $(PROJECT)
-DESCRIPTION = Timed Petri Net Editor
+TARGET_NAME := $(PROJECT_NAME)
+TARGET_DESCRIPTION := Timed Petri Net Editor
+include $(M)/project/Makefile
 
 ###################################################
-# Sharable informations between all Makefiles
+# Standalone application
 #
-include $(M)/Makefile.header
+SRC_FILES := src/main.cpp
+INCLUDES := $(P)/include
+VPATH := $(P)/src
+# Internal libs to compile
+LIB_TPNE_NET := $(call internal-lib,TimedPetriNet)
+LIB_TPNE_EDITOR := $(call internal-lib,TimedPetriEditor)
+LIB_TPNE_JULIA := $(call internal-lib,TimedPetriJulia)
+INTERNAL_LIBS := $(LIB_TPNE_EDITOR) $(LIB_TPNE_NET) $(LIB_TPNE_JULIA)
+DIRS_WITH_MAKEFILE := $(P)/src/Net $(P)/src/Editor $(P)/src/julia
 
 ###################################################
-# OpenGL: glfw and glew libraries
+# GUI
 #
-ifeq ($(ARCHI),Darwin)
-    INCLUDES += -I/usr/local/include -I/opt/local/include
-    LINKER_FLAGS += -framework OpenGL -framework Cocoa
-    LINKER_FLAGS += -framework IOKit -framework CoreVideo
-    LINKER_FLAGS += -L/usr/local/lib -L/opt/local/lib
-    LINKER_FLAGS += -lGLEW -lglfw
-else ifeq ($(ARCHI),Linux)
-    LINKER_FLAGS += -lGL
-    PKG_LIBS += --static glfw3
-else ifeq ($(ARCHI),Emscripten)
-    ifneq ($(EXAEQUOS),)
-        LINKER_FLAGS += -sMIN_WEBGL_VERSION=2 -sMAX_WEBGL_VERSION=2 -sFULL_ES3
-        PKG_LIBS += exa-wayland --static glfw
-    endif
-else
-    $(error Unknown architecture $(ARCHI) for OpenGL)
-endif
+include $(abspath $(P)/src/Editor/DearImGui/Backends/Makefile)
+THIRDPART_LIBS :=
+LINKER_FLAGS += -ldl -lpthread
+INCLUDES += $(P)/src/Editor/DearImGui
+INCLUDES += $(P)/src
 
 ###################################################
 # Embed assets for web version. Assets shall be
 # present inside $(BUILD) folder.
 #
-ifeq ($(ARCHI),Emscripten)
-ifeq ($(EXAEQUOS),)
-LINKER_FLAGS += --preload-file examples
-LINKER_FLAGS += --preload-file data
-LINKER_FLAGS += -s FORCE_FILESYSTEM=1
-endif
-endif
-
-###################################################
-# Create a MacOS X bundle application.
-#
-ifeq ($(ARCHI),Darwin)
-BUILD_MACOS_APP_BUNDLE = 1
-APPLE_IDENTIFIER = lecrapouille
-MACOS_BUNDLE_ICON = data/TimedPetriNetEditor.icns
-LINKER_FLAGS += -framework CoreFoundation
+ifeq ($(OS),Emscripten)
+    ifndef EXAEQUOS
+        # Install the folder data in the Emscripten filesystem
+        LINKER_FLAGS += --preload-file $(PROJECT_DATA_DIR)
+        LINKER_FLAGS += -s FORCE_FILESYSTEM=1
+        # Add this flag ONLY in case we are using ASYNCIFY code
+        LINKER_FLAGS += -s ASYNCIFY
+        # For linking glfwGetProcAddress().
+        LINKER_FLAGS += -s GL_ENABLE_GET_PROC_ADDRESS
+    endif
 endif
 
 ###################################################
-# Stand-alone application.
+# Generic Makefile rules
 #
-include $(P)/src/Editor/DearImGui/Makefile.imgui
-LINKER_FLAGS += -ldl -lpthread
-VPATH += $(P)/include $(P)/src $(P)/src/Utils $(P)/src/Net
-VPATH += $(P)/src/Net/Imports VPATH += $(P)/src/Net/Exports
-INCLUDES += -I$(P)/include -I$(P)/src -I$(P)/external
-OBJS += main.o
+include $(M)/rules/Makefile
 
 ###################################################
-# Compile the stand-alone application
-.PHONY: all
-all: $(TARGET) copy-emscripten-assets
-
-###################################################
-# Internal libraries
+# Compile internal librairies in the correct order
 #
-LIB_TPNE_CORE = $(abspath $(P)/$(BUILD)/libtimedpetrinetcore.a)
-LIB_TPNE_GUI = $(abspath $(P)/$(BUILD)/libtimedpetrinetgui.a)
-LIB_TPNE_JULIA = $(abspath $(P)/$(BUILD)/libtimedpetrinetjulia.a)
-THIRDPART_LIBS += $(LIB_TPNE_CORE) $(LIB_TPNE_GUI) $(LIB_TPNE_JULIA)
-DIRS_WITH_MAKEFILE := src/Editor src/Net src/julia
 
-$(LIB_TPNE_GUI): src/Editor
+$(LIB_TPNE_NET): $(P)/src/Net
 
-$(LIB_TPNE_CORE): src/Net
+$(LIB_TPNE_EDITOR): $(P)/src/Editor
 
-$(LIB_TPNE_JULIA): src/julia
+$(LIB_TPNE_JULIA): $(P)/src/julia
 
-src/julia: src/Editor
+$(P)/src/julia: $(P)/src/Editor
 
-src/Editor: src/Net
+$(P)/src/Editor: $(P)/src/Net
 
 ###################################################
 # Copy data inside BUILD to allow emscripten to embedded them
+#
 .PHONY: copy-assets
 copy-emscripten-assets: | $(BUILD)
 ifeq ($(ARCHI),Emscripten)
@@ -105,50 +102,3 @@ ifeq ($(ARCHI),Emscripten)
 	@cp $(P)/data/font.ttf $(BUILD)/data
 	@cp $(P)/data/imgui.ini $(BUILD)/data
 endif
-
-###################################################
-# Compile and launch unit tests and generate the code coverage html report.
-.PHONY: unit-tests
-unit-tests:
-	@$(call print-simple,"Compiling unit tests")
-	@$(MAKE) -C tests coverage
-
-###################################################
-# Compile and launch unit tests and generate the code coverage html report.
-.PHONY: check
-check: unit-tests
-
-###################################################
-# Install project. You need to be root.
-.PHONY: install
-install: $(TARGET)
-	@$(call INSTALL_BINARY)
-ifeq ($(EXAEQUOS),)
-	@$(MAKE) --no-print-directory -C src/Net install
-	@$(MAKE) --no-print-directory -C src/Editor install
-	@$(MAKE) --no-print-directory -C src/julia install
-	@$(call INSTALL_DOCUMENTATION)
-	@$(call INSTALL_PROJECT_HEADERS)
-endif
-
-###################################################
-# Clean the whole project.
-.PHONY: veryclean
-veryclean: clean
-	@rm -fr cov-int $(PROJECT).tgz *.log foo 2> /dev/null
-	@(cd tests && $(MAKE) -s clean)
-	@$(call print-simple,"Cleaning","$(PWD)/doc/html")
-	@rm -fr $(THIRDPART)/*/ doc/html 2> /dev/null
-
-###################################################
-# Sharable informations between all Makefiles
-#
-include $(M)/Makefile.footer
-
-###################################################
-# Override clean the project
-.PHONY: clean
-clean::
-	@$(MAKE) --no-print-directory -C src/Net clean
-	@$(MAKE) --no-print-directory -C src/Editor clean
-	@$(MAKE) --no-print-directory -C src/julia clean

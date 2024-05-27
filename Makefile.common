@@ -1,23 +1,12 @@
 ###################################################
 # Project definition
 #
-PROJECT = TimedPetriNetEditor
-STANDARD = --std=c++14
-BUILD_TYPE = release
+PROJECT_NAME := TimedPetriNetEditor
+PROJECT_VERSION := 0.4.0
+COMPILATION_MODE := debug
+CXX_STANDARD := --std=c++14
 
 ###################################################
 # Select the Dear ImGui backend: RayLib or GLFW3.
 #
 DEAR_IMGUI_BACKEND ?= RayLib
-
-###################################################
-# Reduce warnings
-#
-CCFLAGS += -Wno-sign-conversion -Wno-float-equal
-CXXFLAGS += -Wno-undef -Wno-switch-enum -Wno-enum-compare
-CXXFLAGS += -Wshadow
-
-###################################################
-# Project defines
-#
-DEFINES += -DDATADIR=\"$(DATADIR):$(abspath $(P))/data/:data/\"
