@@ -84,7 +84,7 @@ private:
 private:
 
     Rectangle m_screen_resolution;
-    Vector2 m_mouse_position = { 0, 0 };
+    //Vector2 m_mouse_position = { 0, 0 };
     bool m_exit_window = false;
     size_t m_framerate = 60u;
 };

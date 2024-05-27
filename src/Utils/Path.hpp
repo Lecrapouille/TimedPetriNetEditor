@@ -108,7 +108,7 @@ public:
     //! Beware of race condition: even if found the file may have suppress after
     //! this function has been called.
     //--------------------------------------------------------------------------
-    std::string expand(std::string const& filename) const;
+    std::string expand(std::string const& filename) const; // FIXME retourner pair<string,RD/WR>
 
     //--------------------------------------------------------------------------
     //! \brief Return the container of path

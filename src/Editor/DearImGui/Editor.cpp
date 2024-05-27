@@ -437,7 +437,7 @@ void Editor::showCounterOrDaterEquation() const
 {
     static bool use_caption = false;
     static bool tropical_notation = false;
-    static bool show_matrix = false;
+    //static bool show_matrix = false;
 
     ImGui::OpenPopup("Counter or dater equations");
     ImGui::SetNextWindowPos(m_states.viewport_center, ImGuiCond_Appearing,

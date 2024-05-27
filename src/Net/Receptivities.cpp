@@ -47,7 +47,7 @@ bool Receptivity::VariableExp::evaluate() const
         return Sensors::instance().get(m_name);
     }
     catch (...) {
-        assert("Unkown variable");
+        assert(false && "Unkown variable");
         return false;
     }
 }
@@ -60,7 +60,7 @@ Receptivity::ConstExp::ConstExp(std::string const& operand)
     } else if (operand == "false") {
         m_operand = false;
     } else {
-        assert("Unkown const operand");
+        assert(false && "Unkown const operand");
     }
 }
 
