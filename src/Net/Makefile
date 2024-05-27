@@ -1,90 +1,89 @@
+##=====================================================================
+## TimedPetriNetEditor: A timed Petri net editor.
+## Copyright 2021 -- 2023 Quentin Quadrat <lecrapouille@gmail.com>
+##
+## This file is part of PetriEditor.
+##
+## PetriEditor is free software: you can redistribute it and/or modify it
+## under the terms of the GNU General Public License as published by
+## the Free Software Foundation, either version 3 of the License, or
+## (at your option) any later version.
+##
+## This program is distributed in the hope that it will be useful, but
+## WITHOUT ANY WARRANTY; without even the implied warranty of
+## MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+## General Public License for more details.
+##
+## You should have received a copy of the GNU General Public License
+## along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.
+##=====================================================================
+
 ###################################################
 # Location of the project directory and Makefiles
 #
 P := ../..
 M := $(P)/.makefile
-BUILD := $(P)/build
 
 ###################################################
 # Project definition
 #
 include $(P)/Makefile.common
-TARGET = TimedPetriNetCore
-DESCRIPTION = Library for the Core of the Timed Petri Net Editor
-
-###################################################
-# Location of the project directory and Makefiles
-#
-include $(M)/Makefile.header
+TARGET_NAME := TimedPetriNet
+TARGET_DESCRIPTION := Library manipulating Petri nets
+include $(M)/project/Makefile
 
 ###################################################
 # Set MQTT Library.
 #
-ifneq ($(ARCHI),Emscripten)
-INCLUDES += -I$(THIRDPART) -I$(THIRDPART)/MQTT/include
-VPATH += $(THIRDPART)/MQTT/src
-DEFINES += -DMQTT_BROKER_ADDR=\"localhost\"
-DEFINES += -DMQTT_BROKER_PORT=1883
-PKG_LIBS += libmosquitto
+ifeq ($(OS),Linux)
+    INCLUDES += $(THIRDPART_DIR)/MQTT/include
+    VPATH += $(THIRDPART_DIR)/MQTT/src
+    DEFINES += -DMQTT_BROKER_ADDR=\"localhost\"
+    DEFINES += -DMQTT_BROKER_PORT=1883
+    PKG_LIBS += libmosquitto
 endif
 
 ###################################################
 # Set json ibrary.
 #
-INCLUDES += -I$(THIRDPART)/json/include
+INCLUDES += $(THIRDPART_DIR)/json/include
 
 ###################################################
 # Set xml Library.
 #
-VPATH += $(THIRDPART)/tinyxml2
-LIB_OBJS += tinyxml2.o
+VPATH += $(THIRDPART_DIR)/tinyxml2
+LIB_FILES += $(THIRDPART_DIR)/tinyxml2/tinyxml2.cpp
+USER_CXXFLAGS := -Wno-old-style-cast -Wno-sign-conversion
 
 ###################################################
-# MacOS X
+# MacOS X: get path inside the bundle application
 #
-ifeq ($(ARCHI),Darwin)
-LINKER_FLAGS += -framework CoreFoundation
+ifeq ($(OS),Darwin)
+    LINKER_FLAGS += -framework CoreFoundation
 endif
 
 ###################################################
 # Inform Makefile where to find *.cpp files
 #
-VPATH += $(P)/include $(P)/src $(P)/src/Utils $(P)/src/Net
+VPATH += $(P)/src $(P)/src/Utils $(P)/src/Net
 VPATH += $(P)/src/Net/Imports $(P)/src/Net/Exports
 
 ###################################################
 # Inform Makefile where to find header files
 #
-INCLUDES += -I$(P)/include -I$(P)/src -I$(P)/external
-
-###################################################
-# Linkage
-#
-LINKER_FLAGS += -ldl -lpthread
+INCLUDES += $(P)/include $(P)/src $(THIRDPART_DIR)
+INCLUDES += $(THIRDPART_DIR)/imgui
 
 ###################################################
 # Make the list of compiled files for the library
 #
-LIB_OBJS += ImportJSON.o ImportPNML.o ImportTimedEventGraph.o ExportTimedEventGraph.o
-LIB_OBJS += ExportJSON.o ExportPNML.o ExportSymfony.o ExportPnEditor.o
-LIB_OBJS += ExportPetriLaTeX.o ExportJulia.o ExportGraphviz.o ExportDrawIO.o
-LIB_OBJS += ExportGrafcetCpp.o ImportFlowshop.o
-LIB_OBJS += Path.o Howard.o Utils.o TimedTokens.o Receptivities.o
-LIB_OBJS += PetriNet.o Algorithms.o Simulation.o History.o
-LIB_OBJS += Imports.o Exports.o
+LIB_FILES += $(call rwildcard,$(P)/src/Net,*.cpp)
+LIB_FILES += $(call rwildcard,$(P)/src/Net,*.c)
+LIB_FILES += $(call rwildcard,$(P)/src/Utils,*.cpp)
+USER_CXXFLAGS += -Wno-cast-qual -Wno-float-equal
+USER_CCFLAGS += -Wno-sign-conversion -Wno-float-equal
 
 ###################################################
-# Compile the project, the static and shared libraries
-.PHONY: all
-all: $(STATIC_LIB_TARGET) $(SHARED_LIB_TARGET) $(PKG_FILE) $(P)/Makefile $(P)/Makefile.common
-
-###################################################
-# Install project. You need to be root.
-.PHONY: install
-install: $(STATIC_LIB_TARGET) $(SHARED_LIB_TARGET) $(PKG_FILE)
-	@$(call INSTALL_PROJECT_LIBRARIES)
-
-###################################################
-# Sharable informations between all Makefiles
+# Generic Makefile rules
 #
-include $(M)/Makefile.footer
+include $(M)/rules/Makefile

@@ -23,7 +23,7 @@
 
 #  include "Editor/DearImGui/Theme.hpp"
 #  include "TimedPetriNetEditor/PetriNet.hpp"
-#  include "imgui.h"
+#  include "imgui/imgui.h"
 
 namespace tpne {
 

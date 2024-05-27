@@ -24,11 +24,11 @@
 #include "raylib.h"
 #include "imgui_impl_raylib.h"
 #include "imgui/misc/cpp/imgui_stdlib.h"
-#include "imgui.h"
-#include "implot.h"
-#include "ImGuiFileDialog.h"
-#include "rlImGui.h"
-#include "DearUtils.hpp"
+#include "imgui/imgui.h"
+#include "implot/implot.h"
+#include "ImGuiFileDialog/ImGuiFileDialog.h"
+#include "rlImGui/rlImGui.h"
+#include "Editor/DearImGui/DearUtils.hpp"
 
 #include <string>
 #include <functional>

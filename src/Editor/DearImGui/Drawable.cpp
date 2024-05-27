@@ -20,7 +20,7 @@
 
 #include "Editor/DearImGui/Drawable.hpp"
 #include "Editor/DearImGui/DearUtils.hpp"
-#include "implot.h"
+#include "implot/implot.h"
 #include "Utils/Utils.hpp"
 #include <iomanip> // std::setprecision
 

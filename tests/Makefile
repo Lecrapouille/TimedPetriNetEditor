@@ -19,62 +19,52 @@
 ##=====================================================================
 
 ###################################################
-# Project definition
-#
-PROJECT = TimedPetriNetEditor
-TARGET = $(PROJECT)-UnitTest
-DESCRIPTION = Unit tests for $(PROJECT)
-BUILD_TYPE = debug
-USE_COVERAGE = 1
-
-###################################################
 # Location of the project directory and Makefiles
 #
 P := ..
 M := $(P)/.makefile
-include $(M)/Makefile.header
 
 ###################################################
-# Inform Makefile where to find header files
+# Project definition
 #
-INCLUDES += -I$(P)/include -I$(P)/src -I$(P)/external
+include $(P)/Makefile.common
+TARGET_NAME := $(PROJECT_NAME)-UnitTest
+TARGET_DESCRIPTION := Unit tests for $(PROJECT_NAME)
+BUILD_TYPE = test
+include $(M)/project/Makefile
 
 ###################################################
-# Inform Makefile where to find *.cpp and *.o files
+# Set json ibrary.
 #
-VPATH += $(P)/include $(P)/src $(P)/src/Utils $(P)/src/Net
-VPATH += $(P)/src/Net/Imports VPATH += $(P)/src/Net/Exports
-VPATH += $(P)/src/Application $(P)/src/Editor $(P)/src/Editor/DearImGui
-
-###################################################
-# Set json Library.
-#
-INCLUDES += -I$(THIRDPART)/json/include
+INCLUDES += $(THIRDPART_DIR)/json/include
 
 ###################################################
 # Set xml Library.
 #
-VPATH += $(THIRDPART)/tinyxml2
-OBJS += tinyxml2.o
+VPATH += $(THIRDPART_DIR)/tinyxml2
+SRC_FILES += $(THIRDPART_DIR)/tinyxml2/tinyxml2.cpp
+USER_CXXFLAGS := -Wno-old-style-cast -Wno-sign-conversion
 
 ###################################################
-# Make the list of compiled files for tests
+# Inform Makefile where to find *.cpp files
 #
-OBJS += Path.o Howard.o Utils.o TimedTokens.o Receptivities.o
-OBJS += PetriNet.o Algorithms.o Simulation.o
-OBJS += ExportGrafcetCpp.o ExportJSON.o ExportSymfony.o ExportPnEditor.o
-OBJS += ExportPetriLaTeX.o ExportJulia.o ExportGraphviz.o ExportDrawIO.o
-OBJS += ExportPNML.o Exports.o ImportPNML.o ImportJSON.o Imports.o
-OBJS += ImportTimedEventGraph.o ExportTimedEventGraph.o ImportFlowshop.o
-OBJS += PetriNetTests.o LoadJSONTests.o HowardTests.o EventGraphTests.o
-OBJS += SparseMatrixTests.o TimedTokensTests.o main.o
+VPATH += $(P)/src $(P)/src/Utils $(P)/src/Net
+VPATH += $(P)/src/Net/Imports $(P)/src/Net/Exports
 
 ###################################################
-# MacOS X
+# Inform Makefile where to find header files
 #
-ifeq ($(ARCHI),Darwin)
-LINKER_FLAGS += -framework CoreFoundation
-endif
+INCLUDES += $(P)/include $(P)/src $(THIRDPART_DIR)
+
+###################################################
+# Make the list of compiled files for the library
+#
+SRC_FILES += $(call rwildcard,$(P)/src/Net,*.cpp)
+SRC_FILES += $(call rwildcard,$(P)/src/Net,*.c)
+SRC_FILES += $(call rwildcard,$(P)/src/Utils,*.cpp)
+SRC_FILES += $(call rwildcard,$(P)/tests,*.cpp)
+USER_CXXFLAGS += -Wno-float-equal
+USER_CCFLAGS += -Wno-sign-conversion -Wno-float-equal
 
 ###################################################
 # Set Libraries. For knowing which libraries
@@ -83,18 +73,6 @@ endif
 PKG_LIBS += gtest gmock
 
 ###################################################
-# Compile the project
-.PHONY: all
-all: $(TARGET)
-
-###################################################
-# Compile and launch unit tests and generate the code coverage html report.
-.PHONY: unit-tests
-.PHONY: check
-unit-tests check: $(TARGET)
-	@$(call print-to,"Running","$(TARGET)","$(RAPPORT)","")
-	$(SANITIZER) ./$(BUILD)/$(TARGET) $(TU_OPTIONS) || (cat $(TARGET).log; return 1)
-
-###################################################
-# Sharable informations between all Makefiles
-include $(M)/Makefile.footer
+# Generic Makefile rules
+#
+include $(M)/rules/Makefile

@@ -1,65 +1,78 @@
+##=====================================================================
+## TimedPetriNetEditor: A timed Petri net editor.
+## Copyright 2021 -- 2023 Quentin Quadrat <lecrapouille@gmail.com>
+##
+## This file is part of PetriEditor.
+##
+## PetriEditor is free software: you can redistribute it and/or modify it
+## under the terms of the GNU General Public License as published by
+## the Free Software Foundation, either version 3 of the License, or
+## (at your option) any later version.
+##
+## This program is distributed in the hope that it will be useful, but
+## WITHOUT ANY WARRANTY; without even the implied warranty of
+## MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+## General Public License for more details.
+##
+## You should have received a copy of the GNU General Public License
+## along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.
+##=====================================================================
+
 ###################################################
 # Location of the project directory and Makefiles
 #
 P := ../..
 M := $(P)/.makefile
-BUILD := $(P)/build
 
 ###################################################
 # Project definition
 #
 include $(P)/Makefile.common
-TARGET = TimedPetriNetJulia
-DESCRIPTION = Timed Petri Net Editor interface for Julia
-
-###################################################
-# Location of the project directory and Makefiles
-#
-include $(M)/Makefile.header
-include $(P)/src/Editor/DearImGui/Makefile.imgui
+TARGET_NAME := TimedPetriJulia
+TARGET_DESCRIPTION := Timed Petri Net Editor interface for Julia
+include $(M)/project/Makefile
 
 ###################################################
 # Inform Makefile where to find *.cpp files
 #
-VPATH += $(P)/include $(P)/src $(P)/src/Utils $(P)/src/Net
+VPATH += $(P)/src $(P)/src/Utils $(P)/src/Net
 VPATH += $(P)/src/Net/Imports VPATH += $(P)/src/Net/Exports
 
 ###################################################
 # Inform Makefile where to find header files
 #
-INCLUDES += -I$(P)/include -I$(P)/src -I$(P)/external
+INCLUDES += $(P)/include $(P)/src $(P)/external
 
 ###################################################
 # Internal libraries since we can call the GUI from Julia REPL
-#
-LIB_TPNE_CORE = $(abspath $(P)/src/Net/$(BUILD)/libtimedpetrinetcore.a)
-LIB_TPNE_GUI = $(abspath $(P)/src/Editor/$(BUILD)/libtimedpetrinetgui.a)
-ifneq ($(EXAEQUOS),)
-PKG_LIBS += --static glfw
-else
-PKG_LIBS += --static glfw3
-LINKER_FLAGS += -lGL
-endif
-# WARNING: do not use += since we do not want to include twice libraylib.a
-THIRDPART_LIBS := $(LIB_TPNE_GUI) $(LIB_TPNE_CORE)
+# We force compilation order.
+LIB_TPNE_NET := $(call internal-lib,TimedPetriNet)
+LIB_TPNE_EDITOR := $(call internal-lib,TimedPetriEditor)
+INTERNAL_LIBS := $(LIB_TPNE_EDITOR) $(LIB_TPNE_NET)
+DIRS_WITH_MAKEFILE := $(P)/src/Net $(P)/src/Editor
+
+#$(LIB_TPNE_NET): $(P)/src/Net
+
+#$(LIB_TPNE_EDITOR): $(P)/src/Editor
+
+#$(P)/src/Editor: $(P)/src/Net
 
 ###################################################
 # Make the list of compiled files for the library
 #
-LIB_OBJS += Julia.o
+LIB_FILES += $(P)/src/julia/Julia.cpp
+
+USER_CXXFLAGS := -Wno-cast-qual -Wno-undef
 
 ###################################################
-# Compile the project, the static and shared libraries
-.PHONY: all
-all: $(STATIC_LIB_TARGET) $(SHARED_LIB_TARGET) $(PKG_FILE) $(LIB_TPNE_GUI) $(LIB_TPNE_CORE) $(P)/Makefile $(P)/Makefile.common
-
-###################################################
-# Install project. You need to be root.
-.PHONY: install
-install: $(STATIC_LIB_TARGET) $(SHARED_LIB_TARGET) $(PKG_FILE)
-	@$(call INSTALL_PROJECT_LIBRARIES)
-
-###################################################
-# Sharable informations between all Makefiles
+# GUI
 #
-include $(M)/Makefile.footer
+include $(abspath $(P)/src/Editor/DearImGui/Backends/Makefile)
+THIRDPART_LIBS :=
+INCLUDES += $(P)/src/Editor/DearImGui
+INCLUDES += $(P)/src
+
+###################################################
+# Generic Makefile rules
+#
+include $(M)/rules/Makefile

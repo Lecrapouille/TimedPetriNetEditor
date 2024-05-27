@@ -667,7 +667,7 @@ void Editor::about() const
         ImGui::Text("Git branch: %s", project::info::git_branch.c_str());
         ImGui::Text("Git SHA1: %s", project::info::git_sha1.c_str());
         ImGui::Text("Compiled as %s",
-                    (project::info::mode == project::info::Mode::debug)
+                    (project::info::compilation::mode == project::info::compilation::Mode::debug)
                     ? "Debug" : "Release");
         ImGui::Separator();
         ImGui::Text("Developed by Quentin Quadrat");

@@ -27,7 +27,7 @@
 ### $CXX: C++ compiler
 ###############################################################################
 
-source ../.makefile/compile-external-libs.sh
+source $1
 
 ### Library raylib
 print-compile raylib
@@ -39,11 +39,11 @@ print-compile raylib
  # Note: Concerning .backup see https://www.themoderncoder.com/fix-sed-i-error-macos/
  sed -i.backup 's/ExportImage(image, path)/ExportImage(image, fileName)/g' rcore.c
 
- mkdir -p $ARCHI
+ mkdir -p $OS
  call-make clean
- if [ "$ARCHI" != "Emscripten" ]; then
-   call-make PLATFORM=PLATFORM_DESKTOP RAYLIB_RELEASE_PATH=$ARCHI RAYLIB_BUILD_MODE=DEBUG
+ if [ "$OS" != "Emscripten" ]; then
+   call-make PLATFORM=PLATFORM_DESKTOP RAYLIB_RELEASE_PATH=$OS RAYLIB_BUILD_MODE=DEBUG
  else
-   call-make PLATFORM=PLATFORM_WEB RAYLIB_RELEASE_PATH=$ARCHI
+   call-make PLATFORM=PLATFORM_WEB RAYLIB_RELEASE_PATH=$OS
  fi
 )
