@@ -1028,6 +1028,7 @@ void Editor::importNetFrom(Importer const& importer)
         if (ImGuiFileDialog::Instance()->IsOk())
         {
             auto const filepath = ImGuiFileDialog::Instance()->GetFilePathName();
+            m_marked_arcs.clear();
             m_net.clear();
             std::string error = importer.importFct(m_net, filepath);
             if (error.empty())
