@@ -136,9 +136,11 @@ void drawArc(ImDrawList* draw_list, Arc const& arc, TypeOfNet const type, ImVec2
         float x = origin.x + arc.from.x + (next.x - arc.from.x) / 2.0f;
         float y = origin.y + arc.from.y + (next.y - arc.from.y) / 2.0f;
         std::stringstream stream;
-        stream << std::fixed << std::setprecision(2) << arc.duration << ", "
-               << arc.to.key << "(" << reinterpret_cast<Place&>(arc.to).tokens << ")";
-        draw_list->AddText(ImVec2(x, y), DURATION_COLOR, stream.str().c_str());
+        stream << std::fixed << std::setprecision(2) << arc.duration;
+        draw_list->AddText(ImVec2(x, y + 15.0f), DURATION_COLOR, stream.str().c_str());
+        // FIXME: if (!m_simulation.running) {
+        drawTimedToken(draw_list, reinterpret_cast<Place&>(arc.to).tokens, x, y);
+        // }
     }
     else
     {
