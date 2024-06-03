@@ -39,7 +39,7 @@ int main(int argc, char* argv[])
         filename = argv[optind];
     }
 
-    tpne::Editor editor(1024, 768, "Petri Net Editor");
+    tpne::Editor editor(1100, 768, "Petri Net Editor");
     editor.run(filename);
 
     return EXIT_SUCCESS;
