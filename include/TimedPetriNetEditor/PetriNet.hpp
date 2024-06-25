@@ -821,7 +821,8 @@ bool convertTo(Net& net, TypeOfNet const type, std::string& error, std::vector<A
 //! saved. Should have the .json extension.
 //! \return error message in case of failure, else return dummy string.
 //-----------------------------------------------------------------------------
-std::string loadFromFile(Net& net, std::string const& filepath);
+// FIXME remplacer bool& springify par bool const springify
+std::string loadFromFile(Net& net, std::string const& filepath, bool& springify);
 
 //-----------------------------------------------------------------------------
 //! \brief Save the Petri net in a a file.

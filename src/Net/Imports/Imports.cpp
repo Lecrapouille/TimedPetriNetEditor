@@ -26,10 +26,10 @@ namespace tpne {
 std::vector<Importer> const& importers()
 {
     static const std::vector<Importer> s_importers = {
-        { "JSON", ".json", importFromJSON },
-        { "Petri Net Markup Language", ".pnml", importFromPNML },
-        { "Flowshop", ".flowshop", importFlowshop },
-        { "Timed Event Graph", ".teg", importFromTimedEventGraph }
+        { "JSON", ".json", importFromJSON, false },
+        { "Petri Net Markup Language", ".pnml", importFromPNML, false },
+        { "Flowshop", ".flowshop", importFlowshop, false },
+        { "Timed Event Graph", ".teg", importFromTimedEventGraph, true }
     };
 
     return s_importers;

@@ -26,6 +26,7 @@
 #  include "Net/Simulation.hpp"
 #  include "Net/Exports/Exports.hpp"
 #  include "Net/Imports/Imports.hpp"
+#  include "Utils/ForceDirected.hpp"
 #  include "Utils/History.hpp"
 #  include "Utils/Path.hpp"
 #  include <vector>
@@ -94,6 +95,7 @@ private: // Petri net services
     void clearNet();
     void undo();
     void redo();
+    void springify();
 
 private: // Error logs
 
@@ -195,9 +197,12 @@ private:
         // ********************************************************************
         struct Canvas
         {
-            ImVec2 corners[2];
-            ImVec2 size;
-            ImVec2 origin;
+            ImVec2 corners[2] = {{0.0f, 0.0f}, {0.0f, 0.0f}};
+            ImVec2 size{800.0f, 600.0f}; // FIXME: size is undefined while not
+                                         // rendered once but when importing nets
+                                         // we need to know th windows size which
+                                         // is 0x0
+            ImVec2 origin{0.0f, 0.0f};
             ImVec2 scrolling{0.0f, 0.0f};
             ImDrawList* draw_list;
 
@@ -272,6 +277,9 @@ private:
     //! \brief Single Petri net the editor can edit.
     //! \fixme Manage several nets (like done with GEMMA).
     Net m_net;
+    //! Apply spring positive/negative forces on arcs/nodes to unfold imported
+    //! Petri nets that do not have positions on their nodes.
+    ForceDirected m_spring;
     //! \brief History of modifications of the net.
     History m_history;
     //! \brief Instance allowing to do timed simulation.

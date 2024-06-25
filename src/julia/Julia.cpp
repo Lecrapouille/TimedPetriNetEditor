@@ -367,7 +367,8 @@ bool petri_load(int64_t const pn, const char* filepath)
 {
     CHECK_VALID_PETRI_HANDLE(pn, false);
 
-    std::string err = tpne::loadFromFile(*g_petri_nets[size_t(pn)], filepath);
+    bool springify = false;
+    std::string err = tpne::loadFromFile(*g_petri_nets[size_t(pn)], filepath, springify);
     if (err.empty())
         return true;
     std::cerr << "Failed loading net from " << filepath << "Reason is '"

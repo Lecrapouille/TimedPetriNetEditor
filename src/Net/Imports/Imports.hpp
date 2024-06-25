@@ -55,6 +55,8 @@ struct Importer
     std::string extensions;
     //! \brief the pointer function for importing (i.e. importFromJSON)
     ImportFunc importFct;
+    //! \brief Shall apply spring force on the net ?
+    bool springify;
 };
 
 //! \brief Container of file formats we can import a Petri net from.
