@@ -1488,7 +1488,7 @@ void Editor::PetriView::handleArcDestination()
     assert(m_mouse.to != nullptr);
 
     // The case where two nodes have the same type is managed by addArc
-    m_editor.m_net.addArc(*m_mouse.from, *m_mouse.to, random(1, 5));
+    m_editor.m_net.addArc(*m_mouse.from, *m_mouse.to, randomInt(1, 5));
 
     action->after(m_editor.m_net);
     m_editor.m_history.add(std::move(action));

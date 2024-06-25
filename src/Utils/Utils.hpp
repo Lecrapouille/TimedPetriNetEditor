@@ -41,7 +41,8 @@ T rotate(T const& v, float const cos_a, float const sin_a)
 }
 
 //------------------------------------------------------------------------------
-float random(int lower, int upper);
+int randomInt(int lower, int upper);
+float randomFloat(int lower, int upper);
 
 //------------------------------------------------------------------------------
 //! \brief give the file extension
