@@ -27,6 +27,7 @@
 #endif
 
 #  include <algorithm> // std::transform
+#  include <random>
 
 //------------------------------------------------------------------------------
 #ifdef __APPLE__
@@ -66,11 +67,21 @@ std::string osx_get_resources_dir(std::string const& file)
 namespace tpne {
 
 //------------------------------------------------------------------------------
-float random(int lower, int upper)
+int randomInt(int lower, int upper)
 {
-    auto const t = static_cast<unsigned int>(time(NULL));
-    srand(t);
-    return float(rand() % (upper - lower + 1)) + float(lower);
+    static std::random_device rd;
+    static std::mt19937 gen(rd());
+    std::uniform_int_distribution<> dist(lower, upper);
+    return dist(gen);
+}
+
+//------------------------------------------------------------------------------
+float randomFloat(int lower, int upper)
+{
+    static std::random_device rd;
+    static std::mt19937 gen(rd());
+    std::uniform_real_distribution<float> dist(lower, upper);
+    return dist(gen);
 }
 
 //------------------------------------------------------------------------------
