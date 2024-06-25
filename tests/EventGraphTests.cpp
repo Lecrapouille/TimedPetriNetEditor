@@ -35,11 +35,12 @@ TEST(TestEventGraph, TestHoward2)
 {
     std::string error;
     std::vector<Arc*> erroneous_arcs;
+    bool stringify;
 
     Net net(TypeOfNet::TimedPetriNet);
     Net canonic(TypeOfNet::TimedPetriNet);
 
-    ASSERT_STREQ(loadFromFile(net,"../data/examples/Howard2.json").c_str(), "");
+    ASSERT_STREQ(loadFromFile(net,"../data/examples/Howard2.json", stringify).c_str(), "");
     ASSERT_EQ(net.isEmpty(), false);
     ASSERT_EQ(isEventGraph(net), true);
     ASSERT_EQ(erroneous_arcs.empty(), true);
@@ -70,8 +71,9 @@ TEST(TestEventGraph, TestHoward2)
 TEST(TestEventGraph, TestToCounterEquation)
 {
     Net net(TypeOfNet::TimedPetriNet);
+    bool stringify;
 
-    ASSERT_STREQ(loadFromFile(net, "../data/examples/EventGraph.json").c_str(), "");
+    ASSERT_STREQ(loadFromFile(net, "../data/examples/EventGraph.json", stringify).c_str(), "");
     net.generateArcsInArcsOut(); // FIXME
     ASSERT_EQ(isEventGraph(net), true);
 
@@ -120,8 +122,9 @@ TEST(TestEventGraph, TestToAdjacencyMatrices)
 {
     std::vector<Arc*> erroneous_arcs; std::string error;
     Net net(TypeOfNet::TimedPetriNet);
+    bool stringify;
 
-    ASSERT_STREQ(loadFromFile(net, "../data/examples/Howard2.json").c_str(), "");
+    ASSERT_STREQ(loadFromFile(net, "../data/examples/Howard2.json", stringify).c_str(), "");
     ASSERT_EQ(isEventGraph(net, error, erroneous_arcs), true);
     ASSERT_EQ(error.empty(), true);
     ASSERT_EQ(erroneous_arcs.empty(), true);
@@ -179,8 +182,9 @@ TEST(TestEventGraph, TestToSysLinInputOutput)
 {
     std::vector<Arc*> erroneous_arcs;
     Net net(TypeOfNet::TimedPetriNet);
+    bool stringify;
 
-    ASSERT_STREQ(loadFromFile(net, "../data/examples/JPQ.json").c_str(), "");
+    ASSERT_STREQ(loadFromFile(net, "../data/examples/JPQ.json", stringify).c_str(), "");
     ASSERT_EQ(isEventGraph(net), true);
 
     SparseMatrix<MaxPlus> D;
@@ -235,8 +239,9 @@ TEST(TestEventGraph, TestToSysLinNoInputNoOutput)
 {
     std::vector<Arc*> erroneous_arcs; std::string error;
     Net net(TypeOfNet::TimedPetriNet);
+    bool stringify;
 
-    ASSERT_STREQ(loadFromFile(net, "../data/examples/Howard2.json").c_str(), "");
+    ASSERT_STREQ(loadFromFile(net, "../data/examples/Howard2.json", stringify).c_str(), "");
     ASSERT_EQ(isEventGraph(net), true);
     ASSERT_EQ(isEventGraph(net, error, erroneous_arcs), true);
     ASSERT_EQ(error.empty(), true);
@@ -326,8 +331,9 @@ TEST(TestEventGraph, TestToSysLinNoInputNoOutput)
 TEST(TestEventGraph, TestToDaterEquation)
 {
     Net net(TypeOfNet::TimedPetriNet);
+    bool stringify;
 
-    ASSERT_STREQ(loadFromFile(net, "../data/examples/EventGraph.json").c_str(), "");
+    ASSERT_STREQ(loadFromFile(net, "../data/examples/EventGraph.json", stringify).c_str(), "");
     net.generateArcsInArcsOut(); // FIXME
     ASSERT_EQ(isEventGraph(net), true);
 

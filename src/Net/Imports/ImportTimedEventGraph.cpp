@@ -74,7 +74,7 @@ std::string importFromTimedEventGraph(Net& net, std::string const& filename)
     size_t x = margin, y = margin;
     for (size_t id = 0u; id < transitions; ++id)
     {
-        net.addTransition(id, Transition::to_str(id), float(x), float(y), 0);
+        net.addTransition(id, Transition::to_str(id), randomInt(0,800), randomInt(0,600), 0);
         x += dx;
         if (x > w - margin) { x = margin; y += dy; }
     }

@@ -755,7 +755,7 @@ std::string saveToFile(Net const& net, std::string const& filepath)
 }
 
 //------------------------------------------------------------------------------
-std::string loadFromFile(Net& net, std::string const& filepath)
+std::string loadFromFile(Net& net, std::string const& filepath, bool& springify)
 {
     // Search the importer
     Importer const* importer = getImporter(extension(filepath));
@@ -770,6 +770,10 @@ std::string loadFromFile(Net& net, std::string const& filepath)
     if (!error.empty())
     {
         net.reset(net.type());
+    }
+    else
+    {
+        springify = importer->springify;
     }
 
     // Get a name to the net

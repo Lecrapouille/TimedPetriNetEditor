@@ -728,8 +728,9 @@ TEST(TestPetriNet, TestInvalidAddArc)
 TEST(TestPetriNet, TestLoadedNetTimedPetri)
 {
     Net net(TypeOfNet::TimedPetriNet);
+    bool stringify;
 
-    ASSERT_STREQ(loadFromFile(net, "../data/examples/Howard2.json").c_str(), "");
+    ASSERT_STREQ(loadFromFile(net, "../data/examples/Howard2.json", stringify).c_str(), "");
     ASSERT_STREQ(net.error().c_str(), "");
     ASSERT_EQ(net.type(), TypeOfNet::TimedEventGraph);
     ASSERT_EQ(net.isEmpty(), false);
@@ -1046,8 +1047,9 @@ TEST(TestPetriNet, TestLoadedNetTimedPetri)
 TEST(TestPetriNet, TestLoadedNetGraphEvent)
 {
     Net net(TypeOfNet::TimedPetriNet);
+    bool stringify;
 
-    ASSERT_STREQ(loadFromFile(net, "data/EventGraph2.json").c_str(), "");
+    ASSERT_STREQ(loadFromFile(net, "data/EventGraph2.json", stringify).c_str(), "");
     ASSERT_STREQ(net.error().c_str(), "");
     ASSERT_EQ(net.type(), TypeOfNet::TimedEventGraph);
     ASSERT_EQ(net.isEmpty(), false);
@@ -1352,8 +1354,9 @@ TEST(TestPetriNet, TestLoadedNetGraphEvent)
 TEST(TestPetriNet, TestRemoveNode)
 {
     Net net(TypeOfNet::TimedPetriNet);
+    bool stringify;
 
-    ASSERT_STREQ(loadFromFile(net, "../data/examples/Howard2.json").c_str(), "");
+    ASSERT_STREQ(loadFromFile(net, "../data/examples/Howard2.json", stringify).c_str(), "");
     ASSERT_STREQ(net.error().c_str(), "");
     ASSERT_EQ(net.type(), TypeOfNet::TimedEventGraph);
     ASSERT_EQ(net.m_next_place_id, 5u);
@@ -1484,8 +1487,9 @@ TEST(TestPetriNet, TestcountBurnableTokens)
     std::string error;
 
     Net net(TypeOfNet::TimedPetriNet);
+    bool stringify;
 
-    ASSERT_STREQ(loadFromFile(net, "../data/examples/EventGraph.json").c_str(), "");
+    ASSERT_STREQ(loadFromFile(net, "../data/examples/EventGraph.json", stringify).c_str(), "");
     ASSERT_STREQ(net.error().c_str(), "");
     ASSERT_EQ(convertTo(net, TypeOfNet::PetriNet, error, erroneous_arcs), true);
 

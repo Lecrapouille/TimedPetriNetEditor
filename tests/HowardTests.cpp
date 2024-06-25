@@ -128,6 +128,7 @@ TEST(TestHoward, TestSemiNetherlands)
 TEST(TestHoward, TestPetriNetSemiSimple)
 {
     Net net(TypeOfNet::TimedPetriNet);
+    bool stringify;
 
     // Check dummy result is set to "invalid".
     CriticalCycleResult res;
@@ -139,7 +140,7 @@ TEST(TestHoward, TestPetriNetSemiSimple)
     ASSERT_STREQ(res.message.str().c_str(), "");
 
     // Load a net that is not event graph
-    ASSERT_STREQ(loadFromFile(net, "../data/examples/AppelsDurgence.json").c_str(), "");
+    ASSERT_STREQ(loadFromFile(net, "../data/examples/AppelsDurgence.json", stringify).c_str(), "");
     ASSERT_EQ(net.type(), TypeOfNet::PetriNet);
     ASSERT_EQ(net.isEmpty(), false);
     res = findCriticalCycle(net);
@@ -151,7 +152,7 @@ TEST(TestHoward, TestPetriNetSemiSimple)
     ASSERT_STREQ(res.message.str().c_str(), "The Petri net is not an event graph. Because:\n  P0 has more than one output arc: T0 T4 T8\n");
 
     // Load a net that is an event graph but that Howard does find policy (FIXME while it should)
-    ASSERT_STREQ(loadFromFile(net, "../data/examples/EventGraph.json").c_str(), "");
+    ASSERT_STREQ(loadFromFile(net, "../data/examples/EventGraph.json", stringify).c_str(), "");
     ASSERT_EQ(net.type(), TypeOfNet::TimedEventGraph);
     ASSERT_EQ(net.isEmpty(), false);
     res = findCriticalCycle(net);
@@ -163,7 +164,7 @@ TEST(TestHoward, TestPetriNetSemiSimple)
     ASSERT_STREQ(res.message.str().c_str(), "No optimal policy found");
 
     // Load a net that is an event graph
-    ASSERT_STREQ(loadFromFile(net,"../data/examples/Howard2.json").c_str(), "");
+    ASSERT_STREQ(loadFromFile(net,"../data/examples/Howard2.json", stringify).c_str(), "");
     ASSERT_EQ(net.type(), TypeOfNet::TimedEventGraph);
     ASSERT_EQ(net.isEmpty(), false);
     ASSERT_EQ(isEventGraph(net), true);
@@ -221,8 +222,9 @@ TEST(TestHoward, TestPetriNetSemiSimple)
 TEST(TestHoward, TestSemiHowardExample)
 {
     Net net(TypeOfNet::TimedPetriNet);
+    bool stringify;
 
-    ASSERT_STREQ(loadFromFile(net, "../data/examples/SemiHoward.teg").c_str(), "");
+    ASSERT_STREQ(loadFromFile(net, "../data/examples/SemiHoward.teg", stringify).c_str(), "");
     CriticalCycleResult res = findCriticalCycle(net);
     ASSERT_EQ(res.success, true);
     ASSERT_EQ(res.cycles, 2u);
@@ -268,8 +270,9 @@ TEST(TestHoward, TestSemiHowardExample)
 TEST(TestHoward, TestSemiNetherlandsExample)
 {
     Net net(TypeOfNet::TimedPetriNet);
+    bool stringify;
 
-    ASSERT_STREQ(loadFromFile(net, "../data/examples/SemiNetherlands.teg").c_str(), "");
+    ASSERT_STREQ(loadFromFile(net, "../data/examples/SemiNetherlands.teg", stringify).c_str(), "");
     CriticalCycleResult res = findCriticalCycle(net);
     ASSERT_EQ(res.success, true);
     ASSERT_EQ(res.cycles, 1u);

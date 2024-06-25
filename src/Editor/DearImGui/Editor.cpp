@@ -124,11 +124,16 @@ void Editor::run(std::string const& filepath)
     // Load Petri net file if passed with command line
     if (!filepath.empty())
     {
-        std::string error = loadFromFile(m_net, filepath);
+        bool shall_springify;
+        std::string error = loadFromFile(m_net, filepath, shall_springify);
         if (error.empty())
         {
             m_messages.setInfo("Loaded with success " + filepath);
             setSavePath(filepath);
+            if (shall_springify)
+            {
+                springify();
+            }
         }
         else
         {
@@ -153,6 +158,7 @@ void Editor::onUpdate(float const dt)
     }
 
     m_simulation.step(dt);
+    m_spring.update();
 }
 
 //------------------------------------------------------------------------------
@@ -1002,7 +1008,7 @@ Transition* Editor::getTransition(ImVec2 const& position)
 //------------------------------------------------------------------------------
 void Editor::loadNetFile()
 {
-    static Importer importer{"TimedPetriNetEditor", ".json", importFromJSON};
+    static Importer importer{"TimedPetriNetEditor", ".json", importFromJSON, false};
     importNetFrom(importer);
 }
 
@@ -1039,12 +1045,17 @@ void Editor::importNetFrom(Importer const& importer)
                     m_messages.setInfo("Loaded with success '" + filepath + "'");
                 setSavePath(filepath);
                 m_net.modified = false;
+                if (importer.springify)
+                {
+                    springify();
+                }
             }
             else
             {
                 m_messages.setError(error);
                 m_net.clear();
                 m_net.modified = true;
+                m_spring.reset();
             }
         }
 
@@ -1053,6 +1064,12 @@ void Editor::importNetFrom(Importer const& importer)
         m_states.do_import_from = nullptr; // FIXME think proper code: export vs save as
         ImGuiFileDialog::Instance()->Close();
     }
+}
+
+//--------------------------------------------------------------------------
+void Editor::springify()
+{
+    m_spring.reset(m_view.size().x, m_view.size().y, m_net);
 }
 
 //--------------------------------------------------------------------------
@@ -1561,6 +1578,10 @@ void Editor::PetriView::onHandleInput()
         else if (ImGui::IsKeyPressed(KEY_MOVE_PETRI_NODE, false))
         {
             handleMoveNode();
+        }
+        else if (ImGui::IsKeyPressed(KEY_SPRINGIFY_NET))
+        {
+            m_editor.springify();
         }
         // Run the animation of the Petri net
         else if (ImGui::IsKeyPressed(KEY_RUN_SIMULATION) ||
