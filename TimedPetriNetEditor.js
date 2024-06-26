@@ -39,7 +39,7 @@ if (ENVIRONMENT_IS_NODE) {
 
 // --pre-jses are emitted after the Module integration code, so that they can
 // refer to Module (if they choose; they can also define Module)
-// include: /tmp/tmp9863_b7f.js
+// include: /tmp/tmpvyr04re5.js
 
   if (!Module.expectedDataFileDownloads) {
     Module.expectedDataFileDownloads = 0;
@@ -223,25 +223,25 @@ Module['FS_createPath']("/home/runner/work/TimedPetriNetEditor/TimedPetriNetEdit
     }
 
     }
-    loadPackage({"files": [{"filename": "/home/runner/work/TimedPetriNetEditor/TimedPetriNetEditor/data/GEMMA.drawio", "start": 0, "end": 31772}, {"filename": "/home/runner/work/TimedPetriNetEditor/TimedPetriNetEditor/data/GEMMA.pdf", "start": 31772, "end": 76525}, {"filename": "/home/runner/work/TimedPetriNetEditor/TimedPetriNetEditor/data/TimedPetriNetEditor.icns", "start": 76525, "end": 114673}, {"filename": "/home/runner/work/TimedPetriNetEditor/TimedPetriNetEditor/data/examples/AppelsDurgence.json", "start": 114673, "end": 118733}, {"filename": "/home/runner/work/TimedPetriNetEditor/TimedPetriNetEditor/data/examples/Coffee.json", "start": 118733, "end": 120318}, {"filename": "/home/runner/work/TimedPetriNetEditor/TimedPetriNetEditor/data/examples/EventGraph.json", "start": 120318, "end": 122024}, {"filename": "/home/runner/work/TimedPetriNetEditor/TimedPetriNetEditor/data/examples/FourRoadJunctions.json", "start": 122024, "end": 127421}, {"filename": "/home/runner/work/TimedPetriNetEditor/TimedPetriNetEditor/data/examples/GRAFCET.json", "start": 127421, "end": 128535}, {"filename": "/home/runner/work/TimedPetriNetEditor/TimedPetriNetEditor/data/examples/Howard1.json", "start": 128535, "end": 129570}, {"filename": "/home/runner/work/TimedPetriNetEditor/TimedPetriNetEditor/data/examples/Howard2.json", "start": 129570, "end": 130928}, {"filename": "/home/runner/work/TimedPetriNetEditor/TimedPetriNetEditor/data/examples/Infinite.json", "start": 130928, "end": 131499}, {"filename": "/home/runner/work/TimedPetriNetEditor/TimedPetriNetEditor/data/examples/InputsOutputs.json", "start": 131499, "end": 133177}, {"filename": "/home/runner/work/TimedPetriNetEditor/TimedPetriNetEditor/data/examples/JPQ.json", "start": 133177, "end": 134709}, {"filename": "/home/runner/work/TimedPetriNetEditor/TimedPetriNetEditor/data/examples/Philosophers.json", "start": 134709, "end": 137290}, {"filename": "/home/runner/work/TimedPetriNetEditor/TimedPetriNetEditor/data/examples/ProducerConsumer.json", "start": 137290, "end": 138689}, {"filename": "/home/runner/work/TimedPetriNetEditor/TimedPetriNetEditor/data/examples/README.md", "start": 138689, "end": 140600}, {"filename": "/home/runner/work/TimedPetriNetEditor/TimedPetriNetEditor/data/examples/SemiHoward.teg", "start": 140600, "end": 140685}, {"filename": "/home/runner/work/TimedPetriNetEditor/TimedPetriNetEditor/data/examples/SemiNetherlands.teg", "start": 140685, "end": 140898}, {"filename": "/home/runner/work/TimedPetriNetEditor/TimedPetriNetEditor/data/examples/Simple.json", "start": 140898, "end": 142316}, {"filename": "/home/runner/work/TimedPetriNetEditor/TimedPetriNetEditor/data/examples/TrafficLights.json", "start": 142316, "end": 144341}, {"filename": "/home/runner/work/TimedPetriNetEditor/TimedPetriNetEditor/data/examples/complex.flowshop", "start": 144341, "end": 144843}, {"filename": "/home/runner/work/TimedPetriNetEditor/TimedPetriNetEditor/data/examples/dualband.json", "start": 144843, "end": 148150}, {"filename": "/home/runner/work/TimedPetriNetEditor/TimedPetriNetEditor/data/examples/pics/AppelsDurgence.png", "start": 148150, "end": 217393}, {"filename": "/home/runner/work/TimedPetriNetEditor/TimedPetriNetEditor/data/examples/pics/Coffee.png", "start": 217393, "end": 239492}, {"filename": "/home/runner/work/TimedPetriNetEditor/TimedPetriNetEditor/data/examples/pics/EventGraph.png", "start": 239492, "end": 275514}, {"filename": "/home/runner/work/TimedPetriNetEditor/TimedPetriNetEditor/data/examples/pics/FourRoadJunctions.png", "start": 275514, "end": 343201}, {"filename": "/home/runner/work/TimedPetriNetEditor/TimedPetriNetEditor/data/examples/pics/InputsOutputs.png", "start": 343201, "end": 359001}, {"filename": "/home/runner/work/TimedPetriNetEditor/TimedPetriNetEditor/data/examples/pics/Philosophers.png", "start": 359001, "end": 408597}, {"filename": "/home/runner/work/TimedPetriNetEditor/TimedPetriNetEditor/data/examples/pics/ProducerConsumer.png", "start": 408597, "end": 429484}, {"filename": "/home/runner/work/TimedPetriNetEditor/TimedPetriNetEditor/data/examples/pics/TrafficLights.png", "start": 429484, "end": 456475}, {"filename": "/home/runner/work/TimedPetriNetEditor/TimedPetriNetEditor/data/examples/simple.flowshop", "start": 456475, "end": 456602}, {"filename": "/home/runner/work/TimedPetriNetEditor/TimedPetriNetEditor/data/font.ttf", "start": 456602, "end": 628394}, {"filename": "/home/runner/work/TimedPetriNetEditor/TimedPetriNetEditor/data/imgui.ini", "start": 628394, "end": 631343}], "remote_package_size": 631343});
+    loadPackage({"files": [{"filename": "/home/runner/work/TimedPetriNetEditor/TimedPetriNetEditor/data/GEMMA.drawio", "start": 0, "end": 31772}, {"filename": "/home/runner/work/TimedPetriNetEditor/TimedPetriNetEditor/data/GEMMA.pdf", "start": 31772, "end": 76525}, {"filename": "/home/runner/work/TimedPetriNetEditor/TimedPetriNetEditor/data/TimedPetriNetEditor.icns", "start": 76525, "end": 114673}, {"filename": "/home/runner/work/TimedPetriNetEditor/TimedPetriNetEditor/data/examples/AppelsDurgence.json", "start": 114673, "end": 118733}, {"filename": "/home/runner/work/TimedPetriNetEditor/TimedPetriNetEditor/data/examples/Coffee.json", "start": 118733, "end": 120318}, {"filename": "/home/runner/work/TimedPetriNetEditor/TimedPetriNetEditor/data/examples/EventGraph.json", "start": 120318, "end": 122024}, {"filename": "/home/runner/work/TimedPetriNetEditor/TimedPetriNetEditor/data/examples/FourRoadJunctions.json", "start": 122024, "end": 127421}, {"filename": "/home/runner/work/TimedPetriNetEditor/TimedPetriNetEditor/data/examples/GRAFCET.json", "start": 127421, "end": 128535}, {"filename": "/home/runner/work/TimedPetriNetEditor/TimedPetriNetEditor/data/examples/Howard1.json", "start": 128535, "end": 129570}, {"filename": "/home/runner/work/TimedPetriNetEditor/TimedPetriNetEditor/data/examples/Howard2.json", "start": 129570, "end": 130928}, {"filename": "/home/runner/work/TimedPetriNetEditor/TimedPetriNetEditor/data/examples/Infinite.json", "start": 130928, "end": 131499}, {"filename": "/home/runner/work/TimedPetriNetEditor/TimedPetriNetEditor/data/examples/InputsOutputs.json", "start": 131499, "end": 133177}, {"filename": "/home/runner/work/TimedPetriNetEditor/TimedPetriNetEditor/data/examples/JPQ.json", "start": 133177, "end": 134709}, {"filename": "/home/runner/work/TimedPetriNetEditor/TimedPetriNetEditor/data/examples/Philosophers.json", "start": 134709, "end": 137290}, {"filename": "/home/runner/work/TimedPetriNetEditor/TimedPetriNetEditor/data/examples/ProducerConsumer.json", "start": 137290, "end": 138689}, {"filename": "/home/runner/work/TimedPetriNetEditor/TimedPetriNetEditor/data/examples/README.md", "start": 138689, "end": 140600}, {"filename": "/home/runner/work/TimedPetriNetEditor/TimedPetriNetEditor/data/examples/SemiHoward.teg", "start": 140600, "end": 140685}, {"filename": "/home/runner/work/TimedPetriNetEditor/TimedPetriNetEditor/data/examples/SemiNetherlands.teg", "start": 140685, "end": 140898}, {"filename": "/home/runner/work/TimedPetriNetEditor/TimedPetriNetEditor/data/examples/Simple.json", "start": 140898, "end": 142316}, {"filename": "/home/runner/work/TimedPetriNetEditor/TimedPetriNetEditor/data/examples/TrafficLights.json", "start": 142316, "end": 144341}, {"filename": "/home/runner/work/TimedPetriNetEditor/TimedPetriNetEditor/data/examples/complex.flowshop", "start": 144341, "end": 144843}, {"filename": "/home/runner/work/TimedPetriNetEditor/TimedPetriNetEditor/data/examples/dualband.json", "start": 144843, "end": 148150}, {"filename": "/home/runner/work/TimedPetriNetEditor/TimedPetriNetEditor/data/examples/pics/AppelsDurgence.png", "start": 148150, "end": 217393}, {"filename": "/home/runner/work/TimedPetriNetEditor/TimedPetriNetEditor/data/examples/pics/Coffee.png", "start": 217393, "end": 239492}, {"filename": "/home/runner/work/TimedPetriNetEditor/TimedPetriNetEditor/data/examples/pics/EventGraph.png", "start": 239492, "end": 275514}, {"filename": "/home/runner/work/TimedPetriNetEditor/TimedPetriNetEditor/data/examples/pics/FourRoadJunctions.png", "start": 275514, "end": 343201}, {"filename": "/home/runner/work/TimedPetriNetEditor/TimedPetriNetEditor/data/examples/pics/InputsOutputs.png", "start": 343201, "end": 359001}, {"filename": "/home/runner/work/TimedPetriNetEditor/TimedPetriNetEditor/data/examples/pics/Philosophers.png", "start": 359001, "end": 408597}, {"filename": "/home/runner/work/TimedPetriNetEditor/TimedPetriNetEditor/data/examples/pics/ProducerConsumer.png", "start": 408597, "end": 429484}, {"filename": "/home/runner/work/TimedPetriNetEditor/TimedPetriNetEditor/data/examples/pics/TrafficLights.png", "start": 429484, "end": 456475}, {"filename": "/home/runner/work/TimedPetriNetEditor/TimedPetriNetEditor/data/examples/simple.flowshop", "start": 456475, "end": 456602}, {"filename": "/home/runner/work/TimedPetriNetEditor/TimedPetriNetEditor/data/font.ttf", "start": 456602, "end": 628394}, {"filename": "/home/runner/work/TimedPetriNetEditor/TimedPetriNetEditor/data/imgui.ini", "start": 628394, "end": 633390}], "remote_package_size": 633390});
 
   })();
 
-// end include: /tmp/tmp9863_b7f.js
-// include: /tmp/tmpt1rb3p9k.js
+// end include: /tmp/tmpvyr04re5.js
+// include: /tmp/tmpvlxw6omw.js
 
     // All the pre-js content up to here must remain later on, we need to run
     // it.
     if (Module['$ww'] || (typeof ENVIRONMENT_IS_PTHREAD != 'undefined' && ENVIRONMENT_IS_PTHREAD)) Module['preRun'] = [];
     var necessaryPreJSTasks = Module['preRun'].slice();
-  // end include: /tmp/tmpt1rb3p9k.js
-// include: /tmp/tmp2njs95sn.js
+  // end include: /tmp/tmpvlxw6omw.js
+// include: /tmp/tmpympbpi3i.js
 
     if (!Module['preRun']) throw 'Module.preRun should exist because file support used it; did a pre-js delete it?';
     necessaryPreJSTasks.forEach((task) => {
       if (Module['preRun'].indexOf(task) < 0) throw 'All preRun tasks that exist before user pre-js code should remain after; did you replace Module or modify Module.preRun?';
     });
-  // end include: /tmp/tmp2njs95sn.js
+  // end include: /tmp/tmpympbpi3i.js
 
 
 // Sometimes an existing Module object exists with properties
@@ -1145,40 +1145,40 @@ function dbg(...args) {
 // === Body ===
 
 var ASM_CONSTS = {
-  175228: () => { if (document.fullscreenElement) return 1; },  
- 175274: () => { return document.getElementById('canvas').width; },  
- 175326: () => { return parseInt(document.getElementById('canvas').style.width); },  
- 175394: () => { document.exitFullscreen(); },  
- 175421: () => { setTimeout(function() { Module.requestFullscreen(false, false); }, 100); },  
- 175494: () => { if (document.fullscreenElement) return 1; },  
- 175540: () => { return document.getElementById('canvas').width; },  
- 175592: () => { return screen.width; },  
- 175617: () => { document.exitFullscreen(); },  
- 175644: () => { setTimeout(function() { Module.requestFullscreen(false, true); setTimeout(function() { canvas.style.width="unset"; }, 100); }, 100); },  
- 175777: () => { if (document.fullscreenElement) return 1; },  
- 175823: () => { return document.getElementById('canvas').width; },  
- 175875: () => { return parseInt(document.getElementById('canvas').style.width); },  
- 175943: () => { if (document.fullscreenElement) return 1; },  
- 175989: () => { return document.getElementById('canvas').width; },  
- 176041: () => { return screen.width; },  
- 176066: () => { if (document.fullscreenElement) return 1; },  
- 176112: () => { return document.getElementById('canvas').width; },  
- 176164: () => { return screen.width; },  
- 176189: () => { document.exitFullscreen(); },  
- 176216: () => { if (document.fullscreenElement) return 1; },  
- 176262: () => { return document.getElementById('canvas').width; },  
- 176314: () => { return parseInt(document.getElementById('canvas').style.width); },  
- 176382: () => { document.exitFullscreen(); },  
- 176409: () => { return screen.width; },  
- 176434: () => { return screen.height; },  
- 176460: () => { return window.screenX; },  
- 176487: () => { return window.screenY; },  
- 176514: ($0) => { navigator.clipboard.writeText(UTF8ToString($0)); },  
- 176567: ($0) => { document.getElementById("canvas").style.cursor = UTF8ToString($0); },  
- 176638: () => { document.getElementById('canvas').style.cursor = 'none'; },  
- 176695: ($0) => { document.getElementById('canvas').style.cursor = UTF8ToString($0); },  
- 176766: () => { if (document.fullscreenElement) return 1; },  
- 176812: () => { if (document.pointerLockElement) return 1; }
+  215876: () => { if (document.fullscreenElement) return 1; },  
+ 215922: () => { return document.getElementById('canvas').width; },  
+ 215974: () => { return parseInt(document.getElementById('canvas').style.width); },  
+ 216042: () => { document.exitFullscreen(); },  
+ 216069: () => { setTimeout(function() { Module.requestFullscreen(false, false); }, 100); },  
+ 216142: () => { if (document.fullscreenElement) return 1; },  
+ 216188: () => { return document.getElementById('canvas').width; },  
+ 216240: () => { return screen.width; },  
+ 216265: () => { document.exitFullscreen(); },  
+ 216292: () => { setTimeout(function() { Module.requestFullscreen(false, true); setTimeout(function() { canvas.style.width="unset"; }, 100); }, 100); },  
+ 216425: () => { if (document.fullscreenElement) return 1; },  
+ 216471: () => { return document.getElementById('canvas').width; },  
+ 216523: () => { return parseInt(document.getElementById('canvas').style.width); },  
+ 216591: () => { if (document.fullscreenElement) return 1; },  
+ 216637: () => { return document.getElementById('canvas').width; },  
+ 216689: () => { return screen.width; },  
+ 216714: () => { if (document.fullscreenElement) return 1; },  
+ 216760: () => { return document.getElementById('canvas').width; },  
+ 216812: () => { return screen.width; },  
+ 216837: () => { document.exitFullscreen(); },  
+ 216864: () => { if (document.fullscreenElement) return 1; },  
+ 216910: () => { return document.getElementById('canvas').width; },  
+ 216962: () => { return parseInt(document.getElementById('canvas').style.width); },  
+ 217030: () => { document.exitFullscreen(); },  
+ 217057: () => { return screen.width; },  
+ 217082: () => { return screen.height; },  
+ 217108: () => { return window.screenX; },  
+ 217135: () => { return window.screenY; },  
+ 217162: ($0) => { navigator.clipboard.writeText(UTF8ToString($0)); },  
+ 217215: ($0) => { document.getElementById("canvas").style.cursor = UTF8ToString($0); },  
+ 217286: () => { document.getElementById('canvas').style.cursor = 'none'; },  
+ 217343: ($0) => { document.getElementById('canvas').style.cursor = UTF8ToString($0); },  
+ 217414: () => { if (document.fullscreenElement) return 1; },  
+ 217460: () => { if (document.pointerLockElement) return 1; }
 };
 function GetWindowInnerWidth() { return window.innerWidth; }
 function GetWindowInnerHeight() { return window.innerHeight; }
@@ -11078,7 +11078,11 @@ var wasmImports = {
   /** @export */
   glfwWindowHint: _glfwWindowHint,
   /** @export */
+  invoke_dii,
+  /** @export */
   invoke_f,
+  /** @export */
+  invoke_fi,
   /** @export */
   invoke_fii,
   /** @export */
@@ -11088,13 +11092,19 @@ var wasmImports = {
   /** @export */
   invoke_iid,
   /** @export */
+  invoke_iidi,
+  /** @export */
   invoke_iif,
   /** @export */
   invoke_iiff,
   /** @export */
+  invoke_iiffff,
+  /** @export */
   invoke_iiffi,
   /** @export */
   invoke_iii,
+  /** @export */
+  invoke_iiiffi,
   /** @export */
   invoke_iiiffii,
   /** @export */
@@ -11106,11 +11116,11 @@ var wasmImports = {
   /** @export */
   invoke_iiiiffi,
   /** @export */
+  invoke_iiiiffii,
+  /** @export */
   invoke_iiiii,
   /** @export */
   invoke_iiiiif,
-  /** @export */
-  invoke_iiiiiff,
   /** @export */
   invoke_iiiiii,
   /** @export */
@@ -11118,7 +11128,13 @@ var wasmImports = {
   /** @export */
   invoke_iiiiiii,
   /** @export */
+  invoke_iiiiiiii,
+  /** @export */
+  invoke_iiiiiiiiii,
+  /** @export */
   invoke_iiiiiiiiiiii,
+  /** @export */
+  invoke_iij,
   /** @export */
   invoke_v,
   /** @export */
@@ -11134,13 +11150,19 @@ var wasmImports = {
   /** @export */
   invoke_viiff,
   /** @export */
+  invoke_viiffffiiii,
+  /** @export */
   invoke_viii,
+  /** @export */
+  invoke_viiiff,
   /** @export */
   invoke_viiifffffffff,
   /** @export */
   invoke_viiii,
   /** @export */
   invoke_viiiii,
+  /** @export */
+  invoke_viiiiifi,
   /** @export */
   invoke_viiiiii,
   /** @export */
@@ -11173,42 +11195,53 @@ var ___cxa_decrement_exception_refcount = createExportWrapper('__cxa_decrement_e
 var ___cxa_increment_exception_refcount = createExportWrapper('__cxa_increment_exception_refcount', 1);
 var ___cxa_can_catch = createExportWrapper('__cxa_can_catch', 3);
 var ___cxa_is_pointer_type = createExportWrapper('__cxa_is_pointer_type', 1);
+var dynCall_vi = Module['dynCall_vi'] = createExportWrapper('dynCall_vi', 2);
 var dynCall_iiii = Module['dynCall_iiii'] = createExportWrapper('dynCall_iiii', 4);
 var dynCall_iii = Module['dynCall_iii'] = createExportWrapper('dynCall_iii', 3);
 var dynCall_ii = Module['dynCall_ii'] = createExportWrapper('dynCall_ii', 2);
 var dynCall_iiiii = Module['dynCall_iiiii'] = createExportWrapper('dynCall_iiiii', 5);
 var dynCall_vii = Module['dynCall_vii'] = createExportWrapper('dynCall_vii', 3);
-var dynCall_vi = Module['dynCall_vi'] = createExportWrapper('dynCall_vi', 2);
 var dynCall_iiiiiii = Module['dynCall_iiiiiii'] = createExportWrapper('dynCall_iiiiiii', 7);
 var dynCall_v = Module['dynCall_v'] = createExportWrapper('dynCall_v', 1);
-var dynCall_viif = Module['dynCall_viif'] = createExportWrapper('dynCall_viif', 4);
 var dynCall_viii = Module['dynCall_viii'] = createExportWrapper('dynCall_viii', 4);
+var dynCall_viiiii = Module['dynCall_viiiii'] = createExportWrapper('dynCall_viiiii', 6);
+var dynCall_viif = Module['dynCall_viif'] = createExportWrapper('dynCall_viif', 4);
 var dynCall_iiiiii = Module['dynCall_iiiiii'] = createExportWrapper('dynCall_iiiiii', 6);
-var dynCall_viiifffffffff = Module['dynCall_viiifffffffff'] = createExportWrapper('dynCall_viiifffffffff', 13);
 var dynCall_viiii = Module['dynCall_viiii'] = createExportWrapper('dynCall_viiii', 5);
+var dynCall_viiffffiiii = Module['dynCall_viiffffiiii'] = createExportWrapper('dynCall_viiffffiiii', 11);
+var dynCall_iiiiiiii = Module['dynCall_iiiiiiii'] = createExportWrapper('dynCall_iiiiiiii', 8);
+var dynCall_viiiff = Module['dynCall_viiiff'] = createExportWrapper('dynCall_viiiff', 6);
+var dynCall_viiifffffffff = Module['dynCall_viiifffffffff'] = createExportWrapper('dynCall_viiifffffffff', 13);
+var dynCall_viiiiiii = Module['dynCall_viiiiiii'] = createExportWrapper('dynCall_viiiiiii', 8);
+var dynCall_viiiiifi = Module['dynCall_viiiiifi'] = createExportWrapper('dynCall_viiiiifi', 8);
+var dynCall_iiffff = Module['dynCall_iiffff'] = createExportWrapper('dynCall_iiffff', 6);
+var dynCall_iif = Module['dynCall_iif'] = createExportWrapper('dynCall_iif', 3);
 var dynCall_iiiiiiffffi = Module['dynCall_iiiiiiffffi'] = createExportWrapper('dynCall_iiiiiiffffi', 11);
 var dynCall_iid = Module['dynCall_iid'] = createExportWrapper('dynCall_iid', 3);
-var dynCall_viiiii = Module['dynCall_viiiii'] = createExportWrapper('dynCall_viiiii', 6);
 var dynCall_i = Module['dynCall_i'] = createExportWrapper('dynCall_i', 1);
 var dynCall_vff = Module['dynCall_vff'] = createExportWrapper('dynCall_vff', 3);
 var dynCall_f = Module['dynCall_f'] = createExportWrapper('dynCall_f', 1);
 var dynCall_vif = Module['dynCall_vif'] = createExportWrapper('dynCall_vif', 3);
+var dynCall_iiiiiiiiii = Module['dynCall_iiiiiiiiii'] = createExportWrapper('dynCall_iiiiiiiiii', 10);
 var dynCall_viiiiii = Module['dynCall_viiiiii'] = createExportWrapper('dynCall_viiiiii', 7);
 var dynCall_iiifii = Module['dynCall_iiifii'] = createExportWrapper('dynCall_iiifii', 6);
 var dynCall_iiiffii = Module['dynCall_iiiffii'] = createExportWrapper('dynCall_iiiffii', 7);
-var dynCall_iiffi = Module['dynCall_iiffi'] = createExportWrapper('dynCall_iiffi', 5);
 var dynCall_iiff = Module['dynCall_iiff'] = createExportWrapper('dynCall_iiff', 4);
-var dynCall_fii = Module['dynCall_fii'] = createExportWrapper('dynCall_fii', 3);
+var dynCall_iiffi = Module['dynCall_iiffi'] = createExportWrapper('dynCall_iiffi', 5);
+var dynCall_iiiffi = Module['dynCall_iiiffi'] = createExportWrapper('dynCall_iiiffi', 6);
 var dynCall_iiiif = Module['dynCall_iiiif'] = createExportWrapper('dynCall_iiiif', 5);
-var dynCall_iif = Module['dynCall_iif'] = createExportWrapper('dynCall_iif', 3);
 var dynCall_viiff = Module['dynCall_viiff'] = createExportWrapper('dynCall_viiff', 5);
 var dynCall_viff = Module['dynCall_viff'] = createExportWrapper('dynCall_viff', 4);
 var dynCall_vidd = Module['dynCall_vidd'] = createExportWrapper('dynCall_vidd', 4);
 var dynCall_viiiiiiiii = Module['dynCall_viiiiiiiii'] = createExportWrapper('dynCall_viiiiiiiii', 10);
 var dynCall_iiiiiiiiiiii = Module['dynCall_iiiiiiiiiiii'] = createExportWrapper('dynCall_iiiiiiiiiiii', 12);
-var dynCall_iiiiiff = Module['dynCall_iiiiiff'] = createExportWrapper('dynCall_iiiiiff', 7);
 var dynCall_iiiiffi = Module['dynCall_iiiiffi'] = createExportWrapper('dynCall_iiiiffi', 7);
-var dynCall_viiiiiii = Module['dynCall_viiiiiii'] = createExportWrapper('dynCall_viiiiiii', 8);
+var dynCall_iiiiffii = Module['dynCall_iiiiffii'] = createExportWrapper('dynCall_iiiiffii', 8);
+var dynCall_fi = Module['dynCall_fi'] = createExportWrapper('dynCall_fi', 2);
+var dynCall_iidi = Module['dynCall_iidi'] = createExportWrapper('dynCall_iidi', 4);
+var dynCall_iij = Module['dynCall_iij'] = createExportWrapper('dynCall_iij', 4);
+var dynCall_dii = Module['dynCall_dii'] = createExportWrapper('dynCall_dii', 3);
+var dynCall_fii = Module['dynCall_fii'] = createExportWrapper('dynCall_fii', 3);
 var dynCall_iiiiif = Module['dynCall_iiiiif'] = createExportWrapper('dynCall_iiiiif', 6);
 var dynCall_vffff = Module['dynCall_vffff'] = createExportWrapper('dynCall_vffff', 5);
 var dynCall_vf = Module['dynCall_vf'] = createExportWrapper('dynCall_vf', 2);
@@ -11223,7 +11256,6 @@ var dynCall_iiiiiiiii = Module['dynCall_iiiiiiiii'] = createExportWrapper('dynCa
 var dynCall_iiiiij = Module['dynCall_iiiiij'] = createExportWrapper('dynCall_iiiiij', 7);
 var dynCall_iiiiid = Module['dynCall_iiiiid'] = createExportWrapper('dynCall_iiiiid', 6);
 var dynCall_iiiiijj = Module['dynCall_iiiiijj'] = createExportWrapper('dynCall_iiiiijj', 9);
-var dynCall_iiiiiiii = Module['dynCall_iiiiiiii'] = createExportWrapper('dynCall_iiiiiiii', 8);
 var dynCall_iiiiiijj = Module['dynCall_iiiiiijj'] = createExportWrapper('dynCall_iiiiiijj', 10);
 var _asyncify_start_unwind = createExportWrapper('asyncify_start_unwind', 1);
 var _asyncify_stop_unwind = createExportWrapper('asyncify_stop_unwind', 0);
@@ -11241,10 +11273,10 @@ function invoke_iiii(index,a1,a2,a3) {
   }
 }
 
-function invoke_iii(index,a1,a2) {
+function invoke_vi(index,a1) {
   var sp = stackSave();
   try {
-    return dynCall_iii(index,a1,a2);
+    dynCall_vi(index,a1);
   } catch(e) {
     stackRestore(sp);
     if (e !== e+0) throw e;
@@ -11252,10 +11284,10 @@ function invoke_iii(index,a1,a2) {
   }
 }
 
-function invoke_ii(index,a1) {
+function invoke_iii(index,a1,a2) {
   var sp = stackSave();
   try {
-    return dynCall_ii(index,a1);
+    return dynCall_iii(index,a1,a2);
   } catch(e) {
     stackRestore(sp);
     if (e !== e+0) throw e;
@@ -11285,10 +11317,21 @@ function invoke_vii(index,a1,a2) {
   }
 }
 
-function invoke_vi(index,a1) {
+function invoke_viii(index,a1,a2,a3) {
   var sp = stackSave();
   try {
-    dynCall_vi(index,a1);
+    dynCall_viii(index,a1,a2,a3);
+  } catch(e) {
+    stackRestore(sp);
+    if (e !== e+0) throw e;
+    _setThrew(1, 0);
+  }
+}
+
+function invoke_ii(index,a1) {
+  var sp = stackSave();
+  try {
+    return dynCall_ii(index,a1);
   } catch(e) {
     stackRestore(sp);
     if (e !== e+0) throw e;
@@ -11318,10 +11361,10 @@ function invoke_v(index) {
   }
 }
 
-function invoke_viif(index,a1,a2,a3) {
+function invoke_viiiii(index,a1,a2,a3,a4,a5) {
   var sp = stackSave();
   try {
-    dynCall_viif(index,a1,a2,a3);
+    dynCall_viiiii(index,a1,a2,a3,a4,a5);
   } catch(e) {
     stackRestore(sp);
     if (e !== e+0) throw e;
@@ -11329,10 +11372,10 @@ function invoke_viif(index,a1,a2,a3) {
   }
 }
 
-function invoke_viii(index,a1,a2,a3) {
+function invoke_viif(index,a1,a2,a3) {
   var sp = stackSave();
   try {
-    dynCall_viii(index,a1,a2,a3);
+    dynCall_viif(index,a1,a2,a3);
   } catch(e) {
     stackRestore(sp);
     if (e !== e+0) throw e;
@@ -11362,6 +11405,50 @@ function invoke_iiiiii(index,a1,a2,a3,a4,a5) {
   }
 }
 
+function invoke_viiii(index,a1,a2,a3,a4) {
+  var sp = stackSave();
+  try {
+    dynCall_viiii(index,a1,a2,a3,a4);
+  } catch(e) {
+    stackRestore(sp);
+    if (e !== e+0) throw e;
+    _setThrew(1, 0);
+  }
+}
+
+function invoke_viiffffiiii(index,a1,a2,a3,a4,a5,a6,a7,a8,a9,a10) {
+  var sp = stackSave();
+  try {
+    dynCall_viiffffiiii(index,a1,a2,a3,a4,a5,a6,a7,a8,a9,a10);
+  } catch(e) {
+    stackRestore(sp);
+    if (e !== e+0) throw e;
+    _setThrew(1, 0);
+  }
+}
+
+function invoke_iiiiiiii(index,a1,a2,a3,a4,a5,a6,a7) {
+  var sp = stackSave();
+  try {
+    return dynCall_iiiiiiii(index,a1,a2,a3,a4,a5,a6,a7);
+  } catch(e) {
+    stackRestore(sp);
+    if (e !== e+0) throw e;
+    _setThrew(1, 0);
+  }
+}
+
+function invoke_viiiff(index,a1,a2,a3,a4,a5) {
+  var sp = stackSave();
+  try {
+    dynCall_viiiff(index,a1,a2,a3,a4,a5);
+  } catch(e) {
+    stackRestore(sp);
+    if (e !== e+0) throw e;
+    _setThrew(1, 0);
+  }
+}
+
 function invoke_viiifffffffff(index,a1,a2,a3,a4,a5,a6,a7,a8,a9,a10,a11,a12) {
   var sp = stackSave();
   try {
@@ -11373,10 +11460,43 @@ function invoke_viiifffffffff(index,a1,a2,a3,a4,a5,a6,a7,a8,a9,a10,a11,a12) {
   }
 }
 
-function invoke_viiii(index,a1,a2,a3,a4) {
+function invoke_viiiiiii(index,a1,a2,a3,a4,a5,a6,a7) {
   var sp = stackSave();
   try {
-    dynCall_viiii(index,a1,a2,a3,a4);
+    dynCall_viiiiiii(index,a1,a2,a3,a4,a5,a6,a7);
+  } catch(e) {
+    stackRestore(sp);
+    if (e !== e+0) throw e;
+    _setThrew(1, 0);
+  }
+}
+
+function invoke_viiiiifi(index,a1,a2,a3,a4,a5,a6,a7) {
+  var sp = stackSave();
+  try {
+    dynCall_viiiiifi(index,a1,a2,a3,a4,a5,a6,a7);
+  } catch(e) {
+    stackRestore(sp);
+    if (e !== e+0) throw e;
+    _setThrew(1, 0);
+  }
+}
+
+function invoke_iiffff(index,a1,a2,a3,a4,a5) {
+  var sp = stackSave();
+  try {
+    return dynCall_iiffff(index,a1,a2,a3,a4,a5);
+  } catch(e) {
+    stackRestore(sp);
+    if (e !== e+0) throw e;
+    _setThrew(1, 0);
+  }
+}
+
+function invoke_iif(index,a1,a2) {
+  var sp = stackSave();
+  try {
+    return dynCall_iif(index,a1,a2);
   } catch(e) {
     stackRestore(sp);
     if (e !== e+0) throw e;
@@ -11439,28 +11559,6 @@ function invoke_iid(index,a1,a2) {
   }
 }
 
-function invoke_viiiiii(index,a1,a2,a3,a4,a5,a6) {
-  var sp = stackSave();
-  try {
-    dynCall_viiiiii(index,a1,a2,a3,a4,a5,a6);
-  } catch(e) {
-    stackRestore(sp);
-    if (e !== e+0) throw e;
-    _setThrew(1, 0);
-  }
-}
-
-function invoke_viiiii(index,a1,a2,a3,a4,a5) {
-  var sp = stackSave();
-  try {
-    dynCall_viiiii(index,a1,a2,a3,a4,a5);
-  } catch(e) {
-    stackRestore(sp);
-    if (e !== e+0) throw e;
-    _setThrew(1, 0);
-  }
-}
-
 function invoke_vff(index,a1,a2) {
   var sp = stackSave();
   try {
@@ -11483,10 +11581,21 @@ function invoke_vif(index,a1,a2) {
   }
 }
 
-function invoke_iiffi(index,a1,a2,a3,a4) {
+function invoke_viiiiii(index,a1,a2,a3,a4,a5,a6) {
   var sp = stackSave();
   try {
-    return dynCall_iiffi(index,a1,a2,a3,a4);
+    dynCall_viiiiii(index,a1,a2,a3,a4,a5,a6);
+  } catch(e) {
+    stackRestore(sp);
+    if (e !== e+0) throw e;
+    _setThrew(1, 0);
+  }
+}
+
+function invoke_iiiiiiiiii(index,a1,a2,a3,a4,a5,a6,a7,a8,a9) {
+  var sp = stackSave();
+  try {
+    return dynCall_iiiiiiiiii(index,a1,a2,a3,a4,a5,a6,a7,a8,a9);
   } catch(e) {
     stackRestore(sp);
     if (e !== e+0) throw e;
@@ -11505,10 +11614,21 @@ function invoke_iiff(index,a1,a2,a3) {
   }
 }
 
-function invoke_fii(index,a1,a2) {
+function invoke_iiffi(index,a1,a2,a3,a4) {
   var sp = stackSave();
   try {
-    return dynCall_fii(index,a1,a2);
+    return dynCall_iiffi(index,a1,a2,a3,a4);
+  } catch(e) {
+    stackRestore(sp);
+    if (e !== e+0) throw e;
+    _setThrew(1, 0);
+  }
+}
+
+function invoke_iiiffi(index,a1,a2,a3,a4,a5) {
+  var sp = stackSave();
+  try {
+    return dynCall_iiiffi(index,a1,a2,a3,a4,a5);
   } catch(e) {
     stackRestore(sp);
     if (e !== e+0) throw e;
@@ -11520,17 +11640,6 @@ function invoke_iiiif(index,a1,a2,a3,a4) {
   var sp = stackSave();
   try {
     return dynCall_iiiif(index,a1,a2,a3,a4);
-  } catch(e) {
-    stackRestore(sp);
-    if (e !== e+0) throw e;
-    _setThrew(1, 0);
-  }
-}
-
-function invoke_iif(index,a1,a2) {
-  var sp = stackSave();
-  try {
-    return dynCall_iif(index,a1,a2);
   } catch(e) {
     stackRestore(sp);
     if (e !== e+0) throw e;
@@ -11571,17 +11680,6 @@ function invoke_iiiiiiiiiiii(index,a1,a2,a3,a4,a5,a6,a7,a8,a9,a10,a11) {
   }
 }
 
-function invoke_iiiiiff(index,a1,a2,a3,a4,a5,a6) {
-  var sp = stackSave();
-  try {
-    return dynCall_iiiiiff(index,a1,a2,a3,a4,a5,a6);
-  } catch(e) {
-    stackRestore(sp);
-    if (e !== e+0) throw e;
-    _setThrew(1, 0);
-  }
-}
-
 function invoke_iiiiffi(index,a1,a2,a3,a4,a5,a6) {
   var sp = stackSave();
   try {
@@ -11593,10 +11691,54 @@ function invoke_iiiiffi(index,a1,a2,a3,a4,a5,a6) {
   }
 }
 
-function invoke_viiiiiii(index,a1,a2,a3,a4,a5,a6,a7) {
+function invoke_iiiiffii(index,a1,a2,a3,a4,a5,a6,a7) {
   var sp = stackSave();
   try {
-    dynCall_viiiiiii(index,a1,a2,a3,a4,a5,a6,a7);
+    return dynCall_iiiiffii(index,a1,a2,a3,a4,a5,a6,a7);
+  } catch(e) {
+    stackRestore(sp);
+    if (e !== e+0) throw e;
+    _setThrew(1, 0);
+  }
+}
+
+function invoke_fi(index,a1) {
+  var sp = stackSave();
+  try {
+    return dynCall_fi(index,a1);
+  } catch(e) {
+    stackRestore(sp);
+    if (e !== e+0) throw e;
+    _setThrew(1, 0);
+  }
+}
+
+function invoke_dii(index,a1,a2) {
+  var sp = stackSave();
+  try {
+    return dynCall_dii(index,a1,a2);
+  } catch(e) {
+    stackRestore(sp);
+    if (e !== e+0) throw e;
+    _setThrew(1, 0);
+  }
+}
+
+function invoke_iidi(index,a1,a2,a3) {
+  var sp = stackSave();
+  try {
+    return dynCall_iidi(index,a1,a2,a3);
+  } catch(e) {
+    stackRestore(sp);
+    if (e !== e+0) throw e;
+    _setThrew(1, 0);
+  }
+}
+
+function invoke_fii(index,a1,a2) {
+  var sp = stackSave();
+  try {
+    return dynCall_fii(index,a1,a2);
   } catch(e) {
     stackRestore(sp);
     if (e !== e+0) throw e;
@@ -11608,6 +11750,17 @@ function invoke_iiiiif(index,a1,a2,a3,a4,a5) {
   var sp = stackSave();
   try {
     return dynCall_iiiiif(index,a1,a2,a3,a4,a5);
+  } catch(e) {
+    stackRestore(sp);
+    if (e !== e+0) throw e;
+    _setThrew(1, 0);
+  }
+}
+
+function invoke_iij(index,a1,a2,a3) {
+  var sp = stackSave();
+  try {
+    return dynCall_iij(index,a1,a2,a3);
   } catch(e) {
     stackRestore(sp);
     if (e !== e+0) throw e;

@@ -4844,7 +4844,7 @@ DockId=0x00000003,1
 Pos=798,19
 Size=302,749
 Collapsed=0
-DockId=0x00000001,0
+DockId=0x00000001,1
 
 [Window][Arcs]
 Pos=798,19
@@ -4862,22 +4862,21 @@ DockId=0x00000002,0
 Pos=798,19
 Size=302,749
 Collapsed=0
-DockId=0x00000001,1
+DockId=0x00000001,0
 
 [Window][Sensors]
 Pos=1651,493
 Size=269,461
 Collapsed=0
-DockId=0x8B93E3BD,0
 
 [Window][Choose the Petri file to save before quitting##ChooseFileDlgKey]
-Pos=152,195
+Pos=151,195
 Size=482,329
 Collapsed=0
 
 [Window][Choose the Petri file to load##ChooseFileDlgKey]
 Pos=160,199
-Size=482,313
+Size=603,445
 Collapsed=0
 
 [Window][Choose the Petri file to save##ChooseFileDlgKey]
@@ -4901,10 +4900,10 @@ Size=565,338
 Collapsed=0
 
 [Window][Steps]
-Pos=755,19
-Size=269,674
+Pos=1618,19
+Size=302,1010
 Collapsed=0
-DockId=0x8B93E3BD,1
+DockId=0x00000001,1
 
 [Window][(max, +) dynamic linear system]
 Pos=342,307
@@ -4919,6 +4918,11 @@ Collapsed=0
 [Window][WindowOverViewport_11111111]
 Pos=0,19
 Size=1100,749
+Collapsed=0
+
+[Window][Critical Cycle]
+Pos=366,307
+Size=367,154
 Collapsed=0
 
 [Table][0x90C2C115,4]
@@ -4993,11 +4997,166 @@ Column 0  Sort=0v
 RefScale=13
 Column 0  Sort=0v
 
+[Table][0xA4496EB7,4]
+RefScale=13
+Column 0  Sort=0v
+
+[Table][0xD616B88F,4]
+RefScale=13
+Column 0  Sort=0v
+
+[Table][0x404838E1,4]
+RefScale=13
+Column 0  Sort=0v
+
+[Table][0x629ECACD,4]
+RefScale=13
+Column 0  Sort=0v
+
+[Table][0x0D783CED,4]
+RefScale=13
+Column 0  Sort=0v
+
+[Table][0x0EE39411,4]
+RefScale=13
+Column 0  Sort=0v
+
+[Table][0xC0AD998B,4]
+RefScale=13
+Column 0  Sort=0v
+
+[Table][0xEE050DEE,4]
+RefScale=13
+Column 0  Sort=0v
+
+[Table][0xD5D31E81,4]
+RefScale=13
+Column 0  Sort=0v
+
+[Table][0xF72CED69,4]
+RefScale=13
+Column 0  Sort=0v
+
+[Table][0xD72074DF,4]
+RefScale=13
+Column 0  Sort=0v
+
+[Table][0x4D450B4D,4]
+RefScale=13
+Column 0  Sort=0v
+
+[Table][0xFEB63409,4]
+RefScale=13
+Column 0  Sort=0v
+
+[Table][0x9BBB1CF2,4]
+RefScale=13
+Column 0  Sort=0v
+
+[Table][0xC46BD7B5,4]
+RefScale=13
+Column 0  Sort=0v
+
+[Table][0x16CA66E8,4]
+RefScale=13
+Column 0  Sort=0v
+
+[Table][0x6BD99B0D,4]
+RefScale=13
+Column 0  Sort=0v
+
+[Table][0xB9782A50,4]
+RefScale=13
+Column 0  Sort=0v
+
+[Table][0x3ECC7FEE,4]
+RefScale=13
+Column 0  Sort=0v
+
+[Table][0xEC6DCEB3,4]
+RefScale=13
+Column 0  Sort=0v
+
+[Table][0x36652F98,4]
+RefScale=13
+Column 0  Sort=0v
+
+[Table][0x0197DEBE,4]
+RefScale=13
+Column 0  Sort=0v
+
+[Table][0xD3366FE3,4]
+RefScale=13
+Column 0  Sort=0v
+
+[Table][0xBD57462E,4]
+RefScale=13
+Column 0  Sort=0v
+
+[Table][0xF223AF9B,4]
+RefScale=13
+Column 0  Sort=0v
+
+[Table][0x5AD7A5BB,4]
+RefScale=13
+Column 0  Sort=0v
+
+[Table][0xCF057B70,4]
+RefScale=13
+Column 0  Sort=0v
+
+[Table][0x7ED01C26,4]
+RefScale=13
+Column 0  Sort=0v
+
+[Table][0xAC71AD7B,4]
+RefScale=13
+Column 0  Sort=0v
+
+[Table][0x6010A887,4]
+RefScale=13
+Column 0  Sort=0v
+
+[Table][0x140FD15E,4]
+RefScale=13
+Column 0  Sort=0v
+
+[Table][0x7F168A17,4]
+RefScale=13
+Column 0  Sort=0v
+
+[Table][0xADB73B4A,4]
+RefScale=13
+Column 0  Sort=0v
+
+[Table][0x15120F83,4]
+RefScale=13
+Column 0  Sort=0v
+
+[Table][0xBB7ADF11,4]
+RefScale=13
+Column 0  Sort=0v
+
+[Table][0xDC308CD0,4]
+RefScale=13
+Column 0  Sort=0v
+
+[Table][0xF7380767,4]
+RefScale=13
+Column 0  Sort=0v
+
+[Table][0x2599B63A,4]
+RefScale=13
+Column 0  Sort=0v
+
+[Table][0x5D8FF001,4]
+RefScale=13
+Column 0  Sort=0v
+
 [Docking][Data]
 DockSpace     ID=0x7C6B3D9B Window=0xA87D555D Pos=0,19 Size=1100,749 Split=X
   DockNode    ID=0x00000004 Parent=0x7C6B3D9B SizeRef=798,762 Split=Y
     DockNode  ID=0x00000002 Parent=0x00000004 SizeRef=1102,662 CentralNode=1 Selected=0x249E7C8C
     DockNode  ID=0x00000003 Parent=0x00000004 SizeRef=1102,98 Selected=0x6B041B99
-  DockNode    ID=0x00000001 Parent=0x7C6B3D9B SizeRef=302,762 Selected=0x6372E3B7
-DockSpace     ID=0x8B93E3BD Pos=0,19 Size=1065,749 CentralNode=1
+  DockNode    ID=0x00000001 Parent=0x7C6B3D9B SizeRef=302,762 Selected=0xBB186BEF
 
