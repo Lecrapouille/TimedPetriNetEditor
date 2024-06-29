@@ -27,6 +27,15 @@
 #include "Editor/DearImGui/KeyBindings.hpp"
 #include "Utils/Utils.hpp"
 
+#ifdef WITH_MQTT
+#  ifndef MQTT_BROKER_ADDR
+#    error "MQTT_BROKER_ADDR shall be defined"
+#  endif
+#  ifndef MQTT_BROKER_PORT
+#    error "MQTT_BROKER_PORT shall be defined"
+#  endif
+#endif
+
 namespace tpne {
 
 //! \brief path of the file storing dear imgui widgets. Cannot be placed
@@ -37,6 +46,9 @@ static std::string g_ini_filename = "imgui.ini";
 Editor::Editor(size_t const width, size_t const height,
                std::string const& title)
     : Application(width, height, title),
+#ifdef WITH_MQTT
+      MQTT(MQTT_BROKER_ADDR, MQTT_BROKER_PORT),
+#endif
       m_path(GET_DATA_PATH),
       m_simulation(m_net, m_messages),
       m_view(*this)
@@ -64,6 +76,93 @@ Editor::Editor(size_t const width, size_t const height,
     // Theme
     ImGui::StyleColorsDark();
 }
+
+#ifdef WITH_MQTT
+//------------------------------------------------------------------------------
+void Editor::onConnected(int /*rc*/)
+{
+    std::cout << "Connected to MQTT broker" << std::endl;
+
+    // Load a Petri net using the formalism used for TPNE json files. For example
+    // mosquitto_pub -h localhost -t "tpne/load" -m '{ "revision": 3, "type":
+    // "Petri net", "nets": [ { "name": "hello world",
+    // "places": [ { "id": 0, "caption": "P0", "tokens": 1, "x": 244, "y": 153 },
+    // { "id": 1, "caption": "P1", "tokens": 0, "x": 356, "y": 260 } ],
+    // "transitions": [ { "id": 0, "caption": "T0", "x": 298, "y": 207, "angle": 0 } ],
+    // "arcs": [ { "from": "P0", "to": "T0" }, { "from": "T0", "to": "P1", "duration": 3 }
+    // ] } ] }'
+    subscribe("tpne/load", [&](MQTT::Message const& msg){
+        std::cout << "load\n";
+        if (m_simulation.running)
+        {
+            m_messages.setError("MQTT: cannot load new Petri net while the simulation is still in progress");
+            return ;
+        }
+        const char* message = static_cast<const char*>(msg.payload);
+
+        // To temporary file
+        std::string path("/tmp/petri.json");
+        std::ofstream file(path);
+        file << message;
+        file.close();
+
+        // Import the file
+        bool shall_springify;
+        std::string error = loadFromFile(m_net, path, shall_springify);
+        if (error.empty())
+        {
+            m_messages.setInfo("Loaded with success " + path);
+        }
+        else
+        {
+            m_messages.setError(error);
+        }
+    }, MQTT::QoS::QoS0);
+
+    // Start the simulation for Petri net and GRAFCET.
+    // mosquitto_pub -h localhost -t "tpne/start" -m ''
+    subscribe("tpne/start", [&](MQTT::Message const& /*msg*/){
+        if ((m_net.type() == TypeOfNet::TimedEventGraph) || (m_net.type() == TypeOfNet::TimedPetriNet))
+        {
+            m_messages.setError("MQTT: Please convert first to non timed net before starting simulation");
+            return ;
+        }
+        m_simulation.running = true;
+        framerate(30);
+    }, MQTT::QoS::QoS0);
+
+    // Stop the simulation.
+    // mosquitto_pub -h localhost -t "tpne/stop" -m ''
+    subscribe("tpne/stop", [&](MQTT::Message const& /*msg*/){
+        m_simulation.running = false;
+        framerate(60);
+    }, MQTT::QoS::QoS0);
+
+    // Fire transitions.
+    // mosquitto_pub -h localhost -t "tpne/fire" -m '10100'
+    subscribe("tpne/fire", [&](MQTT::Message const& msg){
+        if (!m_simulation.running)
+        {
+            m_messages.setError("MQTT: The simulation is not running");
+            return ;
+        }
+        const char* message = static_cast<const char*>(msg.payload);
+        Net::Transitions& transitions = m_net.transitions();
+        size_t i = size_t(msg.payloadlen);
+        if (i == transitions.size())
+        {
+            while (i--)
+            {
+                transitions[i].receptivity = (message[i] != '0');
+            }
+        }
+        else
+        {
+            m_messages.setError("MQTT: fire command length does not match number of transitions");
+        }
+    }, MQTT::QoS::QoS0);
+}
+#endif
 
 //------------------------------------------------------------------------------
 void Editor::showStyleSelector()
