@@ -47,9 +47,9 @@ INCLUDES += $(P)/include $(P)/src
 # Internal libraries since we can call the GUI from Julia REPL
 # We force compilation order.
 LIB_TPNE_NET := $(call internal-lib,TimedPetriNet)
-LIB_TPNE_EDITOR := $(call internal-lib,TimedPetriEditor)
+LIB_TPNE_EDITOR := $(call internal-lib,TimedPetriGUI)
 INTERNAL_LIBS := $(LIB_TPNE_EDITOR) $(LIB_TPNE_NET)
-DIRS_WITH_MAKEFILE := $(P)/src/Net $(P)/src/Editor
+#DIRS_WITH_MAKEFILE := $(P)/src/Net $(P)/src/Editor
 
 #$(LIB_TPNE_NET): $(P)/src/Net
 
@@ -68,9 +68,6 @@ USER_CXXFLAGS := -Wno-cast-qual -Wno-undef
 # GUI
 #
 include $(abspath $(P)/src/Editor/DearImGui/Backends/Makefile)
-THIRDPART_LIBS :=
-INCLUDES += $(P)/src/Editor/DearImGui
-INCLUDES += $(P)/src
 
 ###################################################
 # Generic Makefile rules
