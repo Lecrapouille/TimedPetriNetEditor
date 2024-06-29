@@ -29,14 +29,22 @@
 #  include "Utils/ForceDirected.hpp"
 #  include "Utils/History.hpp"
 #  include "Utils/Path.hpp"
+#  ifdef WITH_MQTT
+#    include "MQTT/MQTT.hpp"
+#  endif
 #  include <vector>
 
 namespace tpne {
 
+#  ifndef WITH_MQTT
+//! \brief Dummy MQTT class since disabled by the Makefile
+class MQTT {};
+#  endif
+
 // ****************************************************************************
 //! \brief Graphical User interface for manipulating and simulating Petri net.
 // ****************************************************************************
-class Editor: public PetriNetEditor, public Application
+class Editor: public PetriNetEditor, public Application, protected MQTT
 {
 public:
 
@@ -60,6 +68,12 @@ private: // Inheritance from Application class
     virtual void onUpdate(float const dt) override;
     virtual void onDraw() override;
     void close();
+
+#ifdef WITH_MQTT
+private: // Inheritance from MQTT
+
+    virtual void onConnected(int rc) override;
+#endif
 
 private: // Widgets
 

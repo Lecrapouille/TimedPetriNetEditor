@@ -1,4 +1,18 @@
 ###################################################
+# Set MQTT Library.
+#
+ifneq ($(OS),Emscripten)
+    INCLUDES += $(THIRDPART_DIR)/MQTT/include
+    DEFINES += -DMQTT_BROKER_ADDR=\"localhost\"
+    DEFINES += -DMQTT_BROKER_PORT=1883
+    DEFINES += -DWITH_MQTT
+    PKG_LIBS += libmosquitto
+    GUI_FILES += $(THIRDPART_DIR)/MQTT/src/MQTT.cpp
+else
+    DEFINES += -UWITH_MQTT
+endif
+
+###################################################
 # If compiling for HTML5 (Emscripten) then force
 # using Raylib backend since GLFW3 is not compilable.
 #

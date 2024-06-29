@@ -41,7 +41,7 @@ VPATH += $(P)/src/Net/Imports VPATH += $(P)/src/Net/Exports
 ###################################################
 # Inform Makefile where to find header files
 #
-INCLUDES += $(P)/include $(P)/src $(P)/external
+INCLUDES += $(P)/include $(P)/src
 
 ###################################################
 # Internal libraries since we can call the GUI from Julia REPL
