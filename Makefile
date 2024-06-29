@@ -40,7 +40,7 @@ INCLUDES := $(P)/include
 VPATH := $(P)/src
 # Internal libs to compile
 LIB_TPNE_NET := $(call internal-lib,TimedPetriNet)
-LIB_TPNE_EDITOR := $(call internal-lib,TimedPetriEditor)
+LIB_TPNE_EDITOR := $(call internal-lib,TimedPetriGUI)
 LIB_TPNE_JULIA := $(call internal-lib,TimedPetriJulia)
 INTERNAL_LIBS := $(LIB_TPNE_EDITOR) $(LIB_TPNE_NET) $(LIB_TPNE_JULIA)
 DIRS_WITH_MAKEFILE := $(P)/src/Net $(P)/src/Editor $(P)/src/julia
@@ -49,10 +49,6 @@ DIRS_WITH_MAKEFILE := $(P)/src/Net $(P)/src/Editor $(P)/src/julia
 # GUI
 #
 include $(abspath $(P)/src/Editor/DearImGui/Backends/Makefile)
-THIRDPART_LIBS :=
-LINKER_FLAGS += -ldl -lpthread
-INCLUDES += $(P)/src/Editor/DearImGui
-INCLUDES += $(P)/src
 
 ###################################################
 # Embed assets for web version. Assets shall be
@@ -68,6 +64,32 @@ ifeq ($(OS),Emscripten)
         # For linking glfwGetProcAddress().
         LINKER_FLAGS += -s GL_ENABLE_GET_PROC_ADDRESS
     endif
+endif
+
+###################################################
+# OpenGL: glfw and glew libraries
+#
+ifeq ($(ARCHI),Darwin)
+INCLUDES += -I/usr/local/include -I/opt/local/include
+LINKER_FLAGS += -framework OpenGL -framework Cocoa
+LINKER_FLAGS += -framework IOKit -framework CoreVideo
+LINKER_FLAGS += -L/usr/local/lib -L/opt/local/lib
+LINKER_FLAGS += -lGLEW -lglfw
+endif
+
+###################################################
+# Project linker
+#
+LINKER_FLAGS += -ldl -lpthread
+
+###################################################
+# MacOS X
+#
+ifeq ($(ARCHI),Darwin)
+BUILD_MACOS_APP_BUNDLE = 1
+APPLE_IDENTIFIER = lecrapouille
+MACOS_BUNDLE_ICON = data/TimedPetriNetEditor.icns
+LINKER_FLAGS += -framework CoreFoundation
 endif
 
 ###################################################
@@ -90,7 +112,7 @@ $(P)/src/julia: $(P)/src/Editor
 $(P)/src/Editor: $(P)/src/Net
 
 ###################################################
-# Copy data inside BUILD to allow emscripten to embedded them
+#? Copy data inside BUILD to allow emscripten to embedded them
 #
 .PHONY: copy-assets
 copy-emscripten-assets: | $(BUILD)
@@ -102,3 +124,4 @@ ifeq ($(ARCHI),Emscripten)
 	@cp $(P)/data/font.ttf $(BUILD)/data
 	@cp $(P)/data/imgui.ini $(BUILD)/data
 endif
+

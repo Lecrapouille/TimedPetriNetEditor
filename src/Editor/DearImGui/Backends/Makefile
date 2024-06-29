@@ -80,7 +80,7 @@ ifeq ($(DEAR_IMGUI_BACKEND),RayLib)
     INCLUDES += $(THIRDPART_DIR)/rlImGui
     GUI_FILES += $(THIRDPART_DIR)/rlImGui/rlImGui.cpp
     INCLUDES += $(THIRDPART_DIR)/raylib/src
-    THIRDPART_LIBS += $(THIRDPART_DIR)/raylib/src/$(OS)/libraylib.a
+    GUI_THIRDPART_LIBS += $(THIRDPART_DIR)/raylib/src/$(OS)/libraylib.a
     ifeq ($(OS),Emscripten)
         ifdef EXAEQUOS
             LINKER_FLAGS += -sMIN_WEBGL_VERSION=2 -sMAX_WEBGL_VERSION=2 -sFULL_ES3
@@ -101,7 +101,9 @@ ifeq ($(DEAR_IMGUI_BACKEND),RayLib)
     USER_CXXFLAGS += -Wno-cast-qual -Wno-undef
 endif
 
+###################################################
 # Dear ImGui
+#
 INCLUDES += $(THIRDPART_DIR)
 INCLUDES += $(THIRDPART_DIR)/imgui
 GUI_FILES += $(THIRDPART_DIR)/imgui/imgui_widgets.cpp
@@ -110,13 +112,21 @@ GUI_FILES += $(THIRDPART_DIR)/imgui/imgui_tables.cpp
 GUI_FILES += $(THIRDPART_DIR)/imgui/imgui.cpp
 GUI_FILES += $(THIRDPART_DIR)/imgui/misc/cpp/imgui_stdlib.cpp
 
+###################################################
 # Dear ImGui plot
+#
 GUI_FILES += $(THIRDPART_DIR)/implot/implot_items.cpp
 GUI_FILES += $(THIRDPART_DIR)/implot/implot.cpp
 
+###################################################
 # Dear ImGui file dialog
+#
 GUI_FILES += $(THIRDPART_DIR)/ImGuiFileDialog/ImGuiFileDialog.cpp
 USER_CXXFLAGS += -Wno-unknown-pragmas
 
+###################################################
 # Petri Editor
+#
+INCLUDES += $(P)/src/Editor/DearImGui
+INCLUDES += $(P)/src
 GUI_FILES += $(call wildcard,$(P)/src/Editor/DearImGui/*.cpp)

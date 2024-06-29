@@ -28,7 +28,7 @@ M := $(P)/.makefile
 # Project definition
 #
 include $(P)/Makefile.common
-TARGET_NAME :=  TimedPetriEditor
+TARGET_NAME := TimedPetriGUI
 TARGET_DESCRIPTION := Library Editor for Petri nets
 include $(M)/project/Makefile
 
@@ -42,6 +42,7 @@ include ./DearImGui/Backends/Makefile
 #
 INCLUDES += $(P)/src $(P)/include
 LIB_FILES += $(GUI_FILES)
+THIRDPART_LIBS := $(GUI_THIRDPART_LIBS)
 
 ###################################################
 # Generic Makefile rules

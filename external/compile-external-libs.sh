@@ -27,8 +27,6 @@
 ### $CXX: C++ compiler
 ###############################################################################
 
-source $1
-
 ### Library raylib
 print-compile raylib
 (
