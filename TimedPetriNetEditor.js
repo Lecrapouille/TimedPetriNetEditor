@@ -39,7 +39,7 @@ if (ENVIRONMENT_IS_NODE) {
 
 // --pre-jses are emitted after the Module integration code, so that they can
 // refer to Module (if they choose; they can also define Module)
-// include: /tmp/tmpvyr04re5.js
+// include: /tmp/tmp3ejusajy.js
 
   if (!Module.expectedDataFileDownloads) {
     Module.expectedDataFileDownloads = 0;
@@ -227,21 +227,21 @@ Module['FS_createPath']("/home/runner/work/TimedPetriNetEditor/TimedPetriNetEdit
 
   })();
 
-// end include: /tmp/tmpvyr04re5.js
-// include: /tmp/tmpvlxw6omw.js
+// end include: /tmp/tmp3ejusajy.js
+// include: /tmp/tmpo61mpz2g.js
 
     // All the pre-js content up to here must remain later on, we need to run
     // it.
     if (Module['$ww'] || (typeof ENVIRONMENT_IS_PTHREAD != 'undefined' && ENVIRONMENT_IS_PTHREAD)) Module['preRun'] = [];
     var necessaryPreJSTasks = Module['preRun'].slice();
-  // end include: /tmp/tmpvlxw6omw.js
-// include: /tmp/tmpympbpi3i.js
+  // end include: /tmp/tmpo61mpz2g.js
+// include: /tmp/tmpu68swa0l.js
 
     if (!Module['preRun']) throw 'Module.preRun should exist because file support used it; did a pre-js delete it?';
     necessaryPreJSTasks.forEach((task) => {
       if (Module['preRun'].indexOf(task) < 0) throw 'All preRun tasks that exist before user pre-js code should remain after; did you replace Module or modify Module.preRun?';
     });
-  // end include: /tmp/tmpympbpi3i.js
+  // end include: /tmp/tmpu68swa0l.js
 
 
 // Sometimes an existing Module object exists with properties
@@ -1145,40 +1145,40 @@ function dbg(...args) {
 // === Body ===
 
 var ASM_CONSTS = {
-  215876: () => { if (document.fullscreenElement) return 1; },  
- 215922: () => { return document.getElementById('canvas').width; },  
- 215974: () => { return parseInt(document.getElementById('canvas').style.width); },  
- 216042: () => { document.exitFullscreen(); },  
- 216069: () => { setTimeout(function() { Module.requestFullscreen(false, false); }, 100); },  
- 216142: () => { if (document.fullscreenElement) return 1; },  
- 216188: () => { return document.getElementById('canvas').width; },  
- 216240: () => { return screen.width; },  
- 216265: () => { document.exitFullscreen(); },  
- 216292: () => { setTimeout(function() { Module.requestFullscreen(false, true); setTimeout(function() { canvas.style.width="unset"; }, 100); }, 100); },  
- 216425: () => { if (document.fullscreenElement) return 1; },  
- 216471: () => { return document.getElementById('canvas').width; },  
- 216523: () => { return parseInt(document.getElementById('canvas').style.width); },  
- 216591: () => { if (document.fullscreenElement) return 1; },  
- 216637: () => { return document.getElementById('canvas').width; },  
- 216689: () => { return screen.width; },  
- 216714: () => { if (document.fullscreenElement) return 1; },  
- 216760: () => { return document.getElementById('canvas').width; },  
- 216812: () => { return screen.width; },  
- 216837: () => { document.exitFullscreen(); },  
- 216864: () => { if (document.fullscreenElement) return 1; },  
- 216910: () => { return document.getElementById('canvas').width; },  
- 216962: () => { return parseInt(document.getElementById('canvas').style.width); },  
- 217030: () => { document.exitFullscreen(); },  
- 217057: () => { return screen.width; },  
- 217082: () => { return screen.height; },  
- 217108: () => { return window.screenX; },  
- 217135: () => { return window.screenY; },  
- 217162: ($0) => { navigator.clipboard.writeText(UTF8ToString($0)); },  
- 217215: ($0) => { document.getElementById("canvas").style.cursor = UTF8ToString($0); },  
- 217286: () => { document.getElementById('canvas').style.cursor = 'none'; },  
- 217343: ($0) => { document.getElementById('canvas').style.cursor = UTF8ToString($0); },  
- 217414: () => { if (document.fullscreenElement) return 1; },  
- 217460: () => { if (document.pointerLockElement) return 1; }
+  215972: () => { if (document.fullscreenElement) return 1; },  
+ 216018: () => { return document.getElementById('canvas').width; },  
+ 216070: () => { return parseInt(document.getElementById('canvas').style.width); },  
+ 216138: () => { document.exitFullscreen(); },  
+ 216165: () => { setTimeout(function() { Module.requestFullscreen(false, false); }, 100); },  
+ 216238: () => { if (document.fullscreenElement) return 1; },  
+ 216284: () => { return document.getElementById('canvas').width; },  
+ 216336: () => { return screen.width; },  
+ 216361: () => { document.exitFullscreen(); },  
+ 216388: () => { setTimeout(function() { Module.requestFullscreen(false, true); setTimeout(function() { canvas.style.width="unset"; }, 100); }, 100); },  
+ 216521: () => { if (document.fullscreenElement) return 1; },  
+ 216567: () => { return document.getElementById('canvas').width; },  
+ 216619: () => { return parseInt(document.getElementById('canvas').style.width); },  
+ 216687: () => { if (document.fullscreenElement) return 1; },  
+ 216733: () => { return document.getElementById('canvas').width; },  
+ 216785: () => { return screen.width; },  
+ 216810: () => { if (document.fullscreenElement) return 1; },  
+ 216856: () => { return document.getElementById('canvas').width; },  
+ 216908: () => { return screen.width; },  
+ 216933: () => { document.exitFullscreen(); },  
+ 216960: () => { if (document.fullscreenElement) return 1; },  
+ 217006: () => { return document.getElementById('canvas').width; },  
+ 217058: () => { return parseInt(document.getElementById('canvas').style.width); },  
+ 217126: () => { document.exitFullscreen(); },  
+ 217153: () => { return screen.width; },  
+ 217178: () => { return screen.height; },  
+ 217204: () => { return window.screenX; },  
+ 217231: () => { return window.screenY; },  
+ 217258: ($0) => { navigator.clipboard.writeText(UTF8ToString($0)); },  
+ 217311: ($0) => { document.getElementById("canvas").style.cursor = UTF8ToString($0); },  
+ 217382: () => { document.getElementById('canvas').style.cursor = 'none'; },  
+ 217439: ($0) => { document.getElementById('canvas').style.cursor = UTF8ToString($0); },  
+ 217510: () => { if (document.fullscreenElement) return 1; },  
+ 217556: () => { if (document.pointerLockElement) return 1; }
 };
 function GetWindowInnerWidth() { return window.innerWidth; }
 function GetWindowInnerHeight() { return window.innerHeight; }
