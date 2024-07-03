@@ -46,9 +46,6 @@ static std::string g_ini_filename = "imgui.ini";
 Editor::Editor(size_t const width, size_t const height,
                std::string const& title)
     : Application(width, height, title),
-#ifdef WITH_MQTT
-      MQTT(MQTT_BROKER_ADDR, MQTT_BROKER_PORT),
-#endif
       m_path(GET_DATA_PATH),
       m_simulation(m_net, m_messages),
       m_view(*this)
@@ -59,7 +56,7 @@ Editor::Editor(size_t const width, size_t const height,
 #  define FONT_SIZE 13.0f
 #endif
 
-    std::cout << "Path: " << m_path.toString() << std::endl;
+    m_messages.setInfo("Path: " + m_path.toString());
 
     m_states.title = title;
 
@@ -67,7 +64,7 @@ Editor::Editor(size_t const width, size_t const height,
     ImGuiIO &io = ImGui::GetIO();
     g_ini_filename = m_path.expand("imgui.ini").c_str();
     io.IniFilename = g_ini_filename.c_str();
-    std::cout << "imgui.ini path: " << io.IniFilename << std::endl;
+    // std::cout << "imgui.ini path: " << io.IniFilename << std::endl;
 
     // Setup fonts
     io.Fonts->AddFontFromFileTTF(m_path.expand("font.ttf").c_str(), FONT_SIZE);
@@ -75,14 +72,16 @@ Editor::Editor(size_t const width, size_t const height,
 
     // Theme
     ImGui::StyleColorsDark();
+
+#ifdef WITH_MQTT
+    initMQTT();
+#endif
 }
 
 #ifdef WITH_MQTT
 //------------------------------------------------------------------------------
-void Editor::onConnected(int /*rc*/)
+bool Editor::initMQTT()
 {
-    std::cout << "Connected to MQTT broker" << std::endl;
-
     // Load a Petri net using the formalism used for TPNE json files. For example
     // mosquitto_pub -h localhost -t "tpne/load" -m '{ "revision": 3, "type":
     // "Petri net", "nets": [ { "name": "hello world",
@@ -91,8 +90,8 @@ void Editor::onConnected(int /*rc*/)
     // "transitions": [ { "id": 0, "caption": "T0", "x": 298, "y": 207, "angle": 0 } ],
     // "arcs": [ { "from": "P0", "to": "T0" }, { "from": "T0", "to": "P1", "duration": 3 }
     // ] } ] }'
-    subscribe("tpne/load", [&](MQTT::Message const& msg){
-        std::cout << "load\n";
+    static auto onLoadCommandReceived = [&](const mqtt::Message& msg)
+    {
         if (m_simulation.running)
         {
             m_messages.setError("MQTT: cannot load new Petri net while the simulation is still in progress");
@@ -117,30 +116,34 @@ void Editor::onConnected(int /*rc*/)
         {
             m_messages.setError(error);
         }
-    }, MQTT::QoS::QoS0);
+    };
 
     // Start the simulation for Petri net and GRAFCET.
     // mosquitto_pub -h localhost -t "tpne/start" -m ''
-    subscribe("tpne/start", [&](MQTT::Message const& /*msg*/){
-        if ((m_net.type() == TypeOfNet::TimedEventGraph) || (m_net.type() == TypeOfNet::TimedPetriNet))
+    static auto onStartSimulationCommandReceived = [&](mqtt::Message const& /*msg*/)
+    {
+        if ((m_net.type() == TypeOfNet::TimedEventGraph) ||
+            (m_net.type() == TypeOfNet::TimedPetriNet))
         {
-            m_messages.setError("MQTT: Please convert first to non timed net before starting simulation");
+            m_messages.setError(
+                "MQTT: Please convert first to non timed net before starting simulation");
             return ;
         }
-        m_simulation.running = true;
-        framerate(30);
-    }, MQTT::QoS::QoS0);
+        toogleStartSimulation();
+    };
 
     // Stop the simulation.
     // mosquitto_pub -h localhost -t "tpne/stop" -m ''
-    subscribe("tpne/stop", [&](MQTT::Message const& /*msg*/){
+    static auto onStopSimulationCommandReceived = [&](mqtt::Message const& /*msg*/)
+    {
         m_simulation.running = false;
         framerate(60);
-    }, MQTT::QoS::QoS0);
+    };
 
     // Fire transitions.
     // mosquitto_pub -h localhost -t "tpne/fire" -m '10100'
-    subscribe("tpne/fire", [&](MQTT::Message const& msg){
+    static auto onFireTransitionCommandReceived = [&](mqtt::Message const& msg)
+    {
         if (!m_simulation.running)
         {
             m_messages.setError("MQTT: The simulation is not running");
@@ -160,9 +163,28 @@ void Editor::onConnected(int /*rc*/)
         {
             m_messages.setError("MQTT: fire command length does not match number of transitions");
         }
-    }, MQTT::QoS::QoS0);
+    };
+
+    // Subscription to MQTT messages
+    auto onConnected = [&](int rc)
+    {
+        m_messages.setInfo("Connected to MQTT broker with return code " + std::to_string(rc));
+        m_mqtt.subscribe(TOPIC_LOAD, mqtt::QoS::QoS0, onLoadCommandReceived);
+        m_mqtt.subscribe(TOPIC_START, mqtt::QoS::QoS0, onStartSimulationCommandReceived);
+        m_mqtt.subscribe(TOPIC_STOP, mqtt::QoS::QoS0, onStopSimulationCommandReceived);
+        m_mqtt.subscribe(TOPIC_FIRE, mqtt::QoS::QoS0, onFireTransitionCommandReceived);
+    };
+
+    // Connection to the MQTT broker
+    if (!m_mqtt.connect({"localhost", 1883, std::chrono::seconds(60)}, onConnected))
+    {
+        m_messages.setError(m_mqtt.error().message());
+        return false;
+    }
+
+    return true;
 }
-#endif
+#endif // WITH_MQTT
 
 //------------------------------------------------------------------------------
 void Editor::showStyleSelector()
@@ -914,9 +936,13 @@ void Editor::messagebox()
 //------------------------------------------------------------------------------
 void Editor::inspector()
 {
+    // InputText modify callback: modified => net shall be saved ?
+    static bool modified = false;
+    // InputText callback: GRAFCET transitivities modified ?
+    static bool compiled = false;
     // Do not allow editing when running simulation
     const auto readonly = m_simulation.running ?
-                          ImGuiInputTextFlags_ReadOnly : ImGuiInputTextFlags_None;
+        ImGuiInputTextFlags_ReadOnly : ImGuiInputTextFlags_None;
 
     // Place captions and tokens
     {
@@ -934,7 +960,13 @@ void Editor::inspector()
         {
             ImGui::PushID(place.key.c_str());
             ImGui::AlignTextToFramePadding();
-            ImGui::InputText(place.key.c_str(), &place.caption, readonly);
+            ImGui::InputText(place.key.c_str(), &place.caption,
+                readonly | ImGuiInputTextFlags_CallbackEdit,
+                [](ImGuiInputTextCallbackData*)
+                {
+                    modified = true;
+                    return 0;
+                });
 
             // Increment/decrement tokens
             ImGui::SameLine();
@@ -942,11 +974,13 @@ void Editor::inspector()
             if (ImGui::ArrowButton("##left", ImGuiDir_Left))
             {
                 place.decrement();
+                modified = true;
             }
             ImGui::SameLine();
             if (ImGui::ArrowButton("##right", ImGuiDir_Right))
             {
                 place.increment();
+                modified = true;
             }
             ImGui::PopButtonRepeat();
 
@@ -971,34 +1005,55 @@ void Editor::inspector()
         ImGui::Separator();
         ImGui::Text("%s", (m_net.type() == TypeOfNet::GRAFCET) ? "Transitivities:" : "Captions:");
 
-        // Show contents of transitivities
+        // Compile transitivities for GRAFCET the initial time and each time one of transitions
+        // have been edited (Currently: any InputText invalid the whole sensors. Slow but easier
+        // to implement).
+        compiled |= m_simulation.compiled;
+        if ((m_net.type() == TypeOfNet::GRAFCET) && (!compiled))
+        {
+            compiled = m_simulation.generateSensors();
+        }
         for (auto& t: m_net.transitions())
         {
-            ImGui::InputText(t.key.c_str(), &t.caption, readonly);
-            std::vector<Receptivity> const& receptivities = m_simulation.receptivities();
-            if ((m_net.type() == TypeOfNet::GRAFCET) && (!receptivities.empty()) && (!m_simulation.running))
-            {
-                Receptivity const& recp = receptivities[t.id];
-                // FIXME parse and clear sensors if and only if we modified entrytext
-                if (!recp.isValid()) // && recp.compiled()
+            // Show contents of transition
+            ImGui::InputText(t.key.c_str(), &t.caption,
+                readonly | ImGuiInputTextFlags_CallbackEdit,
+                [](ImGuiInputTextCallbackData*)
                 {
-                    ImGui::TextColored(ImVec4(1.0f, 0.0f, 0.0f, 1.0f), "%s", recp.error().c_str());
+                    modified = true;
+                    compiled = false;
+                    return 0;
+                });
+
+            // For GRAFCET and show syntax error on the transitivity
+            if ((m_net.type() == TypeOfNet::GRAFCET) && (!m_simulation.running))
+            {
+                Simulation::Receptivities const& receptivities = m_simulation.receptivities();
+                auto it = receptivities.find(t.id);
+                if (it == receptivities.end())
+                {
+                    m_messages.setError("Could not find receptivity. This should not happened. Please report this error");
+                }
+                else if (!it->second.isValid())
+                {
+                    ImGui::TextColored(ImVec4(1.0f, 0.0f, 0.0f, 1.0f), "%s", it->second.error().c_str());
+                    ImGui::TextColored(ImVec4(1.0f, 0.0f, 0.0f, 1.0f), "%s", "See help for the syntax");
                 }
             }
         }
         ImGui::End();
 
+        // For GRAFCET show sensor names from transitivities
         if (m_net.type() == TypeOfNet::GRAFCET)
         {
-            if (m_simulation.running)
+            ImGui::Begin("Sensors");
+            for (auto& it: Sensors::instance().database())
             {
-                ImGui::Begin("Sensors");
-                for (auto& it: Sensors::instance().database())
-                {
-                    ImGui::SliderInt(it.first.c_str(), &it.second, 0, 1);
-                }
-                ImGui::End();
+                int prev_value = it.second;
+                ImGui::SliderInt(it.first.c_str(), &it.second, 0, 1);
+                modified = (prev_value != it.second) && (!m_simulation.running);
             }
+            ImGui::End();
         }
     }
 
@@ -1012,7 +1067,9 @@ void Editor::inspector()
             if (arc.from.type == Node::Type::Transition)
             {
                 std::string text(arc.from.key + " -> " + arc.to.arcsOut[0]->to.key);
+                float prev_value = arc.duration;
                 ImGui::InputFloat(text.c_str(), &arc.duration, 0.01f, 1.0f, "%.3f", readonly);
+                modified = (prev_value != arc.duration);
             }
         }
         ImGui::End();
@@ -1024,10 +1081,18 @@ void Editor::inspector()
         for (auto& arc: m_net.arcs())
         {
             std::string text(arc.from.key + " -> " + arc.to.key);
+            float prev_value = arc.duration;
             ImGui::InputFloat(text.c_str(), &arc.duration, 0.01f, 1.0f, "%.3f", readonly);
+            modified = (prev_value != arc.duration);
         }
         ImGui::End();
     }
+
+    // Modified net ? If yes, set it as dirty to force its save when the app
+    // is closed. Compiled receptivities ?
+    m_simulation.compiled = compiled;
+    m_net.modified |= modified;
+    modified = false;
 }
 
 //------------------------------------------------------------------------------
@@ -1045,6 +1110,27 @@ void Editor::toogleStartSimulation()
     // will be displayed at the same position instead of a
     // single AnimatedToken carying 2 tokens.
     framerate(m_simulation.running ? 30 : 60); // FPS
+
+#ifdef WITH_MQTT
+    // Simulate sensor reading value.
+    auto& database = Sensors::instance().database();
+    for (auto const& sensor: database)
+    {
+        /*
+        auto const& sensor_name = sensor.first;
+        m_mqtt.subscribe("tpne/" + sensor_name, MQTT::QoS::QoS0,
+        [&](MQTT::Message const& msg)
+        {
+            const char* payload = static_cast<const char*>(msg.payload);
+            auto it = database.find(sensor_name);
+            if (it != database.end())
+            {
+                it->second = (payload[0] != '0');
+            }
+        });
+        */
+    }
+#endif
 }
 
 //------------------------------------------------------------------------------
@@ -1102,6 +1188,72 @@ Transition* Editor::getTransition(ImVec2 const& position)
     }
 
     return nullptr;
+}
+
+//------------------------------------------------------------------------------
+Transition& Editor::addTransition(float const x, float const y)
+{
+    auto action = std::make_unique<NetModifaction>(*this);
+    action->before(m_net);
+    Transition& transition = m_net.addTransition(x, y);
+    m_simulation.generateSensors(); // m_simulation.generateSensor(transition);
+    action->after(m_net);
+    m_history.add(std::move(action));
+    return transition;
+}
+
+//------------------------------------------------------------------------------
+void Editor::addPlace(float const x, float const y)
+{
+    auto action = std::make_unique<NetModifaction>(*this);
+    action->before(m_net);
+    m_net.addPlace(x, y);
+    action->after(m_net);
+    m_history.add(std::move(action));
+}
+
+//------------------------------------------------------------------------------
+void Editor::removeNode(Node& node)
+{
+    Node::Type type = node.type;
+    auto action = std::make_unique<NetModifaction>(*this);
+    action->before(m_net);
+    m_net.removeNode(node);
+    if (type == Node::Type::Transition)
+    {
+        m_simulation.generateSensors();
+    }
+    action->after(m_net);
+    m_history.add(std::move(action));
+}
+
+//------------------------------------------------------------------------------
+Node& Editor::addOppositeNode(Node::Type const type, float const x,
+    float const y, size_t const tokens)
+{
+    auto action = std::make_unique<NetModifaction>(*this);
+    action->before(m_net);
+    m_simulation.generateSensors();
+    Node& node = m_net.addOppositeNode(type, x, y, tokens);
+    if (node.type == Node::Type::Transition)
+    {
+        // FIXME m_simulation.generateSensor(node);
+        m_simulation.generateSensors();
+    }
+    action->after(m_net);
+    m_history.add(std::move(action));
+    return node;
+}
+
+//------------------------------------------------------------------------------
+void Editor::addArc(Node& from, Node& to, float const duration)
+{
+    auto action = std::make_unique<NetModifaction>(*this);
+    action->before(m_net);
+    m_net.addArc(from, to, duration);
+    m_simulation.generateSensors();
+    action->after(m_net);
+    m_history.add(std::move(action));
 }
 
 //------------------------------------------------------------------------------
@@ -1323,7 +1475,6 @@ std::vector<Messages::TimedMessage> const& Editor::getLogs() const
 void Editor::clearLogs()
 {
     m_messages.clear();
-
 }
 
 //--------------------------------------------------------------------------
@@ -1339,8 +1490,8 @@ void Editor::undo()
     else
     {
         m_messages.setInfo("Undo!");
+        m_net.modified = true;
     }
-    m_net.modified = true;
 }
 
 //--------------------------------------------------------------------------
@@ -1356,8 +1507,9 @@ void Editor::redo()
     else
     {
         m_messages.setInfo("Redo!");
+        m_net.modified = true;
+        m_simulation.compiled = false;
     }
-    m_net.modified = true;
 }
 
 //--------------------------------------------------------------------------
@@ -1509,29 +1661,25 @@ void Editor::PetriView::handleAddNode(ImGuiMouseButton button)
         {
             float const x = m_mouse.position.x;
             float const y = m_mouse.position.y;
-            auto action = std::make_unique<NetModifaction>(m_editor);
-            action->before(m_editor.m_net);
             if (m_editor.m_net.type() == TypeOfNet::TimedEventGraph)
             {
                 // In TimedEventGraph mode, we prefer avoiding creating
                 // places because they are not displayed. So only create
                 // transitions and arcs.
-                m_editor.m_net.addTransition(x, y);
+                m_editor.addTransition(x, y);
             }
             else
             {
                 // In other mode, Petri nets have two types of nodes.
                 if (button == MOUSE_BOUTON_ADD_PLACE)
                 {
-                    m_editor.m_net.addPlace(x, y);
+                    m_editor.addPlace(x, y);
                 }
                 else if (button == MOUSE_BOUTON_ADD_TRANSITION)
                 {
-                    m_editor.m_net.addTransition(x, y);
+                    m_editor.addTransition(x, y);
                 }
             }
-            action->after(m_editor.m_net);
-            m_editor.m_history.add(std::move(action));
         }
     }
     else if (m_editor.m_net.type() == TypeOfNet::PetriNet)
@@ -1564,9 +1712,6 @@ void Editor::PetriView::handleArcDestination()
     m_mouse.to = m_editor.getNode(m_mouse.position);
     m_mouse.handling_arc = false;
 
-    auto action = std::make_unique<NetModifaction>(m_editor);
-    action->before(m_editor.m_net);
-
     if (m_editor.m_net.type() == TypeOfNet::TimedEventGraph)
     {
         // In TimedEventGraph mode we only create transitions since places are
@@ -1574,12 +1719,12 @@ void Editor::PetriView::handleArcDestination()
         if (m_mouse.from == nullptr)
         {
             assert(m_mouse.to != nullptr);
-            m_mouse.from = &m_editor.m_net.addTransition(m_mouse.clicked_at.x, m_mouse.clicked_at.y);
+            m_mouse.from = &m_editor.addTransition(m_mouse.clicked_at.x, m_mouse.clicked_at.y);
         }
         if (m_mouse.to == nullptr)
         {
             assert(m_mouse.from != nullptr);
-            m_mouse.to = &m_editor.m_net.addTransition(m_mouse.position.x, m_mouse.position.y);
+            m_mouse.to = &m_editor.addTransition(m_mouse.position.x, m_mouse.position.y);
         }
     }
     else
@@ -1591,12 +1736,12 @@ void Editor::PetriView::handleArcDestination()
         else if (m_mouse.from == nullptr)
         {
             assert(m_mouse.to != nullptr);
-            m_mouse.from = &m_editor.m_net.addOppositeNode(m_mouse.to->type, m_mouse.clicked_at.x, m_mouse.clicked_at.y);
+            m_mouse.from = &m_editor.addOppositeNode(m_mouse.to->type, m_mouse.clicked_at.x, m_mouse.clicked_at.y);
         }
         else if (m_mouse.to == nullptr)
         {
             assert(m_mouse.from != nullptr);
-            m_mouse.to = &m_editor.m_net.addOppositeNode(m_mouse.from->type, m_mouse.position.x, m_mouse.position.y);
+            m_mouse.to = &m_editor.addOppositeNode(m_mouse.from->type, m_mouse.position.x, m_mouse.position.y);
         }
     }
 
@@ -1604,10 +1749,7 @@ void Editor::PetriView::handleArcDestination()
     assert(m_mouse.to != nullptr);
 
     // The case where two nodes have the same type is managed by addArc
-    m_editor.m_net.addArc(*m_mouse.from, *m_mouse.to, randomInt(1, 5));
-
-    action->after(m_editor.m_net);
-    m_editor.m_history.add(std::move(action));
+    m_editor.addArc(*m_mouse.from, *m_mouse.to, randomInt(1, 5));
 
     // Reset states
     m_mouse.from = m_mouse.to = nullptr;
@@ -1714,11 +1856,7 @@ void Editor::PetriView::onHandleInput()
             Node* node = m_editor.getNode(m_mouse.position);
             if (node != nullptr)
             {
-                auto action = std::make_unique<NetModifaction>(m_editor);
-                action->before(m_editor.m_net);
-                m_editor.m_net.removeNode(*node);
-                action->after(m_editor.m_net);
-                m_editor.m_history.add(std::move(action));
+                m_editor.removeNode(*node);
             }
         }
     }

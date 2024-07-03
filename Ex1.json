@@ -1,0 +1,32 @@
+{
+  "revision": 3,
+  "type": "GRAFCET",
+  "nets": [
+    {
+       "name": "Timed Petri net",
+       "places": [
+            { "id": 0, "caption": "Step 1", "tokens": 1, "x": 205, "y": 79 },
+            { "id": 1, "caption": "Step 2", "tokens": 0, "x": 206, "y": 249 },
+            { "id": 2, "caption": "Step 3", "tokens": 0, "x": 206, "y": 440 }
+       ],
+       "transitions": [
+            { "id": 0, "caption": "m", "x": 205, "y": 166, "angle": 0 },
+            { "id": 1, "caption": "a", "x": 206, "y": 348, "angle": 0 },
+            { "id": 2, "caption": "b", "x": 71, "y": 237, "angle": 0 }
+       ],
+       "arcs": [
+            { "from": "P0", "to": "T0" },
+            { "from": "T0", "to": "P1", "duration": 1 },
+            { "from": "P1", "to": "T1" },
+            { "from": "T1", "to": "P2", "duration": 4 },
+            { "from": "P2", "to": "T2" },
+            { "from": "T2", "to": "P0", "duration": 2 }
+       ],
+       "sensors": [
+            { "name": "a", "value": 0 },
+            { "name": "b", "value": 0 },
+            { "name": "m", "value": 0 }
+       ]
+    }
+  ]
+}
