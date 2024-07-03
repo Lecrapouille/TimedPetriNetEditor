@@ -1,0 +1,33 @@
+{
+  "revision": 3,
+  "type": "GRAFCET",
+  "nets": [
+    {
+       "name": "Timed Petri net",
+       "places": [
+            { "id": 0, "caption": "P0", "tokens": 1, "x": 235, "y": 86 },
+            { "id": 1, "caption": "P1", "tokens": 0, "x": 238, "y": 268 },
+            { "id": 2, "caption": "P2", "tokens": 0, "x": 106, "y": 449 },
+            { "id": 3, "caption": "P3", "tokens": 0, "x": 368, "y": 458 }
+       ],
+       "transitions": [
+            { "id": 0, "caption": "m", "x": 233, "y": 179, "angle": 0 },
+            { "id": 1, "caption": "a", "x": 104, "y": 358, "angle": 0 },
+            { "id": 2, "caption": "b", "x": 364, "y": 365, "angle": 0 }
+       ],
+       "arcs": [
+            { "from": "P0", "to": "T0" },
+            { "from": "T0", "to": "P1", "duration": 2 },
+            { "from": "P1", "to": "T1" },
+            { "from": "P1", "to": "T2" },
+            { "from": "T1", "to": "P2", "duration": 2 },
+            { "from": "T2", "to": "P3", "duration": 3 }
+       ],
+       "sensors": [
+            { "name": "a", "value": 0 },
+            { "name": "b", "value": 0 },
+            { "name": "m", "value": 0 }
+       ]
+    }
+  ]
+}

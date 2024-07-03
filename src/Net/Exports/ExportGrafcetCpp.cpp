@@ -26,6 +26,33 @@
 
 namespace tpne {
 
+static std::string camelCase(std::string const& line)
+{
+    std::string res(line);
+    bool active = true;
+
+    for(int i = 0; res[i] != '\0'; i++)
+    {
+        if (std::isalpha(res[i]))
+        {
+            if (active)
+            {
+                res[i] = char(std::toupper(res[i]));
+                active = false;
+            }
+            else
+            {
+                res[i] = char(std::tolower(res[i]));
+            }
+        }
+        else if (res[i] == ' ')
+        {
+            active = true;
+        }
+    }
+    return res;
+}
+
 //------------------------------------------------------------------------------
 std::string exportToGrafcetCpp(Net const& net, std::string const& filename)
 {
@@ -39,11 +66,17 @@ std::string exportToGrafcetCpp(Net const& net, std::string const& filename)
         return error.str();
     }
 
-    // Generate the C++ namespace and header guards
+    // Generate the C++ namespace
     std::string name_space = net.name;
+      std::for_each(name_space.begin(), name_space.end(), [](char & c) {
+        c = char(::tolower(int(c)));
+        if (c == ' ') { c = '_'; }
+    });
+    // Generate the C++ header guards
     std::string header_guards(name_space);
     std::for_each(header_guards.begin(), header_guards.end(), [](char & c) {
         c = char(::toupper(int(c)));
+        if (c == ' ') { c = '_'; }
     });
 
     file << "// This file has been generated and you should avoid editing it." << std::endl;
@@ -52,219 +85,194 @@ std::string exportToGrafcetCpp(Net const& net, std::string const& filename)
     file << "#ifndef GENERATED_GRAFCET_" << header_guards << "_HPP" << std::endl;
     file << "#  define GENERATED_GRAFCET_" << header_guards << "_HPP" << std::endl;
     file << "" << std::endl;
-    file << "#  include <iostream>" << std::endl;
-    file << "#  include \"MQTT.hpp\"" << std::endl;
-    file << "" << std::endl;
+    // FIXME #ifndef GRAFCET_WITH_DEBUG
+    //file << "#  include <iostream>" << std::endl;
+    //file << "" << std::endl;
+    file << "#  ifndef GRAFCET_SENSOR_TYPE" << std::endl;
+    file << "#    define GRAFCET_SENSOR_TYPE bool" << std::endl;
+    file << "#  endif" << std::endl << std::endl;
     file << "namespace " << name_space << " {" << std::endl;
 
     file << R"PN(
 // *****************************************************************************
 //! \brief
 // *****************************************************************************
-class Grafcet: public MQTT
+class Grafcet
 {
-private: // MQTT
-
-    //-------------------------------------------------------------------------
-    //! \brief Callback when this class is connected to the MQTT broker.
-    //-------------------------------------------------------------------------
-    virtual void onConnected(int /*rc*/) override;
-
-    //-------------------------------------------------------------------------
-    //! \brief Callback when this class is has received a new message from the
-    //! MQTT broker.
-    //-------------------------------------------------------------------------
-    virtual void onMessageReceived(const struct mosquitto_message& message) override;
-
-    //-------------------------------------------------------------------------
-    //! \brief Transmit to the Petri net editor all transitions that have been
-    //! fired.
-    //-------------------------------------------------------------------------
-    void publish()
-    {
-        static char message[MAX_TRANSITIONS + 1u] = { 'T' };
-
-        for (size_t i = 0u; i < MAX_TRANSITIONS; ++i)
-            message[i + 1u] = T[i];
-
-        MQTT::publish(topic().c_str(), std::string(message, MAX_TRANSITIONS + 1u), MQTT::QoS::QoS0);
-    }
-
 public:
 
     //-------------------------------------------------------------------------
     //! \brief Restore all states of the GRAFCET to their initial states.
     //-------------------------------------------------------------------------
-    Grafcet() { initGPIO(); reset(); }
+    Grafcet() { initInputsGPIOs(); initOutputGPIOs(); reset(); }
 
     //-------------------------------------------------------------------------
-    //! \brief Return the MQTT topic to talk with the Petri net editor.
-    //! Call Grafcet grafcet
-    //-------------------------------------------------------------------------
-    std::string& topic() { return m_topic; }
-
-    //-------------------------------------------------------------------------
-    //! \brief Print values of transitions and steps
-    //-------------------------------------------------------------------------
-    void debug() const
-    {
-       std::cout << "Transitions:" << std::endl;
-       for (size_t i = 0u; i < MAX_TRANSITIONS; ++i)
-       {
-          std::cout << "  Transition[" << i << "] = " << T[i]
-                    << std::endl;
-       }
-
-       std::cout << "Steps:" << std::endl;
-       for (size_t i = 0u; i < MAX_STEPS; ++i)
-       {
-          std::cout << "  Step[" << i << "] = " << X[i]
-                    << std::endl;
-       }
-    }
-
-    //-------------------------------------------------------------------------
-    //! \brief Desactivate all steps except the ones initially activated
+    //! \brief Reset the sequence to the initial step.
     //-------------------------------------------------------------------------
     void reset()
     {
 )PN";
-
+    file << "// Reset sensors ?" << std::endl;
+    file << "        init = true;" << std::endl;
     auto const& places = net.places();
     for (size_t i = 0; i < places.size(); ++i)
     {
         file << "        X[" << places[i].id << "] = "
              << (places[i].tokens ? "true; " : "false;")
-             << " // " << places[i].caption
              << std::endl;
     }
 
     file << R"PN(    }
 
     //-------------------------------------------------------------------------
-    //! \brief
+    //! \brief Update one cycle of the GRAFCET: read sensors, update states,
+    //! write outputs. The update follows the document
+    //! http://legins69.free.fr/automatisme/PL7Pro/GRAFCET.pdf
     //-------------------------------------------------------------------------
-    void step()
-    {
-        doActions();
-        readInputs();
-        setTransitions();
-        setSteps();
-    }
-
-private:
-
-    //-------------------------------------------------------------------------
-    //! \brief
-    //-------------------------------------------------------------------------
-    void initGPIO();
-
-    //-------------------------------------------------------------------------
-    //! \brief
-    //-------------------------------------------------------------------------
-    void readInputs();
-
-    //-------------------------------------------------------------------------
-    //! \brief
-    //-------------------------------------------------------------------------
-    void doActions()
+    void update()
     {
 )PN";
 
-    for (size_t p = 0u; p < net.places().size(); ++p)
+    std::string del;
+
+    // Read sensors
+    file << "        // Read sensors:" << std::endl;
+    for (auto const& s: Sensors::instance().database())
     {
-        file << "        if (X[" << p << "]) { P" << p << "(); }"
+        file << "        " << s.first
+             << " = readSensor" << camelCase(s.first) << "();"
              << std::endl;
     }
 
-    file << "    }" << std::endl << R"PN(
-    //-------------------------------------------------------------------------
-    //! \brief
-    //-------------------------------------------------------------------------
-    void setTransitions()
-    {
-)PN";
-
-    for (auto const& trans: net.transitions())
-    {
-        file << "        T[" << trans.id << "] =";
-        for (size_t a = 0; a < trans.arcsIn.size(); ++a)
-        {
-            Arc& arc = *trans.arcsIn[a];
-            if (a > 0u) { file << " &&"; }
-            file << " X[" << arc.from.id << "]";
-        }
-        file << " && T"  << trans.id << "();\n";
-    }
-
-    file << "        publish();" << std::endl << "    }" << std::endl << R"PN(
-    //-------------------------------------------------------------------------
-    //! \brief
-    //-------------------------------------------------------------------------
-    void setSteps()
-    {
-)PN";
-
-    for (auto const& trans: net.transitions())
-    {
-        file << "        if (T[" << trans.id << "])" << std::endl;
-        file << "        {" << std::endl;
-
-        for (auto const& arc: trans.arcsIn)
-        {
-            file << "            X[" << arc->from.id << "] = false;" << std::endl;
-        }
-
-        for (auto const& arc: trans.arcsOut)
-        {
-            file << "            X[" << arc->to.id << "] = true;" << std::endl;
-        }
-
-        file << "        }" << std::endl;;
-    }
-
-    file << "    }" << std::endl << std::endl << "private: // You have to implement the following methods in the C++ file"
-         << std::endl << std::endl;
-
+    file << std::endl << "        // Update GRAFCET states:" << std::endl;
+    // Compute T[n] = X[n] . R[n]
     for (auto const& t: net.transitions())
     {
-        file << "    //-------------------------------------------------------------------------" << std::endl;
-        file << "    //! \\brief Transition " << t.id <<  ": \"" << t.caption << "\"" << std::endl;
-        file << "    //! \\return true if the transition is enabled." << std::endl;
-        file << "    //-------------------------------------------------------------------------" << std::endl;
-        if (net.type() == TypeOfNet::GRAFCET)
+        file << "        T[" << t.id << "] = ";
+        del = "";
+        for (auto const& p: t.arcsIn)
         {
-            file << "    bool T" << t.id << "() { return " << Receptivity::Parser::translate(t.caption, "C") << "; } const";
+            file << del << "X[" << p->from.id << "]";
+            del = " & ";
+        }
+        file << del << t.key << "();"
+             << " // Transition " << t.id << ": " << t.caption
+             << std::endl;
+    }
+
+    // Compute X[n] = T[n-1] + X[n] . /T[n]
+    for (auto const& p: net.places())
+    {
+        file << "        X[" << p.id << "] = ";
+        del = "";
+        for (auto const& t: p.arcsIn)
+        {
+            file << del << "T[" << t->from.id << "]";
+            del = " | ";
+        }
+        if (p.arcsIn.size() > 0u)
+        {
+            file << " | ";
+        }
+        if (p.arcsOut.size() == 0u)
+        {
+            file << "X[" << p.id << "]";
         }
         else
         {
-            file << "    bool T" << t.id << "() const;";
+            file << "(X[" << p.id << "] & ";
+            del = "";
+            for (auto const& t: p.arcsOut)
+            {
+                file << del << "(!T[" << t->to.id << "])";
+                del = " & ";
+            }
+            file << ")";
         }
-        file << std::endl << std::endl;
+        if (p.tokens > 0u)
+        {
+            file << " | init";
+        }
+        file << "; // Step " << p.id << ": " << p.caption << std::endl;
     }
 
+    file << std::endl << "        // Update outputs:" << std::endl;
+    // TODO Sorties
+    // Pour toutes les sorties: faire la liste des Etapes qui les utilisent avec |
+    for (auto const& p: net.places())
+    {
+        file << "        outputs[xxx] = X[yyy] + (X[zzz] & inibiteur[zzz]);" << std::endl;
+    }
+    for (auto const& p: net.places())
+    {
+        file << "        P" << p.id << "(outputs[xxx]);" << std::endl;
+    }
+
+    file << std::endl << "        // End of the initial GRAFCET cycle" << std::endl;
+    file << "        init = false;";
+    file << R"PN(
+    }
+
+private:  // You have to implement the following methods in the C++ file
+
+    //-------------------------------------------------------------------------
+    //! \brief Initialize the input GPIOs.
+    //-------------------------------------------------------------------------
+    void initInputsGPIOs();
+    //-------------------------------------------------------------------------
+    //! \brief Initialize the output GPIOs.
+    //-------------------------------------------------------------------------
+    void initOutputGPIOs();
+
+)PN";
+
+    for (auto const& s: Sensors::instance().database())
+    {
+        file << "    //-------------------------------------------------------------------------" << std::endl;
+        file << "    //! \\brief Read sensor " << s.first << std::endl;
+        file << "    //-------------------------------------------------------------------------" << std::endl;
+        file << "    bool readSensor" << camelCase(s.first) << "();" << std::endl;
+    }
+
+    file << std::endl;
+    for (auto const& t: net.transitions())
+    {
+        file << "    //-------------------------------------------------------------------------" << std::endl;
+        file << "    //! \\brief Compute the receptivity of the transition " << t.id << "." << std::endl;
+        file << "    //! RPN boolean equation: \"" << t.caption << "\"" << std::endl;
+        file << "    //! \\return true if the transition is enabled." << std::endl;
+        file << "    //-------------------------------------------------------------------------" << std::endl;
+        file << "    bool T" << t.id << "() const { return !!("
+             << Receptivity::Parser::translate(t.caption, "C")
+             << "); }" << std::endl;
+    }
+
+    file << std::endl;
     for (auto const& p: net.places())
     {
         file << "    //-------------------------------------------------------------------------" << std::endl;
         file << "    //! \\brief Do actions associated with the step " << p.id << ": " << p.caption << std::endl;
         file << "    //-------------------------------------------------------------------------" << std::endl;
-        file << "    void P" << p.id << "();" << std::endl << std::endl;
+        file << "    void P" << p.id << "(const bool activated);" << std::endl;
     }
 
     file << std::endl << "private:" << std::endl << std::endl;
-    file << "    const size_t MAX_STEPS = " << net.places().size() << "u;"  << std::endl;
-    file << "    const size_t MAX_TRANSITIONS = " << net.transitions().size() << "u;" << std::endl;
-    file << "    //! \\brief Steps"  << std::endl;
-    file << "    bool X[MAX_STEPS];" << std::endl;
-    file << "    //! \\brief Transitions"  << std::endl;
-    file << "    bool T[MAX_TRANSITIONS];" << std::endl;
-    file << "    //! \\brief MQTT topic to communicate with the Petri net editor"  << std::endl;
-    file << "    std::string m_topic = \"pneditor/" << name_space << "\";" << std::endl;
+    file << "    //! \\brief States of transitions."  << std::endl;
+    file << "    bool T[" << net.transitions().size() << "];" << std::endl;
+    file << "    //! \\brief States of steps." << std::endl;
+    file << "    bool X[" << net.places().size() << "];" << std::endl;
+    file << "    //! \\brief List of sensors:"  << std::endl;
     for (auto const& s: Sensors::instance().database())
     {
-        file << "    //! \\brief"  << std::endl;
-        file << "    bool " << s.first << " = " << s.second << ";" << std::endl;
+        file << "    GRAFCET_SENSOR_TYPE " << s.first << " = " << s.second << ";" << std::endl;
     }
+    //file << "    //! \\brief List of actions:"  << std::endl;
+    //for (auto const& s: Actuators::instance().database())
+    //{
+    //    file << "    GRAFCET_SENSOR_TYPE " << s.first << " = " << s.second << ";" << std::endl;
+    //}
+    file << "    //! \\brief Initial GRAFCET cycle." << std::endl;
+    file << "    bool init = true;" << std::endl;
     file << "};" << std::endl;
     file << "" << std::endl;
     file << "} // namespace " << name_space << std::endl;

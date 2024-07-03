@@ -19,6 +19,7 @@
 //=============================================================================
 
 #include "Net/Exports/Exports.hpp"
+#include "Net/Receptivities.hpp"
 #include "TimedPetriNetEditor/PetriNet.hpp"
 #include "nlohmann/json.hpp"
 #include <fstream>
@@ -39,8 +40,6 @@ std::string exportToJSON(Net const& net, std::string const& filename)
               << "'. Reason was " << strerror(errno) << std::endl;
         return error.str();
     }
-
-    // TODO sensors
 
     file << "{" << std::endl;
     file << "  \"revision\": 3," << std::endl;
@@ -74,17 +73,27 @@ std::string exportToJSON(Net const& net, std::string const& filename)
     for (auto const& a: net.arcs())
     {
         file << separator; separator = ",\n";
-        file << "            { \"from\": \"" << a.from.key << "\", " << "\"to\": \"" << a.to.key
-             << "\"";
+        file << "            { \"from\": \"" << a.from.key << "\", " << "\"to\": \"" << a.to.key << "\"";
         if (a.from.type == Node::Type::Transition)
             file << ", \"duration\": " << a.duration;
         file << " }";
     }
-    file << "\n       ]" << std::endl;
-    file << "    }" << std::endl;
-    file << "  ]" << std::endl;
-    file << "}" << std::endl;
 
+    // GRAFCET sensors
+    separator = "\n";
+    file << "\n       ],\n       \"sensors\": [";
+    for (auto& it: Sensors::instance().database())
+    {
+        file << separator; separator = ",\n";
+        file << "            { \"name\": \"" << it.first.c_str() << "\", "
+             << "\"value\": " << it.second << " }";
+    }
+    file << "\n       ]" << std::endl;
+
+    // TODO GRAFCET actions
+
+    file << "    }\n  ]\n";   // nets
+    file << "}" << std::endl; // json document
     return {};
 }
 

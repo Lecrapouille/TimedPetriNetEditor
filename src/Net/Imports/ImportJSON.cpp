@@ -28,6 +28,7 @@
 namespace tpne {
 
 //------------------------------------------------------------------------------
+// TODO read sensor values
 std::string importFromJSON(Net& net, std::string const& filename)
 {
     std::stringstream error;

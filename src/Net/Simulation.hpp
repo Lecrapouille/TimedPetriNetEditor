@@ -35,6 +35,9 @@ class Simulation
 {
 public:
 
+    using TimedTokens = std::vector<TimedToken>;
+    using Receptivities = std::map<size_t, Receptivity>;
+
     // *************************************************************************
     //! \brief State machine for the Petri net simulation.
     // *************************************************************************
@@ -47,8 +50,10 @@ public:
 
     Simulation(Net& net, Messages& m_messages);
     void step(float const dt);
-    inline std::vector<TimedToken> const& timedTokens() const { return m_timed_tokens; }
-    inline std::vector<Receptivity> const& receptivities() const { return m_receptivities; }
+    bool generateSensors();
+    bool generateSensor(Transition const& transition);
+    inline TimedTokens const& timedTokens() const { return m_timed_tokens; }
+    inline Receptivities const& receptivities() const { return m_receptivities; }
 
 private:
 
@@ -63,6 +68,9 @@ public:
     //! maintain the simulation running. Set false to halt the simulation.
     std::atomic<bool> running{false};
 
+    //! \brief When set to true then receptivities shall be recompiled.
+    std::atomic<bool> compiled{false};
+
 private:
 
     //! \brief The single Petri net we are simulating
@@ -72,11 +80,11 @@ private:
     //! \brief List of shuffled Transitions.
     std::vector<Transition*> m_shuffled_transitions;
     //! \brief Animation of tokens when transitioning from Transitions to Places.
-    std::vector<TimedToken> m_timed_tokens;
+    TimedTokens m_timed_tokens;
     //! \brief Memorize initial number of tokens in places.
     std::vector<size_t> m_initial_tokens;
-    //! \brief For GRAFCET boolean expressions in transitions
-    std::vector<Receptivity> m_receptivities;
+    //! \brief For GRAFCET boolean expressions in transitions.
+    Receptivities m_receptivities;
     //! \brief State machine for the simulation.
     Simulation::State m_state{Simulation::State::Idle};
 

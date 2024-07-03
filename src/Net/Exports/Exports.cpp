@@ -28,13 +28,13 @@ std::vector<Exporter> const& exporters()
 {
     static const std::vector<Exporter> s_exporters = {
         { "JSON", ".json", exportToJSON },
-        { "Grafcet C++", ".hpp,.h,.hh,.h++", exportToGrafcetCpp },
+        { "Arduino GRAFCET", ".hpp,.h,.hh,.h++", exportToGrafcetCpp },
         { "Symfony", ".yaml", exportToSymfony },
         { "Julia", ".jl", exportToJulia },
         { "Draw.io", ".drawio.xml", exportToDrawIO },
         { "Graphviz", ".gv,.dot", exportToGraphviz },
         { "PN-Editor", ".pns,.pnl,.pnk,.pnkp", exportToPNEditor },
-        { "Petri-LaTeX", ".tex", exportToPetriLaTeX },
+        { "Petri LaTeX", ".tex", exportToPetriLaTeX },
         { "Petri Net Markup Language", ".pnml", exportToPNML },
         { "Timed Event Graph", ".teg", exportToTimedEventGraph },
         //{ "Codesys", ".codesys.xml", exportToCodesys },

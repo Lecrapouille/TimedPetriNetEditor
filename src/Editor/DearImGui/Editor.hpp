@@ -36,15 +36,10 @@
 
 namespace tpne {
 
-#  ifndef WITH_MQTT
-//! \brief Dummy MQTT class since disabled by the Makefile
-class MQTT {};
-#  endif
-
 // ****************************************************************************
 //! \brief Graphical User interface for manipulating and simulating Petri net.
 // ****************************************************************************
-class Editor: public PetriNetEditor, public Application, protected MQTT
+class Editor: public PetriNetEditor, public Application
 {
 public:
 
@@ -69,12 +64,6 @@ private: // Inheritance from Application class
     virtual void onDraw() override;
     void close();
 
-#ifdef WITH_MQTT
-private: // Inheritance from MQTT
-
-    virtual void onConnected(int rc) override;
-#endif
-
 private: // Widgets
 
     void menu();
@@ -96,9 +85,6 @@ private: // Show results from Petri algorithms
 private: // Petri net services
 
     Node* getNode(ImVec2 const& position);
-    Place* getPlace(ImVec2 const& position);
-    Transition* getTransition(ImVec2 const& position);
-    bool switchOfNet(TypeOfNet const type);
     void exportNetTo(Exporter const& exporter);
     void importNetFrom(Importer const& importer);
     void loadNetFile();
@@ -110,6 +96,19 @@ private: // Petri net services
     void undo();
     void redo();
     void springify();
+    bool initMQTT();
+
+private:
+
+    Place* getPlace(ImVec2 const& position);
+    Transition* getTransition(ImVec2 const& position);
+    bool switchOfNet(TypeOfNet const type);
+    Transition& addTransition(float const x, float const y);
+    void addPlace(float const x, float const y);
+    void removeNode(Node& node);
+    Node& addOppositeNode(Node::Type const type, float const x, float const y,
+        size_t const tokens = 0u);
+    void addArc(Node& from, Node& to, float const duration = 0.0f);
 
 private: // Error logs
 
@@ -298,6 +297,14 @@ private:
     History m_history;
     //! \brief Instance allowing to do timed simulation.
     Simulation m_simulation;
+#ifdef WITH_MQTT
+    //! \brief Allow to control the net from network.
+    mqtt::Client m_mqtt;
+    mqtt::Topic TOPIC_LOAD{"tpne/load"};
+    mqtt::Topic TOPIC_START{"tpne/start"};
+    mqtt::Topic TOPIC_STOP{"tpne/stop"};
+    mqtt::Topic TOPIC_FIRE{"tpne/fire"};
+#endif
     //! \brief Critical cycle found by Howard algorithm. Also used to show
     //! where are erroneous arcs making the Petri net not be a graph event.
     std::vector<Arc*> m_marked_arcs;

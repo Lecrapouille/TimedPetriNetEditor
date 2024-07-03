@@ -105,25 +105,12 @@ void Simulation::stateStarting()
     {
         a.count = 0u;
     }
-    m_net.resetReceptivies();
 
-    // Check for GRAFCET if boolean expressions in transitivities have
-    // not syntaxical errors.
-    if (m_net.type() == TypeOfNet::GRAFCET)
+    // Reset values on transitivities and sensors for GRAFCET
+    m_net.resetReceptivies();
+    if (!generateSensors())
     {
-        Sensors::instance().clear();
-        m_receptivities.clear();
-        m_receptivities.resize(m_net.transitions().size());
-        for (auto const& it: m_net.transitions())
-        {
-            std::string error = m_receptivities[it.id].compile(it.caption, m_net);
-            if (!error.empty())
-            {
-                m_messages.setWarning(error);
-                running = false;
-                return ;
-            }
-        }
+        running = false;
     }
 
     //
@@ -142,6 +129,48 @@ void Simulation::stateStarting()
     }
 
     m_state = Simulation::State::Simulating;
+}
+
+//------------------------------------------------------------------------------
+// FIXME Sensors::instance().clear(); is violent we loose current sensor values
+// => they are reset to false.
+// https://github.com/Lecrapouille/TimedPetriNetEditor/issues/29
+bool Simulation::generateSensors()
+{
+    //if (this->compiled)
+    //    return true;
+
+    // Check for GRAFCET if boolean expressions in transitivities have
+    // not syntaxical errors.
+    if (m_net.type() == TypeOfNet::GRAFCET)
+    {
+        Sensors::instance().clear();
+        m_receptivities.clear();
+        for (auto const& it: m_net.transitions())
+        {
+            std::string error = m_receptivities[it.id].compile(it.caption, m_net);
+            if (!error.empty())
+            {
+                m_messages.setWarning(error);
+                return false;
+            }
+        }
+    }
+    this->compiled = true;
+    return true;
+}
+
+//------------------------------------------------------------------------------
+bool Simulation::generateSensor(Transition const& transition)
+{
+    std::string error = m_receptivities[transition.id].compile(transition.caption, m_net);
+    if (!error.empty())
+    {
+        m_messages.setWarning(error);
+        this->compiled = false;
+        return false;
+    }
+    return true;
 }
 
 //------------------------------------------------------------------------------
