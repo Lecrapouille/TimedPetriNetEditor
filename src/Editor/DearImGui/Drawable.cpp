@@ -174,32 +174,16 @@ void drawTimedToken(ImDrawList* draw_list, size_t tokens, float const x, float c
 }
 
 //------------------------------------------------------------------------------
-void drawPlace(ImDrawList* draw_list, Place const& place, TypeOfNet const type, ImVec2 const& origin, bool const show_caption, float const alpha)
+static void drawPetriPlace(ImDrawList* draw_list, Place const& place, ImVec2 const& origin, bool const show_caption, float const alpha)
 {
-    // In graph event we "compress" the graph by not displaying places.
-    if (type == TypeOfNet::TimedEventGraph)
-        return ;
-
-    //const uint8_t alpha = 255; // TODO m_fading[place.key]
     const ImVec2 p = origin + ImVec2(place.x, place.y);
 
-    if (type == TypeOfNet::GRAFCET)
-    {
-        // Draw the place as square
-        const ImVec2 pmin(p.x - TRANS_WIDTH / 2.0f, p.y - TRANS_WIDTH / 2.0f);
-        const ImVec2 pmax(p.x + TRANS_WIDTH / 2.0f, p.y + TRANS_WIDTH / 2.0f);
-        draw_list->AddRectFilled(pmin, pmax, FILL_COLOR(alpha));
-        draw_list->AddRect(pmin, pmax, OUTLINE_COLOR, 0.0f, ImDrawFlags_None, 2.5f);
-    }
+    // Draw the place as circle
+    if (place.tokens == 0u)
+        draw_list->AddCircleFilled(p, PLACE_RADIUS, FILL_COLOR(alpha), 64);
     else
-    {
-        // Draw the place as circle
-        if (place.tokens == 0u)
-            draw_list->AddCircleFilled(p, PLACE_RADIUS, FILL_COLOR(alpha), 64);
-        else
-            draw_list->AddCircleFilled(p, PLACE_RADIUS, FILL_COLOR(255), 64);
-        draw_list->AddCircle(p, PLACE_RADIUS, OUTLINE_COLOR, 64, 2.5f);
-    }
+        draw_list->AddCircleFilled(p, PLACE_RADIUS, FILL_COLOR(255), 64);
+    draw_list->AddCircle(p, PLACE_RADIUS, OUTLINE_COLOR, 64, 2.5f);
 
     // Draw the caption
     const char* text = show_caption ? place.caption.c_str() : place.key.c_str();
@@ -251,6 +235,55 @@ void drawPlace(ImDrawList* draw_list, Place const& place, TypeOfNet const type, 
 }
 
 //------------------------------------------------------------------------------
+static void drawGrafcetPlace(ImDrawList* draw_list, Place const& place, ImVec2 const& origin, float const alpha)
+{
+    const ImVec2 p = origin + ImVec2(place.x, place.y);
+
+    // Draw the step (place) as square. Double square for initial steps.
+    if (place.tokens != 0u)
+    {
+        // Outer square
+        const ImVec2 pmin(p.x - TRANS_WIDTH2 / 2.0f, p.y - TRANS_WIDTH2 / 2.0f);
+        const ImVec2 pmax(p.x + TRANS_WIDTH2 / 2.0f, p.y + TRANS_WIDTH2 / 2.0f);
+        draw_list->AddRectFilled(pmin, pmax, FILL_COLOR(alpha));
+        draw_list->AddRect(pmin, pmax, OUTLINE_COLOR, 0.0f, ImDrawFlags_None, 2.5f);
+
+        // Token
+        drawToken(draw_list, p.x, p.y + TRANS_WIDTH * 1.0f / 3.0f);
+    }
+
+    // Inner square
+    const ImVec2 pmin(p.x - TRANS_WIDTH / 2.0f, p.y - TRANS_WIDTH / 2.0f);
+    const ImVec2 pmax(p.x + TRANS_WIDTH / 2.0f, p.y + TRANS_WIDTH / 2.0f);
+    draw_list->AddRectFilled(pmin, pmax, FILL_COLOR(alpha));
+    draw_list->AddRect(pmin, pmax, OUTLINE_COLOR, 0.0f, ImDrawFlags_None, 2.5f);
+
+    // Draw the caption inside the square
+    const char* text = place.caption.c_str();
+    ImVec2 dim = ImGui::CalcTextSize(text) / 2.0f;
+    ImVec2 ptext = p - dim + ImVec2(0.0f, -TRANS_WIDTH / 3.0f + 5.0f);
+    draw_list->AddText(ptext, CAPTION_COLOR, text);
+}
+
+//------------------------------------------------------------------------------
+void drawPlace(ImDrawList* draw_list, Place const& place, TypeOfNet const type, ImVec2 const& origin, bool const show_caption, float const alpha)
+{
+    // In graph event we "compress" the graph by not displaying places.
+    if (type == TypeOfNet::TimedEventGraph)
+        return ;
+
+    // const uint8_t alpha = 255; // TODO m_fading[place.key]
+    if (type == TypeOfNet::GRAFCET)
+    {
+       drawGrafcetPlace(draw_list, place, origin, alpha);
+    }
+    else
+    {
+       drawPetriPlace(draw_list, place, origin, show_caption, alpha);
+    }
+}
+
+//------------------------------------------------------------------------------
 void drawTransition(ImDrawList* draw_list, Transition const& transition,
                     TypeOfNet const type, ImVec2 const& origin,
                     bool const show_caption, float const alpha)
@@ -289,10 +322,19 @@ void drawTransition(ImDrawList* draw_list, Transition const& transition,
     draw_list->AddRect(pmin, pmax, OUTLINE_COLOR, 0.0f, ImDrawFlags_None, 2.5f);
 
     // Draw the caption
-    const char* text = show_caption ? transition.caption.c_str() : transition.key.c_str();
-    ImVec2 dim = ImGui::CalcTextSize(text);
-    ImVec2 ptext = p - ImVec2(dim.x / 2.0f, TRANS_HEIGHT / 2.0f + dim.y);
-    draw_list->AddText(ptext, CAPTION_COLOR, text);
+    if (type == TypeOfNet::GRAFCET)
+    {
+        const char* text = transition.caption.c_str();
+        ImVec2 dim = ImGui::CalcTextSize(text) / 2.0f;
+        draw_list->AddText(p + ImVec2(dim.x, -dim.y) + ImVec2(TRANS_WIDTH / 2.0f, 0.0f), CAPTION_COLOR, text);
+    }
+    else
+    {
+        const char* text = show_caption ? transition.caption.c_str() : transition.key.c_str();
+        ImVec2 dim = ImGui::CalcTextSize(text);
+        ImVec2 ptext = p - ImVec2(dim.x / 2.0f, TRANS_HEIGHT / 2.0f + dim.y);
+        draw_list->AddText(ptext, CAPTION_COLOR, text);
+    }
 }
 
 //------------------------------------------------------------------------------
