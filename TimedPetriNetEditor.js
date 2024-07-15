@@ -39,7 +39,7 @@ if (ENVIRONMENT_IS_NODE) {
 
 // --pre-jses are emitted after the Module integration code, so that they can
 // refer to Module (if they choose; they can also define Module)
-// include: /tmp/tmp9k7zud_d.js
+// include: /tmp/tmpdhfb8i8b.js
 
   if (!Module.expectedDataFileDownloads) {
     Module.expectedDataFileDownloads = 0;
@@ -227,21 +227,21 @@ Module['FS_createPath']("/home/runner/work/TimedPetriNetEditor/TimedPetriNetEdit
 
   })();
 
-// end include: /tmp/tmp9k7zud_d.js
-// include: /tmp/tmp0kh8gho0.js
+// end include: /tmp/tmpdhfb8i8b.js
+// include: /tmp/tmp8dnkrs7r.js
 
     // All the pre-js content up to here must remain later on, we need to run
     // it.
     if (Module['$ww'] || (typeof ENVIRONMENT_IS_PTHREAD != 'undefined' && ENVIRONMENT_IS_PTHREAD)) Module['preRun'] = [];
     var necessaryPreJSTasks = Module['preRun'].slice();
-  // end include: /tmp/tmp0kh8gho0.js
-// include: /tmp/tmp2wx01qqg.js
+  // end include: /tmp/tmp8dnkrs7r.js
+// include: /tmp/tmpv9ntuwnj.js
 
     if (!Module['preRun']) throw 'Module.preRun should exist because file support used it; did a pre-js delete it?';
     necessaryPreJSTasks.forEach((task) => {
       if (Module['preRun'].indexOf(task) < 0) throw 'All preRun tasks that exist before user pre-js code should remain after; did you replace Module or modify Module.preRun?';
     });
-  // end include: /tmp/tmp2wx01qqg.js
+  // end include: /tmp/tmpv9ntuwnj.js
 
 
 // Sometimes an existing Module object exists with properties
@@ -1126,40 +1126,40 @@ function dbg(...args) {
 // === Body ===
 
 var ASM_CONSTS = {
-  214340: () => { if (document.fullscreenElement) return 1; },  
- 214386: () => { return document.getElementById('canvas').width; },  
- 214438: () => { return parseInt(document.getElementById('canvas').style.width); },  
- 214506: () => { document.exitFullscreen(); },  
- 214533: () => { setTimeout(function() { Module.requestFullscreen(false, false); }, 100); },  
- 214606: () => { if (document.fullscreenElement) return 1; },  
- 214652: () => { return document.getElementById('canvas').width; },  
- 214704: () => { return screen.width; },  
- 214729: () => { document.exitFullscreen(); },  
- 214756: () => { setTimeout(function() { Module.requestFullscreen(false, true); setTimeout(function() { canvas.style.width="unset"; }, 100); }, 100); },  
- 214889: () => { if (document.fullscreenElement) return 1; },  
- 214935: () => { return document.getElementById('canvas').width; },  
- 214987: () => { return parseInt(document.getElementById('canvas').style.width); },  
- 215055: () => { if (document.fullscreenElement) return 1; },  
- 215101: () => { return document.getElementById('canvas').width; },  
- 215153: () => { return screen.width; },  
- 215178: () => { if (document.fullscreenElement) return 1; },  
- 215224: () => { return document.getElementById('canvas').width; },  
- 215276: () => { return screen.width; },  
- 215301: () => { document.exitFullscreen(); },  
- 215328: () => { if (document.fullscreenElement) return 1; },  
- 215374: () => { return document.getElementById('canvas').width; },  
- 215426: () => { return parseInt(document.getElementById('canvas').style.width); },  
- 215494: () => { document.exitFullscreen(); },  
- 215521: () => { return screen.width; },  
- 215546: () => { return screen.height; },  
- 215572: () => { return window.screenX; },  
- 215599: () => { return window.screenY; },  
- 215626: ($0) => { navigator.clipboard.writeText(UTF8ToString($0)); },  
- 215679: ($0) => { document.getElementById("canvas").style.cursor = UTF8ToString($0); },  
- 215750: () => { document.getElementById('canvas').style.cursor = 'none'; },  
- 215807: ($0) => { document.getElementById('canvas').style.cursor = UTF8ToString($0); },  
- 215878: () => { if (document.fullscreenElement) return 1; },  
- 215924: () => { if (document.pointerLockElement) return 1; }
+  214356: () => { if (document.fullscreenElement) return 1; },  
+ 214402: () => { return document.getElementById('canvas').width; },  
+ 214454: () => { return parseInt(document.getElementById('canvas').style.width); },  
+ 214522: () => { document.exitFullscreen(); },  
+ 214549: () => { setTimeout(function() { Module.requestFullscreen(false, false); }, 100); },  
+ 214622: () => { if (document.fullscreenElement) return 1; },  
+ 214668: () => { return document.getElementById('canvas').width; },  
+ 214720: () => { return screen.width; },  
+ 214745: () => { document.exitFullscreen(); },  
+ 214772: () => { setTimeout(function() { Module.requestFullscreen(false, true); setTimeout(function() { canvas.style.width="unset"; }, 100); }, 100); },  
+ 214905: () => { if (document.fullscreenElement) return 1; },  
+ 214951: () => { return document.getElementById('canvas').width; },  
+ 215003: () => { return parseInt(document.getElementById('canvas').style.width); },  
+ 215071: () => { if (document.fullscreenElement) return 1; },  
+ 215117: () => { return document.getElementById('canvas').width; },  
+ 215169: () => { return screen.width; },  
+ 215194: () => { if (document.fullscreenElement) return 1; },  
+ 215240: () => { return document.getElementById('canvas').width; },  
+ 215292: () => { return screen.width; },  
+ 215317: () => { document.exitFullscreen(); },  
+ 215344: () => { if (document.fullscreenElement) return 1; },  
+ 215390: () => { return document.getElementById('canvas').width; },  
+ 215442: () => { return parseInt(document.getElementById('canvas').style.width); },  
+ 215510: () => { document.exitFullscreen(); },  
+ 215537: () => { return screen.width; },  
+ 215562: () => { return screen.height; },  
+ 215588: () => { return window.screenX; },  
+ 215615: () => { return window.screenY; },  
+ 215642: ($0) => { navigator.clipboard.writeText(UTF8ToString($0)); },  
+ 215695: ($0) => { document.getElementById("canvas").style.cursor = UTF8ToString($0); },  
+ 215766: () => { document.getElementById('canvas').style.cursor = 'none'; },  
+ 215823: ($0) => { document.getElementById('canvas').style.cursor = UTF8ToString($0); },  
+ 215894: () => { if (document.fullscreenElement) return 1; },  
+ 215940: () => { if (document.pointerLockElement) return 1; }
 };
 function GetWindowInnerWidth() { return window.innerWidth; }
 function GetWindowInnerHeight() { return window.innerHeight; }
@@ -4510,46 +4510,6 @@ function GetWindowInnerHeight() { return window.innerHeight; }
 
   var __emscripten_memcpy_js = (dest, src, num) => HEAPU8.copyWithin(dest, src, src + num);
 
-  var __emscripten_system = (command) => {
-      if (ENVIRONMENT_IS_NODE) {
-        if (!command) return 1; // shell is available
-  
-        var cmdstr = UTF8ToString(command);
-        if (!cmdstr.length) return 0; // this is what glibc seems to do (shell works test?)
-  
-        var cp = require('child_process');
-        var ret = cp.spawnSync(cmdstr, [], {shell:true, stdio:'inherit'});
-  
-        var _W_EXITCODE = (ret, sig) => ((ret) << 8 | (sig));
-  
-        // this really only can happen if process is killed by signal
-        if (ret.status === null) {
-          // sadly node doesn't expose such function
-          var signalToNumber = (sig) => {
-            // implement only the most common ones, and fallback to SIGINT
-            switch (sig) {
-              case 'SIGHUP': return 1;
-              case 'SIGINT': return 2;
-              case 'SIGQUIT': return 3;
-              case 'SIGFPE': return 8;
-              case 'SIGKILL': return 9;
-              case 'SIGALRM': return 14;
-              case 'SIGTERM': return 15;
-            }
-            return 2; // SIGINT
-          }
-          return _W_EXITCODE(0, signalToNumber(ret.signal));
-        }
-  
-        return _W_EXITCODE(ret.status, 0);
-      }
-      // int system(const char *command);
-      // http://pubs.opengroup.org/onlinepubs/000095399/functions/system.html
-      // Can't call external programs.
-      if (!command) return 0; // no shell available
-      return -52;
-    };
-
   var isLeapYear = (year) => year%4 === 0 && (year%100 !== 0 || year%400 === 0);
   
   var MONTH_DAYS_LEAP_CUMULATIVE = [0,31,60,91,121,152,182,213,244,274,305,335];
@@ -4678,6 +4638,8 @@ function GetWindowInnerHeight() { return window.innerHeight; }
 
   var _emscripten_date_now = () => Date.now();
 
+  var _emscripten_err = (str) => err(UTF8ToString(str));
+
   var JSEvents = {
   removeAllEventListeners() {
         while (JSEvents.eventHandlers.length) {
@@ -4697,8 +4659,7 @@ function GetWindowInnerHeight() { return window.innerHeight; }
           return true;
         }
         // Test if the given call was already queued, and if so, don't add it again.
-        for (var i in JSEvents.deferredCalls) {
-          var call = JSEvents.deferredCalls[i];
+        for (var call of JSEvents.deferredCalls) {
           if (call.targetFunction == targetFunction && arraysHaveEqualContent(call.argsList, argsList)) {
             return;
           }
@@ -4712,12 +4673,7 @@ function GetWindowInnerHeight() { return window.innerHeight; }
         JSEvents.deferredCalls.sort((x,y) => x.precedence < y.precedence);
       },
   removeDeferredCalls(targetFunction) {
-        for (var i = 0; i < JSEvents.deferredCalls.length; ++i) {
-          if (JSEvents.deferredCalls[i].targetFunction == targetFunction) {
-            JSEvents.deferredCalls.splice(i, 1);
-            --i;
-          }
-        }
+        JSEvents.deferredCalls = JSEvents.deferredCalls.filter((call) => call.targetFunction != targetFunction);
       },
   canPerformEventHandlerRequests() {
         if (navigator.userActivation) {
@@ -4735,10 +4691,9 @@ function GetWindowInnerHeight() { return window.innerHeight; }
         if (!JSEvents.canPerformEventHandlerRequests()) {
           return;
         }
-        for (var i = 0; i < JSEvents.deferredCalls.length; ++i) {
-          var call = JSEvents.deferredCalls[i];
-          JSEvents.deferredCalls.splice(i, 1);
-          --i;
+        var deferredCalls = JSEvents.deferredCalls;
+        JSEvents.deferredCalls = [];
+        for (var call of deferredCalls) {
           call.targetFunction(...call.argsList);
         }
       },
@@ -7053,10 +7008,10 @@ function GetWindowInnerHeight() { return window.innerHeight; }
       HEAP32[idx + 3] = e.screenY;
       HEAP32[idx + 4] = e.clientX;
       HEAP32[idx + 5] = e.clientY;
-      HEAP8[idx + 24] = e.ctrlKey;
-      HEAP8[idx + 25] = e.shiftKey;
-      HEAP8[idx + 26] = e.altKey;
-      HEAP8[idx + 27] = e.metaKey;
+      HEAP8[eventStruct + 24] = e.ctrlKey;
+      HEAP8[eventStruct + 25] = e.shiftKey;
+      HEAP8[eventStruct + 26] = e.altKey;
+      HEAP8[eventStruct + 27] = e.metaKey;
       HEAP16[idx*2 + 14] = e.button;
       HEAP16[idx*2 + 15] = e.buttons;
   
@@ -7309,49 +7264,46 @@ function GetWindowInnerHeight() { return window.innerHeight; }
         // only changed touches in e.changedTouches, and touches on target at a.targetTouches), mark a boolean in
         // each Touch object so that we can later loop only once over all touches we see to marshall over to Wasm.
   
-        for (var i = 0; i < et.length; ++i) {
-          t = et[i];
+        for (let t of et) {
           // Browser might recycle the generated Touch objects between each frame (Firefox on Android), so reset any
           // changed/target states we may have set from previous frame.
           t.isChanged = t.onTarget = 0;
           touches[t.identifier] = t;
         }
         // Mark which touches are part of the changedTouches list.
-        for (var i = 0; i < e.changedTouches.length; ++i) {
-          t = e.changedTouches[i];
+        for (let t of e.changedTouches) {
           t.isChanged = 1;
           touches[t.identifier] = t;
         }
         // Mark which touches are part of the targetTouches list.
-        for (var i = 0; i < e.targetTouches.length; ++i) {
-          touches[e.targetTouches[i].identifier].onTarget = 1;
+        for (let t of e.targetTouches) {
+          touches[t.identifier].onTarget = 1;
         }
   
         var touchEvent = JSEvents.touchEvent;
         HEAPF64[((touchEvent)>>3)] = e.timeStamp;
-        var idx =((touchEvent)>>2);// Pre-shift the ptr to index to HEAP32 to save code size
-        HEAP8[idx + 12] = e.ctrlKey;
-        HEAP8[idx + 13] = e.shiftKey;
-        HEAP8[idx + 14] = e.altKey;
-        HEAP8[idx + 15] = e.metaKey;
-        idx += 4; // Advance to the start of the touch array.
+        HEAP8[touchEvent + 12] = e.ctrlKey;
+        HEAP8[touchEvent + 13] = e.shiftKey;
+        HEAP8[touchEvent + 14] = e.altKey;
+        HEAP8[touchEvent + 15] = e.metaKey;
+        var idx = touchEvent + 16;
         var targetRect = getBoundingClientRect(target);
         var numTouches = 0;
-        for (var i in touches) {
-          t = touches[i];
-          HEAP32[idx + 0] = t.identifier;
-          HEAP32[idx + 1] = t.screenX;
-          HEAP32[idx + 2] = t.screenY;
-          HEAP32[idx + 3] = t.clientX;
-          HEAP32[idx + 4] = t.clientY;
-          HEAP32[idx + 5] = t.pageX;
-          HEAP32[idx + 6] = t.pageY;
+        for (let t of Object.values(touches)) {
+          var idx32 = ((idx)>>2); // Pre-shift the ptr to index to HEAP32 to save code size
+          HEAP32[idx32 + 0] = t.identifier;
+          HEAP32[idx32 + 1] = t.screenX;
+          HEAP32[idx32 + 2] = t.screenY;
+          HEAP32[idx32 + 3] = t.clientX;
+          HEAP32[idx32 + 4] = t.clientY;
+          HEAP32[idx32 + 5] = t.pageX;
+          HEAP32[idx32 + 6] = t.pageY;
           HEAP8[idx + 28] = t.isChanged;
           HEAP8[idx + 29] = t.onTarget;
-          HEAP32[idx + 8] = t.clientX - (targetRect.left | 0);
-          HEAP32[idx + 9] = t.clientY - (targetRect.top  | 0);
+          HEAP32[idx32 + 8] = t.clientX - (targetRect.left | 0);
+          HEAP32[idx32 + 9] = t.clientY - (targetRect.top  | 0);
   
-          idx += 12;
+          idx += 48;
   
           if (++numTouches > 31) {
             break;
@@ -10137,8 +10089,6 @@ var wasmImports = {
   /** @export */
   _emscripten_memcpy_js: __emscripten_memcpy_js,
   /** @export */
-  _emscripten_system: __emscripten_system,
-  /** @export */
   _localtime_js: __localtime_js,
   /** @export */
   _tzset_js: __tzset_js,
@@ -10146,6 +10096,8 @@ var wasmImports = {
   emscripten_asm_const_int: _emscripten_asm_const_int,
   /** @export */
   emscripten_date_now: _emscripten_date_now,
+  /** @export */
+  emscripten_err: _emscripten_err,
   /** @export */
   emscripten_get_element_css_size: _emscripten_get_element_css_size,
   /** @export */
