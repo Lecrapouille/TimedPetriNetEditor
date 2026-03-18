@@ -108,7 +108,7 @@ void Application::run()
     // Iterate update()
     tpne::Timer timer;
     float timeSinceLastUpdate = 0.0f;
-    const float time_per_frame = 1.0f / float(m_framerate);;
+    const float time_per_frame = 1.0f / float(m_framerate);
 
     while (!m_exit_window)
     {
