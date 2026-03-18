@@ -68,7 +68,8 @@ public:
 
     //--------------------------------------------------------------------------
     //! \brief Append a new path. Directories are separated by the delimiter char
-    //! (by default ':'). Example: add("/foo/bar:/usr/lib/").
+    //! (by default ':').
+    //! Example: add("/foo/bar:/usr/lib/").
     //--------------------------------------------------------------------------
     void add(std::string const& path);
 
@@ -114,7 +115,7 @@ public:
     //--------------------------------------------------------------------------
     //! \brief Return pathes as string. The first path is always ".:"
     //--------------------------------------------------------------------------
-    std::string toString() const;  
+    std::string toString() const;
 
     bool open(std::string& filename, std::ifstream& ifs,
               std::ios_base::openmode mode = std::ios_base::in) const;

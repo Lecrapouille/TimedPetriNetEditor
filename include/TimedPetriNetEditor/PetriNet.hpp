@@ -88,7 +88,7 @@ public:
     //! \brief Constructor. No sanity checks are made in this method.
     //! \param[in] type_: Type of Petri node: Place or Transition.
     //! \param[in] id_: unique identifier (0u, 1u, ...).
-    //! \param[in] caption_: Text to displaying indentifying the node.
+    //! \param[in] caption_: Text to displaying identifying the node.
     //! \param[in] x_: X-axis coordinate in the window needed for the display.
     //! \param[in] y_: Y-axis coordinate in the window needed for the display.
     //--------------------------------------------------------------------------
@@ -156,7 +156,7 @@ public:
     //! \fixme: TBD to be moved inside the editor since we do not care of
     //! position.
     float y;
-    //! \brief Text displayed near a node the user can modify. Defaut value is
+    //! \brief Text displayed near a node the user can modify. Default value is
     //! the tring unique \c key.
     std::string caption;
     //! \brief Hold the incoming arcs to access to previous nodes.
@@ -171,7 +171,7 @@ public:
 
 // *****************************************************************************
 //! \brief Petri Place node. Places represent system states. Places hold tokens
-//! (resources). In GRAFCET, Places are nammed Steps and have at max one token.
+//! (resources). In GRAFCET, Places are named Steps and have at max one token.
 //! When steps are activated actions are performed.
 // *****************************************************************************
 class Place : public Node
@@ -183,7 +183,7 @@ public:
 
     //--------------------------------------------------------------------------
     //! \brief Constructor. To be used when loading a Petri net from a file.
-    //! \param[in] id_: unique node identifier. Shall be unique (responsability
+    //! \param[in] id_: unique node identifier. Shall be unique (responsibility
     //! given to the caller class).
     //! \param[in] caption_: Displayed text under the node.
     //! \param[in] x_: X-axis coordinate in the window needed for the display.
@@ -194,7 +194,7 @@ public:
           float const y_, size_t const tokens_);
 
     //--------------------------------------------------------------------------
-    //! \brief Static method stringifying a place given an identifier.
+    //! \brief Static method stringify a place given an identifier.
     //! \return "P42" for example.
     //--------------------------------------------------------------------------
     inline static std::string to_str(size_t const id_)
@@ -232,7 +232,7 @@ public:
 // *****************************************************************************
 //! \brief Petri Transition node. A boolean condition (named receptivity) is set
 //! but differ with the type of net (Petri: when the user click on the
-//! transition, timed Petri net: always set to true, GRAFCER depend on boolean
+//! transition, timed Petri net: always set to true, GRAFCET depend on boolean
 //! expression with sensors). When the receptivity is true and the transition is
 //! enabled (meaning that all incoming places have at least one token each) the
 //! transition is fired and tokens in incoming places burnt and placed in
@@ -249,7 +249,7 @@ public:
 
     //--------------------------------------------------------------------------
     //! \brief Constructor. To be used when loading a Petri net from a file.
-    //! \param[in] id_: unique node identifier. Shall be unique (responsability
+    //! \param[in] id_: unique node identifier. Shall be unique (responsibility
     //! given to the caller class).
     //! \param[in] caption_: Displayed text under the node.
     //! \param[in] x_: X-axis coordinate in the window needed for the display.
@@ -264,7 +264,7 @@ public:
     {}
 
     //--------------------------------------------------------------------------
-    //! \brief Static method stringifying a transition given an identifier.
+    //! \brief Static method stringify a transition given an identifier.
     //! \return "T42" for example.
     //--------------------------------------------------------------------------
     inline static std::string to_str(size_t const id_)
@@ -273,14 +273,14 @@ public:
     }
 
     //--------------------------------------------------------------------------
-    //! \brief Check if all immediatly incoming places have at least one token
+    //! \brief Check if all immediately incoming places have at least one token
     //! on each of them.
     //--------------------------------------------------------------------------
     bool isValidated() const;
 
     //--------------------------------------------------------------------------
-    //! \brief Check if the transition has all its immediatly incoming places
-    //! with at leat one token and if the transitivity (bool expression) is
+    //! \brief Check if the transition has all its immediately incoming places
+    //! with at least one token and if the transitivity (bool expression) is
     //! true.
     //! \note The burning of tokens is made by the PetriEditor class during the
     //! animation.
@@ -290,7 +290,7 @@ public:
 
     //--------------------------------------------------------------------------
     //! \brief Return the maximum number of tokens that can be burn in
-    //! immediatly incoming places if and only if isFireable() is true.
+    //! immediately incoming places if and only if isFireable() is true.
     //! \note This method does not modify the number of tokens in previous
     //! places.
     //! \return the max number of tokens that be burnt or 0u if cannot fire.
@@ -359,7 +359,7 @@ public:
 
     //! \brief Store the result of the transition condition (boolean expression
     //! of sensors for GRAFCET; always true for timed Petri net; false by
-    //! default execept if the user clicks on it for Petri).
+    //! default except if the user clicks on it for Petri).
     //! \note This structure does not store the boolean expression directly but
     //! the result. The simulation will hold boolean expressions. This allows
     //! to separate things.
@@ -505,7 +505,7 @@ public:
         //! nets: +infinity (aka std::numeric_limits<size_t>::max()).
         static size_t maxTokens;
 
-        //! \brief The theory would burn the maximum possibe of tokens that we
+        //! \brief The theory would burn the maximum possible of tokens that we
         //! can within a single action (Fire::MaxPossible) but we can also try
         //! to burn tokens one by one and randomize the transitions
         //! (Fire::OneByOne). This will favor dispatching tokens along arcs.
@@ -705,7 +705,7 @@ public:
     inline Arcs& arcs() { return m_arcs; } // FIXME because of inspector
 
     //--------------------------------------------------------------------------
-    //! \brief Remove an existing Place or a Transition (usually refered by the
+    //! \brief Remove an existing Place or a Transition (usually referred by the
     //! mouse cursor).
     //--------------------------------------------------------------------------
     void removeNode(Node& node);

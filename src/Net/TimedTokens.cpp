@@ -25,7 +25,7 @@
 namespace tpne {
 
 //------------------------------------------------------------------------------
-TimedToken::TimedToken(Arc& arc_,size_t const tokens_, TypeOfNet const type_)
+TimedToken::TimedToken(Arc& arc_, size_t const tokens_, TypeOfNet const type_)
     : arc(&arc_), x(arc_.from.x), y(arc_.from.y), tokens(tokens_), type(type_)
 {
     assert(arc->from.type == Node::Type::Transition);
@@ -47,7 +47,7 @@ TimedToken::TimedToken(Arc& arc_,size_t const tokens_, TypeOfNet const type_)
 
     // Set the token animation speed. Depending on the type of Petri net,
     // and for pure entertainment reason, override the arc duration to
-    // avoid unpleasant instaneous transitions (teleportation effect).
+    // avoid unpleasant instantaneous transitions (teleportation effect).
     switch (type_)
     {
     case TypeOfNet::TimedPetriNet:
@@ -78,7 +78,7 @@ bool TimedToken::update(float const dt)
     offset += dt * speed / magnitude;
     x = arc->from.x + (next.x - arc->from.x) * offset;
     y = arc->from.y + (next.y - arc->from.y) * offset;
-    return (offset >= 1.0f);
+    return offset >= 1.0f;
 }
 
 } // namespace tpne
