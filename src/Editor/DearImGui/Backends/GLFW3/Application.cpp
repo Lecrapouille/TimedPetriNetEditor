@@ -96,7 +96,10 @@ Application::~Application()
     ImPlot::DestroyContext();
     ImGui::DestroyContext();
 
+    glfwMakeContextCurrent(nullptr);  // Release GL context before destroying window
     glfwDestroyWindow(m_window);
+    glfwPollEvents();  // Workaround: flush pending Wayland events to avoid segfault
+                       // (see https://github.com/glfw/glfw/issues/2744)
     glfwTerminate();
 }
 
