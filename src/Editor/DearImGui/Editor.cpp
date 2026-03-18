@@ -397,11 +397,15 @@ void Editor::menu()
             if (ImGui::BeginMenu("Type of net"))
             {
                 static int current_type = int(m_net.type());
-                ImGui::RadioButton("Petri net", &current_type, 0);
-                ImGui::RadioButton("Timed Petri net", &current_type, 1);
-                ImGui::RadioButton("Timed event graph", &current_type, 2);
-                ImGui::RadioButton("GRAFCET", &current_type, 3);
-                switchOfNet(TypeOfNet(current_type)); // FIXME pour Timed event graph => afficher les arcs
+                current_type = int(m_net.type());  // Sync with actual net type
+                if (ImGui::RadioButton("Petri net", &current_type, 0))
+                    switchOfNet(TypeOfNet::PetriNet);
+                if (ImGui::RadioButton("Timed Petri net", &current_type, 1))
+                    switchOfNet(TypeOfNet::TimedPetriNet);
+                if (ImGui::RadioButton("Timed event graph", &current_type, 2))
+                    switchOfNet(TypeOfNet::TimedEventGraph);
+                if (ImGui::RadioButton("GRAFCET", &current_type, 3))
+                    switchOfNet(TypeOfNet::GRAFCET);
                 ImGui::EndMenu();
             }
 
@@ -624,9 +628,18 @@ void Editor::showDynamicLinearSystem() const
         ImGui::Checkbox("Dense matrix", &SparseMatrix<MaxPlus>::display_as_dense);
         ImGui::PopStyleVar();
 
-        SparseMatrix<MaxPlus> D; SparseMatrix<MaxPlus> A;
-        SparseMatrix<MaxPlus> B; SparseMatrix<MaxPlus> C;
-        toSysLin(m_net, D, A, B, C);
+        static SparseMatrix<MaxPlus> cached_D, cached_A, cached_B, cached_C;
+        static bool cached_valid = false;
+        if (!cached_valid)
+        {
+            toSysLin(m_net, cached_D, cached_A, cached_B, cached_C);
+            cached_valid = true;
+        }
+
+        SparseMatrix<MaxPlus>& D = cached_D;
+        SparseMatrix<MaxPlus>& A = cached_A;
+        SparseMatrix<MaxPlus>& B = cached_B;
+        SparseMatrix<MaxPlus>& C = cached_C;
         SparseMatrix<MaxPlus>::display_for_julia = false;
         ImGui::Text(u8"%s", "X(n) = D . X(n) (+) A . X(n-1) (+) B . U(n)\nY(n) = C . X(n)");
         ImGuiTabBarFlags tab_bar_flags = ImGuiTabBarFlags_None;
@@ -686,6 +699,7 @@ void Editor::showDynamicLinearSystem() const
             ImGui::CloseCurrentPopup();
             m_states.do_syslin = false;
             m_states.plot.reset();
+            cached_valid = false;  // Invalidate cache for next open
         }
         ImGui::EndPopup();
     }
@@ -699,7 +713,14 @@ void Editor::showCriticalCycles() //const
                             ImVec2(0.5f, 0.5f));
     if (ImGui::BeginPopupModal("Critical Cycle", NULL, ImGuiWindowFlags_AlwaysAutoResize))
     {
-        CriticalCycleResult res = findCriticalCycle(m_net);
+        static CriticalCycleResult cached;
+        static bool cached_valid = false;
+        if (!cached_valid)
+        {
+            cached = findCriticalCycle(m_net);
+            cached_valid = true;
+        }
+        CriticalCycleResult const& res = cached;
         if (!res.success)
         {
             ImGui::Text(u8"%s", res.message.str().c_str());
@@ -772,6 +793,7 @@ void Editor::showCriticalCycles() //const
         {
             ImGui::CloseCurrentPopup();
             m_states.do_find_critical_cycle = false;
+            cached_valid = false;  // Invalidate cache for next open
         }
         ImGui::EndPopup();
     }
