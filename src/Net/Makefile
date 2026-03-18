@@ -36,8 +36,8 @@ include $(M)/project/Makefile
 # Set MQTT Library.
 #
 ifeq ($(OS),Linux)
-    INCLUDES += $(THIRDPART_DIR)/MQTT/include
-    VPATH += $(THIRDPART_DIR)/MQTT/src
+    INCLUDES += $(THIRD_PARTIES_DIR)/MQTT/include
+    VPATH += $(THIRD_PARTIES_DIR)/MQTT/src
     DEFINES += -DMQTT_BROKER_ADDR=\"localhost\"
     DEFINES += -DMQTT_BROKER_PORT=1883
     PKG_LIBS += libmosquitto
@@ -46,13 +46,13 @@ endif
 ###################################################
 # Set json ibrary.
 #
-INCLUDES += $(THIRDPART_DIR)/json/include
+INCLUDES += $(THIRD_PARTIES_DIR)/json/include
 
 ###################################################
 # Set xml Library.
 #
-VPATH += $(THIRDPART_DIR)/tinyxml2
-LIB_FILES += $(THIRDPART_DIR)/tinyxml2/tinyxml2.cpp
+VPATH += $(THIRD_PARTIES_DIR)/tinyxml2
+LIB_FILES += $(THIRD_PARTIES_DIR)/tinyxml2/tinyxml2.cpp
 USER_CXXFLAGS := -Wno-old-style-cast -Wno-sign-conversion
 
 ###################################################
@@ -71,8 +71,8 @@ VPATH += $(P)/src/Net/Imports $(P)/src/Net/Exports
 ###################################################
 # Inform Makefile where to find header files
 #
-INCLUDES += $(P)/include $(P)/src $(THIRDPART_DIR)
-INCLUDES += $(THIRDPART_DIR)/imgui
+INCLUDES += $(P)/include $(P)/src $(THIRD_PARTIES_DIR)
+INCLUDES += $(THIRD_PARTIES_DIR)/imgui
 
 ###################################################
 # Make the list of compiled files for the library

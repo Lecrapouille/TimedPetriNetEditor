@@ -785,14 +785,14 @@ void Editor::about() const
         ImGui::Text("wrapped API for Julia langage.");
         ImGui::Separator();
         std::string version("Version: " +
-                            std::to_string(project::info::major_version) + '.' +
-                            std::to_string(project::info::minor_version) + '.' +
-                            std::to_string(project::info::patch_version));
+                            std::to_string(project::info::version::major) + '.' +
+                            std::to_string(project::info::version::minor) + '.' +
+                            std::to_string(project::info::version::patch));
         ImGui::Text("%s", version.c_str());
         ImGui::Separator();
         ImGui::Text("https://github.com/Lecrapouille/TimedPetriNetEditor");
-        ImGui::Text("Git branch: %s", project::info::git_branch.c_str());
-        ImGui::Text("Git SHA1: %s", project::info::git_sha1.c_str());
+        ImGui::Text("Git branch: %s", project::info::git::branch.c_str());
+        ImGui::Text("Git SHA1: %s", project::info::git::sha1.c_str());
         ImGui::Text("Compiled as %s",
                     (project::info::compilation::mode == project::info::compilation::Mode::debug)
                     ? "Debug" : "Release");
@@ -873,8 +873,8 @@ void Editor::help() const
             if (ImGui::BeginTabItem("Pathes"))
             {
                 ImGui::Text("Data path: %s", m_path.toString().c_str());
-                ImGui::Text("Temporary path: %s", project::info::tmp_path.c_str());
-                ImGui::Text("Log path: %s", project::info::log_path.c_str());
+                ImGui::Text("Temporary path: %s", project::info::paths::tmp.c_str());
+                ImGui::Text("Log path: %s", project::info::paths::log.c_str());
                 ImGui::EndTabItem();
             }
             ImGui::EndTabBar();

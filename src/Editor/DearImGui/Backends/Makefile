@@ -2,12 +2,12 @@
 # Set MQTT Library.
 #
 ifneq ($(OS),Emscripten)
-    INCLUDES += $(THIRDPART_DIR)/MQTT/include
+    INCLUDES += $(THIRD_PARTIES_DIR)/MQTT/include
     DEFINES += -DMQTT_BROKER_ADDR=\"localhost\"
     DEFINES += -DMQTT_BROKER_PORT=1883
     DEFINES += -DWITH_MQTT
     PKG_LIBS += libmosquitto
-    GUI_FILES += $(THIRDPART_DIR)/MQTT/src/MQTT.cpp
+    GUI_FILES += $(THIRD_PARTIES_DIR)/MQTT/src/MQTT.cpp
 else
     DEFINES += -UWITH_MQTT
 endif
@@ -36,9 +36,9 @@ endif
 ifeq ($(DEAR_IMGUI_BACKEND),GLFW3)
     INCLUDES += $(P)/src/Editor/DearImGui/Backends/GLFW3
     GUI_FILES += $(P)/src/Editor/DearImGui/Backends/GLFW3/Application.cpp
-    INCLUDES += $(THIRDPART_DIR)/imgui/backends/
-    GUI_FILES += $(THIRDPART_DIR)/imgui/backends/imgui_impl_glfw.cpp
-    GUI_FILES += $(THIRDPART_DIR)/imgui/backends/imgui_impl_opengl3.cpp
+    INCLUDES += $(THIRD_PARTIES_DIR)/imgui/backends/
+    GUI_FILES += $(THIRD_PARTIES_DIR)/imgui/backends/imgui_impl_glfw.cpp
+    GUI_FILES += $(THIRD_PARTIES_DIR)/imgui/backends/imgui_impl_opengl3.cpp
     ifeq ($(OS),Linux)
         # OpenGL, GLEW, GLFW3
         LINKER_FLAGS += -lGL
@@ -76,11 +76,11 @@ ifeq ($(DEAR_IMGUI_BACKEND),RayLib)
     VPATH += $(P)/src/Editor/DearImGui/Backends/RayLib
     INCLUDES += $(P)/src/Editor/DearImGui/Backends/RayLib
     GUI_FILES += $(P)/src/Editor/DearImGui/Backends/RayLib/Application.cpp
-    VPATH += $(THIRDPART_DIR)/rlImGui
-    INCLUDES += $(THIRDPART_DIR)/rlImGui
-    GUI_FILES += $(THIRDPART_DIR)/rlImGui/rlImGui.cpp
-    INCLUDES += $(THIRDPART_DIR)/raylib/src
-    GUI_THIRDPART_LIBS += $(THIRDPART_DIR)/raylib/src/$(OS)/libraylib.a
+    VPATH += $(THIRD_PARTIES_DIR)/rlImGui
+    INCLUDES += $(THIRD_PARTIES_DIR)/rlImGui
+    GUI_FILES += $(THIRD_PARTIES_DIR)/rlImGui/rlImGui.cpp
+    INCLUDES += $(THIRD_PARTIES_DIR)/raylib/src
+    GUI_THIRDPART_LIBS += $(THIRD_PARTIES_DIR)/raylib/src/$(OS)/libraylib.a
     ifeq ($(OS),Emscripten)
         ifdef EXAEQUOS
             LINKER_FLAGS += -sMIN_WEBGL_VERSION=2 -sMAX_WEBGL_VERSION=2 -sFULL_ES3
@@ -93,7 +93,7 @@ ifeq ($(DEAR_IMGUI_BACKEND),RayLib)
             # All webs need a "shell" structure to load and run the game,
             # by default emscripten has a `shell.html` but we can provide
             # our own.
-            LINKER_FLAGS += --shell-file $(THIRDPART_DIR)/raylib/src/minshell.html
+            LINKER_FLAGS += --shell-file $(THIRD_PARTIES_DIR)/raylib/src/minshell.html
         endif
     endif
 
@@ -104,25 +104,26 @@ endif
 ###################################################
 # Dear ImGui
 #
-INCLUDES += $(THIRDPART_DIR)
-INCLUDES += $(THIRDPART_DIR)/imgui
-GUI_FILES += $(THIRDPART_DIR)/imgui/imgui_widgets.cpp
-GUI_FILES += $(THIRDPART_DIR)/imgui/imgui_draw.cpp
-GUI_FILES += $(THIRDPART_DIR)/imgui/imgui_tables.cpp
-GUI_FILES += $(THIRDPART_DIR)/imgui/imgui.cpp
-GUI_FILES += $(THIRDPART_DIR)/imgui/misc/cpp/imgui_stdlib.cpp
+INCLUDES += $(THIRD_PARTIES_DIR)
+INCLUDES += $(THIRD_PARTIES_DIR)/imgui
+GUI_FILES += $(THIRD_PARTIES_DIR)/imgui/imgui_widgets.cpp
+GUI_FILES += $(THIRD_PARTIES_DIR)/imgui/imgui_draw.cpp
+GUI_FILES += $(THIRD_PARTIES_DIR)/imgui/imgui_tables.cpp
+GUI_FILES += $(THIRD_PARTIES_DIR)/imgui/imgui.cpp
+GUI_FILES += $(THIRD_PARTIES_DIR)/imgui/misc/cpp/imgui_stdlib.cpp
+USER_CXXFLAGS += -Wno-useless-cast
 
 ###################################################
 # Dear ImGui plot
 #
-GUI_FILES += $(THIRDPART_DIR)/implot/implot_items.cpp
-GUI_FILES += $(THIRDPART_DIR)/implot/implot.cpp
+GUI_FILES += $(THIRD_PARTIES_DIR)/implot/implot_items.cpp
+GUI_FILES += $(THIRD_PARTIES_DIR)/implot/implot.cpp
 
 ###################################################
 # Dear ImGui file dialog
 #
-GUI_FILES += $(THIRDPART_DIR)/ImGuiFileDialog/ImGuiFileDialog.cpp
-USER_CXXFLAGS += -Wno-unknown-pragmas
+GUI_FILES += $(THIRD_PARTIES_DIR)/ImGuiFileDialog/ImGuiFileDialog.cpp
+USER_CXXFLAGS += -Wno-unknown-pragmas -Wno-double-promotion
 
 ###################################################
 # Petri Editor

@@ -9,4 +9,4 @@ CXX_STANDARD := --std=c++14
 ###################################################
 # Select the Dear ImGui backend: RayLib or GLFW3.
 #
-DEAR_IMGUI_BACKEND ?= RayLib
+DEAR_IMGUI_BACKEND ?= GLFW3

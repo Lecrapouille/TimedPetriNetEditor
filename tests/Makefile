@@ -36,13 +36,13 @@ include $(M)/project/Makefile
 ###################################################
 # Set json ibrary.
 #
-INCLUDES += $(THIRDPART_DIR)/json/include
+INCLUDES += $(THIRD_PARTIES_DIR)/json/include
 
 ###################################################
 # Set xml Library.
 #
-VPATH += $(THIRDPART_DIR)/tinyxml2
-SRC_FILES += $(THIRDPART_DIR)/tinyxml2/tinyxml2.cpp
+VPATH += $(THIRD_PARTIES_DIR)/tinyxml2
+SRC_FILES += $(THIRD_PARTIES_DIR)/tinyxml2/tinyxml2.cpp
 USER_CXXFLAGS := -Wno-old-style-cast -Wno-sign-conversion
 
 ###################################################
@@ -54,7 +54,7 @@ VPATH += $(P)/src/Net/Imports $(P)/src/Net/Exports
 ###################################################
 # Inform Makefile where to find header files
 #
-INCLUDES += $(P)/include $(P)/src $(THIRDPART_DIR)
+INCLUDES += $(P)/include $(P)/src $(THIRD_PARTIES_DIR)
 
 ###################################################
 # Make the list of compiled files for the library
