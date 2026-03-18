@@ -1,0 +1,39 @@
+{
+  "revision": 3,
+  "type": "Petri net",
+  "nets": [
+    {
+       "name": "Timed Petri net",
+       "places": [
+            { "id": 0, "caption": "Red", "tokens": 0, "x": 272, "y": 102 },
+            { "id": 1, "caption": "Yellow", "tokens": 0, "x": 268, "y": 312 },
+            { "id": 2, "caption": "Green", "tokens": 1, "x": 274, "y": 470 },
+            { "id": 3, "caption": "Control", "tokens": 0, "x": 429.5, "y": 201 }
+       ],
+       "transitions": [
+            { "id": 0, "caption": "T0", "x": 429, "y": 103, "angle": 0 },
+            { "id": 1, "caption": "T1", "x": 271, "y": 199, "angle": 0 },
+            { "id": 2, "caption": "T2", "x": 108, "y": 311, "angle": 0 },
+            { "id": 3, "caption": "T3", "x": 429, "y": 311, "angle": 0 }
+       ],
+       "arcs": [
+            { "from": "P0", "to": "T0" },
+            { "from": "T0", "to": "P1", "duration": 2 },
+            { "from": "P1", "to": "T1" },
+            { "from": "T1", "to": "P0", "duration": 4 },
+            { "from": "P0", "to": "T2" },
+            { "from": "P1", "to": "T2" },
+            { "from": "T2", "to": "P2", "duration": 4 },
+            { "from": "P2", "to": "T3" },
+            { "from": "T3", "to": "P1", "duration": 3 },
+            { "from": "T3", "to": "P3", "duration": 3 },
+            { "from": "P3", "to": "T0" },
+            { "from": "P3", "to": "T1" },
+            { "from": "T1", "to": "P3", "duration": 5 },
+            { "from": "T0", "to": "P0", "duration": 4 }
+       ],
+       "sensors": [
+       ]
+    }
+  ]
+}

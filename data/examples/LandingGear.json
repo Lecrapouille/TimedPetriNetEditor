@@ -1,0 +1,47 @@
+{
+  "revision": 3,
+  "type": "Petri net",
+  "nets": [
+    {
+       "name": "Petri net",
+       "places": [
+            { "id": 0, "caption": "High speed", "tokens": 0, "x": 165, "y": 155 },
+            { "id": 1, "caption": "Low speed", "tokens": 1, "x": 469, "y": 142 },
+            { "id": 2, "caption": "Gear up", "tokens": 0, "x": 388, "y": 290 },
+            { "id": 3, "caption": "Gear down", "tokens": 1, "x": 383, "y": 436 },
+            { "id": 4, "caption": "Warning on", "tokens": 0, "x": 102, "y": 503 },
+            { "id": 5, "caption": "Warning off", "tokens": 1, "x": 250, "y": 508 }
+       ],
+       "transitions": [
+            { "id": 0, "caption": "Slower", "x": 316, "y": 86, "angle": 0 },
+            { "id": 1, "caption": "Faster", "x": 317, "y": 211, "angle": 0 },
+            { "id": 2, "caption": "Retract", "x": 311, "y": 361, "angle": 0 },
+            { "id": 3, "caption": "Extend", "x": 470, "y": 359, "angle": 0 },
+            { "id": 4, "caption": "Start warning", "x": 167, "y": 437, "angle": 0 },
+            { "id": 5, "caption": "Ack", "x": 171, "y": 589, "angle": 0 }
+       ],
+       "arcs": [
+            { "from": "P0", "to": "T0" },
+            { "from": "T0", "to": "P1", "duration": 3 },
+            { "from": "P1", "to": "T1" },
+            { "from": "T1", "to": "P0", "duration": 3 },
+            { "from": "P3", "to": "T2" },
+            { "from": "T2", "to": "P2", "duration": 1 },
+            { "from": "P1", "to": "T3" },
+            { "from": "T3", "to": "P1", "duration": 1 },
+            { "from": "P2", "to": "T3" },
+            { "from": "T3", "to": "P3", "duration": 2 },
+            { "from": "P0", "to": "T4" },
+            { "from": "T4", "to": "P3", "duration": 4 },
+            { "from": "T4", "to": "P0", "duration": 1 },
+            { "from": "P3", "to": "T4" },
+            { "from": "T4", "to": "P4", "duration": 1 },
+            { "from": "P4", "to": "T5" },
+            { "from": "T5", "to": "P5", "duration": 2 },
+            { "from": "P5", "to": "T4" }
+       ],
+       "sensors": [
+       ]
+    }
+  ]
+}
