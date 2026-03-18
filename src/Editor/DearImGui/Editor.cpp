@@ -328,7 +328,7 @@ void Editor::menu()
         {
             if (ImGui::MenuItem("New", nullptr, false))
             {
-                // TODO
+                m_states.request_new = true;
             }
 
             ImGui::Separator();
@@ -512,6 +512,12 @@ void Editor::menu()
         // Request to save the modified net before quitting, else quit the
         // application.
         if (m_net.modified) { m_states.do_save_as = true; } else { halt(); }
+    }
+    if (m_states.request_new)
+    {
+        // Request to save the modified net before creating new document, else
+        // clear the net.
+        if (m_net.modified) { m_states.do_save_as = true; } else { m_marked_arcs.clear(); clearNet(); m_net.modified = false; m_path_to_save.clear(); m_states.request_new = false; }
     }
 }
 
@@ -1346,6 +1352,15 @@ void Editor::exportNetTo(Exporter const& exporter)
             m_states.request_quitting = false;
             halt();
         }
+        else if (m_states.request_new)
+        {
+            m_marked_arcs.clear();
+            clearNet();
+            m_net.modified = false;
+            m_path_to_save.clear();
+            m_states.request_new = false;
+            m_states.do_save_as = false;
+        }
         else
         {
             m_messages.setError("Cannot save dummy net!");
@@ -1360,7 +1375,8 @@ void Editor::exportNetTo(Exporter const& exporter)
         "ChooseFileDlgKey",
         m_states.do_export_to ? "Choose the Petri file to save"
           : (m_states.request_quitting ? "Choose the Petri file to save before quitting"
-          : "Choose the Petri file to save"),
+          : (m_states.request_new ? "Choose the Petri file to save before creating new document"
+          : "Choose the Petri file to save")),
         exporter.extensions.c_str(), config);
 
     if (ImGuiFileDialog::Instance()->Display("ChooseFileDlgKey"))
@@ -1386,6 +1402,14 @@ void Editor::exportNetTo(Exporter const& exporter)
                     m_states.request_quitting = false;
                     halt();
                 }
+                if (m_states.request_new)
+                {
+                    m_states.request_new = false;
+                    m_marked_arcs.clear();
+                    clearNet();
+                    m_net.modified = false;
+                    m_path_to_save.clear();
+                }
             }
             else
             {
@@ -1403,6 +1427,14 @@ void Editor::exportNetTo(Exporter const& exporter)
             m_states.request_quitting = false;
             // FIXME ajouter une pop: voulez vous vraiment perdre votre document ?
             halt();
+        }
+        if (m_states.request_new)
+        {
+            m_states.request_new = false;
+            m_marked_arcs.clear();
+            clearNet();  // Discard changes and create new document
+            m_net.modified = false;
+            m_path_to_save.clear();
         }
         ImGuiFileDialog::Instance()->Close();
     }

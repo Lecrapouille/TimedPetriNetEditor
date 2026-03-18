@@ -162,6 +162,7 @@ private:
         ImVec2 viewport_center;
         std::string title;
         bool request_quitting = false;
+        bool request_new = false;
         PlotData plot;
     };
 
