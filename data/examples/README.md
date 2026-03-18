@@ -21,6 +21,17 @@ Two traffic lights (red, orange, red lights) synchronized by the Place `P6`.
 TimedPetriNetEditor data/examples/TrafficLights.json
 ```
 
+## German Traffic Lights
+
+One traffic ligth. The particularity of German traffic lights is they are at the same time red and yellow before swaitching to green.
+
+```
+TimedPetriNetEditor data/examples/GermanTrafficLights.json
+```
+
+Credit: YAWL User Group
+https://www.youtube.com/shorts/ZQZCpDRqwKY
+
 ## Philosphers
 
 Three philosophers are eating but they are sharing their fork and knives.
@@ -84,3 +95,40 @@ https://www.rocq.inria.fr/metalau/cohen/SED/book-online.html.
 ```
 TimedPetriNetEditor data/examples/EventGraph.json
 ```
+
+## Chainsaw Safety
+
+Show security such as dead man works on a chainsaw.
+
+```
+TimedPetriNetEditor data/examples/Chainsaw.json
+```
+
+Credit: YAWL User Group
+https://www.youtube.com/shorts/V42WiF2Ib3w
+
+## Landing Gear
+
+Show how to prevent damaging aircraft landing gear.
+- The aircraft has initially its gear down and at low speed.
+- On high speed, extending gears is not possible.
+- If gears are down and aircraft go to high speed a warning is triggered.
+
+
+```
+TimedPetriNetEditor data/examples/LandingGear.json
+```
+
+Credit: YAWL User Group
+https://www.youtube.com/shorts/IqMyF5JKoE4
+
+## Smarthome Safety
+
+Prevent shuttering down the last roller shutters.
+
+```
+TimedPetriNetEditor data/examples/SmarthomeSafety.json
+```
+
+Credit: YAWL User Group
+https://www.youtube.com/shorts/BB5N9Nxtq00

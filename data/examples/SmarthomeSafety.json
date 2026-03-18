@@ -1,0 +1,58 @@
+{
+  "revision": 3,
+  "type": "Petri net",
+  "nets": [
+    {
+       "name": "Petri net",
+       "places": [
+            { "id": 0, "caption": "Shutter up", "tokens": 1, "x": 110, "y": 74 },
+            { "id": 1, "caption": "Shutter down", "tokens": 0, "x": 108, "y": 256 },
+            { "id": 2, "caption": "Shutter up", "tokens": 1, "x": 684, "y": 54 },
+            { "id": 3, "caption": "Shutter down", "tokens": 0, "x": 686, "y": 269 },
+            { "id": 4, "caption": "Shutter up", "tokens": 1, "x": 218, "y": 340 },
+            { "id": 5, "caption": "Shutter down", "tokens": 0, "x": 217, "y": 585 },
+            { "id": 6, "caption": "Shutter up", "tokens": 1, "x": 743, "y": 382 },
+            { "id": 7, "caption": "Shutter down", "tokens": 0, "x": 741, "y": 572 },
+            { "id": 8, "caption": "Remaining", "tokens": 3, "x": 454, "y": 331 }
+       ],
+       "transitions": [
+            { "id": 0, "caption": "Down", "x": 108, "y": 167, "angle": 0 },
+            { "id": 1, "caption": "Up", "x": 201, "y": 159, "angle": 0 },
+            { "id": 2, "caption": "Down", "x": 593, "y": 164, "angle": 0 },
+            { "id": 3, "caption": "Up", "x": 685, "y": 161.5, "angle": 0 },
+            { "id": 4, "caption": "Down", "x": 219, "y": 481, "angle": 0 },
+            { "id": 5, "caption": "Up", "x": 306, "y": 462, "angle": 0 },
+            { "id": 6, "caption": "Down", "x": 655, "y": 488, "angle": 0 },
+            { "id": 7, "caption": "Up", "x": 743, "y": 472, "angle": 0 }
+       ],
+       "arcs": [
+            { "from": "P0", "to": "T0" },
+            { "from": "T0", "to": "P1", "duration": 1 },
+            { "from": "P1", "to": "T1" },
+            { "from": "T1", "to": "P0", "duration": 5 },
+            { "from": "P2", "to": "T2" },
+            { "from": "T2", "to": "P3", "duration": 1 },
+            { "from": "P3", "to": "T3" },
+            { "from": "T3", "to": "P2", "duration": 3 },
+            { "from": "P4", "to": "T4" },
+            { "from": "T4", "to": "P5", "duration": 3 },
+            { "from": "P5", "to": "T5" },
+            { "from": "T5", "to": "P4", "duration": 1 },
+            { "from": "P6", "to": "T6" },
+            { "from": "T6", "to": "P7", "duration": 4 },
+            { "from": "P7", "to": "T7" },
+            { "from": "T7", "to": "P6", "duration": 1 },
+            { "from": "T1", "to": "P8", "duration": 1 },
+            { "from": "P8", "to": "T2" },
+            { "from": "T3", "to": "P8", "duration": 2 },
+            { "from": "P8", "to": "T0" },
+            { "from": "P8", "to": "T4" },
+            { "from": "T5", "to": "P8", "duration": 2 },
+            { "from": "P8", "to": "T6" },
+            { "from": "T7", "to": "P8", "duration": 3 }
+       ],
+       "sensors": [
+       ]
+    }
+  ]
+}
