@@ -876,7 +876,7 @@ static int Semi_Security_Check(void)
     return(errorflag);
 }
 
-void Import_Arguments(int *IJ, double *A,int NNODES, int NARCS, double *CHI, double *V, int *POLICY, int *NITERATIONS, int *NCOMPONENTS, int VERBOSEMODE)
+static void Import_Arguments(int *IJ, double *A,int NNODES, int NARCS, double *CHI, double *V, int *POLICY, int *NITERATIONS, int *NCOMPONENTS, int VERBOSEMODE)
 {
     ij=IJ;
     a=A;
@@ -890,7 +890,7 @@ void Import_Arguments(int *IJ, double *A,int NNODES, int NARCS, double *CHI, dou
     verbosemode=VERBOSEMODE;
 }
 
-void Semi_Import_Arguments(int *IJ, double *A,double *T,int NNODES, int NARCS, double *CHI, double *V, int *POLICY, int *NITERATIONS, int *NCOMPONENTS, int VERBOSEMODE)
+static void Semi_Import_Arguments(int *IJ, double *A,double *T,int NNODES, int NARCS, double *CHI, double *V, int *POLICY, int *NITERATIONS, int *NCOMPONENTS, int VERBOSEMODE)
 {
     ij=IJ;
     a=A;

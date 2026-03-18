@@ -78,7 +78,7 @@ bool TimedToken::update(float const dt)
     offset += dt * speed / magnitude;
     x = arc->from.x + (next.x - arc->from.x) * offset;
     y = arc->from.y + (next.y - arc->from.y) * offset;
-    return (offset >= 1.0);
+    return (offset >= 1.0f);
 }
 
 } // namespace tpne

@@ -199,7 +199,7 @@ public:
     //--------------------------------------------------------------------------
     inline static std::string to_str(size_t const id_)
     {
-        return std::string("P" + std::to_string(id_));
+        return std::string("P") + std::to_string(id_);
     }
 
     //--------------------------------------------------------------------------
@@ -269,7 +269,7 @@ public:
     //--------------------------------------------------------------------------
     inline static std::string to_str(size_t const id_)
     {
-        return std::string("T" + std::to_string(id_));
+        return std::string("T") + std::to_string(id_);
     }
 
     //--------------------------------------------------------------------------

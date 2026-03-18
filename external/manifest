@@ -1,42 +1,35 @@
-#!/bin/bash -e
-###############################################################################
-### This script is called by (cd .. && make download-external-libs). It will
-### git clone thirdparts needed for this project but does not compile them.
-### It replaces git submodules that I dislike.
-###############################################################################
-
 ### Dear ImGui: Bloat-free Graphical User interface for C++ with minimal dependencies
 ### License: MIT
-cloning ocornut/imgui -b docking
+ocornut/imgui@docking
 
 ### Immediate Mode Plotting
 ### License: MIT
-cloning epezent/implot
+epezent/implot
 
 ### File Dialog for Dear ImGui
 ### License: MIT
-cloning aiekick/ImGuiFileDialog
+aiekick/ImGuiFileDialog
 
 ### A simple and easy-to-use library to enjoy videogames programming
 ### License: Zlib
-cloning raysan5/raylib
+raysan5/raylib
 
 ### A Raylib integration with DearImGui
 ### License: Zlib
-cloning raylib-extras/rlImGui
+raylib-extras/rlImGui
 
 ### JSON for Modern C++
 ### License: MIT
-cloning nlohmann/json
+nlohmann/json
 
 ### TinyXML2 is a simple, small, efficient, C++ XML parser.
 ### License: Zlib
-cloning leethomason/tinyxml2
+leethomason/tinyxml2
 
 ### Class wrapping client MQTT (mosquitto lib)
 ### License: MIT
-cloning Lecrapouille/MQTT
+Lecrapouille/MQTT
 
 ### C++ implementation of sparse matrix using CRS (Compressed Row Storage) format
 ### License: none
-#cloning uestla/Sparse-Matrix
+#uestla/Sparse-Matrix

@@ -1,0 +1,20 @@
+#!/bin/bash -e
+
+### Library raylib
+print-compile raylib
+(
+    cd raylib/src
+
+    # Need to patch TakeScreenshot() function because it only accepts file name instead
+    # of file path which is the poorest idea ever!
+    # Note: Concerning .backup see https://www.themoderncoder.com/fix-sed-i-error-macos/
+    sed -i.backup 's/ExportImage(image, path)/ExportImage(image, fileName)/g' rcore.c
+
+    mkdir -p $OS
+    call-make clean
+    if [ "$OS" != "Emscripten" ]; then
+    call-make PLATFORM=PLATFORM_DESKTOP RAYLIB_RELEASE_PATH=$OS RAYLIB_BUILD_MODE=DEBUG
+    else
+    call-make PLATFORM=PLATFORM_WEB RAYLIB_RELEASE_PATH=$OS
+    fi
+)
