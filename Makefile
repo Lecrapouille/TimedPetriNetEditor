@@ -38,12 +38,19 @@ include $(M)/project/Makefile
 SRC_FILES := src/main.cpp
 INCLUDES := $(P)/include
 VPATH := $(P)/src
-# Internal libs to compile
+
+###################################################
+# Compile internal libraries in the correct order
+#
 LIB_TPNE_NET := $(call internal-lib,TimedPetriNet)
 LIB_TPNE_EDITOR := $(call internal-lib,TimedPetriGUI)
 LIB_TPNE_JULIA := $(call internal-lib,TimedPetriJulia)
 INTERNAL_LIBS := $(LIB_TPNE_EDITOR) $(LIB_TPNE_NET) $(LIB_TPNE_JULIA)
 DIRS_WITH_MAKEFILE := $(P)/src/Net $(P)/src/Editor $(P)/src/julia
+
+$(P)/src/julia: $(P)/src/Editor
+
+$(P)/src/Editor: $(P)/src/Net
 
 ###################################################
 # GUI
@@ -96,20 +103,6 @@ endif
 # Generic Makefile rules
 #
 include $(M)/rules/Makefile
-
-###################################################
-# Compile internal librairies in the correct order
-#
-
-$(LIB_TPNE_NET): $(P)/src/Net
-
-$(LIB_TPNE_EDITOR): $(P)/src/Editor
-
-$(LIB_TPNE_JULIA): $(P)/src/julia
-
-$(P)/src/julia: $(P)/src/Editor
-
-$(P)/src/Editor: $(P)/src/Net
 
 ###################################################
 #? Copy data inside BUILD to allow emscripten to embedded them

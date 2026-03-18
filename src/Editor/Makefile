@@ -42,7 +42,7 @@ include ./DearImGui/Backends/Makefile
 #
 INCLUDES += $(P)/src $(P)/include
 LIB_FILES += $(GUI_FILES)
-THIRDPART_LIBS := $(GUI_THIRDPART_LIBS)
+THIRD_PARTIES_LIBS := $(GUI_THIRD_PARTIES_LIBS)
 
 ###################################################
 # Generic Makefile rules
