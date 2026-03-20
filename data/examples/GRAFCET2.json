@@ -1,0 +1,62 @@
+{
+  "revision": 3,
+  "type": "GRAFCET",
+  "nets": [
+    {
+       "name": "Timed Petri net",
+       "places": [
+            { "id": 0, "caption": "1", "tokens": 1, "x": 145, "y": 88 },
+            { "id": 1, "caption": "6", "tokens": 0, "x": 202, "y": 199 },
+            { "id": 2, "caption": "7", "tokens": 0, "x": 200, "y": 365 },
+            { "id": 3, "caption": "8", "tokens": 0, "x": 318, "y": 492 },
+            { "id": 4, "caption": "2", "tokens": 0, "x": 455, "y": 187 },
+            { "id": 5, "caption": "3", "tokens": 0, "x": 457, "y": 339 },
+            { "id": 6, "caption": "4", "tokens": 0, "x": 461, "y": 500 },
+            { "id": 7, "caption": "5", "tokens": 0, "x": 647, "y": 501 },
+            { "id": 8, "caption": "9", "tokens": 0, "x": 286, "y": 575 }
+       ],
+       "transitions": [
+            { "id": 0, "caption": "m", "x": 332, "y": 142, "angle": 0 },
+            { "id": 1, "caption": "a1", "x": 203, "y": 286, "angle": 0 },
+            { "id": 2, "caption": "a0", "x": 201, "y": 437, "angle": 0 },
+            { "id": 3, "caption": "b1 c1 .", "x": 455, "y": 270, "angle": 0 },
+            { "id": 4, "caption": "b0", "x": 460, "y": 420, "angle": 0 },
+            { "id": 5, "caption": "c0 m ! .", "x": 389, "y": 576, "angle": 0 },
+            { "id": 6, "caption": "c0 m .", "x": 559, "y": 579, "angle": 0 },
+            { "id": 7, "caption": "c1", "x": 566, "y": 453, "angle": 0 },
+            { "id": 8, "caption": "true", "x": 145, "y": 573, "angle": 0 }
+       ],
+       "arcs": [
+            { "from": "P0", "to": "T0" },
+            { "from": "T0", "to": "P1", "duration": 4 },
+            { "from": "P1", "to": "T1" },
+            { "from": "T1", "to": "P2", "duration": 2 },
+            { "from": "P2", "to": "T2" },
+            { "from": "T2", "to": "P3", "duration": 4 },
+            { "from": "T0", "to": "P4", "duration": 5 },
+            { "from": "P4", "to": "T3" },
+            { "from": "T3", "to": "P5", "duration": 2 },
+            { "from": "P5", "to": "T4" },
+            { "from": "T4", "to": "P6", "duration": 5 },
+            { "from": "P6", "to": "T5" },
+            { "from": "P6", "to": "T6" },
+            { "from": "T6", "to": "P7", "duration": 3 },
+            { "from": "P7", "to": "T7" },
+            { "from": "T7", "to": "P6", "duration": 5 },
+            { "from": "T5", "to": "P8", "duration": 1 },
+            { "from": "P8", "to": "T8" },
+            { "from": "P3", "to": "T8" },
+            { "from": "T8", "to": "P0", "duration": 2 }
+       ],
+       "sensors": [
+            { "name": "a0", "value": 0 },
+            { "name": "a1", "value": 0 },
+            { "name": "b0", "value": 0 },
+            { "name": "b1", "value": 0 },
+            { "name": "c0", "value": 0 },
+            { "name": "c1", "value": 0 },
+            { "name": "m", "value": 0 }
+       ]
+    }
+  ]
+}
