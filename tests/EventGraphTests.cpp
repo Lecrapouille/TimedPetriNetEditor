@@ -132,9 +132,12 @@ TEST(TestEventGraph, TestToAdjacencyMatrices)
     SparseMatrix<MaxPlus> tokens;
     SparseMatrix<MaxPlus> durations;
     ASSERT_EQ(toAdjacencyMatrices(net, tokens, durations), true);
-    SparseMatrix<MaxPlus>::display_for_julia = true;
-    SparseMatrix<MaxPlus>::display_as_dense = true;
-    std::cout << "tokens:\n" << tokens << "durations:\n" << durations << std::endl;
+    
+    std::cout << "tokens:\n";
+    printSparseMatrix(std::cout, tokens, IndexingStyle::JuliaStyle, DisplayFormat::Dense);
+    std::cout << "durations:\n";
+    printSparseMatrix(std::cout, durations, IndexingStyle::JuliaStyle, DisplayFormat::Dense);
+    std::cout << std::endl;
 
     //
     //     | .  .  2  . |       | .  .  5  . |
@@ -142,37 +145,33 @@ TEST(TestEventGraph, TestToAdjacencyMatrices)
     // T = | .  0  .  0 |,  N = | .  3  .  1 |
     //     | 0  .  .  . |       | 1  .  .  . |
 
-    SparseMatrix<MaxPlus>::display_for_julia = true;
-    SparseMatrix<MaxPlus>::display_as_dense = false;
-    std::stringstream ss; ss << tokens;
-    ASSERT_STREQ(ss.str().c_str(), "[1, 2, 3, 4, 3], [3, 1, 2, 1, 4], MP([2, 0, 0, 0, 0]), 4, 4");
-    SparseMatrix<MaxPlus>::display_as_dense = true;
-    ss.str(""); ss << tokens;
+    std::stringstream ss;
+    printSparseMatrix(ss, tokens, IndexingStyle::JuliaStyle, DisplayFormat::Sparse);
+    ASSERT_STREQ(ss.str().c_str(), "[1, 2, 3, 3, 4], [3, 1, 2, 4, 1], MP([2, 0, 0, 0, 0]), 4, 4");
+    ss.str("");
+    printSparseMatrix(ss, tokens, IndexingStyle::JuliaStyle, DisplayFormat::Dense);
     ASSERT_STREQ(ss.str().c_str(), ". . 2 . \n0 . . . \n. 0 . 0 \n0 . . . \n");
-    ASSERT_EQ(tokens.i.size(), 5u);
-    ASSERT_EQ(tokens.j.size(), 5u);
-    ASSERT_EQ(tokens.d.size(), 5u);
-    ASSERT_EQ(tokens.N, 4u);
-    ASSERT_EQ(tokens.M, 4u);
-    ASSERT_THAT(tokens.i, ElementsAre(1, 2, 3, 4, 3));
-    ASSERT_THAT(tokens.j, ElementsAre(3, 1, 2, 1, 4));
-    ASSERT_THAT(tokens.d, ElementsAre(2, 0, 0, 0, 0));
+    ASSERT_EQ(tokens.nbRows(), 4u);
+    ASSERT_EQ(tokens.nbColumns(), 4u);
+    ASSERT_EQ(tokens.get(0u, 2u).val, 2.0);
+    ASSERT_EQ(tokens.get(1u, 0u).val, 0.0);
+    ASSERT_EQ(tokens.get(2u, 1u).val, 0.0);
+    ASSERT_EQ(tokens.get(3u, 0u).val, 0.0);
+    ASSERT_EQ(tokens.get(2u, 3u).val, 0.0);
 
-    SparseMatrix<MaxPlus>::display_for_julia = true;
-    SparseMatrix<MaxPlus>::display_as_dense = false;
-    ss.str(""); ss << durations;
-    ASSERT_STREQ(ss.str().c_str(), "[1, 2, 3, 4, 3], [3, 1, 2, 1, 4], MP([5, 5, 3, 1, 1]), 4, 4");
-    SparseMatrix<MaxPlus>::display_as_dense = true;
-    ss.str(""); ss << durations;
+    ss.str("");
+    printSparseMatrix(ss, durations, IndexingStyle::JuliaStyle, DisplayFormat::Sparse);
+    ASSERT_STREQ(ss.str().c_str(), "[1, 2, 3, 3, 4], [3, 1, 2, 4, 1], MP([5, 5, 3, 1, 1]), 4, 4");
+    ss.str("");
+    printSparseMatrix(ss, durations, IndexingStyle::JuliaStyle, DisplayFormat::Dense);
     ASSERT_STREQ(ss.str().c_str(), ". . 5 . \n5 . . . \n. 3 . 1 \n1 . . . \n");
-    ASSERT_EQ(durations.i.size(), 5u);
-    ASSERT_EQ(durations.j.size(), 5u);
-    ASSERT_EQ(durations.d.size(), 5u);
-    ASSERT_EQ(durations.N, 4u);
-    ASSERT_EQ(durations.M, 4u);
-    ASSERT_THAT(durations.i, ElementsAre(1, 2, 3, 4, 3));
-    ASSERT_THAT(durations.j, ElementsAre(3, 1, 2, 1, 4));
-    ASSERT_THAT(durations.d, ElementsAre(5, 5, 3, 1, 1));
+    ASSERT_EQ(durations.nbRows(), 4u);
+    ASSERT_EQ(durations.nbColumns(), 4u);
+    ASSERT_EQ(durations.get(0u, 2u).val, 5.0);
+    ASSERT_EQ(durations.get(1u, 0u).val, 5.0);
+    ASSERT_EQ(durations.get(2u, 1u).val, 3.0);
+    ASSERT_EQ(durations.get(3u, 0u).val, 1.0);
+    ASSERT_EQ(durations.get(2u, 3u).val, 1.0);
 }
 
 //------------------------------------------------------------------------------
@@ -193,45 +192,36 @@ TEST(TestEventGraph, TestToSysLinInputOutput)
     SparseMatrix<MaxPlus> C;
 
     ASSERT_EQ(toSysLin(net, D, A, B, C), true);
-    SparseMatrix<MaxPlus>::display_for_julia = true;
-    SparseMatrix<MaxPlus>::display_as_dense = true;
-    std::cout << "D:\n" << D << "A:\n" << A << "B:\n" << B << "C:\n" << C << std::endl;
+    
+    std::cout << "D:\n";
+    printSparseMatrix(std::cout, D, IndexingStyle::JuliaStyle, DisplayFormat::Dense);
+    std::cout << "A:\n";
+    printSparseMatrix(std::cout, A, IndexingStyle::JuliaStyle, DisplayFormat::Dense);
+    std::cout << "B:\n";
+    printSparseMatrix(std::cout, B, IndexingStyle::JuliaStyle, DisplayFormat::Dense);
+    std::cout << "C:\n";
+    printSparseMatrix(std::cout, C, IndexingStyle::JuliaStyle, DisplayFormat::Dense);
+    std::cout << std::endl;
 
     //     | .  . |      | 3  7 |      | . |
     // D = | .  . |, A = | 2  4 |, B = | 1 |, C = | 3 . |
-    ASSERT_EQ(D.i.size(), 0u);
-    ASSERT_EQ(D.j.size(), 0u);
-    ASSERT_EQ(D.d.size(), 0u);
-    ASSERT_EQ(D.N, 2u);
-    ASSERT_EQ(D.M, 2u);
+    ASSERT_EQ(D.nbRows(), 2u);
+    ASSERT_EQ(D.nbColumns(), 2u);
 
-    ASSERT_EQ(A.i.size(), 4u);
-    ASSERT_EQ(A.j.size(), 4u);
-    ASSERT_EQ(A.d.size(), 4u);
-    ASSERT_EQ(A.N, 2u);
-    ASSERT_EQ(A.M, 2u);
-    ASSERT_THAT(A.i, ElementsAre(2u, 1u, 1u, 2u));
-    ASSERT_THAT(A.j, ElementsAre(1u, 2u, 1u, 2u));
-    ASSERT_THAT(A.d, ElementsAre(2.0, 7.0, 3.0, 4.0));
+    ASSERT_EQ(A.nbRows(), 2u);
+    ASSERT_EQ(A.nbColumns(), 2u);
+    ASSERT_EQ(A.get(0u, 0u).val, 3.0);
+    ASSERT_EQ(A.get(0u, 1u).val, 7.0);
+    ASSERT_EQ(A.get(1u, 0u).val, 2.0);
+    ASSERT_EQ(A.get(1u, 1u).val, 4.0);
 
-    ASSERT_EQ(B.i.size(), 1u);
-    ASSERT_EQ(B.j.size(), 1u);
-    ASSERT_EQ(B.d.size(), 1u);
-    ASSERT_EQ(B.N, 1u);
-    ASSERT_EQ(B.M, 2u);
+    ASSERT_EQ(B.nbRows(), 2u);
+    ASSERT_EQ(B.nbColumns(), 1u);
+    ASSERT_EQ(B.get(1u, 0u).val, 1.0);
 
-    ASSERT_THAT(B.i, ElementsAre(2u));
-    ASSERT_THAT(B.j, ElementsAre(1u));
-    ASSERT_THAT(B.d, ElementsAre(1.0));
-
-    ASSERT_EQ(C.i.size(), 1u);
-    ASSERT_EQ(C.j.size(), 1u);
-    ASSERT_EQ(C.d.size(), 1u);
-    ASSERT_EQ(C.N, 2u);
-    ASSERT_EQ(C.M, 1u);
-    ASSERT_THAT(C.i, ElementsAre(1u));
-    ASSERT_THAT(C.j, ElementsAre(1u));
-    ASSERT_THAT(C.d, ElementsAre(3.0));
+    ASSERT_EQ(C.nbRows(), 1u);
+    ASSERT_EQ(C.nbColumns(), 2u);
+    ASSERT_EQ(C.get(0u, 0u).val, 3.0);
 }
 
 //------------------------------------------------------------------------------
@@ -253,9 +243,15 @@ TEST(TestEventGraph, TestToSysLinNoInputNoOutput)
     SparseMatrix<MaxPlus> C;
 
     ASSERT_EQ(toSysLin(net, D, A, B, C), true);
-    SparseMatrix<MaxPlus>::display_for_julia = true;
-    SparseMatrix<MaxPlus>::display_as_dense = true;
-    std::cout << "D:\n" << D << "A:\n" << A << "B:\n" << B << "C:\n" << C << std::endl;
+    std::cout << "D:\n";
+    printSparseMatrix(std::cout, D, IndexingStyle::JuliaStyle, DisplayFormat::Dense);
+    std::cout << "A:\n";
+    printSparseMatrix(std::cout, A, IndexingStyle::JuliaStyle, DisplayFormat::Dense);
+    std::cout << "B:\n";
+    printSparseMatrix(std::cout, B, IndexingStyle::JuliaStyle, DisplayFormat::Dense);
+    std::cout << "C:\n";
+    printSparseMatrix(std::cout, C, IndexingStyle::JuliaStyle, DisplayFormat::Dense);
+    std::cout << std::endl;
 
     //
     //       j
@@ -265,63 +261,50 @@ TEST(TestEventGraph, TestToSysLinNoInputNoOutput)
     //     | .  .  1  .  . |       | .  .  .  .  . |
     //     | .  .  .  .  . |       | 0  .  .  .  . |
     //
-    ASSERT_EQ(D.i.size(), 4u);
-    ASSERT_EQ(D.j.size(), 4u);
-    ASSERT_EQ(D.d.size(), 4u);
-    ASSERT_EQ(D.N, 5u);
-    ASSERT_EQ(D.M, 5u);
-    ASSERT_THAT(D.i, ElementsAre(1u, 2u, 1u, 4u));
-    ASSERT_THAT(D.j, ElementsAre(4u, 3u, 2u, 3u));
-    ASSERT_THAT(D.d, ElementsAre(1.0, 3.0, 5.0, 1.0));
-    SparseMatrix<MaxPlus>::display_for_julia = true;
-    SparseMatrix<MaxPlus>::display_as_dense = false;
-    std::stringstream ssD; ssD << D;
-    ASSERT_STREQ(ssD.str().c_str(), "[1, 2, 1, 4], [4, 3, 2, 3], MP([1, 3, 5, 1]), 5, 5");
-    SparseMatrix<MaxPlus>::display_as_dense = true;
-    ssD.str(""); ssD << D;
+    ASSERT_EQ(D.nbRows(), 5u);
+    ASSERT_EQ(D.nbColumns(), 5u);
+    ASSERT_EQ(D.get(0u, 1u).val, 5.0);
+    ASSERT_EQ(D.get(0u, 3u).val, 1.0);
+    ASSERT_EQ(D.get(1u, 2u).val, 3.0);
+    ASSERT_EQ(D.get(3u, 2u).val, 1.0);
+    
+    std::stringstream ssD;
+    printSparseMatrix(ssD, D, IndexingStyle::JuliaStyle, DisplayFormat::Sparse);
+    ASSERT_STREQ(ssD.str().c_str(), "[1, 1, 2, 4], [2, 4, 3, 3], MP([5, 1, 3, 1]), 5, 5");
+    ssD.str("");
+    printSparseMatrix(ssD, D, IndexingStyle::JuliaStyle, DisplayFormat::Dense);
     ASSERT_STREQ(ssD.str().c_str(), ". 5 . 1 . \n. . 3 . . \n. . . . . \n. . 1 . . \n. . . . . \n");
 
-    ASSERT_EQ(A.i.size(), 2u);
-    ASSERT_EQ(A.j.size(), 2u);
-    ASSERT_EQ(A.d.size(), 2u);
-    ASSERT_EQ(A.N, 5u);
-    ASSERT_EQ(A.M, 5u);
-    ASSERT_THAT(A.j, ElementsAre(1u, 5u));
-    ASSERT_THAT(A.i, ElementsAre(5u, 3u));
-    ASSERT_THAT(A.d, ElementsAre(0.0, 5.0));
-    SparseMatrix<MaxPlus>::display_for_julia = true;
-    SparseMatrix<MaxPlus>::display_as_dense = false;
-    std::stringstream ssA; ssA << A;
-    ASSERT_STREQ(ssA.str().c_str(), "[5, 3], [1, 5], MP([0, 5]), 5, 5");
-    SparseMatrix<MaxPlus>::display_as_dense = true;
-    ssA.str(""); ssA << A;
-    // FIXME trailing white space and extra \n not proper
+    ASSERT_EQ(A.nbRows(), 5u);
+    ASSERT_EQ(A.nbColumns(), 5u);
+    ASSERT_EQ(A.get(4u, 0u).val, 0.0);
+    ASSERT_EQ(A.get(2u, 4u).val, 5.0);
+    
+    std::stringstream ssA;
+    printSparseMatrix(ssA, A, IndexingStyle::JuliaStyle, DisplayFormat::Sparse);
+    ASSERT_STREQ(ssA.str().c_str(), "[3, 5], [5, 1], MP([5, 0]), 5, 5");
+    ssA.str("");
+    printSparseMatrix(ssA, A, IndexingStyle::JuliaStyle, DisplayFormat::Dense);
     ASSERT_STREQ(ssA.str().c_str(), ". . . . . \n. . . . . \n. . . . 5 \n. . . . . \n0 . . . . \n");
 
-    ASSERT_EQ(B.i.size(), 0u);
-    ASSERT_EQ(B.j.size(), 0u);
-    ASSERT_EQ(B.d.size(), 0u);
-    ASSERT_EQ(B.N, 0u);
-    ASSERT_EQ(B.M, 5u);
-    SparseMatrix<MaxPlus>::display_for_julia = true;
-    SparseMatrix<MaxPlus>::display_as_dense = false;
-    std::stringstream ssB; ssB << B;
+    ASSERT_EQ(B.nbRows(), 5u);
+    ASSERT_EQ(B.nbColumns(), 0u);
+    
+    std::stringstream ssB;
+    printSparseMatrix(ssB, B, IndexingStyle::JuliaStyle, DisplayFormat::Sparse);
     ASSERT_STREQ(ssB.str().c_str(), "[], [], MP([]), 5, 0");
-    SparseMatrix<MaxPlus>::display_as_dense = true;
-    ssB.str(""); ssB << B;
+    ssB.str("");
+    printSparseMatrix(ssB, B, IndexingStyle::JuliaStyle, DisplayFormat::Dense);
     ASSERT_STREQ(ssB.str().c_str(), "");
 
-    ASSERT_EQ(C.i.size(), 0u);
-    ASSERT_EQ(C.j.size(), 0u);
-    ASSERT_EQ(C.d.size(), 0u);
-    ASSERT_EQ(C.N, 5u);
-    ASSERT_EQ(C.M, 0u);
-    SparseMatrix<MaxPlus>::display_for_julia = true;
-    SparseMatrix<MaxPlus>::display_as_dense = false;
-    std::stringstream ssC; ssC << C;
+    ASSERT_EQ(C.nbRows(), 0u);
+    ASSERT_EQ(C.nbColumns(), 5u);
+    
+    std::stringstream ssC;
+    printSparseMatrix(ssC, C, IndexingStyle::JuliaStyle, DisplayFormat::Sparse);
     ASSERT_STREQ(ssC.str().c_str(), "[], [], MP([]), 0, 5");
-    SparseMatrix<MaxPlus>::display_as_dense = true;
-    ssC.str(""); ssC << C;
+    ssC.str("");
+    printSparseMatrix(ssC, C, IndexingStyle::JuliaStyle, DisplayFormat::Dense);
     ASSERT_STREQ(ssC.str().c_str(), "");
 }
 

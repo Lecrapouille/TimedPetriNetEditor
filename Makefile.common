@@ -4,7 +4,7 @@
 PROJECT_NAME := TimedPetriNetEditor
 PROJECT_VERSION := 0.4.0
 COMPILATION_MODE := debug
-CXX_STANDARD := --std=c++14
+CXX_STANDARD := --std=c++17
 
 ###################################################
 # Select the Dear ImGui backend: RayLib or GLFW3.

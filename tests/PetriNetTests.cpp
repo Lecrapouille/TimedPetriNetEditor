@@ -1398,7 +1398,7 @@ TEST(TestPetriNet, TestRemoveNode)
     ASSERT_NE(net.findArc(*net.findTransition(2u), *net.findPlace(1u)), nullptr);
     ASSERT_NE(net.findArc(*net.findPlace(0u), *net.findTransition(1u)), nullptr);
     ASSERT_NE(net.findArc(*net.findPlace(1u), *net.findTransition(0u)), nullptr);
-    
+
     // In/out arcs Transition
     // T0 (previously T3)
     {

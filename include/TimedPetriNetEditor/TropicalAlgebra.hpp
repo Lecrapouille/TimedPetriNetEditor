@@ -40,20 +40,20 @@ public:
     MaxPlus() : val() {};
     MaxPlus(const MaxPlus & d) : val(d.val){}
     MaxPlus(const double t) : val(t){}
-    inline bool operator==(const MaxPlus &rhs) const { return val == rhs.val; }
-    inline bool operator==(const double &rhs) const { return val == rhs; }
-    inline bool operator!=(const MaxPlus &rhs) const { return val != rhs.val; }
-    inline bool operator!=(const double &rhs) const { return val != rhs; }
-    inline MaxPlus & operator=(const MaxPlus & rhs) { val = rhs.val; return *this;}
-    inline MaxPlus & operator=(const double rhs) { val = rhs; return *this;}
-    inline double operator*=(const MaxPlus & rhs) { val += rhs.val; return val; }
-    inline double operator+=(const MaxPlus & rhs) { val = std::max(val, rhs.val); return val; }
-    inline double operator*(const MaxPlus & rhs) const { return val + rhs.val; }
-    inline double operator+(const MaxPlus & rhs) const { return std::max(val, rhs.val); }
-    inline double operator/(const MaxPlus & rhs) const { return val - rhs.val; }
-    inline double operator-(const MaxPlus & rhs) const { return val - rhs.val; }
-    inline double operator-() const { return -val; }
-    inline double operator+() const { return val; }
+    inline bool operator==(const MaxPlus &rhs) const noexcept { return val == rhs.val; }
+    inline bool operator==(const double &rhs) const noexcept { return val == rhs; }
+    inline bool operator!=(const MaxPlus &rhs) const noexcept { return val != rhs.val; }
+    inline bool operator!=(const double &rhs) const noexcept { return val != rhs; }
+    inline MaxPlus & operator=(const MaxPlus & rhs) noexcept { val = rhs.val; return *this;}
+    inline MaxPlus & operator=(const double rhs) noexcept { val = rhs; return *this;}
+    inline double operator*=(const MaxPlus & rhs) noexcept { val += rhs.val; return val; }
+    inline double operator+=(const MaxPlus & rhs) noexcept { val = std::max(val, rhs.val); return val; }
+    inline double operator*(const MaxPlus & rhs) const noexcept { return val + rhs.val; }
+    inline double operator+(const MaxPlus & rhs) const noexcept { return std::max(val, rhs.val); }
+    inline double operator/(const MaxPlus & rhs) const noexcept { return val - rhs.val; }
+    inline double operator-(const MaxPlus & rhs) const noexcept { return val - rhs.val; }
+    inline double operator-() const noexcept { return -val; }
+    inline double operator+() const noexcept { return val; }
     //inline operator double const& () const { return val; }
     //inline operator double& () { return val; }
 
@@ -74,20 +74,20 @@ public:
     MinPlus() : val() {};
     MinPlus(const MinPlus & d) : val(d.val){}
     MinPlus(const double t) : val(t){}
-    inline bool operator==(const MinPlus &rhs) const { return val == rhs.val; }
-    inline bool operator==(const double &rhs) const { return val == rhs; }
-    inline bool operator!=(const MinPlus &rhs) const { return val != rhs.val; }
-    inline bool operator!=(const double &rhs) const { return val != rhs; }
-    inline MinPlus & operator=(const MinPlus & rhs) { val = rhs.val; return *this;}
-    inline MinPlus & operator=(const double rhs) { val = rhs; return *this;}
-    inline double operator*=(const MinPlus & rhs) { val += rhs.val; return val; }
-    inline double operator+=(const MinPlus & rhs) { val = std::min(val, rhs.val); return val; }
-    inline double operator*(const MinPlus & rhs) const { return val + rhs.val; }
-    inline double operator+(const MinPlus & rhs) const { return std::min(val, rhs.val); }
-    inline double operator/(const MinPlus & rhs) const { return val - rhs.val; }
-    inline double operator-(const MinPlus & rhs) const { return val - rhs.val; }
-    inline double operator-() const { return -val; }
-    inline double operator+() const { return val; }
+    inline bool operator==(const MinPlus &rhs) const noexcept { return val == rhs.val; }
+    inline bool operator==(const double &rhs) const noexcept { return val == rhs; }
+    inline bool operator!=(const MinPlus &rhs) const noexcept { return val != rhs.val; }
+    inline bool operator!=(const double &rhs) const noexcept { return val != rhs; }
+    inline MinPlus & operator=(const MinPlus & rhs) noexcept { val = rhs.val; return *this;}
+    inline MinPlus & operator=(const double rhs) noexcept { val = rhs; return *this;}
+    inline double operator*=(const MinPlus & rhs) noexcept { val += rhs.val; return val; }
+    inline double operator+=(const MinPlus & rhs) noexcept { val = std::min(val, rhs.val); return val; }
+    inline double operator*(const MinPlus & rhs) const noexcept { return val + rhs.val; }
+    inline double operator+(const MinPlus & rhs) const noexcept { return std::min(val, rhs.val); }
+    inline double operator/(const MinPlus & rhs) const noexcept { return val - rhs.val; }
+    inline double operator-(const MinPlus & rhs) const noexcept { return val - rhs.val; }
+    inline double operator-() const noexcept { return -val; }
+    inline double operator+() const noexcept { return val; }
     //inline operator double const& () const { return val; }
     //inline operator double& () { return val; }
 

@@ -28,89 +28,195 @@
 using namespace ::tpne;
 
 //------------------------------------------------------------------------------
-static std::string stream(SparseMatrix<MaxPlus> const& M, bool display_for_julia)
+TEST(TestSparseMatrix, TestConstructor)
 {
-    std::stringstream ss;
-    SparseMatrix<MaxPlus>::display_for_julia = display_for_julia;
-    SparseMatrix<MaxPlus>::display_as_dense = false;
-    ss << M;
-    return ss.str();
+    SparseMatrix<double> M;
+
+    ASSERT_EQ(M.m_vals.size(), 0u);
+    ASSERT_EQ(M.m_cols.size(), 0u);
+    ASSERT_EQ(M.m_rows.size(), 1u);
+    ASSERT_EQ(M.nbRows(), 0u);
+    ASSERT_EQ(M.nbColumns(), 0u);
+
+    SparseMatrix<double> M2(4u, 5u);
+    ASSERT_EQ(M2.m_vals.size(), 0u);
+    ASSERT_EQ(M2.m_cols.size(), 0u);
+    ASSERT_EQ(M2.m_rows.size(), 5u);
+    ASSERT_EQ(M2.nbRows(), 4u);
+    ASSERT_EQ(M2.nbColumns(), 5u);
+
+    SparseMatrix<double> M3(3u);
+    ASSERT_EQ(M3.nbRows(), 3u);
+    ASSERT_EQ(M3.nbColumns(), 3u);
 }
 
 //------------------------------------------------------------------------------
-TEST(TestEventGraph, TestSparseMatrixConstructor)
+TEST(TestSparseMatrix, TestReshapeAndClear)
+{
+    SparseMatrix<double> M;
+    M.reshape(4u, 5u);
+
+    ASSERT_EQ(M.m_vals.size(), 0u);
+    ASSERT_EQ(M.m_cols.size(), 0u);
+    ASSERT_EQ(M.nbRows(), 4u);
+    ASSERT_EQ(M.nbColumns(), 5u);
+
+    M.set(0u, 0u, 42.0);
+    ASSERT_EQ(M.m_vals.size(), 1u);
+    ASSERT_EQ(M.m_vals[0], 42.0);
+
+    M.clear();
+    ASSERT_EQ(M.m_vals.size(), 0u);
+    ASSERT_EQ(M.m_cols.size(), 0u);
+    ASSERT_EQ(M.nbRows(), 4u);
+    ASSERT_EQ(M.nbColumns(), 5u);
+}
+
+//------------------------------------------------------------------------------
+TEST(TestSparseMatrix, TestGetSet)
+{
+    SparseMatrix<double> M(5u, 4u);
+
+    M.set(0u, 0u, 42.0);
+    ASSERT_EQ(M.m_vals.size(), 1u);
+    ASSERT_EQ(M.m_cols.size(), 1u);
+    ASSERT_EQ(M.m_vals[0], 42.0);
+    ASSERT_EQ(M.m_cols[0], 0u);
+    ASSERT_EQ(M.get(0u, 0u), 42.0);
+    ASSERT_EQ(M.get(1u, 1u), 0.0);
+
+    M.set(4u, 3u, 43.0);
+    ASSERT_EQ(M.m_vals.size(), 2u);
+    ASSERT_EQ(M.m_cols.size(), 2u);
+    ASSERT_EQ(M.m_vals[1], 43.0);
+    ASSERT_EQ(M.m_cols[1], 3u);
+    ASSERT_EQ(M.get(4u, 3u), 43.0);
+
+    M.set(0u, 0u, 0.0);
+    ASSERT_EQ(M.m_vals.size(), 1u);
+    ASSERT_EQ(M.get(0u, 0u), 0.0);
+
+    M.set(4u, 3u, 44.0);
+    ASSERT_EQ(M.m_vals.size(), 1u);
+    ASSERT_EQ(M.m_vals[0], 44.0);
+    ASSERT_EQ(M.get(4u, 3u), 44.0);
+}
+
+//------------------------------------------------------------------------------
+TEST(TestSparseMatrix, TestMaxPlusConstructor)
 {
     SparseMatrix<MaxPlus> M;
 
-    ASSERT_EQ(M.i.size(), 0u);
-    ASSERT_EQ(M.j.size(), 0u);
-    ASSERT_EQ(M.d.size(), 0u);
-    ASSERT_EQ(M.N, 0u);
-    ASSERT_EQ(M.M, 0u);
-    ASSERT_STREQ(stream(M, true).c_str(), "[], [], MP([]), 0, 0");
-    ASSERT_STREQ(stream(M, false).c_str(), "0x0 sparse (max,+) matrix with 0 stored entry:\n[], [], MP([])");
+    ASSERT_EQ(M.m_vals.size(), 0u);
+    ASSERT_EQ(M.m_cols.size(), 0u);
+    ASSERT_EQ(M.nbRows(), 0u);
+    ASSERT_EQ(M.nbColumns(), 0u);
 
     M.reshape(4u, 5u);
-    ASSERT_EQ(M.i.size(), 0u);
-    ASSERT_EQ(M.j.size(), 0u);
-    ASSERT_EQ(M.d.size(), 0u);
-    ASSERT_EQ(M.N, 4u);
-    ASSERT_EQ(M.M, 5u);
-    ASSERT_STREQ(stream(M, true).c_str(), "[], [], MP([]), 5, 4");
-    ASSERT_STREQ(stream(M, false).c_str(), "5x4 sparse (max,+) matrix with 0 stored entry:\n[], [], MP([])");
+    ASSERT_EQ(M.m_vals.size(), 0u);
+    ASSERT_EQ(M.nbRows(), 4u);
+    ASSERT_EQ(M.nbColumns(), 5u);
 
-    M.set(0u, 0u, 42.0);
-    ASSERT_EQ(M.i.size(), 1u);
-    ASSERT_EQ(M.j.size(), 1u);
-    ASSERT_EQ(M.d.size(), 1u);
-    ASSERT_EQ(M.N, 4u);
-    ASSERT_EQ(M.M, 5u);
-    ASSERT_EQ(M.i[0], 1u);
-    ASSERT_EQ(M.j[0], 1u);
-    ASSERT_EQ(M.d[0], 42.0);
-    ASSERT_STREQ(stream(M, true).c_str(), "[1], [1], MP([42]), 5, 4");
-    ASSERT_STREQ(stream(M, false).c_str(), "5x4 sparse (max,+) matrix with 1 stored entry:\n[0], [0], MP([42])");
+    M.set(0u, 0u, MaxPlus(42.0));
+    ASSERT_EQ(M.m_vals.size(), 1u);
+    ASSERT_EQ(M.m_vals[0].val, 42.0);
+    ASSERT_EQ(M.m_cols[0], 0u);
 
-    M.set(4u, 5u, 43.0);
-    ASSERT_EQ(M.i.size(), 2u);
-    ASSERT_EQ(M.j.size(), 2u);
-    ASSERT_EQ(M.d.size(), 2u);
-    ASSERT_EQ(M.N, 4u);
-    ASSERT_EQ(M.M, 5u);
-    ASSERT_EQ(M.i[0], 1u);
-    ASSERT_EQ(M.j[0], 1u);
-    ASSERT_EQ(M.d[0], 42.0);
-    ASSERT_EQ(M.i[1], 5u);
-    ASSERT_EQ(M.j[1], 6u);
-    ASSERT_EQ(M.d[1], 43.0);
-    ASSERT_STREQ(stream(M, true).c_str(), "[1, 5], [1, 6], MP([42, 43]), 5, 4");
-    ASSERT_STREQ(stream(M, false).c_str(), "5x4 sparse (max,+) matrix with 2 stored entry:\n[0, 4], [0, 5], MP([42, 43])");
-
-    // Check double insertion is possible (no security check)
-    M.set(4u, 5u, 44.0);
-    ASSERT_EQ(M.i.size(), 3u);
-    ASSERT_EQ(M.j.size(), 3u);
-    ASSERT_EQ(M.d.size(), 3u);
-    ASSERT_EQ(M.N, 4u);
-    ASSERT_EQ(M.M, 5u);
-    ASSERT_EQ(M.i[0], 1u);
-    ASSERT_EQ(M.j[0], 1u);
-    ASSERT_EQ(M.d[0], 42.0);
-    ASSERT_EQ(M.i[1], 5u);
-    ASSERT_EQ(M.j[1], 6u);
-    ASSERT_EQ(M.d[1], 43.0);
-    ASSERT_EQ(M.i[2], 5u);
-    ASSERT_EQ(M.j[2], 6u);
-    ASSERT_EQ(M.d[2], 44.0);
-    ASSERT_STREQ(stream(M, true).c_str(), "[1, 5, 5], [1, 6, 6], MP([42, 43, 44]), 5, 4");
-    ASSERT_STREQ(stream(M, false).c_str(), "5x4 sparse (max,+) matrix with 3 stored entry:\n[0, 4, 4], [0, 5, 5], MP([42, 43, 44])");
+    M.set(3u, 4u, MaxPlus(43.0));
+    ASSERT_EQ(M.m_vals.size(), 2u);
+    ASSERT_EQ(M.m_vals[1].val, 43.0);
+    ASSERT_EQ(M.m_cols[1], 4u);
 
     M.clear();
-    ASSERT_EQ(M.i.size(), 0u);
-    ASSERT_EQ(M.j.size(), 0u);
-    ASSERT_EQ(M.d.size(), 0u);
-    ASSERT_EQ(M.N, 4u);
-    ASSERT_EQ(M.M, 5u);
-    ASSERT_STREQ(stream(M, true).c_str(), "[], [], MP([]), 5, 4");
-    ASSERT_STREQ(stream(M, false).c_str(), "5x4 sparse (max,+) matrix with 0 stored entry:\n[], [], MP([])");
+    ASSERT_EQ(M.m_vals.size(), 0u);
+    ASSERT_EQ(M.nbRows(), 4u);
+    ASSERT_EQ(M.nbColumns(), 5u);
+}
+
+//------------------------------------------------------------------------------
+TEST(TestSparseMatrix, TestMaxPlusOperations)
+{
+    SparseMatrix<MaxPlus> A(2u, 2u);
+    SparseMatrix<MaxPlus> B(2u, 2u);
+
+    A.set(0u, 0u, MaxPlus(1.0));
+    A.set(0u, 1u, MaxPlus(2.0));
+    A.set(1u, 0u, MaxPlus(3.0));
+    A.set(1u, 1u, MaxPlus(4.0));
+
+    B.set(0u, 0u, MaxPlus(0.5));
+    B.set(0u, 1u, MaxPlus(1.5));
+    B.set(1u, 0u, MaxPlus(2.5));
+    B.set(1u, 1u, MaxPlus(3.5));
+
+    SparseMatrix<MaxPlus> C = A + B;
+    ASSERT_EQ(C.get(0u, 0u).val, 1.0);
+    ASSERT_EQ(C.get(0u, 1u).val, 2.0);
+    ASSERT_EQ(C.get(1u, 0u).val, 3.0);
+    ASSERT_EQ(C.get(1u, 1u).val, 4.0);
+
+    SparseMatrix<MaxPlus> D = A * B;
+    ASSERT_EQ(D.get(0u, 0u).val, 4.5);
+    ASSERT_EQ(D.get(0u, 1u).val, 5.5);
+    ASSERT_EQ(D.get(1u, 0u).val, 6.5);
+    ASSERT_EQ(D.get(1u, 1u).val, 7.5);
+}
+
+//------------------------------------------------------------------------------
+TEST(TestSparseMatrix, TestMatrixVectorMultiplication)
+{
+    SparseMatrix<double> M(3u, 3u);
+    M.set(0u, 0u, 1.0);
+    M.set(0u, 2u, 2.0);
+    M.set(1u, 1u, 3.0);
+    M.set(2u, 0u, 4.0);
+    M.set(2u, 2u, 5.0);
+
+    std::vector<double> v = {1.0, 2.0, 3.0};
+    std::vector<double> result = M * v;
+
+    ASSERT_EQ(result.size(), 3u);
+    ASSERT_EQ(result[0], 7.0);
+    ASSERT_EQ(result[1], 6.0);
+    ASSERT_EQ(result[2], 19.0);
+}
+
+//------------------------------------------------------------------------------
+TEST(TestSparseMatrix, TestMaxPlusMatrixVectorMultiplication)
+{
+    SparseMatrix<MaxPlus> M(3u, 3u);
+    M.set(0u, 0u, MaxPlus(1.0));
+    M.set(0u, 2u, MaxPlus(2.0));
+    M.set(1u, 1u, MaxPlus(3.0));
+    M.set(2u, 0u, MaxPlus(4.0));
+    M.set(2u, 2u, MaxPlus(5.0));
+
+    std::vector<MaxPlus> v = {MaxPlus(1.0), MaxPlus(2.0), MaxPlus(3.0)};
+    std::vector<MaxPlus> result = M * v;
+
+    ASSERT_EQ(result.size(), 3u);
+    ASSERT_EQ(result[0].val, 5.0);
+    ASSERT_EQ(result[1].val, 5.0);
+    ASSERT_EQ(result[2].val, 8.0);
+}
+
+//------------------------------------------------------------------------------
+TEST(TestSparseMatrix, TestDisplayOptions)
+{
+    SparseMatrix<MaxPlus> M(2u, 2u);
+    M.set(0u, 0u, MaxPlus(1.0));
+    M.set(1u, 1u, MaxPlus(2.0));
+
+    DisplayOptions cpp_opts;
+    cpp_opts.indexing = IndexingStyle::CppStyle;
+    cpp_opts.format = DisplayFormat::Sparse;
+    std::string cpp_str = M.toString(cpp_opts);
+    ASSERT_TRUE(cpp_str.find("[0, 1]") != std::string::npos);
+
+    DisplayOptions julia_opts;
+    julia_opts.indexing = IndexingStyle::JuliaStyle;
+    julia_opts.format = DisplayFormat::Sparse;
+    std::string julia_str = M.toString(julia_opts);
+    ASSERT_TRUE(julia_str.find("[1, 2]") != std::string::npos);
+    ASSERT_TRUE(julia_str.find(", 2, 2") != std::string::npos);
 }

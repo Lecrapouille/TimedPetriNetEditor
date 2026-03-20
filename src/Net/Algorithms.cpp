@@ -26,11 +26,6 @@
 
 namespace tpne {
 
-//------------------------------------------------------------------------------
-// FIXME pas au bon endroit
-// Used to control the behavior of operator<<.
-template<> bool SparseMatrix<MaxPlus>::display_for_julia = true;
-template<> bool SparseMatrix<MaxPlus>::display_as_dense = false;
 
 //------------------------------------------------------------------------------
 bool isEventGraph(Net const& net, std::string& error, std::vector<Arc*>& erroneous_arcs)
@@ -192,8 +187,8 @@ void toSysLin(Net const& net,
     D.clear(); A.clear(); B.clear(); C.clear();
     D.reshape(nb_states, nb_states);
     A.reshape(nb_states, nb_states);
-    B.reshape(nb_inputs, nb_states);
-    C.reshape(nb_states, nb_outputs);
+    B.reshape(nb_states, nb_inputs);
+    C.reshape(nb_outputs, nb_states);
 
     // Note origin and destination are inverted because we use the following
     // matrix product convension: M * x where x is a column vector.
