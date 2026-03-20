@@ -10,7 +10,7 @@ on:
 jobs:
   non_regression_linux:
     name: Non regression tests on Linux
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     steps:
       - name: Install system packages
         run: |
@@ -19,7 +19,7 @@ jobs:
           sudo apt-get install libasound2-dev libxrandr-dev libxi-dev libgl1-mesa-dev libglu1-mesa-dev libxcursor-dev
           sudo apt-get install libwayland-dev libxkbcommon-x11-dev libglfw3-dev libxcursor-dev libxinerama-dev
       - name: Checkout TimedPetriNetEditor
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           submodules: true
       - name: Compile TimedPetriNetEditor
@@ -56,7 +56,7 @@ jobs:
         run: |
           brew install pkg-config mosquitto raylib glfw glew
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           submodules: true
       - name: Compile TimedPetriNetEditor
@@ -80,7 +80,7 @@ jobs:
         run: |
           hdiutil create -format UDZO -srcfolder build/TimedPetriNetEditor.app build/TimedPetriNetEditor.dmg
       - name: Deploy
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: TimedPetriNetEditor-macos
           path: build/TimedPetriNetEditor.dmg
