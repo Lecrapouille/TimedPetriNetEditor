@@ -406,15 +406,35 @@ int64_t petri_to_canonical(int64_t const pn)
 }
 
 //------------------------------------------------------------------------------
-// Ok! Ok! Ugly but works since org are static variables
+static std::vector<size_t> temp_i, temp_j;
+static std::vector<tpne::MaxPlus> temp_d;
+
 static void convert(tpne::SparseMatrix<tpne::MaxPlus>& org, CSparseMatrix_t* dst)
 {
-    dst->i = org.i.data();
-    dst->j = org.j.data();
-    dst->d = org.d.data();
-    dst->size = org.d.size();
-    dst->N = org.M;
-    dst->M = org.N;
+    temp_i.clear();
+    temp_j.clear();
+    temp_d.clear();
+
+    for (size_t row = 0; row < org.nbRows(); ++row)
+    {
+        for (size_t col = 0; col < org.nbColumns(); ++col)
+        {
+            tpne::MaxPlus val = org.get(row, col);
+            if (!(val == tpne::zero<tpne::MaxPlus>()))
+            {
+                temp_i.push_back(row + 1);
+                temp_j.push_back(col + 1);
+                temp_d.push_back(val);
+            }
+        }
+    }
+
+    dst->i = temp_i.data();
+    dst->j = temp_j.data();
+    dst->d = temp_d.data();
+    dst->size = temp_d.size();
+    dst->N = org.nbRows();
+    dst->M = org.nbColumns();
 }
 
 //------------------------------------------------------------------------------

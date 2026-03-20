@@ -18,161 +18,239 @@
 // along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.
 //=============================================================================
 
-#ifndef SPARSE_MATRIX_HPP
-#  define SPARSE_MATRIX_HPP
+#ifndef TPNE_SPARSE_MATRIX_H
+#  define TPNE_SPARSE_MATRIX_H
 
 #  include "TimedPetriNetEditor/TropicalAlgebra.hpp"
-
-// FIXME Add template and manage (max,+) types
-//#  include <cstdint>
 #  include <vector>
 #  include <iostream>
+#  include <string>
+#  include <cstddef>
 
 namespace tpne {
 
-//------------------------------------------------------------------------------
-//! \brief Helper structure for building sparse matrix for the exportation of
-//! the Petri net to Julia language (Julia is a vectorial language mixing Matlab
-//! and Python syntax but with a faster runtime) as Max-Plus dynamical linear
-//! systems (State space representation).
-//!
-//! This class is only used for storing elements not for doing matrix
-//! operations. In Julia, a sparse matrix of dimensions m x n is built with the
-//! function sparse(I, J, D, n, m) where I, J are two column vectors indicating
-//! coordinates of the non-zero elements, D is column vector holding values to
-//! be stored. Note that in Julia indexes starts at 1, contrary to C/C++
-//! starting at 0.
-//------------------------------------------------------------------------------
+// *****************************************************************************
+//! \brief Indexing style for matrix display
+// *****************************************************************************
+enum class IndexingStyle
+{
+    CppStyle,    //!< 0-based indexing (C++ convention)
+    JuliaStyle   //!< 1-based indexing (Julia convention)
+};
+
+// *****************************************************************************
+//! \brief Matrix display format
+// *****************************************************************************
+enum class DisplayFormat
+{
+    Sparse,  //!< Display as sparse format (i, j, d vectors)
+    Dense    //!< Display as dense matrix
+};
+
+// *****************************************************************************
+//! \brief Options for displaying sparse matrices
+// *****************************************************************************
+struct DisplayOptions
+{
+    //! \brief Indexing style (0-based or 1-based)
+    IndexingStyle indexing = IndexingStyle::CppStyle;
+    //! \brief Display format (sparse or dense)
+    DisplayFormat format = DisplayFormat::Sparse;
+};
+
+// Helper functions for type prefixes in Julia format
 template<typename T>
-class SparseMatrix // FIXME: redo manage (max,+) type
+inline std::string getTypePrefix()
+{
+    return "";
+}
+
+template<>
+inline std::string getTypePrefix<MaxPlus>()
+{
+    return "MP";
+}
+
+template<>
+inline std::string getTypePrefix<MinPlus>()
+{
+    return "mp";
+}
+
+// *****************************************************************************
+//! \brief Sparse matrix implementation using Compressed Row Storage (CRS) format.
+//!
+//! This class stores sparse matrices efficiently using the CRS format:
+//! - Only non-zero elements are stored
+//! - Uses 0-based indexing for all operations (C++ convention)
+//! - Supports generic types including tropical algebras (MaxPlus, MinPlus)
+//! - Compatible with Julia export (1-based indexing) via DisplayOptions
+//!
+//! The CRS format uses three arrays:
+//! - m_vals: values of non-zero elements
+//! - m_cols: column indices of non-zero elements
+//! - m_rows: row pointers (m_rows[i] points to the start of row i in m_vals)
+//!
+//! \tparam T Element type (supports double, MaxPlus, MinPlus, etc.)
+// *****************************************************************************
+template<typename T>
+class SparseMatrix
 {
 public:
 
-    SparseMatrix(size_t const N_ = 0u, size_t const M_ = 0u)
-        : N(N_), M(M_)
-    {}
+    // === CONSTRUCTORS / DESTRUCTOR =======================================
 
-    void reshape(size_t const N_, size_t const M_)
-    {
-        N = N_;
-        M = M_;
-    }
+    //! \brief Construct a square sparse matrix of size n×n
+    //! \param n Number of rows and columns
+    explicit SparseMatrix(size_t n = 0u);
 
-    void clear()
-    {
-        i.clear();
-        j.clear();
-        d.clear();
-    }
+    //! \brief Construct a rectangular sparse matrix
+    //! \param rows Number of rows
+    //! \param cols Number of columns
+    SparseMatrix(size_t rows, size_t cols);
 
-    //! \brief Beware double inclusions are not checked
-    void set(size_t i_, size_t j_, float d_)
-    {
-        i.push_back(i_ + 1u);
-        j.push_back(j_ + 1u);
-        d.push_back(d_);
-    }
+    //! \brief Copy constructor
+    SparseMatrix(const SparseMatrix<T>& other);
 
-    T get(size_t i_, size_t j_) const
-    {
-        for (size_t pos = 0u; pos < i.size(); ++pos)
-        {
-            if (i[pos] == i_)
-            {
-                if (j[pos] == j_)
-                {
-                    return d[pos];
-                }
-            }
-        }
+    //! \brief Move constructor
+    SparseMatrix(SparseMatrix<T>&& other) noexcept;
 
-        return zero<T>();
-    }
+    //! \brief Copy assignment operator
+    SparseMatrix<T>& operator=(const SparseMatrix<T>& other);
 
-    //! \brief Option to display for C++ or for Julia
-    static bool display_for_julia;
-    //! \brief Option to force display as dense matrix
-    static bool display_as_dense;
+    //! \brief Move assignment operator
+    SparseMatrix<T>& operator=(SparseMatrix<T>&& other) noexcept;
 
-    //! \brief (I,J) Coordinates
-    std::vector<size_t> i, j;
-    //! \brief Non zero element
-    std::vector<T> d;
-    //! \brief Matrix dimension
-    size_t N, M;
+    //! \brief Destructor
+    ~SparseMatrix() = default;
+
+    // === DIMENSIONS ======================================================
+
+    //! \brief Get the number of rows
+    //! \return Number of rows in the matrix
+    size_t nbRows() const { return m_rows_count; }
+
+    //! \brief Get the number of columns
+    //! \return Number of columns in the matrix
+    size_t nbColumns() const { return m_cols_count; }
+
+    //! \brief Resize the matrix (clears all elements)
+    //! \param rows New number of rows
+    //! \param cols New number of columns
+    void reshape(size_t rows, size_t cols);
+
+    //! \brief Clear all elements (keeps dimensions)
+    void clear();
+
+    // === ELEMENT ACCESS ==================================================
+
+    //! \brief Get element at position (row, col) using 0-based indexing
+    //! \param row Row index (0-based)
+    //! \param col Column index (0-based)
+    //! \return Element value, or zero<T>() if not stored
+    T get(size_t row, size_t col) const;
+
+    //! \brief Set element at position (row, col) using 0-based indexing
+    //! \param row Row index (0-based)
+    //! \param col Column index (0-based)
+    //! \param val Value to set (zero<T>() values are not stored)
+    //! \return Reference to this matrix for chaining
+    SparseMatrix<T>& set(size_t row, size_t col, T val);
+
+    // === OPERATIONS ======================================================
+
+    //! \brief Matrix-vector multiplication
+    //! \param vec Vector to multiply with
+    //! \return Resulting vector
+    std::vector<T> multiply(const std::vector<T>& vec) const;
+
+    //! \brief Matrix-vector multiplication operator
+    std::vector<T> operator*(const std::vector<T>& vec) const;
+
+    //! \brief Matrix-matrix multiplication
+    //! \param other Matrix to multiply with
+    //! \return Resulting matrix
+    SparseMatrix<T> multiply(const SparseMatrix<T>& other) const;
+
+    //! \brief Matrix-matrix multiplication operator
+    SparseMatrix<T> operator*(const SparseMatrix<T>& other) const;
+
+    //! \brief Matrix addition
+    //! \param other Matrix to add
+    //! \return Resulting matrix
+    SparseMatrix<T> add(const SparseMatrix<T>& other) const;
+
+    //! \brief Matrix addition operator
+    SparseMatrix<T> operator+(const SparseMatrix<T>& other) const;
+
+    //! \brief Matrix subtraction
+    //! \param other Matrix to subtract
+    //! \return Resulting matrix
+    SparseMatrix<T> subtract(const SparseMatrix<T>& other) const;
+
+    //! \brief Matrix subtraction operator
+    SparseMatrix<T> operator-(const SparseMatrix<T>& other) const;
+
+    // === COMPARISON OPERATORS ============================================
+
+    //! \brief Equality comparison
+    template<typename X>
+    friend bool operator==(const SparseMatrix<X>& a, const SparseMatrix<X>& b);
+
+    //! \brief Inequality comparison
+    template<typename X>
+    friend bool operator!=(const SparseMatrix<X>& a, const SparseMatrix<X>& b);
+
+    // === OUTPUT ==========================================================
+
+    //! \brief Output stream operator (uses C++ indexing and sparse format)
+    template<typename X>
+    friend std::ostream& operator<<(std::ostream& os, const SparseMatrix<X>& matrix);
+
+    //! \brief Convert to string representation
+    //! \param options Display options (Julia indexing, dense format, etc.)
+    //! \return String representation of the matrix
+    std::string toString(const DisplayOptions& options = DisplayOptions{}) const;
+
+    // === HELPER FUNCTIONS FOR OUTPUT =====================================
+
+    //! \brief Print sparse matrix to output stream with custom options
+    //! \param os Output stream
+    //! \param matrix Matrix to print
+    //! \param indexing Indexing style (CppStyle or JuliaStyle)
+    //! \param format Display format (Sparse or Dense)
+    //! \return Output stream
+    template<typename X>
+    friend std::ostream& printSparseMatrix(std::ostream& os, const SparseMatrix<X>& matrix,
+                                           IndexingStyle indexing, DisplayFormat format);
+
+private:
+
+    // === INTERNAL HELPERS ================================================
+
+    //! \brief Validate that coordinates are within bounds
+    void validateCoordinates(size_t row, size_t col) const;
+
+    //! \brief Insert a new non-zero element at the specified position
+    void insert(size_t index, size_t row, size_t col, T val);
+
+    //! \brief Remove a non-zero element at the specified position
+    void remove(size_t index, size_t row);
+
+    // === MEMBER VARIABLES ================================================
+
+    //! \brief Number of rows
+    size_t m_rows_count;
+    //! \brief Number of columns
+    size_t m_cols_count;
+    //! \brief Values of non-zero elements
+    std::vector<T> m_vals;
+    //! \brief Column indices of non-zero elements
+    std::vector<size_t> m_cols;
+    //! \brief Row pointers (CRS format): m_rows[i] = index of first element in row i
+    std::vector<size_t> m_rows;
 };
 
-//------------------------------------------------------------------------------
-//! \brief Output sparse matrix as I, J, D where I, J and D are 3 vectors.
-//------------------------------------------------------------------------------
-template<typename T>
-inline std::ostream & operator<<(std::ostream &os, SparseMatrix<T> const& matrix)
-{
-    std::string separator;
+}  // namespace tpne
 
-    if (matrix.display_as_dense)
-    {
-        if (!matrix.display_for_julia)
-        {
-            os << matrix.M << "x" << matrix.N << " (max,+) dense matrix:"
-               << std::endl;
-        }
-
-        if ((matrix.N != 0u) && (matrix.M != 0u))
-        {
-            // FIXME: manage column alignement
-            for (size_t i = 0u; i < matrix.M; ++i)
-            {
-                for (size_t j = 0u; j < matrix.N; ++j)
-                {
-                    T v = matrix.get(i + 1u, j + 1u);
-                    if (v != zero<T>())
-                        os << v << " ";
-                    else
-                        os << ". ";
-                }
-                os << std::endl;
-            }
-        }
-    }
-    else
-    {
-        if (!matrix.display_for_julia)
-        {
-            os << matrix.M << "x" << matrix.N << " sparse (max,+) matrix with "
-               << matrix.d.size() << " stored entry:" << std::endl;
-        }
-        os << "[";
-        for (auto const& it: matrix.i)
-        {
-            os << separator << (matrix.display_for_julia ? it : (it - 1));
-            separator = ", ";
-        }
-
-        os << "], [";
-        separator.clear();
-        for (auto const& it: matrix.j)
-        {
-            os << separator << (matrix.display_for_julia ? it : (it - 1));
-            separator = ", ";
-        }
-
-        os << "], MP([";
-        separator.clear();
-        for (auto const& it: matrix.d)
-        {
-            os << separator << it;
-            separator = ", ";
-        }
-        os << "])";
-        if (matrix.display_for_julia)
-        {
-            os << ", " << matrix.M << ", " << matrix.N;
-        }
-    }
-    return os;
-}
-
-} // namespace tpne
-
-#endif
+#endif // TPNE_SPARSE_MATRIX_H

@@ -152,12 +152,18 @@ std::string exportToJulia(Net const& net, std::string const& filename)
     file << "## Max-Plus implicit linear dynamic system of the dater equation:" << std::endl;
     file << "# X(n) = D X(n) ⨁ A X(n-1) ⨁ B U(n)" << std::endl;
     file << "# Y(n) = C X(n)" << std::endl;
-    SparseMatrix<MaxPlus>::display_for_julia = true;
-    SparseMatrix<MaxPlus>::display_as_dense = false;
-    file << "D = sparse(" << D << ") # States without tokens" << std::endl;
-    file << "A = sparse(" << A << ") # States with 1 token" << std::endl;
-    file << "B = sparse(" << B << ") # Inputs" << std::endl;
-    file << "C = sparse(" << C << ") # Outputs" << std::endl;
+    file << "D = sparse(";
+    printSparseMatrix(file, D, IndexingStyle::JuliaStyle, DisplayFormat::Sparse);
+    file << ") # States without tokens" << std::endl;
+    file << "A = sparse(";
+    printSparseMatrix(file, A, IndexingStyle::JuliaStyle, DisplayFormat::Sparse);
+    file << ") # States with 1 token" << std::endl;
+    file << "B = sparse(";
+    printSparseMatrix(file, B, IndexingStyle::JuliaStyle, DisplayFormat::Sparse);
+    file << ") # Inputs" << std::endl;
+    file << "C = sparse(";
+    printSparseMatrix(file, C, IndexingStyle::JuliaStyle, DisplayFormat::Sparse);
+    file << ") # Outputs" << std::endl;
     file << "S = MPSysLin(A, B, C, D)" << std::endl;
 
     // Semi-Howard

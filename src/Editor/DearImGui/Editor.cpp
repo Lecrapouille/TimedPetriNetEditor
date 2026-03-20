@@ -534,9 +534,9 @@ void Editor::showAdjacencyMatrices() const
     if (ImGui::BeginPopupModal("Show adjacency matrices",
                                NULL, ImGuiWindowFlags_AlwaysAutoResize))
     {
+        static bool display_as_dense = false;
         ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(0, 0));
-        ImGui::Checkbox("Dense matrix", &SparseMatrix<MaxPlus>::display_as_dense);
-        SparseMatrix<MaxPlus>::display_for_julia = false;
+        ImGui::Checkbox("Dense matrix", &display_as_dense);
         ImGui::PopStyleVar();
 
         SparseMatrix<MaxPlus> tokens; SparseMatrix<MaxPlus> durations;
@@ -547,13 +547,17 @@ void Editor::showAdjacencyMatrices() const
         {
             if (ImGui::BeginTabItem("Durations"))
             {
-                std::stringstream txt; txt << durations;
+                std::stringstream txt;
+                printSparseMatrix(txt, durations, IndexingStyle::CppStyle, 
+                                  display_as_dense ? DisplayFormat::Dense : DisplayFormat::Sparse);
                 ImGui::Text("%s", txt.str().c_str());
                 ImGui::EndTabItem();
             }
             if (ImGui::BeginTabItem("Tokens"))
             {
-                std::stringstream txt; txt << tokens;
+                std::stringstream txt;
+                printSparseMatrix(txt, tokens, IndexingStyle::CppStyle,
+                                  display_as_dense ? DisplayFormat::Dense : DisplayFormat::Sparse);
                 ImGui::Text("%s", txt.str().c_str());
                 ImGui::EndTabItem();
             }
@@ -624,8 +628,9 @@ void Editor::showDynamicLinearSystem() const
     if (ImGui::BeginPopupModal("(max, +) dynamic linear system", NULL,
                                ImGuiWindowFlags_AlwaysAutoResize))
     {
+        static bool display_as_dense = false;
         ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(0, 0));
-        ImGui::Checkbox("Dense matrix", &SparseMatrix<MaxPlus>::display_as_dense);
+        ImGui::Checkbox("Dense matrix", &display_as_dense);
         ImGui::PopStyleVar();
 
         static SparseMatrix<MaxPlus> cached_D, cached_A, cached_B, cached_C;
@@ -640,32 +645,39 @@ void Editor::showDynamicLinearSystem() const
         SparseMatrix<MaxPlus>& A = cached_A;
         SparseMatrix<MaxPlus>& B = cached_B;
         SparseMatrix<MaxPlus>& C = cached_C;
-        SparseMatrix<MaxPlus>::display_for_julia = false;
         ImGui::Text(u8"%s", "X(n) = D . X(n) (+) A . X(n-1) (+) B . U(n)\nY(n) = C . X(n)");
         ImGuiTabBarFlags tab_bar_flags = ImGuiTabBarFlags_None;
         if (ImGui::BeginTabBar("syslin", tab_bar_flags))
         {
             if (ImGui::BeginTabItem("D"))
             {
-                std::stringstream txt; txt << D;
+                std::stringstream txt;
+                printSparseMatrix(txt, D, IndexingStyle::CppStyle,
+                                  display_as_dense ? DisplayFormat::Dense : DisplayFormat::Sparse);
                 ImGui::Text("%s", txt.str().c_str());
                 ImGui::EndTabItem();
             }
             if (ImGui::BeginTabItem("A"))
             {
-                std::stringstream txt; txt << A;
+                std::stringstream txt;
+                printSparseMatrix(txt, A, IndexingStyle::CppStyle,
+                                  display_as_dense ? DisplayFormat::Dense : DisplayFormat::Sparse);
                 ImGui::Text("%s", txt.str().c_str());
                 ImGui::EndTabItem();
             }
             if (ImGui::BeginTabItem("B"))
             {
-                std::stringstream txt; txt << B;
+                std::stringstream txt;
+                printSparseMatrix(txt, B, IndexingStyle::CppStyle,
+                                  display_as_dense ? DisplayFormat::Dense : DisplayFormat::Sparse);
                 ImGui::Text("%s", txt.str().c_str());
                 ImGui::EndTabItem();
             }
             if (ImGui::BeginTabItem("C"))
             {
-                std::stringstream txt; txt << C;
+                std::stringstream txt;
+                printSparseMatrix(txt, C, IndexingStyle::CppStyle,
+                                  display_as_dense ? DisplayFormat::Dense : DisplayFormat::Sparse);
                 ImGui::Text("%s", txt.str().c_str());
                 ImGui::EndTabItem();
             }
