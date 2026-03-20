@@ -24,13 +24,15 @@
 enum ThemeId { Dark = 0, Light, Calssic };
 ThemeId& theme();
 
-static const float ARROW_WIDTH = 14.0f;
-static const float ARROW_SPACING = 5.0f;
-static const float TRANS_WIDTH = 36.0f;  // Rectangle width for rendering Transitions
-static const float TRANS_HEIGHT = TRANS_WIDTH / 3.0f;  // Rectangle height for rendering Transitions
-static const float PLACE_RADIUS = TRANS_WIDTH / 2.0f; // Circle radius for rendering Places
-static const float TRANS_WIDTH2 = 45.0f; // For GRAFCET initial steps (double square)
-static const float TOKEN_RADIUS = 2.0f;  // Circle radius for rendering tokens
+static const float ARROW_WIDTH = 12.0f;
+static const float ARROW_SPACING = 6.0f;
+static const float TRANS_WIDTH = 40.0f;  // Rectangle width for rendering Transitions
+static const float TRANS_HEIGHT = 20.0f;  // Rectangle height (ratio 2:1)
+static const float PLACE_RADIUS = 20.0f; // Circle radius for rendering Places
+static const float TRANS_WIDTH2 = 48.0f; // For GRAFCET initial steps (double square)
+static const float TOKEN_RADIUS = 3.0f;  // Circle radius for rendering tokens
+static const float SHADOW_OFFSET = 3.0f;  // Shadow offset for nodes
+static const float NODE_ROUNDING = 2.0f;  // Corner rounding for transitions
 
 // Light theme
 #  define LIGHT_THEME_FILL_COLOR(alpha)      IM_COL32(255, 165, 0, alpha)
