@@ -35,6 +35,7 @@ std::vector<Exporter> const& exporters()
         { "Graphviz", ".gv,.dot", exportToGraphviz },
         { "PN-Editor", ".pns,.pnl,.pnk,.pnkp", exportToPNEditor },
         { "Petri LaTeX", ".tex", exportToPetriLaTeX },
+        { "Grafcet LaTeX", ".tex", exportToGrafcetLaTeX },
         { "Petri Net Markup Language", ".pnml", exportToPNML },
         { "Timed Event Graph", ".teg", exportToTimedEventGraph },
         //{ "Codesys", ".codesys.xml", exportToCodesys },

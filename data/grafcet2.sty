@@ -1,0 +1,623 @@
+% ---------------------------------------------------------------------------- %
+%                                GRAFCET2 0.1                                  %
+% ---------------------------------------------------------------------------- %
+%         Ruslan Nagimov                                                       %
+%         github: http://nagimov.github.com/grafcet2/                          %
+%         e-mail: nagimov@outlook.com                                          %
+% ---------------------------------------------------------------------------- %
+% This package is based on Pierre Chatelier's GRAFCET package:                 %
+%         GRAFCET 1.0                                                          %
+%         e-mail: pierre.chatelier@club-internet.fr                            %
+%         web:    http://perso.club-internet.fr/ktd                            %
+% More commands were added, variable names and comments were translated to     %
+% English.                                                                     %
+% ---------------------------------------------------------------------------- %
+% This package allows to draw nice grafcets (sequential function charts) using %
+% latex.                                                                       %
+%                                                                              %
+% Required packages:                                                           %
+%     # float                                                                  %
+%     # ifthen                                                                 %
+%     # hhline                                                                 %
+%     # tikz                                                                   %
+% ---------------------------------------------------------------------------- %
+% The syntax of commands:                                                      %
+%                                                                              %
+%     \Transition{text}                                                        %
+%         Transition block represents the line, connecting two steps. The text %
+%         usually represents the condition which has to be met in order to     %
+%         proceed execution.                                                   %
+%                                                                              %
+%     \Step{text}                                                              %
+%         Step block represents the square, executing command.                 %
+%                                                                              %
+%     \FirstStep{text}                                                         %
+%         The same as \Step, drawn with a double line, used for the first step %
+%         in the function/routine.                                             %
+%                                                                              %
+%     \MacroStep{text}                                                         %
+%         The same as \Step, drawn with extra lines at a top and a bottom of   %
+%         the block.                                                           %
+%                                                                              %
+%     \Jump{text}                                                              %
+%         Jump block represents unconditional jump to another step in the      %
+%         code. It's somehow equivalent to GOTO command in different           %
+%         languages. The jump point has to be described in the text block.     %
+%                                                                              %
+%     \Divergence{...}{...}                                                    %
+%         Divergence block is used to represent "OR" conditions. Creates       %
+%         single horizontal line.                                              %
+%                                                                              %
+%     \Fork{...}{...}                                                          %
+%         Fork block is used to represent "AND" conditions (parallel           %
+%         processing). Creates double horizontal line.                         %
+%                                                                              %
+%     \Loop{...}                                                               %
+%         Loop block is used to create cycled execution path.                  %
+%                                                                              %
+%     \Nop                                                                     %
+%         Creates blank space with vertical line (useful for filling blank     %
+%         steps after forks).                                                  %
+% ---------------------------------------------------------------------------- %
+%                                                                              %
+%                     Pseudographic explanation of commands                    %
+%                                                                              %
+%                     ╔═════════════╗                                          %
+%                     ║             ║                                          %
+%                     ║ First  Step ║                                          %
+%                     ║             ║                                          %
+%                     ╚══════╤══════╝                                          %
+%                            │                                                 %
+%                            │                                                 %
+%                           ─┼─ Transition                                     %
+%                            │                                                 %
+%                            │                                                 %
+%                     ───────┼─────────────────────┬───────  # Divergence      %
+%                            │                     │                           %
+%                            │                     │                           %
+%                     ┌──────┴──────┐       ┌──────┴──────┐\                   %
+%                     ├─────────────┤       │             │ \                  %
+%                     │ Macro  Step │       │  Jump Step  │  >                 %
+%                     ├─────────────┤       │             │ /                  %
+%                     └──────┬──────┘       └──────┬──────┘/                   %
+%                            │                     │                           %
+%                            │                     │                           %
+%                     ───────┼─────────────────────┴───────                    %
+%                            │                                                 %
+%                            │                                                 %
+%                            │                                                 %
+%                            │                                                 %
+%                     ═══════╪═════════════════════╤═══════  # Fork            %
+%                            │                     │                           %
+%                            │                     │                           %
+%                     ┌──────┴──────┐       ┌──────┴──────┐                    %
+%                     │             │       │             │                    %
+%                     │    Step     │       │    Step     │                    %
+%                     │             │       │             │                    %
+%                     └──────┬──────┘       └──────┬──────┘                    %
+%                            │                     │                           %
+%                            │                     │                           %
+%                     ═══════╪═════════════════════╧═══════                    %
+%                            │                                                 %
+%                            │                                                 %
+%                            │                                                 %
+%                            │                                                 %
+%                            │<───────────┐  # Loop                            %
+%                            │            │                                    %
+%                            │            │                                    %
+%                     ┌──────┴──────┐     │                                    %
+%                     │             │     │                                    %
+%                     │    Step     │     ^                                    %
+%                     │             │     │                                    %
+%                     └──────┬──────┘     │                                    %
+%                            │            │                                    %
+%                            │            │                                    %
+%                            └──────>─────┘                                    %
+%                                                                              %
+% ---------------------------------------------------------------------------- %
+
+
+%  INIT
+\NeedsTeXFormat{LaTeX2e}
+\ProvidesClass{grafcet2}
+
+
+%  IMPORTS
+\RequirePackage{float}  %%
+\RequirePackage{ifthen} %%\ifthenelse{}{}
+\RequirePackage{hhline} %%\hhline{}
+\RequirePackage{tikz} %%\hhline{}
+
+
+% LANGUAGE
+\@ifpackageloaded{babel}
+{
+  \iflanguage{french}{\def\gra@language{french}}{}
+  \iflanguage{english}{\def\gra@language{english}}{}
+  \iflanguage{american}{\def\gra@language{english}}{}
+}
+{
+  \def\gra@language{english}
+}
+\ifthenelse{\equal{\gra@language}{french}}
+{
+  \def\gra@floatname{Grafcet}
+  \def\gra@listname{Liste des Grafcets}
+}{}
+\ifthenelse{\equal{\gra@language}{english}}
+{
+  \def\gra@floatname{Grafcets}
+  \def\gra@listname{List of Grafcets}
+}{}
+
+
+% MATCHING "FLOAT" PACKAGE FOR \listofgrafcets COMMAND
+\newcommand\floatc@gra[2]{\begin{center}{\bfseries\rmfamily #1:} #2\end{center}}
+\newcommand\fs@gra{
+   \let\@fs@capt\floatc@gra
+   \def\@fs@pre{}\def\@fs@post{}\def\@fs@mid{\vspace{3pt}}
+   \let\@fs@iftopcapt\iftrue}
+\newfloat{grafcetfloat}{h}{lor}
+\floatname{grafcetfloat}{\gra@floatname}
+\newcommand{\listofgrafcets}{\listof{grafcetfloat}{\gra@listname}}
+
+
+% STEPS COUNTER AND STUFF
+\newcounter{StepsCounter}
+\renewcommand{\theStepsCounter}{\arabic{StepsCounter}}
+\newbox\LHS
+\newbox\RHS
+\newbox\LHSS
+\newbox\RHSS
+\newdimen\Lskip
+\newdimen\Rskip
+\newlength{\diff}
+\newlength{\difff}
+\newlength{\LLHS}
+\newlength{\LRHS}
+
+
+% MAIN COMMANDS
+\newcommand{\SimpleBox}[1]{\begin{tabular}{|c|}\hline\rule{0pt}{3.5ex}\LARGE#1\\\hline\end{tabular}}
+\newcommand{\DoubleBox}[1]{\begin{tabular}{|c|}\hhline{|=|}\rule{0pt}{3.5ex}\LARGE#1\\\hhline{|=|}\end{tabular}}
+
+% TRANSITION
+% ----------
+\newcommand{\Transition}[1]{%
+                        \setbox\LHSS\hbox{\hspace{-1.67em}\rule{1em}{.4pt}\rule[-3ex]{.4pt}{6ex}\rule{1em}{.4pt}\hspace{.5em}}
+                        \setbox\RHSS\hbox{\begin{tabular}{@{}c}#1\end{tabular}}%
+                        \ifthenelse{\dp\LHSS < \dp\RHSS}
+                        {
+                            \setlength{\diff}{\dp\RHSS}
+                            \addtolength{\diff}{-\dp\LHSS}
+                            \setlength{\difff}{\dp\LHSS}
+                            \addtolength{\difff}{\diff}
+                            \begin{tabular}{@{}c@{}l@{}}%
+                                \raise - \difff
+                                \vbox{
+                                    \hsize\wd\LHSS
+                                    \hbox to \hsize{\hfill\vrule height \diff\hfill}
+                                    \box\LHSS
+                                    \hbox to \hsize{\hfill\vrule height \diff\hfill}
+                                }
+                                &
+                                \raise - 1.2ex
+                                \vbox{
+                                    \box\RHSS%
+                                }
+                            \end{tabular}%
+                        }%else if left > right
+                        {
+                            \setlength{\diff}{\dp\LHSS}
+                            \addtolength{\diff}{-\dp\RHSS}
+                            \setlength{\difff}{\dp\RHSS}
+                            \begin{tabular}{@{}c@{}l@{}}%
+                                \raise - \difff
+                                \vbox{
+                                    \box\LHSS
+                                }
+                                &
+                                \raise - 1.2ex
+                                \vbox{
+                                    \box\RHSS%
+                                }
+                            \end{tabular}%
+                        }%ifthenelse end
+\\}%Transition end
+
+% NOP
+% ---
+\newcommand{\Nop}{\begin{tabular}{@{}p{1em}@{}|@{}p{1em}l@{}}&&\\\end{tabular}\\}%
+
+% STEP
+% ----
+\newcommand{\Step}[2][\theStepsCounter]{%
+                        \hspace{1em}\vrule\\
+                        \setbox\LHSS\hbox{\SimpleBox{#1}\hrulefill}
+                        \setbox\RHSS\hbox{\raisebox{.5ex}{\rule{1em}{.4pt}}\begin{tabular}{@{}|l|l|}\hline#2\\\hline\end{tabular}}%
+                        \ifthenelse{\dp\LHSS < \dp\RHSS}
+                        {
+                            \setlength{\diff}{\dp\RHSS}
+                            \addtolength{\diff}{-\dp\LHSS}
+                            \setlength{\difff}{\dp\LHSS}
+                            \ifthenelse{#1<10}{\hspace{-1.63em}}{\hspace{-2.05em}}%
+                            \begin{tabular}{@{}c@{}l@{}}%
+                                \raise - \difff
+                                \vbox{
+                                    \hsize\wd\LHSS
+                                    \hbox to \hsize{\hfill\vrule height \diff\hfill}
+                                    \box\LHSS
+                                    \hbox to \hsize{\hfill\vrule height \diff\hfill}
+                                }
+                                &
+                                \raise + \diff
+                                \vbox{
+                                    \box\RHSS%
+                                }
+                            \end{tabular}%
+                            \setcounter{StepsCounter}{#1}
+                            \stepcounter{StepsCounter}%
+                        }%else if left > right
+                        {
+                            \setlength{\diff}{\dp\LHSS}
+                            \addtolength{\diff}{-\dp\RHSS}
+                            \setlength{\difff}{\dp\RHSS}
+                            \ifthenelse{#1<10}{\hspace{-1.63em}}{\hspace{-2.05em}}%
+                            \begin{tabular}{@{}c@{}l@{}}%
+                                \raise - \difff
+                                \vbox{
+                                    \box\LHSS
+                                }
+                                &
+                                \raise - \difff
+                                \vbox{
+                                    \box\RHSS%
+                                }
+                            \end{tabular}%
+                            \setcounter{StepsCounter}{#1}
+                            \stepcounter{StepsCounter}%
+                        }%ifthenelse end
+\\}%Step end
+
+% MACRO STEP
+% ----------
+\newcommand{\MacroStep}[2][\theStepsCounter]{%
+                        \hspace{1em}\vrule\\ %%
+                        \setbox\LHSS\hbox{\DoubleBox{#1}\hrulefill}
+                        \setbox\RHSS\hbox{\raisebox{.5ex}{\rule{1em}{.4pt}}\begin{tabular}{@{}|l|l|}\hline#2\\\hline\end{tabular}}%
+                        \ifthenelse{\dp\LHSS < \dp\RHSS}
+                        {
+                            \setlength{\diff}{\dp\RHSS}
+                            \addtolength{\diff}{-\dp\LHSS}
+                            \setlength{\difff}{\dp\LHSS}
+                            \ifthenelse{#1<10}{\hspace{-1.64em}}{\hspace{-2.05em}}%
+                            \begin{tabular}{@{}c@{}l@{}}%
+                                \raise - \difff
+                                \vbox{
+                                    \hsize\wd\LHSS
+                                    \hbox to \hsize{\hfill\vrule height \diff\hfill}
+                                    \box\LHSS
+                                    \hbox to \hsize{\hfill\vrule height \diff\hfill}
+                                }
+                                &
+                                \raise + \diff
+                                \vbox{
+                                    \box\RHSS%
+                                }
+                            \end{tabular}%
+                            \setcounter{StepsCounter}{#1}
+                            \stepcounter{StepsCounter}%
+                        }%else if left > right
+                        {
+                            \setlength{\diff}{\dp\LHSS}
+                            \addtolength{\diff}{-\dp\RHSS}
+                            \setlength{\difff}{\dp\RHSS}
+                            \ifthenelse{#1<10}{\hspace{-1.64em}}{\hspace{-2.05em}}%
+                            \begin{tabular}{@{}c@{}l@{}}%
+                                \raise - \difff
+                                \vbox{
+                                    \box\LHSS
+                                }
+                                &
+                                \raise - \difff
+                                \vbox{
+                                    \box\RHSS%
+                                }
+                            \end{tabular}%
+                            \setcounter{StepsCounter}{#1}
+                            \stepcounter{StepsCounter}%
+                        }%ifthenelse end
+\\}%MacroStep end
+
+% FIRSTSTEP
+% ---------
+\newcommand{\FirstStep}[2][\theStepsCounter]{%
+                        \hspace{1em}\vrule\\
+                        \setbox\LHSS\hbox{\fbox{\fbox{\LARGE #1}}\hrulefill}
+                        \setbox\RHSS\hbox{\raisebox{.5ex}{\rule{1em}{.4pt}}\begin{tabular}{@{}|l|l|}\hline#2\\\hline\end{tabular}}%
+                        \ifthenelse{\dp\LHSS < \dp\RHSS}
+                        {
+                            \setlength{\diff}{\dp\RHSS}
+                            \addtolength{\diff}{-\dp\LHSS}
+                            \setlength{\difff}{\dp\LHSS}
+                            \addtolength{\difff}{\diff}
+                            \ifthenelse{#1<10}{\hspace{-2.07em}}{\hspace{-2.4em}}%
+                            \begin{tabular}{@{}c@{}l@{}}%
+                                \raise - \difff
+                                \vbox{
+                                    \hsize\wd\LHSS
+                                    \box\LHSS
+                                    \hbox to \hsize{\hfill\vrule height \diff\hfill}
+                                }
+                                &
+                                \raise + \diff
+                                \vbox{
+                                    \box\RHSS%
+                                }
+                            \end{tabular}%
+                            \setcounter{StepsCounter}{#1}
+                            \stepcounter{StepsCounter}%
+                        }%else if left > right
+                        {
+                            \setlength{\diff}{\dp\LHSS}
+                            \addtolength{\diff}{-\dp\RHSS}
+                            \setlength{\difff}{\dp\RHSS}
+                            \addtolength{\difff}{\diff}
+                            \ifthenelse{#1<10}{\hspace{-2.07em}}{\hspace{-2.4em}}%
+                            \begin{tabular}{@{}c@{}l@{}}%
+                                \raise - \difff
+                                \vbox{
+                                    \box\LHSS
+                                }
+                                &
+                                \vbox{
+                                    \box\RHSS%
+                                }
+                            \end{tabular}%
+                            \setcounter{StepsCounter}{#1}
+                            \stepcounter{StepsCounter}%
+                        }%ifthenelse end
+\\}%FisrtStep end
+
+% DIVERGENCE
+% ----------
+\newcommand{\Divergence}[2]
+{
+  \hspace{1em}\vrule\\
+  \setbox\LHS\hbox{\hspace{-2.33em}\begin{tabular}{@{}l}#1\end{tabular}}%
+  \setbox\RHS\hbox{\begin{tabular}{@{}l}#2\end{tabular}}%
+  \setlength{\LLHS}{\wd\LHS}
+  \setlength{\LRHS}{\wd\RHS}
+
+  \ifthenelse{\dp\LHS < \dp\RHS}
+  {
+  \setlength{\diff}{\dp\RHS}
+  \addtolength{\diff}{-\dp\LHS}
+  \setlength{\difff}{\dp\LHS}
+  \addtolength{\difff}{\diff}
+  \begin{tabular}{@{}l@{}l@{}}
+          \raise - \difff
+          \vbox{%
+              \hsize\LLHS
+              \hbox to \hsize{\hspace{-2.5em}\rule{\LLHS}{.4pt}\rule{4.5em}{.4pt}}
+              \hbox to \hsize{\hspace{-1.35em}\vrule height \diff}
+              \box\LHS
+              \hbox to \hsize{\hspace{-1.35em}\vrule height \diff}
+              \hbox to \LLHS{\hspace{-2.5em}\rule[-.4pt]{\LLHS}{.4pt}\rule[-.4pt]{4.5em}{.4pt}}
+          }%
+          &
+          \box\RHS
+   \end{tabular}
+  }
+  {
+  \setlength{\diff}{\dp\LHS}
+  \addtolength{\diff}{-\dp\RHS}
+  \setlength{\difff}{\dp\RHS}
+  \addtolength{\difff}{\diff}
+  \begin{tabular}{@{}l@{}l@{}}
+          \raise - \difff
+          \vbox{%
+              \hsize\LLHS
+              \hbox to \hsize{\hspace{-2.5em}\rule{\LLHS}{.4pt}\rule{4.5em}{.4pt}}
+              \box\LHS
+              \hbox to \hsize{\hspace{-2.5em}\rule{\LLHS}{.4pt}\rule{4.5em}{.4pt}}
+          }%
+          &
+          \addtolength{\difff}{-.4pt}   
+          \raise - \difff
+          \vbox{%
+              \hsize\LRHS
+              \hbox to \hsize{\hspace{1em}\vrule height \diff}
+              \box\RHS
+              \hbox to \hsize{\hspace{1em}\vrule height \diff}
+          }
+   \end{tabular}
+  }
+\\}%divergence end
+
+% LOOP
+% ----
+\newcommand{\Loop}[1]
+{
+  \hspace{1.01em}\vrule\\
+  \setbox\LHS\hbox{\hspace{-2.33em}\begin{tabular}{@{}l}#1\end{tabular}}%
+  \setbox\RHS\hbox{\hspace{.2pt}\begin{tabular}{@{}c@{}|@{}c@{}}&\hspace{-.8ex}{$\wedge$}\\\end{tabular}}
+
+  \setlength{\LLHS}{\wd\LHS}
+  \setlength{\LRHS}{\wd\RHS}  
+
+  \setlength{\diff}{\dp\LHS}
+  \addtolength{\diff}{-\dp\RHS}
+  \setlength{\difff}{\dp\RHS}
+  \addtolength{\difff}{\diff}
+  \begin{tabular}{@{}l@{}l@{}}
+          \raise - \diff
+          \vbox{%
+              \hsize\LLHS
+              \addtolength{\LLHS}{1.33em}
+              \addtolength{\LLHS}{-.4pt}              
+              \hbox to \hsize{\hspace{-1.33em}\vrule\rule{\LLHS}{.4pt}\hspace{1pt}\hspace{-.5\LLHS}\raisebox{-.5ex}{$<$}}
+              \box\LHS
+              %\hbox to \hsize{\hspace{-1.33em}\hspace{-.2pt}\vrule\rule[.05pt]{\LLHS}{.4pt}}
+              \hbox to \hsize{\hspace{-1.35em}\rule[.5ex]{.4pt}{2.5ex}\rule[.5ex]{\LLHS}{.4pt}\hspace{1pt}\hspace{-.5\LLHS}$>$}              
+          }%
+          &
+          \raise - \diff
+          \vbox{%
+              \hsize.4pt
+              \addtolength{\diff}{.8pt}
+              \addtolength{\diff}{1.4ex}              
+              \hbox to \hsize{\rule{.4pt}{\diff}}
+              \box\RHS
+              %\addtolength{\diff}{1ex}
+              \hbox to \hsize{\rule[.5ex]{.4pt}{\diff}}
+          }\\
+   \end{tabular}\\
+}% Loop end
+
+% FORK
+% ----
+\newcommand{\Fork}[2]
+{
+  \hspace{1em}\vrule\\
+  \setbox\LHS\hbox{\hspace{-2.65em}\begin{tabular}{@{}l}#1\end{tabular}}%
+  \setbox\RHS\hbox{\begin{tabular}{@{}l}#2\end{tabular}}%
+  \setlength{\LLHS}{\wd\LHS}
+  \setlength{\LRHS}{\wd\RHS}
+
+  \ifthenelse{\dp\LHS < \dp\RHS}
+  {
+  \setlength{\diff}{\dp\RHS}
+  \addtolength{\diff}{-\dp\LHS}
+  \setlength{\difff}{\dp\LHS}
+  \addtolength{\difff}{\diff}
+  \begin{tabular}{@{\hspace{.31em}}l@{}l@{}}
+          \raise - \difff
+          \vbox{%
+              \hsize\LLHS
+              \hbox to \hsize{\hspace{-2.5em}\rule{\LLHS}{.4pt}\rule{4.5em}{.4pt}}
+              \hbox to \hsize{\hspace{-2.5em}\rule[-.75ex]{\LLHS}{.4pt}\rule[-.75ex]{4.5em}{.4pt}}
+              \hbox to \hsize{\hspace{-1.65em}\vrule height \diff}
+              \box\LHS
+              \hbox to \hsize{\hspace{-1.65em}\vrule height \diff}
+              \hbox to \hsize{\hspace{-2.5em}\rule{\LLHS}{.4pt}\rule{4.5em}{.4pt}}
+              \hbox to \hsize{\hspace{-2.5em}\rule[-.75ex]{\LLHS}{.4pt}\rule[-.75ex]{4.5em}{.4pt}}
+          }%
+          &
+          \raise + .4pt
+          \vbox{
+          \box\RHS
+          }
+   \end{tabular}\\
+  \hspace{1em}\vrule
+  }
+  {
+  \setlength{\diff}{\dp\LHS}
+  \addtolength{\diff}{-\dp\RHS}
+  \setlength{\difff}{\dp\RHS}
+  \addtolength{\difff}{\diff}
+  \begin{tabular}{@{\hspace{.31em}}l@{}l@{}}
+          \raise - \difff
+          \vbox{%
+              \hsize\LLHS
+              \hbox to \hsize{\hspace{-2.5em}\rule{\LLHS}{.4pt}\rule{4.5em}{.4pt}}
+              \hbox to \hsize{\hspace{-2.5em}\rule[-.75ex]{\LLHS}{.4pt}\rule[-.75ex]{4.5em}{.4pt}}
+              \box\LHS
+              \hbox to \hsize{\hspace{-2.5em}\rule{\LLHS}{.4pt}\rule{4.5em}{.4pt}}
+              \hbox to \hsize{\hspace{-2.5em}\rule[-.75ex]{\LLHS}{.4pt}\rule[-.75ex]{4.5em}{.4pt}}
+          }%
+          &
+          \addtolength{\difff}{-.4pt}
+          \raise - \difff
+          \vbox{%
+              \hsize\LRHS
+              \hbox to \hsize{\hspace{1em}\vrule height \diff}
+              \box\RHS
+              \hbox to \hsize{\hspace{1em}\vrule height \diff}
+          }
+   \end{tabular}\\
+  \hspace{1em}\vrule
+  }
+\\}%fork end
+
+% JUMP
+% ----
+\newcommand{\Jump}[2][\theStepsCounter]{%
+                        \hspace{1em}\vrule\\
+                        \setbox\LHSS\hbox{\SimpleBox{#1}\hrulefill}
+                        \setbox\RHSS\hbox{\raisebox{.5ex}{\rule{1em}{.4pt}}\begin{tabular}{@{}|l|l|}\hline#2\\\hline\end{tabular}}%
+                        \ifthenelse{\dp\LHSS < \dp\RHSS}
+                        {
+                            \setlength{\diff}{\dp\RHSS}
+                            \addtolength{\diff}{-\dp\LHSS}
+                            \setlength{\difff}{\dp\LHSS}
+                            \ifthenelse{#1<10}{\hspace{-1.63em}}{\hspace{-2.05em}}%
+                            \begin{tabular}{@{}c@{}l@{}}%
+                                \raise - \difff
+                                \vbox{
+                                    \hsize\wd\LHSS
+                                    \hbox to \hsize{\hfill\vrule height \diff\hfill}
+                                    \box\LHSS
+                                    \hbox to \hsize{\hfill\vrule height \diff\hfill}
+                                }
+                                \begin{tikzpicture}[baseline=1.4,anchor=east,inner sep=0]
+                                    \path[use as bounding box] (-0.45,0) rectangle (\tabcolsep-7,\baselineskip);
+                                    \node[minimum width=\tabcolsep+1em,minimum height=\baselineskip+2em-1] (box) {};
+                                    \draw (box.north west) -- (box.east);
+                                    \draw (box.south west) -- (box.east);
+                                \end{tikzpicture}
+                                &
+                                \raise + \diff
+                                \vbox{
+                                    \box\RHSS%
+                                }
+                            \end{tabular}%
+                            \setcounter{StepsCounter}{#1}
+                            \stepcounter{StepsCounter}%
+                        }%else if left > right
+                        {
+                            \setlength{\diff}{\dp\LHSS}
+                            \addtolength{\diff}{-\dp\RHSS}
+                            \setlength{\difff}{\dp\RHSS}
+                            \ifthenelse{#1<10}{\hspace{-1.63em}}{\hspace{-2.05em}}%
+                            \begin{tabular}{@{}c@{}l@{}}%
+                                \raise - \difff
+                                \vbox{
+                                    \box\LHSS
+                                }
+                                
+                                \begin{tikzpicture}[baseline=1.4,anchor=east,inner sep=0]
+                                    \path[use as bounding box] (-0.45,0) rectangle (\tabcolsep-7,\baselineskip);
+                                    \node[minimum width=\tabcolsep+1em,minimum height=\baselineskip+2em-1] (box) {};
+                                    \draw (box.north west) -- (box.east);
+                                    \draw (box.south west) -- (box.east);
+                                \end{tikzpicture}
+
+                                &
+                                \raise - \difff
+                                \vbox{
+                                    \box\RHSS%
+                                }
+                            \end{tabular}%
+                            \setcounter{StepsCounter}{#1}
+                            \stepcounter{StepsCounter}%
+                        }%ifthenelse end
+\\}%Step end
+
+
+
+
+
+
+
+% LATEX GRAFCET ENVIRENMENT
+\newenvironment{grafcet}[1][H]
+{
+    \begin{grafcetfloat}[#1]
+    \setcounter{StepsCounter}{0}
+    \begin{tabular}{@{}l@{}}
+}%
+{%
+    \end{tabular}
+    \end{grafcetfloat}
+}%

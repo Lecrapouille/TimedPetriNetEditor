@@ -3,8 +3,14 @@
 ## Export to LaTeX
 
 The Petri net can be exported to a LaTeX file. The application will
-ask you where to save the file. For LaTex a `.tex` file is created, and you can compile
-it with a command like `latex LateX-gen.tex; dvipdf LateX-gen.dvi`.
+ask you where to save the file. For LaTeX a `.tex` file is created, and you can compile
+it with a command like `pdflatex LateX-gen.tex` or `latex LateX-gen.tex; dvipdf LateX-gen.dvi`.
+
+Two formats are available:
+
+- **Petri LaTeX**: Uses the `petri` TikZ library for standard Petri nets (places, transitions, arcs).
+- **Grafcet LaTeX**: For GRAFCET nets only. Draws steps (étapes) as squares (double border for initial step)
+  and transitions (réceptivités) as horizontal bars. Uses plain TikZ.
 
 ![LaTeX](pics/Latex.png)
 

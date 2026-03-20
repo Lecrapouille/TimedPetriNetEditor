@@ -39,6 +39,7 @@ std::string exportToPNEditor(Net const& net, std::string const& filename);
 std::string exportToDrawIO(Net const& net, std::string const& filename);
 std::string exportToGraphviz(Net const& net, std::string const& filename);
 std::string exportToPetriLaTeX(Net const& net, std::string const& filename);
+std::string exportToGrafcetLaTeX(Net const& net, std::string const& filename);
 std::string exportToJulia(Net const& net, std::string const& filename);
 std::string exportToGrafcetCpp(Net const& net, std::string const& filename);
 std::string exportToPNML(Net const& net, std::string const& filename);
