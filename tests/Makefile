@@ -63,8 +63,10 @@ SRC_FILES += $(call rwildcard,$(P)/src/Net,*.cpp)
 SRC_FILES += $(call rwildcard,$(P)/src/Net,*.c)
 SRC_FILES += $(call rwildcard,$(P)/src/Utils,*.cpp)
 SRC_FILES += $(call rwildcard,$(P)/tests,*.cpp)
-USER_CXXFLAGS += -Wno-float-equal
-USER_CCFLAGS += -Wno-sign-conversion -Wno-float-equal
+
+# BEWARE: Disable fast math for testing, else the tests on NaN will fail.
+USER_CXXFLAGS += -Wno-float-equal -fno-fast-math
+USER_CCFLAGS += -Wno-sign-conversion -Wno-float-equal -fno-fast-math
 
 ###################################################
 # Set Libraries. For knowing which libraries

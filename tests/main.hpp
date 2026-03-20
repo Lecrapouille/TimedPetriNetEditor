@@ -23,6 +23,7 @@
 
 #  include <gmock/gmock.h>
 #  include <gtest/gtest.h>
+#  include <cmath>
 
 using namespace ::testing;
 
