@@ -28,23 +28,12 @@
 namespace tpne {
 
 //------------------------------------------------------------------------------
-std::string exportToJSON(Net const& net, std::string const& filename)
+// Helper function to write a single net to JSON
+static void writeNetToJSON(std::ofstream& file, Net const& net)
 {
     std::string separator("\n");
 
-    std::ofstream file(filename);
-    if (!file)
-    {
-        std::stringstream error;
-        error << "Failed saving the Petri net in '" << filename
-              << "'. Reason was " << strerror(errno) << std::endl;
-        return error.str();
-    }
-
-    file << "{" << std::endl;
-    file << "  \"revision\": 4," << std::endl;
-    file << "  \"type\": \"" << to_str(net.type()) << "\"," << std::endl;
-    file << "  \"nets\": [\n    {" << std::endl;
+    file << "    {" << std::endl;
     file << "       \"name\": \"" << net.name << "\"," << std::endl;
 
     // Places
@@ -79,7 +68,7 @@ std::string exportToJSON(Net const& net, std::string const& filename)
         file << " }";
     }
 
-    // GRAFCET sensors
+    // GRAFCET actions
     separator = "\n";
     file << "\n       ],\n       \"actions\": [";
     for (auto const& p: net.places())
@@ -94,20 +83,98 @@ std::string exportToJSON(Net const& net, std::string const& filename)
                  << "\", \"duration\": " << action.duration << " }";
         }
     }
+    file << "\n       ]" << std::endl;
 
-    // Inputs (renamed from sensors) with initial value
-    separator = "\n";
-    file << "\n       ],\n       \"inputs\": [";
+    file << "    }";
+}
+
+//------------------------------------------------------------------------------
+std::string exportAllNetsToJSON(std::vector<Net> const& nets, std::string const& filename)
+{
+    if (nets.empty())
+    {
+        return "No nets to export";
+    }
+
+    std::ofstream file(filename);
+    if (!file)
+    {
+        std::stringstream error;
+        error << "Failed saving the Petri net in '" << filename
+              << "'. Reason was " << strerror(errno) << std::endl;
+        return error.str();
+    }
+
+    // Use the type of the first net for the document
+    file << "{" << std::endl;
+    file << "  \"revision\": 4," << std::endl;
+    file << "  \"type\": \"" << to_str(nets[0].type()) << "\"," << std::endl;
+    file << "  \"nets\": [" << std::endl;
+
+    // Write all nets
+    for (size_t i = 0; i < nets.size(); ++i)
+    {
+        writeNetToJSON(file, nets[i]);
+        if (i < nets.size() - 1)
+        {
+            file << ",";
+        }
+        file << std::endl;
+    }
+
+    file << "  ]," << std::endl;
+
+    // Inputs (shared between all nets)
+    std::string separator("\n");
+    file << "  \"inputs\": [";
     for (auto& it: Sensors::instance().database())
     {
         file << separator; separator = ",\n";
-        file << "            { \"name\": \"" << it.first.c_str() << "\", "
+        file << "    { \"name\": \"" << it.first.c_str() << "\", "
              << "\"initial\": " << it.second << " }";
     }
-    file << "\n       ]" << std::endl;
+    file << "\n  ]" << std::endl;
 
-    file << "    }\n  ]\n";   // nets
-    file << "}" << std::endl; // json document
+    file << "}" << std::endl;
+    return {};
+}
+
+//------------------------------------------------------------------------------
+std::string exportToJSON(Net const& net, std::string const& filename)
+{
+    std::string separator("\n");
+
+    std::ofstream file(filename);
+    if (!file)
+    {
+        std::stringstream error;
+        error << "Failed saving the Petri net in '" << filename
+              << "'. Reason was " << strerror(errno) << std::endl;
+        return error.str();
+    }
+
+    file << "{" << std::endl;
+    file << "  \"revision\": 4," << std::endl;
+    file << "  \"type\": \"" << to_str(net.type()) << "\"," << std::endl;
+    file << "  \"nets\": [" << std::endl;
+
+    writeNetToJSON(file, net);
+    file << std::endl;
+
+    file << "  ]," << std::endl;
+
+    // Inputs with initial value
+    separator = "\n";
+    file << "  \"inputs\": [";
+    for (auto& it: Sensors::instance().database())
+    {
+        file << separator; separator = ",\n";
+        file << "    { \"name\": \"" << it.first.c_str() << "\", "
+             << "\"initial\": " << it.second << " }";
+    }
+    file << "\n  ]" << std::endl;
+
+    file << "}" << std::endl;
     return {};
 }
 

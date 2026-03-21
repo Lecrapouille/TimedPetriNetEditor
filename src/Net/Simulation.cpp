@@ -150,13 +150,14 @@ bool Simulation::generateSensors()
         // Sensors::instance().clear();
         m_receptivities.clear();
 
+        bool all_ok = true;
         for (auto const& it: m_net.transitions())
         {
             std::string error = m_receptivities[it.id].compile(it.caption, m_net);
             if (!error.empty())
             {
-                m_messages.setWarning(error);
-                return false;
+                m_messages.setWarning(it.key + ": " + error);
+                all_ok = false;
             }
         }
 
@@ -169,6 +170,8 @@ bool Simulation::generateSensors()
                 db[kv.first] = kv.second;
             }
         }
+        if (!all_ok)
+            return false;
     }
     this->compiled = true;
     return true;
@@ -201,6 +204,21 @@ void Simulation::stateHalting()
     m_timed_tokens.clear();
     Sensors::instance().clear();
     m_state = Simulation::State::Idle;
+}
+
+//------------------------------------------------------------------------------
+void Simulation::storeInitialMarking()
+{
+    m_initial_tokens = m_net.tokens();
+}
+
+//------------------------------------------------------------------------------
+void Simulation::restoreInitialMarking()
+{
+    if (!m_initial_tokens.empty())
+    {
+        m_net.tokens(m_initial_tokens);
+    }
 }
 
 //------------------------------------------------------------------------------

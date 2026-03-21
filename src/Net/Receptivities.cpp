@@ -36,8 +36,34 @@ Receptivity::StepExp::StepExp(Net& net, std::string const& name)
 bool Receptivity::StepExp::evaluate() const
 {
     Place* p = m_net.findPlace(m_id);
-    assert((p != nullptr) && "Unknowm place id");
+    assert((p != nullptr) && "Unknown place id");
     return !!(p->tokens); // size_t to boolean conversion
+}
+
+//-----------------------------------------------------------------------------
+Receptivity::CrossGraphStepExp::CrossGraphStepExp(std::string const& graph_name, std::string const& step_name)
+    : m_graph_name(graph_name)
+{
+    assert((step_name[0] == 'X') && "Incorrect place identifier in cross-graph ref");
+    m_step_id = std::stoul(&step_name[1]);
+}
+
+//-----------------------------------------------------------------------------
+bool Receptivity::CrossGraphStepExp::evaluate() const
+{
+    Net* net = NetRegistry::instance().findNet(m_graph_name);
+    if (net == nullptr)
+    {
+        // Graph not found, return false
+        return false;
+    }
+    Place* p = net->findPlace(m_step_id);
+    if (p == nullptr)
+    {
+        // Step not found in graph, return false
+        return false;
+    }
+    return !!(p->tokens);
 }
 
 //-----------------------------------------------------------------------------
@@ -110,6 +136,29 @@ bool Receptivity::Parser::isState(std::string const& token)
     }
 
     return true;
+}
+
+//-----------------------------------------------------------------------------
+// Check for cross-graph reference syntax: "GraphName:Xn"
+bool Receptivity::Parser::isCrossGraphState(std::string const& token)
+{
+    size_t colon_pos = token.find(':');
+    if (colon_pos == std::string::npos || colon_pos == 0)
+        return false;
+
+    // Check graph name part (before colon)
+    std::string graph_name = token.substr(0, colon_pos);
+    if (!isalpha(graph_name[0]))
+        return false;
+    for (size_t i = 1u; i < graph_name.length(); i++)
+    {
+        if (!isalnum(graph_name[i]) && graph_name[i] != '_')
+            return false;
+    }
+
+    // Check step part (after colon) - must be Xn format
+    std::string step_name = token.substr(colon_pos + 1);
+    return isState(step_name);
 }
 
 //-----------------------------------------------------------------------------
@@ -216,6 +265,15 @@ std::string Receptivity::Parser::translate(std::string const& code, std::string 
         {
             exprs.push(convert(it, lang));
         }
+        else if (isCrossGraphState(it))
+        {
+            // Cross-graph reference: "GraphName:Xn" -> "GraphName.X[n]"
+            size_t colon_pos = it.find(':');
+            std::string graph_name = it.substr(0, colon_pos);
+            std::string step_part = it.substr(colon_pos + 2); // Skip ":X"
+            std::string state(graph_name + ".X[" + step_part + "]");
+            exprs.push(state);
+        }
         else if (isState(it))
         {
             std::string state("X[");
@@ -291,6 +349,14 @@ std::shared_ptr<Receptivity::BooleanExp> Receptivity::Parser::compile(
         else if (isConst(it))
         {
             exprs.push(std::make_shared<ConstExp>(it));
+        }
+        else if (isCrossGraphState(it))
+        {
+            // Parse cross-graph reference: "GraphName:Xn"
+            size_t colon_pos = it.find(':');
+            std::string graph_name = it.substr(0, colon_pos);
+            std::string step_name = it.substr(colon_pos + 1);
+            exprs.push(std::make_shared<CrossGraphStepExp>(graph_name, step_name));
         }
         else if (isState(it))
         {

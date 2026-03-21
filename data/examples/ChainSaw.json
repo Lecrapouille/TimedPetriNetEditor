@@ -3,7 +3,7 @@
   "type": "Petri net",
   "nets": [
     {
-       "name": "Petri net",
+       "name": "Chain Saw",
        "places": [
             { "id": 0, "caption": "Chain brake on", "tokens": 1, "x": 238, "y": 223 },
             { "id": 1, "caption": "Off", "tokens": 0, "x": 355, "y": 310 },

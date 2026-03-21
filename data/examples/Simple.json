@@ -3,7 +3,7 @@
   "type": "Timed Petri net",
   "nets": [
     {
-       "name": "Timed Petri net",
+       "name": "Simple",
        "places": [
             { "id": 0, "caption": "P0", "tokens": 1, "x": 105, "y": 130 },
             { "id": 1, "caption": "P1", "tokens": 2, "x": 485, "y": 131 },

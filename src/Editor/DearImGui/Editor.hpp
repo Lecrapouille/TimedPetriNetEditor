@@ -23,6 +23,7 @@
 
 #  include "Application.hpp" // Selected by Makefile
 #  include "TimedPetriNetEditor/PetriEditor.hpp"
+#  include "Document.hpp"
 #  include "Net/Simulation.hpp"
 #  include "Net/Exports/Exports.hpp"
 #  include "Net/Imports/Imports.hpp"
@@ -33,6 +34,7 @@
 #    include "MQTT/MQTT.hpp"
 #  endif
 #  include <vector>
+#  include <memory>
 
 namespace tpne {
 
@@ -56,7 +58,14 @@ public:
     //-------------------------------------------------------------------------
     virtual void run(std::string const& petri_file) override;
     virtual void run(Net const& net) override;
-    inline Net& net() { return m_net; }
+
+    // Document management
+    Document& activeDocument();
+    Document const& activeDocument() const;
+    Net& net();
+    Net const& net() const;
+    Simulation& simulation();
+    Simulation const& simulation() const;
 
 private: // Inheritance from Application class
 
@@ -82,15 +91,29 @@ private: // Show results from Petri algorithms
     void showCounterOrDaterEquation() const;
     void showAdjacencyMatrices() const;
 
+private: // Document management
+
+    void newDocument();
+    Document& createDocument();
+    void closeDocument(Document* doc);
+    void setActiveDocument(size_t index);
+    size_t documentCount() const { return m_documents.size(); }
+    void addNetToActiveDocument(TypeOfNet type, std::string const& name);
+    void createGEMMADocument();
+
 private: // Petri net services
 
     Node* getNode(ImVec2 const& position);
     void exportNetTo(Exporter const& exporter);
     void importNetFrom(Importer const& importer);
     void loadNetFile();
+    void loadDocumentFromFile(std::string const& filepath);
     void saveNetAs();
+    void saveDocumentAs();
     void closeNet();
     void toogleStartSimulation();
+    void toogleStartAllSimulations();
+    void updateSimulationFramerate();
     void takeScreenshot();
     void clearNet();
     void undo();
@@ -164,6 +187,7 @@ private:
         std::string title;
         bool request_quitting = false;
         bool request_new = false;
+        bool request_vertical_split = false;
         PlotData plot;
     };
 
@@ -193,10 +217,13 @@ private:
 
         PetriView(Editor& editor);
         ImVec2 reshape();
-        void onHandleInput();
-        void drawPetriNet(Net& net, Simulation& simulation);
+        void onHandleInput(Net& net, Simulation& simulation);
+        void drawPetriNet(Net& net, Simulation& simulation,
+                          bool interactive = true);
         inline ImVec2 const& origin() const { return m_canvas.origin; };
         inline ImVec2 const& size() const { return m_canvas.size; };
+        void loadViewState(Document::ViewState const& state);
+        void saveViewState(Document::ViewState& state) const;
 
     private:
 
@@ -226,6 +253,10 @@ private:
     private:
 
         Editor& m_editor;
+        //! \brief Current net being drawn/edited (set by drawPetriNet)
+        Net* m_current_net = nullptr;
+        //! \brief Current simulation being used (set by drawPetriNet)
+        Simulation* m_current_simulation = nullptr;
 
         // ********************************************************************
         //! \brief
@@ -303,8 +334,8 @@ private:
 
     // ************************************************************************
     //! \brief Quick and dirty net memorization for performing undo/redo.
-    //! \fixme this is memory usage consuption by saving two nets. It's better
-    //! to memorize only command. but the remove command make change nodes ID
+    //! \fixme this is memory usage consumption by saving two nets. It's better
+    //! to memorize only command. but the remove command makes nodes ID change
     //! so history will become false.
     // ************************************************************************
     class NetModifaction : public History::Action
@@ -316,13 +347,13 @@ private:
 
         virtual bool undo() override
         {
-            m_editor.m_net = m_before;
+            m_editor.net() = m_before;
             return true;
         }
 
         virtual bool redo() override
         {
-            m_editor.m_net = m_after;
+            m_editor.net() = m_after;
             return true;
         }
 
@@ -353,19 +384,18 @@ private:
 
 private:
 
-    //! \brief Heper instance to find files like Linux $PATH environment variable.
+    //! \brief Helper instance to find files like Linux $PATH environment variable.
     //! Used for example for loading font files.
     Path m_path;
-    //! \brief Single Petri net the editor can edit.
-    //! \fixme Manage several nets (like done with GEMMA).
-    Net m_net;
+    //! \brief All open documents (each can contain multiple nets)
+    std::vector<std::unique_ptr<Document>> m_documents;
+    //! \brief Index of the currently active document
+    size_t m_active_document_index = 0;
     //! Apply spring positive/negative forces on arcs/nodes to unfold imported
     //! Petri nets that do not have positions on their nodes.
     ForceDirected m_spring;
     //! \brief History of modifications of the net.
     History m_history;
-    //! \brief Instance allowing to do timed simulation.
-    Simulation m_simulation;
 #ifdef WITH_MQTT
     //! \brief Allow to control the net from network.
     mqtt::Client m_mqtt;
@@ -380,10 +410,11 @@ private:
     //! \brief Clipboard for copy-paste
     Clipboard m_clipboard;
     //! \brief Visualize the net and do the interaction with the user.
+    //! \note Now each Document::NetEntry will have its own PetriView-like state
     PetriView m_view;
     //! \brief Messages to be displayed on the GUI.
     Messages m_messages;
-    //! \brief States controling the GUI
+    //! \brief States controlling the GUI
     mutable States m_states;
     //! \brief Cache the path to save the loaded Petri file.
     std::string m_path_to_save;

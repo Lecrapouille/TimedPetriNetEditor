@@ -3,7 +3,7 @@
   "type": "Timed Petri net",
   "nets": [
     {
-       "name": "TrafficLights",
+       "name": "Traffic Lights",
        "places": [
             { "id": 0, "caption": "Light 1 Red", "tokens": 1, "x": 146, "y": 250 },
             { "id": 1, "caption": "Light 1 Green", "tokens": 0, "x": 389, "y": 173 },

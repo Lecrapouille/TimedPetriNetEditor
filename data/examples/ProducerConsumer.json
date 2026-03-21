@@ -3,7 +3,7 @@
   "type": "Petri net",
   "nets": [
     {
-       "name": "ProducerConsumer",
+       "name": "Producer Consumer",
        "places": [
             { "id": 0, "caption": "Producer ready", "tokens": 1, "x": 100, "y": 75 },
             { "id": 1, "caption": "Idle", "tokens": 1, "x": 100, "y": 225 },

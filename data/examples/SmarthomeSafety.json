@@ -3,7 +3,7 @@
   "type": "Petri net",
   "nets": [
     {
-       "name": "Petri net",
+       "name": "Smart Home Safety",
        "places": [
             { "id": 0, "caption": "Shutter up", "tokens": 1, "x": 110, "y": 74 },
             { "id": 1, "caption": "Shutter down", "tokens": 0, "x": 108, "y": 256 },
