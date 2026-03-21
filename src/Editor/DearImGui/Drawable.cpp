@@ -249,10 +249,16 @@ static void drawGrafcetPlace(ImDrawList* draw_list, Place const& place, ImVec2 c
     const float trans_width = TRANS_WIDTH * zoom;
     const float trans_width2 = TRANS_WIDTH2 * zoom;
     const float outline_thickness = 2.5f * zoom;
+    const float shadow_offset = SHADOW_OFFSET * zoom;
 
     // Draw the step (place) as square. Double square for initial steps.
     if (place.tokens != 0u)
     {
+        // Shadow for outer square
+        const ImVec2 shadow_min(p.x - trans_width2 / 2.0f + shadow_offset, p.y - trans_width2 / 2.0f + shadow_offset);
+        const ImVec2 shadow_max(p.x + trans_width2 / 2.0f + shadow_offset, p.y + trans_width2 / 2.0f + shadow_offset);
+        draw_list->AddRectFilled(shadow_min, shadow_max, IM_COL32(0, 0, 0, 40));
+
         // Outer square
         const ImVec2 pmin(p.x - trans_width2 / 2.0f, p.y - trans_width2 / 2.0f);
         const ImVec2 pmax(p.x + trans_width2 / 2.0f, p.y + trans_width2 / 2.0f);
@@ -261,6 +267,13 @@ static void drawGrafcetPlace(ImDrawList* draw_list, Place const& place, ImVec2 c
 
         // Token
         drawToken(draw_list, p.x, p.y + trans_width * 1.0f / 3.0f, zoom);
+    }
+    else
+    {
+        // Shadow for inner square (only when not initial step)
+        const ImVec2 shadow_min(p.x - trans_width / 2.0f + shadow_offset, p.y - trans_width / 2.0f + shadow_offset);
+        const ImVec2 shadow_max(p.x + trans_width / 2.0f + shadow_offset, p.y + trans_width / 2.0f + shadow_offset);
+        draw_list->AddRectFilled(shadow_min, shadow_max, IM_COL32(0, 0, 0, 40));
     }
 
     // Inner square

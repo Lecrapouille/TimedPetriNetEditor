@@ -54,7 +54,25 @@ std::string exportToJSON(Net const& net, std::string const& filename)
         file << separator; separator = ",\n";
         file << "            { \"id\": " << p.id << ", \"caption\": \"" << p.caption
              << "\", \"tokens\": " << p.tokens << ", \"x\": " << p.x
-             << ", \"y\": " << p.y << " }";
+             << ", \"y\": " << p.y;
+
+        // GRAFCET actions
+        if (!p.actions.empty())
+        {
+            file << ", \"actions\": [";
+            std::string action_sep = "";
+            for (auto const& action : p.actions)
+            {
+                file << action_sep;
+                file << "{ \"qualifier\": \"" << qualifierToStr(action.qualifier)
+                     << "\", \"name\": \"" << action.name
+                     << "\", \"script\": \"" << action.script
+                     << "\", \"duration\": " << action.duration << " }";
+                action_sep = ", ";
+            }
+            file << "]";
+        }
+        file << " }";
     }
 
     // Transitions

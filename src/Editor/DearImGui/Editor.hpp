@@ -183,7 +183,7 @@ private:
             float step = 50.0f;
             bool  show = true;
             bool  menu = true;
-            bool  snap = false;
+            bool  snap = true;  // Actif par defaut
 
             float snapValue(float v) const
             {
