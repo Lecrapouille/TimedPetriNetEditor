@@ -97,7 +97,21 @@ std::string importFromJSON(Net& net, std::string const& filename)
 
     // Places
     for (nlohmann::json const& p : jnet["places"]) {
-        net.addPlace(p["id"], p["caption"], p["x"], p["y"], p["tokens"]);
+        Place& place = net.addPlace(p["id"], p["caption"], p["x"], p["y"], p["tokens"]);
+
+        // GRAFCET actions
+        if (p.contains("actions"))
+        {
+            for (nlohmann::json const& a : p["actions"])
+            {
+                Action action;
+                action.qualifier = strToQualifier(a.value("qualifier", "N"));
+                action.name = a.value("name", "");
+                action.script = a.value("script", "");
+                action.duration = a.value("duration", 0.0f);
+                place.actions.push_back(action);
+            }
+        }
     }
 
     // Transitions

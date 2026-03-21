@@ -1124,6 +1124,8 @@ void Editor::inspector()
 
             ImGui::Separator();
 
+            ImDrawList* draw_list = ImGui::GetWindowDrawList();
+
             for (auto& it : Sensors::instance().database())
             {
                 if (pending_values.find(it.first) == pending_values.end())
@@ -1136,22 +1138,55 @@ void Editor::inspector()
 
                 ImGui::PushID(it.first.c_str());
 
-                // Push button style toggle
                 bool is_on = immediate_mode ? (current != 0) : (pending != 0);
                 bool changed = is_on != (current != 0);
 
-                if (changed)
+                // Industrial-style toggle switch widget
+                ImVec2 switch_pos = ImGui::GetCursorScreenPos();
+                const float switch_width = 50.0f;
+                const float switch_height = 24.0f;
+                const float switch_radius = switch_height / 2.0f - 2.0f;
+
+                // Switch background
+                ImU32 bg_color = is_on ? IM_COL32(60, 160, 60, 255) : IM_COL32(100, 100, 100, 255);
+                if (changed && !immediate_mode)
                 {
-                    ImGui::PushStyleColor(ImGuiCol_Button, IM_COL32(255, 200, 100, 255));
-                    ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(0, 0, 0, 255));
-                }
-                else if (is_on)
-                {
-                    ImGui::PushStyleColor(ImGuiCol_Button, IM_COL32(100, 200, 100, 255));
-                    ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(0, 0, 0, 255));
+                    bg_color = IM_COL32(200, 150, 50, 255); // Orange for pending
                 }
 
-                if (ImGui::Button(is_on ? "ON " : "OFF", ImVec2(50, 25)))
+                draw_list->AddRectFilled(
+                    switch_pos,
+                    ImVec2(switch_pos.x + switch_width, switch_pos.y + switch_height),
+                    bg_color, switch_height / 2.0f);
+
+                // Switch border
+                draw_list->AddRect(
+                    switch_pos,
+                    ImVec2(switch_pos.x + switch_width, switch_pos.y + switch_height),
+                    IM_COL32(40, 40, 40, 255), switch_height / 2.0f, ImDrawFlags_None, 2.0f);
+
+                // Switch knob position
+                float knob_x = is_on
+                    ? switch_pos.x + switch_width - switch_radius - 4.0f
+                    : switch_pos.x + switch_radius + 4.0f;
+                float knob_y = switch_pos.y + switch_height / 2.0f;
+
+                // Knob shadow
+                draw_list->AddCircleFilled(
+                    ImVec2(knob_x + 1.0f, knob_y + 1.0f),
+                    switch_radius, IM_COL32(0, 0, 0, 60));
+
+                // Knob
+                draw_list->AddCircleFilled(
+                    ImVec2(knob_x, knob_y),
+                    switch_radius, IM_COL32(240, 240, 240, 255));
+                draw_list->AddCircle(
+                    ImVec2(knob_x, knob_y),
+                    switch_radius, IM_COL32(180, 180, 180, 255), 32, 1.0f);
+
+                // Invisible button for interaction
+                ImGui::InvisibleButton("##switch", ImVec2(switch_width, switch_height));
+                if (ImGui::IsItemClicked())
                 {
                     if (immediate_mode)
                     {
@@ -1165,21 +1200,212 @@ void Editor::inspector()
                     }
                 }
 
-                if (changed || is_on)
+                // Indicator light (voyant)
+                ImGui::SameLine();
+                ImVec2 light_pos = ImGui::GetCursorScreenPos();
+                const float light_radius = 8.0f;
+                ImVec2 light_center(light_pos.x + light_radius + 2.0f, light_pos.y + switch_height / 2.0f);
+
+                // Light glow effect
+                ImU32 light_color = current ? IM_COL32(50, 255, 50, 255) : IM_COL32(50, 80, 50, 255);
+                ImU32 glow_color = current ? IM_COL32(50, 255, 50, 80) : IM_COL32(0, 0, 0, 0);
+
+                if (current)
                 {
-                    ImGui::PopStyleColor(2);
+                    draw_list->AddCircleFilled(light_center, light_radius + 4.0f, glow_color);
                 }
+                draw_list->AddCircleFilled(light_center, light_radius, light_color);
+                draw_list->AddCircle(light_center, light_radius, IM_COL32(30, 30, 30, 255), 32, 1.5f);
+
+                // Spacer for indicator
+                ImGui::Dummy(ImVec2(light_radius * 2 + 8.0f, switch_height));
 
                 ImGui::SameLine();
-                ImGui::Text("%s", it.first.c_str());
 
+                // Sensor name with status indication
                 if (changed && !immediate_mode)
                 {
+                    ImGui::TextColored(ImVec4(1.0f, 0.6f, 0.0f, 1.0f), "%s", it.first.c_str());
                     ImGui::SameLine();
-                    ImGui::TextColored(ImVec4(1.0f, 0.6f, 0.0f, 1.0f), "(pending)");
+                    ImGui::TextColored(ImVec4(0.6f, 0.6f, 0.6f, 1.0f), "(pending)");
+                }
+                else
+                {
+                    ImGui::Text("%s", it.first.c_str());
                 }
 
                 ImGui::PopID();
+            }
+
+            // Help text
+            ImGui::Separator();
+            ImGui::TextColored(ImVec4(0.6f, 0.6f, 0.6f, 1.0f),
+                "Click switch to toggle. Green light = active state.");
+
+            ImGui::End();
+
+            // GRAFCET Actions Panel
+            ImGui::Begin("Actions");
+
+            ImGui::TextWrapped("Actions for each step. Double-click step to edit.");
+            ImGui::Separator();
+
+            for (auto& place : m_net.places())
+            {
+                bool is_active = (place.tokens > 0);
+                if (is_active)
+                {
+                    ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(100, 255, 100, 255));
+                }
+
+                bool open = ImGui::TreeNode(place.key.c_str(), "%s: %s %s",
+                    place.key.c_str(), place.caption.c_str(),
+                    is_active ? "[ACTIVE]" : "");
+
+                if (is_active)
+                {
+                    ImGui::PopStyleColor();
+                }
+
+                if (open)
+                {
+                    ImGui::PushID(place.key.c_str());
+
+                    // List actions
+                    for (size_t i = 0; i < place.actions.size(); ++i)
+                    {
+                        Action& action = place.actions[i];
+                        ImGui::PushID(static_cast<int>(i));
+
+                        // Qualifier badge
+                        const char* qual_str = qualifierToStr(action.qualifier);
+                        ImVec4 badge_color;
+                        switch (action.qualifier) {
+                            case Action::Qualifier::N: badge_color = ImVec4(0.4f, 0.4f, 0.8f, 1.0f); break;
+                            case Action::Qualifier::S: badge_color = ImVec4(0.2f, 0.7f, 0.2f, 1.0f); break;
+                            case Action::Qualifier::R: badge_color = ImVec4(0.8f, 0.2f, 0.2f, 1.0f); break;
+                            case Action::Qualifier::D:
+                            case Action::Qualifier::L:
+                            case Action::Qualifier::SD:
+                            case Action::Qualifier::DS:
+                            case Action::Qualifier::SL: badge_color = ImVec4(0.7f, 0.5f, 0.2f, 1.0f); break;
+                            case Action::Qualifier::P: badge_color = ImVec4(0.6f, 0.2f, 0.6f, 1.0f); break;
+                        }
+
+                        ImGui::TextColored(badge_color, "[%s]", qual_str);
+                        ImGui::SameLine();
+                        ImGui::Text("%s", action.name.c_str());
+                        if (!action.script.empty())
+                        {
+                            ImGui::SameLine();
+                            ImGui::TextColored(ImVec4(0.6f, 0.6f, 0.6f, 1.0f), "(%s)", action.script.c_str());
+                        }
+
+                        // Show timer for timed qualifiers
+                        if (action.qualifier == Action::Qualifier::D ||
+                            action.qualifier == Action::Qualifier::L ||
+                            action.qualifier == Action::Qualifier::SD ||
+                            action.qualifier == Action::Qualifier::DS ||
+                            action.qualifier == Action::Qualifier::SL)
+                        {
+                            ImGui::SameLine();
+                            ImGui::TextColored(ImVec4(0.5f, 0.5f, 0.5f, 1.0f), "[%.1fs]", action.duration);
+                        }
+
+                        // Show active state during simulation
+                        if (m_simulation.running && action.active)
+                        {
+                            ImGui::SameLine();
+                            ImGui::TextColored(ImVec4(0.0f, 1.0f, 0.0f, 1.0f), " ACTIVE");
+                        }
+
+                        ImGui::PopID();
+                    }
+
+                    // Button to add new action
+                    if (ImGui::SmallButton("+ Add Action"))
+                    {
+                        Action new_action;
+                        new_action.name = "Action" + std::to_string(place.actions.size() + 1);
+                        place.actions.push_back(new_action);
+                        modified = true;
+                    }
+
+                    // Edit selected action
+                    if (!place.actions.empty())
+                    {
+                        ImGui::Separator();
+                        ImGui::Text("Edit action:");
+
+                        static int selected_action = 0;
+                        if (selected_action >= static_cast<int>(place.actions.size()))
+                            selected_action = 0;
+
+                        // Action selector
+                        std::vector<const char*> action_names;
+                        for (auto& a : place.actions)
+                            action_names.push_back(a.name.c_str());
+
+                        ImGui::Combo("##action_select", &selected_action,
+                            action_names.data(), static_cast<int>(action_names.size()));
+
+                        if (selected_action < static_cast<int>(place.actions.size()))
+                        {
+                            Action& action = place.actions[selected_action];
+
+                            // Qualifier selector
+                            const char* qualifiers[] = { "N", "S", "R", "D", "L", "SD", "DS", "SL", "P" };
+                            int qual_idx = static_cast<int>(action.qualifier);
+                            if (ImGui::Combo("Qualifier", &qual_idx, qualifiers, IM_ARRAYSIZE(qualifiers)))
+                            {
+                                action.qualifier = static_cast<Action::Qualifier>(qual_idx);
+                                modified = true;
+                            }
+
+                            // Name input
+                            char name_buf[128];
+                            strncpy(name_buf, action.name.c_str(), sizeof(name_buf) - 1);
+                            if (ImGui::InputText("Name", name_buf, sizeof(name_buf)))
+                            {
+                                action.name = name_buf;
+                                modified = true;
+                            }
+
+                            // Script input
+                            char script_buf[256];
+                            strncpy(script_buf, action.script.c_str(), sizeof(script_buf) - 1);
+                            if (ImGui::InputText("Script", script_buf, sizeof(script_buf)))
+                            {
+                                action.script = script_buf;
+                                modified = true;
+                            }
+
+                            // Duration for timed qualifiers
+                            if (action.qualifier == Action::Qualifier::D ||
+                                action.qualifier == Action::Qualifier::L ||
+                                action.qualifier == Action::Qualifier::SD ||
+                                action.qualifier == Action::Qualifier::DS ||
+                                action.qualifier == Action::Qualifier::SL)
+                            {
+                                if (ImGui::InputFloat("Duration (s)", &action.duration, 0.1f, 1.0f))
+                                {
+                                    modified = true;
+                                }
+                            }
+
+                            // Delete action button
+                            if (ImGui::SmallButton("Delete Action"))
+                            {
+                                place.actions.erase(place.actions.begin() + selected_action);
+                                if (selected_action > 0) selected_action--;
+                                modified = true;
+                            }
+                        }
+                    }
+
+                    ImGui::PopID();
+                    ImGui::TreePop();
+                }
             }
 
             ImGui::End();
@@ -2171,26 +2397,45 @@ void Editor::PetriView::handleAddNode(ImGuiMouseButton button)
     if (!m_editor.m_simulation.running)
     {
         Node* node = m_editor.getNode(m_mouse.position);
+        Arc* arc = getArc(m_mouse.position);
+
         if (button == MOUSE_BOUTON_ADD_PLACE)
         {
+            // Clic sur un noeud existant = selection
             if (node != nullptr)
             {
                 handleSelection(button);
                 return;
             }
-            if (m_editor.m_net.type() == TypeOfNet::TimedEventGraph)
+            // Clic sur un arc = selection de l'arc
+            if (arc != nullptr)
             {
-                m_editor.addTransition(m_mouse.position.x, m_mouse.position.y);
+                handleSelection(button);
+                return;
+            }
+            // Clic dans le vide = rubber band selection OU creation de noeud
+            // Si Shift n'est pas presse, on cree un noeud
+            // Si Shift est presse, on demarre une selection rectangulaire uniquement
+            if (!ImGui::GetIO().KeyShift)
+            {
+                if (m_editor.m_net.type() == TypeOfNet::TimedEventGraph)
+                {
+                    m_editor.addTransition(m_mouse.position.x, m_mouse.position.y);
+                }
+                else
+                {
+                    m_editor.addPlace(m_mouse.position.x, m_mouse.position.y);
+                }
             }
             else
             {
+                // Shift+clic = rubber band uniquement
                 handleSelection(button);
-                m_editor.addPlace(m_mouse.position.x, m_mouse.position.y);
             }
         }
         else if (button == MOUSE_BOUTON_ADD_TRANSITION)
         {
-            if (node == nullptr)
+            if (node == nullptr && arc == nullptr)
             {
                 m_editor.addTransition(m_mouse.position.x, m_mouse.position.y);
             }
@@ -2407,15 +2652,29 @@ void Editor::PetriView::onHandleInput()
         ImGuiIO& io = ImGui::GetIO();
         if (io.MouseWheel != 0.0f)
         {
-            ImVec2 mouse_before = m_mouse.position;
+            float old_zoom = m_canvas.zoom;
             float zoom_delta = io.MouseWheel * 0.1f;
-            float new_zoom = m_canvas.zoom + zoom_delta;
+            float new_zoom = old_zoom + zoom_delta;
             if (new_zoom < Canvas::ZOOM_MIN) new_zoom = Canvas::ZOOM_MIN;
             if (new_zoom > Canvas::ZOOM_MAX) new_zoom = Canvas::ZOOM_MAX;
-            m_canvas.zoom = new_zoom;
-            ImVec2 mouse_after = m_canvas.getMousePosition();
-            m_canvas.scrolling.x += (mouse_after.x - mouse_before.x) * m_canvas.zoom;
-            m_canvas.scrolling.y += (mouse_after.y - mouse_before.y) * m_canvas.zoom;
+
+            if (new_zoom != old_zoom)
+            {
+                // Position de la souris en coordonnees ecran (relative au coin)
+                ImVec2 mouse_screen = io.MousePos - m_canvas.corners[0];
+
+                // Position de la souris en coordonnees monde (avant zoom)
+                ImVec2 mouse_world = m_mouse.position;
+
+                // Appliquer le nouveau zoom
+                m_canvas.zoom = new_zoom;
+
+                // Ajuster le scroll pour garder le meme point sous la souris
+                // mouse_screen = scrolling + mouse_world * zoom
+                // donc scrolling = mouse_screen - mouse_world * zoom
+                m_canvas.scrolling.x = mouse_screen.x - mouse_world.x * new_zoom;
+                m_canvas.scrolling.y = mouse_screen.y - mouse_world.y * new_zoom;
+            }
         }
     }
 
@@ -2465,7 +2724,8 @@ void Editor::PetriView::onHandleInput()
         {
             m_editor.toogleStartSimulation();
         }
-        else if (ImGui::IsKeyPressed(KEY_INCREMENT_TOKENS))
+        else if (ImGui::IsKeyPressed(KEY_INCREMENT_TOKENS) ||
+                 ImGui::IsKeyPressed(ImGuiKey_Equal))  // + normal
         {
             Node* node = m_editor.getNode(m_mouse.position);
             if ((node != nullptr) && (node->type == Node::Type::Place))
@@ -2474,7 +2734,8 @@ void Editor::PetriView::onHandleInput()
                 m_editor.m_net.modified = true;
             }
         }
-        else if (ImGui::IsKeyPressed(KEY_DECREMENT_TOKENS))
+        else if (ImGui::IsKeyPressed(KEY_DECREMENT_TOKENS) ||
+                 ImGui::IsKeyPressed(ImGuiKey_Minus))  // - normal
         {
             Node* node = m_editor.getNode(m_mouse.position);
             if ((node != nullptr) && (node->type == Node::Type::Place))
@@ -2482,6 +2743,10 @@ void Editor::PetriView::onHandleInput()
                 reinterpret_cast<Place*>(node)->decrement(1u);
                 m_editor.m_net.modified = true;
             }
+        }
+        else if (ImGui::IsKeyPressed(ImGuiKey_M, false))  // M pour deplacer
+        {
+            handleMoveNode();
         }
         else if (ImGui::IsKeyPressed(KEY_DELETE_NODE))
         {
@@ -2599,10 +2864,20 @@ void Editor::PetriView::drawPetriNet(Net& net, Simulation& simulation)
         ImVec2 p = origin + ImVec2(m_mouse.hovered_node->x * zoom, m_mouse.hovered_node->y * zoom);
         if (m_mouse.hovered_node->type == Node::Type::Place)
         {
-            float radius = (net.type() == TypeOfNet::GRAFCET)
-                ? TRANS_WIDTH * zoom / 2.0f + 2.0f * zoom
-                : PLACE_RADIUS * zoom + 2.0f * zoom;
-            m_canvas.draw_list->AddCircle(p, radius, hover_color, 64, 2.0f * zoom);
+            if (net.type() == TypeOfNet::GRAFCET)
+            {
+                // GRAFCET steps are squares
+                float w = TRANS_WIDTH * zoom / 2.0f + 2.0f * zoom;
+                m_canvas.draw_list->AddRect(
+                    ImVec2(p.x - w, p.y - w),
+                    ImVec2(p.x + w, p.y + w),
+                    hover_color, 0.0f, ImDrawFlags_None, 2.0f * zoom);
+            }
+            else
+            {
+                float radius = PLACE_RADIUS * zoom + 2.0f * zoom;
+                m_canvas.draw_list->AddCircle(p, radius, hover_color, 64, 2.0f * zoom);
+            }
         }
         else
         {
@@ -2612,6 +2887,52 @@ void Editor::PetriView::drawPetriNet(Net& net, Simulation& simulation)
                 ImVec2(p.x - w, p.y - h),
                 ImVec2(p.x + w, p.y + h),
                 hover_color, 0.0f, ImDrawFlags_None, 2.0f * zoom);
+        }
+
+        // GRAFCET tooltip: show actions when hovering over a step
+        if (net.type() == TypeOfNet::GRAFCET &&
+            m_mouse.hovered_node->type == Node::Type::Place)
+        {
+            Place* place = reinterpret_cast<Place*>(m_mouse.hovered_node);
+            if (!place->actions.empty())
+            {
+                ImGui::BeginTooltip();
+                ImGui::Text("%s: %s", place->key.c_str(), place->caption.c_str());
+                if (place->tokens > 0)
+                {
+                    ImGui::SameLine();
+                    ImGui::TextColored(ImVec4(0.4f, 1.0f, 0.4f, 1.0f), "[ACTIVE]");
+                }
+                ImGui::Separator();
+                ImGui::Text("Actions:");
+                for (const auto& action : place->actions)
+                {
+                    const char* qual_str = qualifierToStr(action.qualifier);
+                    ImVec4 badge_color = ImVec4(0.7f, 0.5f, 0.2f, 1.0f); // default for timed
+                    if (action.qualifier == Action::Qualifier::N)
+                        badge_color = ImVec4(0.4f, 0.4f, 0.8f, 1.0f);
+                    else if (action.qualifier == Action::Qualifier::S)
+                        badge_color = ImVec4(0.2f, 0.7f, 0.2f, 1.0f);
+                    else if (action.qualifier == Action::Qualifier::R)
+                        badge_color = ImVec4(0.8f, 0.2f, 0.2f, 1.0f);
+                    else if (action.qualifier == Action::Qualifier::P)
+                        badge_color = ImVec4(0.6f, 0.2f, 0.6f, 1.0f);
+                    ImGui::TextColored(badge_color, "[%s]", qual_str);
+                    ImGui::SameLine();
+                    ImGui::Text("%s", action.name.c_str());
+                    if (!action.script.empty())
+                    {
+                        ImGui::SameLine();
+                        ImGui::TextColored(ImVec4(0.6f, 0.6f, 0.6f, 1.0f), "- %s", action.script.c_str());
+                    }
+                    if (action.duration > 0.0f)
+                    {
+                        ImGui::SameLine();
+                        ImGui::TextColored(ImVec4(0.5f, 0.5f, 0.5f, 1.0f), "(%.1fs)", action.duration);
+                    }
+                }
+                ImGui::EndTooltip();
+            }
         }
     }
 
@@ -2632,10 +2953,20 @@ void Editor::PetriView::drawPetriNet(Net& net, Simulation& simulation)
         ImVec2 p = origin + ImVec2(node->x * zoom, node->y * zoom);
         if (node->type == Node::Type::Place)
         {
-            float radius = (net.type() == TypeOfNet::GRAFCET)
-                ? TRANS_WIDTH * zoom / 2.0f + 4.0f * zoom
-                : PLACE_RADIUS * zoom + 4.0f * zoom;
-            m_canvas.draw_list->AddCircle(p, radius, selection_color, 64, node_selection_thickness);
+            if (net.type() == TypeOfNet::GRAFCET)
+            {
+                // GRAFCET steps are squares
+                float w = TRANS_WIDTH * zoom / 2.0f + 4.0f * zoom;
+                m_canvas.draw_list->AddRect(
+                    ImVec2(p.x - w, p.y - w),
+                    ImVec2(p.x + w, p.y + w),
+                    selection_color, 0.0f, ImDrawFlags_None, node_selection_thickness);
+            }
+            else
+            {
+                float radius = PLACE_RADIUS * zoom + 4.0f * zoom;
+                m_canvas.draw_list->AddCircle(p, radius, selection_color, 64, node_selection_thickness);
+            }
         }
         else
         {
@@ -2659,8 +2990,8 @@ void Editor::PetriView::drawPetriNet(Net& net, Simulation& simulation)
         ImVec2 node_screen_pos = m_canvas.origin +
             ImVec2(m_mouse.editing_node->x * m_canvas.zoom, m_mouse.editing_node->y * m_canvas.zoom);
 
-        ImGui::SetNextWindowPos(ImVec2(node_screen_pos.x - 50.0f, node_screen_pos.y + 30.0f));
-        ImGui::SetNextWindowSize(ImVec2(150.0f, 0.0f));
+        ImGui::SetNextWindowPos(ImVec2(node_screen_pos.x - 75.0f, node_screen_pos.y + 35.0f));
+        ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(8.0f, 8.0f));
         ImGui::Begin("##EditNodeName", nullptr,
             ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize |
             ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoSavedSettings |
@@ -2672,6 +3003,7 @@ void Editor::PetriView::drawPetriNet(Net& net, Simulation& simulation)
             m_mouse.edit_focus_requested = false;
         }
 
+        ImGui::SetNextItemWidth(150.0f);
         ImGuiInputTextFlags flags = ImGuiInputTextFlags_EnterReturnsTrue | ImGuiInputTextFlags_AutoSelectAll;
         if (ImGui::InputText("##name", m_mouse.edit_buffer, sizeof(m_mouse.edit_buffer), flags))
         {
@@ -2691,6 +3023,7 @@ void Editor::PetriView::drawPetriNet(Net& net, Simulation& simulation)
         }
 
         ImGui::End();
+        ImGui::PopStyleVar();
     }
 
     // Context menu for nodes

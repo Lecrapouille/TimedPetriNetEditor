@@ -170,6 +170,68 @@ public:
 };
 
 // *****************************************************************************
+//! \brief GRAFCET Action associated with a Step (Place).
+//! Actions are operations performed when a step is active.
+//! Qualifiers define the behavior: N (normal), S (set), R (reset), etc.
+// *****************************************************************************
+struct Action
+{
+    //! \brief IEC 60848 Action qualifiers
+    enum class Qualifier
+    {
+        N,   // Normal: active while step is active
+        S,   // Set: latched ON at step activation
+        R,   // Reset: latched OFF at step activation
+        D,   // Delayed: active after delay while step active
+        L,   // Limited: active for limited time while step active
+        SD,  // Stored & Delayed: set after delay
+        DS,  // Delayed & Stored: delayed then latched
+        SL,  // Stored & Limited: set for limited time
+        P    // Pulse: single pulse at step activation
+    };
+
+    Qualifier qualifier = Qualifier::N;
+    std::string name;        // Action name (e.g., "KM1", "Verin_A+")
+    std::string script;      // Code/description of the action
+    float duration = 0.0f;   // For D, L, SD, DS, SL qualifiers (seconds)
+
+    // Runtime state (used during simulation)
+    mutable bool active = false;
+    mutable float timer = 0.0f;
+};
+
+//! \brief Convert Action::Qualifier to string
+inline const char* qualifierToStr(Action::Qualifier q)
+{
+    switch (q) {
+        case Action::Qualifier::N: return "N";
+        case Action::Qualifier::S: return "S";
+        case Action::Qualifier::R: return "R";
+        case Action::Qualifier::D: return "D";
+        case Action::Qualifier::L: return "L";
+        case Action::Qualifier::SD: return "SD";
+        case Action::Qualifier::DS: return "DS";
+        case Action::Qualifier::SL: return "SL";
+        case Action::Qualifier::P: return "P";
+    }
+    return "N";
+}
+
+//! \brief Convert string to Action::Qualifier
+inline Action::Qualifier strToQualifier(std::string const& s)
+{
+    if (s == "S") return Action::Qualifier::S;
+    if (s == "R") return Action::Qualifier::R;
+    if (s == "D") return Action::Qualifier::D;
+    if (s == "L") return Action::Qualifier::L;
+    if (s == "SD") return Action::Qualifier::SD;
+    if (s == "DS") return Action::Qualifier::DS;
+    if (s == "SL") return Action::Qualifier::SL;
+    if (s == "P") return Action::Qualifier::P;
+    return Action::Qualifier::N;
+}
+
+// *****************************************************************************
 //! \brief Petri Place node. Places represent system states. Places hold tokens
 //! (resources). In GRAFCET, Places are named Steps and have at max one token.
 //! When steps are activated actions are performed.
@@ -227,6 +289,10 @@ public:
     //! \brief the number of tokens hold by the Place. Public access is fine
     //! since this will facilitate its access during the simulation.
     size_t tokens;
+
+    //! \brief GRAFCET actions associated with this step.
+    //! Only used in GRAFCET mode.
+    std::vector<Action> actions;
 };
 
 // *****************************************************************************
