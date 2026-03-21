@@ -20,6 +20,7 @@
 
 #include "Imports.hpp"
 #include "TimedPetriNetEditor/PetriNet.hpp"
+#include "Net/Receptivities.hpp"
 #include "nlohmann/json.hpp"
 #include <sstream>
 #include <fstream>
@@ -28,7 +29,6 @@
 namespace tpne {
 
 //------------------------------------------------------------------------------
-// TODO read sensor values
 std::string importFromJSON(Net& net, std::string const& filename)
 {
     std::stringstream error;
@@ -55,6 +55,7 @@ std::string importFromJSON(Net& net, std::string const& filename)
         return error.str();
     }
 
+    // Get the type of net
     if (json.contains("type"))
     {
         std::string type = std::string(json["type"]);
@@ -87,6 +88,7 @@ std::string importFromJSON(Net& net, std::string const& filename)
     }
     nlohmann::json const& jnet = json["nets"][0];
 
+    // Net name
     if (!jnet.contains("name"))
     {
         error << "Failed parsing '" << filename << "'. Reason was '"
@@ -99,7 +101,7 @@ std::string importFromJSON(Net& net, std::string const& filename)
     for (nlohmann::json const& p : jnet["places"]) {
         Place& place = net.addPlace(p["id"], p["caption"], p["x"], p["y"], p["tokens"]);
 
-        // GRAFCET actions
+        // GRAFCET actions embedded in place
         if (p.contains("actions"))
         {
             for (nlohmann::json const& a : p["actions"])
@@ -151,6 +153,46 @@ std::string importFromJSON(Net& net, std::string const& filename)
                   << ". Arc " << from->key << " -> " << to->key
                   << " is badly formed" << std::endl;
             return error.str();
+        }
+    }
+
+    // GRAFCET step actions
+    if (jnet.contains("actions"))
+    {
+        for (nlohmann::json const& a : jnet["actions"])
+        {
+            size_t place_id = a["place_id"];
+            Place* place = net.findPlace(place_id);
+            if (place != nullptr)
+            {
+                Action action;
+                action.qualifier = strToQualifier(a.value("qualifier", "N"));
+                action.name = a.value("name", "");
+                action.script = a.value("script", "");
+                action.duration = a.value("duration", 0.0f);
+                place->actions.push_back(action);
+            }
+        }
+    }
+
+    // GRAFCET transition inputs
+    Sensors::instance().clear();
+    if (jnet.contains("inputs"))
+    {
+        for (nlohmann::json const& i : jnet["inputs"])
+        {
+            std::string name = i["name"];
+            int initial = i.value("initial", 0);
+            Sensors::instance().set(name, initial);
+        }
+    }
+    else if (jnet.contains("sensors"))
+    {
+        for (nlohmann::json const& s : jnet["sensors"])
+        {
+            std::string name = s["name"];
+            int value = s.value("value", s.value("initial", 0));
+            Sensors::instance().set(name, value);
         }
     }
 

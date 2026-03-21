@@ -132,20 +132,24 @@ void Simulation::stateStarting()
 }
 
 //------------------------------------------------------------------------------
-// FIXME Sensors::instance().clear(); is violent we loose current sensor values
-// => they are reset to false.
-// https://github.com/Lecrapouille/TimedPetriNetEditor/issues/29
+// Generate sensors from transition captions, preserving existing values
 bool Simulation::generateSensors()
 {
-    //if (this->compiled)
-    //    return true;
-
     // Check for GRAFCET if boolean expressions in transitivities have
     // not syntaxical errors.
     if (m_net.type() == TypeOfNet::GRAFCET)
     {
-        Sensors::instance().clear();
+        // Save existing sensor values before regenerating
+        std::map<std::string, int> saved_values;
+        for (const auto& kv : Sensors::instance().database())
+        {
+            saved_values[kv.first] = kv.second;
+        }
+
+        // Don't clear - the compile() function will add new sensors as needed
+        // Sensors::instance().clear();
         m_receptivities.clear();
+
         for (auto const& it: m_net.transitions())
         {
             std::string error = m_receptivities[it.id].compile(it.caption, m_net);
@@ -153,6 +157,16 @@ bool Simulation::generateSensors()
             {
                 m_messages.setWarning(error);
                 return false;
+            }
+        }
+
+        // Restore saved values for sensors that existed before
+        for (const auto& kv : saved_values)
+        {
+            auto& db = Sensors::instance().database();
+            if (db.find(kv.first) != db.end())
+            {
+                db[kv.first] = kv.second;
             }
         }
     }

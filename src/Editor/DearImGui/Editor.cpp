@@ -1105,21 +1105,27 @@ void Editor::inspector()
             static std::map<std::string, int> pending_values;
             static bool immediate_mode = false;
 
-            ImGui::Begin("Sensors");
+            ImGui::Begin("Inputs");
 
-            ImGui::Checkbox("Immediate mode", &immediate_mode);
-            ImGui::SameLine();
-            if (ImGui::Button("Apply (F7)") || ImGui::IsKeyPressed(ImGuiKey_F7))
+            if (m_simulation.running)
             {
-                for (auto& it : pending_values)
+                ImGui::Checkbox("Immediate mode", &immediate_mode);
+                ImGui::SameLine();
+                if (ImGui::Button("Apply (F7)") || ImGui::IsKeyPressed(ImGuiKey_F7))
                 {
-                    auto db_it = Sensors::instance().database().find(it.first);
-                    if (db_it != Sensors::instance().database().end())
+                    for (auto& it : pending_values)
                     {
-                        db_it->second = it.second;
+                        auto db_it = Sensors::instance().database().find(it.first);
+                        if (db_it != Sensors::instance().database().end())
+                        {
+                            db_it->second = it.second;
+                        }
                     }
                 }
-                modified = !m_simulation.running;
+            }
+            else
+            {
+                ImGui::TextColored(ImVec4(0.6f, 0.6f, 0.6f, 1.0f), "Set initial values:");
             }
 
             ImGui::Separator();
@@ -1137,8 +1143,10 @@ void Editor::inspector()
                 ImGui::PushID(it.first.c_str());
 
                 // Simple ON/OFF button toggle
-                bool is_on = immediate_mode ? (current != 0) : (pending != 0);
-                bool changed = is_on != (current != 0);
+                bool is_on = m_simulation.running
+                    ? (immediate_mode ? (current != 0) : (pending != 0))
+                    : (current != 0);  // Direct edit when not simulating
+                bool changed = m_simulation.running && (is_on != (current != 0));
 
                 if (changed)
                 {
@@ -1153,15 +1161,24 @@ void Editor::inspector()
 
                 if (ImGui::Button(is_on ? "ON " : "OFF", ImVec2(50, 25)))
                 {
-                    if (immediate_mode)
+                    if (m_simulation.running)
                     {
-                        it.second = it.second ? 0 : 1;
-                        pending = it.second;
-                        modified = !m_simulation.running;
+                        if (immediate_mode)
+                        {
+                            it.second = it.second ? 0 : 1;
+                            pending = it.second;
+                        }
+                        else
+                        {
+                            pending = pending ? 0 : 1;
+                        }
                     }
                     else
                     {
-                        pending = pending ? 0 : 1;
+                        // Direct edit of initial value when not simulating
+                        it.second = it.second ? 0 : 1;
+                        pending = it.second;
+                        modified = true;
                     }
                 }
 
@@ -1173,7 +1190,7 @@ void Editor::inspector()
                 ImGui::SameLine();
                 ImGui::Text("%s", it.first.c_str());
 
-                if (changed && !immediate_mode)
+                if (changed && !immediate_mode && m_simulation.running)
                 {
                     ImGui::SameLine();
                     ImGui::TextColored(ImVec4(1.0f, 0.6f, 0.0f, 1.0f), "(pending)");
