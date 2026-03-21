@@ -1124,8 +1124,6 @@ void Editor::inspector()
 
             ImGui::Separator();
 
-            ImDrawList* draw_list = ImGui::GetWindowDrawList();
-
             for (auto& it : Sensors::instance().database())
             {
                 if (pending_values.find(it.first) == pending_values.end())
@@ -1138,55 +1136,22 @@ void Editor::inspector()
 
                 ImGui::PushID(it.first.c_str());
 
+                // Simple ON/OFF button toggle
                 bool is_on = immediate_mode ? (current != 0) : (pending != 0);
                 bool changed = is_on != (current != 0);
 
-                // Industrial-style toggle switch widget
-                ImVec2 switch_pos = ImGui::GetCursorScreenPos();
-                const float switch_width = 50.0f;
-                const float switch_height = 24.0f;
-                const float switch_radius = switch_height / 2.0f - 2.0f;
-
-                // Switch background
-                ImU32 bg_color = is_on ? IM_COL32(60, 160, 60, 255) : IM_COL32(100, 100, 100, 255);
-                if (changed && !immediate_mode)
+                if (changed)
                 {
-                    bg_color = IM_COL32(200, 150, 50, 255); // Orange for pending
+                    ImGui::PushStyleColor(ImGuiCol_Button, IM_COL32(255, 200, 100, 255));
+                    ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(0, 0, 0, 255));
+                }
+                else if (is_on)
+                {
+                    ImGui::PushStyleColor(ImGuiCol_Button, IM_COL32(100, 200, 100, 255));
+                    ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(0, 0, 0, 255));
                 }
 
-                draw_list->AddRectFilled(
-                    switch_pos,
-                    ImVec2(switch_pos.x + switch_width, switch_pos.y + switch_height),
-                    bg_color, switch_height / 2.0f);
-
-                // Switch border
-                draw_list->AddRect(
-                    switch_pos,
-                    ImVec2(switch_pos.x + switch_width, switch_pos.y + switch_height),
-                    IM_COL32(40, 40, 40, 255), switch_height / 2.0f, ImDrawFlags_None, 2.0f);
-
-                // Switch knob position
-                float knob_x = is_on
-                    ? switch_pos.x + switch_width - switch_radius - 4.0f
-                    : switch_pos.x + switch_radius + 4.0f;
-                float knob_y = switch_pos.y + switch_height / 2.0f;
-
-                // Knob shadow
-                draw_list->AddCircleFilled(
-                    ImVec2(knob_x + 1.0f, knob_y + 1.0f),
-                    switch_radius, IM_COL32(0, 0, 0, 60));
-
-                // Knob
-                draw_list->AddCircleFilled(
-                    ImVec2(knob_x, knob_y),
-                    switch_radius, IM_COL32(240, 240, 240, 255));
-                draw_list->AddCircle(
-                    ImVec2(knob_x, knob_y),
-                    switch_radius, IM_COL32(180, 180, 180, 255), 32, 1.0f);
-
-                // Invisible button for interaction
-                ImGui::InvisibleButton("##switch", ImVec2(switch_width, switch_height));
-                if (ImGui::IsItemClicked())
+                if (ImGui::Button(is_on ? "ON " : "OFF", ImVec2(50, 25)))
                 {
                     if (immediate_mode)
                     {
@@ -1200,54 +1165,102 @@ void Editor::inspector()
                     }
                 }
 
-                // Indicator light (voyant)
-                ImGui::SameLine();
-                ImVec2 light_pos = ImGui::GetCursorScreenPos();
-                const float light_radius = 8.0f;
-                ImVec2 light_center(light_pos.x + light_radius + 2.0f, light_pos.y + switch_height / 2.0f);
-
-                // Light glow effect
-                ImU32 light_color = current ? IM_COL32(50, 255, 50, 255) : IM_COL32(50, 80, 50, 255);
-                ImU32 glow_color = current ? IM_COL32(50, 255, 50, 80) : IM_COL32(0, 0, 0, 0);
-
-                if (current)
+                if (changed || is_on)
                 {
-                    draw_list->AddCircleFilled(light_center, light_radius + 4.0f, glow_color);
+                    ImGui::PopStyleColor(2);
                 }
-                draw_list->AddCircleFilled(light_center, light_radius, light_color);
-                draw_list->AddCircle(light_center, light_radius, IM_COL32(30, 30, 30, 255), 32, 1.5f);
-
-                // Spacer for indicator
-                ImGui::Dummy(ImVec2(light_radius * 2 + 8.0f, switch_height));
 
                 ImGui::SameLine();
+                ImGui::Text("%s", it.first.c_str());
 
-                // Sensor name with status indication
                 if (changed && !immediate_mode)
                 {
-                    ImGui::TextColored(ImVec4(1.0f, 0.6f, 0.0f, 1.0f), "%s", it.first.c_str());
                     ImGui::SameLine();
-                    ImGui::TextColored(ImVec4(0.6f, 0.6f, 0.6f, 1.0f), "(pending)");
-                }
-                else
-                {
-                    ImGui::Text("%s", it.first.c_str());
+                    ImGui::TextColored(ImVec4(1.0f, 0.6f, 0.0f, 1.0f), "(pending)");
                 }
 
                 ImGui::PopID();
             }
 
-            // Help text
+            ImGui::End();
+
+            // Outputs panel - LED indicators for actuators
+            ImGui::Begin("Outputs");
+            ImGui::TextWrapped("Actuator states from active actions.");
             ImGui::Separator();
-            ImGui::TextColored(ImVec4(0.6f, 0.6f, 0.6f, 1.0f),
-                "Click switch to toggle. Green light = active state.");
+
+            ImDrawList* draw_list = ImGui::GetWindowDrawList();
+
+            // Collect all unique action names from all places and show their state
+            std::map<std::string, bool> actuator_states;
+            for (const auto& place : m_net.places())
+            {
+                bool step_active = (place.tokens > 0);
+                for (const auto& action : place.actions)
+                {
+                    if (!action.name.empty())
+                    {
+                        // For now, show action as active if step is active and qualifier is N
+                        // More complex logic would be needed for S/R/D/L qualifiers
+                        bool action_active = step_active &&
+                            (action.qualifier == Action::Qualifier::N ||
+                             action.qualifier == Action::Qualifier::S);
+
+                        // S qualifier keeps state even after step deactivates
+                        if (action.qualifier == Action::Qualifier::S && action.active)
+                            action_active = true;
+
+                        if (actuator_states.find(action.name) == actuator_states.end())
+                            actuator_states[action.name] = action_active;
+                        else
+                            actuator_states[action.name] = actuator_states[action.name] || action_active;
+                    }
+                }
+            }
+
+            if (actuator_states.empty())
+            {
+                ImGui::TextColored(ImVec4(0.5f, 0.5f, 0.5f, 1.0f), "No actions defined");
+            }
+            else
+            {
+                for (const auto& actuator : actuator_states)
+                {
+                    ImVec2 led_pos = ImGui::GetCursorScreenPos();
+                    const float led_radius = 8.0f;
+                    ImVec2 led_center(led_pos.x + led_radius + 4.0f, led_pos.y + 10.0f);
+
+                    // LED color and glow
+                    ImU32 led_color = actuator.second
+                        ? IM_COL32(50, 255, 50, 255)   // Green when ON
+                        : IM_COL32(60, 60, 60, 255);   // Dark when OFF
+
+                    if (actuator.second)
+                    {
+                        // Glow effect
+                        draw_list->AddCircleFilled(led_center, led_radius + 3.0f, IM_COL32(50, 255, 50, 60));
+                    }
+                    draw_list->AddCircleFilled(led_center, led_radius, led_color);
+                    draw_list->AddCircle(led_center, led_radius, IM_COL32(100, 100, 100, 255), 32, 1.5f);
+
+                    // Spacer for LED
+                    ImGui::Dummy(ImVec2(led_radius * 2 + 12.0f, 20.0f));
+                    ImGui::SameLine();
+
+                    // Actuator name
+                    if (actuator.second)
+                        ImGui::TextColored(ImVec4(0.4f, 1.0f, 0.4f, 1.0f), "%s", actuator.first.c_str());
+                    else
+                        ImGui::Text("%s", actuator.first.c_str());
+                }
+            }
 
             ImGui::End();
 
             // GRAFCET Actions Panel
             ImGui::Begin("Actions");
 
-            ImGui::TextWrapped("Actions for each step. Double-click step to edit.");
+            ImGui::TextWrapped("Actions for each step. Right-click step on canvas > Edit Actions.");
             ImGui::Separator();
 
             for (auto& place : m_net.places())
@@ -1353,8 +1366,18 @@ void Editor::inspector()
                         {
                             Action& action = place.actions[selected_action];
 
-                            // Qualifier selector
-                            const char* qualifiers[] = { "N", "S", "R", "D", "L", "SD", "DS", "SL", "P" };
+                            // Qualifier selector with full names
+                            const char* qualifiers[] = {
+                                "N - Normal",
+                                "S - Set (Stored)",
+                                "R - Reset",
+                                "D - Delayed",
+                                "L - Limited",
+                                "SD - Stored & Delayed",
+                                "DS - Delayed & Stored",
+                                "SL - Stored & Limited",
+                                "P - Pulse"
+                            };
                             int qual_idx = static_cast<int>(action.qualifier);
                             if (ImGui::Combo("Qualifier", &qual_idx, qualifiers, IM_ARRAYSIZE(qualifiers)))
                             {
@@ -1590,6 +1613,7 @@ void Editor::removeArc(Arc& arc)
     m_net.removeArc(arc);
     action->after(m_net);
     m_history.add(std::move(action));
+    m_net.modified = true;
 }
 
 //------------------------------------------------------------------------------
@@ -2394,6 +2418,13 @@ void Editor::PetriView::handleSelection(ImGuiMouseButton button)
 //--------------------------------------------------------------------------
 void Editor::PetriView::handleAddNode(ImGuiMouseButton button)
 {
+    // Si le widget d'edition de nom est ouvert, le fermer sans creer de noeud
+    if (m_mouse.editing_node != nullptr)
+    {
+        m_mouse.editing_node = nullptr;
+        return;
+    }
+
     if (!m_editor.m_simulation.running)
     {
         Node* node = m_editor.getNode(m_mouse.position);
@@ -2674,11 +2705,18 @@ void Editor::PetriView::onHandleInput()
                 // donc scrolling = mouse_screen - mouse_world * zoom
                 m_canvas.scrolling.x = mouse_screen.x - mouse_world.x * new_zoom;
                 m_canvas.scrolling.y = mouse_screen.y - mouse_world.y * new_zoom;
+
+                // Mettre a jour origin immediatement pour eviter le glitch visuel
+                m_canvas.origin = m_canvas.corners[0] + m_canvas.scrolling;
             }
         }
     }
 
-    if (ImGui::IsItemHovered() && !ImGui::GetIO().WantCaptureKeyboard)
+    // Raccourcis clavier globaux (fonctionnent meme si le canvas n'est pas hovered)
+    // Condition: pas en train d'editer du texte dans un widget
+    bool can_use_shortcuts = !ImGui::GetIO().WantCaptureKeyboard;
+
+    if (can_use_shortcuts)
     {
         if (ImGui::GetIO().KeyCtrl)
         {
@@ -2707,7 +2745,17 @@ void Editor::PetriView::onHandleInput()
                     m_mouse.selected_nodes.push_back(&trans);
             }
         }
-        else if (ImGui::IsKeyPressed(KEY_MOVE_PETRI_NODE, false))
+        else if (ImGui::IsKeyPressed(KEY_RUN_SIMULATION) ||
+                 ImGui::IsKeyPressed(KEY_RUN_SIMULATION_ALT))
+        {
+            m_editor.toogleStartSimulation();
+        }
+    }
+
+    // Raccourcis qui necessitent le hover du canvas (operations sur les noeuds)
+    if (ImGui::IsItemHovered() && can_use_shortcuts)
+    {
+        if (ImGui::IsKeyPressed(KEY_MOVE_PETRI_NODE, false))
         {
             handleMoveNode();
         }
@@ -2718,11 +2766,6 @@ void Editor::PetriView::onHandleInput()
         else if (ImGui::IsKeyPressed(KEY_SPRINGIFY_NET))
         {
             m_editor.springify();
-        }
-        else if (ImGui::IsKeyPressed(KEY_RUN_SIMULATION) ||
-                 ImGui::IsKeyPressed(KEY_RUN_SIMULATION_ALT))
-        {
-            m_editor.toogleStartSimulation();
         }
         else if (ImGui::IsKeyPressed(KEY_INCREMENT_TOKENS) ||
                  ImGui::IsKeyPressed(ImGuiKey_Equal))  // + normal
@@ -3062,6 +3105,24 @@ void Editor::PetriView::drawPetriNet(Net& net, Simulation& simulation)
                 {
                     reinterpret_cast<Place*>(m_mouse.context_menu_node)->decrement(1u);
                     m_editor.m_net.modified = true;
+                }
+
+                // Edit Actions menu item for GRAFCET mode
+                if (m_editor.m_net.type() == TypeOfNet::GRAFCET)
+                {
+                    ImGui::Separator();
+                    if (ImGui::MenuItem("Edit Actions..."))
+                    {
+                        Place* place = reinterpret_cast<Place*>(m_mouse.context_menu_node);
+                        // Ajouter une nouvelle action si le step n'en a pas
+                        if (place->actions.empty())
+                        {
+                            Action new_action;
+                            new_action.name = "Action1";
+                            place->actions.push_back(new_action);
+                            m_editor.m_net.modified = true;
+                        }
+                    }
                 }
             }
         }
