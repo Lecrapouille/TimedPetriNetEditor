@@ -42,7 +42,7 @@ std::string exportToJSON(Net const& net, std::string const& filename)
     }
 
     file << "{" << std::endl;
-    file << "  \"revision\": 3," << std::endl;
+    file << "  \"revision\": 4," << std::endl;
     file << "  \"type\": \"" << to_str(net.type()) << "\"," << std::endl;
     file << "  \"nets\": [\n    {" << std::endl;
     file << "       \"name\": \"" << net.name << "\"," << std::endl;
@@ -54,25 +54,7 @@ std::string exportToJSON(Net const& net, std::string const& filename)
         file << separator; separator = ",\n";
         file << "            { \"id\": " << p.id << ", \"caption\": \"" << p.caption
              << "\", \"tokens\": " << p.tokens << ", \"x\": " << p.x
-             << ", \"y\": " << p.y;
-
-        // GRAFCET actions
-        if (!p.actions.empty())
-        {
-            file << ", \"actions\": [";
-            std::string action_sep = "";
-            for (auto const& action : p.actions)
-            {
-                file << action_sep;
-                file << "{ \"qualifier\": \"" << qualifierToStr(action.qualifier)
-                     << "\", \"name\": \"" << action.name
-                     << "\", \"script\": \"" << action.script
-                     << "\", \"duration\": " << action.duration << " }";
-                action_sep = ", ";
-            }
-            file << "]";
-        }
-        file << " }";
+             << ", \"y\": " << p.y << " }";
     }
 
     // Transitions
@@ -99,16 +81,30 @@ std::string exportToJSON(Net const& net, std::string const& filename)
 
     // GRAFCET sensors
     separator = "\n";
-    file << "\n       ],\n       \"sensors\": [";
+    file << "\n       ],\n       \"actions\": [";
+    for (auto const& p: net.places())
+    {
+        for (auto const& action : p.actions)
+        {
+            file << separator; separator = ",\n";
+            file << "            { \"place_id\": " << p.id
+                 << ", \"qualifier\": \"" << qualifierToStr(action.qualifier)
+                 << "\", \"name\": \"" << action.name
+                 << "\", \"script\": \"" << action.script
+                 << "\", \"duration\": " << action.duration << " }";
+        }
+    }
+
+    // Inputs (renamed from sensors) with initial value
+    separator = "\n";
+    file << "\n       ],\n       \"inputs\": [";
     for (auto& it: Sensors::instance().database())
     {
         file << separator; separator = ",\n";
         file << "            { \"name\": \"" << it.first.c_str() << "\", "
-             << "\"value\": " << it.second << " }";
+             << "\"initial\": " << it.second << " }";
     }
     file << "\n       ]" << std::endl;
-
-    // TODO GRAFCET actions
 
     file << "    }\n  ]\n";   // nets
     file << "}" << std::endl; // json document
