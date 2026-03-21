@@ -1,5 +1,38 @@
 # Petri Net Examples
 
+## GRAFCET Action Qualifiers
+
+In GRAFCET mode, each step can have actions with different qualifiers that define their behavior according to IEC 60848:
+
+| Qualifier | Name | Description |
+|-----------|------|-------------|
+| **N** | Normal | Action is active while the step is active |
+| **S** | Set (Stored) | Action is latched ON when step becomes active, remains ON until Reset |
+| **R** | Reset | Action is latched OFF when step becomes active |
+| **D** | Delayed | Action becomes active after delay, only while step remains active |
+| **L** | Limited | Action is active for limited duration while step is active |
+| **SD** | Stored & Delayed | Action is set after delay (combination of S and D) |
+| **DS** | Delayed & Stored | Action starts delayed, then stored (combination of D and S) |
+| **SL** | Stored & Limited | Action is set for limited time (combination of S and L) |
+| **P** | Pulse | Single pulse at step activation (impulse action) |
+
+## GRAFCET with Actions (Cylinder Control)
+
+This example demonstrates a pneumatic cylinder control sequence with various action qualifiers:
+- **Init**: Initial waiting state
+- **Extending**: Activates valve V1+ (Normal action)
+- **Extended**: Starts a 2s timer (Delayed) and sets position indicator (Set)
+- **Retracting**: Activates valve V1- (Normal) and resets indicator (Reset)
+- **Alarm**: Sound buzzer (Normal) and flash lamp for 5s (Limited)
+
+Sensors: `Start`, `s0` (retracted position), `s1` (extended position), `Error`, `Reset`
+
+```
+TimedPetriNetEditor data/examples/GrafcetActions.json
+```
+
+---
+
 ## Coffee machine
 
 The client inserts a coin and press to the brew button to get a coffee.
