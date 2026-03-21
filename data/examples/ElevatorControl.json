@@ -3,7 +3,7 @@
   "type": "Petri net",
   "nets": [
     {
-       "name": "Petri net",
+       "name": "Elevator Control",
        "places": [
             { "id": 0, "caption": "Ground floor", "tokens": 1, "x": 391, "y": 38 },
             { "id": 1, "caption": "Going down", "tokens": 0, "x": 484, "y": 249 },

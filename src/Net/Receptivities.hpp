@@ -33,6 +33,29 @@ namespace tpne {
 class Net;
 
 // ****************************************************************************
+//! \brief Registry for cross-graph references in GRAFCET multi-net documents.
+//! Maps net names to their Net pointers for resolving references like "Security:X5"
+// ****************************************************************************
+class NetRegistry
+{
+public:
+    static NetRegistry& instance() { static NetRegistry registry; return registry; }
+
+    void registerNet(std::string const& name, Net* net) { m_nets[name] = net; }
+    void unregisterNet(std::string const& name) { m_nets.erase(name); }
+    Net* findNet(std::string const& name)
+    {
+        auto it = m_nets.find(name);
+        return (it != m_nets.end()) ? it->second : nullptr;
+    }
+    void clear() { m_nets.clear(); }
+
+private:
+    NetRegistry() = default;
+    std::map<std::string, Net*> m_nets;
+};
+
+// ****************************************************************************
 //! \brief Quick and dirty container of sensor boolean values.
 //! \fixme should store analogical value.
 // ****************************************************************************
@@ -107,6 +130,26 @@ public:
         //! \brief Place ID. The GRAFCET net shall no remove the place t let this
         //! ID valid.
         size_t m_id;
+    };
+
+    // *************************************************************************
+    //! \brief Expression for cross-graph step references in GRAFCET.
+    //! Syntax: "GraphName:Xn" where GraphName is the net name and n is step id.
+    //! Example: "Security:X5" refers to step X5 in the "Security" graph.
+    // *************************************************************************
+    class CrossGraphStepExp : public BooleanExp
+    {
+    public:
+
+        //! \param[in] graph_name Name of the target graph/net.
+        //! \param[in] step_name Step name (e.g. "X5").
+        CrossGraphStepExp(std::string const& graph_name, std::string const& step_name);
+        virtual bool evaluate() const override;
+
+    private:
+
+        std::string m_graph_name;
+        size_t m_step_id;
     };
 
     // *************************************************************************
@@ -245,6 +288,7 @@ public:
         static bool isUnitaryOperator(std::string const& token);
         static bool isConst(std::string const& token);
         static bool isState(std::string const& token);
+        static bool isCrossGraphState(std::string const& token);
         static bool isVariable(std::string const& token);
 
         //--------------------------------------------------------------------------

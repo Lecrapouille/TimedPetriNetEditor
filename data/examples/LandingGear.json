@@ -3,7 +3,7 @@
   "type": "Petri net",
   "nets": [
     {
-       "name": "Petri net",
+       "name": "Landing Gear",
        "places": [
             { "id": 0, "caption": "High speed", "tokens": 0, "x": 165, "y": 155 },
             { "id": 1, "caption": "Low speed", "tokens": 1, "x": 469, "y": 142 },

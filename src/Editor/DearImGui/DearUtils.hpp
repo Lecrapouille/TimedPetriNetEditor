@@ -24,6 +24,7 @@
 #  include <string>
 #  include "imgui/imgui.h"
 
+#ifndef IMGUI_DEFINE_MATH_OPERATORS
 //------------------------------------------------------------------------------
 static inline ImVec2& operator+=(ImVec2& lhs, const ImVec2& rhs)
 {
@@ -53,16 +54,17 @@ static inline ImVec2 operator-(ImVec2 const& lhs, ImVec2 const& rhs)
 }
 
 //------------------------------------------------------------------------------
-static inline ImVec2 operator*(ImVec2 const& lhs, float const& rhs)
+static inline ImVec2 operator*(ImVec2 const& lhs, float const rhs)
 {
     return ImVec2(lhs.x * rhs, lhs.y * rhs);
 }
 
 //------------------------------------------------------------------------------
-static inline ImVec2 operator/(ImVec2 const& lhs, float const& rhs)
+static inline ImVec2 operator/(ImVec2 const& lhs, float const rhs)
 {
     return ImVec2(lhs.x / rhs, lhs.y / rhs);
 }
+#endif // !IMGUI_DEFINE_MATH_OPERATORS
 
 //------------------------------------------------------------------------------
 void inputInteger(std::string const& title, size_t const maxTokens, size_t& tokens);

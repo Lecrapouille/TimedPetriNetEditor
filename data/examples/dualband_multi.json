@@ -1,0 +1,90 @@
+{
+  "revision": 4,
+  "type": "GRAFCET",
+  "nets": [
+    {
+       "name": "Production",
+       "places": [
+            { "id": 0, "caption": "Attente depart", "tokens": 1, "x": 100, "y": 200 },
+            { "id": 1, "caption": "Demarrage moteurs", "tokens": 0, "x": 300, "y": 200 },
+            { "id": 2, "caption": "Arret moteurs", "tokens": 0, "x": 200, "y": 400 }
+       ],
+       "transitions": [
+            { "id": 0, "caption": "Controle:X4 Dcy .", "x": 200, "y": 100, "angle": 0 },
+            { "id": 1, "caption": "Acy", "x": 300, "y": 300, "angle": 0 },
+            { "id": 2, "caption": "true", "x": 100, "y": 300, "angle": 0 }
+       ],
+       "arcs": [
+            { "from": "P0", "to": "T0" },
+            { "from": "T0", "to": "P1", "duration": 5 },
+            { "from": "P1", "to": "T1" },
+            { "from": "T1", "to": "P2", "duration": 1 },
+            { "from": "P2", "to": "T2" },
+            { "from": "T2", "to": "P0", "duration": 4 }
+       ],
+       "actions": [
+       ]
+    },
+    {
+       "name": "Controle",
+       "places": [
+            { "id": 0, "caption": "Attente validation panne", "tokens": 1, "x": 350, "y": -0 },
+            { "id": 1, "caption": "Debarasser cartons", "tokens": 0, "x": 350, "y": 200 },
+            { "id": 2, "caption": "Attente selec manu ou auto", "tokens": 0, "x": 350, "y": 400 },
+            { "id": 3, "caption": "Debarasser cartons", "tokens": 0, "x": 350, "y": 600 },
+            { "id": 4, "caption": "Production normale", "tokens": 0, "x": 350, "y": 800 },
+            { "id": 5, "caption": "Marche manuelle", "tokens": 0, "x": 350, "y": 1000 }
+       ],
+       "transitions": [
+            { "id": 0, "caption": "Val", "x": 350, "y": 100, "angle": 0 },
+            { "id": 1, "caption": "true", "x": 350, "y": 300, "angle": 0 },
+            { "id": 2, "caption": "Auto Val .", "x": 350, "y": 500, "angle": 0 },
+            { "id": 3, "caption": "Manu Val .", "x": 650, "y": 500, "angle": 0 },
+            { "id": 4, "caption": "true", "x": 350, "y": 700, "angle": 0 },
+            { "id": 5, "caption": "Manu Val .", "x": 350, "y": 900, "angle": 0 },
+            { "id": 6, "caption": "Auto Val .", "x": 100, "y": 500, "angle": 0 }
+       ],
+       "arcs": [
+            { "from": "P0", "to": "T0" },
+            { "from": "T0", "to": "P1", "duration": 3 },
+            { "from": "P1", "to": "T1" },
+            { "from": "T1", "to": "P2", "duration": 4 },
+            { "from": "P2", "to": "T2" },
+            { "from": "P2", "to": "T3" },
+            { "from": "T2", "to": "P3", "duration": 4 },
+            { "from": "P3", "to": "T4" },
+            { "from": "T4", "to": "P4", "duration": 4 },
+            { "from": "P4", "to": "T5" },
+            { "from": "T5", "to": "P5", "duration": 5 },
+            { "from": "T3", "to": "P5", "duration": 5 },
+            { "from": "P5", "to": "T6" },
+            { "from": "T6", "to": "P0", "duration": 5 }
+       ],
+       "actions": [
+       ]
+    },
+    {
+       "name": "Securite",
+       "places": [
+            { "id": 0, "caption": "Forcage GPN & GC", "tokens": 1, "x": 200, "y": 400 },
+            { "id": 1, "caption": "Attente", "tokens": 0, "x": 200, "y": 500 }
+       ],
+       "transitions": [
+            { "id": 0, "caption": "Au ! Rearm .", "x": 300, "y": 450, "angle": 0 },
+            { "id": 1, "caption": "Au", "x": 100, "y": 450, "angle": 0 }
+       ],
+       "arcs": [
+            { "from": "P0", "to": "T0" },
+            { "from": "T0", "to": "P1", "duration": 2 },
+            { "from": "P1", "to": "T1" },
+            { "from": "T1", "to": "P0", "duration": 4 }
+       ],
+       "actions": [
+       ]
+    }
+  ],
+  "inputs": [
+    { "name": "Acy", "initial": 0 },
+    { "name": "Dcy", "initial": 0 }
+  ]
+}

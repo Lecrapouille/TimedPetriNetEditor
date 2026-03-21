@@ -29,70 +29,15 @@
 namespace tpne {
 
 //------------------------------------------------------------------------------
-std::string importFromJSON(Net& net, std::string const& filename)
+// Helper function to parse a single net from JSON
+static std::string parseNetFromJSON(Net& net, nlohmann::json const& jnet)
 {
     std::stringstream error;
-
-    // Check if file exists
-    std::ifstream file(filename);
-    if (!file)
-    {
-        error << "Failed opening '" << filename << "'. Reason was '"
-              << strerror(errno) << "'" << std::endl;
-        return error.str();
-    }
-
-    // Load the JSON content into dictionaries
-    nlohmann::json json;
-    try
-    {
-        file >> json;
-    }
-    catch (std::exception const& e)
-    {
-        error << "Failed parsing '" << filename << "'. Reason was '"
-              << e.what() << "'" << std::endl;
-        return error.str();
-    }
-
-    // Get the type of net
-    if (json.contains("type"))
-    {
-        std::string type = std::string(json["type"]);
-        if (type == "GRAFCET") {
-            net.reset(TypeOfNet::GRAFCET);
-        } else if (type == "Petri net") {
-            net.reset(TypeOfNet::PetriNet);
-        } else if (type == "Timed Petri net") {
-            net.reset(TypeOfNet::TimedPetriNet);
-        } else if (type == "Timed event graph") {
-            net.reset(TypeOfNet::TimedEventGraph);
-        } else {
-            error << "Failed parsing '" << filename << "'. Reason was '"
-                << "Unknown type of net: " << type << "'" << std::endl;
-            return error.str();
-        }
-    }
-    else
-    {
-        error << "Failed parsing '" << filename << "'. Reason was '"
-              << "Missing type of Net'" << std::endl;
-        return error.str();
-    }
-
-    if (!json.contains("nets"))
-    {
-        error << "Failed parsing '" << filename << "'. Reason was '"
-              << "Missing JSON nets field'" << std::endl;
-        return error.str();
-    }
-    nlohmann::json const& jnet = json["nets"][0];
 
     // Net name
     if (!jnet.contains("name"))
     {
-        error << "Failed parsing '" << filename << "'. Reason was '"
-              << "Missing JSON net name'" << std::endl;
+        error << "Missing JSON net name";
         return error.str();
     }
     net.name = std::string(jnet["name"]);
@@ -128,9 +73,7 @@ std::string importFromJSON(Net& net, std::string const& filename)
         Node* to = net.findNode(a["to"]);
         if ((from == nullptr) || (to == nullptr))
         {
-            error << "Failed parsing '" << filename << "'. Reason was 'Arc "
-                  << a["from"] << " -> " << a["to"] << " refer to unknown nodes'"
-                  << std::endl;
+            error << "Arc " << a["from"] << " -> " << a["to"] << " refers to unknown nodes";
             return error.str();
         }
 
@@ -141,22 +84,18 @@ std::string importFromJSON(Net& net, std::string const& filename)
             duration = *it;
             if (duration < 0.0f)
             {
-                error << "Failed parsing '" << filename << "'. Reason was 'Arc "
-                      << from->key << " -> " << to->key << " has negative duration'"
-                      << std::endl;
+                error << "Arc " << from->key << " -> " << to->key << " has negative duration";
                 return error.str();
             }
         }
         if (!net.addArc(*from, *to, duration))
         {
-            error << "Failed loading " << filename
-                  << ". Arc " << from->key << " -> " << to->key
-                  << " is badly formed" << std::endl;
+            error << "Arc " << from->key << " -> " << to->key << " is badly formed";
             return error.str();
         }
     }
 
-    // GRAFCET step actions
+    // GRAFCET step actions (separate array format)
     if (jnet.contains("actions"))
     {
         for (nlohmann::json const& a : jnet["actions"])
@@ -175,28 +114,132 @@ std::string importFromJSON(Net& net, std::string const& filename)
         }
     }
 
-    // GRAFCET transition inputs
-    Sensors::instance().clear();
-    if (jnet.contains("inputs"))
+    net.resetReceptivies();
+    return {};
+}
+
+//------------------------------------------------------------------------------
+std::string importAllNetsFromJSON(std::vector<Net>& nets, std::string const& filename)
+{
+    std::stringstream error;
+
+    // Check if file exists
+    std::ifstream file(filename);
+    if (!file)
     {
-        for (nlohmann::json const& i : jnet["inputs"])
+        error << "Failed opening '" << filename << "'. Reason was '"
+              << strerror(errno) << "'" << std::endl;
+        return error.str();
+    }
+
+    // Load the JSON content
+    nlohmann::json json;
+    try
+    {
+        file >> json;
+    }
+    catch (std::exception const& e)
+    {
+        error << "Failed parsing '" << filename << "'. Reason was '"
+              << e.what() << "'" << std::endl;
+        return error.str();
+    }
+
+    // Get the type of net
+    TypeOfNet netType = TypeOfNet::PetriNet;
+    if (json.contains("type"))
+    {
+        std::string type = std::string(json["type"]);
+        if (type == "GRAFCET") {
+            netType = TypeOfNet::GRAFCET;
+        } else if (type == "Petri net") {
+            netType = TypeOfNet::PetriNet;
+        } else if (type == "Timed Petri net") {
+            netType = TypeOfNet::TimedPetriNet;
+        } else if (type == "Timed event graph") {
+            netType = TypeOfNet::TimedEventGraph;
+        } else {
+            error << "Failed parsing '" << filename << "'. Unknown type of net: " << type << std::endl;
+            return error.str();
+        }
+    }
+
+    if (!json.contains("nets"))
+    {
+        error << "Failed parsing '" << filename << "'. Missing JSON nets field" << std::endl;
+        return error.str();
+    }
+
+    // Parse all nets
+    nets.clear();
+    for (nlohmann::json const& jnet : json["nets"])
+    {
+        Net net(netType);
+        std::string parseError = parseNetFromJSON(net, jnet);
+        if (!parseError.empty())
+        {
+            error << "Failed parsing '" << filename << "'. " << parseError << std::endl;
+            return error.str();
+        }
+        nets.push_back(std::move(net));
+    }
+
+    // GRAFCET inputs (shared between all nets)
+    Sensors::instance().clear();
+    if (json.contains("inputs"))
+    {
+        for (nlohmann::json const& i : json["inputs"])
         {
             std::string name = i["name"];
             int initial = i.value("initial", 0);
             Sensors::instance().set(name, initial);
         }
     }
-    else if (jnet.contains("sensors"))
+    // Also check in first net for backward compatibility
+    else if (!nets.empty())
     {
-        for (nlohmann::json const& s : jnet["sensors"])
+        nlohmann::json const& jnet = json["nets"][0];
+        if (jnet.contains("inputs"))
         {
-            std::string name = s["name"];
-            int value = s.value("value", s.value("initial", 0));
-            Sensors::instance().set(name, value);
+            for (nlohmann::json const& i : jnet["inputs"])
+            {
+                std::string name = i["name"];
+                int initial = i.value("initial", 0);
+                Sensors::instance().set(name, initial);
+            }
+        }
+        else if (jnet.contains("sensors"))
+        {
+            for (nlohmann::json const& s : jnet["sensors"])
+            {
+                std::string name = s["name"];
+                int value = s.value("value", s.value("initial", 0));
+                Sensors::instance().set(name, value);
+            }
         }
     }
 
-    net.resetReceptivies();
+    return {};
+}
+
+//------------------------------------------------------------------------------
+std::string importFromJSON(Net& net, std::string const& filename)
+{
+    // Use the new multi-net import function and take only the first net
+    std::vector<Net> nets;
+    std::string error = importAllNetsFromJSON(nets, filename);
+    if (!error.empty())
+    {
+        return error;
+    }
+
+    if (nets.empty())
+    {
+        return "No nets found in file '" + filename + "'";
+    }
+
+    // Move first net to output
+    net = std::move(nets[0]);
     return {};
 }
 

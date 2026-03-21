@@ -54,6 +54,10 @@ public:
     bool generateSensor(Transition const& transition);
     inline TimedTokens const& timedTokens() const { return m_timed_tokens; }
     inline Receptivities const& receptivities() const { return m_receptivities; }
+    //! \brief Store current marking as initial marking (for simulation reset)
+    void storeInitialMarking();
+    //! \brief Restore marking to the stored initial marking
+    void restoreInitialMarking();
 
 private:
 

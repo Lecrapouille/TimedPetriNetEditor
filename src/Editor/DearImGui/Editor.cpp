@@ -18,6 +18,7 @@
 // along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.
 //=============================================================================
 
+#define IMGUI_DEFINE_MATH_OPERATORS
 #include "TimedPetriNetEditor/PetriNet.hpp"
 #include "TimedPetriNetEditor/Algorithms.hpp"
 #include "TimedPetriNetEditor/SparseMatrix.hpp"
@@ -26,6 +27,7 @@
 #include "Editor/DearImGui/DearUtils.hpp"
 #include "Editor/DearImGui/KeyBindings.hpp"
 #include "Utils/Utils.hpp"
+#include "imgui/imgui_internal.h"
 #include <algorithm>
 #include <map>
 
@@ -49,7 +51,6 @@ Editor::Editor(size_t const width, size_t const height,
                std::string const& title)
     : Application(width, height, title),
       m_path(GET_DATA_PATH),
-      m_simulation(m_net, m_messages),
       m_view(*this)
 {
 #ifdef __EMSCRIPTEN__
@@ -61,6 +62,9 @@ Editor::Editor(size_t const width, size_t const height,
     m_messages.setInfo("Path: " + m_path.toString());
 
     m_states.title = title;
+
+    // Create initial empty document
+    createDocument();
 
     // Set imgui.ini loading/saving location
     ImGuiIO &io = ImGui::GetIO();
@@ -80,6 +84,130 @@ Editor::Editor(size_t const width, size_t const height,
 #endif
 }
 
+//------------------------------------------------------------------------------
+Document& Editor::activeDocument()
+{
+    if (m_documents.empty())
+    {
+        createDocument();
+    }
+    return *m_documents[m_active_document_index];
+}
+
+//------------------------------------------------------------------------------
+Document const& Editor::activeDocument() const
+{
+    return *m_documents[m_active_document_index];
+}
+
+//------------------------------------------------------------------------------
+Net& Editor::net()
+{
+    return activeDocument().activeNet().net;
+}
+
+//------------------------------------------------------------------------------
+Net const& Editor::net() const
+{
+    return activeDocument().activeNet().net;
+}
+
+//------------------------------------------------------------------------------
+Simulation& Editor::simulation()
+{
+    return *activeDocument().activeNet().simulation;
+}
+
+//------------------------------------------------------------------------------
+Simulation const& Editor::simulation() const
+{
+    return *activeDocument().activeNet().simulation;
+}
+
+//------------------------------------------------------------------------------
+void Editor::newDocument()
+{
+    createDocument();
+    m_active_document_index = m_documents.size() - 1;
+}
+
+//------------------------------------------------------------------------------
+Document& Editor::createDocument()
+{
+    m_documents.push_back(std::make_unique<Document>(m_messages));
+    auto& doc = *m_documents.back();
+    doc.addNet(TypeOfNet::PetriNet, "Net");
+    doc.registerNets();
+    return doc;
+}
+
+//------------------------------------------------------------------------------
+void Editor::closeDocument(Document* doc)
+{
+    if (doc == nullptr)
+        return;
+
+    for (size_t i = 0; i < m_documents.size(); ++i)
+    {
+        if (m_documents[i].get() == doc)
+        {
+            // Unregister nets from the global registry before closing
+            doc->unregisterNets();
+            m_documents.erase(m_documents.begin() + static_cast<ptrdiff_t>(i));
+            if (m_active_document_index >= m_documents.size() && !m_documents.empty())
+            {
+                m_active_document_index = m_documents.size() - 1;
+            }
+            if (m_documents.empty())
+            {
+                createDocument();
+            }
+            break;
+        }
+    }
+}
+
+//------------------------------------------------------------------------------
+void Editor::setActiveDocument(size_t index)
+{
+    if (index < m_documents.size())
+    {
+        m_active_document_index = index;
+    }
+}
+
+//------------------------------------------------------------------------------
+void Editor::addNetToActiveDocument(TypeOfNet type, std::string const& name)
+{
+    activeDocument().addNet(type, name);
+}
+
+//------------------------------------------------------------------------------
+void Editor::createGEMMADocument()
+{
+    // Create a new document or clear current one
+    auto& doc = activeDocument();
+
+    // Unregister old nets
+    doc.unregisterNets();
+    doc.nets().clear();
+
+    // Create the 3 standard GEMMA graphs
+    doc.addNet(TypeOfNet::GRAFCET, "Securite");
+    doc.addNet(TypeOfNet::GRAFCET, "Production");
+    doc.addNet(TypeOfNet::GRAFCET, "Controle");
+
+    // Reset document state
+    doc.setFilepath("");
+    doc.setModified(true);
+    doc.setActiveNetIndex(0);
+
+    // Request vertical split layout
+    m_states.request_vertical_split = true;
+
+    m_messages.setInfo("Created GEMMA document with 3 graphs: Securite, Production, Controle");
+}
+
 #ifdef WITH_MQTT
 //------------------------------------------------------------------------------
 bool Editor::initMQTT()
@@ -94,7 +222,7 @@ bool Editor::initMQTT()
     // ] } ] }'
     static auto onLoadCommandReceived = [&](const mqtt::Message& msg)
     {
-        if (m_simulation.running)
+        if (simulation().running)
         {
             m_messages.setError("MQTT: cannot load new Petri net while the simulation is still in progress");
             return ;
@@ -109,7 +237,7 @@ bool Editor::initMQTT()
 
         // Import the file
         bool shall_springify;
-        std::string error = loadFromFile(m_net, path, shall_springify);
+        std::string error = loadFromFile(net(), path, shall_springify);
         if (error.empty())
         {
             m_messages.setInfo("Loaded with success " + path);
@@ -124,8 +252,8 @@ bool Editor::initMQTT()
     // mosquitto_pub -h localhost -t "tpne/start" -m ''
     static auto onStartSimulationCommandReceived = [&](mqtt::Message const& /*msg*/)
     {
-        if ((m_net.type() == TypeOfNet::TimedEventGraph) ||
-            (m_net.type() == TypeOfNet::TimedPetriNet))
+        if ((net().type() == TypeOfNet::TimedEventGraph) ||
+            (net().type() == TypeOfNet::TimedPetriNet))
         {
             m_messages.setError(
                 "MQTT: Please convert first to non timed net before starting simulation");
@@ -138,7 +266,7 @@ bool Editor::initMQTT()
     // mosquitto_pub -h localhost -t "tpne/stop" -m ''
     static auto onStopSimulationCommandReceived = [&](mqtt::Message const& /*msg*/)
     {
-        m_simulation.running = false;
+        simulation().running = false;
         framerate(60);
     };
 
@@ -146,13 +274,13 @@ bool Editor::initMQTT()
     // mosquitto_pub -h localhost -t "tpne/fire" -m '10100'
     static auto onFireTransitionCommandReceived = [&](mqtt::Message const& msg)
     {
-        if (!m_simulation.running)
+        if (!simulation().running)
         {
             m_messages.setError("MQTT: The simulation is not running");
             return ;
         }
         const char* message = static_cast<const char*>(msg.payload);
-        Net::Transitions& transitions = m_net.transitions();
+        Net::Transitions& transitions = net().transitions();
         size_t i = size_t(msg.payloadlen);
         if (i == transitions.size())
         {
@@ -233,9 +361,9 @@ void Editor::setSavePath(std::string const& filepath)
 }
 
 //------------------------------------------------------------------------------
-void Editor::run(Net const& net)
+void Editor::run(Net const& net_to_load)
 {
-    m_net = net;
+    this->net() = net_to_load;
 
     // Start the infinite loop
     Application::run();
@@ -244,80 +372,145 @@ void Editor::run(Net const& net)
 //------------------------------------------------------------------------------
 void Editor::run(std::string const& filepath)
 {
-    // Load Petri net file if passed with command line
     if (!filepath.empty())
     {
-        bool shall_springify;
-        std::string error = loadFromFile(m_net, filepath, shall_springify);
-        if (error.empty())
-        {
-            m_messages.setInfo("Loaded with success " + filepath);
-            setSavePath(filepath);
-            if (shall_springify)
-            {
-                springify();
-            }
-        }
-        else
-        {
-            m_messages.setError(error);
-        }
+        loadDocumentFromFile(filepath);
     }
 
-    // Start the infinite loop
     Application::run();
 }
 
 //------------------------------------------------------------------------------
 void Editor::onUpdate(float const dt)
 {
-    if (m_net.modified)
+    if (net().modified)
     {
-        title(m_states.title + " -- " + m_net.name + " **");
+        title(m_states.title + " -- " + net().name + " **");
     }
     else
     {
-        title(m_states.title + " -- " + m_net.name);
+        title(m_states.title + " -- " + net().name);
     }
 
-    m_simulation.step(dt);
+    // Step all simulations in the active document
+    activeDocument().stepAllSimulations(dt);
     m_spring.update();
 }
 
 //------------------------------------------------------------------------------
 void Editor::onDraw()
 {
-    ImGui::DockSpaceOverViewport();
+    ImGuiID dockspace_id = ImGui::DockSpaceOverViewport();
+
+    if (m_states.request_vertical_split && activeDocument().netCount() > 1)
+    {
+        auto& doc = activeDocument();
+        size_t count = doc.netCount();
+
+        ImGuiDockNode* central_node = ImGui::DockBuilderGetCentralNode(dockspace_id);
+        ImGuiID target_id;
+
+        if (central_node)
+        {
+            target_id = central_node->ID;
+        }
+        else
+        {
+            target_id = dockspace_id;
+            ImGui::DockBuilderRemoveNode(dockspace_id);
+            ImGui::DockBuilderAddNode(dockspace_id,
+                ImGuiDockNodeFlags_DockSpace);
+            ImGui::DockBuilderSetNodeSize(dockspace_id,
+                ImGui::GetMainViewport()->Size);
+        }
+
+        std::vector<ImGuiID> dock_ids;
+        ImGuiID remaining = target_id;
+        for (size_t i = 0; i < count - 1; ++i)
+        {
+            ImGuiID dock_left;
+            float ratio = 1.0f / static_cast<float>(count - i);
+            ImGui::DockBuilderSplitNode(remaining, ImGuiDir_Left,
+                ratio, &dock_left, &remaining);
+            dock_ids.push_back(dock_left);
+        }
+        dock_ids.push_back(remaining);
+
+        for (size_t i = 0; i < count; ++i)
+        {
+            std::string title = doc.getNet(i).net.name +
+                "###Net" + std::to_string(i);
+            ImGui::DockBuilderDockWindow(title.c_str(), dock_ids[i]);
+        }
+
+        ImGui::DockBuilderFinish(dockspace_id);
+        m_states.request_vertical_split = false;
+    }
 
     menu();
     console();
     messagebox();
     inspector();
     view();
-    //ImGui::ShowDemoWindow();
 }
 
 //------------------------------------------------------------------------------
 void Editor::view()
 {
-    static bool open;
-    if (!ImGui::Begin("Petri net", &open))
+    auto& doc = activeDocument();
+
+    for (size_t i = 0; i < doc.netCount(); ++i)
     {
+        auto& entry = doc.getNet(i);
+        if (!entry.visible)
+            continue;
+
+        std::string window_title = entry.net.name + "###Net" + std::to_string(i);
+        bool* close_button = (doc.netCount() > 1) ? nullptr : &entry.visible;
+
+        if (!ImGui::Begin(window_title.c_str(), close_button))
+        {
+            ImGui::End();
+            continue;
+        }
+
+        if (ImGui::IsWindowFocused())
+        {
+            doc.setActiveNetIndex(i);
+        }
+
+        bool is_active_view = (i == doc.activeNetIndex());
+        m_view.loadViewState(entry.view_state);
+        m_view.reshape();
+        if (is_active_view)
+        {
+            m_view.onHandleInput(entry.net, *entry.simulation);
+        }
+        m_view.drawPetriNet(entry.net, *entry.simulation, is_active_view);
+        m_view.saveViewState(entry.view_state);
         ImGui::End();
-        return;
     }
 
-    m_view.reshape();
-    m_view.onHandleInput();
-    m_view.drawPetriNet(m_net, m_simulation);
-    ImGui::End();
+    if (doc.netCount() == 1 && !doc.getNet(0).visible)
+    {
+        if (doc.isModified())
+        {
+            m_states.request_quitting = true;
+            m_states.do_save_as = true;
+        }
+        else
+        {
+            doc.getNet(0).visible = true;
+            m_states.request_new = true;
+        }
+    }
 }
 
 //------------------------------------------------------------------------------
 void Editor::close()
 {
-    m_simulation.running = false;
-    m_states.do_save_as = m_net.modified;
+    simulation().running = false;
+    m_states.do_save_as = net().modified;
     m_states.request_quitting = true;
 }
 
@@ -328,14 +521,23 @@ void Editor::menu()
     {
         if (ImGui::BeginMenu("File"))
         {
-            if (ImGui::MenuItem("New", nullptr, false))
+            if (ImGui::MenuItem("New Document", nullptr, false))
             {
                 m_states.request_new = true;
+            }
+            if (ImGui::MenuItem("New Document (Keep Current)", nullptr, false))
+            {
+                newDocument();
             }
 
             ImGui::Separator();
             if (ImGui::MenuItem("Open", nullptr, false))
             {
+                m_states.do_load = true;
+            }
+            if (ImGui::MenuItem("Open in New Document", nullptr, false))
+            {
+                newDocument();
                 m_states.do_load = true;
             }
             if (ImGui::BeginMenu("Import from"))
@@ -357,13 +559,33 @@ void Editor::menu()
                 {
                     m_states.do_save_as = true;
                 }
-                else
+                else if (activeDocument().netCount() > 1)
                 {
-                    std::string error = saveToFile(m_net, m_path_to_save);
+                    std::vector<Net> nets;
+                    auto& doc = activeDocument();
+                    nets.reserve(doc.netCount());
+                    for (size_t i = 0; i < doc.netCount(); ++i)
+                        nets.push_back(doc.getNet(i).net);
+                    std::string error = exportAllNetsToJSON(nets, m_path_to_save);
                     if (error.empty())
                     {
                         m_messages.setInfo("Saved with success " + m_path_to_save);
-                        m_net.modified = false;
+                        doc.setModified(false);
+                        for (size_t i = 0; i < doc.netCount(); ++i)
+                            doc.getNet(i).net.modified = false;
+                    }
+                    else
+                    {
+                        m_messages.setError(error);
+                    }
+                }
+                else
+                {
+                    std::string error = saveToFile(net(), m_path_to_save);
+                    if (error.empty())
+                    {
+                        m_messages.setInfo("Saved with success " + m_path_to_save);
+                        net().modified = false;
                     }
                     else
                     {
@@ -387,6 +609,32 @@ void Editor::menu()
                 ImGui::EndMenu();
             }
 
+            // Multi-document management
+            if (m_documents.size() > 1)
+            {
+                ImGui::Separator();
+                ImGui::TextDisabled("Open Documents:");
+                for (size_t i = 0; i < m_documents.size(); ++i)
+                {
+                    auto& doc = *m_documents[i];
+                    std::string label = doc.title();
+                    if (doc.isModified())
+                    {
+                        label += " *";
+                    }
+                    bool is_active = (i == m_active_document_index);
+                    if (ImGui::MenuItem(label.c_str(), nullptr, is_active))
+                    {
+                        setActiveDocument(i);
+                    }
+                }
+                ImGui::Separator();
+                if (ImGui::MenuItem("Close Document"))
+                {
+                    closeDocument(&activeDocument());
+                }
+            }
+
             ImGui::Separator();
             if (ImGui::MenuItem("Exit", nullptr, false))
             {
@@ -398,8 +646,8 @@ void Editor::menu()
         {
             if (ImGui::BeginMenu("Type of net"))
             {
-                static int current_type = int(m_net.type());
-                current_type = int(m_net.type());  // Sync with actual net type
+                static int current_type = int(net().type());
+                current_type = int(net().type());  // Sync with actual net type
                 if (ImGui::RadioButton("Petri net", &current_type, 0))
                     switchOfNet(TypeOfNet::PetriNet);
                 if (ImGui::RadioButton("Timed Petri net", &current_type, 1))
@@ -413,9 +661,9 @@ void Editor::menu()
 
             if (ImGui::MenuItem("To Canonical form"))
             {
-                Net pn(m_net.type());
-                toCanonicalForm(m_net, pn);
-                m_net = pn;
+                Net pn(net().type());
+                toCanonicalForm(net(), pn);
+                net() = pn;
             }
 
             ImGui::Separator();
@@ -436,17 +684,17 @@ void Editor::menu()
             }
             if (ImGui::MenuItem("Align nodes to grid", nullptr, false))
             {
-                for (auto& place : m_net.places())
+                for (auto& place : net().places())
                 {
                     place.x = m_view.grid.snapValue(place.x);
                     place.y = m_view.grid.snapValue(place.y);
                 }
-                for (auto& trans : m_net.transitions())
+                for (auto& trans : net().transitions())
                 {
                     trans.x = m_view.grid.snapValue(trans.x);
                     trans.y = m_view.grid.snapValue(trans.y);
                 }
-                m_net.modified = true;
+                net().modified = true;
             }
             if (ImGui::MenuItem("Snap to grid", nullptr, m_view.grid.snap))
             {
@@ -461,16 +709,68 @@ void Editor::menu()
                 m_states.do_screenshot = true;
             }
             ImGui::Separator();
-            if (ImGui::MenuItem(m_simulation.running
+            if (ImGui::MenuItem(simulation().running
                                 ? "Stop simulation"
-                                : "Start simulation", nullptr, false))
+                                : "Start simulation", "Space", false))
             {
                 toogleStartSimulation();
+            }
+            // Show "Start/Stop All" when document has multiple nets
+            if (activeDocument().netCount() > 1)
+            {
+                bool any_running = activeDocument().isAnySimulationRunning();
+                if (ImGui::MenuItem(any_running
+                                    ? "Stop All simulations"
+                                    : "Start All simulations", nullptr, false))
+                {
+                    toogleStartAllSimulations();
+                }
             }
             ImGui::EndMenu();
         }
 
-        if ((m_net.type() == TypeOfNet::TimedEventGraph) || (isEventGraph(m_net)))
+        // Edit menu for multi-net document management
+        if (ImGui::BeginMenu("Edit"))
+        {
+            if (ImGui::BeginMenu("Add Net"))
+            {
+                if (ImGui::MenuItem("Add Petri Net"))
+                {
+                    addNetToActiveDocument(TypeOfNet::PetriNet, "PetriNet" + std::to_string(activeDocument().netCount() + 1));
+                }
+                if (ImGui::MenuItem("Add GRAFCET"))
+                {
+                    addNetToActiveDocument(TypeOfNet::GRAFCET, "GRAFCET" + std::to_string(activeDocument().netCount() + 1));
+                }
+                ImGui::Separator();
+                ImGui::TextDisabled("GEMMA Templates:");
+                if (ImGui::MenuItem("Create GEMMA Document (3 graphs)"))
+                {
+                    createGEMMADocument();
+                }
+                ImGui::EndMenu();
+            }
+
+            // Show list of nets in document
+            if (activeDocument().netCount() > 1)
+            {
+                ImGui::Separator();
+                ImGui::TextDisabled("Nets in document:");
+                for (size_t i = 0; i < activeDocument().netCount(); ++i)
+                {
+                    auto& entry = activeDocument().getNet(i);
+                    bool is_active = (i == activeDocument().activeNetIndex());
+                    if (ImGui::MenuItem(entry.net.name.c_str(), nullptr, is_active))
+                    {
+                        activeDocument().setActiveNetIndex(i);
+                    }
+                }
+            }
+
+            ImGui::EndMenu();
+        }
+
+        if ((net().type() == TypeOfNet::TimedEventGraph) || (isEventGraph(net())))
         {
             if (ImGui::BeginMenu("Graph Events"))
             {
@@ -531,13 +831,13 @@ void Editor::menu()
     {
         // Request to save the modified net before quitting, else quit the
         // application.
-        if (m_net.modified) { m_states.do_save_as = true; } else { halt(); }
+        if (net().modified) { m_states.do_save_as = true; } else { halt(); }
     }
     if (m_states.request_new)
     {
         // Request to save the modified net before creating new document, else
         // clear the net.
-        if (m_net.modified) { m_states.do_save_as = true; } else { m_marked_arcs.clear(); clearNet(); m_net.modified = false; m_path_to_save.clear(); m_states.request_new = false; }
+        if (net().modified) { m_states.do_save_as = true; } else { m_marked_arcs.clear(); clearNet(); net().modified = false; m_path_to_save.clear(); m_states.request_new = false; }
     }
 }
 
@@ -556,7 +856,7 @@ void Editor::showAdjacencyMatrices() const
         ImGui::PopStyleVar();
 
         SparseMatrix<MaxPlus> tokens; SparseMatrix<MaxPlus> durations;
-        toAdjacencyMatrices(m_net, tokens, durations);
+        toAdjacencyMatrices(net(), tokens, durations);
 
         ImGuiTabBarFlags tab_bar_flags = ImGuiTabBarFlags_None;
         if (ImGui::BeginTabBar("adjacency", tab_bar_flags))
@@ -613,13 +913,13 @@ void Editor::showCounterOrDaterEquation() const
         {
             if (ImGui::BeginTabItem("Counter"))
             {
-                ImGui::Text("%s", showCounterEquation(m_net, "", use_caption, tropical_notation)
+                ImGui::Text("%s", showCounterEquation(net(), "", use_caption, tropical_notation)
                     .str().c_str());
                 ImGui::EndTabItem();
             }
             if (ImGui::BeginTabItem("Dater"))
             {
-                ImGui::Text("%s", showDaterEquation(m_net, "", use_caption, tropical_notation)
+                ImGui::Text("%s", showDaterEquation(net(), "", use_caption, tropical_notation)
                     .str().c_str());
                 ImGui::EndTabItem();
             }
@@ -653,7 +953,7 @@ void Editor::showDynamicLinearSystem() const
         static bool cached_valid = false;
         if (!cached_valid)
         {
-            toSysLin(m_net, cached_D, cached_A, cached_B, cached_C);
+            toSysLin(net(), cached_D, cached_A, cached_B, cached_C);
             cached_valid = true;
         }
 
@@ -745,7 +1045,7 @@ void Editor::showCriticalCycles() //const
         static bool cached_valid = false;
         if (!cached_valid)
         {
-            cached = findCriticalCycle(m_net);
+            cached = findCriticalCycle(net());
             cached_valid = true;
         }
         CriticalCycleResult const& res = cached;
@@ -764,7 +1064,7 @@ void Editor::showCriticalCycles() //const
                 if (ImGui::BeginTabItem("Critical cycle"))
                 {
                     std::stringstream txt;
-                    if (m_net.type() == TypeOfNet::TimedEventGraph)
+                    if (net().type() == TypeOfNet::TimedEventGraph)
                     {
                         // Only show transitions
                         for (size_t it = 0u; it < res.arcs.size(); it += 2u)
@@ -790,7 +1090,7 @@ void Editor::showCriticalCycles() //const
                 }
                 if (ImGui::BeginTabItem("Cycle durations"))
                 {
-                    const auto& tr = m_net.transitions();
+                    const auto& tr = net().transitions();
                     std::stringstream txt;
                     for (size_t i = 0u; i < res.durations.size(); ++i)
                     {
@@ -997,12 +1297,12 @@ void Editor::inspector()
     // InputText callback: GRAFCET transitivities modified ?
     static bool compiled = false;
     // Do not allow editing when running simulation
-    const auto readonly = m_simulation.running ?
+    const auto readonly = simulation().running ?
         ImGuiInputTextFlags_ReadOnly : ImGuiInputTextFlags_None;
 
     // Place captions and tokens
     {
-        ImGui::Begin(m_net.type() == TypeOfNet::GRAFCET ? "Steps" : "Places");
+        ImGui::Begin(net().type() == TypeOfNet::GRAFCET ? "Steps" : "Places");
 
         // Options
         ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(0, 0));
@@ -1012,7 +1312,7 @@ void Editor::inspector()
         ImGui::PopStyleVar();
         ImGui::Separator();
 
-        for (auto& place: m_net.places())
+        for (auto& place: net().places())
         {
             ImGui::PushID(place.key.c_str());
             ImGui::AlignTextToFramePadding();
@@ -1059,17 +1359,17 @@ void Editor::inspector()
                         &m_states.show_transition_captions);
         ImGui::PopStyleVar();
         ImGui::Separator();
-        ImGui::Text("%s", (m_net.type() == TypeOfNet::GRAFCET) ? "Transitivities:" : "Captions:");
+        ImGui::Text("%s", (net().type() == TypeOfNet::GRAFCET) ? "Transitivities:" : "Captions:");
 
         // Compile transitivities for GRAFCET the initial time and each time one of transitions
         // have been edited (Currently: any InputText invalid the whole sensors. Slow but easier
         // to implement).
-        compiled |= m_simulation.compiled;
-        if ((m_net.type() == TypeOfNet::GRAFCET) && (!compiled))
+        compiled |= simulation().compiled;
+        if ((net().type() == TypeOfNet::GRAFCET) && (!compiled))
         {
-            compiled = m_simulation.generateSensors();
+            compiled = simulation().generateSensors();
         }
-        for (auto& t: m_net.transitions())
+        for (auto& t: net().transitions())
         {
             // Show contents of transition
             ImGui::InputText(t.key.c_str(), &t.caption,
@@ -1081,14 +1381,14 @@ void Editor::inspector()
                     return 0;
                 });
 
-            // For GRAFCET and show syntax error on the transitivity
-            if ((m_net.type() == TypeOfNet::GRAFCET) && (!m_simulation.running))
+            if ((net().type() == TypeOfNet::GRAFCET) && (!simulation().running))
             {
-                Simulation::Receptivities const& receptivities = m_simulation.receptivities();
+                Simulation::Receptivities const& receptivities = simulation().receptivities();
                 auto it = receptivities.find(t.id);
                 if (it == receptivities.end())
                 {
-                    m_messages.setError("Could not find receptivity. This should not happened. Please report this error");
+                    ImGui::TextColored(ImVec4(1.0f, 0.5f, 0.0f, 1.0f),
+                        "Receptivity not compiled for %s", t.key.c_str());
                 }
                 else if (!it->second.isValid())
                 {
@@ -1100,14 +1400,14 @@ void Editor::inspector()
         ImGui::End();
 
         // For GRAFCET show sensor names from transitivities with industrial style
-        if (m_net.type() == TypeOfNet::GRAFCET)
+        if (net().type() == TypeOfNet::GRAFCET)
         {
             static std::map<std::string, int> pending_values;
             static bool immediate_mode = false;
 
             ImGui::Begin("Inputs");
 
-            if (m_simulation.running)
+            if (simulation().running)
             {
                 ImGui::Checkbox("Immediate mode", &immediate_mode);
                 ImGui::SameLine();
@@ -1143,10 +1443,10 @@ void Editor::inspector()
                 ImGui::PushID(it.first.c_str());
 
                 // Simple ON/OFF button toggle
-                bool is_on = m_simulation.running
+                bool is_on = simulation().running
                     ? (immediate_mode ? (current != 0) : (pending != 0))
                     : (current != 0);  // Direct edit when not simulating
-                bool changed = m_simulation.running && (is_on != (current != 0));
+                bool changed = simulation().running && (is_on != (current != 0));
 
                 if (changed)
                 {
@@ -1161,7 +1461,7 @@ void Editor::inspector()
 
                 if (ImGui::Button(is_on ? "ON " : "OFF", ImVec2(50, 25)))
                 {
-                    if (m_simulation.running)
+                    if (simulation().running)
                     {
                         if (immediate_mode)
                         {
@@ -1190,7 +1490,7 @@ void Editor::inspector()
                 ImGui::SameLine();
                 ImGui::Text("%s", it.first.c_str());
 
-                if (changed && !immediate_mode && m_simulation.running)
+                if (changed && !immediate_mode && simulation().running)
                 {
                     ImGui::SameLine();
                     ImGui::TextColored(ImVec4(1.0f, 0.6f, 0.0f, 1.0f), "(pending)");
@@ -1210,7 +1510,7 @@ void Editor::inspector()
 
             // Collect all unique action names from all places and show their state
             std::map<std::string, bool> actuator_states;
-            for (const auto& place : m_net.places())
+            for (const auto& place : net().places())
             {
                 bool step_active = (place.tokens > 0);
                 for (const auto& action : place.actions)
@@ -1280,7 +1580,7 @@ void Editor::inspector()
             ImGui::TextWrapped("Actions for each step. Right-click step on canvas > Edit Actions.");
             ImGui::Separator();
 
-            for (auto& place : m_net.places())
+            for (auto& place : net().places())
             {
                 bool is_active = (place.tokens > 0);
                 if (is_active)
@@ -1343,7 +1643,7 @@ void Editor::inspector()
                         }
 
                         // Show active state during simulation
-                        if (m_simulation.running && action.active)
+                        if (simulation().running && action.active)
                         {
                             ImGui::SameLine();
                             ImGui::TextColored(ImVec4(0.0f, 1.0f, 0.0f, 1.0f), " ACTIVE");
@@ -1453,11 +1753,11 @@ void Editor::inspector()
     }
 
     // Arc durations
-    if (m_net.type() == TypeOfNet::TimedEventGraph)
+    if (net().type() == TypeOfNet::TimedEventGraph)
     {
         ImGui::Begin("Arcs");
         ImGui::Text("%s", "Durations:");
-        for (auto& arc: m_net.arcs())
+        for (auto& arc: net().arcs())
         {
             if (arc.from.type == Node::Type::Transition)
             {
@@ -1469,11 +1769,11 @@ void Editor::inspector()
         }
         ImGui::End();
     }
-    else if (m_net.type() == TypeOfNet::TimedPetriNet)
+    else if (net().type() == TypeOfNet::TimedPetriNet)
     {
         ImGui::Begin("Arcs");
         ImGui::Text("%s", "Durations:");
-        for (auto& arc: m_net.arcs())
+        for (auto& arc: net().arcs())
         {
             std::string text(arc.from.key + " -> " + arc.to.key);
             float prev_value = arc.duration;
@@ -1485,26 +1785,42 @@ void Editor::inspector()
 
     // Modified net ? If yes, set it as dirty to force its save when the app
     // is closed. Compiled receptivities ?
-    m_simulation.compiled = compiled;
-    m_net.modified |= modified;
+    simulation().compiled = compiled;
+    net().modified |= modified;
     modified = false;
 }
 
 //------------------------------------------------------------------------------
 void Editor::toogleStartSimulation()
 {
-    m_simulation.running = m_simulation.running ^ true;
+    // Toggle simulation for current net
+    simulation().running = simulation().running ^ true;
+    updateSimulationFramerate();
+}
 
-    // Note: in GUI.cpp in the Application constructor, I set
-    // the window to have slower framerate in the aim to have a
-    // bigger discrete time and therefore AnimatedToken moving
-    // with a bigger step range and avoid them to overlap when
-    // i.e. two of them, carying 1 token, are arriving at almost
-    // the same moment but separated by one call of this method
-    // update() producing two AnimatedToken carying 1 token that
-    // will be displayed at the same position instead of a
-    // single AnimatedToken carying 2 tokens.
-    framerate(m_simulation.running ? 30 : 60); // FPS
+//------------------------------------------------------------------------------
+void Editor::toogleStartAllSimulations()
+{
+    // Toggle simulation for all nets in the document
+    bool any_running = activeDocument().isAnySimulationRunning();
+    if (any_running)
+    {
+        activeDocument().stopAllSimulations();
+    }
+    else
+    {
+        activeDocument().startAllSimulations();
+    }
+    updateSimulationFramerate();
+}
+
+//------------------------------------------------------------------------------
+void Editor::updateSimulationFramerate()
+{
+    // Set framerate based on whether any simulation is running
+    // Lower framerate during simulation to have bigger time steps
+    bool any_running = activeDocument().isAnySimulationRunning();
+    framerate(any_running ? 30 : 60);
 
 #ifdef WITH_MQTT
     // Simulate sensor reading value.
@@ -1531,15 +1847,15 @@ void Editor::toogleStartSimulation()
 //------------------------------------------------------------------------------
 bool Editor::switchOfNet(TypeOfNet const type)
 {
-    if (m_simulation.running)
+    if (simulation().running)
         return false;
 
     std::vector<Arc*> arcs;
     std::string error;
-    if (convertTo(m_net, type, error, arcs))
+    if (convertTo(net(), type, error, arcs))
         return true;
 
-    m_messages.setError(m_net.error());
+    m_messages.setError(net().error());
     return false;
 }
 
@@ -1547,7 +1863,7 @@ bool Editor::switchOfNet(TypeOfNet const type)
 Node* Editor::getNode(ImVec2 const& position)
 {
     Node *node = getTransition(position);
-    if (m_net.type() == TypeOfNet::TimedEventGraph)
+    if (net().type() == TypeOfNet::TimedEventGraph)
         return node;
 
     return (node != nullptr) ? node : getPlace(position);
@@ -1556,7 +1872,7 @@ Node* Editor::getNode(ImVec2 const& position)
 //------------------------------------------------------------------------------
 Place* Editor::getPlace(ImVec2 const& position)
 {
-    for (auto &place : m_net.places())
+    for (auto &place : net().places())
     {
         float d2 = (place.x - position.x) * (place.x - position.x) +
                    (place.y - position.y) * (place.y - position.y);
@@ -1572,7 +1888,7 @@ Place* Editor::getPlace(ImVec2 const& position)
 //------------------------------------------------------------------------------
 Transition* Editor::getTransition(ImVec2 const& position)
 {
-    for (auto &transition : m_net.transitions())
+    for (auto &transition : net().transitions())
     {
         float d2 = (transition.x - position.x) * (transition.x - position.x) +
                    (transition.y - position.y) * (transition.y - position.y);
@@ -1589,10 +1905,10 @@ Transition* Editor::getTransition(ImVec2 const& position)
 Transition& Editor::addTransition(float const x, float const y)
 {
     auto action = std::make_unique<NetModifaction>(*this);
-    action->before(m_net);
-    Transition& transition = m_net.addTransition(x, y);
-    m_simulation.generateSensors(); // m_simulation.generateSensor(transition);
-    action->after(m_net);
+    action->before(net());
+    Transition& transition = net().addTransition(x, y);
+    simulation().generateSensors();
+    action->after(net());
     m_history.add(std::move(action));
     return transition;
 }
@@ -1601,9 +1917,9 @@ Transition& Editor::addTransition(float const x, float const y)
 void Editor::addPlace(float const x, float const y)
 {
     auto action = std::make_unique<NetModifaction>(*this);
-    action->before(m_net);
-    m_net.addPlace(x, y);
-    action->after(m_net);
+    action->before(net());
+    net().addPlace(x, y);
+    action->after(net());
     m_history.add(std::move(action));
 }
 
@@ -1612,13 +1928,13 @@ void Editor::removeNode(Node& node)
 {
     Node::Type type = node.type;
     auto action = std::make_unique<NetModifaction>(*this);
-    action->before(m_net);
-    m_net.removeNode(node);
+    action->before(net());
+    net().removeNode(node);
     if (type == Node::Type::Transition)
     {
-        m_simulation.generateSensors();
+        simulation().generateSensors();
     }
-    action->after(m_net);
+    action->after(net());
     m_history.add(std::move(action));
 }
 
@@ -1626,11 +1942,11 @@ void Editor::removeNode(Node& node)
 void Editor::removeArc(Arc& arc)
 {
     auto action = std::make_unique<NetModifaction>(*this);
-    action->before(m_net);
-    m_net.removeArc(arc);
-    action->after(m_net);
+    action->before(net());
+    net().removeArc(arc);
+    action->after(net());
     m_history.add(std::move(action));
-    m_net.modified = true;
+    net().modified = true;
 }
 
 //------------------------------------------------------------------------------
@@ -1638,15 +1954,15 @@ Node& Editor::addOppositeNode(Node::Type const type, float const x,
     float const y, size_t const tokens)
 {
     auto action = std::make_unique<NetModifaction>(*this);
-    action->before(m_net);
-    m_simulation.generateSensors();
-    Node& node = m_net.addOppositeNode(type, x, y, tokens);
+    action->before(net());
+    simulation().generateSensors();
+    Node& node = net().addOppositeNode(type, x, y, tokens);
     if (node.type == Node::Type::Transition)
     {
-        // FIXME m_simulation.generateSensor(node);
-        m_simulation.generateSensors();
+        // FIXME simulation().generateSensor(node);
+        simulation().generateSensors();
     }
-    action->after(m_net);
+    action->after(net());
     m_history.add(std::move(action));
     return node;
 }
@@ -1655,24 +1971,96 @@ Node& Editor::addOppositeNode(Node::Type const type, float const x,
 void Editor::addArc(Node& from, Node& to, float const duration)
 {
     auto action = std::make_unique<NetModifaction>(*this);
-    action->before(m_net);
-    m_net.addArc(from, to, duration);
-    m_simulation.generateSensors();
-    action->after(m_net);
+    action->before(net());
+    net().addArc(from, to, duration);
+    simulation().generateSensors();
+    action->after(net());
     m_history.add(std::move(action));
 }
 
 //------------------------------------------------------------------------------
 void Editor::loadNetFile()
 {
-    static Importer importer{"TimedPetriNetEditor", ".json", importFromJSON, false};
-    importNetFrom(importer);
+    if (simulation().running)
+    {
+        m_messages.setError("Cannot load during the simulation!");
+        return;
+    }
+
+    IGFD::FileDialogConfig config;
+    config.path = ".";
+    config.flags = ImGuiFileDialogFlags_Modal;
+    ImGuiFileDialog::Instance()->OpenDialog(
+        "LoadFileDlgKey",
+        "Choose the Petri file to load",
+        ".json", config);
+
+    if (ImGuiFileDialog::Instance()->Display("LoadFileDlgKey"))
+    {
+        if (ImGuiFileDialog::Instance()->IsOk())
+        {
+            auto const filepath = ImGuiFileDialog::Instance()->GetFilePathName();
+            loadDocumentFromFile(filepath);
+        }
+
+        m_states.do_load = false;
+        ImGuiFileDialog::Instance()->Close();
+    }
+}
+
+//------------------------------------------------------------------------------
+void Editor::loadDocumentFromFile(std::string const& filepath)
+{
+    // Load all nets from JSON file
+    std::vector<Net> nets;
+    std::string error = importAllNetsFromJSON(nets, filepath);
+    if (!error.empty())
+    {
+        m_messages.setError(error);
+        return;
+    }
+
+    if (nets.empty())
+    {
+        m_messages.setError("No nets found in file '" + filepath + "'");
+        return;
+    }
+
+    // Unregister current nets from registry
+    activeDocument().unregisterNets();
+
+    // Clear current document and replace with loaded nets
+    auto& doc = activeDocument();
+    doc.nets().clear();
+
+    // Add all loaded nets to the document
+    for (auto& loaded_net : nets)
+    {
+        auto& entry = doc.addNet(loaded_net.type(), loaded_net.name);
+        entry.net = std::move(loaded_net);
+        // Store initial tokens for simulation reset
+        entry.simulation->storeInitialMarking();
+    }
+
+    // Set document path and state
+    doc.setFilepath(filepath);
+    doc.setModified(false);
+    setSavePath(filepath);
+
+    // Set first net as active
+    doc.setActiveNetIndex(0);
+
+    // Request vertical split layout on next frame
+    m_states.request_vertical_split = true;
+
+    m_messages.setInfo("Loaded '" + filepath + "' with " +
+        std::to_string(nets.size()) + " net(s)");
 }
 
 //------------------------------------------------------------------------------
 void Editor::importNetFrom(Importer const& importer)
 {
-    if (m_simulation.running)
+    if (simulation().running)
     {
         m_messages.setError("Cannot load during the simulation!");
         return ;
@@ -1692,8 +2080,8 @@ void Editor::importNetFrom(Importer const& importer)
         {
             auto const filepath = ImGuiFileDialog::Instance()->GetFilePathName();
             m_marked_arcs.clear();
-            m_net.clear();
-            std::string error = importer.importFct(m_net, filepath);
+            net().clear();
+            std::string error = importer.importFct(net(), filepath);
             if (error.empty())
             {
                 if (m_states.do_import_from)
@@ -1701,7 +2089,8 @@ void Editor::importNetFrom(Importer const& importer)
                 else
                     m_messages.setInfo("Loaded with success '" + filepath + "'");
                 setSavePath(filepath);
-                m_net.modified = false;
+                activeDocument().setFilepath(filepath);
+                net().modified = false;
                 if (importer.springify)
                 {
                     springify();
@@ -1710,8 +2099,8 @@ void Editor::importNetFrom(Importer const& importer)
             else
             {
                 m_messages.setError(error);
-                m_net.clear();
-                m_net.modified = true;
+                net().clear();
+                net().modified = true;
                 m_spring.reset();
             }
         }
@@ -1726,26 +2115,98 @@ void Editor::importNetFrom(Importer const& importer)
 //--------------------------------------------------------------------------
 void Editor::springify()
 {
-    m_spring.reset(m_view.size().x, m_view.size().y, m_net);
+    m_spring.reset(m_view.size().x, m_view.size().y, net());
 }
 
 //--------------------------------------------------------------------------
 void Editor::saveNetAs()
 {
-    static Exporter exporter{"TimedPetriNetEditor", ".json", exportToJSON};
-    exportNetTo(exporter);
+    if (activeDocument().netCount() > 1)
+    {
+        saveDocumentAs();
+    }
+    else
+    {
+        static Exporter exporter{"TimedPetriNetEditor", ".json", exportToJSON};
+        exportNetTo(exporter);
+    }
+}
+
+//------------------------------------------------------------------------------
+void Editor::saveDocumentAs()
+{
+    if (activeDocument().isAnySimulationRunning())
+    {
+        m_messages.setError("Cannot save during the simulation!");
+        return;
+    }
+
+    IGFD::FileDialogConfig config;
+    config.path = ".";
+    config.flags = ImGuiFileDialogFlags_Modal | ImGuiFileDialogFlags_ConfirmOverwrite;
+    ImGuiFileDialog::Instance()->OpenDialog(
+        "SaveDocDlgKey",
+        "Choose the file to save",
+        ".json", config);
+
+    if (ImGuiFileDialog::Instance()->Display("SaveDocDlgKey"))
+    {
+        if (ImGuiFileDialog::Instance()->IsOk())
+        {
+            auto const path = ImGuiFileDialog::Instance()->GetFilePathName();
+
+            std::vector<Net> nets;
+            auto& doc = activeDocument();
+            nets.reserve(doc.netCount());
+            for (size_t i = 0; i < doc.netCount(); ++i)
+            {
+                nets.push_back(doc.getNet(i).net);
+            }
+
+            std::string error = exportAllNetsToJSON(nets, path);
+            if (error.empty())
+            {
+                setSavePath(path);
+                doc.setFilepath(path);
+                doc.setModified(false);
+                m_messages.setInfo("Saved with success '" + path + "'");
+                for (size_t i = 0; i < doc.netCount(); ++i)
+                    doc.getNet(i).net.modified = false;
+
+                if (m_states.request_quitting)
+                {
+                    m_states.request_quitting = false;
+                    halt();
+                }
+                if (m_states.request_new)
+                {
+                    m_states.request_new = false;
+                    m_marked_arcs.clear();
+                    clearNet();
+                    m_path_to_save.clear();
+                }
+            }
+            else
+            {
+                m_messages.setError(error);
+            }
+        }
+
+        m_states.do_save_as = false;
+        ImGuiFileDialog::Instance()->Close();
+    }
 }
 
 //------------------------------------------------------------------------------
 void Editor::exportNetTo(Exporter const& exporter)
 {
-    if (m_simulation.running)
+    if (simulation().running)
     {
         m_messages.setError("Cannot save during the simulation!");
         return ;
     }
 
-    if (m_net.isEmpty())
+    if (net().isEmpty())
     {
         if (m_states.request_quitting)
         {
@@ -1756,7 +2217,7 @@ void Editor::exportNetTo(Exporter const& exporter)
         {
             m_marked_arcs.clear();
             clearNet();
-            m_net.modified = false;
+            net().modified = false;
             m_path_to_save.clear();
             m_states.request_new = false;
             m_states.do_save_as = false;
@@ -1784,7 +2245,7 @@ void Editor::exportNetTo(Exporter const& exporter)
         if (ImGuiFileDialog::Instance()->IsOk())
         {
             auto const path = ImGuiFileDialog::Instance()->GetFilePathName();
-            std::string error = exporter.exportFct(m_net, path);
+            std::string error = exporter.exportFct(net(), path);
             if (error.empty())
             {
                 if (m_states.do_export_to)
@@ -1795,7 +2256,7 @@ void Editor::exportNetTo(Exporter const& exporter)
                 {
                     setSavePath(path);
                     m_messages.setInfo("Saved with success '" + path + "'");
-                    m_net.modified = false;
+                    net().modified = false;
                 }
                 if (m_states.request_quitting)
                 {
@@ -1807,14 +2268,14 @@ void Editor::exportNetTo(Exporter const& exporter)
                     m_states.request_new = false;
                     m_marked_arcs.clear();
                     clearNet();
-                    m_net.modified = false;
+                    net().modified = false;
                     m_path_to_save.clear();
                 }
             }
             else
             {
                 m_messages.setError(error);
-                m_net.modified = true;
+                net().modified = true;
             }
         }
 
@@ -1833,7 +2294,7 @@ void Editor::exportNetTo(Exporter const& exporter)
             m_states.request_new = false;
             m_marked_arcs.clear();
             clearNet();  // Discard changes and create new document
-            m_net.modified = false;
+            net().modified = false;
             m_path_to_save.clear();
         }
         ImGuiFileDialog::Instance()->Close();
@@ -1877,15 +2338,15 @@ void Editor::takeScreenshot()
 //--------------------------------------------------------------------------
 void Editor::clearNet()
 {
-    if (m_simulation.running)
+    if (simulation().running)
         return ;
 
     auto action = std::make_unique<NetModifaction>(*this);
-    action->before(m_net);
+    action->before(net());
 
-    m_net.reset(m_net.type());
+    net().reset(net().type());
 
-    action->after(m_net);
+    action->after(net());
     m_history.add(std::move(action));
 }
 
@@ -1912,7 +2373,7 @@ void Editor::clearLogs()
 //--------------------------------------------------------------------------
 void Editor::undo()
 {
-    if (m_simulation.running)
+    if (simulation().running)
         return ;
 
     if (!m_history.undo())
@@ -1922,14 +2383,14 @@ void Editor::undo()
     else
     {
         m_messages.setInfo("Undo!");
-        m_net.modified = true;
+        net().modified = true;
     }
 }
 
 //--------------------------------------------------------------------------
 void Editor::redo()
 {
-    if (m_simulation.running)
+    if (simulation().running)
         return ;
 
     if (!m_history.redo())
@@ -1939,8 +2400,8 @@ void Editor::redo()
     else
     {
         m_messages.setInfo("Redo!");
-        m_net.modified = true;
-        m_simulation.compiled = false;
+        net().modified = true;
+        simulation().compiled = false;
     }
 }
 
@@ -1984,6 +2445,22 @@ ImVec2 Editor::PetriView::Canvas::reshape()
 ImVec2 Editor::PetriView::reshape()
 {
     return m_canvas.reshape();
+}
+
+//--------------------------------------------------------------------------
+void Editor::PetriView::loadViewState(Document::ViewState const& state)
+{
+    m_canvas.scrolling.x = state.scrolling_x;
+    m_canvas.scrolling.y = state.scrolling_y;
+    m_canvas.zoom = state.zoom;
+}
+
+//--------------------------------------------------------------------------
+void Editor::PetriView::saveViewState(Document::ViewState& state) const
+{
+    state.scrolling_x = m_canvas.scrolling.x;
+    state.scrolling_y = m_canvas.scrolling.y;
+    state.zoom = m_canvas.zoom;
 }
 
 //--------------------------------------------------------------------------
@@ -2074,7 +2551,7 @@ void Editor::PetriView::handleMoveNode()
         if (node != nullptr)
         {
             m_mouse.selection.push_back(node);
-            m_editor.m_net.modified = true;
+            (*m_current_net).modified = true;
         }
     }
     else
@@ -2132,7 +2609,7 @@ void Editor::PetriView::selectNodesInRect(ImVec2 const& min, ImVec2 const& max)
     float y_min = (min.y < max.y) ? min.y : max.y;
     float y_max = (min.y > max.y) ? min.y : max.y;
 
-    for (auto& place : m_editor.m_net.places())
+    for (auto& place : (*m_current_net).places())
     {
         if (place.x >= x_min && place.x <= x_max &&
             place.y >= y_min && place.y <= y_max)
@@ -2141,7 +2618,7 @@ void Editor::PetriView::selectNodesInRect(ImVec2 const& min, ImVec2 const& max)
                 m_mouse.selected_nodes.push_back(&place);
         }
     }
-    for (auto& trans : m_editor.m_net.transitions())
+    for (auto& trans : (*m_current_net).transitions())
     {
         if (trans.x >= x_min && trans.x <= x_max &&
             trans.y >= y_min && trans.y <= y_max)
@@ -2175,7 +2652,7 @@ Arc* Editor::PetriView::getArc(ImVec2 const& position)
     Arc* closest_arc = nullptr;
     float min_dist = threshold;
 
-    for (auto& arc : m_editor.m_net.arcs())
+    for (auto& arc : (*m_current_net).arcs())
     {
         ImVec2 from_pos(arc.from.x, arc.from.y);
         ImVec2 to_pos(arc.to.x, arc.to.y);
@@ -2263,7 +2740,7 @@ void Editor::PetriView::copySelection()
     m_editor.m_clipboard.center.x = sum_x / m_mouse.selected_nodes.size();
     m_editor.m_clipboard.center.y = sum_y / m_mouse.selected_nodes.size();
 
-    for (auto& arc : m_editor.m_net.arcs())
+    for (auto& arc : (*m_current_net).arcs())
     {
         bool from_selected = isNodeSelected(&arc.from);
         bool to_selected = isNodeSelected(&arc.to);
@@ -2287,7 +2764,7 @@ void Editor::PetriView::pasteClipboard()
         return;
 
     auto action = std::make_unique<Editor::NetModifaction>(m_editor);
-    action->before(m_editor.m_net);
+    action->before((*m_current_net));
 
     ImVec2 offset(
         m_mouse.position.x - m_editor.m_clipboard.center.x,
@@ -2302,7 +2779,7 @@ void Editor::PetriView::pasteClipboard()
 
     for (auto& p : m_editor.m_clipboard.places)
     {
-        Place& new_place = m_editor.m_net.addPlace(
+        Place& new_place = (*m_current_net).addPlace(
             p.x + offset.x, p.y + offset.y
         );
         new_place.caption = p.caption;
@@ -2313,7 +2790,7 @@ void Editor::PetriView::pasteClipboard()
 
     for (auto& t : m_editor.m_clipboard.transitions)
     {
-        Transition& new_trans = m_editor.m_net.addTransition(
+        Transition& new_trans = (*m_current_net).addTransition(
             t.x + offset.x, t.y + offset.y
         );
         new_trans.caption = t.caption;
@@ -2355,13 +2832,13 @@ void Editor::PetriView::pasteClipboard()
 
         if (from_node != nullptr && to_node != nullptr)
         {
-            m_editor.m_net.addArc(*from_node, *to_node, a.duration);
+            (*m_current_net).addArc(*from_node, *to_node, a.duration);
         }
     }
 
-    action->after(m_editor.m_net);
+    action->after((*m_current_net));
     m_editor.m_history.add(std::move(action));
-    m_editor.m_net.modified = true;
+    (*m_current_net).modified = true;
 }
 
 //--------------------------------------------------------------------------
@@ -2442,7 +2919,7 @@ void Editor::PetriView::handleAddNode(ImGuiMouseButton button)
         return;
     }
 
-    if (!m_editor.m_simulation.running)
+    if (!(*m_current_simulation).running)
     {
         Node* node = m_editor.getNode(m_mouse.position);
         Arc* arc = getArc(m_mouse.position);
@@ -2466,7 +2943,7 @@ void Editor::PetriView::handleAddNode(ImGuiMouseButton button)
             // Si Shift est presse, on demarre une selection rectangulaire uniquement
             if (!ImGui::GetIO().KeyShift)
             {
-                if (m_editor.m_net.type() == TypeOfNet::TimedEventGraph)
+                if ((*m_current_net).type() == TypeOfNet::TimedEventGraph)
                 {
                     m_editor.addTransition(m_mouse.position.x, m_mouse.position.y);
                 }
@@ -2489,7 +2966,7 @@ void Editor::PetriView::handleAddNode(ImGuiMouseButton button)
             }
         }
     }
-    else if (m_editor.m_net.type() == TypeOfNet::PetriNet)
+    else if ((*m_current_net).type() == TypeOfNet::PetriNet)
     {
         Transition* transition = m_editor.getTransition(m_mouse.position);
         if (transition != nullptr)
@@ -2502,7 +2979,7 @@ void Editor::PetriView::handleAddNode(ImGuiMouseButton button)
 //--------------------------------------------------------------------------
 void Editor::PetriView::handleArcOrigin()
 {
-    if (m_editor.m_simulation.running)
+    if ((*m_current_simulation).running)
         return ;
 
     m_mouse.clicked_at = m_mouse.position;
@@ -2518,7 +2995,7 @@ void Editor::PetriView::handleArcDestination()
     m_mouse.to = m_editor.getNode(m_mouse.position);
     m_mouse.handling_arc = false;
 
-    if (m_editor.m_net.type() == TypeOfNet::TimedEventGraph)
+    if ((*m_current_net).type() == TypeOfNet::TimedEventGraph)
     {
         // In TimedEventGraph mode we only create transitions since places are
         // implicit and therefore not displayed.
@@ -2562,8 +3039,12 @@ void Editor::PetriView::handleArcDestination()
 }
 
 //--------------------------------------------------------------------------
-void Editor::PetriView::onHandleInput()
+void Editor::PetriView::onHandleInput(Net& net, Simulation& simulation)
 {
+    // Store current net and simulation for private methods
+    m_current_net = &net;
+    m_current_simulation = &simulation;
+
     // This will catch our interactions
     ImGui::InvisibleButton("canvas", m_canvas.size,
                            ImGuiButtonFlags_MouseButtonLeft |
@@ -2654,7 +3135,7 @@ void Editor::PetriView::onHandleInput()
                     m_mouse.selected_nodes[i]->y = m_mouse.position.y + m_mouse.drag_offsets[i].y;
                 }
             }
-            m_editor.m_net.modified = true;
+            net.modified = true;
         }
     }
 
@@ -2756,9 +3237,9 @@ void Editor::PetriView::onHandleInput()
             else if (ImGui::IsKeyPressed(ImGuiKey_A, false))
             {
                 clearSelection();
-                for (auto& place : m_editor.m_net.places())
+                for (auto& place : net.places())
                     m_mouse.selected_nodes.push_back(&place);
-                for (auto& trans : m_editor.m_net.transitions())
+                for (auto& trans : net.transitions())
                     m_mouse.selected_nodes.push_back(&trans);
             }
         }
@@ -2791,7 +3272,7 @@ void Editor::PetriView::onHandleInput()
             if ((node != nullptr) && (node->type == Node::Type::Place))
             {
                 reinterpret_cast<Place*>(node)->increment(1u);
-                m_editor.m_net.modified = true;
+                net.modified = true;
             }
         }
         else if (ImGui::IsKeyPressed(KEY_DECREMENT_TOKENS) ||
@@ -2801,7 +3282,7 @@ void Editor::PetriView::onHandleInput()
             if ((node != nullptr) && (node->type == Node::Type::Place))
             {
                 reinterpret_cast<Place*>(node)->decrement(1u);
-                m_editor.m_net.modified = true;
+                net.modified = true;
             }
         }
         else if (ImGui::IsKeyPressed(ImGuiKey_M, false))  // M pour deplacer
@@ -2855,16 +3336,18 @@ void Editor::PetriView::onHandleInput()
 }
 
 //--------------------------------------------------------------------------
-void Editor::PetriView::drawPetriNet(Net& net, Simulation& simulation)
+void Editor::PetriView::drawPetriNet(Net& net, Simulation& simulation,
+                                     bool interactive)
 {
+    m_current_net = &net;
+    m_current_simulation = &simulation;
+
     const float alpha = 1.0f; // FIXME
 
     m_canvas.push();
 
-    // Draw the grid
     drawGrid(m_canvas.draw_list, simulation.running);
 
-    // Draw the Petri net
     ImVec2 const& origin = m_canvas.origin;
     const float zoom = m_canvas.zoom;
     for (auto const& it: net.arcs())
@@ -2882,25 +3365,25 @@ void Editor::PetriView::drawPetriNet(Net& net, Simulation& simulation)
                        m_editor.m_states.show_transition_captions, alpha, zoom);
     }
 
-    // Draw all tokens transiting from Transitions to Places
     for (auto const& it: simulation.timedTokens())
     {
         drawTimedToken(m_canvas.draw_list, it.tokens,
                        origin.x + it.x * zoom, origin.y + it.y * zoom, zoom);
     }
 
-    // Update node positions the user is currently moving
-    for (auto& it: m_mouse.selection)
+    if (interactive)
     {
-        it->x = m_mouse.position.x;
-        it->y = m_mouse.position.y;
-    }
+        for (auto& it: m_mouse.selection)
+        {
+            it->x = m_mouse.position.x;
+            it->y = m_mouse.position.y;
+        }
 
-    // Show the arc we are creating
-    if (m_mouse.handling_arc)
-    {
-        drawArc(m_canvas.draw_list, m_mouse.from, m_mouse.to, &m_mouse.clicked_at,
-                origin, m_mouse.position, zoom);
+        if (m_mouse.handling_arc)
+        {
+            drawArc(m_canvas.draw_list, m_mouse.from, m_mouse.to, &m_mouse.clicked_at,
+                    origin, m_mouse.position, zoom);
+        }
     }
 
     // Draw critical cycle
@@ -2909,143 +3392,137 @@ void Editor::PetriView::drawPetriNet(Net& net, Simulation& simulation)
         drawArc(m_canvas.draw_list, *it, net.type(), origin, -1.0f, zoom);
     }
 
-    // Draw hover highlight for hovered arc
-    const ImU32 hover_color = IM_COL32(200, 200, 255, 180);
-    if (m_mouse.hovered_arc != nullptr && !isArcSelected(m_mouse.hovered_arc))
+    if (interactive)
     {
-        ImVec2 from_pos = origin + ImVec2(m_mouse.hovered_arc->from.x * zoom, m_mouse.hovered_arc->from.y * zoom);
-        ImVec2 to_pos = origin + ImVec2(m_mouse.hovered_arc->to.x * zoom, m_mouse.hovered_arc->to.y * zoom);
-        m_canvas.draw_list->AddLine(from_pos, to_pos, hover_color, 3.5f * zoom);
-    }
-
-    // Draw hover highlight for hovered node
-    if (m_mouse.hovered_node != nullptr && !isNodeSelected(m_mouse.hovered_node))
-    {
-        ImVec2 p = origin + ImVec2(m_mouse.hovered_node->x * zoom, m_mouse.hovered_node->y * zoom);
-        if (m_mouse.hovered_node->type == Node::Type::Place)
+        const ImU32 hover_color = IM_COL32(200, 200, 255, 180);
+        if (m_mouse.hovered_arc != nullptr && !isArcSelected(m_mouse.hovered_arc))
         {
-            if (net.type() == TypeOfNet::GRAFCET)
+            ImVec2 from_pos = origin + ImVec2(m_mouse.hovered_arc->from.x * zoom, m_mouse.hovered_arc->from.y * zoom);
+            ImVec2 to_pos = origin + ImVec2(m_mouse.hovered_arc->to.x * zoom, m_mouse.hovered_arc->to.y * zoom);
+            m_canvas.draw_list->AddLine(from_pos, to_pos, hover_color, 3.5f * zoom);
+        }
+
+        if (m_mouse.hovered_node != nullptr && !isNodeSelected(m_mouse.hovered_node))
+        {
+            ImVec2 p = origin + ImVec2(m_mouse.hovered_node->x * zoom, m_mouse.hovered_node->y * zoom);
+            if (m_mouse.hovered_node->type == Node::Type::Place)
             {
-                // GRAFCET steps are squares
+                if (net.type() == TypeOfNet::GRAFCET)
+                {
+                    float w = TRANS_WIDTH * zoom / 2.0f + 2.0f * zoom;
+                    m_canvas.draw_list->AddRect(
+                        ImVec2(p.x - w, p.y - w),
+                        ImVec2(p.x + w, p.y + w),
+                        hover_color, 0.0f, ImDrawFlags_None, 2.0f * zoom);
+                }
+                else
+                {
+                    float radius = PLACE_RADIUS * zoom + 2.0f * zoom;
+                    m_canvas.draw_list->AddCircle(p, radius, hover_color, 64, 2.0f * zoom);
+                }
+            }
+            else
+            {
                 float w = TRANS_WIDTH * zoom / 2.0f + 2.0f * zoom;
+                float h = TRANS_HEIGHT * zoom / 2.0f + 2.0f * zoom;
                 m_canvas.draw_list->AddRect(
-                    ImVec2(p.x - w, p.y - w),
-                    ImVec2(p.x + w, p.y + w),
+                    ImVec2(p.x - w, p.y - h),
+                    ImVec2(p.x + w, p.y + h),
                     hover_color, 0.0f, ImDrawFlags_None, 2.0f * zoom);
             }
+
+            if (net.type() == TypeOfNet::GRAFCET &&
+                m_mouse.hovered_node->type == Node::Type::Place)
+            {
+                Place* place = reinterpret_cast<Place*>(m_mouse.hovered_node);
+                if (!place->actions.empty())
+                {
+                    ImGui::BeginTooltip();
+                    ImGui::Text("%s: %s", place->key.c_str(), place->caption.c_str());
+                    if (place->tokens > 0)
+                    {
+                        ImGui::SameLine();
+                        ImGui::TextColored(ImVec4(0.4f, 1.0f, 0.4f, 1.0f), "[ACTIVE]");
+                    }
+                    ImGui::Separator();
+                    ImGui::Text("Actions:");
+                    for (const auto& action : place->actions)
+                    {
+                        const char* qual_str = qualifierToStr(action.qualifier);
+                        ImVec4 badge_color = ImVec4(0.7f, 0.5f, 0.2f, 1.0f);
+                        if (action.qualifier == Action::Qualifier::N)
+                            badge_color = ImVec4(0.4f, 0.4f, 0.8f, 1.0f);
+                        else if (action.qualifier == Action::Qualifier::S)
+                            badge_color = ImVec4(0.2f, 0.7f, 0.2f, 1.0f);
+                        else if (action.qualifier == Action::Qualifier::R)
+                            badge_color = ImVec4(0.8f, 0.2f, 0.2f, 1.0f);
+                        else if (action.qualifier == Action::Qualifier::P)
+                            badge_color = ImVec4(0.6f, 0.2f, 0.6f, 1.0f);
+                        ImGui::TextColored(badge_color, "[%s]", qual_str);
+                        ImGui::SameLine();
+                        ImGui::Text("%s", action.name.c_str());
+                        if (!action.script.empty())
+                        {
+                            ImGui::SameLine();
+                            ImGui::TextColored(ImVec4(0.6f, 0.6f, 0.6f, 1.0f), "- %s", action.script.c_str());
+                        }
+                        if (action.duration > 0.0f)
+                        {
+                            ImGui::SameLine();
+                            ImGui::TextColored(ImVec4(0.5f, 0.5f, 0.5f, 1.0f), "(%.1fs)", action.duration);
+                        }
+                    }
+                    ImGui::EndTooltip();
+                }
+            }
+        }
+
+        const ImU32 selection_color = IM_COL32(50, 150, 255, 255);
+        const float selection_thickness = 4.0f * zoom;
+        for (auto* arc : m_mouse.selected_arcs)
+        {
+            ImVec2 from_pos = origin + ImVec2(arc->from.x * zoom, arc->from.y * zoom);
+            ImVec2 to_pos = origin + ImVec2(arc->to.x * zoom, arc->to.y * zoom);
+            m_canvas.draw_list->AddLine(from_pos, to_pos, selection_color, selection_thickness);
+        }
+
+        const float node_selection_thickness = 3.0f * zoom;
+        for (auto* node : m_mouse.selected_nodes)
+        {
+            ImVec2 p = origin + ImVec2(node->x * zoom, node->y * zoom);
+            if (node->type == Node::Type::Place)
+            {
+                if (net.type() == TypeOfNet::GRAFCET)
+                {
+                    float w = TRANS_WIDTH * zoom / 2.0f + 4.0f * zoom;
+                    m_canvas.draw_list->AddRect(
+                        ImVec2(p.x - w, p.y - w),
+                        ImVec2(p.x + w, p.y + w),
+                        selection_color, 0.0f, ImDrawFlags_None, node_selection_thickness);
+                }
+                else
+                {
+                    float radius = PLACE_RADIUS * zoom + 4.0f * zoom;
+                    m_canvas.draw_list->AddCircle(p, radius, selection_color, 64, node_selection_thickness);
+                }
+            }
             else
             {
-                float radius = PLACE_RADIUS * zoom + 2.0f * zoom;
-                m_canvas.draw_list->AddCircle(p, radius, hover_color, 64, 2.0f * zoom);
-            }
-        }
-        else
-        {
-            float w = TRANS_WIDTH * zoom / 2.0f + 2.0f * zoom;
-            float h = TRANS_HEIGHT * zoom / 2.0f + 2.0f * zoom;
-            m_canvas.draw_list->AddRect(
-                ImVec2(p.x - w, p.y - h),
-                ImVec2(p.x + w, p.y + h),
-                hover_color, 0.0f, ImDrawFlags_None, 2.0f * zoom);
-        }
-
-        // GRAFCET tooltip: show actions when hovering over a step
-        if (net.type() == TypeOfNet::GRAFCET &&
-            m_mouse.hovered_node->type == Node::Type::Place)
-        {
-            Place* place = reinterpret_cast<Place*>(m_mouse.hovered_node);
-            if (!place->actions.empty())
-            {
-                ImGui::BeginTooltip();
-                ImGui::Text("%s: %s", place->key.c_str(), place->caption.c_str());
-                if (place->tokens > 0)
-                {
-                    ImGui::SameLine();
-                    ImGui::TextColored(ImVec4(0.4f, 1.0f, 0.4f, 1.0f), "[ACTIVE]");
-                }
-                ImGui::Separator();
-                ImGui::Text("Actions:");
-                for (const auto& action : place->actions)
-                {
-                    const char* qual_str = qualifierToStr(action.qualifier);
-                    ImVec4 badge_color = ImVec4(0.7f, 0.5f, 0.2f, 1.0f); // default for timed
-                    if (action.qualifier == Action::Qualifier::N)
-                        badge_color = ImVec4(0.4f, 0.4f, 0.8f, 1.0f);
-                    else if (action.qualifier == Action::Qualifier::S)
-                        badge_color = ImVec4(0.2f, 0.7f, 0.2f, 1.0f);
-                    else if (action.qualifier == Action::Qualifier::R)
-                        badge_color = ImVec4(0.8f, 0.2f, 0.2f, 1.0f);
-                    else if (action.qualifier == Action::Qualifier::P)
-                        badge_color = ImVec4(0.6f, 0.2f, 0.6f, 1.0f);
-                    ImGui::TextColored(badge_color, "[%s]", qual_str);
-                    ImGui::SameLine();
-                    ImGui::Text("%s", action.name.c_str());
-                    if (!action.script.empty())
-                    {
-                        ImGui::SameLine();
-                        ImGui::TextColored(ImVec4(0.6f, 0.6f, 0.6f, 1.0f), "- %s", action.script.c_str());
-                    }
-                    if (action.duration > 0.0f)
-                    {
-                        ImGui::SameLine();
-                        ImGui::TextColored(ImVec4(0.5f, 0.5f, 0.5f, 1.0f), "(%.1fs)", action.duration);
-                    }
-                }
-                ImGui::EndTooltip();
-            }
-        }
-    }
-
-    // Draw selection highlight for selected arcs
-    const ImU32 selection_color = IM_COL32(50, 150, 255, 255);
-    const float selection_thickness = 4.0f * zoom;
-    for (auto* arc : m_mouse.selected_arcs)
-    {
-        ImVec2 from_pos = origin + ImVec2(arc->from.x * zoom, arc->from.y * zoom);
-        ImVec2 to_pos = origin + ImVec2(arc->to.x * zoom, arc->to.y * zoom);
-        m_canvas.draw_list->AddLine(from_pos, to_pos, selection_color, selection_thickness);
-    }
-
-    // Draw selection highlight for selected nodes
-    const float node_selection_thickness = 3.0f * zoom;
-    for (auto* node : m_mouse.selected_nodes)
-    {
-        ImVec2 p = origin + ImVec2(node->x * zoom, node->y * zoom);
-        if (node->type == Node::Type::Place)
-        {
-            if (net.type() == TypeOfNet::GRAFCET)
-            {
-                // GRAFCET steps are squares
                 float w = TRANS_WIDTH * zoom / 2.0f + 4.0f * zoom;
+                float h = TRANS_HEIGHT * zoom / 2.0f + 4.0f * zoom;
                 m_canvas.draw_list->AddRect(
-                    ImVec2(p.x - w, p.y - w),
-                    ImVec2(p.x + w, p.y + w),
+                    ImVec2(p.x - w, p.y - h),
+                    ImVec2(p.x + w, p.y + h),
                     selection_color, 0.0f, ImDrawFlags_None, node_selection_thickness);
             }
-            else
-            {
-                float radius = PLACE_RADIUS * zoom + 4.0f * zoom;
-                m_canvas.draw_list->AddCircle(p, radius, selection_color, 64, node_selection_thickness);
-            }
         }
-        else
-        {
-            float w = TRANS_WIDTH * zoom / 2.0f + 4.0f * zoom;
-            float h = TRANS_HEIGHT * zoom / 2.0f + 4.0f * zoom;
-            m_canvas.draw_list->AddRect(
-                ImVec2(p.x - w, p.y - h),
-                ImVec2(p.x + w, p.y + h),
-                selection_color, 0.0f, ImDrawFlags_None, node_selection_thickness);
-        }
-    }
 
-    // Draw rubber band selection rectangle
-    drawRubberBand(m_canvas.draw_list);
+        drawRubberBand(m_canvas.draw_list);
+    }
 
     m_canvas.pop();
 
-    // Draw inline edit popup for node name
-    if (m_mouse.editing_node != nullptr)
+    if (interactive && m_mouse.editing_node != nullptr)
     {
         ImVec2 node_screen_pos = m_canvas.origin +
             ImVec2(m_mouse.editing_node->x * m_canvas.zoom, m_mouse.editing_node->y * m_canvas.zoom);
@@ -3068,7 +3545,7 @@ void Editor::PetriView::drawPetriNet(Net& net, Simulation& simulation)
         if (ImGui::InputText("##name", m_mouse.edit_buffer, sizeof(m_mouse.edit_buffer), flags))
         {
             m_mouse.editing_node->caption = m_mouse.edit_buffer;
-            m_editor.m_net.modified = true;
+            (*m_current_net).modified = true;
             m_mouse.editing_node = nullptr;
         }
 
@@ -3116,29 +3593,51 @@ void Editor::PetriView::drawPetriNet(Net& net, Simulation& simulation)
                 if (ImGui::MenuItem("Add Token"))
                 {
                     reinterpret_cast<Place*>(m_mouse.context_menu_node)->increment(1u);
-                    m_editor.m_net.modified = true;
+                    (*m_current_net).modified = true;
                 }
                 if (ImGui::MenuItem("Remove Token"))
                 {
                     reinterpret_cast<Place*>(m_mouse.context_menu_node)->decrement(1u);
-                    m_editor.m_net.modified = true;
+                    (*m_current_net).modified = true;
                 }
 
-                // Edit Actions menu item for GRAFCET mode
-                if (m_editor.m_net.type() == TypeOfNet::GRAFCET)
+                // Edit Actions and Forcing menu items for GRAFCET mode
+                if ((*m_current_net).type() == TypeOfNet::GRAFCET)
                 {
                     ImGui::Separator();
                     if (ImGui::MenuItem("Edit Actions..."))
                     {
                         Place* place = reinterpret_cast<Place*>(m_mouse.context_menu_node);
-                        // Ajouter une nouvelle action si le step n'en a pas
+                        // Add a new action if step has none
                         if (place->actions.empty())
                         {
                             Action new_action;
                             new_action.name = "Action1";
                             place->actions.push_back(new_action);
-                            m_editor.m_net.modified = true;
+                            (*m_current_net).modified = true;
                         }
+                    }
+
+                    // Forcing options
+                    ImGui::Separator();
+                    Place* place = reinterpret_cast<Place*>(m_mouse.context_menu_node);
+                    bool is_active = (place->tokens > 0);
+
+                    if (ImGui::MenuItem("Force Active", nullptr, false, !is_active))
+                    {
+                        place->tokens = 1;
+                        (*m_current_net).modified = true;
+                    }
+                    if (ImGui::MenuItem("Force Inactive", nullptr, false, is_active))
+                    {
+                        place->tokens = 0;
+                        (*m_current_net).modified = true;
+                    }
+                    if (ImGui::MenuItem("Set Tokens..."))
+                    {
+                        // This could open a dialog, for now just toggle
+                        place->tokens = is_active ? 0 : 1;
+                        (*m_current_net).modified = true;
                     }
                 }
             }
