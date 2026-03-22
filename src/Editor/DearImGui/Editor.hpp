@@ -23,6 +23,7 @@
 
 #  include "Application.hpp" // Selected by Makefile
 #  include "TimedPetriNetEditor/PetriEditor.hpp"
+#  include "PetriView.hpp"
 #  include "Document.hpp"
 #  include "Net/Simulation.hpp"
 #  include "Net/Exports/Exports.hpp"
@@ -30,11 +31,10 @@
 #  include "Utils/ForceDirected.hpp"
 #  include "Utils/History.hpp"
 #  include "Utils/Path.hpp"
-#  ifdef WITH_MQTT
-#    include "MQTT/MQTT.hpp"
-#  endif
 #  include <vector>
 #  include <memory>
+
+namespace tpne { class IRemoteControl; }
 
 namespace tpne {
 
@@ -43,12 +43,21 @@ namespace tpne {
 // ****************************************************************************
 class Editor: public PetriNetEditor, public Application
 {
+    friend class PetriView;
+    friend class ZeroMQRemote;
+
 public:
 
     //-------------------------------------------------------------------------
     //! \brief Constructor. No additional actions are made here.
     //-------------------------------------------------------------------------
     Editor(size_t const width, size_t const height, std::string const& title);
+
+    //-------------------------------------------------------------------------
+    //! \brief Destructor. Defined in .cpp to allow unique_ptr with forward
+    //! declared types to work properly.
+    //-------------------------------------------------------------------------
+    ~Editor();
 
     //-------------------------------------------------------------------------
     //! \brief Starts the Petri net editor up, load the Petri file if given not
@@ -76,6 +85,14 @@ private: // Inheritance from Application class
 private: // Widgets
 
     void menu();
+    void menuFile();
+    void menuView();
+    void menuActions();
+    void menuGraphEvents();
+    void menuHelp();
+    void handleMenuActions();
+    void showUnsavedChangesDialog();
+    void saveCurrentDocument();
     void about() const;
     void help() const;
     void console();
@@ -119,7 +136,8 @@ private: // Petri net services
     void undo();
     void redo();
     void springify();
-    bool initMQTT();
+    void initRemoteControl();
+    void toggleRemoteControl();
 
 private:
 
@@ -141,6 +159,27 @@ private: // Error logs
     std::vector<Messages::TimedMessage> const& getLogs() const;
     void clearLogs();
     void showStyleSelector();
+
+protected: // Methods for PetriView access
+
+    //! \brief Get caption display state for places.
+    bool showPlaceCaptions() const { return m_states.show_place_captions; }
+    //! \brief Get caption display state for transitions.
+    bool showTransitionCaptions() const { return m_states.show_transition_captions; }
+    //! \brief Get marked arcs (critical cycle, errors).
+    std::vector<Arc*>& markedArcs() { return m_marked_arcs; }
+    //! \brief Clear marked arcs.
+    void clearMarkedArcs() { m_marked_arcs.clear(); }
+
+    // Clipboard operations
+    void clearClipboard() { m_clipboard.clear(); }
+    bool isClipboardEmpty() const { return m_clipboard.empty(); }
+    void setClipboardCenter(float x, float y) { m_clipboard.center = ImVec2(x, y); }
+    void addToClipboard(Place* p);
+    void addToClipboard(Transition* t);
+    void addArcToClipboard(Arc const& arc);
+    void pasteFromClipboard(Net& net, ImVec2 const& position,
+                            std::vector<Node*>& selected_nodes);
 
 private:
 
@@ -191,148 +230,6 @@ private:
         bool show_unsaved_dialog = false;
         PlotData plot;
     };
-
-    // ************************************************************************
-    //! \brief Graphical representation of the Petri net using and its
-    //! interaction with the user.
-    // ************************************************************************
-    class PetriView
-    {
-    public:
-
-        // ********************************************************************
-        //! \brief
-        // ********************************************************************
-        struct GridLayout
-        {
-            float step = 50.0f;
-            bool  show = true;
-            bool  menu = true;
-            bool  snap = true;  // Actif par defaut
-
-            float snapValue(float v) const
-            {
-                return snap ? roundf(v / step) * step : v;
-            }
-        } grid;
-
-        PetriView(Editor& editor);
-        ImVec2 reshape();
-        void onHandleInput(Net& net, Simulation& simulation);
-        void drawPetriNet(Net& net, Simulation& simulation,
-                          bool interactive = true);
-        inline ImVec2 const& origin() const { return m_canvas.origin; };
-        inline ImVec2 const& size() const { return m_canvas.size; };
-        void loadViewState(Document::ViewState const& state);
-        void saveViewState(Document::ViewState& state) const;
-        void clearAllSelections();
-
-    private:
-
-        bool isMouseClicked(ImGuiMouseButton& key);
-        bool isMouseReleased(ImGuiMouseButton& key);
-        bool isMouseDraggingView(ImGuiMouseButton const& key);
-        void handleAddNode(ImGuiMouseButton button);
-        void handleArcOrigin();
-        void handleMoveNode();
-        void handleArcDestination();
-        void handleSelection(ImGuiMouseButton button);
-        void drawGrid(ImDrawList* draw_list, bool const running);
-        void drawRubberBand(ImDrawList* draw_list);
-        bool isNodeSelected(Node* node) const;
-        void selectNode(Node* node, bool add_to_selection);
-        void deselectNode(Node* node);
-        void clearSelection();
-        void selectNodesInRect(ImVec2 const& min, ImVec2 const& max);
-        Arc* getArc(ImVec2 const& position);
-        bool isArcSelected(Arc* arc) const;
-        void selectArc(Arc* arc, bool add_to_selection);
-        void deselectArc(Arc* arc);
-        void clearArcSelection();
-        void copySelection();
-        void pasteClipboard();
-
-    private:
-
-        Editor& m_editor;
-        //! \brief Current net being drawn/edited (set by drawPetriNet)
-        Net* m_current_net = nullptr;
-        //! \brief Current simulation being used (set by drawPetriNet)
-        Simulation* m_current_simulation = nullptr;
-
-        // ********************************************************************
-        //! \brief
-        // ********************************************************************
-        struct Canvas
-        {
-            ImVec2 corners[2] = {{0.0f, 0.0f}, {0.0f, 0.0f}};
-            ImVec2 size{800.0f, 600.0f}; // FIXME: size is undefined while not
-                                         // rendered once but when importing nets
-                                         // we need to know th windows size which
-                                         // is 0x0
-            ImVec2 origin{0.0f, 0.0f};
-            ImVec2 scrolling{0.0f, 0.0f};
-            float zoom = 1.0f;
-            static constexpr float ZOOM_MIN = 0.1f;
-            static constexpr float ZOOM_MAX = 5.0f;
-            ImDrawList* draw_list;
-
-            ImVec2 getMousePosition();
-            ImVec2 reshape();
-            void push();
-            void pop();
-        } m_canvas;
-
-        // ********************************************************************
-        //! \brief
-        // ********************************************************************
-        class MouseState
-        {
-        public:
-            //! \brief Memorize the mouse cursor position when the user has moved it.
-            ImVec2 position;
-            //! \brief Memorize the mouse cursor position when the user has clicked.
-            ImVec2 clicked_at;
-            //! \brief The user is dragging the view
-            bool is_dragging_view = false;
-            //! \brief Selected origin node (place or transition) by the user when
-            //! adding an arc.
-            Node* from = nullptr;
-            //! \brief The user is creating an arc ?
-            bool handling_arc = false;
-            //! \brief Selected destination node (place or transition) by the user when
-            //! adding an arc.
-            Node* to = nullptr;
-            //! \brief The user has select a node to be displaced (legacy mode with `;` key).
-            std::vector<Node*> selection;
-            //! \brief Persistent selection of nodes (for copy, delete, drag).
-            std::vector<Node*> selected_nodes;
-            //! \brief Persistent selection of arcs (for delete).
-            std::vector<Arc*> selected_arcs;
-            //! \brief True when user is dragging to create a rubber band selection.
-            bool is_rubber_band = false;
-            //! \brief Start position of rubber band selection.
-            ImVec2 rubber_band_start;
-            //! \brief True when user is dragging selected nodes.
-            bool is_dragging_nodes = false;
-            //! \brief Offset from mouse position to each selected node (for drag).
-            std::vector<ImVec2> drag_offsets;
-            //! \brief Node currently being edited (name edit mode).
-            Node* editing_node = nullptr;
-            //! \brief Buffer for editing node name.
-            char edit_buffer[256] = {0};
-            //! \brief Flag to set focus on first frame.
-            bool edit_focus_requested = false;
-            //! \brief Node under mouse cursor (for hover effect).
-            Node* hovered_node = nullptr;
-            //! \brief Arc under mouse cursor (for hover effect).
-            Arc* hovered_arc = nullptr;
-            //! \brief Node for context menu.
-            Node* context_menu_node = nullptr;
-            //! \brief Arc for context menu.
-            Arc* context_menu_arc = nullptr;
-        } m_mouse;
-    }; // class PetriView
 
     // ************************************************************************
     //! \brief Quick and dirty net memorization for performing undo/redo.
@@ -398,14 +295,8 @@ private:
     ForceDirected m_spring;
     //! \brief History of modifications of the net.
     History m_history;
-#ifdef WITH_MQTT
-    //! \brief Allow to control the net from network.
-    mqtt::Client m_mqtt;
-    mqtt::Topic TOPIC_LOAD{"tpne/load"};
-    mqtt::Topic TOPIC_START{"tpne/start"};
-    mqtt::Topic TOPIC_STOP{"tpne/stop"};
-    mqtt::Topic TOPIC_FIRE{"tpne/fire"};
-#endif
+    //! \brief Remote control for external debugging/control.
+    std::unique_ptr<IRemoteControl> m_remote;
     //! \brief Critical cycle found by Howard algorithm. Also used to show
     //! where are erroneous arcs making the Petri net not be a graph event.
     std::vector<Arc*> m_marked_arcs;
