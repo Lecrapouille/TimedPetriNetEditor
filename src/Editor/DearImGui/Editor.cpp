@@ -3244,7 +3244,7 @@ void Editor::PetriView::onHandleInput(Net& net, Simulation& simulation)
 
     // Raccourcis clavier globaux (fonctionnent meme si le canvas n'est pas hovered)
     // Condition: pas en train d'editer du texte dans un widget
-    bool can_use_shortcuts = !ImGui::GetIO().WantCaptureKeyboard;
+    bool can_use_shortcuts = !ImGui::GetIO().WantTextInput;
 
     if (can_use_shortcuts)
     {
