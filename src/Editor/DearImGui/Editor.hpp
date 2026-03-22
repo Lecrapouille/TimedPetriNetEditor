@@ -25,6 +25,7 @@
 #  include "TimedPetriNetEditor/PetriEditor.hpp"
 #  include "PetriView.hpp"
 #  include "Document.hpp"
+#  include "Clipboard.hpp"
 #  include "Net/Simulation.hpp"
 #  include "Net/Exports/Exports.hpp"
 #  include "Net/Imports/Imports.hpp"
@@ -171,13 +172,13 @@ protected: // Methods for PetriView access
     //! \brief Clear marked arcs.
     void clearMarkedArcs() { m_marked_arcs.clear(); }
 
-    // Clipboard operations
+    // Clipboard operations (delegate to m_clipboard)
     void clearClipboard() { m_clipboard.clear(); }
     bool isClipboardEmpty() const { return m_clipboard.empty(); }
-    void setClipboardCenter(float x, float y) { m_clipboard.center = ImVec2(x, y); }
-    void addToClipboard(Place* p);
-    void addToClipboard(Transition* t);
-    void addArcToClipboard(Arc const& arc);
+    void setClipboardCenter(float x, float y) { m_clipboard.setCenter(x, y); }
+    void addToClipboard(Place const& p) { m_clipboard.addPlace(p); }
+    void addToClipboard(Transition const& t) { m_clipboard.addTransition(t); }
+    void addArcToClipboard(Arc const& arc) { m_clipboard.addArc(arc); }
     void pasteFromClipboard(Net& net, ImVec2 const& position,
                             std::vector<Node*>& selected_nodes);
 
@@ -208,77 +209,41 @@ private:
     // ************************************************************************
     struct States
     {
+        //! \brief Enum for mutually exclusive file dialogs
+        enum class FileDialog { None, Load, SaveAs, Export, Import, Screenshot };
+
+        //! \brief Algorithm analysis dialogs
         bool do_counter_or_dater = false;
         bool do_find_critical_cycle = false;
         bool do_syslin = false;
         bool do_adjency = false;
-        bool do_load = false;
-        bool do_save_as = false;
-        bool do_screenshot = false;
-        Exporter const* do_export_to = nullptr;
-        Importer const* do_import_from = nullptr;
+
+        //! \brief File operation dialog state (mutually exclusive)
+        FileDialog file_dialog = FileDialog::None;
+        Exporter const* pending_exporter = nullptr;
+        Importer const* pending_importer = nullptr;
+
+        //! \brief Modal info dialogs
         bool show_about = false;
         bool show_help = false;
         bool show_theme = false;
+        bool show_unsaved_dialog = false;
+
+        //! \brief Display options
         bool show_place_captions = true;
         bool show_transition_captions = true;
+
+        //! \brief Viewport state
         ImVec2 viewport_center;
         std::string title;
+
+        //! \brief Pending requests
         bool request_quitting = false;
         bool request_new = false;
         bool request_vertical_split = false;
-        bool show_unsaved_dialog = false;
+
+        //! \brief Plot data for simulation visualization
         PlotData plot;
-    };
-
-    // ************************************************************************
-    //! \brief Quick and dirty net memorization for performing undo/redo.
-    //! \fixme this is memory usage consumption by saving two nets. It's better
-    //! to memorize only command. but the remove command makes nodes ID change
-    //! so history will become false.
-    // ************************************************************************
-    class NetModifaction : public History::Action
-    {
-    public:
-        NetModifaction(Editor& editor) : m_editor(editor) {}
-        void before(Net& net) { m_before = net; }
-        void after(Net& net) { m_after = net; }
-
-        virtual bool undo() override
-        {
-            m_editor.net() = m_before;
-            return true;
-        }
-
-        virtual bool redo() override
-        {
-            m_editor.net() = m_after;
-            return true;
-        }
-
-    private:
-
-        Editor& m_editor;
-        Net m_before;
-        Net m_after;
-    };
-
-    // ************************************************************************
-    //! \brief Clipboard for copy-paste of subgraphs
-    // ************************************************************************
-    struct Clipboard
-    {
-        struct PlaceData { size_t id; std::string caption; float x; float y; size_t tokens; };
-        struct TransitionData { size_t id; std::string caption; float x; float y; int angle; };
-        struct ArcData { size_t from_id; bool from_is_place; size_t to_id; bool to_is_place; float duration; };
-
-        std::vector<PlaceData> places;
-        std::vector<TransitionData> transitions;
-        std::vector<ArcData> arcs;
-        ImVec2 center{0.0f, 0.0f};
-
-        bool empty() const { return places.empty() && transitions.empty(); }
-        void clear() { places.clear(); transitions.clear(); arcs.clear(); }
     };
 
 private:

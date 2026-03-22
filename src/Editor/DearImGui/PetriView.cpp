@@ -356,13 +356,11 @@ void PetriView::copySelection()
 
         if (node->type == Node::Type::Place)
         {
-            Place* p = reinterpret_cast<Place*>(node);
-            m_editor.addToClipboard(p);
+            m_editor.addToClipboard(*reinterpret_cast<Place*>(node));
         }
         else
         {
-            Transition* t = reinterpret_cast<Transition*>(node);
-            m_editor.addToClipboard(t);
+            m_editor.addToClipboard(*reinterpret_cast<Transition*>(node));
         }
     }
     m_editor.setClipboardCenter(sum_x / m_mouse.selected_nodes.size(),

@@ -25,6 +25,7 @@
 #include "Editor/DearImGui/Editor.hpp"
 #include "Editor/DearImGui/Drawable.hpp"
 #include "Editor/DearImGui/DearUtils.hpp"
+#include "Editor/DearImGui/FileDialogHelper.hpp"
 #include "Editor/DearImGui/KeyBindings.hpp"
 #include "Editor/DearImGui/Remote/ZeroMQRemote.hpp"
 #include "Utils/Utils.hpp"
@@ -395,7 +396,7 @@ void Editor::view()
         if (doc.isModified())
         {
             m_states.request_quitting = true;
-            m_states.do_save_as = true;
+            m_states.file_dialog = States::FileDialog::SaveAs;
         }
         else
         {
@@ -510,49 +511,25 @@ bool Editor::switchOfNet(TypeOfNet const type)
 //------------------------------------------------------------------------------
 Node* Editor::getNode(ImVec2 const& position)
 {
-    Node *node = getTransition(position);
-    if (net().type() == TypeOfNet::TimedEventGraph)
-        return node;
-
-    return (node != nullptr) ? node : getPlace(position);
+    return net().findNodeAt(position.x, position.y, PLACE_RADIUS, TRANS_WIDTH);
 }
 
 //------------------------------------------------------------------------------
 Place* Editor::getPlace(ImVec2 const& position)
 {
-    for (auto &place : net().places())
-    {
-        float d2 = (place.x - position.x) * (place.x - position.x) +
-                   (place.y - position.y) * (place.y - position.y);
-        if (d2 < PLACE_RADIUS * PLACE_RADIUS)
-        {
-            return &place;
-        }
-    }
-
-    return nullptr;
+    return net().findPlaceAt(position.x, position.y, PLACE_RADIUS);
 }
 
 //------------------------------------------------------------------------------
 Transition* Editor::getTransition(ImVec2 const& position)
 {
-    for (auto &transition : net().transitions())
-    {
-        float d2 = (transition.x - position.x) * (transition.x - position.x) +
-                   (transition.y - position.y) * (transition.y - position.y);
-        if (d2 < TRANS_WIDTH * TRANS_WIDTH)
-        {
-            return &transition;
-        }
-    }
-
-    return nullptr;
+    return net().findTransitionAt(position.x, position.y, TRANS_WIDTH);
 }
 
 //------------------------------------------------------------------------------
 Transition& Editor::addTransition(float const x, float const y)
 {
-    auto action = std::make_unique<NetModifaction>(*this);
+    auto action = std::make_unique<NetModificationAction>([this]() -> Net& { return net(); });
     action->before(net());
     Transition& transition = net().addTransition(x, y);
     simulation().generateSensors();
@@ -564,7 +541,7 @@ Transition& Editor::addTransition(float const x, float const y)
 //------------------------------------------------------------------------------
 void Editor::addPlace(float const x, float const y)
 {
-    auto action = std::make_unique<NetModifaction>(*this);
+    auto action = std::make_unique<NetModificationAction>([this]() -> Net& { return net(); });
     action->before(net());
     net().addPlace(x, y);
     action->after(net());
@@ -575,7 +552,7 @@ void Editor::addPlace(float const x, float const y)
 void Editor::removeNode(Node& node)
 {
     Node::Type type = node.type;
-    auto action = std::make_unique<NetModifaction>(*this);
+    auto action = std::make_unique<NetModificationAction>([this]() -> Net& { return net(); });
     action->before(net());
     net().removeNode(node);
     if (type == Node::Type::Transition)
@@ -589,7 +566,7 @@ void Editor::removeNode(Node& node)
 //------------------------------------------------------------------------------
 void Editor::removeArc(Arc& arc)
 {
-    auto action = std::make_unique<NetModifaction>(*this);
+    auto action = std::make_unique<NetModificationAction>([this]() -> Net& { return net(); });
     action->before(net());
     net().removeArc(arc);
     action->after(net());
@@ -601,7 +578,7 @@ void Editor::removeArc(Arc& arc)
 Node& Editor::addOppositeNode(Node::Type const type, float const x,
     float const y, size_t const tokens)
 {
-    auto action = std::make_unique<NetModifaction>(*this);
+    auto action = std::make_unique<NetModificationAction>([this]() -> Net& { return net(); });
     action->before(net());
     simulation().generateSensors();
     Node& node = net().addOppositeNode(type, x, y, tokens);
@@ -618,7 +595,7 @@ Node& Editor::addOppositeNode(Node::Type const type, float const x,
 //------------------------------------------------------------------------------
 void Editor::addArc(Node& from, Node& to, float const duration)
 {
-    auto action = std::make_unique<NetModifaction>(*this);
+    auto action = std::make_unique<NetModificationAction>([this]() -> Net& { return net(); });
     action->before(net());
     net().addArc(from, to, duration);
     simulation().generateSensors();
@@ -635,24 +612,13 @@ void Editor::loadNetFile()
         return;
     }
 
-    IGFD::FileDialogConfig config;
-    config.path = ".";
-    config.flags = ImGuiFileDialogFlags_Modal;
-    ImGuiFileDialog::Instance()->OpenDialog(
-        "LoadFileDlgKey",
-        "Choose the Petri file to load",
-        ".json", config);
+    FileDialogHelper::openLoad("LoadFileDlgKey",
+        "Choose the Petri file to load", ".json");
 
-    if (ImGuiFileDialog::Instance()->Display("LoadFileDlgKey"))
+    if (FileDialogHelper::display("LoadFileDlgKey",
+        [this](std::string const& filepath) { loadDocumentFromFile(filepath); }))
     {
-        if (ImGuiFileDialog::Instance()->IsOk())
-        {
-            auto const filepath = ImGuiFileDialog::Instance()->GetFilePathName();
-            loadDocumentFromFile(filepath);
-        }
-
-        m_states.do_load = false;
-        ImGuiFileDialog::Instance()->Close();
+        m_states.file_dialog = States::FileDialog::None;
     }
 }
 
@@ -714,49 +680,39 @@ void Editor::importNetFrom(Importer const& importer)
         return ;
     }
 
-    IGFD::FileDialogConfig config;
-    config.path = ".";
-    config.flags = ImGuiFileDialogFlags_Modal;
-    ImGuiFileDialog::Instance()->OpenDialog(
-        "ChooseFileDlgKey",
-        "Choose the Petri file to load",
-        importer.extensions.c_str(), config);
+    FileDialogHelper::openLoad("ImportDlgKey",
+        "Choose the Petri file to load", importer.extensions.c_str());
 
-    if (ImGuiFileDialog::Instance()->Display("ChooseFileDlgKey"))
+    if (FileDialogHelper::display("ImportDlgKey", [this, &importer](std::string const& filepath)
     {
-        if (ImGuiFileDialog::Instance()->IsOk())
+        m_marked_arcs.clear();
+        net().clear();
+        std::string error = importer.importFct(net(), filepath);
+        if (error.empty())
         {
-            auto const filepath = ImGuiFileDialog::Instance()->GetFilePathName();
-            m_marked_arcs.clear();
-            net().clear();
-            std::string error = importer.importFct(net(), filepath);
-            if (error.empty())
-            {
-                if (m_states.do_import_from)
-                    m_messages.setInfo("Imported with success from '" + filepath + "'");
-                else
-                    m_messages.setInfo("Loaded with success '" + filepath + "'");
-                setSavePath(filepath);
-                activeDocument().setFilepath(filepath);
-                net().modified = false;
-                if (importer.springify)
-                {
-                    springify();
-                }
-            }
+            if (m_states.file_dialog == States::FileDialog::Import)
+                m_messages.setInfo("Imported with success from '" + filepath + "'");
             else
+                m_messages.setInfo("Loaded with success '" + filepath + "'");
+            setSavePath(filepath);
+            activeDocument().setFilepath(filepath);
+            net().modified = false;
+            if (importer.springify)
             {
-                m_messages.setError(error);
-                net().clear();
-                net().modified = true;
-                m_spring.reset();
+                springify();
             }
         }
-
-        // close
-        m_states.do_load = false;
-        m_states.do_import_from = nullptr; // FIXME think proper code: export vs save as
-        ImGuiFileDialog::Instance()->Close();
+        else
+        {
+            m_messages.setError(error);
+            net().clear();
+            net().modified = true;
+            m_spring.reset();
+        }
+    }))
+    {
+        m_states.file_dialog = States::FileDialog::None;
+        m_states.pending_importer = nullptr;
     }
 }
 
@@ -789,59 +745,50 @@ void Editor::saveDocumentAs()
         return;
     }
 
-    IGFD::FileDialogConfig config;
-    config.path = ".";
-    config.flags = ImGuiFileDialogFlags_Modal | ImGuiFileDialogFlags_ConfirmOverwrite;
-    ImGuiFileDialog::Instance()->OpenDialog(
-        "SaveDocDlgKey",
-        "Choose the file to save",
-        ".json", config);
+    FileDialogHelper::openSave("SaveDocDlgKey",
+        "Choose the file to save", ".json");
 
-    if (ImGuiFileDialog::Instance()->Display("SaveDocDlgKey"))
+    if (FileDialogHelper::display("SaveDocDlgKey", [this](std::string const& path)
     {
-        if (ImGuiFileDialog::Instance()->IsOk())
+        // Collect all nets from the document
+        std::vector<Net> nets;
+        auto& doc = activeDocument();
+        nets.reserve(doc.netCount());
+        for (size_t i = 0; i < doc.netCount(); ++i)
         {
-            auto const path = ImGuiFileDialog::Instance()->GetFilePathName();
-
-            std::vector<Net> nets;
-            auto& doc = activeDocument();
-            nets.reserve(doc.netCount());
-            for (size_t i = 0; i < doc.netCount(); ++i)
-            {
-                nets.push_back(doc.getNet(i).net);
-            }
-
-            std::string error = exportAllNetsToJSON(nets, path);
-            if (error.empty())
-            {
-                setSavePath(path);
-                doc.setFilepath(path);
-                doc.setModified(false);
-                m_messages.setInfo("Saved with success '" + path + "'");
-                for (size_t i = 0; i < doc.netCount(); ++i)
-                    doc.getNet(i).net.modified = false;
-
-                if (m_states.request_quitting)
-                {
-                    m_states.request_quitting = false;
-                    halt();
-                }
-                if (m_states.request_new)
-                {
-                    m_states.request_new = false;
-                    m_marked_arcs.clear();
-                    clearNet();
-                    m_path_to_save.clear();
-                }
-            }
-            else
-            {
-                m_messages.setError(error);
-            }
+            nets.push_back(doc.getNet(i).net);
         }
 
-        m_states.do_save_as = false;
-        ImGuiFileDialog::Instance()->Close();
+        std::string error = exportAllNetsToJSON(nets, path);
+        if (error.empty())
+        {
+            setSavePath(path);
+            doc.setFilepath(path);
+            doc.setModified(false);
+            m_messages.setInfo("Saved with success '" + path + "'");
+            for (size_t i = 0; i < doc.netCount(); ++i)
+                doc.getNet(i).net.modified = false;
+
+            if (m_states.request_quitting)
+            {
+                m_states.request_quitting = false;
+                halt();
+            }
+            if (m_states.request_new)
+            {
+                m_states.request_new = false;
+                m_marked_arcs.clear();
+                clearNet();
+                m_path_to_save.clear();
+            }
+        }
+        else
+        {
+            m_messages.setError(error);
+        }
+    }))
+    {
+        m_states.file_dialog = States::FileDialog::None;
     }
 }
 
@@ -868,7 +815,7 @@ void Editor::exportNetTo(Exporter const& exporter)
             net().modified = false;
             m_path_to_save.clear();
             m_states.request_new = false;
-            m_states.do_save_as = false;
+            m_states.file_dialog = States::FileDialog::None;
         }
         else
         {
@@ -877,96 +824,75 @@ void Editor::exportNetTo(Exporter const& exporter)
         return ;
     }
 
-    IGFD::FileDialogConfig config;
-    config.path = ".";
-    config.flags = ImGuiFileDialogFlags_Modal | ImGuiFileDialogFlags_ConfirmOverwrite;
-    ImGuiFileDialog::Instance()->OpenDialog(
-        "ChooseFileDlgKey",
-        m_states.do_export_to ? "Choose the Petri file to save"
-          : (m_states.request_quitting ? "Choose the Petri file to save before quitting"
-          : (m_states.request_new ? "Choose the Petri file to save before creating new document"
-          : "Choose the Petri file to save")),
-        exporter.extensions.c_str(), config);
+    const char* title = (m_states.file_dialog == States::FileDialog::Export) ? "Choose the Petri file to export"
+        : (m_states.request_quitting ? "Choose the Petri file to save before quitting"
+        : (m_states.request_new ? "Choose the Petri file to save before creating new document"
+        : "Choose the Petri file to save"));
 
-    if (ImGuiFileDialog::Instance()->Display("ChooseFileDlgKey"))
+    FileDialogHelper::openSave("ExportDlgKey", title, exporter.extensions.c_str());
+
+    if (FileDialogHelper::display("ExportDlgKey", [this, &exporter](std::string const& path)
     {
-        if (ImGuiFileDialog::Instance()->IsOk())
+        std::string error = exporter.exportFct(net(), path);
+        if (error.empty())
         {
-            auto const path = ImGuiFileDialog::Instance()->GetFilePathName();
-            std::string error = exporter.exportFct(net(), path);
-            if (error.empty())
+            if (m_states.file_dialog == States::FileDialog::Export)
             {
-                if (m_states.do_export_to)
-                {
-                    m_messages.setInfo("Exported with success '" + path + "'");
-                }
-                else
-                {
-                    setSavePath(path);
-                    m_messages.setInfo("Saved with success '" + path + "'");
-                    net().modified = false;
-                }
-                if (m_states.request_quitting)
-                {
-                    m_states.request_quitting = false;
-                    halt();
-                }
-                if (m_states.request_new)
-                {
-                    m_states.request_new = false;
-                    m_marked_arcs.clear();
-                    clearNet();
-                    net().modified = false;
-                    m_path_to_save.clear();
-                }
+                m_messages.setInfo("Exported with success '" + path + "'");
             }
             else
             {
-                m_messages.setError(error);
-                net().modified = true;
+                setSavePath(path);
+                m_messages.setInfo("Saved with success '" + path + "'");
+                net().modified = false;
+            }
+            if (m_states.request_quitting)
+            {
+                m_states.request_quitting = false;
+                halt();
+            }
+            if (m_states.request_new)
+            {
+                m_states.request_new = false;
+                m_marked_arcs.clear();
+                clearNet();
+                net().modified = false;
+                m_path_to_save.clear();
             }
         }
-
-        // Close or Cancel button: cancel the pending operation
-        m_states.do_save_as = false;
-        m_states.do_export_to = nullptr;
+        else
+        {
+            m_messages.setError(error);
+            net().modified = true;
+        }
+    }))
+    {
+        m_states.file_dialog = States::FileDialog::None;
+        m_states.pending_exporter = nullptr;
         m_states.request_quitting = false;
         m_states.request_new = false;
-        ImGuiFileDialog::Instance()->Close();
     }
 }
 
 //--------------------------------------------------------------------------
 void Editor::takeScreenshot()
 {
-    std::string path;
-    IGFD::FileDialogConfig config;
-    config.path = ".";
-    config.flags = ImGuiFileDialogFlags_Modal | ImGuiFileDialogFlags_ConfirmOverwrite;
-    ImGuiFileDialog::Instance()->OpenDialog(
-        "ChooseFileDlgKey",
-        "Choose the PNG file to save the screenshot",
-        ".png", config);
+    FileDialogHelper::openSave("ScreenshotDlgKey",
+        "Choose the PNG file to save the screenshot", ".png");
 
-    if (ImGuiFileDialog::Instance()->Display("ChooseFileDlgKey"))
+    if (FileDialogHelper::display("ScreenshotDlgKey", [this](std::string const& path)
     {
-        if (ImGuiFileDialog::Instance()->IsOk())
+        if (Application::screenshot(path))
         {
-            path = ImGuiFileDialog::Instance()->GetFilePathName();
-            if (Application::screenshot(path))
-            {
-                m_messages.setInfo("Screenshot taken as file '" + path + "'");
-            }
-            else
-            {
-                m_messages.setError("Failed to save screenshot to file '" +
-                                    path + "'");
-            }
+            m_messages.setInfo("Screenshot taken as file '" + path + "'");
         }
-
-        // close.
-        m_states.do_screenshot = false;
-        ImGuiFileDialog::Instance()->Close();
+        else
+        {
+            m_messages.setError("Failed to save screenshot to file '" + path + "'");
+        }
+    }))
+    {
+        m_states.file_dialog = States::FileDialog::None;
     }
 }
 
@@ -976,7 +902,7 @@ void Editor::clearNet()
     if (simulation().running)
         return ;
 
-    auto action = std::make_unique<NetModifaction>(*this);
+    auto action = std::make_unique<NetModificationAction>([this]() -> Net& { return net(); });
     action->before(net());
 
     net().reset(net().type());
@@ -1041,101 +967,13 @@ void Editor::redo()
 }
 
 //------------------------------------------------------------------------------
-void Editor::addToClipboard(Place* p)
-{
-    m_clipboard.places.push_back({p->id, p->caption, p->x, p->y, p->tokens});
-}
-
-//------------------------------------------------------------------------------
-void Editor::addToClipboard(Transition* t)
-{
-    m_clipboard.transitions.push_back({t->id, t->caption, t->x, t->y, t->angle});
-}
-
-//------------------------------------------------------------------------------
-void Editor::addArcToClipboard(Arc const& arc)
-{
-    m_clipboard.arcs.push_back({
-        arc.from.id,
-        arc.from.type == Node::Type::Place,
-        arc.to.id,
-        arc.to.type == Node::Type::Place,
-        arc.duration
-    });
-}
-
-//------------------------------------------------------------------------------
 void Editor::pasteFromClipboard(Net& target_net, ImVec2 const& position,
                                 std::vector<Node*>& selected_nodes)
 {
-    auto action = std::make_unique<NetModifaction>(*this);
+    auto action = std::make_unique<NetModificationAction>([this]() -> Net& { return net(); });
     action->before(target_net);
 
-    ImVec2 offset(position.x - m_clipboard.center.x,
-                  position.y - m_clipboard.center.y);
-
-    std::map<size_t, Place*> old_to_new_place;
-    std::map<size_t, Transition*> old_to_new_trans;
-
-    selected_nodes.clear();
-
-    // Paste places
-    for (auto& p : m_clipboard.places)
-    {
-        Place& new_place = target_net.addPlace(p.x + offset.x, p.y + offset.y);
-        new_place.caption = p.caption;
-        new_place.tokens = p.tokens;
-        old_to_new_place[p.id] = &new_place;
-        selected_nodes.push_back(&new_place);
-    }
-
-    // Paste transitions
-    for (auto& t : m_clipboard.transitions)
-    {
-        Transition& new_trans = target_net.addTransition(t.x + offset.x, t.y + offset.y);
-        new_trans.caption = t.caption;
-        new_trans.angle = t.angle;
-        old_to_new_trans[t.id] = &new_trans;
-        selected_nodes.push_back(&new_trans);
-    }
-
-    // Paste arcs
-    for (auto& a : m_clipboard.arcs)
-    {
-        Node* from_node = nullptr;
-        Node* to_node = nullptr;
-
-        if (a.from_is_place)
-        {
-            auto it = old_to_new_place.find(a.from_id);
-            if (it != old_to_new_place.end())
-                from_node = it->second;
-        }
-        else
-        {
-            auto it = old_to_new_trans.find(a.from_id);
-            if (it != old_to_new_trans.end())
-                from_node = it->second;
-        }
-
-        if (a.to_is_place)
-        {
-            auto it = old_to_new_place.find(a.to_id);
-            if (it != old_to_new_place.end())
-                to_node = it->second;
-        }
-        else
-        {
-            auto it = old_to_new_trans.find(a.to_id);
-            if (it != old_to_new_trans.end())
-                to_node = it->second;
-        }
-
-        if (from_node != nullptr && to_node != nullptr)
-        {
-            target_net.addArc(*from_node, *to_node, a.duration);
-        }
-    }
+    m_clipboard.paste(target_net, position.x, position.y, selected_nodes);
 
     action->after(target_net);
     m_history.add(std::move(action));

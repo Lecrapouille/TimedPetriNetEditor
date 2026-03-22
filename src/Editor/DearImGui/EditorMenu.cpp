@@ -76,12 +76,12 @@ void Editor::menuFile()
     // Open/Import
     if (ImGui::MenuItem("Open", nullptr, false))
     {
-        m_states.do_load = true;
+        m_states.file_dialog = States::FileDialog::Load;
     }
     if (ImGui::MenuItem("Open in New Document", nullptr, false))
     {
         newDocument();
-        m_states.do_load = true;
+        m_states.file_dialog = States::FileDialog::Load;
     }
     if (ImGui::BeginMenu("Import from"))
     {
@@ -89,7 +89,8 @@ void Editor::menuFile()
         {
             if (ImGui::MenuItem(it.format.c_str(), nullptr, false))
             {
-                m_states.do_import_from = &it;
+                m_states.file_dialog = States::FileDialog::Import;
+                m_states.pending_importer = &it;
             }
         }
         ImGui::EndMenu();
@@ -104,7 +105,7 @@ void Editor::menuFile()
     }
     if (ImGui::MenuItem("Save as", nullptr, false))
     {
-        m_states.do_save_as = true;
+        m_states.file_dialog = States::FileDialog::SaveAs;
     }
     if (ImGui::BeginMenu("Export to"))
     {
@@ -112,7 +113,8 @@ void Editor::menuFile()
         {
             if (ImGui::MenuItem(it.format.c_str(), nullptr, false))
             {
-                m_states.do_export_to = &it;
+                m_states.file_dialog = States::FileDialog::Export;
+                m_states.pending_exporter = &it;
             }
         }
         ImGui::EndMenu();
@@ -244,7 +246,7 @@ void Editor::menuView()
     // Screenshot
     if (ImGui::MenuItem("Take Screenshot", nullptr, false))
     {
-        m_states.do_screenshot = true;
+        m_states.file_dialog = States::FileDialog::Screenshot;
     }
 
     ImGui::EndMenu();
@@ -426,15 +428,36 @@ void Editor::menuHelp()
 //------------------------------------------------------------------------------
 void Editor::handleMenuActions()
 {
-    // Dialog handling
+    // Modal info dialogs
     if (m_states.show_help) { help(); }
     if (m_states.show_about) { about(); }
     if (m_states.show_theme) { showStyleSelector(); }
-    if (m_states.do_load) { loadNetFile(); }
-    if (m_states.do_save_as) { saveNetAs(); }
-    if (m_states.do_export_to != nullptr) { exportNetTo(*m_states.do_export_to); }
-    if (m_states.do_import_from != nullptr) { importNetFrom(*m_states.do_import_from); }
-    if (m_states.do_screenshot) { takeScreenshot(); }
+
+    // File dialogs (mutually exclusive)
+    switch (m_states.file_dialog)
+    {
+        case States::FileDialog::Load:
+            loadNetFile();
+            break;
+        case States::FileDialog::SaveAs:
+            saveNetAs();
+            break;
+        case States::FileDialog::Export:
+            if (m_states.pending_exporter != nullptr)
+                exportNetTo(*m_states.pending_exporter);
+            break;
+        case States::FileDialog::Import:
+            if (m_states.pending_importer != nullptr)
+                importNetFrom(*m_states.pending_importer);
+            break;
+        case States::FileDialog::Screenshot:
+            takeScreenshot();
+            break;
+        case States::FileDialog::None:
+            break;
+    }
+
+    // Algorithm analysis dialogs
     if (m_states.do_adjency) { showAdjacencyMatrices(); }
     if (m_states.do_counter_or_dater) { showCounterOrDaterEquation(); }
     if (m_states.do_syslin) { showDynamicLinearSystem(); }
@@ -494,7 +517,7 @@ void Editor::showUnsavedChangesDialog()
 
     if (ImGui::Button("Save", ImVec2(120, 0)))
     {
-        m_states.do_save_as = true;
+        m_states.file_dialog = States::FileDialog::SaveAs;
         ImGui::CloseCurrentPopup();
     }
     ImGui::SameLine();
@@ -518,7 +541,7 @@ void Editor::saveCurrentDocument()
 {
     if (m_path_to_save == "")
     {
-        m_states.do_save_as = true;
+        m_states.file_dialog = States::FileDialog::SaveAs;
     }
     else if (activeDocument().netCount() > 1)
     {
