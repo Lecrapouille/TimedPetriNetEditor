@@ -29,9 +29,11 @@
 #  include "TimedPetriNetEditor/PetriNet.hpp"
 
 #  include <vector>
+#  include <unordered_map>
+#  include <unordered_set>
 #  include <cstdlib>
 #  include <cmath>
-#  include <map>
+#  include <random>
 
 namespace tpne {
 
@@ -54,25 +56,20 @@ struct Vec2
 };
 
 // *****************************************************************************
-//! \brief Force-directed graph drawing algorithms are a class of algorithms for
-//! drawing graphs in an aesthetically-pleasing way. Their purpose is to
-//! position the nodes of a graph in two-dimensional or three-dimensional space
-//! so that all the edges are of more or less equal length and there are as few
-//! crossing edges as possible, by assigning forces among the set of edges and
-//! the set of nodes, based on their relative positions, and then using these
-//! forces either to simulate the motion of the edges and nodes or to minimize
-//! their energy.
+//! \brief Force-directed graph drawing algorithm (Fruchterman-Reingold 1991).
 //!
-//! Use the spring/repulsion model of Fruchterman and Reingold (1991) with:
-//! - Attractive force: af(d) = d^2 / k
-//! - Repulsive force: rf(d) = -k^2 / d
-//! where d is distance between two vertices and the optimal distance between
-//! vertices k is defined as C * sqrt(area / num_vertices) where C is a
-//! parameter we can adjust.
+//! Positions nodes of a graph so that edges have similar lengths and crossings
+//! are minimized. Uses spring/repulsion model with simulated annealing.
 //!
-//! For more information see this video https://youtu.be/WWm-g2nLHds
-//! This code source is largely inspired by:
-//! https://github.com/qdHe/Parallelized-Force-directed-Graph-Drawing
+//! Forces:
+//! - Attractive force: af(d) = d^2 / k (connected nodes attract)
+//! - Repulsive force: rf(d) = -k^2 / d (all nodes repel)
+//! - Gravity force: pulls nodes toward center (keeps graph compact)
+//!
+//! Where k = C * sqrt(area / num_vertices) is the optimal distance.
+//!
+//! Reference: https://youtu.be/WWm-g2nLHds
+//! Inspired by: https://github.com/qdHe/Parallelized-Force-directed-Graph-Drawing
 // *****************************************************************************
 class ForceDirected
 {
@@ -83,28 +80,38 @@ public:
     // *************************************************************************
     struct Vertex
     {
-        explicit Vertex(Transition& tr) : node(&tr) {}
-        explicit Vertex(Place& p) : node(&p) {}
+        explicit Vertex(Node* n) : node(n) {}
 
-        //! \brief Place or transition. Need to access to position.
-        Node* node = nullptr;
-        //! \brief Displacement due to attractive and repulsive forces.
-        Vec2 displacement;
-        //! \brief List of neighboring nodes.
-        std::vector<Node*> neighbors;
+        Node* node = nullptr;              //!< Place or Transition pointer
+        Vec2 displacement;                 //!< Accumulated force displacement
+        std::vector<Node*> neighbors;      //!< Connected nodes (no duplicates)
     };
 
-    using Vertices = std::vector<ForceDirected::Vertex>;
+    using Vertices = std::vector<Vertex>;
+
+    //----------------------------------------------------------------------
+    //! \brief Algorithm parameters (can be tuned).
+    //----------------------------------------------------------------------
+    struct Parameters
+    {
+        float gravity = 0.1f;       //!< Gravity force toward center (0 = none)
+        float cooling_rate = 0.95f; //!< Temperature decay per step (0.9-0.99)
+        int steps_per_frame = 3;    //!< Iterations per update() call
+        float min_temperature = 0.5f; //!< Stop when temperature below this
+    };
+
+    Parameters params;
 
 public:
 
     //----------------------------------------------------------------------
-    //! \brief Restore initial states and start the layout algorithm.
+    //! \brief Start the layout algorithm.
     //! \param[in] width Canvas width in pixels.
     //! \param[in] height Canvas height in pixels.
     //! \param[in,out] net The Petri net to layout.
+    //! \param[in] randomize If true, randomize positions of overlapping nodes.
     //----------------------------------------------------------------------
-    void reset(float width, float height, Net& net);
+    void reset(float width, float height, Net& net, bool randomize = true);
 
     //----------------------------------------------------------------------
     //! \brief Stop the layout algorithm.
@@ -112,22 +119,25 @@ public:
     void reset() { m_net = nullptr; m_temperature = 0.0f; }
 
     //----------------------------------------------------------------------
-    //! \brief Compute one step of forces if temperature is still hot else
-    //! do nothing.
+    //! \brief Compute multiple steps of forces.
+    //! Does nothing if temperature has cooled below threshold.
     //----------------------------------------------------------------------
     void update();
 
     //----------------------------------------------------------------------
     //! \brief Check if the algorithm is still running.
-    //! \return true if still computing layout, false if converged.
     //----------------------------------------------------------------------
-    bool isRunning() const { return m_net != nullptr && m_temperature >= 0.1f; }
+    bool isRunning() const { return m_net != nullptr && m_temperature >= params.min_temperature; }
 
     //----------------------------------------------------------------------
     //! \brief Get the current temperature (convergence indicator).
-    //! \return Temperature value (0 = converged, higher = still moving).
     //----------------------------------------------------------------------
     float temperature() const { return m_temperature; }
+
+    //----------------------------------------------------------------------
+    //! \brief Get the canvas center point.
+    //----------------------------------------------------------------------
+    Vec2 center() const { return {m_width / 2.0f, m_height / 2.0f}; }
 
     //----------------------------------------------------------------------
     //! \brief Const getter of vertices.
@@ -136,67 +146,40 @@ public:
 
 private:
 
-    //----------------------------------------------------------------------
-    //! \brief Do a single step for computing forces.
-    //----------------------------------------------------------------------
     void step();
+    void initializePositions(bool randomize);
 
-    //----------------------------------------------------------------------
-    //! \brief Euclidian norm.
-    //! \param[in] v 2D vector.
-    //! \return The length of the vector.
-    //----------------------------------------------------------------------
     float length(Vec2 const& v) const
     {
         return std::max(0.001f, sqrtf(v.x * v.x + v.y * v.y));
     }
 
-    //----------------------------------------------------------------------
-    //! \brief Compute repulsive force.
-    //! \param[in] dist Distance between two nodes.
-    //! \return Repulsive force magnitude.
-    //----------------------------------------------------------------------
     float repulsive_force(float dist) const
     {
-        return K * K / dist / float(N) / 2.0f;
+        return m_K * m_K / dist;
     }
 
-    //----------------------------------------------------------------------
-    //! \brief Compute attractive force.
-    //! \param[in] dist Distance between two connected nodes.
-    //! \return Attractive force magnitude.
-    //----------------------------------------------------------------------
     float attractive_force(float dist) const
     {
-        return dist * dist / K / float(N);
+        return dist * dist / m_K;
     }
 
-    //----------------------------------------------------------------------
-    //! \brief Reduce effect of forces (simulated annealing).
-    //! \return New temperature value.
-    //----------------------------------------------------------------------
     float cooling()
     {
-        m_temperature *= 0.98f;
+        m_temperature *= params.cooling_rate;
         return m_temperature;
     }
 
 private:
 
-    //! \brief The Petri net to layout.
     Net* m_net = nullptr;
-    //! \brief Collection of vertices with displacement info.
     Vertices m_vertices;
-    //! \brief Canvas width.
+    std::unordered_map<Node*, size_t> m_node_to_index;
     float m_width = 0.0f;
-    //! \brief Canvas height.
     float m_height = 0.0f;
-    //! \brief Temperature for simulated annealing (reduces over time).
     float m_temperature = 0.0f;
-    //! \brief Force coefficient: sqrt(area / num_vertices).
-    float K = 0.0f;
-    //! \brief Number of vertices.
-    size_t N = 0;
+    float m_K = 0.0f;          //!< Optimal distance between nodes
+    std::mt19937 m_rng{42};    //!< Random generator for initial positions
 };
 
 } // namespace tpne
