@@ -510,7 +510,6 @@ void Editor::view()
 void Editor::close()
 {
     simulation().running = false;
-    m_states.do_save_as = net().modified;
     m_states.request_quitting = true;
 }
 
@@ -829,15 +828,61 @@ void Editor::menu()
     if (m_states.do_find_critical_cycle) { showCriticalCycles(); }
     if (m_states.request_quitting)
     {
-        // Request to save the modified net before quitting, else quit the
-        // application.
-        if (net().modified) { m_states.do_save_as = true; } else { halt(); }
+        if (net().modified)
+        {
+            m_states.show_unsaved_dialog = true;
+            m_states.request_quitting = false;
+        }
+        else
+        {
+            halt();
+        }
     }
     if (m_states.request_new)
     {
-        // Request to save the modified net before creating new document, else
-        // clear the net.
-        if (net().modified) { m_states.do_save_as = true; } else { m_marked_arcs.clear(); clearNet(); net().modified = false; m_path_to_save.clear(); m_states.request_new = false; }
+        if (net().modified)
+        {
+            m_states.show_unsaved_dialog = true;
+            m_states.request_new = false;
+        }
+        else
+        {
+            m_marked_arcs.clear();
+            clearNet();
+            net().modified = false;
+            m_path_to_save.clear();
+            m_states.request_new = false;
+        }
+    }
+    if (m_states.show_unsaved_dialog)
+    {
+        ImGui::OpenPopup("Unsaved Changes");
+        m_states.show_unsaved_dialog = false;
+    }
+    if (ImGui::BeginPopupModal("Unsaved Changes", nullptr,
+            ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoMove))
+    {
+        ImGui::Text("The document has unsaved changes.");
+        ImGui::Text("What do you want to do?");
+        ImGui::Separator();
+        if (ImGui::Button("Save", ImVec2(120, 0)))
+        {
+            m_states.do_save_as = true;
+            ImGui::CloseCurrentPopup();
+        }
+        ImGui::SameLine();
+        if (ImGui::Button("Don't Save", ImVec2(120, 0)))
+        {
+            net().modified = false;
+            halt();
+            ImGui::CloseCurrentPopup();
+        }
+        ImGui::SameLine();
+        if (ImGui::Button("Cancel", ImVec2(120, 0)))
+        {
+            ImGui::CloseCurrentPopup();
+        }
+        ImGui::EndPopup();
     }
 }
 
@@ -2279,24 +2324,11 @@ void Editor::exportNetTo(Exporter const& exporter)
             }
         }
 
-        // Close or Cancel button.
+        // Close or Cancel button: cancel the pending operation
         m_states.do_save_as = false;
-        m_states.do_export_to = nullptr; // FIXME think proper code: export vs save as
-        if (m_states.request_quitting)
-        {
-            m_states.do_save_as = true;
-            m_states.request_quitting = false;
-            // FIXME ajouter une pop: voulez vous vraiment perdre votre document ?
-            halt();
-        }
-        if (m_states.request_new)
-        {
-            m_states.request_new = false;
-            m_marked_arcs.clear();
-            clearNet();  // Discard changes and create new document
-            net().modified = false;
-            m_path_to_save.clear();
-        }
+        m_states.do_export_to = nullptr;
+        m_states.request_quitting = false;
+        m_states.request_new = false;
         ImGuiFileDialog::Instance()->Close();
     }
 }

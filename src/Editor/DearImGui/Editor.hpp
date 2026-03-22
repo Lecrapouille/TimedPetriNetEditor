@@ -188,6 +188,7 @@ private:
         bool request_quitting = false;
         bool request_new = false;
         bool request_vertical_split = false;
+        bool show_unsaved_dialog = false;
         PlotData plot;
     };
 
