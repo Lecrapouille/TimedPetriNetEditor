@@ -25,11 +25,3 @@ nlohmann/json
 ### TinyXML2 is a simple, small, efficient, C++ XML parser.
 ### License: Zlib
 leethomason/tinyxml2
-
-### Class wrapping client MQTT (mosquitto lib)
-### License: MIT
-Lecrapouille/MQTT
-
-### C++ implementation of sparse matrix using CRS (Compressed Row Storage) format
-### License: none
-#uestla/Sparse-Matrix

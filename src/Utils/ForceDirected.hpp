@@ -27,13 +27,31 @@
 #  define FORCEDIRECTEDGRAPH_HPP
 
 #  include "TimedPetriNetEditor/PetriNet.hpp"
-#  include "Editor/DearImGui/DearUtils.hpp"
-#  include <map>
+
 #  include <vector>
 #  include <cstdlib>
 #  include <cmath>
+#  include <map>
 
 namespace tpne {
+
+// *****************************************************************************
+//! \brief Simple 2D vector without ImGui dependency.
+// *****************************************************************************
+struct Vec2
+{
+    float x = 0.0f;
+    float y = 0.0f;
+
+    Vec2() = default;
+    Vec2(float x_, float y_) : x(x_), y(y_) {}
+
+    Vec2 operator+(Vec2 const& other) const { return {x + other.x, y + other.y}; }
+    Vec2 operator-(Vec2 const& other) const { return {x - other.x, y - other.y}; }
+    Vec2 operator*(float s) const { return {x * s, y * s}; }
+    Vec2& operator+=(Vec2 const& other) { x += other.x; y += other.y; return *this; }
+    Vec2& operator-=(Vec2 const& other) { x -= other.x; y -= other.y; return *this; }
+};
 
 // *****************************************************************************
 //! \brief Force-directed graph drawing algorithms are a class of algorithms for
@@ -70,8 +88,8 @@ public:
 
         //! \brief Place or transition. Need to access to position.
         Node* node = nullptr;
-        //! \brief Displacement due to attractive and reuplsive forces.
-        ImVec2 displacement = { 0.0f, 0.0f };
+        //! \brief Displacement due to attractive and repulsive forces.
+        Vec2 displacement;
         //! \brief List of neighboring nodes.
         std::vector<Node*> neighbors;
     };
@@ -81,10 +99,17 @@ public:
 public:
 
     //----------------------------------------------------------------------
-    //! \brief Restore initial states.
+    //! \brief Restore initial states and start the layout algorithm.
+    //! \param[in] width Canvas width in pixels.
+    //! \param[in] height Canvas height in pixels.
+    //! \param[in,out] net The Petri net to layout.
     //----------------------------------------------------------------------
     void reset(float width, float height, Net& net);
-    void reset() { m_net = nullptr; }
+
+    //----------------------------------------------------------------------
+    //! \brief Stop the layout algorithm.
+    //----------------------------------------------------------------------
+    void reset() { m_net = nullptr; m_temperature = 0.0f; }
 
     //----------------------------------------------------------------------
     //! \brief Compute one step of forces if temperature is still hot else
@@ -93,12 +118,21 @@ public:
     void update();
 
     //----------------------------------------------------------------------
+    //! \brief Check if the algorithm is still running.
+    //! \return true if still computing layout, false if converged.
+    //----------------------------------------------------------------------
+    bool isRunning() const { return m_net != nullptr && m_temperature >= 0.1f; }
+
+    //----------------------------------------------------------------------
+    //! \brief Get the current temperature (convergence indicator).
+    //! \return Temperature value (0 = converged, higher = still moving).
+    //----------------------------------------------------------------------
+    float temperature() const { return m_temperature; }
+
+    //----------------------------------------------------------------------
     //! \brief Const getter of vertices.
     //----------------------------------------------------------------------
-    inline Vertices const& vertices() const
-    {
-        return m_vertices;
-    }
+    Vertices const& vertices() const { return m_vertices; }
 
 private:
 
@@ -109,35 +143,39 @@ private:
 
     //----------------------------------------------------------------------
     //! \brief Euclidian norm.
-    //! \param[in] p world coordinate position.
+    //! \param[in] v 2D vector.
+    //! \return The length of the vector.
     //----------------------------------------------------------------------
-    inline float distance(ImVec2 const& p) const
+    float length(Vec2 const& v) const
     {
-        return std::max(0.001f, sqrtf(p.x * p.x + p.y * p.y));
+        return std::max(0.001f, sqrtf(v.x * v.x + v.y * v.y));
     }
 
     //----------------------------------------------------------------------
     //! \brief Compute repulsive force.
-    //! \param[in] distance.
+    //! \param[in] dist Distance between two nodes.
+    //! \return Repulsive force magnitude.
     //----------------------------------------------------------------------
-    inline float repulsive_force(float const distance) const
+    float repulsive_force(float dist) const
     {
-        return K * K / distance / float(N) / 2.0f;
+        return K * K / dist / float(N) / 2.0f;
     }
 
     //----------------------------------------------------------------------
     //! \brief Compute attractive force.
-    //! \param[in] distance.
+    //! \param[in] dist Distance between two connected nodes.
+    //! \return Attractive force magnitude.
     //----------------------------------------------------------------------
-    inline float attractive_force(float const distance) const
+    float attractive_force(float dist) const
     {
-        return distance * distance / K / float(N);
+        return dist * dist / K / float(N);
     }
 
     //----------------------------------------------------------------------
-    //! \brief Reduce effect of forces.
+    //! \brief Reduce effect of forces (simulated annealing).
+    //! \return New temperature value.
     //----------------------------------------------------------------------
-    inline float cooling()
+    float cooling()
     {
         m_temperature *= 0.98f;
         return m_temperature;
@@ -145,20 +183,20 @@ private:
 
 private:
 
-    //! \brief The directional graph to display.
+    //! \brief The Petri net to layout.
     Net* m_net = nullptr;
-    //! \brief Collection of nodes to display.
+    //! \brief Collection of vertices with displacement info.
     Vertices m_vertices;
-    //! \brief Dimension of the screen.
-    float m_width;
-    //! \brief Dimension of the screen.
-    float m_height;
-    //! \brief Reduce effect of forces.
-    float m_temperature;
-    //! \brief Force coeficient: sqrt(area / num_vertices)
-    float K;
+    //! \brief Canvas width.
+    float m_width = 0.0f;
+    //! \brief Canvas height.
+    float m_height = 0.0f;
+    //! \brief Temperature for simulated annealing (reduces over time).
+    float m_temperature = 0.0f;
+    //! \brief Force coefficient: sqrt(area / num_vertices).
+    float K = 0.0f;
     //! \brief Number of vertices.
-    size_t N;
+    size_t N = 0;
 };
 
 } // namespace tpne

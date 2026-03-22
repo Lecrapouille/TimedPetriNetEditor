@@ -30,12 +30,17 @@ namespace tpne {
 //------------------------------------------------------------------------------
 void ForceDirected::reset(float width, float height, Net& net)
 {
-    std::cout << "ForceDirected::reset " << width << " x " << height << "\n";
     m_net = &net;
     m_width = width;
     m_height = height;
 
     N = net.transitions().size() + net.places().size();
+    if (N == 0)
+    {
+        m_temperature = 0.0f;
+        return;
+    }
+
     K = sqrtf(m_width * m_height / 2.0f / float(N));
     m_temperature = m_width + m_height;
     m_vertices.clear();
@@ -59,7 +64,7 @@ void ForceDirected::reset(float width, float height, Net& net)
     }
 
     // Add edges "source node" -> "destination node".
-    // Since, we need undirected graph so add edges "destination node" -> "source node"
+    // Since we need undirected graph, add edges "destination node" -> "source node"
     for (size_t n = 0u; n < N; ++n)
     {
         Vertex& v = m_vertices[n];
@@ -83,10 +88,10 @@ void ForceDirected::reset(float width, float height, Net& net)
 void ForceDirected::update()
 {
     if (m_net == nullptr)
-        return ;
+        return;
 
     if (m_temperature < 0.1f)
-        return ;
+        return;
 
     step();
 }
@@ -95,53 +100,63 @@ void ForceDirected::update()
 void ForceDirected::step()
 {
     if (m_net == nullptr)
-        return ;
+        return;
 
+    // Compute forces for each vertex
     for (auto& v: m_vertices)
     {
-        const ImVec2 v_position(v.node->x, v.node->y);
+        const Vec2 v_position(v.node->x, v.node->y);
 
-        // Repulsive forces: nodes -- nodes
+        // Repulsive forces: all nodes repel each other
         for (auto& u: m_vertices)
         {
             if (u.node->key == v.node->key)
-                continue ;
+                continue;
 
-            const ImVec2 u_position(u.node->x, u.node->y);
-            const ImVec2 direction(v_position - u_position);
-            const float dist = distance(direction);
+            const Vec2 u_position(u.node->x, u.node->y);
+            const Vec2 direction = v_position - u_position;
+            const float dist = length(direction);
             const float rf = repulsive_force(dist);
-            v.displacement += direction * rf / dist;
+            v.displacement += direction * (rf / dist);
         }
 
-        // Attractive forces: edges
+        // Attractive forces: connected nodes attract each other
         for (auto& u: v.neighbors)
         {
             if (u->key == v.node->key)
-                continue ;
+                continue;
 
-            const ImVec2 u_position(u->x, u->y);
-            const ImVec2 direction(v_position - u_position);
-            const float dist = distance(direction);
+            const Vec2 u_position(u->x, u->y);
+            const Vec2 direction = v_position - u_position;
+            const float dist = length(direction);
             const float af = attractive_force(dist);
-            v.displacement -= direction * af / dist;
+            v.displacement -= direction * (af / dist);
         }
     }
 
-    // Update position and constrain position to the window bounds
+    // Update positions and constrain to canvas bounds
+    constexpr float BORDER = 50.0f;
     for (auto& v: m_vertices)
     {
-        constexpr ImVec2 LAYOUT_BORDER(50.0f, 50.0f);
-        const float dist = distance(v.displacement);
-        ImVec2 v_position(v.node->x, v.node->y);
-        v_position += (dist > m_temperature)
-                      ? v.displacement * m_temperature / dist
-                      : v.displacement;
-        v.node->x = std::min(m_width - LAYOUT_BORDER.x,
-                             std::max(LAYOUT_BORDER.x, v_position.x));
-        v.node->y = std::min(m_height - LAYOUT_BORDER.y,
-                             std::max(LAYOUT_BORDER.y, v_position.y));
-        v.displacement = { 0.0f, 0.0f };
+        const float dist = length(v.displacement);
+        Vec2 v_position(v.node->x, v.node->y);
+
+        // Limit displacement by temperature
+        if (dist > m_temperature)
+        {
+            v_position += v.displacement * (m_temperature / dist);
+        }
+        else
+        {
+            v_position += v.displacement;
+        }
+
+        // Constrain to canvas bounds
+        v.node->x = std::min(m_width - BORDER, std::max(BORDER, v_position.x));
+        v.node->y = std::min(m_height - BORDER, std::max(BORDER, v_position.y));
+
+        // Reset displacement for next iteration
+        v.displacement = Vec2();
     }
 
     cooling();

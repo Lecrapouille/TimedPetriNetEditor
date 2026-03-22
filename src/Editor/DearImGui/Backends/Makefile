@@ -1,15 +1,8 @@
 ###################################################
-# Set MQTT Library.
+# Set ZeroMQ Library for remote control.
 #
 ifneq ($(OS),Emscripten)
-    INCLUDES += $(THIRD_PARTIES_DIR)/MQTT/include
-    DEFINES += -DMQTT_BROKER_ADDR=\"localhost\"
-    DEFINES += -DMQTT_BROKER_PORT=1883
-    DEFINES += -DWITH_MQTT
-    PKG_LIBS += libmosquitto
-    GUI_FILES += $(THIRD_PARTIES_DIR)/MQTT/src/MQTT.cpp
-else
-    DEFINES += -UWITH_MQTT
+    PKG_LIBS += libzmq
 endif
 
 ###################################################
@@ -129,5 +122,7 @@ USER_CXXFLAGS += -Wno-unknown-pragmas -Wno-double-promotion
 # Petri Editor
 #
 INCLUDES += $(P)/src/Editor/DearImGui
+INCLUDES += $(P)/src/Editor/DearImGui/Remote
 INCLUDES += $(P)/src
 GUI_FILES += $(call wildcard,$(P)/src/Editor/DearImGui/*.cpp)
+GUI_FILES += $(call wildcard,$(P)/src/Editor/DearImGui/Remote/*.cpp)

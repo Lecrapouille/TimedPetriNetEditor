@@ -1,25 +1,25 @@
 {
-  "revision": 3,
+  "revision": 4,
   "type": "Petri net",
   "nets": [
     {
        "name": "Elevator Control",
        "places": [
-            { "id": 0, "caption": "Ground floor", "tokens": 1, "x": 391, "y": 38 },
-            { "id": 1, "caption": "Going down", "tokens": 0, "x": 484, "y": 249 },
-            { "id": 2, "caption": "Basement", "tokens": 0, "x": 373, "y": 520 },
-            { "id": 3, "caption": "Door open", "tokens": 1, "x": 264, "y": 385 },
-            { "id": 4, "caption": "Door shut", "tokens": 0, "x": 378, "y": 153 },
-            { "id": 5, "caption": "Going up", "tokens": 0, "x": 164, "y": 242 }
+            { "id": 0, "caption": "Ground floor", "tokens": 1, "x": 400, "y": 50 },
+            { "id": 1, "caption": "Going down", "tokens": 0, "x": 500, "y": 250 },
+            { "id": 2, "caption": "Basement", "tokens": 0, "x": 350, "y": 500 },
+            { "id": 3, "caption": "Door open", "tokens": 1, "x": 250, "y": 400 },
+            { "id": 4, "caption": "Door shut", "tokens": 0, "x": 400, "y": 150 },
+            { "id": 5, "caption": "Going up", "tokens": 0, "x": 150, "y": 250 }
        ],
        "transitions": [
-            { "id": 0, "caption": "Start", "x": 484, "y": 153, "angle": 0 },
-            { "id": 1, "caption": "Arrive", "x": 486, "y": 371, "angle": 0 },
-            { "id": 2, "caption": "Open door", "x": 412, "y": 380, "angle": 0 },
-            { "id": 3, "caption": "Shut door", "x": 349, "y": 301, "angle": 0 },
-            { "id": 4, "caption": "Open Door", "x": 267, "y": 155, "angle": 0 },
-            { "id": 5, "caption": "Arrive", "x": 168, "y": 130, "angle": 0 },
-            { "id": 6, "caption": "Start", "x": 165, "y": 388, "angle": 0 }
+            { "id": 0, "caption": "Start", "x": 500, "y": 150, "angle": 0 },
+            { "id": 1, "caption": "Arrive", "x": 500, "y": 350, "angle": 0 },
+            { "id": 2, "caption": "Open door", "x": 400, "y": 400, "angle": 0 },
+            { "id": 3, "caption": "Shut door", "x": 350, "y": 300, "angle": 0 },
+            { "id": 4, "caption": "Open Door", "x": 250, "y": 150, "angle": 0 },
+            { "id": 5, "caption": "Arrive", "x": 150, "y": 150, "angle": 0 },
+            { "id": 6, "caption": "Start", "x": 150, "y": 400, "angle": 0 }
        ],
        "arcs": [
             { "from": "P0", "to": "T0" },
@@ -45,8 +45,10 @@
             { "from": "T6", "to": "P4", "duration": 5 },
             { "from": "T2", "to": "P2", "duration": 5 }
        ],
-       "sensors": [
+       "actions": [
        ]
     }
+  ],
+  "inputs": [
   ]
 }
