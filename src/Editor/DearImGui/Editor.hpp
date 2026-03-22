@@ -225,6 +225,7 @@ private:
         inline ImVec2 const& size() const { return m_canvas.size; };
         void loadViewState(Document::ViewState const& state);
         void saveViewState(Document::ViewState& state) const;
+        void clearAllSelections();
 
     private:
 

@@ -480,13 +480,14 @@ void Editor::view()
         }
 
         bool is_active_view = (i == doc.activeNetIndex());
+        bool show_interactive = is_active_view && !entry.simulation->running;
         m_view.loadViewState(entry.view_state);
         m_view.reshape();
         if (is_active_view)
         {
             m_view.onHandleInput(entry.net, *entry.simulation);
         }
-        m_view.drawPetriNet(entry.net, *entry.simulation, is_active_view);
+        m_view.drawPetriNet(entry.net, *entry.simulation, show_interactive);
         m_view.saveViewState(entry.view_state);
         ImGui::End();
     }
@@ -1838,8 +1839,11 @@ void Editor::inspector()
 //------------------------------------------------------------------------------
 void Editor::toogleStartSimulation()
 {
-    // Toggle simulation for current net
     simulation().running = simulation().running ^ true;
+    if (simulation().running)
+    {
+        m_view.clearAllSelections();
+    }
     updateSimulationFramerate();
 }
 
@@ -2741,6 +2745,19 @@ void Editor::PetriView::clearArcSelection()
 }
 
 //--------------------------------------------------------------------------
+void Editor::PetriView::clearAllSelections()
+{
+    clearSelection();
+    clearArcSelection();
+    m_mouse.editing_node = nullptr;
+    m_mouse.hovered_node = nullptr;
+    m_mouse.hovered_arc = nullptr;
+    m_mouse.is_rubber_band = false;
+    m_mouse.is_dragging_nodes = false;
+    m_mouse.drag_offsets.clear();
+}
+
+//--------------------------------------------------------------------------
 void Editor::PetriView::copySelection()
 {
     if (m_mouse.selected_nodes.empty())
@@ -2975,6 +2992,8 @@ void Editor::PetriView::handleAddNode(ImGuiMouseButton button)
             // Si Shift est presse, on demarre une selection rectangulaire uniquement
             if (!ImGui::GetIO().KeyShift)
             {
+                clearSelection();
+                clearArcSelection();
                 if ((*m_current_net).type() == TypeOfNet::TimedEventGraph)
                 {
                     m_editor.addTransition(m_mouse.position.x, m_mouse.position.y);
@@ -2994,6 +3013,8 @@ void Editor::PetriView::handleAddNode(ImGuiMouseButton button)
         {
             if (node == nullptr && arc == nullptr)
             {
+                clearSelection();
+                clearArcSelection();
                 m_editor.addTransition(m_mouse.position.x, m_mouse.position.y);
             }
         }
@@ -3086,7 +3107,6 @@ void Editor::PetriView::onHandleInput(Net& net, Simulation& simulation)
     m_mouse.position = m_canvas.getMousePosition();
     ImGuiMouseButton button;
 
-    // Track hovered elements for visual feedback
     if (ImGui::IsItemHovered())
     {
         m_mouse.hovered_node = m_editor.getNode(m_mouse.position);
@@ -3105,7 +3125,6 @@ void Editor::PetriView::onHandleInput(Net& net, Simulation& simulation)
         m_mouse.hovered_arc = nullptr;
     }
 
-    // Context menu on right-click on a node (not on empty canvas)
     if (ImGui::IsMouseClicked(ImGuiMouseButton_Right) && ImGui::IsItemHovered())
     {
         Node* node = m_editor.getNode(m_mouse.position);
@@ -3124,7 +3143,7 @@ void Editor::PetriView::onHandleInput(Net& net, Simulation& simulation)
         }
     }
 
-    if (ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left) && ImGui::IsItemHovered())
+    if (!simulation.running && ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left) && ImGui::IsItemHovered())
     {
         Node* node = m_editor.getNode(m_mouse.position);
         if (node != nullptr && m_mouse.editing_node == nullptr)
@@ -3248,7 +3267,12 @@ void Editor::PetriView::onHandleInput(Net& net, Simulation& simulation)
 
     if (can_use_shortcuts)
     {
-        if (ImGui::GetIO().KeyCtrl)
+        if (ImGui::IsKeyPressed(KEY_RUN_SIMULATION) ||
+            ImGui::IsKeyPressed(KEY_RUN_SIMULATION_ALT))
+        {
+            m_editor.toogleStartSimulation();
+        }
+        else if (!simulation.running && ImGui::GetIO().KeyCtrl)
         {
             if (ImGui::IsKeyPressed(KEY_UNDO, false))
             {
@@ -3275,15 +3299,35 @@ void Editor::PetriView::onHandleInput(Net& net, Simulation& simulation)
                     m_mouse.selected_nodes.push_back(&trans);
             }
         }
-        else if (ImGui::IsKeyPressed(KEY_RUN_SIMULATION) ||
-                 ImGui::IsKeyPressed(KEY_RUN_SIMULATION_ALT))
+    }
+
+    // Raccourcis tokens (+ / -) : actifs meme pendant la simulation
+    if (ImGui::IsItemHovered() && can_use_shortcuts)
+    {
+        if (ImGui::IsKeyPressed(KEY_INCREMENT_TOKENS) ||
+            ImGui::IsKeyPressed(ImGuiKey_Equal))
         {
-            m_editor.toogleStartSimulation();
+            Node* node = m_editor.getNode(m_mouse.position);
+            if ((node != nullptr) && (node->type == Node::Type::Place))
+            {
+                reinterpret_cast<Place*>(node)->increment(1u);
+                net.modified = true;
+            }
+        }
+        else if (ImGui::IsKeyPressed(KEY_DECREMENT_TOKENS) ||
+                 ImGui::IsKeyPressed(ImGuiKey_Minus))
+        {
+            Node* node = m_editor.getNode(m_mouse.position);
+            if ((node != nullptr) && (node->type == Node::Type::Place))
+            {
+                reinterpret_cast<Place*>(node)->decrement(1u);
+                net.modified = true;
+            }
         }
     }
 
-    // Raccourcis qui necessitent le hover du canvas (operations sur les noeuds)
-    if (ImGui::IsItemHovered() && can_use_shortcuts)
+    // Raccourcis d'edition : desactives pendant la simulation
+    if (ImGui::IsItemHovered() && can_use_shortcuts && !simulation.running)
     {
         if (ImGui::IsKeyPressed(KEY_MOVE_PETRI_NODE, false))
         {
@@ -3297,27 +3341,7 @@ void Editor::PetriView::onHandleInput(Net& net, Simulation& simulation)
         {
             m_editor.springify();
         }
-        else if (ImGui::IsKeyPressed(KEY_INCREMENT_TOKENS) ||
-                 ImGui::IsKeyPressed(ImGuiKey_Equal))  // + normal
-        {
-            Node* node = m_editor.getNode(m_mouse.position);
-            if ((node != nullptr) && (node->type == Node::Type::Place))
-            {
-                reinterpret_cast<Place*>(node)->increment(1u);
-                net.modified = true;
-            }
-        }
-        else if (ImGui::IsKeyPressed(KEY_DECREMENT_TOKENS) ||
-                 ImGui::IsKeyPressed(ImGuiKey_Minus))  // - normal
-        {
-            Node* node = m_editor.getNode(m_mouse.position);
-            if ((node != nullptr) && (node->type == Node::Type::Place))
-            {
-                reinterpret_cast<Place*>(node)->decrement(1u);
-                net.modified = true;
-            }
-        }
-        else if (ImGui::IsKeyPressed(ImGuiKey_M, false))  // M pour deplacer
+        else if (ImGui::IsKeyPressed(ImGuiKey_M, false))
         {
             handleMoveNode();
         }
@@ -3600,22 +3624,23 @@ void Editor::PetriView::drawPetriNet(Net& net, Simulation& simulation,
     {
         if (m_mouse.context_menu_node != nullptr)
         {
+            bool sim_running = m_current_simulation && m_current_simulation->running;
             ImGui::Text("%s", m_mouse.context_menu_node->key.c_str());
             ImGui::Separator();
 
-            if (ImGui::MenuItem("Rename"))
+            if (ImGui::MenuItem("Rename", nullptr, false, !sim_running))
             {
                 m_mouse.editing_node = m_mouse.context_menu_node;
                 strncpy(m_mouse.edit_buffer, m_mouse.context_menu_node->caption.c_str(), sizeof(m_mouse.edit_buffer) - 1);
                 m_mouse.edit_buffer[sizeof(m_mouse.edit_buffer) - 1] = '\0';
                 m_mouse.edit_focus_requested = true;
             }
-            if (ImGui::MenuItem("Delete"))
+            if (ImGui::MenuItem("Delete", nullptr, false, !sim_running))
             {
                 m_editor.removeNode(*m_mouse.context_menu_node);
                 m_mouse.context_menu_node = nullptr;
             }
-            if (ImGui::MenuItem("Select"))
+            if (ImGui::MenuItem("Select", nullptr, false, !sim_running))
             {
                 selectNode(m_mouse.context_menu_node, false);
             }
@@ -3682,16 +3707,17 @@ void Editor::PetriView::drawPetriNet(Net& net, Simulation& simulation,
     {
         if (m_mouse.context_menu_arc != nullptr)
         {
+            bool sim_running = m_current_simulation && m_current_simulation->running;
             ImGui::Text("Arc: %s -> %s", m_mouse.context_menu_arc->from.key.c_str(),
                         m_mouse.context_menu_arc->to.key.c_str());
             ImGui::Separator();
 
-            if (ImGui::MenuItem("Delete"))
+            if (ImGui::MenuItem("Delete", nullptr, false, !sim_running))
             {
                 m_editor.removeArc(*m_mouse.context_menu_arc);
                 m_mouse.context_menu_arc = nullptr;
             }
-            if (ImGui::MenuItem("Select"))
+            if (ImGui::MenuItem("Select", nullptr, false, !sim_running))
             {
                 selectArc(m_mouse.context_menu_arc, false);
             }
