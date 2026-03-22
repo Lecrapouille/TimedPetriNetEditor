@@ -733,6 +733,35 @@ public:
     Place* findPlace(size_t const id);
 
     //--------------------------------------------------------------------------
+    //! \brief Find a Place at the given screen position (spatial query).
+    //! \param[in] x X coordinate in world space.
+    //! \param[in] y Y coordinate in world space.
+    //! \param[in] radius Hit detection radius (default: 20.0f).
+    //! \return Pointer to the Place if found within radius, nullptr otherwise.
+    //--------------------------------------------------------------------------
+    Place* findPlaceAt(float x, float y, float radius = 20.0f);
+
+    //--------------------------------------------------------------------------
+    //! \brief Find a Transition at the given screen position (spatial query).
+    //! \param[in] x X coordinate in world space.
+    //! \param[in] y Y coordinate in world space.
+    //! \param[in] radius Hit detection radius (default: 40.0f).
+    //! \return Pointer to the Transition if found within radius, nullptr otherwise.
+    //--------------------------------------------------------------------------
+    Transition* findTransitionAt(float x, float y, float radius = 40.0f);
+
+    //--------------------------------------------------------------------------
+    //! \brief Find any Node (Place or Transition) at the given position.
+    //! Transitions are checked first for TimedEventGraph, otherwise both.
+    //! \param[in] x X coordinate in world space.
+    //! \param[in] y Y coordinate in world space.
+    //! \param[in] place_radius Hit radius for places (default: 20.0f).
+    //! \param[in] trans_radius Hit radius for transitions (default: 40.0f).
+    //! \return Pointer to the Node if found, nullptr otherwise.
+    //--------------------------------------------------------------------------
+    Node* findNodeAt(float x, float y, float place_radius = 20.0f, float trans_radius = 40.0f);
+
+    //--------------------------------------------------------------------------
     //! \brief Add a new arc between two Petri nodes (place or transition). The
     //! duration is only applied for Transition -> Place. If nodes \from and \to
     //! have the same type then an extra node and an extra arc is created.

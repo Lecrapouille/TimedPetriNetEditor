@@ -542,6 +542,50 @@ Place* Net::findPlace(size_t const id)
 }
 
 //------------------------------------------------------------------------------
+Place* Net::findPlaceAt(float x, float y, float radius)
+{
+    const float r2 = radius * radius;
+    for (auto& place : m_places)
+    {
+        float dx = place.x - x;
+        float dy = place.y - y;
+        if (dx * dx + dy * dy < r2)
+        {
+            return &place;
+        }
+    }
+    return nullptr;
+}
+
+//------------------------------------------------------------------------------
+Transition* Net::findTransitionAt(float x, float y, float radius)
+{
+    const float r2 = radius * radius;
+    for (auto& transition : m_transitions)
+    {
+        float dx = transition.x - x;
+        float dy = transition.y - y;
+        if (dx * dx + dy * dy < r2)
+        {
+            return &transition;
+        }
+    }
+    return nullptr;
+}
+
+//------------------------------------------------------------------------------
+Node* Net::findNodeAt(float x, float y, float place_radius, float trans_radius)
+{
+    // For TimedEventGraph, only check transitions
+    Node* node = findTransitionAt(x, y, trans_radius);
+    if (m_type == TypeOfNet::TimedEventGraph)
+        return node;
+
+    // For other net types, check places too
+    return (node != nullptr) ? node : findPlaceAt(x, y, place_radius);
+}
+
+//------------------------------------------------------------------------------
 bool Net::removeArc(Arc const& a)
 {
     return removeArc(a.from, a.to);
