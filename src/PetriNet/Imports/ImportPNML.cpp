@@ -38,7 +38,7 @@ std::string importFromPNML(Net& net, std::string const& filename)
     std::ifstream file(filename);
     if (!file)
     {
-        error << "Failed opening '" << filename << "'. Reason was '"
+        error << "Failed opening '" << filename << "'. Reason: '"
               << strerror(errno) << "'" << std::endl;
         return error.str();
     }
@@ -118,7 +118,7 @@ std::string importFromPNML(Net& net, std::string const& filename)
         Node* to = net.findNode(lookup_ids[target]);
         if ((from == nullptr) || (to == nullptr))
         {
-            error << "Failed parsing '" << filename << "'. Reason was 'Arc "
+            error << "Failed parsing '" << filename << "'. Reason: 'Arc "
                 << source << " -> " << target << " refer to unknown nodes'"
                 << std::endl;
             return error.str();
@@ -131,7 +131,7 @@ std::string importFromPNML(Net& net, std::string const& filename)
                             ->FirstChildElement("text")->GetText());
             if (duration < 0.0f)
             {
-                error << "Failed parsing '" << filename << "'. Reason was 'Arc "
+                error << "Failed parsing '" << filename << "'. Reason: 'Arc "
                     << from->key << " -> " << to->key << " has negative duration'"
                     << std::endl;
                 return error.str();

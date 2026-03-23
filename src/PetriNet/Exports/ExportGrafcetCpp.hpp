@@ -7,7 +7,7 @@ bool PetriNet::exportToCpp(std::string const& filename) const
     {
         m_message.str("");
         m_message << "Failed to export the Petri net to '" << filename
-                  << "'. Reason was " << strerror(errno) << std::endl;
+                  << "'. Reason: " << strerror(errno) << std::endl;
         return false;
     }
 

@@ -451,7 +451,7 @@ public:
     //--------------------------------------------------------------------------
     Arc(Node& from_, Node& to_, float duration_ = 0.0f)
         : from(from_), to(to_),
-          duration(from_.type == Node::Type::Transition ? duration_ : NAN)
+          duration(from_.type == Node::Type::Transition ? duration_ : std::numeric_limits<float>::quiet_NaN())
     {
         assert(from.type != to.type);
     }
@@ -476,14 +476,14 @@ public:
     //--------------------------------------------------------------------------
     //! \brief Needed because of usage of references.
     //--------------------------------------------------------------------------
-    Arc(Arc&& other)
+    Arc(Arc&& other) noexcept
         : Arc(other.from, other.to, other.duration)
     {}
 
     //--------------------------------------------------------------------------
     //! \brief Needed because of usage of references.
     //--------------------------------------------------------------------------
-    Arc& operator=(Arc&& other)
+    Arc& operator=(Arc&& other) noexcept
     {
         this->~Arc(); // destroy
         new (this) Arc(other); // copy construct in place

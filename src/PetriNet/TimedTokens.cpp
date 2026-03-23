@@ -51,7 +51,7 @@ TimedToken::TimedToken(Arc& arc_, size_t const tokens_, TypeOfNet const type_)
     {
         // With graph event we have to skip implicit places.
         assert(arc->to.arcsOut.size() == 1u && "malformed graph event");
-        Node& next = arc->to.arcsOut[0]->to;
+        Node const& next = arc->to.arcsOut[0]->to;
         magnitude = norm(arc->from, next);
     }
 
@@ -82,7 +82,7 @@ TimedToken::TimedToken(Arc& arc_, size_t const tokens_, TypeOfNet const type_)
 bool TimedToken::update(float const dt)
 {
     // With graph event we have to skip implicit places.
-    Node& next = (type != TypeOfNet::TimedEventGraph)
+    Node const& next = (type != TypeOfNet::TimedEventGraph)
                 ? arc->to : arc->to.arcsOut[0]->to;
 
     offset += dt * speed / magnitude;

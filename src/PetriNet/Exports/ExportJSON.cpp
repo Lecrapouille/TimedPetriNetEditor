@@ -101,7 +101,7 @@ std::string exportAllNetsToJSON(std::vector<Net> const& nets, std::string const&
     {
         std::stringstream error;
         error << "Failed saving the Petri net in '" << filename
-              << "'. Reason was " << strerror(errno) << std::endl;
+              << "'. Reason: " << strerror(errno) << std::endl;
         return error.str();
     }
 
@@ -149,7 +149,7 @@ std::string exportToJSON(Net const& net, std::string const& filename)
     {
         std::stringstream error;
         error << "Failed saving the Petri net in '" << filename
-              << "'. Reason was " << strerror(errno) << std::endl;
+              << "'. Reason: " << strerror(errno) << std::endl;
         return error.str();
     }
 

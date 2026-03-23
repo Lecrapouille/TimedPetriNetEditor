@@ -77,7 +77,7 @@ static std::string parseNetFromJSON(Net& net, nlohmann::json const& jnet)
             return error.str();
         }
 
-        float duration = NAN;
+        float duration = std::numeric_limits<float>::quiet_NaN();
         auto const& it = a.find("duration");
         if (it != a.end())
         {
@@ -127,7 +127,7 @@ std::string importAllNetsFromJSON(std::vector<Net>& nets, std::string const& fil
     std::ifstream file(filename);
     if (!file)
     {
-        error << "Failed opening '" << filename << "'. Reason was '"
+        error << "Failed opening '" << filename << "'. Reason: '"
               << strerror(errno) << "'" << std::endl;
         return error.str();
     }
@@ -140,7 +140,7 @@ std::string importAllNetsFromJSON(std::vector<Net>& nets, std::string const& fil
     }
     catch (std::exception const& e)
     {
-        error << "Failed parsing '" << filename << "'. Reason was '"
+        error << "Failed parsing '" << filename << "'. Reason: '"
               << e.what() << "'" << std::endl;
         return error.str();
     }
@@ -149,7 +149,7 @@ std::string importAllNetsFromJSON(std::vector<Net>& nets, std::string const& fil
     TypeOfNet netType = TypeOfNet::PetriNet;
     if (json.contains("type"))
     {
-        std::string type = std::string(json["type"]);
+        auto type = std::string(json["type"]);
         if (type == "GRAFCET") {
             netType = TypeOfNet::GRAFCET;
         } else if (type == "Petri net") {
@@ -159,14 +159,14 @@ std::string importAllNetsFromJSON(std::vector<Net>& nets, std::string const& fil
         } else if (type == "Timed event graph") {
             netType = TypeOfNet::TimedEventGraph;
         } else {
-            error << "Failed parsing '" << filename << "'. Unknown type of net: " << type << std::endl;
+            error << "Failed parsing '" << filename << "'. Reason: 'Unknown type of net: " << type << "'" << std::endl;
             return error.str();
         }
     }
 
     if (!json.contains("nets"))
     {
-        error << "Failed parsing '" << filename << "'. Missing JSON nets field" << std::endl;
+        error << "Failed parsing '" << filename << "'. Reason: 'Missing JSON nets field'" << std::endl;
         return error.str();
     }
 
@@ -178,10 +178,10 @@ std::string importAllNetsFromJSON(std::vector<Net>& nets, std::string const& fil
         std::string parseError = parseNetFromJSON(net, jnet);
         if (!parseError.empty())
         {
-            error << "Failed parsing '" << filename << "'. " << parseError << std::endl;
+            error << "Failed parsing '" << filename << "'. Reason: '" << parseError << "'" << std::endl;
             return error.str();
         }
-        nets.push_back(std::move(net));
+        nets.push_back(net);
     }
 
     // GRAFCET inputs (shared between all nets)
@@ -239,7 +239,7 @@ std::string importFromJSON(Net& net, std::string const& filename)
     }
 
     // Move first net to output
-    net = std::move(nets[0]);
+    net = nets[0];
     return {};
 }
 

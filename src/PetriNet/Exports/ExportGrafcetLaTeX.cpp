@@ -443,7 +443,7 @@ std::string exportToGrafcetLaTeX(Net const& net, std::string const& filename)
     {
         std::stringstream error;
         error << "Failed to export the GRAFCET to '" << filename
-              << "'. Reason was " << strerror(errno) << std::endl;
+              << "'. Reason: " << strerror(errno) << std::endl;
         return error.str();
     }
 

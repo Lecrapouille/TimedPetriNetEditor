@@ -63,7 +63,7 @@ std::string importFlowshop(Net& net, std::string const& filename)
     std::ifstream file(filename);
     if (!file)
     {
-        error << "Failed opening '" << filename << "'. Reason was '"
+        error << "Failed opening '" << filename << "'. Reason: '"
             << strerror(errno) << "'" << std::endl;
         return error.str();
     }
@@ -139,7 +139,7 @@ std::string importFlowshop(Net& net, std::string const& filename)
         else
         {
             error << "Malformed line '" << line << "'" << std::endl;
-            return error.str(); 
+            return error.str();
         }
         x = margin + dx;
         y += dy;

@@ -58,7 +58,7 @@ std::string exportToPNEditor(Net const& net, std::string const& filename)
         {
             std::stringstream error;
             error << "Failed to export the Petri net to '" << filename_pns
-                  << "'. Reason was " << strerror(errno) << std::endl;
+                  << "'. Reason: " << strerror(errno) << std::endl;
             return error.str();
         }
 
@@ -94,7 +94,7 @@ std::string exportToPNEditor(Net const& net, std::string const& filename)
         {
             std::stringstream error;
             error << "Failed to export the Petri net to '" << filename_pnl
-                  << "'. Reason was " << strerror(errno) << std::endl;
+                  << "'. Reason: " << strerror(errno) << std::endl;
             return error.str();
         }
 
@@ -119,7 +119,7 @@ std::string exportToPNEditor(Net const& net, std::string const& filename)
         {
             std::stringstream error;
             error << "Failed to export the Petri net to '" << filename_pnkp
-                  << "'. Reason was " << strerror(errno) << std::endl;
+                  << "'. Reason: " << strerror(errno) << std::endl;
             return error.str();
         }
 
@@ -137,7 +137,7 @@ std::string exportToPNEditor(Net const& net, std::string const& filename)
         {
             std::stringstream error;
             error <<  "Failed to export the Petri net to '" << filename_pnk
-                  << "'. Reason was " << strerror(errno) << std::endl;
+                  << "'. Reason: " << strerror(errno) << std::endl;
             return error.str();
         }
 

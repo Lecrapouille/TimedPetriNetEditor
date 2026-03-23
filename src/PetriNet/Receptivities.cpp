@@ -35,7 +35,7 @@ Receptivity::StepExp::StepExp(Net& net, std::string const& name)
 //-----------------------------------------------------------------------------
 bool Receptivity::StepExp::evaluate() const
 {
-    Place* p = m_net.findPlace(m_id);
+    Place const* p = m_net.findPlace(m_id);
     assert((p != nullptr) && "Unknown place id");
     return !!(p->tokens); // size_t to boolean conversion
 }
@@ -57,7 +57,7 @@ bool Receptivity::CrossGraphStepExp::evaluate() const
         // Graph not found, return false
         return false;
     }
-    Place* p = net->findPlace(m_step_id);
+    Place const* p = net->findPlace(m_step_id);
     if (p == nullptr)
     {
         // Step not found in graph, return false
@@ -387,7 +387,7 @@ std::string Receptivity::compile(std::string const& code, Net& net)
 }
 
 //-----------------------------------------------------------------------------
-bool Receptivity::evaluate()
+bool Receptivity::evaluate() const
 {
     // Invalid syntaxt
     if (!m_valid)

@@ -26,11 +26,8 @@
 #include "Editor/Path.hpp"
 
 #include <algorithm>
-#include <iomanip>
 #include <iostream>
-#include <fstream>
 #include <cstring>
-#include <ctype.h>
 #include <limits>
 
 namespace tpne {
@@ -386,7 +383,7 @@ bool Net::addArc(Node& from, Node& to, float const duration)
 
     modified = true;
 
-    // Create an arc "Place -> Transition" or "Transition -> Place" 
+    // Create an arc "Place -> Transition" or "Transition -> Place"
     if (from.type != to.type)
     {
         m_arcs.push_back(Arc(from, to, duration));
@@ -731,7 +728,7 @@ void Net::removeNode(Node& node)
         }
 
         // Since we swap nodes inside the array before removing
-        // then, we have to start from greater id to lowest id. 
+        // then, we have to start from greater id to lowest id.
         std::sort(nodes_to_remove.begin(), nodes_to_remove.end(),
             [](Node* a, Node* b) { return a->id > b-> id; });
 
@@ -795,7 +792,7 @@ std::string saveToFile(Net const& net, std::string const& filepath)
     Exporter const* exporter = getExporter(Path::extension(filepath));
     if (exporter == nullptr)
     {
-        return "Cannot export " + filepath + ". Reason: 'unknown file extension'\n";
+        return "Cannot export '" + filepath + "'. Reason: 'unknown file extension'\n";
     }
     return exporter->exportFct(net, filepath);
 }
@@ -807,7 +804,7 @@ std::string loadFromFile(Net& net, std::string const& filepath, bool& springify)
     Importer const* importer = getImporter(Path::extension(filepath));
     if (importer == nullptr)
     {
-        return "Cannot import " + filepath + ". Reason: 'unknown file extension'\n";
+        return "Cannot import '" + filepath + "'. Reason: 'unknown file extension'\n";
     }
 
     // Load the file
