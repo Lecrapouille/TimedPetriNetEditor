@@ -187,7 +187,19 @@ struct Action
         P    // Pulse: single pulse at step activation
     };
 
+    //! \brief LED colors for industrial visualization
+    enum class LedColor
+    {
+        Green,   // Default for most actions
+        Red,     // Alarms, errors
+        Orange,  // Warnings
+        Yellow,  // Caution
+        Blue,    // Information
+        White    // Neutral
+    };
+
     Qualifier qualifier = Qualifier::N;
+    LedColor color = LedColor::Green;  // LED color for visualization
     std::string name;        // Action name (e.g., "KM1", "Verin_A+")
     std::string script;      // Code/description of the action
     float duration = 0.0f;   // For D, L, SD, DS, SL qualifiers (seconds)
@@ -226,6 +238,31 @@ inline Action::Qualifier strToQualifier(std::string const& s)
     if (s == "SL") return Action::Qualifier::SL;
     if (s == "P") return Action::Qualifier::P;
     return Action::Qualifier::N;
+}
+
+//! \brief Convert Action::LedColor to string
+inline const char* ledColorToStr(Action::LedColor c)
+{
+    switch (c) {
+        case Action::LedColor::Green: return "green";
+        case Action::LedColor::Red: return "red";
+        case Action::LedColor::Orange: return "orange";
+        case Action::LedColor::Yellow: return "yellow";
+        case Action::LedColor::Blue: return "blue";
+        case Action::LedColor::White: return "white";
+    }
+    return "green";
+}
+
+//! \brief Convert string to Action::LedColor
+inline Action::LedColor strToLedColor(std::string const& s)
+{
+    if (s == "red") return Action::LedColor::Red;
+    if (s == "orange") return Action::LedColor::Orange;
+    if (s == "yellow") return Action::LedColor::Yellow;
+    if (s == "blue") return Action::LedColor::Blue;
+    if (s == "white") return Action::LedColor::White;
+    return Action::LedColor::Green;
 }
 
 // *****************************************************************************
@@ -290,6 +327,10 @@ public:
     //! \brief GRAFCET actions associated with this step.
     //! Only used in GRAFCET mode.
     std::vector<Action> actions;
+
+    //! \brief Previous activation state (for detecting rising/falling edges).
+    //! Used by simulation to implement S, R, P qualifiers.
+    mutable bool wasActive = false;
 };
 
 // *****************************************************************************

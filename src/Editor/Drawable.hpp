@@ -34,7 +34,8 @@ void drawArc(ImDrawList* draw_list, Arc const& arc, TypeOfNet const type,
 void drawToken(ImDrawList* draw_list, float const x, float const y, float zoom = 1.0f);
 void drawTimedToken(ImDrawList* draw_list, size_t tokens, float const x, float const y, float zoom = 1.0f);
 void drawPlace(ImDrawList* draw_list, Place const& place, TypeOfNet const type,
-               ImVec2 const& origin, bool const show_caption, float const alpha, float zoom = 1.0f);
+               ImVec2 const& origin, bool const show_caption, float const alpha,
+               float zoom = 1.0f, bool isInitialStep = false);
 void drawTransition(ImDrawList* draw_list, Transition const& transition, TypeOfNet const type,
                     ImVec2 const& origin, bool const show_caption, float const alpha, float zoom = 1.0f);
 void drawPlot(const char* title, const char* label, std::vector<float> const& x, std::vector<float> const& y);

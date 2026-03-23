@@ -378,6 +378,159 @@ void Simulation::stateSimulating(float const dt)
         running = false;
         m_state = Simulation::State::Halting;
     }
+
+    // Update GRAFCET action states based on qualifiers
+    if (m_net.type() == TypeOfNet::GRAFCET)
+    {
+        updateActions(dt);
+    }
+}
+
+//------------------------------------------------------------------------------
+void Simulation::resetStoredAction(std::string const& name)
+{
+    // Find and reset all stored actions with the given name
+    for (auto& place : m_net.places())
+    {
+        for (auto& action : place.actions)
+        {
+            if (action.name == name &&
+                (action.qualifier == Action::Qualifier::S ||
+                 action.qualifier == Action::Qualifier::SD ||
+                 action.qualifier == Action::Qualifier::DS ||
+                 action.qualifier == Action::Qualifier::SL))
+            {
+                action.active = false;
+                action.timer = 0.0f;
+            }
+        }
+    }
+}
+
+//------------------------------------------------------------------------------
+void Simulation::updateActions(float const dt)
+{
+    for (auto& place : m_net.places())
+    {
+        bool step_active = (place.tokens > 0);
+        bool rising_edge = step_active && !place.wasActive;
+        bool falling_edge = !step_active && place.wasActive;
+
+        for (auto& action : place.actions)
+        {
+            switch (action.qualifier)
+            {
+            case Action::Qualifier::N:
+                // Normal: active while step is active
+                action.active = step_active;
+                if (!step_active) action.timer = 0.0f;
+                break;
+
+            case Action::Qualifier::S:
+                // Set (Stored): latched ON at step activation
+                if (rising_edge)
+                    action.active = true;
+                break;
+
+            case Action::Qualifier::R:
+                // Reset: resets stored actions with the same name
+                if (step_active)
+                {
+                    resetStoredAction(action.name);
+                }
+                action.active = false;
+                break;
+
+            case Action::Qualifier::D:
+                // Delayed: active after delay while step active
+                if (step_active)
+                {
+                    action.timer += dt;
+                    action.active = (action.timer >= action.duration);
+                }
+                else
+                {
+                    action.timer = 0.0f;
+                    action.active = false;
+                }
+                break;
+
+            case Action::Qualifier::L:
+                // Limited: active for limited time while step active
+                if (step_active)
+                {
+                    if (action.timer < action.duration)
+                    {
+                        action.timer += dt;
+                        action.active = true;
+                    }
+                    else
+                    {
+                        action.active = false;
+                    }
+                }
+                else
+                {
+                    action.timer = 0.0f;
+                    action.active = false;
+                }
+                break;
+
+            case Action::Qualifier::SD:
+                // Stored & Delayed: set after delay (stays on even if step deactivates)
+                if (step_active)
+                {
+                    action.timer += dt;
+                    if (action.timer >= action.duration)
+                        action.active = true;
+                }
+                else if (falling_edge)
+                {
+                    action.timer = 0.0f;
+                    // Keep active state (stored)
+                }
+                break;
+
+            case Action::Qualifier::DS:
+                // Delayed & Stored: delayed then latched
+                if (step_active)
+                {
+                    action.timer += dt;
+                    if (action.timer >= action.duration)
+                        action.active = true;
+                }
+                else
+                {
+                    action.timer = 0.0f;
+                    // Keep active state (stored) - only reset by R
+                }
+                break;
+
+            case Action::Qualifier::SL:
+                // Stored & Limited: set for limited time (stays on even if step deactivates)
+                if (rising_edge)
+                {
+                    action.active = true;
+                    action.timer = 0.0f;
+                }
+                if (action.active)
+                {
+                    action.timer += dt;
+                    if (action.timer >= action.duration)
+                        action.active = false;
+                }
+                break;
+
+            case Action::Qualifier::P:
+                // Pulse: single pulse at step activation (one cycle only)
+                action.active = rising_edge;
+                break;
+            }
+        }
+
+        // Update wasActive for next cycle
+        place.wasActive = step_active;
+    }
 }
 
 } // namespace tpne

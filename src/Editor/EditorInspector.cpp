@@ -251,29 +251,73 @@ static void drawGrafcetOutputsPanel(Net& net)
 
     ImDrawList* draw_list = ImGui::GetWindowDrawList();
 
-    // Collect actuator states from active steps
-    std::map<std::string, bool> actuator_states;
+    // Structure to hold actuator state and color
+    struct ActuatorInfo {
+        bool active = false;
+        Action::LedColor color = Action::LedColor::Green;
+    };
+
+    // Collect actuator states from actions (using action.active computed by simulation)
+    std::map<std::string, ActuatorInfo> actuator_states;
     for (const auto& place : net.places())
     {
-        bool step_active = (place.tokens > 0);
         for (const auto& action : place.actions)
         {
             if (!action.name.empty())
             {
-                bool action_active = step_active &&
-                    (action.qualifier == Action::Qualifier::N ||
-                     action.qualifier == Action::Qualifier::S);
-
-                if (action.qualifier == Action::Qualifier::S && action.active)
-                    action_active = true;
-
-                if (actuator_states.find(action.name) == actuator_states.end())
-                    actuator_states[action.name] = action_active;
+                // Use action.active which is computed by Simulation::updateActions()
+                // This properly handles all qualifiers (N, S, R, D, L, SD, DS, SL, P)
+                auto it = actuator_states.find(action.name);
+                if (it == actuator_states.end())
+                {
+                    actuator_states[action.name] = {action.active, action.color};
+                }
                 else
-                    actuator_states[action.name] = actuator_states[action.name] || action_active;
+                {
+                    // OR the states (multiple actions can control the same actuator)
+                    it->second.active = it->second.active || action.active;
+                }
             }
         }
     }
+
+    // Helper to convert LedColor to ImU32
+    auto ledColorToImU32 = [](Action::LedColor color, bool active) -> ImU32 {
+        if (!active) return IM_COL32(60, 60, 60, 255);
+        switch (color) {
+            case Action::LedColor::Green:  return IM_COL32(50, 255, 50, 255);
+            case Action::LedColor::Red:    return IM_COL32(255, 50, 50, 255);
+            case Action::LedColor::Orange: return IM_COL32(255, 165, 0, 255);
+            case Action::LedColor::Yellow: return IM_COL32(255, 255, 50, 255);
+            case Action::LedColor::Blue:   return IM_COL32(50, 150, 255, 255);
+            case Action::LedColor::White:  return IM_COL32(255, 255, 255, 255);
+        }
+        return IM_COL32(50, 255, 50, 255);
+    };
+
+    auto ledColorToGlow = [](Action::LedColor color) -> ImU32 {
+        switch (color) {
+            case Action::LedColor::Green:  return IM_COL32(50, 255, 50, 60);
+            case Action::LedColor::Red:    return IM_COL32(255, 50, 50, 60);
+            case Action::LedColor::Orange: return IM_COL32(255, 165, 0, 60);
+            case Action::LedColor::Yellow: return IM_COL32(255, 255, 50, 60);
+            case Action::LedColor::Blue:   return IM_COL32(50, 150, 255, 60);
+            case Action::LedColor::White:  return IM_COL32(255, 255, 255, 60);
+        }
+        return IM_COL32(50, 255, 50, 60);
+    };
+
+    auto ledColorToTextColor = [](Action::LedColor color) -> ImVec4 {
+        switch (color) {
+            case Action::LedColor::Green:  return ImVec4(0.4f, 1.0f, 0.4f, 1.0f);
+            case Action::LedColor::Red:    return ImVec4(1.0f, 0.4f, 0.4f, 1.0f);
+            case Action::LedColor::Orange: return ImVec4(1.0f, 0.65f, 0.0f, 1.0f);
+            case Action::LedColor::Yellow: return ImVec4(1.0f, 1.0f, 0.4f, 1.0f);
+            case Action::LedColor::Blue:   return ImVec4(0.4f, 0.6f, 1.0f, 1.0f);
+            case Action::LedColor::White:  return ImVec4(1.0f, 1.0f, 1.0f, 1.0f);
+        }
+        return ImVec4(0.4f, 1.0f, 0.4f, 1.0f);
+    };
 
     if (actuator_states.empty())
     {
@@ -281,19 +325,17 @@ static void drawGrafcetOutputsPanel(Net& net)
     }
     else
     {
-        for (const auto& actuator : actuator_states)
+        for (const auto& [name, info] : actuator_states)
         {
             ImVec2 led_pos = ImGui::GetCursorScreenPos();
             const float led_radius = 8.0f;
             ImVec2 led_center(led_pos.x + led_radius + 4.0f, led_pos.y + 10.0f);
 
-            ImU32 led_color = actuator.second
-                ? IM_COL32(50, 255, 50, 255)
-                : IM_COL32(60, 60, 60, 255);
+            ImU32 led_color = ledColorToImU32(info.color, info.active);
 
-            if (actuator.second)
+            if (info.active)
             {
-                draw_list->AddCircleFilled(led_center, led_radius + 3.0f, IM_COL32(50, 255, 50, 60));
+                draw_list->AddCircleFilled(led_center, led_radius + 3.0f, ledColorToGlow(info.color));
             }
             draw_list->AddCircleFilled(led_center, led_radius, led_color);
             draw_list->AddCircle(led_center, led_radius, IM_COL32(100, 100, 100, 255), 32, 1.5f);
@@ -301,10 +343,10 @@ static void drawGrafcetOutputsPanel(Net& net)
             ImGui::Dummy(ImVec2(led_radius * 2 + 12.0f, 20.0f));
             ImGui::SameLine();
 
-            if (actuator.second)
-                ImGui::TextColored(ImVec4(0.4f, 1.0f, 0.4f, 1.0f), "%s", actuator.first.c_str());
+            if (info.active)
+                ImGui::TextColored(ledColorToTextColor(info.color), "%s", name.c_str());
             else
-                ImGui::Text("%s", actuator.first.c_str());
+                ImGui::Text("%s", name.c_str());
         }
     }
 
@@ -435,6 +477,17 @@ static void drawGrafcetActionsPanel(Net& net, Simulation& simulation, bool& modi
                         modified = true;
                     }
 
+                    // LED Color selector (industrial standard colors)
+                    const char* colors[] = {
+                        "Green", "Red", "Orange", "Yellow", "Blue", "White"
+                    };
+                    int color_idx = static_cast<int>(action.color);
+                    if (ImGui::Combo("LED Color", &color_idx, colors, IM_ARRAYSIZE(colors)))
+                    {
+                        action.color = static_cast<Action::LedColor>(color_idx);
+                        modified = true;
+                    }
+
                     // Name input
                     char name_buf[128];
                     strncpy(name_buf, action.name.c_str(), sizeof(name_buf) - 1);
@@ -444,13 +497,17 @@ static void drawGrafcetActionsPanel(Net& net, Simulation& simulation, bool& modi
                         modified = true;
                     }
 
-                    // Script input
+                    // Script/Description input (used as comment in generated code)
                     char script_buf[256];
                     strncpy(script_buf, action.script.c_str(), sizeof(script_buf) - 1);
-                    if (ImGui::InputText("Script", script_buf, sizeof(script_buf)))
+                    if (ImGui::InputText("Description", script_buf, sizeof(script_buf)))
                     {
                         action.script = script_buf;
                         modified = true;
+                    }
+                    if (ImGui::IsItemHovered())
+                    {
+                        ImGui::SetTooltip("Description of the action (used as comment in generated code)");
                     }
 
                     // Duration for timed qualifiers

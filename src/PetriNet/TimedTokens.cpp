@@ -69,8 +69,9 @@ TimedToken::TimedToken(Arc& arc_, size_t const tokens_, TypeOfNet const type_)
         speed = magnitude / 0.2f;
         break;
         // In theory duration is 0 but nicer for the user to see animation.
+        // Fast animation for GRAFCET (quasi-instantaneous token movement).
     case TypeOfNet::GRAFCET:
-        speed = magnitude / 1.5f;
+        speed = magnitude / 0.15f;
         break;
     default:
         assert(false && "Unknown type of net");
