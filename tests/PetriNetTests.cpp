@@ -1,6 +1,6 @@
 //=============================================================================
 // TimedPetriNetEditor: A timed Petri net editor.
-// Copyright 2021 -- 2023 Quentin Quadrat <lecrapouille@gmail.com>
+// Copyright 2021 -- 2026 Quentin Quadrat <lecrapouille@gmail.com>
 //
 // This file is part of TimedPetriNetEditor.
 //
@@ -21,13 +21,15 @@
 #include "main.hpp"
 #define protected public
 #define private public
-#  include "TimedPetriNetEditor/PetriNet.hpp"
+#  include "PetriNet/PetriNet.hpp"
 #undef protected
 #undef private
 
-#include "TimedPetriNetEditor/Algorithms.hpp"
+#include "PetriNet/Algorithms.hpp"
+#include <cmath>
 
 using namespace ::tpne;
+using std::isnan;
 
 //------------------------------------------------------------------------------
 TEST(TestPetriNet, TestNodeCreation)

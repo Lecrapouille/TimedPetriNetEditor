@@ -1,25 +1,24 @@
 {
-  "revision": 3,
-  "type": "Timed Petri net",
+  "revision": 4,
+  "type": "Petri net",
   "nets": [
     {
        "name": "Traffic Lights",
        "places": [
-            { "id": 0, "caption": "Light 1 Red", "tokens": 1, "x": 146, "y": 250 },
-            { "id": 1, "caption": "Light 1 Green", "tokens": 0, "x": 389, "y": 173 },
-            { "id": 2, "caption": "Light 1 Orange", "tokens": 0, "x": 615, "y": 173 },
-            { "id": 3, "caption": "Light 2 Red", "tokens": 1, "x": 153, "y": 408 },
-            { "id": 4, "caption": "Light 2 Green", "tokens": 0, "x": 397, "y": 444 },
-            { "id": 5, "caption": "Light 2 Orange", "tokens": 0, "x": 639, "y": 444 },
-            { "id": 6, "caption": "P6", "tokens": 1, "x": 209, "y": 318 }
+            { "id": 0, "caption": "Light 1 Red", "tokens": 1, "x": 450, "y": 100 },
+            { "id": 1, "caption": "Light 1 Green", "tokens": 0, "x": 450, "y": 500 },
+            { "id": 2, "caption": "Light 1 Orange", "tokens": 0, "x": 450, "y": 300 },
+            { "id": 3, "caption": "Light 2 Red", "tokens": 0, "x": 850, "y": 100 },
+            { "id": 4, "caption": "Light 2 Green", "tokens": 1, "x": 850, "y": 500 },
+            { "id": 5, "caption": "Light 2 Orange", "tokens": 0, "x": 850, "y": 300 }
        ],
        "transitions": [
-            { "id": 0, "caption": "T0", "x": 272, "y": 173, "angle": 315 },
-            { "id": 1, "caption": "T1", "x": 496, "y": 173, "angle": 0 },
-            { "id": 2, "caption": "T2", "x": 497, "y": 255, "angle": 0 },
-            { "id": 3, "caption": "T3", "x": 283, "y": 444, "angle": 225 },
-            { "id": 4, "caption": "T4", "x": 497, "y": 444, "angle": 0 },
-            { "id": 5, "caption": "T5", "x": 497, "y": 339, "angle": 0 }
+            { "id": 0, "caption": "T0", "x": 600, "y": 250, "angle": 315 },
+            { "id": 1, "caption": "T1", "x": 450, "y": 400, "angle": 0 },
+            { "id": 2, "caption": "T2", "x": 450, "y": 200, "angle": 0 },
+            { "id": 3, "caption": "T3", "x": 700, "y": 250, "angle": 225 },
+            { "id": 4, "caption": "T4", "x": 850, "y": 400, "angle": 0 },
+            { "id": 5, "caption": "T5", "x": 850, "y": 200, "angle": 0 }
        ],
        "arcs": [
             { "from": "P0", "to": "T0" },
@@ -34,11 +33,21 @@
             { "from": "T4", "to": "P5", "duration": 3 },
             { "from": "P5", "to": "T5" },
             { "from": "T5", "to": "P3", "duration": 3 },
-            { "from": "P6", "to": "T0" },
-            { "from": "P6", "to": "T3" },
-            { "from": "T2", "to": "P6", "duration": 4 },
-            { "from": "T5", "to": "P6", "duration": 3 }
+            { "from": "P3", "to": "T0" },
+            { "from": "T0", "to": "P3", "duration": 1 },
+            { "from": "P0", "to": "T3" },
+            { "from": "T3", "to": "P0", "duration": 1 }
+       ],
+       "actions": [
+            { "place_id": 0, "qualifier": "N", "name": "Red 1", "script": "", "duration": 0 },
+            { "place_id": 1, "qualifier": "N", "name": "Green 1", "script": "", "duration": 0 },
+            { "place_id": 2, "qualifier": "N", "name": "Orange 1", "script": "", "duration": 0 },
+            { "place_id": 3, "qualifier": "N", "name": "Red 2", "script": "", "duration": 0 },
+            { "place_id": 4, "qualifier": "N", "name": "Green 2", "script": "", "duration": 0 },
+            { "place_id": 5, "qualifier": "N", "name": "Orange 2", "script": "", "duration": 0 }
        ]
     }
+  ],
+  "inputs": [
   ]
 }

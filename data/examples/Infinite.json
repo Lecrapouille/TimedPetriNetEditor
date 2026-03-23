@@ -1,21 +1,25 @@
 {
-  "revision": 3,
+  "revision": 4,
   "type": "Timed Petri net",
   "nets": [
     {
        "name": "Infinite",
        "places": [
-            { "id": 0, "caption": "P0", "tokens": 1, "x": 184, "y": 295 },
-            { "id": 1, "caption": "P1", "tokens": 0, "x": 513, "y": 295 }
+            { "id": 0, "caption": "P0", "tokens": 1, "x": 200, "y": 300 },
+            { "id": 1, "caption": "P1", "tokens": 0, "x": 500, "y": 300 }
        ],
        "transitions": [
-            { "id": 0, "caption": "T0", "x": 351, "y": 295, "angle": 0 }
+            { "id": 0, "caption": "T0", "x": 350, "y": 300, "angle": 0 }
        ],
        "arcs": [
             { "from": "P0", "to": "T0" },
             { "from": "T0", "to": "P1", "duration": 1 },
             { "from": "T0", "to": "P0", "duration": 1 }
+       ],
+       "actions": [
        ]
     }
+  ],
+  "inputs": [
   ]
 }

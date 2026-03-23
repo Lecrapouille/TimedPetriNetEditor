@@ -1,4 +1,5 @@
-#include "Editor.hpp" // Selected by Makefile
+#include "Editor/Editor.hpp" // Selected by Makefile
+#include <iostream>
 #include <unistd.h> // getopt
 
 //------------------------------------------------------------------------------

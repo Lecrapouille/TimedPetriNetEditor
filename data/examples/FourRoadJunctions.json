@@ -1,48 +1,48 @@
 {
-  "revision": 3,
+  "revision": 4,
   "type": "Petri net",
   "nets": [
     {
        "name": "FourRoadJunctions",
        "places": [
-            { "id": 0, "caption": "P0", "tokens": 3, "x": 200, "y": 125 },
-            { "id": 1, "caption": "P1", "tokens": 0, "x": 125, "y": 275 },
-            { "id": 2, "caption": "P2", "tokens": 0, "x": 400, "y": 275 },
-            { "id": 3, "caption": "P3", "tokens": 2, "x": 675, "y": 175 },
-            { "id": 4, "caption": "P4", "tokens": 0, "x": 500, "y": 150 },
-            { "id": 5, "caption": "P5", "tokens": 0, "x": 575, "y": 300 },
-            { "id": 6, "caption": "P6", "tokens": 1, "x": 675, "y": 350 },
-            { "id": 7, "caption": "P7", "tokens": 0, "x": 250, "y": 225 },
-            { "id": 8, "caption": "P8", "tokens": 0, "x": 200, "y": 325 },
-            { "id": 9, "caption": "P9", "tokens": 1, "x": 300, "y": 175 },
-            { "id": 10, "caption": "P10", "tokens": 0, "x": 200, "y": 575 },
-            { "id": 11, "caption": "P11", "tokens": 0, "x": 325, "y": 475 },
-            { "id": 12, "caption": "P12", "tokens": 0, "x": 500, "y": 425 },
-            { "id": 13, "caption": "P13", "tokens": 0, "x": 575, "y": 475 },
-            { "id": 14, "caption": "P14", "tokens": 0, "x": 450, "y": 550 },
-            { "id": 15, "caption": "P15", "tokens": 1, "x": 400, "y": 575 },
-            { "id": 16, "caption": "P16", "tokens": 2, "x": 500, "y": 650 },
-            { "id": 17, "caption": "P17", "tokens": 0, "x": 175, "y": 450 },
-            { "id": 18, "caption": "P18", "tokens": 1, "x": 100, "y": 400 },
-            { "id": 19, "caption": "P19", "tokens": 4, "x": 50, "y": 475 }
+            { "id": 0, "caption": "P0", "tokens": 5, "x": 200, "y": 150 },
+            { "id": 1, "caption": "P1", "tokens": 2, "x": 150, "y": 300 },
+            { "id": 2, "caption": "P2", "tokens": 0, "x": 550, "y": 300 },
+            { "id": 3, "caption": "P3", "tokens": 5, "x": 850, "y": 200 },
+            { "id": 4, "caption": "P4", "tokens": 0, "x": 650, "y": 150 },
+            { "id": 5, "caption": "P5", "tokens": 1, "x": 750, "y": 350 },
+            { "id": 6, "caption": "P6", "tokens": 0, "x": 850, "y": 400 },
+            { "id": 7, "caption": "P7", "tokens": 0, "x": 250, "y": 250 },
+            { "id": 8, "caption": "P8", "tokens": 1, "x": 200, "y": 400 },
+            { "id": 9, "caption": "P9", "tokens": 1, "x": 300, "y": 200 },
+            { "id": 10, "caption": "P10", "tokens": 2, "x": 200, "y": 700 },
+            { "id": 11, "caption": "P11", "tokens": 2, "x": 350, "y": 600 },
+            { "id": 12, "caption": "P12", "tokens": 0, "x": 750, "y": 550 },
+            { "id": 13, "caption": "P13", "tokens": 0, "x": 850, "y": 600 },
+            { "id": 14, "caption": "P14", "tokens": 0, "x": 700, "y": 650 },
+            { "id": 15, "caption": "P15", "tokens": 1, "x": 650, "y": 700 },
+            { "id": 16, "caption": "P16", "tokens": 2, "x": 750, "y": 800 },
+            { "id": 17, "caption": "P17", "tokens": 0, "x": 150, "y": 550 },
+            { "id": 18, "caption": "P18", "tokens": 1, "x": 100, "y": 500 },
+            { "id": 19, "caption": "P19", "tokens": 3, "x": 50, "y": 600 }
        ],
        "transitions": [
             { "id": 0, "caption": "u1", "x": 200, "y": 50, "angle": 90 },
-            { "id": 1, "caption": "y0", "x": 500, "y": 75, "angle": 90 },
-            { "id": 2, "caption": "T2", "x": 200, "y": 175, "angle": 90 },
-            { "id": 3, "caption": "y1", "x": 50, "y": 275, "angle": 180 },
-            { "id": 4, "caption": "T4", "x": 300, "y": 275, "angle": 0 },
-            { "id": 5, "caption": "T5", "x": 675, "y": 275, "angle": 0 },
-            { "id": 6, "caption": "u0", "x": 675, "y": 75, "angle": 90 },
-            { "id": 7, "caption": "T7", "x": 500, "y": 350, "angle": 270 },
-            { "id": 8, "caption": "T8", "x": 200, "y": 400, "angle": 270 },
-            { "id": 9, "caption": "y2", "x": 100, "y": 625, "angle": 270 },
-            { "id": 10, "caption": "T10", "x": 400, "y": 475, "angle": 0 },
-            { "id": 11, "caption": "y3", "x": 675, "y": 475, "angle": 0 },
-            { "id": 12, "caption": "T12", "x": 500, "y": 575, "angle": 270 },
-            { "id": 13, "caption": "u3", "x": 675, "y": 650, "angle": 180 },
-            { "id": 14, "caption": "T14", "x": 100, "y": 475, "angle": 0 },
-            { "id": 15, "caption": "u2", "x": 50, "y": 625, "angle": 270 }
+            { "id": 1, "caption": "y0", "x": 650, "y": 50, "angle": 90 },
+            { "id": 2, "caption": "T2", "x": 200, "y": 200, "angle": 90 },
+            { "id": 3, "caption": "y1", "x": 50, "y": 300, "angle": 180 },
+            { "id": 4, "caption": "T4", "x": 350, "y": 300, "angle": 0 },
+            { "id": 5, "caption": "T5", "x": 850, "y": 300, "angle": 0 },
+            { "id": 6, "caption": "u0", "x": 850, "y": 100, "angle": 90 },
+            { "id": 7, "caption": "T7", "x": 650, "y": 400, "angle": 270 },
+            { "id": 8, "caption": "T8", "x": 200, "y": 500, "angle": 270 },
+            { "id": 9, "caption": "y2", "x": 200, "y": 800, "angle": 270 },
+            { "id": 10, "caption": "T10", "x": 650, "y": 600, "angle": 0 },
+            { "id": 11, "caption": "y3", "x": 950, "y": 600, "angle": 0 },
+            { "id": 12, "caption": "T12", "x": 750, "y": 700, "angle": 270 },
+            { "id": 13, "caption": "u3", "x": 950, "y": 800, "angle": 180 },
+            { "id": 14, "caption": "T14", "x": 100, "y": 600, "angle": 0 },
+            { "id": 15, "caption": "u2", "x": 50, "y": 750, "angle": 270 }
        ],
        "arcs": [
             { "from": "T0", "to": "P0", "duration": 2 },
@@ -93,7 +93,11 @@
             { "from": "P19", "to": "T14" },
             { "from": "T15", "to": "P19", "duration": 5 },
             { "from": "T14", "to": "P10", "duration": 3 }
+       ],
+       "actions": [
        ]
     }
+  ],
+  "inputs": [
   ]
 }

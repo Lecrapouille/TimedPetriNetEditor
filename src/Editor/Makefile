@@ -1,6 +1,6 @@
 ##=====================================================================
 ## TimedPetriNetEditor: A timed Petri net editor.
-## Copyright 2021 -- 2023 Quentin Quadrat <lecrapouille@gmail.com>
+## Copyright 2021 -- 2026 Quentin Quadrat <lecrapouille@gmail.com>
 ##
 ## This file is part of PetriEditor.
 ##
@@ -35,12 +35,12 @@ include $(M)/project/Makefile
 ###################################################
 # For the moment we only use Dear ImGui
 #
-include ./DearImGui/Backends/Makefile
+include ./Backends/Makefile
 
 ###################################################
 # Make the list of compiled files for the library
 #
-INCLUDES += $(P)/src $(P)/include
+INCLUDES += $(P)/src
 LIB_FILES += $(GUI_FILES)
 THIRD_PARTIES_LIBS := $(GUI_THIRD_PARTIES_LIBS)
 

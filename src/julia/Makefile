@@ -1,6 +1,6 @@
 ##=====================================================================
 ## TimedPetriNetEditor: A timed Petri net editor.
-## Copyright 2021 -- 2023 Quentin Quadrat <lecrapouille@gmail.com>
+## Copyright 2021 -- 2026 Quentin Quadrat <lecrapouille@gmail.com>
 ##
 ## This file is part of PetriEditor.
 ##
@@ -21,7 +21,8 @@
 ###################################################
 # Location of the project directory and Makefiles
 #
-P := ../..
+_MK_DIR := $(dir $(abspath $(lastword $(MAKEFILE_LIST))))
+P := $(abspath $(_MK_DIR)/../..)
 M := $(P)/.makefile
 
 ###################################################
@@ -35,13 +36,13 @@ include $(M)/project/Makefile
 ###################################################
 # Inform Makefile where to find *.cpp files
 #
-VPATH += $(P)/src $(P)/src/Utils $(P)/src/Net
-VPATH += $(P)/src/Net/Imports VPATH += $(P)/src/Net/Exports
+VPATH += $(P)/src $(P)/src/PetriNet
+VPATH += $(P)/src/PetriNet/Imports $(P)/src/PetriNet/Exports
 
 ###################################################
 # Inform Makefile where to find header files
 #
-INCLUDES += $(P)/include $(P)/src
+INCLUDES += $(P)/src
 
 ###################################################
 # Internal libraries since we can call the GUI from Julia REPL
@@ -67,7 +68,7 @@ USER_CXXFLAGS := -Wno-cast-qual -Wno-undef
 ###################################################
 # GUI
 #
-include $(abspath $(P)/src/Editor/DearImGui/Backends/Makefile)
+include $(abspath $(P)/src/Editor/Backends/Makefile)
 
 ###################################################
 # Generic Makefile rules

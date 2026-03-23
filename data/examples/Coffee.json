@@ -1,37 +1,41 @@
 {
-  "revision": 3,
-  "type": "Timed Petri net",
+  "revision": 4,
+  "type": "Petri net",
   "nets": [
     {
        "name": "Coffee",
        "places": [
-            { "id": 0, "caption": "Cold", "tokens": 1, "x": 239, "y": 104 },
-            { "id": 1, "caption": "Hot", "tokens": 0, "x": 245, "y": 251 },
-            { "id": 2, "caption": "Ready", "tokens": 1, "x": 392, "y": 90 },
-            { "id": 3, "caption": "Coin Inserted", "tokens": 0, "x": 598, "y": 172 },
-            { "id": 4, "caption": "Accepted", "tokens": 0, "x": 387, "y": 250 }
+            { "id": 0, "caption": "Cold", "tokens": 1, "x": 250, "y": 100 },
+            { "id": 1, "caption": "Hot", "tokens": 0, "x": 250, "y": 300 },
+            { "id": 2, "caption": "Ready", "tokens": 1, "x": 450, "y": 100 },
+            { "id": 3, "caption": "Coin Inserted", "tokens": 0, "x": 700, "y": 200 },
+            { "id": 4, "caption": "Accepted", "tokens": 0, "x": 450, "y": 300 }
        ],
        "transitions": [
-            { "id": 0, "caption": "Brew", "x": 156, "y": 179, "angle": 0 },
-            { "id": 1, "caption": "Dispense", "x": 314, "y": 180, "angle": 0 },
-            { "id": 2, "caption": "Insert Coin", "x": 529, "y": 90, "angle": 0 },
-            { "id": 3, "caption": "Reject Coin", "x": 465, "y": 172, "angle": 0 },
-            { "id": 4, "caption": "Accept", "x": 525, "y": 250, "angle": 0 }
+            { "id": 0, "caption": "Brew", "x": 150, "y": 200, "angle": 0 },
+            { "id": 1, "caption": "Dispense", "x": 350, "y": 200, "angle": 0 },
+            { "id": 2, "caption": "Insert Coin", "x": 650, "y": 100, "angle": 0 },
+            { "id": 3, "caption": "Reject Coin", "x": 550, "y": 200, "angle": 0 },
+            { "id": 4, "caption": "Accept", "x": 600, "y": 300, "angle": 0 }
        ],
        "arcs": [
             { "from": "P0", "to": "T0" },
-            { "from": "T0", "to": "P1", "duration": 5 },
+            { "from": "T0", "to": "P1", "duration": 2 },
             { "from": "P1", "to": "T1" },
-            { "from": "T1", "to": "P2", "duration": 0.2 },
+            { "from": "T1", "to": "P2", "duration": 2 },
             { "from": "P2", "to": "T2" },
             { "from": "T2", "to": "P3", "duration": 2 },
             { "from": "P3", "to": "T3" },
             { "from": "T3", "to": "P2", "duration": 2 },
             { "from": "P3", "to": "T4" },
-            { "from": "T4", "to": "P4", "duration": 0.2 },
+            { "from": "T4", "to": "P4", "duration": 2 },
             { "from": "P4", "to": "T1" },
-            { "from": "T1", "to": "P0", "duration": 0.2 }
+            { "from": "T1", "to": "P0", "duration": 2 }
+       ],
+       "actions": [
        ]
     }
+  ],
+  "inputs": [
   ]
 }
