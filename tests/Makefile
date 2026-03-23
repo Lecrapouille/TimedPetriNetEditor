@@ -1,6 +1,6 @@
 ##=====================================================================
 ## TimedPetriNetEditor: A timed Petri net editor.
-## Copyright 2021 -- 2023 Quentin Quadrat <lecrapouille@gmail.com>
+## Copyright 2021 -- 2026 Quentin Quadrat <lecrapouille@gmail.com>
 ##
 ## This file is part of PetriEditor.
 ##
@@ -48,20 +48,20 @@ USER_CXXFLAGS := -Wno-old-style-cast -Wno-sign-conversion
 ###################################################
 # Inform Makefile where to find *.cpp files
 #
-VPATH += $(P)/src $(P)/src/Utils $(P)/src/Net
-VPATH += $(P)/src/Net/Imports $(P)/src/Net/Exports
+VPATH += $(P)/src $(P)/src/PetriNet
+VPATH += $(P)/src/PetriNet/Imports $(P)/src/PetriNet/Exports
 
 ###################################################
 # Inform Makefile where to find header files
 #
-INCLUDES += $(P)/include $(P)/src $(THIRD_PARTIES_DIR)
+INCLUDES += $(P)/src $(THIRD_PARTIES_DIR)
 
 ###################################################
 # Make the list of compiled files for the library
 #
-SRC_FILES += $(call rwildcard,$(P)/src/Net,*.cpp)
-SRC_FILES += $(call rwildcard,$(P)/src/Net,*.c)
-SRC_FILES += $(call rwildcard,$(P)/src/Utils,*.cpp)
+SRC_FILES += $(call rwildcard,$(P)/src/PetriNet,*.cpp)
+SRC_FILES += $(call rwildcard,$(P)/src/PetriNet,*.c)
+SRC_FILES += $(P)/src/Editor/Path.cpp
 SRC_FILES += $(call rwildcard,$(P)/tests,*.cpp)
 
 # BEWARE: Disable fast math for testing, else the tests on NaN will fail.

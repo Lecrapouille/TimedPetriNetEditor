@@ -1,6 +1,6 @@
 ##=====================================================================
 ## TimedPetriNetEditor: A timed Petri net editor.
-## Copyright 2021 -- 2023 Quentin Quadrat <lecrapouille@gmail.com>
+## Copyright 2021 -- 2026 Quentin Quadrat <lecrapouille@gmail.com>
 ##
 ## This file is part of TimedPetriNetEditor.
 ##
@@ -115,7 +115,7 @@ Throw an exception if the Petri net handle cannot be loaded.
 
 # Examples
 ```julia-repl
-julia> pn = petri_net("TimedPetriNetEditor/examples/Example1.json")
+julia> pn = petri_net("PetriNet/examples/Example1.json")
 PetriNet(0)
 
 julia> typeof(pn)
@@ -772,7 +772,7 @@ meaning places will have at most one token.
 
 # Examples
 ```julia-repl
-julia> pn1 = petri_net("TimedPetriNetEditor/examples/Howard2.json")
+julia> pn1 = petri_net("PetriNet/examples/Howard2.json")
 PetriNet(0)
 
 julia> is_event_graph(pn)

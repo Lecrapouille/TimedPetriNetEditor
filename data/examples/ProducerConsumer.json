@@ -1,21 +1,21 @@
 {
-  "revision": 3,
+  "revision": 4,
   "type": "Petri net",
   "nets": [
     {
        "name": "Producer Consumer",
        "places": [
-            { "id": 0, "caption": "Producer ready", "tokens": 1, "x": 100, "y": 75 },
-            { "id": 1, "caption": "Idle", "tokens": 1, "x": 100, "y": 225 },
-            { "id": 2, "caption": "Buffer", "tokens": 3, "x": 300, "y": 150 },
-            { "id": 3, "caption": "Accepted", "tokens": 0, "x": 500, "y": 75 },
-            { "id": 4, "caption": "Ready", "tokens": 2, "x": 500, "y": 225 }
+            { "id": 0, "caption": "Producer ready", "tokens": 1, "x": 200, "y": 100 },
+            { "id": 1, "caption": "Idle", "tokens": 1, "x": 200, "y": 200 },
+            { "id": 2, "caption": "Buffer", "tokens": 3, "x": 400, "y": 150 },
+            { "id": 3, "caption": "Accepted", "tokens": 0, "x": 600, "y": 100 },
+            { "id": 4, "caption": "Ready", "tokens": 2, "x": 600, "y": 200 }
        ],
        "transitions": [
-            { "id": 0, "caption": "Send", "x": 175, "y": 150, "angle": 0 },
-            { "id": 1, "caption": "Produce", "x": 25, "y": 150, "angle": 0 },
-            { "id": 2, "caption": "Accept", "x": 425, "y": 150, "angle": 0 },
-            { "id": 3, "caption": "Consume", "x": 575, "y": 150, "angle": 0 }
+            { "id": 0, "caption": "Send", "x": 300, "y": 150, "angle": 0 },
+            { "id": 1, "caption": "Produce", "x": 100, "y": 150, "angle": 0 },
+            { "id": 2, "caption": "Accept", "x": 500, "y": 150, "angle": 0 },
+            { "id": 3, "caption": "Consume", "x": 700, "y": 150, "angle": 0 }
        ],
        "arcs": [
             { "from": "P0", "to": "T0" },
@@ -28,7 +28,11 @@
             { "from": "P3", "to": "T3" },
             { "from": "T3", "to": "P4", "duration": 1 },
             { "from": "P4", "to": "T2" }
+       ],
+       "actions": [
        ]
     }
+  ],
+  "inputs": [
   ]
 }

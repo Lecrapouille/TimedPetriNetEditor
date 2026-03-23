@@ -1,28 +1,28 @@
 {
-  "revision": 3,
+  "revision": 4,
   "type": "Petri net",
   "nets": [
     {
        "name": "Chain Saw",
        "places": [
-            { "id": 0, "caption": "Chain brake on", "tokens": 1, "x": 238, "y": 223 },
-            { "id": 1, "caption": "Off", "tokens": 0, "x": 355, "y": 310 },
-            { "id": 2, "caption": "Chain running", "tokens": 0, "x": 764, "y": 65 },
-            { "id": 3, "caption": "Stopped", "tokens": 1, "x": 636, "y": 315 },
-            { "id": 4, "caption": "On", "tokens": 0, "x": 371, "y": 418 },
-            { "id": 5, "caption": "On", "tokens": 1, "x": 437, "y": 481 },
-            { "id": 6, "caption": "Safety throttle off", "tokens": 0, "x": 280, "y": 595 },
-            { "id": 7, "caption": "Dead man switch off", "tokens": 1, "x": 214, "y": 518 }
+            { "id": 0, "caption": "Chain brake on", "tokens": 1, "x": 250, "y": 200 },
+            { "id": 1, "caption": "Off", "tokens": 0, "x": 350, "y": 300 },
+            { "id": 2, "caption": "Chain running", "tokens": 0, "x": 750, "y": 50 },
+            { "id": 3, "caption": "Stopped", "tokens": 1, "x": 650, "y": 300 },
+            { "id": 4, "caption": "On", "tokens": 0, "x": 350, "y": 400 },
+            { "id": 5, "caption": "On", "tokens": 1, "x": 450, "y": 500 },
+            { "id": 6, "caption": "Safety throttle off", "tokens": 0, "x": 300, "y": 600 },
+            { "id": 7, "caption": "Dead man switch off", "tokens": 1, "x": 200, "y": 500 }
        ],
        "transitions": [
-            { "id": 0, "caption": "T0", "x": 267, "y": 296, "angle": 0 },
-            { "id": 1, "caption": "T1", "x": 317, "y": 255, "angle": 0 },
-            { "id": 2, "caption": "T2", "x": 477, "y": 323, "angle": 0 },
-            { "id": 3, "caption": "T3", "x": 762, "y": 213, "angle": 0 },
-            { "id": 4, "caption": "T4", "x": 347, "y": 518, "angle": 0 },
-            { "id": 5, "caption": "T5", "x": 384, "y": 554, "angle": 0 },
-            { "id": 6, "caption": "T6", "x": 264, "y": 422, "angle": 0 },
-            { "id": 7, "caption": "T7", "x": 320, "y": 483, "angle": 0 }
+            { "id": 0, "caption": "T0", "x": 250, "y": 300, "angle": 0 },
+            { "id": 1, "caption": "T1", "x": 300, "y": 250, "angle": 0 },
+            { "id": 2, "caption": "T2", "x": 500, "y": 300, "angle": 0 },
+            { "id": 3, "caption": "T3", "x": 750, "y": 200, "angle": 0 },
+            { "id": 4, "caption": "T4", "x": 350, "y": 500, "angle": 0 },
+            { "id": 5, "caption": "T5", "x": 400, "y": 550, "angle": 0 },
+            { "id": 6, "caption": "T6", "x": 250, "y": 400, "angle": 0 },
+            { "id": 7, "caption": "T7", "x": 300, "y": 500, "angle": 0 }
        ],
        "arcs": [
             { "from": "P0", "to": "T0" },
@@ -47,8 +47,10 @@
             { "from": "P7", "to": "T7" },
             { "from": "T7", "to": "P4", "duration": 1 }
        ],
-       "sensors": [
+       "actions": [
        ]
     }
+  ],
+  "inputs": [
   ]
 }

@@ -1,6 +1,6 @@
 ##=====================================================================
 ## TimedPetriNetEditor: A timed Petri net editor.
-## Copyright 2021 -- 2023 Quentin Quadrat <lecrapouille@gmail.com>
+## Copyright 2021 -- 2026 Quentin Quadrat <lecrapouille@gmail.com>
 ##
 ## This file is part of PetriEditor.
 ##
@@ -36,7 +36,6 @@ include $(M)/project/Makefile
 # Standalone application
 #
 SRC_FILES := src/main.cpp
-INCLUDES := $(P)/include
 VPATH := $(P)/src
 
 ###################################################
@@ -46,16 +45,16 @@ LIB_TPNE_NET := $(call internal-lib,TimedPetriNet)
 LIB_TPNE_EDITOR := $(call internal-lib,TimedPetriGUI)
 LIB_TPNE_JULIA := $(call internal-lib,TimedPetriJulia)
 INTERNAL_LIBS := $(LIB_TPNE_EDITOR) $(LIB_TPNE_NET) $(LIB_TPNE_JULIA)
-DIRS_WITH_MAKEFILE := $(P)/src/Net $(P)/src/Editor $(P)/src/julia
+DIRS_WITH_MAKEFILE := $(P)/src/PetriNet $(P)/src/Editor $(P)/src/julia
 
 $(P)/src/julia: $(P)/src/Editor
 
-$(P)/src/Editor: $(P)/src/Net
+$(P)/src/Editor: $(P)/src/PetriNet
 
 ###################################################
 # GUI
 #
-include $(abspath $(P)/src/Editor/DearImGui/Backends/Makefile)
+include $(abspath $(P)/src/Editor/Backends/Makefile)
 
 ###################################################
 # Embed assets for web version. Assets shall be
