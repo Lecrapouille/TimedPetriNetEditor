@@ -29,7 +29,6 @@
 #  include "Editor/EditorState.hpp"
 #  include "Editor/Path.hpp"
 
-#  include "PetriNet/Simulation.hpp"
 #  include "PetriNet/Exports/Exports.hpp"
 #  include "PetriNet/Imports/Imports.hpp"
 #  include "PetriNet/ForceDirected.hpp"

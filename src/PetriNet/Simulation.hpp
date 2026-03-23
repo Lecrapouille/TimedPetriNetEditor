@@ -25,7 +25,6 @@
 #  include "PetriNet/Signal.hpp"
 
 #  include <atomic>
-#  include <map>
 #  include <string>
 #  include <vector>
 
