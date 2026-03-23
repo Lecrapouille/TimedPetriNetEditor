@@ -1,21 +1,21 @@
 {
-  "revision": 3,
+  "revision": 4,
   "type": "Timed event graph",
   "nets": [
     {
        "name": "Howard2",
        "places": [
-            { "id": 0, "caption": "P0", "tokens": 2, "x": 208, "y": 250 },
-            { "id": 1, "caption": "P1", "tokens": 0, "x": 562, "y": 276 },
-            { "id": 2, "caption": "P2", "tokens": 0, "x": 304, "y": 398 },
+            { "id": 0, "caption": "P0", "tokens": 2, "x": 200, "y": 250 },
+            { "id": 1, "caption": "P1", "tokens": 0, "x": 550, "y": 300 },
+            { "id": 2, "caption": "P2", "tokens": 0, "x": 300, "y": 400 },
             { "id": 3, "caption": "P3", "tokens": 0, "x": 650, "y": 200 },
-            { "id": 4, "caption": "P4", "tokens": 0, "x": 428, "y": 550 }
+            { "id": 4, "caption": "P4", "tokens": 0, "x": 450, "y": 550 }
        ],
        "transitions": [
-            { "id": 0, "caption": "T0", "x": 320, "y": 128, "angle": 0 },
-            { "id": 1, "caption": "T1", "x": 458, "y": 398, "angle": 0 },
-            { "id": 2, "caption": "T2", "x": 120, "y": 388, "angle": 0 },
-            { "id": 3, "caption": "T3", "x": 734, "y": 406, "angle": 0 }
+            { "id": 0, "caption": "T0", "x": 300, "y": 150, "angle": 0 },
+            { "id": 1, "caption": "T1", "x": 450, "y": 400, "angle": 0 },
+            { "id": 2, "caption": "T2", "x": 100, "y": 400, "angle": 0 },
+            { "id": 3, "caption": "T3", "x": 750, "y": 400, "angle": 0 }
        ],
        "arcs": [
             { "from": "P3", "to": "T0" },
@@ -28,7 +28,11 @@
             { "from": "T2", "to": "P4", "duration": 1 },
             { "from": "P4", "to": "T3" },
             { "from": "T3", "to": "P3", "duration": 1 }
+       ],
+       "actions": [
        ]
     }
+  ],
+  "inputs": [
   ]
 }

@@ -207,7 +207,7 @@ void Simulation::stateHalting()
     std::cout << current_time() << "Simulation has ended!"
                 << std::endl << std::endl;
 
-    // Restore burnt tokens from the simulation
+    // Restore consumed tokens from the simulation
     m_net.tokens(m_initial_tokens);
     m_net.resetReceptivies();
     m_receptivities.clear();
@@ -234,8 +234,7 @@ void Simulation::restoreInitialMarking()
 //------------------------------------------------------------------------------
 void Simulation::stateSimulating(float const dt)
 {
-    bool burnt = false;
-    size_t burning = 0u;
+    size_t consuming = 0u;
 
     // The user has requested to halt the simulation ?
     if (!running)
@@ -254,49 +253,45 @@ void Simulation::stateSimulating(float const dt)
     }
 
     // For each transition check if it is activated (all incoming Places
-    // have at least one token to burn. Note: since here we care Petri but
-    // not Grafcet the transitivity is always true). If yes, we will burn
+    // have at least one token to consume). If yes, we will consume
     // the maximum possible of tokens in a single step for the animation.
     // But in the aim to divide tokens the most kindly over the maximum
-    // transitions possible we have to iterate and burn tokens one by one.
+    // transitions possible we have to iterate and consume tokens one by one.
+
+    // Collect arcs that will carry animated tokens (optimization: avoid
+    // iterating over all arcs at the end)
+    std::vector<Arc*> arcs_to_animate;
+    arcs_to_animate.reserve(32u);
+
     do
     {
-        // Randomize the order of fired transition.
-        // TODO: filter the list to speed up ?
+        // Randomize the order of fired transitions (shuffle once per outer iteration)
         auto& transitions = shuffle_transitions();
 
-        burning = 0u;
-        for (auto& trans: transitions)
+        consuming = 0u;
+        for (auto* trans: transitions)
         {
-            // The theory would burn the maximum possibe of tokens that
-            // we can in a single action but we can also try to burn tokens
-            // one by one and randomize the transitions.
-            size_t tokens = 0u;
-            if (trans->isFireable())
-            {
-                tokens = trans->countBurnableTokens();
-            }
+            // maxTokensToConsume() returns 0 if transition cannot fire,
+            // so no need to call canFire() separately (optimization)
+            const size_t tokens = trans->maxTokensToConsume();
 
             if (tokens > 0u)
             {
                 assert(tokens <= Net::Settings::maxTokens);
-                //TODO trans->fading.restart();
 
-                burning = tokens; // keep iterating on this loop
-                burnt = true; // At least one place has been fired
+                consuming = tokens;
 
-                // Transition source
+                // Input transition (source)
                 if (trans->isInput())
                 {
-                    burning = 0u;
+                    consuming = 0u;
                     trans->receptivity = false;
                 }
                 else
                 {
-                    // Burn tokens on each predecessor Places
-                    for (auto& a: trans->arcsIn)
+                    // Consume tokens from each input place
+                    for (auto* a: trans->arcsIn)
                     {
-                        // Burn tokens
                         size_t& tks = a->tokensIn();
                         assert(tks >= tokens);
                         tks = std::min(Net::Settings::maxTokens, tks - tokens);
@@ -307,36 +302,34 @@ void Simulation::stateSimulating(float const dt)
                             Transition& tr = reinterpret_cast<Transition&>(a->to);
                             tr.receptivity = false;
                         }
-                        //TODO a->fading.restart();
                     }
                 }
 
-                // Count the number of tokens for the animation
-                for (auto& a: trans->arcsOut)
+                // Count the number of tokens for the animation and collect arcs
+                for (auto* a: trans->arcsOut)
                 {
+                    if (a->count == 0u)
+                    {
+                        arcs_to_animate.push_back(a);
+                    }
                     a->count = std::min(Net::Settings::maxTokens, a->count + tokens);
                 }
             }
         }
-    } while (burning != 0u);
+    } while (consuming != 0u);
 
-    // Create animated tokens with the correct number of tokens they are
-    // carrying.
-    if (burnt)
+    // Create animated tokens from the collected arcs (optimization: O(k) instead of O(n))
+    for (auto* a: arcs_to_animate)
     {
-        for (auto& a: m_net.arcs()) // FIXME: speedup: trans->arcsOut
+        if (a->count > 0u)
         {
-            if (a.count > 0u) // number of tokens carried by a single animation
-            {
-                std::cout << current_time()
-                            << "Transition " << a.from.caption << " burnt "
-                            << a.count << " token"
-                            << (a.count == 1u ? "" : "s")
-                            << std::endl;
-                m_timed_tokens.emplace_back(a, a.count, m_net.type());
-                //TODO a.fading.restart();
-                a.count = 0u;
-            }
+            std::cout << current_time()
+                      << "Transition " << a->from.caption << " consumed "
+                      << a->count << " token"
+                      << (a->count == 1u ? "" : "s")
+                      << std::endl;
+            m_timed_tokens.emplace_back(*a, a->count, m_net.type());
+            a->count = 0u;
         }
     }
 
@@ -380,8 +373,8 @@ void Simulation::stateSimulating(float const dt)
     }
     else if ((m_net.type() != TypeOfNet::PetriNet) && (m_net.type() != TypeOfNet::GRAFCET))
     {
-        std::cout << current_time() << "The simulation cannot burn tokens."
-                    << std::endl;
+        std::cout << current_time() << "The simulation cannot consume tokens."
+                  << std::endl;
         running = false;
         m_state = Simulation::State::Halting;
     }

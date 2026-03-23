@@ -107,15 +107,14 @@ size_t Place::decrement(size_t const count)
 }
 
 //------------------------------------------------------------------------------
-bool Transition::isValidated() const
+bool Transition::isEnabled() const
 {
-    // Transition source will always produce tokens.
+    // Input transition (source) is always enabled.
     if (arcsIn.size() == 0u)
         return true;
 
-    // To enabled this current transition, all its previous Places shall have at
-    // least one token.
-    for (auto& a: arcsIn)
+    // To enable this transition, all its input places shall have at least one token.
+    for (auto const& a: arcsIn)
     {
         if (a->tokensIn() == 0u)
             return false;
@@ -125,30 +124,31 @@ bool Transition::isValidated() const
 }
 
 //------------------------------------------------------------------------------
-size_t Transition::countBurnableTokens() const
+size_t Transition::maxTokensToConsume() const
 {
-    // Transition source will fire one token iff the animated token transitioning
-    // along the arcs has reached the Place (in this receptivity becomes true ...
-    // FIXME this will conflict if we add code to the receptivity add && animation_done)
+    // Input transition (source) will fire one token iff the animated token
+    // transitioning along the arcs has reached the Place (then receptivity
+    // becomes true).
+    // FIXME this will conflict if we add code to the receptivity: && animation_done
     if (arcsIn.size() == 0u)
         return size_t(receptivity != false);
 
-    // The transition is false => it does not let burn tokens.
+    // The guard is false => cannot consume tokens.
     if (receptivity == false)
         return 0u;
 
-    // Iterate on all previous places to know how many tokens can be burned.
-    size_t burnt = static_cast<size_t>(-1);
-    for (auto& a: arcsIn)
+    // Iterate on all input places to find the minimum number of tokens available.
+    size_t min_tokens = static_cast<size_t>(-1);
+    for (auto const& a: arcsIn)
     {
         const size_t tokens = a->tokensIn();
         if (tokens == 0u)
             return 0u;
 
-        if (tokens < burnt)
-            burnt = tokens;
+        if (tokens < min_tokens)
+            min_tokens = tokens;
     }
-    return (Net::Settings::firing == Net::Settings::Fire::OneByOne) ? 1u : burnt;
+    return (Net::Settings::firing == Net::Settings::Fire::OneByOne) ? 1u : min_tokens;
 }
 
 //------------------------------------------------------------------------------
