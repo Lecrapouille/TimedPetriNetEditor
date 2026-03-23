@@ -41,7 +41,7 @@ std::string importFromTimedEventGraph(Net& net, std::string const& filename)
     std::ifstream file(filename);
     if (!file)
     {
-        error << "Failed opening '" << filename << "'. Reason was '"
+        error << "Failed opening '" << filename << "'. Reason: '"
             << strerror(errno) << "'" << std::endl;
         return error.str();
     }

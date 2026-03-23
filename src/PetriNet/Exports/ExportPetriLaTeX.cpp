@@ -38,7 +38,7 @@ std::string exportToPetriLaTeX(Net const& net, std::string const& filename)
     {
         std::stringstream error;
         error << "Failed to export the Petri net to '" << filename
-              << "'. Reason was " << strerror(errno) << std::endl;
+              << "'. Reason: " << strerror(errno) << std::endl;
         return error.str();
     }
 

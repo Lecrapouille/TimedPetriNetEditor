@@ -666,8 +666,7 @@ void Editor::loadDocumentFromFile(std::string const& filepath)
     // Other formats: single net via importer
     if (importer == nullptr)
     {
-        m_messages.setError("Cannot import " + filepath +
-            ". Reason: 'unknown file extension'");
+        m_messages.setError("Cannot import '" + filepath + "'. Reason: 'unknown file extension'");
         return;
     }
 

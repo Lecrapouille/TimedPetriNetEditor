@@ -140,7 +140,7 @@ TEST(TestHoward, TestPetriNetSemiSimple)
     ASSERT_STREQ(res.message.str().c_str(), "");
 
     // Load a net that is not event graph
-    ASSERT_STREQ(loadFromFile(net, "../data/examples/AppelsDurgence.json", stringify).c_str(), "");
+    ASSERT_STREQ(loadFromFile(net, "../data/examples/EmergencyCalls.json", stringify).c_str(), "");
     ASSERT_EQ(net.type(), TypeOfNet::PetriNet);
     ASSERT_EQ(net.isEmpty(), false);
     res = findCriticalCycle(net);

@@ -34,7 +34,7 @@ std::string exportToTimedEventGraph(Net const& net, std::string const& filename)
     if (!isEventGraph(net))
     {
         error << "Failed to export the Petri net to '" << filename
-              << "'. Reason was 'the net is not an event graph'"
+              << "'. Reason: 'the net is not an event graph'"
               << std::endl;
         return error.str();
     }
@@ -43,7 +43,7 @@ std::string exportToTimedEventGraph(Net const& net, std::string const& filename)
     if (!file)
     {
         error << "Failed to export the Petri net to '" << filename
-              << "'. Reason was " << strerror(errno) << std::endl;
+              << "'. Reason: " << strerror(errno) << std::endl;
         return error.str();
     }
 

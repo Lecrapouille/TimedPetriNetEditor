@@ -152,10 +152,10 @@ bool Simulation::generateSensors()
     if (m_net.type() == TypeOfNet::GRAFCET)
     {
         // Save existing sensor values before regenerating
-        std::map<std::string, int> saved_values;
-        for (const auto& kv : Sensors::instance().database())
+        std::map<std::string, int, std::less<>> saved_values;
+        for (const auto& [key, value] : Sensors::instance().database())
         {
-            saved_values[kv.first] = kv.second;
+            saved_values[key] = value;
         }
 
         // Don't clear - the compile() function will add new sensors as needed
@@ -174,12 +174,12 @@ bool Simulation::generateSensors()
         }
 
         // Restore saved values for sensors that existed before
-        for (const auto& kv : saved_values)
+        for (const auto& [key, value] : saved_values)
         {
             auto& db = Sensors::instance().database();
-            if (db.find(kv.first) != db.end())
+            if (db.find(key) != db.end())
             {
-                db[kv.first] = kv.second;
+                db[key] = value;
             }
         }
         if (!all_ok)

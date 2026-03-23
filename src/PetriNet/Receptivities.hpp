@@ -96,7 +96,7 @@ public:
     std::string compile(std::string const& code, Net& net);
     inline bool isValid() const { return m_valid; }
     inline std::string const& error() const { return m_error; }
-    bool evaluate();
+    bool evaluate() const;
 
     // *************************************************************************
     //! \brief Base class of boolean expression used as AST node.
@@ -121,7 +121,7 @@ public:
 
         //! \param[in] name Step (aka place0 name, i.e. "X0".
         StepExp(Net& net, std::string const& name);
-        virtual bool evaluate() const override;
+        bool evaluate() const override;
 
     private:
 
@@ -143,7 +143,7 @@ public:
         //! \param[in] graph_name Name of the target graph/net.
         //! \param[in] step_name Step name (e.g. "X5").
         CrossGraphStepExp(std::string const& graph_name, std::string const& step_name);
-        virtual bool evaluate() const override;
+        bool evaluate() const override;
 
     private:
 
@@ -158,11 +158,11 @@ public:
     {
     public:
 
-        VariableExp(std::string name)
+        explicit VariableExp(std::string const& name)
             : m_name(name)
         {}
 
-        virtual bool evaluate() const override;
+        bool evaluate() const override;
 
     private:
 
@@ -176,9 +176,8 @@ public:
     {
     public:
 
-        ConstExp(std::string const& operand);
-        virtual ~ConstExp() = default;
-        virtual bool evaluate() const override
+        explicit ConstExp(std::string const& operand);
+        bool evaluate() const override
         {
             return m_operand;
         }
@@ -195,12 +194,11 @@ public:
     {
     public:
 
-        NotExp(std::shared_ptr<BooleanExp> operand)
+        explicit NotExp(std::shared_ptr<BooleanExp> operand)
             : m_operand(operand)
         {}
 
-        virtual ~NotExp() = default;
-        virtual bool evaluate() const override
+        bool evaluate() const override
         {
             return !m_operand->evaluate();
         }
@@ -217,12 +215,11 @@ public:
     {
     public:
 
-        AndExp(std::shared_ptr<BooleanExp> op1, std::shared_ptr<BooleanExp> op2)
+        explicit AndExp(std::shared_ptr<BooleanExp> op1, std::shared_ptr<BooleanExp> op2)
             : m_operand1(op1), m_operand2(op2)
         {}
 
-        virtual ~AndExp() = default;
-        virtual bool evaluate() const override
+        bool evaluate() const override
         {
             return m_operand1->evaluate() && m_operand2->evaluate();
         }
@@ -244,8 +241,7 @@ public:
             : m_operand1(op1), m_operand2(op2)
         {}
 
-        virtual ~OrExp() = default;
-        virtual bool evaluate() const override
+        bool evaluate() const override
         {
             return m_operand1->evaluate() || m_operand2->evaluate();
         }
