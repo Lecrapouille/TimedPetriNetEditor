@@ -32,7 +32,7 @@ class Editor;
 //! \brief ZeroMQ implementation of remote control using REQ/REP pattern.
 //! Commands are received as JSON, executed, and responses are sent back.
 // ****************************************************************************
-class ZeroMQRemote : public IRemoteControl
+class ZeroMQRemote final : public IRemoteControl
 {
 public:
     //--------------------------------------------------------------------------
@@ -71,6 +71,7 @@ private:
 
 private:
     Editor& m_editor;                //!< Reference to editor
+    char m_buffer[65536];            //!< Buffer for received commands
     void* m_context = nullptr;       //!< ZeroMQ context
     void* m_socket = nullptr;        //!< ZeroMQ REP socket
     bool m_running = false;          //!< Server running flag

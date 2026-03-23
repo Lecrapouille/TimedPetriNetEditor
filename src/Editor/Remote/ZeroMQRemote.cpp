@@ -20,7 +20,6 @@
 
 #include "ZeroMQRemote.hpp"
 #include "Editor/Editor.hpp"
-#include "PetriNet/Imports/Imports.hpp"
 #include <zmq.h>
 #include <fstream>
 
@@ -34,7 +33,7 @@ ZeroMQRemote::ZeroMQRemote(Editor& editor)
 //------------------------------------------------------------------------------
 ZeroMQRemote::~ZeroMQRemote()
 {
-    stop();
+    stop(); // FIXME
 }
 
 //------------------------------------------------------------------------------
@@ -109,8 +108,7 @@ void ZeroMQRemote::poll()
         return;
 
     // Try to receive a message (non-blocking)
-    char buffer[65536];
-    int size = zmq_recv(m_socket, buffer, sizeof(buffer) - 1, ZMQ_DONTWAIT);
+    int size = zmq_recv(m_socket, m_buffer, sizeof(m_buffer) - 1, ZMQ_DONTWAIT);
 
     if (size < 0)
     {
@@ -122,10 +120,10 @@ void ZeroMQRemote::poll()
         return;
     }
 
-    buffer[size] = '\0';
+    m_buffer[size] = '\0';
 
     // Process command and get response
-    std::string response = processCommand(buffer);
+    std::string response = processCommand(m_buffer);
 
     // Send response
     zmq_send(m_socket, response.c_str(), response.length(), 0);

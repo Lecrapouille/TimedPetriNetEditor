@@ -22,14 +22,12 @@
 
 #  include "PetriNet/PetriNet.hpp"
 #  include "PetriNet/Receptivities.hpp"
-#  include "PetriNet/TimedTokens.hpp"
 
 #  include <algorithm>
 #  include <cstdlib>
 #  include <ctime>
 #  include <iostream>
 #  include <random>
-#  include <string>
 
 namespace tpne {
 
