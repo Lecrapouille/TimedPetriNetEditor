@@ -42,15 +42,15 @@ class Arc;
 //------------------------------------------------------------------------------
 enum class TypeOfNet
 {
-    //! \brief The user has to click on fireable transitions to burn tokens.
-    //! Tokens in incoming places are burnt one by one.
+    //! \brief The user has to click on fireable transitions to consume tokens.
+    //! Tokens in input places are consumed one by one.
     PetriNet,
     //! \brief Is a Petri with duration on arcs transition -> place.
-    //! Receptivities are set to true. When transitions are enabled (when all
-    //! immediate incoming places have at least one token), the fire is
-    //! automaticaly made (The user cannot click to transitions to fire). The
+    //! Guards are set to true. When transitions are enabled (when all
+    //! input places have at least one token), the firing is
+    //! automatic (The user cannot click on transitions to fire). The
     //! policy concerning divergence transitions: the maximum of tokens are
-    //! burnt in once but tokens are shuffled along arcs.
+    //! consumed at once but tokens are shuffled along arcs.
     TimedPetriNet,
     //! \brief Is a timed Petri where all places have a single input arc and
     //! a single output arc. TODO currently the net is displayed ugly!
@@ -293,14 +293,14 @@ public:
 };
 
 // *****************************************************************************
-//! \brief Petri Transition node. A boolean condition (named receptivity) is set
-//! but differ with the type of net (Petri: when the user click on the
-//! transition, timed Petri net: always set to true, GRAFCET depend on boolean
-//! expression with sensors). When the receptivity is true and the transition is
-//! enabled (meaning that all incoming places have at least one token each) the
-//! transition is fired and tokens in incoming places burnt and placed in
-//! outcoming places.
-//! \note There is currently no method for burning tokens because this is made
+//! \brief Petri Transition node. A boolean condition (named guard or receptivity
+//! in GRAFCET) is set but differs with the type of net (Petri: when the user
+//! clicks on the transition, timed Petri net: always set to true, GRAFCET depends
+//! on boolean expressions with sensors). When the guard is true and the transition
+//! is enabled (meaning that all input places have at least one token each) the
+//! transition fires and tokens in input places are consumed and placed in output
+//! places.
+//! \note There is currently no method for consuming tokens because this is made
 //! by the simulator with animation.
 // *****************************************************************************
 class Transition : public Node
@@ -337,28 +337,28 @@ public:
 
     //--------------------------------------------------------------------------
     //! \brief Check if all immediately incoming places have at least one token
-    //! on each of them.
+    //! on each of them. A transition is "enabled" when all its input places
+    //! have enough tokens.
     //--------------------------------------------------------------------------
-    bool isValidated() const;
+    bool isEnabled() const;
 
     //--------------------------------------------------------------------------
-    //! \brief Check if the transition has all its immediately incoming places
-    //! with at least one token and if the transitivity (bool expression) is
-    //! true.
-    //! \note The burning of tokens is made by the PetriEditor class during the
-    //! animation.
+    //! \brief Check if the transition can fire: it must be enabled (all input
+    //! places have tokens) and its guard condition (receptivity) must be true.
+    //! \note The consumption of tokens is made by the PetriEditor class during
+    //! the animation.
     //! \return true if can fire else return false.
     //--------------------------------------------------------------------------
-    bool isFireable() const { return receptivity && isValidated(); }
+    bool canFire() const { return receptivity && isEnabled(); }
 
     //--------------------------------------------------------------------------
-    //! \brief Return the maximum number of tokens that can be burn in
-    //! immediately incoming places if and only if isFireable() is true.
+    //! \brief Return the maximum number of tokens that can be consumed from
+    //! immediately incoming places if and only if canFire() is true.
     //! \note This method does not modify the number of tokens in previous
     //! places.
-    //! \return the max number of tokens that be burnt or 0u if cannot fire.
+    //! \return the max number of tokens that can be consumed, or 0 if cannot fire.
     //--------------------------------------------------------------------------
-    size_t countBurnableTokens() const;
+    size_t maxTokensToConsume() const;
 
     //--------------------------------------------------------------------------
     //! \brief Return true if the transition comes from an input place.
@@ -568,13 +568,13 @@ public:
         //! nets: +infinity (aka std::numeric_limits<size_t>::max()).
         static size_t maxTokens;
 
-        //! \brief The theory would burn the maximum possible of tokens that we
+        //! \brief The theory would consume the maximum possible of tokens that we
         //! can within a single action (Fire::MaxPossible) but we can also try
-        //! to burn tokens one by one and randomize the transitions
+        //! to consume tokens one by one and randomize the transitions
         //! (Fire::OneByOne). This will favor dispatching tokens along arcs.
         enum class Fire { OneByOne, MaxPossible };
 
-        //! \brief Burn tokens one by one or as many as possible.
+        //! \brief Consume tokens one by one or as many as possible.
         static Fire firing;
     };
 

@@ -343,11 +343,11 @@ void drawTransition(ImDrawList* draw_list, Transition const& transition,
         if ((type != TypeOfNet::TimedPetriNet) && (type != TypeOfNet::TimedEventGraph))
             color = TRANS_ENABLED_COLOR;
     }
-    if (transition.isFireable())
+    if (transition.canFire())
     {
         color = TRANS_FIREABLE_COLOR;
     }
-    else if (transition.isValidated())
+    else if (transition.isEnabled())
     {
         color = (type == TypeOfNet::PetriNet)
             ? TRANS_FIREABLE_COLOR : TRANS_ENABLED_COLOR;
