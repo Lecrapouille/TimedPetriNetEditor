@@ -53,6 +53,7 @@ static std::string parseNetFromJSON(Net& net, nlohmann::json const& jnet)
             {
                 Action action;
                 action.qualifier = strToQualifier(a.value("qualifier", "N"));
+                action.color = strToLedColor(a.value("color", "green"));
                 action.name = a.value("name", "");
                 action.script = a.value("script", "");
                 action.duration = a.value("duration", 0.0f);
@@ -106,6 +107,7 @@ static std::string parseNetFromJSON(Net& net, nlohmann::json const& jnet)
             {
                 Action action;
                 action.qualifier = strToQualifier(a.value("qualifier", "N"));
+                action.color = strToLedColor(a.value("color", "green"));
                 action.name = a.value("name", "");
                 action.script = a.value("script", "");
                 action.duration = a.value("duration", 0.0f);

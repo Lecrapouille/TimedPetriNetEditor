@@ -64,6 +64,15 @@ public:
     void storeInitialMarking();
     //! \brief Restore marking to the stored initial marking
     void restoreInitialMarking();
+    //! \brief Check if a place is an initial step (had tokens at simulation start)
+    //! \param[in] place_index Index of the place in the places vector
+    //! \return true if the place had tokens when simulation started
+    inline bool isInitialStep(size_t place_index) const
+    {
+        return place_index < m_initial_tokens.size() && m_initial_tokens[place_index] > 0;
+    }
+    //! \brief Check if initial marking has been stored
+    inline bool hasInitialMarking() const { return !m_initial_tokens.empty(); }
 
 private:
 
@@ -71,6 +80,10 @@ private:
     void stateStarting();
     void stateSimulating(float const dt);
     void stateHalting();
+    //! \brief Update GRAFCET action states based on qualifiers (N, S, R, D, L, etc.)
+    void updateActions(float const dt);
+    //! \brief Reset a stored action by name (used by R qualifier)
+    void resetStoredAction(std::string const& name);
 
 public:
 

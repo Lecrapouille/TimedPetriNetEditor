@@ -929,10 +929,22 @@ void PetriView::drawPetriNet(Net& net, Simulation& simulation, bool interactive,
     }
 
     // Draw places
-    for (auto const& it : net.places())
+    auto const& places = net.places();
+    for (size_t i = 0; i < places.size(); ++i)
     {
-        drawPlace(m_canvas.draw_list, it, net.type(), origin,
-                  m_editor.showPlaceCaptions(), alpha, zoom);
+        // For GRAFCET, determine if this is an initial step:
+        // - During simulation: use stored initial marking (so double square stays visible)
+        // - Before simulation: use current tokens (for editing)
+        bool isInitialStep = false;
+        if (net.type() == TypeOfNet::GRAFCET)
+        {
+            if (simulation.hasInitialMarking())
+                isInitialStep = simulation.isInitialStep(i);
+            else
+                isInitialStep = (places[i].tokens > 0);
+        }
+        drawPlace(m_canvas.draw_list, places[i], net.type(), origin,
+                  m_editor.showPlaceCaptions(), alpha, zoom, isInitialStep);
     }
 
     // Draw transitions

@@ -261,7 +261,7 @@ static void drawPetriPlace(ImDrawList* draw_list, Place const& place, ImVec2 con
 
 //------------------------------------------------------------------------------
 static void drawGrafcetPlace(ImDrawList* draw_list, Place const& place, ImVec2 const& origin,
-                              float const alpha, float zoom)
+                              float const alpha, float zoom, bool isInitialStep)
 {
     const ImVec2 p = origin + ImVec2(place.x * zoom, place.y * zoom);
     const float trans_width = TRANS_WIDTH * zoom;
@@ -270,25 +270,24 @@ static void drawGrafcetPlace(ImDrawList* draw_list, Place const& place, ImVec2 c
     const float shadow_offset = SHADOW_OFFSET * zoom;
 
     // Draw the step (place) as square. Double square for initial steps.
-    if (place.tokens != 0u)
+    // Initial step display is based on the initial marking (stored at simulation start),
+    // not on the current token count.
+    if (isInitialStep)
     {
         // Shadow for outer square
         const ImVec2 shadow_min(p.x - trans_width2 / 2.0f + shadow_offset, p.y - trans_width2 / 2.0f + shadow_offset);
         const ImVec2 shadow_max(p.x + trans_width2 / 2.0f + shadow_offset, p.y + trans_width2 / 2.0f + shadow_offset);
         draw_list->AddRectFilled(shadow_min, shadow_max, IM_COL32(0, 0, 0, 40));
 
-        // Outer square
+        // Outer square (initial step indicator)
         const ImVec2 pmin(p.x - trans_width2 / 2.0f, p.y - trans_width2 / 2.0f);
         const ImVec2 pmax(p.x + trans_width2 / 2.0f, p.y + trans_width2 / 2.0f);
         draw_list->AddRectFilled(pmin, pmax, FILL_COLOR(alpha));
         draw_list->AddRect(pmin, pmax, OUTLINE_COLOR, 0.0f, ImDrawFlags_None, outline_thickness);
-
-        // Token
-        drawToken(draw_list, p.x, p.y + trans_width * 1.0f / 3.0f, zoom);
     }
     else
     {
-        // Shadow for inner square (only when not initial step)
+        // Shadow for inner square (non-initial step)
         const ImVec2 shadow_min(p.x - trans_width / 2.0f + shadow_offset, p.y - trans_width / 2.0f + shadow_offset);
         const ImVec2 shadow_max(p.x + trans_width / 2.0f + shadow_offset, p.y + trans_width / 2.0f + shadow_offset);
         draw_list->AddRectFilled(shadow_min, shadow_max, IM_COL32(0, 0, 0, 40));
@@ -300,6 +299,12 @@ static void drawGrafcetPlace(ImDrawList* draw_list, Place const& place, ImVec2 c
     draw_list->AddRectFilled(pmin, pmax, FILL_COLOR(alpha));
     draw_list->AddRect(pmin, pmax, OUTLINE_COLOR, 0.0f, ImDrawFlags_None, outline_thickness);
 
+    // Draw token if step is currently active
+    if (place.tokens != 0u)
+    {
+        drawToken(draw_list, p.x, p.y + trans_width * 1.0f / 3.0f, zoom);
+    }
+
     // Draw the caption inside the square
     const char* text = place.caption.c_str();
     ImVec2 dim = ImGui::CalcTextSize(text) / 2.0f;
@@ -309,14 +314,15 @@ static void drawGrafcetPlace(ImDrawList* draw_list, Place const& place, ImVec2 c
 
 //------------------------------------------------------------------------------
 void drawPlace(ImDrawList* draw_list, Place const& place, TypeOfNet const type,
-               ImVec2 const& origin, bool const show_caption, float const alpha, float zoom)
+               ImVec2 const& origin, bool const show_caption, float const alpha,
+               float zoom, bool isInitialStep)
 {
     if (type == TypeOfNet::TimedEventGraph)
         return ;
 
     if (type == TypeOfNet::GRAFCET)
     {
-       drawGrafcetPlace(draw_list, place, origin, alpha, zoom);
+       drawGrafcetPlace(draw_list, place, origin, alpha, zoom, isInitialStep);
     }
     else
     {

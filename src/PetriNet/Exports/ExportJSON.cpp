@@ -78,6 +78,7 @@ static void writeNetToJSON(std::ofstream& file, Net const& net)
             file << separator; separator = ",\n";
             file << "            { \"place_id\": " << p.id
                  << ", \"qualifier\": \"" << qualifierToStr(action.qualifier)
+                 << "\", \"color\": \"" << ledColorToStr(action.color)
                  << "\", \"name\": \"" << action.name
                  << "\", \"script\": \"" << action.script
                  << "\", \"duration\": " << action.duration << " }";
