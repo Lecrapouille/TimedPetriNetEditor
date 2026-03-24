@@ -167,6 +167,135 @@ public:
 };
 
 // *****************************************************************************
+//! \brief GRAFCET Forcing command for hierarchical control.
+//! Allows a master GRAFCET to force the state of a slave GRAFCET.
+//! Syntax: "TargetNet:{init}", "TargetNet:{2,8}", "TargetNet:{}", "TargetNet:{*}"
+// *****************************************************************************
+struct Forcing
+{
+    //! \brief Type of forcing command
+    enum class Type
+    {
+        Init,   // Force to initial state: "G2:{init}"
+        Freeze, // Freeze (no evolution): "G2:{*}"
+        Empty,  // Deactivate all steps: "G2:{}"
+        Steps   // Activate specific steps: "G2:{2,8}"
+    };
+
+    std::string targetNet;       // Name of the target GRAFCET
+    Type type = Type::Init;      // Type of forcing
+    std::vector<size_t> steps;   // For Type::Steps: list of steps to activate
+};
+
+//! \brief Convert Forcing::Type to string
+inline const char* forcingTypeToStr(Forcing::Type t)
+{
+    switch (t) {
+        case Forcing::Type::Init: return "init";
+        case Forcing::Type::Freeze: return "*";
+        case Forcing::Type::Empty: return "";
+        case Forcing::Type::Steps: return "steps";
+    }
+    return "init";
+}
+
+//! \brief Convert string to Forcing::Type
+inline Forcing::Type strToForcingType(std::string const& s)
+{
+    if (s == "*") return Forcing::Type::Freeze;
+    if (s == "" || s == "empty") return Forcing::Type::Empty;
+    if (s == "steps") return Forcing::Type::Steps;
+    return Forcing::Type::Init;
+}
+
+//! \brief Parse a forcing string like "Production:{init}" or "G2:{2,8}"
+inline Forcing parseForcing(std::string const& str)
+{
+    Forcing f;
+    size_t colonPos = str.find(':');
+    if (colonPos == std::string::npos)
+    {
+        f.targetNet = str;
+        f.type = Forcing::Type::Init;
+        return f;
+    }
+
+    f.targetNet = str.substr(0, colonPos);
+
+    // Find content between { }
+    size_t braceStart = str.find('{', colonPos);
+    size_t braceEnd = str.find('}', colonPos);
+    if (braceStart == std::string::npos || braceEnd == std::string::npos)
+    {
+        f.type = Forcing::Type::Init;
+        return f;
+    }
+
+    std::string content = str.substr(braceStart + 1, braceEnd - braceStart - 1);
+
+    // Trim whitespace
+    while (!content.empty() && std::isspace(content.front())) content.erase(0, 1);
+    while (!content.empty() && std::isspace(content.back())) content.pop_back();
+
+    if (content == "init")
+    {
+        f.type = Forcing::Type::Init;
+    }
+    else if (content == "*")
+    {
+        f.type = Forcing::Type::Freeze;
+    }
+    else if (content.empty())
+    {
+        f.type = Forcing::Type::Empty;
+    }
+    else
+    {
+        // Parse step numbers: "2,8" or "2, 8"
+        f.type = Forcing::Type::Steps;
+        std::stringstream ss(content);
+        std::string token;
+        while (std::getline(ss, token, ','))
+        {
+            while (!token.empty() && std::isspace(token.front())) token.erase(0, 1);
+            while (!token.empty() && std::isspace(token.back())) token.pop_back();
+            if (!token.empty())
+            {
+                try {
+                    f.steps.push_back(std::stoul(token));
+                } catch (...) {}
+            }
+        }
+    }
+    return f;
+}
+
+//! \brief Convert Forcing to string representation
+inline std::string forcingToStr(Forcing const& f)
+{
+    std::string result = f.targetNet + ":{";
+    switch (f.type) {
+        case Forcing::Type::Init:
+            result += "init";
+            break;
+        case Forcing::Type::Freeze:
+            result += "*";
+            break;
+        case Forcing::Type::Empty:
+            break;
+        case Forcing::Type::Steps:
+            for (size_t i = 0; i < f.steps.size(); ++i)
+            {
+                if (i > 0) result += ",";
+                result += std::to_string(f.steps[i]);
+            }
+            break;
+    }
+    result += "}";
+    return result;
+}
+
+// *****************************************************************************
 //! \brief GRAFCET Action associated with a Step (Place).
 //! Actions are operations performed when a step is active.
 //! Qualifiers define the behavior: N (normal), S (set), R (reset), etc.
@@ -203,6 +332,9 @@ struct Action
     std::string name;        // Action name (e.g., "KM1", "Verin_A+")
     std::string script;      // Code/description of the action
     float duration = 0.0f;   // For D, L, SD, DS, SL qualifiers (seconds)
+
+    //! \brief Forcings to apply when this action is active (GRAFCET hierarchical control)
+    std::vector<Forcing> forcings;
 
     // Runtime state (used during simulation)
     mutable bool active = false;
@@ -468,6 +600,14 @@ public:
     //! the result. The simulation will hold boolean expressions. This allows
     //! to separate things.
     bool receptivity = false;
+
+    //! \brief Delay before the transition can fire (GRAFCET temporization).
+    //! The transition must remain enabled for this duration before firing.
+    //! 0 means no delay (immediate firing when enabled).
+    float delay = 0.0f;
+
+    //! \brief Runtime timer for delay (mutable for simulation use).
+    mutable float delayTimer = 0.0f;
 };
 
 // *****************************************************************************
@@ -932,6 +1072,44 @@ public:
     std::string name;
     //! \brief Editor has changed content and save is needed.
     bool modified = false;
+    //! \brief GRAFCET is frozen by a forcing command (no evolution allowed)
+    mutable bool frozen = false;
+
+    //--------------------------------------------------------------------------
+    //! \brief Store current marking as initial marking (for forcing restore).
+    //--------------------------------------------------------------------------
+    void storeInitialMarking()
+    {
+        m_initial_marking.clear();
+        for (auto const& p : m_places)
+        {
+            m_initial_marking.push_back(p.tokens);
+        }
+    }
+
+    //--------------------------------------------------------------------------
+    //! \brief Restore marking to the stored initial marking.
+    //--------------------------------------------------------------------------
+    void restoreInitialMarking()
+    {
+        if (m_initial_marking.size() == m_places.size())
+        {
+            for (size_t i = 0; i < m_places.size(); ++i)
+            {
+                m_places[i].tokens = m_initial_marking[i];
+            }
+        }
+    }
+
+    //--------------------------------------------------------------------------
+    //! \brief Check if initial marking has been stored.
+    //--------------------------------------------------------------------------
+    bool hasInitialMarking() const { return !m_initial_marking.empty(); }
+
+private:
+
+    //! \brief Stored initial marking for forcing restore
+    std::vector<size_t> m_initial_marking;
 };
 
 //-----------------------------------------------------------------------------

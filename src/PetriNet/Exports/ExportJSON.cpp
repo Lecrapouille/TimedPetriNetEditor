@@ -81,7 +81,19 @@ static void writeNetToJSON(std::ofstream& file, Net const& net)
                  << "\", \"color\": \"" << ledColorToStr(action.color)
                  << "\", \"name\": \"" << action.name
                  << "\", \"script\": \"" << action.script
-                 << "\", \"duration\": " << action.duration << " }";
+                 << "\", \"duration\": " << action.duration;
+            // Export forcings if any
+            if (!action.forcings.empty())
+            {
+                file << ", \"forcing\": [";
+                for (size_t i = 0; i < action.forcings.size(); ++i)
+                {
+                    if (i > 0) file << ", ";
+                    file << "\"" << forcingToStr(action.forcings[i]) << "\"";
+                }
+                file << "]";
+            }
+            file << " }";
         }
     }
     file << "\n       ]" << std::endl;

@@ -5,14 +5,14 @@
     {
        "name": "Production",
        "places": [
-            { "id": 0, "caption": "Attente depart", "tokens": 1, "x": 100, "y": 200 },
-            { "id": 1, "caption": "Demarrage moteurs", "tokens": 0, "x": 300, "y": 200 },
-            { "id": 2, "caption": "Arret moteurs", "tokens": 0, "x": 200, "y": 400 }
+            { "id": 0, "caption": "Attente depart", "tokens": 1, "x": 200, "y": 150 },
+            { "id": 1, "caption": "Demarrage moteurs", "tokens": 0, "x": 200, "y": 350 },
+            { "id": 2, "caption": "Arret moteurs", "tokens": 0, "x": 200, "y": 550 }
        ],
        "transitions": [
-            { "id": 0, "caption": "Controle:X4 Dcy .", "x": 200, "y": 100, "angle": 0 },
-            { "id": 1, "caption": "Acy", "x": 300, "y": 300, "angle": 0 },
-            { "id": 2, "caption": "true", "x": 100, "y": 300, "angle": 0 }
+            { "id": 0, "caption": "Controle:X4 Dcy .", "x": 200, "y": 250, "angle": 0 },
+            { "id": 1, "caption": "Acy", "x": 200, "y": 450, "angle": 0 },
+            { "id": 2, "caption": "true", "x": 50, "y": 350, "angle": 0 }
        ],
        "arcs": [
             { "from": "P0", "to": "T0" },
@@ -23,12 +23,13 @@
             { "from": "T2", "to": "P0", "duration": 4 }
        ],
        "actions": [
+            { "place_id": 1, "qualifier": "N", "color": "green", "name": "Moteur", "script": "Demarrage des moteurs", "duration": 0 }
        ]
     },
     {
        "name": "Controle",
        "places": [
-            { "id": 0, "caption": "Attente validation panne", "tokens": 1, "x": 350, "y": -0 },
+            { "id": 0, "caption": "Attente validation panne", "tokens": 1, "x": 350, "y": 0 },
             { "id": 1, "caption": "Debarasser cartons", "tokens": 0, "x": 350, "y": 200 },
             { "id": 2, "caption": "Attente selec manu ou auto", "tokens": 0, "x": 350, "y": 400 },
             { "id": 3, "caption": "Debarasser cartons", "tokens": 0, "x": 350, "y": 600 },
@@ -61,17 +62,18 @@
             { "from": "T6", "to": "P0", "duration": 5 }
        ],
        "actions": [
+            { "place_id": 5, "qualifier": "N", "color": "green", "name": "Reset Production", "script": "Force Production to initial state", "duration": 0, "forcing": ["Production:{init}"] }
        ]
     },
     {
        "name": "Securite",
        "places": [
-            { "id": 0, "caption": "Forcage GPN & GC", "tokens": 1, "x": 200, "y": 400 },
-            { "id": 1, "caption": "Attente", "tokens": 0, "x": 200, "y": 500 }
+            { "id": 0, "caption": "Forcage GPN & GC", "tokens": 1, "x": 250, "y": 200 },
+            { "id": 1, "caption": "Attente", "tokens": 0, "x": 250, "y": 400 }
        ],
        "transitions": [
-            { "id": 0, "caption": "Au ! Rearm .", "x": 300, "y": 450, "angle": 0 },
-            { "id": 1, "caption": "Au", "x": 100, "y": 450, "angle": 0 }
+            { "id": 0, "caption": "Au ! Rearm .", "x": 250, "y": 300, "angle": 0 },
+            { "id": 1, "caption": "Au", "x": 150, "y": 300, "angle": 0 }
        ],
        "arcs": [
             { "from": "P0", "to": "T0" },
@@ -80,11 +82,17 @@
             { "from": "T1", "to": "P0", "duration": 4 }
        ],
        "actions": [
+            { "place_id": 0, "qualifier": "N", "color": "red", "name": "Force Init", "script": "Force Production and Controle to initial state", "duration": 0, "forcing": ["Production:{init}", "Controle:{init}"] }
        ]
     }
   ],
   "inputs": [
     { "name": "Acy", "initial": 0 },
-    { "name": "Dcy", "initial": 0 }
+    { "name": "Au", "initial": 0 },
+    { "name": "Auto", "initial": 0 },
+    { "name": "Dcy", "initial": 0 },
+    { "name": "Manu", "initial": 0 },
+    { "name": "Rearm", "initial": 0 },
+    { "name": "Val", "initial": 0 }
   ]
 }

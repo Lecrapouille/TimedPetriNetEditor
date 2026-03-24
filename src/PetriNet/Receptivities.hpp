@@ -47,6 +47,7 @@ public:
         auto it = m_nets.find(name);
         return (it != m_nets.end()) ? it->second : nullptr;
     }
+    std::map<std::string, Net*> const& getRegistry() const { return m_nets; }
     void clear() { m_nets.clear(); }
 
 private:
