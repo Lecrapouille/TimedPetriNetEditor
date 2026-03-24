@@ -109,6 +109,7 @@ void Simulation::stateStarting()
     // Reset states of the simulator
     m_net.generateArcsInArcsOut();
     m_initial_tokens = m_net.tokens();
+    m_net.storeInitialMarking();  // Store for forcing restore
     shuffle_transitions(true);
     m_timed_tokens.clear();
     for (auto& a: m_net.arcs())
@@ -243,6 +244,17 @@ void Simulation::stateSimulating(float const dt)
         return ;
     }
 
+    // Skip simulation if net is frozen by a forcing command
+    if (m_net.frozen)
+    {
+        // Still update actions so forcings can be applied/removed
+        if (m_net.type() == TypeOfNet::GRAFCET)
+        {
+            updateActions(dt);
+        }
+        return;
+    }
+
     // Interpret the code of receptivities.
     if (m_net.type() == TypeOfNet::GRAFCET)
     {
@@ -250,6 +262,24 @@ void Simulation::stateSimulating(float const dt)
         for (auto& t: m_net.transitions())
             t.receptivity = m_receptivities[t.id].evaluate();
         // }  Sensors::modified = false;
+    }
+
+    // Update transition delay timers (GRAFCET temporization)
+    for (auto& t: m_net.transitions())
+    {
+        if (t.delay > 0.0f)
+        {
+            // Check if transition is enabled (all input places have tokens)
+            if (t.isEnabled() && t.receptivity)
+            {
+                t.delayTimer += dt;
+            }
+            else
+            {
+                // Reset timer if transition is no longer enabled
+                t.delayTimer = 0.0f;
+            }
+        }
     }
 
     // For each transition check if it is activated (all incoming Places
@@ -271,6 +301,10 @@ void Simulation::stateSimulating(float const dt)
         consuming = 0u;
         for (auto* trans: transitions)
         {
+            // Check delay timer for GRAFCET temporization
+            if (trans->delay > 0.0f && trans->delayTimer < trans->delay)
+                continue;  // Delay not yet elapsed
+
             // maxTokensToConsume() returns 0 if transition cannot fire,
             // so no need to call canFire() separately (optimization)
             const size_t tokens = trans->maxTokensToConsume();
@@ -530,6 +564,89 @@ void Simulation::updateActions(float const dt)
 
         // Update wasActive for next cycle
         place.wasActive = step_active;
+    }
+
+    // Apply forcings from active actions
+    applyForcings();
+}
+
+//------------------------------------------------------------------------------
+void Simulation::applyForcings()
+{
+    // First pass: clear frozen state on all nets (will be re-applied if needed)
+    for (auto& [name, net] : NetRegistry::instance().getRegistry())
+    {
+        if (net) net->frozen = false;
+    }
+
+    // Second pass: apply forcings from active actions
+    for (auto const& place : m_net.places())
+    {
+        bool step_active = (place.tokens > 0);
+        if (!step_active) continue;
+
+        for (auto const& action : place.actions)
+        {
+            for (auto const& forcing : action.forcings)
+            {
+                Net* target = NetRegistry::instance().findNet(forcing.targetNet);
+                if (target == nullptr)
+                {
+                    onWarning.emit("Forcing target '" + forcing.targetNet + "' not found");
+                    continue;
+                }
+
+                switch (forcing.type)
+                {
+                case Forcing::Type::Init:
+                    // Force to initial state: restore initial marking
+                    if (target->hasInitialMarking())
+                    {
+                        target->restoreInitialMarking();
+                    }
+                    else
+                    {
+                        onWarning.emit("No initial marking stored for " + forcing.targetNet);
+                    }
+                    break;
+
+                case Forcing::Type::Freeze:
+                    // Freeze: prevent any evolution
+                    target->frozen = true;
+                    break;
+
+                case Forcing::Type::Empty:
+                    // Empty: deactivate all steps
+                    for (auto& p : target->places())
+                    {
+                        p.tokens = 0;
+                    }
+                    onInfo.emit("Forcing " + forcing.targetNet + " to empty state");
+                    break;
+
+                case Forcing::Type::Steps:
+                    // Steps: activate only specific steps
+                    for (auto& p : target->places())
+                    {
+                        p.tokens = 0;
+                    }
+                    for (size_t step_id : forcing.steps)
+                    {
+                        Place* p = target->findPlace(step_id);
+                        if (p)
+                        {
+                            p->tokens = 1;
+                        }
+                        else
+                        {
+                            onWarning.emit("Forcing step " + std::to_string(step_id) +
+                                         " not found in " + forcing.targetNet);
+                        }
+                    }
+                    break;
+                }
+            }
+        }
     }
 }
 

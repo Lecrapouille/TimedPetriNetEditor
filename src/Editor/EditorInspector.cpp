@@ -108,6 +108,8 @@ static void drawTransitionsPanel(Net& net, Simulation& simulation, [[maybe_unuse
     // Transition list
     for (auto& t : net.transitions())
     {
+        ImGui::PushID(static_cast<int>(t.id));
+
         ImGui::InputText(t.key.c_str(), &t.caption,
             readonly | ImGuiInputTextFlags_CallbackEdit,
             [](ImGuiInputTextCallbackData*)
@@ -131,6 +133,32 @@ static void drawTransitionsPanel(Net& net, Simulation& simulation, [[maybe_unuse
                 ImGui::TextColored(ImVec4(1.0f, 0.0f, 0.0f, 1.0f), "%s", "See help for the syntax");
             }
         }
+
+        // GRAFCET transition delay (temporization)
+        if (net.type() == TypeOfNet::GRAFCET)
+        {
+            ImGui::SameLine();
+            ImGui::SetNextItemWidth(60.0f);
+            if (ImGui::InputFloat("##delay", &t.delay, 0.0f, 0.0f, "%.1fs"))
+            {
+                if (t.delay < 0.0f) t.delay = 0.0f;
+                modified = true;
+            }
+            if (ImGui::IsItemHovered())
+            {
+                ImGui::SetTooltip("Delay before transition can fire (0 = immediate)");
+            }
+
+            // Show timer progress during simulation
+            if (simulation.running && t.delay > 0.0f && t.delayTimer > 0.0f)
+            {
+                ImGui::SameLine();
+                float progress = t.delayTimer / t.delay;
+                ImGui::ProgressBar(progress, ImVec2(50, 0), "");
+            }
+        }
+
+        ImGui::PopID();
     }
     ImGui::End();
 }
@@ -522,6 +550,57 @@ static void drawGrafcetActionsPanel(Net& net, Simulation& simulation, bool& modi
                             modified = true;
                         }
                     }
+
+                    // Forcings section (hierarchical GRAFCET control)
+                    ImGui::Separator();
+                    ImGui::Text("Forcings (hierarchical control):");
+
+                    // List existing forcings
+                    for (size_t fi = 0; fi < action.forcings.size(); ++fi)
+                    {
+                        Forcing& f = action.forcings[fi];
+                        ImGui::PushID(static_cast<int>(fi));
+
+                        // Display forcing as text
+                        ImGui::TextColored(ImVec4(0.9f, 0.6f, 0.2f, 1.0f), "%s",
+                            forcingToStr(f).c_str());
+
+                        ImGui::SameLine();
+                        if (ImGui::SmallButton("X##del_forcing"))
+                        {
+                            action.forcings.erase(action.forcings.begin() + static_cast<ptrdiff_t>(fi));
+                            modified = true;
+                            ImGui::PopID();
+                            break;
+                        }
+
+                        ImGui::PopID();
+                    }
+
+                    // Add new forcing
+                    static char new_forcing_buf[128] = "";
+                    ImGui::InputText("##new_forcing", new_forcing_buf, sizeof(new_forcing_buf));
+                    if (ImGui::IsItemHovered())
+                    {
+                        ImGui::SetTooltip(
+                            "Forcing syntax:\n"
+                            "  NetName:{init}  - Force to initial state\n"
+                            "  NetName:{*}     - Freeze (no evolution)\n"
+                            "  NetName:{}      - Empty (all steps OFF)\n"
+                            "  NetName:{2,5}   - Activate steps 2 and 5");
+                    }
+                    ImGui::SameLine();
+                    if (ImGui::SmallButton("+ Add Forcing"))
+                    {
+                        if (strlen(new_forcing_buf) > 0)
+                        {
+                            action.forcings.push_back(parseForcing(new_forcing_buf));
+                            new_forcing_buf[0] = '\0';
+                            modified = true;
+                        }
+                    }
+
+                    ImGui::Separator();
 
                     // Delete button
                     if (ImGui::SmallButton("Delete Action"))

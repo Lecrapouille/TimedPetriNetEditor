@@ -8,12 +8,18 @@ Implementer les actions GRAFCET (surtout dans la generation de code arduino)
 Ameliorer generation de code arduino + connection en remote a l'editeur
 Finir l'exemple de https://www.youtube.com/watch?v=8_mZYlMHsds + ajouter dans le README
 Ajouter les reset et inhibitor cote Petri
-Mieux mettre la classe Simulation en private
-Corriger et completer les TU
 Finir flowshop + plot des donner
-Gros bug de selection d'arcs en mode "Timed event graph" car il n'y a plus les places
+Gros bug de selection d'arcs en mode "Timed event graph" car il n'y a plus les Places affichées.
 Ajouter une couleur aux actions et vu que le temps que le token se deplace les actions sont stoppées
 Mettre Traffic Lights en Grafcet
+Crash: modifier graphe, Clique sur X, sauver => boucle infinie
+Editeur si GRAFCET on voit les actions pour event graph
+Centrer le graphe
+Boucle infinie si je sauve fichier apres avoir clique sur X
+En mode grafcet afficher les noms P et T ne fonctionne pas
+En mode GRAFCET le focage fait iterer GC entre init et val
+
+if forzen if GRAFCET devrait etre inverse
 
 
 Dans @src/PetriNet/TimedTokens.cpp je pense qu'il y a des trucs a ameliorer, 1/ pour le mode remote j'aimerai que les animations des tokens soient instantané car c'est du debug temps reel et 2. J'aimerai une option dans l'editeur pour normaliser le temps des deplacements des tokens. Par exemple si la plus grosse tempo est 5 min on peut vouloir la normaliser en une animation de 5s. Il y aussi le nombre de tokens a bruler est de 1 mais si on ajoute des arcs reset ou inhibiteur il faudra surement modifier

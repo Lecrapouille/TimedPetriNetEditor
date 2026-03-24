@@ -84,6 +84,8 @@ private:
     void updateActions(float const dt);
     //! \brief Reset a stored action by name (used by R qualifier)
     void resetStoredAction(std::string const& name);
+    //! \brief Apply forcings from active actions to target GRAFCETs
+    void applyForcings();
 
 public:
 

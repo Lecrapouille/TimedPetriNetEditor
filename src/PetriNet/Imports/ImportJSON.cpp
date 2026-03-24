@@ -57,6 +57,14 @@ static std::string parseNetFromJSON(Net& net, nlohmann::json const& jnet)
                 action.name = a.value("name", "");
                 action.script = a.value("script", "");
                 action.duration = a.value("duration", 0.0f);
+                // Parse forcings
+                if (a.contains("forcing"))
+                {
+                    for (nlohmann::json const& f : a["forcing"])
+                    {
+                        action.forcings.push_back(parseForcing(f.get<std::string>()));
+                    }
+                }
                 place.actions.push_back(action);
             }
         }
@@ -111,6 +119,14 @@ static std::string parseNetFromJSON(Net& net, nlohmann::json const& jnet)
                 action.name = a.value("name", "");
                 action.script = a.value("script", "");
                 action.duration = a.value("duration", 0.0f);
+                // Parse forcings
+                if (a.contains("forcing"))
+                {
+                    for (nlohmann::json const& f : a["forcing"])
+                    {
+                        action.forcings.push_back(parseForcing(f.get<std::string>()));
+                    }
+                }
                 place->actions.push_back(action);
             }
         }

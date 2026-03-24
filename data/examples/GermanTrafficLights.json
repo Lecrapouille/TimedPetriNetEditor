@@ -1,6 +1,6 @@
 {
-  "revision": 3,
-  "type": "Petri net",
+  "revision": 4,
+  "type": "GRAFCET",
   "nets": [
     {
        "name": "German Traffic Lights",
@@ -8,13 +8,13 @@
             { "id": 0, "caption": "Red", "tokens": 0, "x": 272, "y": 102 },
             { "id": 1, "caption": "Yellow", "tokens": 0, "x": 268, "y": 312 },
             { "id": 2, "caption": "Green", "tokens": 1, "x": 274, "y": 470 },
-            { "id": 3, "caption": "Control", "tokens": 0, "x": 429.5, "y": 201 }
+            { "id": 3, "caption": "Red+Yellow", "tokens": 0, "x": 429.5, "y": 201 }
        ],
        "transitions": [
-            { "id": 0, "caption": "T0", "x": 429, "y": 103, "angle": 0 },
-            { "id": 1, "caption": "T1", "x": 271, "y": 199, "angle": 0 },
-            { "id": 2, "caption": "T2", "x": 108, "y": 311, "angle": 0 },
-            { "id": 3, "caption": "T3", "x": 429, "y": 311, "angle": 0 }
+            { "id": 0, "caption": "1", "x": 429, "y": 103, "angle": 0 },
+            { "id": 1, "caption": "1", "x": 271, "y": 199, "angle": 0 },
+            { "id": 2, "caption": "1", "x": 108, "y": 311, "angle": 0 },
+            { "id": 3, "caption": "1", "x": 429, "y": 311, "angle": 0 }
        ],
        "arcs": [
             { "from": "P0", "to": "T0" },
@@ -31,6 +31,13 @@
             { "from": "P3", "to": "T1" },
             { "from": "T1", "to": "P3", "duration": 5 },
             { "from": "T0", "to": "P0", "duration": 4 }
+       ],
+       "actions": [
+            { "place_id": 0, "qualifier": "N", "color": "red", "name": "Red LED", "script": "Red light only", "duration": 0 },
+            { "place_id": 1, "qualifier": "N", "color": "yellow", "name": "Yellow LED", "script": "Yellow light only", "duration": 0 },
+            { "place_id": 2, "qualifier": "N", "color": "green", "name": "Green LED", "script": "Green light only", "duration": 0 },
+            { "place_id": 3, "qualifier": "N", "color": "red", "name": "Red LED", "script": "Red light (with yellow)", "duration": 0 },
+            { "place_id": 3, "qualifier": "N", "color": "yellow", "name": "Yellow LED", "script": "Yellow light (with red)", "duration": 0 }
        ],
        "sensors": [
        ]

@@ -39,12 +39,12 @@
             { "from": "T3", "to": "P0", "duration": 1 }
        ],
        "actions": [
-            { "place_id": 0, "qualifier": "N", "name": "Red 1", "script": "", "duration": 0 },
-            { "place_id": 1, "qualifier": "N", "name": "Green 1", "script": "", "duration": 0 },
-            { "place_id": 2, "qualifier": "N", "name": "Orange 1", "script": "", "duration": 0 },
-            { "place_id": 3, "qualifier": "N", "name": "Red 2", "script": "", "duration": 0 },
-            { "place_id": 4, "qualifier": "N", "name": "Green 2", "script": "", "duration": 0 },
-            { "place_id": 5, "qualifier": "N", "name": "Orange 2", "script": "", "duration": 0 }
+            { "place_id": 0, "qualifier": "N", "color": "red", "name": "Red 1", "script": "Traffic light 1 - Red", "duration": 0 },
+            { "place_id": 1, "qualifier": "N", "color": "green", "name": "Green 1", "script": "Traffic light 1 - Green", "duration": 0 },
+            { "place_id": 2, "qualifier": "N", "color": "orange", "name": "Orange 1", "script": "Traffic light 1 - Orange", "duration": 0 },
+            { "place_id": 3, "qualifier": "N", "color": "red", "name": "Red 2", "script": "Traffic light 2 - Red", "duration": 0 },
+            { "place_id": 4, "qualifier": "N", "color": "green", "name": "Green 2", "script": "Traffic light 2 - Green", "duration": 0 },
+            { "place_id": 5, "qualifier": "N", "color": "orange", "name": "Orange 2", "script": "Traffic light 2 - Orange", "duration": 0 }
        ]
     }
   ],

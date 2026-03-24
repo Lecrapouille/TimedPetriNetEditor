@@ -24,6 +24,8 @@
 #include <algorithm>
 #include <fstream>
 #include <cstring>
+#include <set>
+#include <map>
 
 namespace tpne {
 
@@ -32,7 +34,7 @@ static std::string camelCase(std::string const& line)
     std::string res(line);
     bool active = true;
 
-    for(int i = 0; res[i] != '\0'; i++)
+    for (size_t i = 0; i < res.size(); i++)
     {
         if (std::isalpha(res[i]))
         {
@@ -54,10 +56,22 @@ static std::string camelCase(std::string const& line)
     return res;
 }
 
+static std::string sanitizeName(std::string const& name)
+{
+    std::string res;
+    for (char c : name)
+    {
+        if (std::isalnum(c))
+            res += c;
+        else if (c == ' ')
+            res += '_';
+    }
+    return res;
+}
+
 //------------------------------------------------------------------------------
 std::string exportToGrafcetCpp(Net const& net, std::string const& filename)
 {
-    // Open the file
     std::ofstream file(filename);
     if (!file)
     {
@@ -67,217 +81,685 @@ std::string exportToGrafcetCpp(Net const& net, std::string const& filename)
         return error.str();
     }
 
-    // Generate the C++ namespace
-    std::string name_space = net.name;
-      std::for_each(name_space.begin(), name_space.end(), [](char & c) {
-        c = char(::tolower(int(c)));
-        if (c == ' ') { c = '_'; }
-    });
-    // Generate the C++ header guards
-    std::string header_guards(name_space);
-    std::for_each(header_guards.begin(), header_guards.end(), [](char & c) {
-        c = char(::toupper(int(c)));
-        if (c == ' ') { c = '_'; }
-    });
+    // Generate namespace and header guards
+    std::string name_space = sanitizeName(net.name);
+    std::transform(name_space.begin(), name_space.end(), name_space.begin(),
+                   [](unsigned char c) { return std::tolower(c); });
 
-    file << "// This file has been generated and you should avoid editing it." << std::endl;
-    file << "// Note: the code generator is still experimental !" << std::endl;
-    file << "" << std::endl;
-    file << "#ifndef GENERATED_GRAFCET_" << header_guards << "_HPP" << std::endl;
-    file << "#  define GENERATED_GRAFCET_" << header_guards << "_HPP" << std::endl;
-    file << "" << std::endl;
-    // FIXME #ifndef GRAFCET_WITH_DEBUG
-    //file << "#  include <iostream>" << std::endl;
-    //file << "" << std::endl;
-    file << "#  ifndef GRAFCET_SENSOR_TYPE" << std::endl;
-    file << "#    define GRAFCET_SENSOR_TYPE bool" << std::endl;
-    file << "#  endif" << std::endl << std::endl;
-    file << "namespace " << name_space << " {" << std::endl;
+    std::string header_guards = name_space;
+    std::transform(header_guards.begin(), header_guards.end(), header_guards.begin(),
+                   [](unsigned char c) { return std::toupper(c); });
 
-    file << R"PN(
-// *****************************************************************************
-//! \brief
-// *****************************************************************************
-class Grafcet
-{
-public:
+    // Collect all unique action names and their qualifiers
+    struct ActionInfo {
+        std::string name;
+        Action::Qualifier qualifier;
+        float duration;
+        size_t step_id;
+    };
+    std::vector<ActionInfo> all_actions;
+    std::set<std::string> action_names;
 
-    //-------------------------------------------------------------------------
-    //! \brief Restore all states of the GRAFCET to their initial states.
-    //-------------------------------------------------------------------------
-    Grafcet() { initInputsGPIOs(); initOutputGPIOs(); reset(); }
+    // Collect forcings for hierarchical control
+    struct ForcingInfo {
+        size_t step_id;
+        Forcing forcing;
+    };
+    std::vector<ForcingInfo> all_forcings;
+    std::set<std::string> target_grafcets;
 
-    //-------------------------------------------------------------------------
-    //! \brief Reset the sequence to the initial step.
-    //-------------------------------------------------------------------------
-    void reset()
+    for (auto const& p : net.places())
     {
-)PN";
-    file << "// Reset sensors ?" << std::endl;
-    file << "        init = true;" << std::endl;
-    auto const& places = net.places();
-    for (size_t i = 0; i < places.size(); ++i)
-    {
-        file << "        X[" << places[i].id << "] = "
-             << (places[i].tokens ? "true; " : "false;")
-             << std::endl;
+        for (auto const& a : p.actions)
+        {
+            all_actions.push_back({a.name, a.qualifier, a.duration, p.id});
+            action_names.insert(a.name);
+
+            // Collect forcings
+            for (auto const& f : a.forcings)
+            {
+                all_forcings.push_back({p.id, f});
+                target_grafcets.insert(f.targetNet);
+            }
+        }
     }
 
-    file << R"PN(    }
+    bool has_forcings = !all_forcings.empty();
 
-    //-------------------------------------------------------------------------
-    //! \brief Update one cycle of the GRAFCET: read sensors, update states,
-    //! write outputs. The update follows the document
-    //! http://legins69.free.fr/automatisme/PL7Pro/GRAFCET.pdf
-    //-------------------------------------------------------------------------
-    void update()
+    // Check which qualifiers need timers
+    bool needs_timers = false;
+    for (auto const& a : all_actions)
     {
-)PN";
+        if (a.qualifier == Action::Qualifier::D ||
+            a.qualifier == Action::Qualifier::L ||
+            a.qualifier == Action::Qualifier::SD ||
+            a.qualifier == Action::Qualifier::DS ||
+            a.qualifier == Action::Qualifier::SL)
+        {
+            needs_timers = true;
+            break;
+        }
+    }
 
-    std::string del;
+    // Check if any transition has delay
+    bool has_transition_delays = false;
+    for (auto const& t : net.transitions())
+    {
+        if (t.delay > 0.0f)
+        {
+            has_transition_delays = true;
+            break;
+        }
+    }
+
+    //==========================================================================
+    // Generate header file
+    //==========================================================================
+    file << "// This file has been generated by TimedPetriNetEditor.\n";
+    file << "// GRAFCET: " << net.name << "\n";
+    file << "// Generation follows IEC 60848 standard.\n";
+    file << "//\n";
+    file << "// To compile and test on Linux/macOS:\n";
+    file << "//   g++ -std=c++17 -DGRAFCET_STANDALONE_TEST " << filename << " -o grafcet_test\n";
+    file << "//   ./grafcet_test\n";
+    file << "//\n";
+    file << "// To enable debug output to console:\n";
+    file << "//   g++ -std=c++17 -DGRAFCET_STANDALONE_TEST -DGRAFCET_DEBUG " << filename << " -o grafcet_test\n";
+    file << "\n";
+    file << "#ifndef GENERATED_GRAFCET_" << header_guards << "_HPP\n";
+    file << "#define GENERATED_GRAFCET_" << header_guards << "_HPP\n\n";
+
+    file << "#include <cstdint>\n";
+    file << "#include <cstdio>\n";
+    file << "#include <initializer_list>\n";
+    if (needs_timers || has_transition_delays)
+    {
+        file << "#include <chrono>\n";
+    }
+    file << "\n";
+
+    file << "#ifndef GRAFCET_SENSOR_TYPE\n";
+    file << "#  define GRAFCET_SENSOR_TYPE bool\n";
+    file << "#endif\n\n";
+
+    file << "#ifdef GRAFCET_DEBUG\n";
+    file << "#  define GRAFCET_LOG(fmt, ...) printf(fmt, ##__VA_ARGS__)\n";
+    file << "#else\n";
+    file << "#  define GRAFCET_LOG(fmt, ...)\n";
+    file << "#endif\n\n";
+
+    file << "namespace " << name_space << " {\n\n";
+
+    //==========================================================================
+    // Grafcet class
+    //==========================================================================
+    file << "class Grafcet\n";
+    file << "{\n";
+    file << "public:\n\n";
+
+    // Constructor
+    file << "    Grafcet()\n";
+    file << "    {\n";
+    file << "        initInputGPIOs();\n";
+    file << "        initOutputGPIOs();\n";
+    file << "        reset();\n";
+    file << "    }\n\n";
+
+    // Reset method
+    file << "    void reset()\n";
+    file << "    {\n";
+    file << "        GRAFCET_LOG(\"[GRAFCET] Reset to initial state\\n\");\n";
+    file << "        m_init = true;\n";
+    file << "        m_frozen = false;\n";
+    for (auto const& p : net.places())
+    {
+        file << "        X[" << p.id << "] = " << (p.tokens ? "true" : "false")
+             << ";  // " << p.caption << "\n";
+    }
+    for (auto const& t : net.transitions())
+    {
+        file << "        T[" << t.id << "] = false;\n";
+    }
+    // Reset action states
+    for (auto const& name : action_names)
+    {
+        file << "        m_action_" << sanitizeName(name) << " = false;\n";
+    }
+    // Reset timers
+    if (needs_timers)
+    {
+        for (auto const& a : all_actions)
+        {
+            if (a.qualifier == Action::Qualifier::D ||
+                a.qualifier == Action::Qualifier::L ||
+                a.qualifier == Action::Qualifier::SD ||
+                a.qualifier == Action::Qualifier::DS ||
+                a.qualifier == Action::Qualifier::SL)
+            {
+                file << "        m_timer_" << sanitizeName(a.name) << "_" << a.step_id << " = 0.0f;\n";
+            }
+        }
+    }
+    if (has_transition_delays)
+    {
+        for (auto const& t : net.transitions())
+        {
+            if (t.delay > 0.0f)
+            {
+                file << "        m_trans_timer_" << t.id << " = 0.0f;\n";
+            }
+        }
+    }
+    file << "    }\n\n";
+
+    // Update method
+    file << "    void update(float dt)\n";
+    file << "    {\n";
+    file << "        // Skip if frozen by forcing command\n";
+    file << "        if (m_frozen) return;\n\n";
 
     // Read sensors
-    file << "        // Read sensors:" << std::endl;
-    for (auto const& s: Sensors::instance().database())
+    file << "        // 1. Read sensors\n";
+    for (auto const& s : Sensors::instance().database())
     {
-        file << "        " << s.first
-             << " = readSensor" << camelCase(s.first) << "();"
-             << std::endl;
+        file << "        " << s.first << " = readSensor" << camelCase(s.first) << "();\n";
+    }
+    file << "\n";
+
+    // Update transition delay timers
+    if (has_transition_delays)
+    {
+        file << "        // 2. Update transition delay timers\n";
+        for (auto const& t : net.transitions())
+        {
+            if (t.delay > 0.0f)
+            {
+                file << "        {\n";
+                file << "            bool enabled = ";
+                std::string del;
+                for (auto const& a : t.arcsIn)
+                {
+                    file << del << "X[" << a->from.id << "]";
+                    del = " && ";
+                }
+                file << ";\n";
+                file << "            if (enabled && R" << t.id << "())\n";
+                file << "                m_trans_timer_" << t.id << " += dt;\n";
+                file << "            else\n";
+                file << "                m_trans_timer_" << t.id << " = 0.0f;\n";
+                file << "        }\n";
+            }
+        }
+        file << "\n";
     }
 
-    file << std::endl << "        // Update GRAFCET states:" << std::endl;
-    // Compute T[n] = X[n] . R[n]
-    for (auto const& t: net.transitions())
+    // Compute transitions T[n] = X[n] . R[n]
+    file << "        // " << (has_transition_delays ? "3" : "2") << ". Compute transition firing conditions\n";
+    for (auto const& t : net.transitions())
     {
         file << "        T[" << t.id << "] = ";
-        del = "";
-        for (auto const& p: t.arcsIn)
+        std::string del;
+        for (auto const& a : t.arcsIn)
         {
-            file << del << "X[" << p->from.id << "]";
-            del = " & ";
+            file << del << "X[" << a->from.id << "]";
+            del = " && ";
         }
-        file << del << t.key << "();"
-             << " // Transition " << t.id << ": " << t.caption
-             << std::endl;
+        file << del << "R" << t.id << "()";
+        if (t.delay > 0.0f)
+        {
+            file << " && (m_trans_timer_" << t.id << " >= " << t.delay << "f)";
+        }
+        file << ";  // " << t.caption << "\n";
     }
+    file << "\n";
 
-    // Compute X[n] = T[n-1] + X[n] . /T[n]
-    for (auto const& p: net.places())
+    // Compute steps X[n] = T[n-1] + X[n] . /T[n]
+    file << "        // " << (has_transition_delays ? "4" : "3") << ". Update step states\n";
+    for (auto const& p : net.places())
     {
         file << "        X[" << p.id << "] = ";
-        del = "";
-        for (auto const& t: p.arcsIn)
+        std::string del;
+        for (auto const& a : p.arcsIn)
         {
-            file << del << "T[" << t->from.id << "]";
-            del = " | ";
+            file << del << "T[" << a->from.id << "]";
+            del = " || ";
         }
         if (p.arcsIn.size() > 0u)
-        {
-            file << " | ";
-        }
+            file << " || ";
+
         if (p.arcsOut.size() == 0u)
         {
             file << "X[" << p.id << "]";
         }
         else
         {
-            file << "(X[" << p.id << "] & ";
+            file << "(X[" << p.id << "] && ";
             del = "";
-            for (auto const& t: p.arcsOut)
+            for (auto const& a : p.arcsOut)
             {
-                file << del << "(!T[" << t->to.id << "])";
-                del = " & ";
+                file << del << "!T[" << a->to.id << "]";
+                del = " && ";
             }
             file << ")";
         }
         if (p.tokens > 0u)
         {
-            file << " | init";
+            file << " || m_init";
         }
-        file << "; // Step " << p.id << ": " << p.caption << std::endl;
+        file << ";  // " << p.caption << "\n";
     }
+    file << "\n";
 
-    file << std::endl << "        // Update outputs:" << std::endl;
-    // TODO Sorties
-    // Pour toutes les sorties: faire la liste des Etapes qui les utilisent avec |
-    for (auto const& p: net.places())
+    // Update action timers
+    if (needs_timers)
     {
-        file << "        outputs[xxx] = X[yyy] + (X[zzz] & inibiteur[zzz]);" << std::endl;
+        file << "        // " << (has_transition_delays ? "5" : "4") << ". Update action timers\n";
+        for (auto const& a : all_actions)
+        {
+            if (a.qualifier == Action::Qualifier::D ||
+                a.qualifier == Action::Qualifier::L ||
+                a.qualifier == Action::Qualifier::SD ||
+                a.qualifier == Action::Qualifier::DS ||
+                a.qualifier == Action::Qualifier::SL)
+            {
+                std::string timer_name = "m_timer_" + sanitizeName(a.name) + "_" + std::to_string(a.step_id);
+                file << "        if (X[" << a.step_id << "])\n";
+                file << "            " << timer_name << " += dt;\n";
+                file << "        else\n";
+                file << "            " << timer_name << " = 0.0f;\n";
+            }
+        }
+        file << "\n";
     }
-    for (auto const& p: net.places())
+
+    // Compute action outputs
+    file << "        // " << (has_transition_delays ? "6" : (needs_timers ? "5" : "4")) << ". Compute action outputs\n";
+    for (auto const& name : action_names)
     {
-        file << "        P" << p.id << "(outputs[xxx]);" << std::endl;
+        std::string var_name = "m_action_" + sanitizeName(name);
+        file << "        " << var_name << " = false;\n";
     }
 
-    file << std::endl << "        // End of the initial GRAFCET cycle" << std::endl;
-    file << "        init = false;";
-    file << R"PN(
-    }
-
-private:  // You have to implement the following methods in the C++ file
-
-    //-------------------------------------------------------------------------
-    //! \brief Initialize the input GPIOs.
-    //-------------------------------------------------------------------------
-    void initInputsGPIOs();
-    //-------------------------------------------------------------------------
-    //! \brief Initialize the output GPIOs.
-    //-------------------------------------------------------------------------
-    void initOutputGPIOs();
-
-)PN";
-
-    for (auto const& s: Sensors::instance().database())
+    // Process each action by qualifier type
+    for (auto const& p : net.places())
     {
-        file << "    //-------------------------------------------------------------------------" << std::endl;
-        file << "    //! \\brief Read sensor " << s.first << std::endl;
-        file << "    //-------------------------------------------------------------------------" << std::endl;
-        file << "    bool readSensor" << camelCase(s.first) << "();" << std::endl;
+        for (auto const& a : p.actions)
+        {
+            std::string var_name = "m_action_" + sanitizeName(a.name);
+            std::string timer_name = "m_timer_" + sanitizeName(a.name) + "_" + std::to_string(p.id);
+
+            switch (a.qualifier)
+            {
+            case Action::Qualifier::N:  // Normal: active while step is active
+                file << "        " << var_name << " = " << var_name << " || X[" << p.id << "];";
+                file << "  // N " << a.name << " (step " << p.id << ")\n";
+                break;
+
+            case Action::Qualifier::S:  // Set: latched on step activation
+                file << "        if (X[" << p.id << "] && !m_prev_X[" << p.id << "]) "
+                     << var_name << " = true;";
+                file << "  // S " << a.name << " (step " << p.id << ")\n";
+                break;
+
+            case Action::Qualifier::R:  // Reset: clear the action
+                file << "        if (X[" << p.id << "]) " << var_name << " = false;";
+                file << "  // R " << a.name << " (step " << p.id << ")\n";
+                break;
+
+            case Action::Qualifier::D:  // Delayed: activate after delay
+                file << "        " << var_name << " = " << var_name
+                     << " || (X[" << p.id << "] && " << timer_name << " >= " << a.duration << "f);";
+                file << "  // D" << a.duration << " " << a.name << " (step " << p.id << ")\n";
+                break;
+
+            case Action::Qualifier::L:  // Limited: active for duration only
+                file << "        " << var_name << " = " << var_name
+                     << " || (X[" << p.id << "] && " << timer_name << " < " << a.duration << "f);";
+                file << "  // L" << a.duration << " " << a.name << " (step " << p.id << ")\n";
+                break;
+
+            case Action::Qualifier::SD:  // Stored + Delayed
+                file << "        if (X[" << p.id << "] && " << timer_name << " >= " << a.duration << "f"
+                     << " && !m_sd_set_" << sanitizeName(a.name) << "_" << p.id << ") {\n";
+                file << "            " << var_name << " = true;\n";
+                file << "            m_sd_set_" << sanitizeName(a.name) << "_" << p.id << " = true;\n";
+                file << "        }";
+                file << "  // SD" << a.duration << " " << a.name << " (step " << p.id << ")\n";
+                break;
+
+            case Action::Qualifier::DS:  // Delayed + Stored
+                file << "        if (X[" << p.id << "] && !m_prev_X[" << p.id << "]) {\n";
+                file << "            m_ds_pending_" << sanitizeName(a.name) << "_" << p.id << " = true;\n";
+                file << "        }\n";
+                file << "        if (m_ds_pending_" << sanitizeName(a.name) << "_" << p.id
+                     << " && " << timer_name << " >= " << a.duration << "f) {\n";
+                file << "            " << var_name << " = true;\n";
+                file << "        }";
+                file << "  // DS" << a.duration << " " << a.name << " (step " << p.id << ")\n";
+                break;
+
+            case Action::Qualifier::SL:  // Stored + Limited
+                file << "        if (X[" << p.id << "] && !m_prev_X[" << p.id << "]) {\n";
+                file << "            m_sl_start_" << sanitizeName(a.name) << "_" << p.id << " = true;\n";
+                file << "            m_sl_timer_" << sanitizeName(a.name) << "_" << p.id << " = 0.0f;\n";
+                file << "        }\n";
+                file << "        if (m_sl_start_" << sanitizeName(a.name) << "_" << p.id << ") {\n";
+                file << "            m_sl_timer_" << sanitizeName(a.name) << "_" << p.id << " += dt;\n";
+                file << "            if (m_sl_timer_" << sanitizeName(a.name) << "_" << p.id
+                     << " < " << a.duration << "f)\n";
+                file << "                " << var_name << " = true;\n";
+                file << "            else\n";
+                file << "                m_sl_start_" << sanitizeName(a.name) << "_" << p.id << " = false;\n";
+                file << "        }";
+                file << "  // SL" << a.duration << " " << a.name << " (step " << p.id << ")\n";
+                break;
+
+            case Action::Qualifier::P:  // Pulse on rising edge
+                file << "        if (X[" << p.id << "] && !m_prev_X[" << p.id << "]) "
+                     << "do" << camelCase(a.name) << "Pulse();";
+                file << "  // P " << a.name << " (step " << p.id << ")\n";
+                break;
+            }
+        }
+    }
+    file << "\n";
+
+    // Apply forcings to other GRAFCETs
+    if (has_forcings)
+    {
+        file << "        // Apply forcings to other GRAFCETs (hierarchical control)\n";
+        for (auto const& fi : all_forcings)
+        {
+            std::string target_var = "m_" + sanitizeName(fi.forcing.targetNet);
+            file << "        if (X[" << fi.step_id << "] && " << target_var << ") {\n";
+
+            switch (fi.forcing.type)
+            {
+            case Forcing::Type::Init:
+                file << "            " << target_var << "->forceInit();\n";
+                break;
+            case Forcing::Type::Freeze:
+                file << "            " << target_var << "->freeze(true);\n";
+                break;
+            case Forcing::Type::Empty:
+                file << "            " << target_var << "->forceEmpty();\n";
+                break;
+            case Forcing::Type::Steps:
+                file << "            " << target_var << "->forceSteps({";
+                for (size_t i = 0; i < fi.forcing.steps.size(); ++i)
+                {
+                    if (i > 0) file << ", ";
+                    file << fi.forcing.steps[i];
+                }
+                file << "});\n";
+                break;
+            }
+            file << "        }\n";
+        }
+        file << "\n";
     }
 
-    file << std::endl;
-    for (auto const& t: net.transitions())
+    // Write outputs
+    file << "        // " << (has_transition_delays ? (has_forcings ? "8" : "7") : (needs_timers ? (has_forcings ? "7" : "6") : (has_forcings ? "6" : "5"))) << ". Write outputs\n";
+    for (auto const& name : action_names)
     {
-        file << "    //-------------------------------------------------------------------------" << std::endl;
-        file << "    //! \\brief Compute the receptivity of the transition " << t.id << "." << std::endl;
-        file << "    //! RPN boolean equation: \"" << t.caption << "\"" << std::endl;
-        file << "    //! \\return true if the transition is enabled." << std::endl;
-        file << "    //-------------------------------------------------------------------------" << std::endl;
-        file << "    bool T" << t.id << "() const { return !!("
-             << Receptivity::Parser::translate(t.caption, "C")
-             << "); }" << std::endl;
+        std::string var_name = "m_action_" + sanitizeName(name);
+        file << "        writeOutput" << camelCase(name) << "(" << var_name << ");\n";
+    }
+    file << "\n";
+
+    // Debug output
+    file << "#ifdef GRAFCET_DEBUG\n";
+    file << "        // Debug: print active steps\n";
+    file << "        GRAFCET_LOG(\"[GRAFCET] Active steps: \");\n";
+    file << "        for (size_t i = 0; i < " << net.places().size() << "; ++i)\n";
+    file << "            if (X[i]) GRAFCET_LOG(\"X%zu \", i);\n";
+    file << "        GRAFCET_LOG(\"\\n\");\n";
+    file << "#endif\n\n";
+
+    // Save previous step states
+    file << "        // Save previous step states for edge detection\n";
+    file << "        for (size_t i = 0; i < " << net.places().size() << "; ++i)\n";
+    file << "            m_prev_X[i] = X[i];\n";
+    file << "\n";
+    file << "        m_init = false;\n";
+    file << "    }\n\n";
+
+    // Getters for step states
+    file << "    // Step state accessors\n";
+    for (auto const& p : net.places())
+    {
+        file << "    bool isStep" << p.id << "Active() const { return X[" << p.id << "]; }  // " << p.caption << "\n";
+    }
+    file << "\n";
+
+    // Getters for action states
+    file << "    // Action state accessors\n";
+    for (auto const& name : action_names)
+    {
+        file << "    bool is" << camelCase(name) << "Active() const { return m_action_"
+             << sanitizeName(name) << "; }\n";
+    }
+    file << "\n";
+
+    // Forcing methods for hierarchical control
+    if (has_forcings || true)  // Always generate for potential use as target
+    {
+        file << "    // Forcing methods for hierarchical GRAFCET control\n";
+        file << "    void forceInit() {\n";
+        file << "        for (size_t i = 0; i < " << net.places().size() << "; ++i)\n";
+        file << "            X[i] = m_initial_X[i];\n";
+        file << "        m_frozen = false;\n";
+        file << "    }\n\n";
+
+        file << "    void forceEmpty() {\n";
+        file << "        for (size_t i = 0; i < " << net.places().size() << "; ++i)\n";
+        file << "            X[i] = false;\n";
+        file << "        m_frozen = false;\n";
+        file << "    }\n\n";
+
+        file << "    void forceSteps(std::initializer_list<size_t> steps) {\n";
+        file << "        forceEmpty();\n";
+        file << "        for (size_t s : steps)\n";
+        file << "            if (s < " << net.places().size() << ") X[s] = true;\n";
+        file << "    }\n\n";
+
+        file << "    void freeze(bool frozen) { m_frozen = frozen; }\n";
+        file << "    bool isFrozen() const { return m_frozen; }\n\n";
     }
 
-    file << std::endl;
-    for (auto const& p: net.places())
+    // Setters to link to other GRAFCETs
+    if (has_forcings)
     {
-        file << "    //-------------------------------------------------------------------------" << std::endl;
-        file << "    //! \\brief Do actions associated with the step " << p.id << ": " << p.caption << std::endl;
-        file << "    //-------------------------------------------------------------------------" << std::endl;
-        file << "    void P" << p.id << "(const bool activated);" << std::endl;
+        file << "    // Link to other GRAFCETs for hierarchical control\n";
+        for (auto const& target : target_grafcets)
+        {
+            std::string target_class = sanitizeName(target);
+            std::transform(target_class.begin(), target_class.end(), target_class.begin(),
+                           [](unsigned char c) { return std::tolower(c); });
+            file << "    void set" << camelCase(target) << "(class Grafcet* g) { m_"
+                 << sanitizeName(target) << " = g; }\n";
+        }
+        file << "\n";
     }
 
-    file << std::endl << "private:" << std::endl << std::endl;
-    file << "    //! \\brief States of transitions."  << std::endl;
-    file << "    bool T[" << net.transitions().size() << "];" << std::endl;
-    file << "    //! \\brief States of steps." << std::endl;
-    file << "    bool X[" << net.places().size() << "];" << std::endl;
-    file << "    //! \\brief List of sensors:"  << std::endl;
-    for (auto const& s: Sensors::instance().database())
+    //==========================================================================
+    // Private section
+    //==========================================================================
+    file << "private:\n\n";
+
+    // GPIO initialization stubs
+    file << "    // GPIO initialization (implement these for your hardware)\n";
+    file << "    void initInputGPIOs() {}\n";
+    file << "    void initOutputGPIOs() {}\n\n";
+
+    // Sensor reading methods
+    file << "    // Sensor reading methods (implement these for your hardware)\n";
+    for (auto const& s : Sensors::instance().database())
     {
-        file << "    GRAFCET_SENSOR_TYPE " << s.first << " = " << s.second << ";" << std::endl;
+        file << "    bool readSensor" << camelCase(s.first) << "() { return "
+             << s.first << "; }  // TODO: read from GPIO\n";
     }
-    //file << "    //! \\brief List of actions:"  << std::endl;
-    //for (auto const& s: Actuators::instance().database())
-    //{
-    //    file << "    GRAFCET_SENSOR_TYPE " << s.first << " = " << s.second << ";" << std::endl;
-    //}
-    file << "    //! \\brief Initial GRAFCET cycle." << std::endl;
-    file << "    bool init = true;" << std::endl;
-    file << "};" << std::endl;
-    file << "" << std::endl;
-    file << "} // namespace " << name_space << std::endl;
-    file << "#endif // GENERATED_GRAFCET_" << header_guards << "_HPP" << std::endl;
+    file << "\n";
+
+    // Output writing methods
+    file << "    // Output writing methods (implement these for your hardware)\n";
+    for (auto const& name : action_names)
+    {
+        file << "    void writeOutput" << camelCase(name)
+             << "(bool value) { (void)value; }  // TODO: write to GPIO\n";
+    }
+    file << "\n";
+
+    // Pulse action methods
+    bool has_pulse = false;
+    for (auto const& a : all_actions)
+    {
+        if (a.qualifier == Action::Qualifier::P)
+        {
+            if (!has_pulse)
+            {
+                file << "    // Pulse action methods (implement these for your hardware)\n";
+                has_pulse = true;
+            }
+            file << "    void do" << camelCase(a.name) << "Pulse() {}  // TODO: implement pulse action\n";
+        }
+    }
+    if (has_pulse) file << "\n";
+
+    // Receptivity methods
+    file << "    // Receptivity (transition guard) methods\n";
+    for (auto const& t : net.transitions())
+    {
+        std::string translated = Receptivity::Parser::translate(t.caption, "C");
+        file << "    bool R" << t.id << "() const { return !!(" << translated << "); }  // " << t.caption << "\n";
+    }
+    file << "\n";
+
+    // Member variables
+    file << "private:\n\n";
+    file << "    bool X[" << net.places().size() << "] = {};  // Step states\n";
+    file << "    bool T[" << net.transitions().size() << "] = {};  // Transition states\n";
+    file << "    bool m_prev_X[" << net.places().size() << "] = {};  // Previous step states\n";
+    file << "    bool m_initial_X[" << net.places().size() << "] = {";
+    // Generate initial step states
+    for (size_t i = 0; i < net.places().size(); ++i)
+    {
+        if (i > 0) file << ", ";
+        file << (net.places()[i].tokens > 0 ? "true" : "false");
+    }
+    file << "};  // Initial step states\n";
+    file << "    bool m_init = true;\n";
+    file << "    bool m_frozen = false;  // Frozen by forcing command\n\n";
+
+    // Pointers to target GRAFCETs for forcings
+    if (has_forcings)
+    {
+        file << "    // Pointers to target GRAFCETs for hierarchical control\n";
+        for (auto const& target : target_grafcets)
+        {
+            file << "    class Grafcet* m_" << sanitizeName(target) << " = nullptr;\n";
+        }
+        file << "\n";
+    }
+
+    // Sensors
+    if (!Sensors::instance().database().empty())
+    {
+        file << "    // Sensors\n";
+        for (auto const& s : Sensors::instance().database())
+        {
+            file << "    GRAFCET_SENSOR_TYPE " << s.first << " = " << s.second << ";\n";
+        }
+        file << "\n";
+    }
+
+    // Action states
+    file << "    // Action states\n";
+    for (auto const& name : action_names)
+    {
+        file << "    bool m_action_" << sanitizeName(name) << " = false;\n";
+    }
+    file << "\n";
+
+    // Timers for D, L, SD, DS, SL qualifiers
+    if (needs_timers)
+    {
+        file << "    // Action timers\n";
+        for (auto const& a : all_actions)
+        {
+            if (a.qualifier == Action::Qualifier::D ||
+                a.qualifier == Action::Qualifier::L ||
+                a.qualifier == Action::Qualifier::SD ||
+                a.qualifier == Action::Qualifier::DS ||
+                a.qualifier == Action::Qualifier::SL)
+            {
+                file << "    float m_timer_" << sanitizeName(a.name) << "_" << a.step_id << " = 0.0f;\n";
+            }
+        }
+        file << "\n";
+    }
+
+    // Transition delay timers
+    if (has_transition_delays)
+    {
+        file << "    // Transition delay timers\n";
+        for (auto const& t : net.transitions())
+        {
+            if (t.delay > 0.0f)
+            {
+                file << "    float m_trans_timer_" << t.id << " = 0.0f;  // delay: " << t.delay << "s\n";
+            }
+        }
+        file << "\n";
+    }
+
+    // SD, DS, SL state variables
+    for (auto const& a : all_actions)
+    {
+        if (a.qualifier == Action::Qualifier::SD)
+        {
+            file << "    bool m_sd_set_" << sanitizeName(a.name) << "_" << a.step_id << " = false;\n";
+        }
+        else if (a.qualifier == Action::Qualifier::DS)
+        {
+            file << "    bool m_ds_pending_" << sanitizeName(a.name) << "_" << a.step_id << " = false;\n";
+        }
+        else if (a.qualifier == Action::Qualifier::SL)
+        {
+            file << "    bool m_sl_start_" << sanitizeName(a.name) << "_" << a.step_id << " = false;\n";
+            file << "    float m_sl_timer_" << sanitizeName(a.name) << "_" << a.step_id << " = 0.0f;\n";
+        }
+    }
+
+    file << "};\n\n";
+    file << "} // namespace " << name_space << "\n\n";
+
+    //==========================================================================
+    // Standalone test main
+    //==========================================================================
+    file << "#ifdef GRAFCET_STANDALONE_TEST\n\n";
+    file << "#include <thread>\n\n";
+    file << "int main()\n";
+    file << "{\n";
+    file << "    " << name_space << "::Grafcet grafcet;\n";
+    file << "    \n";
+    file << "    printf(\"GRAFCET '" << net.name << "' simulation started.\\n\");\n";
+    file << "    printf(\"Press Ctrl+C to stop.\\n\\n\");\n";
+    file << "    \n";
+    file << "    const float dt = 0.1f;  // 100ms cycle time\n";
+    file << "    \n";
+    file << "    while (true)\n";
+    file << "    {\n";
+    file << "        grafcet.update(dt);\n";
+    file << "        std::this_thread::sleep_for(std::chrono::milliseconds(100));\n";
+    file << "    }\n";
+    file << "    \n";
+    file << "    return 0;\n";
+    file << "}\n\n";
+    file << "#endif // GRAFCET_STANDALONE_TEST\n\n";
+
+    file << "#endif // GENERATED_GRAFCET_" << header_guards << "_HPP\n";
 
     return {};
 }
