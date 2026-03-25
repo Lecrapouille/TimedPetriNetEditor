@@ -21,6 +21,8 @@
 #ifndef PETRI_NET_HPP
 #  define PETRI_NET_HPP
 
+#  include "PetriNet/Grafcet.hpp"
+
 #  include <cmath>
 #  include <string>
 #  include <deque>
@@ -53,17 +55,14 @@ enum class TypeOfNet
     //! consumed at once but tokens are shuffled along arcs.
     TimedPetriNet,
     //! \brief Is a timed Petri where all places have a single input arc and
-    //! a single output arc. TODO currently the net is displayed ugly!
+    //! a single output arc.
     TimedEventGraph,
     //! \brief Is a Petri net used for making industrial automata (productive):
     //! Places are named Steps and do discrete actions. Transitions have boolean
     //! expression (named receptivities aka conditions) linked to sensors
     //! (i.e. door closed and alarm off). Steps have at maximum one token (aka
-    //! 1-S net). TODO This mode is partially implemented: partial GRAFCET norm
-    //! is respected, GUI does not allow to simulated actions inside the
-    //! simulator.
+    //! 1-S net).
     GRAFCET
-    // TODO state machine
 };
 
 // *****************************************************************************
@@ -79,7 +78,7 @@ public:
     //! \brief Petri net is a bipartite graph. So we have to define the type of
     //! the node: Place or Transition.
     //--------------------------------------------------------------------------
-    enum Type { Place, Transition };
+    enum class Type { Place, Transition };
 
     //--------------------------------------------------------------------------
     //! \brief Constructor. No sanity checks are made in this method.
@@ -143,7 +142,6 @@ public:
     //! for place or by the 'T' char for transition followed by the unique
     //! identifier (i.e. "P0", "P1", "T0", "T1", ...). Once created, it is not
     //! supposed to be changed.
-    //! \fixme: TBD to be replaced by a method instead ?
     std::string const key;
     //! \brief Position inside the window needed for the display.
     //! \fixme: TBD to be moved inside the editor since we do not care of
@@ -165,237 +163,6 @@ public:
     //! the caller.
     std::vector<Arc*> arcsOut;
 };
-
-// *****************************************************************************
-//! \brief GRAFCET Forcing command for hierarchical control.
-//! Allows a master GRAFCET to force the state of a slave GRAFCET.
-//! Syntax: "TargetNet:{init}", "TargetNet:{2,8}", "TargetNet:{}", "TargetNet:{*}"
-// *****************************************************************************
-struct Forcing
-{
-    //! \brief Type of forcing command
-    enum class Type
-    {
-        Init,   // Force to initial state: "G2:{init}"
-        Freeze, // Freeze (no evolution): "G2:{*}"
-        Empty,  // Deactivate all steps: "G2:{}"
-        Steps   // Activate specific steps: "G2:{2,8}"
-    };
-
-    std::string targetNet;       // Name of the target GRAFCET
-    Type type = Type::Init;      // Type of forcing
-    std::vector<size_t> steps;   // For Type::Steps: list of steps to activate
-};
-
-//! \brief Convert Forcing::Type to string
-inline const char* forcingTypeToStr(Forcing::Type t)
-{
-    switch (t) {
-        case Forcing::Type::Init: return "init";
-        case Forcing::Type::Freeze: return "*";
-        case Forcing::Type::Empty: return "";
-        case Forcing::Type::Steps: return "steps";
-    }
-    return "init";
-}
-
-//! \brief Convert string to Forcing::Type
-inline Forcing::Type strToForcingType(std::string const& s)
-{
-    if (s == "*") return Forcing::Type::Freeze;
-    if (s == "" || s == "empty") return Forcing::Type::Empty;
-    if (s == "steps") return Forcing::Type::Steps;
-    return Forcing::Type::Init;
-}
-
-//! \brief Parse a forcing string like "Production:{init}" or "G2:{2,8}"
-inline Forcing parseForcing(std::string const& str)
-{
-    Forcing f;
-    size_t colonPos = str.find(':');
-    if (colonPos == std::string::npos)
-    {
-        f.targetNet = str;
-        f.type = Forcing::Type::Init;
-        return f;
-    }
-
-    f.targetNet = str.substr(0, colonPos);
-
-    // Find content between { }
-    size_t braceStart = str.find('{', colonPos);
-    size_t braceEnd = str.find('}', colonPos);
-    if (braceStart == std::string::npos || braceEnd == std::string::npos)
-    {
-        f.type = Forcing::Type::Init;
-        return f;
-    }
-
-    std::string content = str.substr(braceStart + 1, braceEnd - braceStart - 1);
-
-    // Trim whitespace
-    while (!content.empty() && std::isspace(content.front())) content.erase(0, 1);
-    while (!content.empty() && std::isspace(content.back())) content.pop_back();
-
-    if (content == "init")
-    {
-        f.type = Forcing::Type::Init;
-    }
-    else if (content == "*")
-    {
-        f.type = Forcing::Type::Freeze;
-    }
-    else if (content.empty())
-    {
-        f.type = Forcing::Type::Empty;
-    }
-    else
-    {
-        // Parse step numbers: "2,8" or "2, 8"
-        f.type = Forcing::Type::Steps;
-        std::stringstream ss(content);
-        std::string token;
-        while (std::getline(ss, token, ','))
-        {
-            while (!token.empty() && std::isspace(token.front())) token.erase(0, 1);
-            while (!token.empty() && std::isspace(token.back())) token.pop_back();
-            if (!token.empty())
-            {
-                try {
-                    f.steps.push_back(std::stoul(token));
-                } catch (...) {}
-            }
-        }
-    }
-    return f;
-}
-
-//! \brief Convert Forcing to string representation
-inline std::string forcingToStr(Forcing const& f)
-{
-    std::string result = f.targetNet + ":{";
-    switch (f.type) {
-        case Forcing::Type::Init:
-            result += "init";
-            break;
-        case Forcing::Type::Freeze:
-            result += "*";
-            break;
-        case Forcing::Type::Empty:
-            break;
-        case Forcing::Type::Steps:
-            for (size_t i = 0; i < f.steps.size(); ++i)
-            {
-                if (i > 0) result += ",";
-                result += std::to_string(f.steps[i]);
-            }
-            break;
-    }
-    result += "}";
-    return result;
-}
-
-// *****************************************************************************
-//! \brief GRAFCET Action associated with a Step (Place).
-//! Actions are operations performed when a step is active.
-//! Qualifiers define the behavior: N (normal), S (set), R (reset), etc.
-// *****************************************************************************
-struct Action
-{
-    //! \brief IEC 60848 Action qualifiers
-    enum class Qualifier
-    {
-        N,   // Normal: active while step is active
-        S,   // Set: latched ON at step activation
-        R,   // Reset: latched OFF at step activation
-        D,   // Delayed: active after delay while step active
-        L,   // Limited: active for limited time while step active
-        SD,  // Stored & Delayed: set after delay
-        DS,  // Delayed & Stored: delayed then latched
-        SL,  // Stored & Limited: set for limited time
-        P    // Pulse: single pulse at step activation
-    };
-
-    //! \brief LED colors for industrial visualization
-    enum class LedColor
-    {
-        Green,   // Default for most actions
-        Red,     // Alarms, errors
-        Orange,  // Warnings
-        Yellow,  // Caution
-        Blue,    // Information
-        White    // Neutral
-    };
-
-    Qualifier qualifier = Qualifier::N;
-    LedColor color = LedColor::Green;  // LED color for visualization
-    std::string name;        // Action name (e.g., "KM1", "Verin_A+")
-    std::string script;      // Code/description of the action
-    float duration = 0.0f;   // For D, L, SD, DS, SL qualifiers (seconds)
-
-    //! \brief Forcings to apply when this action is active (GRAFCET hierarchical control)
-    std::vector<Forcing> forcings;
-
-    // Runtime state (used during simulation)
-    mutable bool active = false;
-    mutable float timer = 0.0f;
-};
-
-//! \brief Convert Action::Qualifier to string
-inline const char* qualifierToStr(Action::Qualifier q)
-{
-    switch (q) {
-        case Action::Qualifier::N: return "N";
-        case Action::Qualifier::S: return "S";
-        case Action::Qualifier::R: return "R";
-        case Action::Qualifier::D: return "D";
-        case Action::Qualifier::L: return "L";
-        case Action::Qualifier::SD: return "SD";
-        case Action::Qualifier::DS: return "DS";
-        case Action::Qualifier::SL: return "SL";
-        case Action::Qualifier::P: return "P";
-    }
-    return "N";
-}
-
-//! \brief Convert string to Action::Qualifier
-inline Action::Qualifier strToQualifier(std::string const& s)
-{
-    if (s == "S") return Action::Qualifier::S;
-    if (s == "R") return Action::Qualifier::R;
-    if (s == "D") return Action::Qualifier::D;
-    if (s == "L") return Action::Qualifier::L;
-    if (s == "SD") return Action::Qualifier::SD;
-    if (s == "DS") return Action::Qualifier::DS;
-    if (s == "SL") return Action::Qualifier::SL;
-    if (s == "P") return Action::Qualifier::P;
-    return Action::Qualifier::N;
-}
-
-//! \brief Convert Action::LedColor to string
-inline const char* ledColorToStr(Action::LedColor c)
-{
-    switch (c) {
-        case Action::LedColor::Green: return "green";
-        case Action::LedColor::Red: return "red";
-        case Action::LedColor::Orange: return "orange";
-        case Action::LedColor::Yellow: return "yellow";
-        case Action::LedColor::Blue: return "blue";
-        case Action::LedColor::White: return "white";
-    }
-    return "green";
-}
-
-//! \brief Convert string to Action::LedColor
-inline Action::LedColor strToLedColor(std::string const& s)
-{
-    if (s == "red") return Action::LedColor::Red;
-    if (s == "orange") return Action::LedColor::Orange;
-    if (s == "yellow") return Action::LedColor::Yellow;
-    if (s == "blue") return Action::LedColor::Blue;
-    if (s == "white") return Action::LedColor::White;
-    return Action::LedColor::Green;
-}
 
 // *****************************************************************************
 //! \brief Petri Place node. Places represent system states. Places hold tokens
@@ -455,14 +222,8 @@ public:
     //! \brief the number of tokens hold by the Place. Public access is fine
     //! since this will facilitate its access during the simulation.
     size_t tokens;
-
-    //! \brief GRAFCET actions associated with this step.
-    //! Only used in GRAFCET mode.
+    //! \brief GRAFCET actions associated with this step. Only used in GRAFCET mode.
     std::vector<Action> actions;
-
-    //! \brief Previous activation state (for detecting rising/falling edges).
-    //! Used by simulation to implement S, R, P qualifiers.
-    mutable bool wasActive = false;
 };
 
 // *****************************************************************************
@@ -490,13 +251,11 @@ public:
     //! \param[in] caption_: Displayed text under the node.
     //! \param[in] x_: X-axis coordinate in the window needed for the display.
     //! \param[in] y_: Y-axis coordinate in the window needed for the display.
-    //! \param[in] angle_: angle in degree of rotation for the display.
     //! \param[in] recep_: initial receptivity value.
     //--------------------------------------------------------------------------
     Transition(size_t const id_, std::string const& caption_, float const x_,
-               float const y_, int const angle_, bool const recep_)
-        : Node(Node::Type::Transition, id_, caption_, x_, y_), angle(angle_),
-          receptivity(recep_)
+               float const y_, bool const recep_)
+        : Node(Node::Type::Transition, id_, caption_, x_, y_), receptivity(recep_)
     {}
 
     //--------------------------------------------------------------------------
@@ -543,7 +302,7 @@ public:
     //--------------------------------------------------------------------------
     inline bool isInput() const
     {
-        return (arcsIn.size() == 0u) && (arcsOut.size() > 0u);
+        return arcsIn.empty() && (!arcsOut.empty());
     }
 
     //--------------------------------------------------------------------------
@@ -556,7 +315,7 @@ public:
     //--------------------------------------------------------------------------
     inline bool isOutput() const
     {
-        return (arcsIn.size() > 0u) && (arcsOut.size() == 0u);
+        return (!arcsIn.empty()) && arcsOut.empty();
     }
 
     //--------------------------------------------------------------------------
@@ -571,7 +330,7 @@ public:
     //--------------------------------------------------------------------------
     inline bool isState() const
     {
-        return (arcsIn.size() > 0u) && (arcsOut.size() > 0u);
+        return (!arcsIn.empty()) && (!arcsOut.empty());
     }
 
     //--------------------------------------------------------------------------
@@ -586,13 +345,6 @@ public:
 
 public:
 
-    //! \brief Transitions are depicted by rectangles. We allow to rotate it to
-    //! have horizontal, vertical or diagonal shape transitions when rendering
-    //! transitions.
-    //! \fixme: TBD to be moved inside the editor since we do not care of
-    //! displayed here.
-    int angle = 0;
-
     //! \brief Store the result of the transition condition (boolean expression
     //! of sensors for GRAFCET; always true for timed Petri net; false by
     //! default except if the user clicks on it for Petri).
@@ -605,9 +357,6 @@ public:
     //! The transition must remain enabled for this duration before firing.
     //! 0 means no delay (immediate firing when enabled).
     float delay = 0.0f;
-
-    //! \brief Runtime timer for delay (mutable for simulation use).
-    mutable float delayTimer = 0.0f;
 };
 
 // *****************************************************************************
@@ -677,7 +426,7 @@ public:
     //--------------------------------------------------------------------------
     inline size_t& tokensIn()
     {
-        assert(from.type == Node::Place);
+        assert(from.type == Node::Type::Place);
         return reinterpret_cast<Place&>(from).tokens;
     }
 
@@ -687,7 +436,7 @@ public:
     //--------------------------------------------------------------------------
     inline size_t& tokensOut()
     {
-        assert(to.type == Node::Place);
+        assert(to.type == Node::Type::Place);
         return reinterpret_cast<Place&>(to).tokens;
     }
 
@@ -711,15 +460,6 @@ public:
     //! \note for the animation of tokens during the simulation, seconds are
     //! used.
     float duration;
-    //! \brief Temporary memory used for counting tokens when they arrive to
-    //! their destination node (place) and their conversion to an AnimatedToken
-    //! instance. This variable is used for avoiding to display on the same
-    //! coordinate several AnimatedToken with the same number of tokens as
-    //! caption. Instead, a single AnimatedToken holding the sum of tokens is
-    //! displayed. This sum is sensitive to the animation frame rate, a lower
-    //! framerate is suggested to force bigger coordinate steps avoiding
-    //! overlapping AnimatedToken.
-    size_t count = 0u; // FIXME to be moved to the Editor class
 };
 
 // *****************************************************************************
@@ -873,11 +613,10 @@ public:
     //! \param[in] caption: node description.
     //! \param[in] x: X-axis coordinate in the window needed for the display.
     //! \param[in] y: Y-axis coordinate in the window needed for the display.
-    //! \param[in] angle: angle of rotation of the displayed rectangle.
     //! \return the reference of the created element.
     //--------------------------------------------------------------------------
     Transition& addTransition(size_t const id, std::string const& caption,
-                              float const x, float const y, int const angle);
+                              float const x, float const y);
 
     //--------------------------------------------------------------------------
     //! \brief Const getter. Return the reference to the container of Transitions.
@@ -952,8 +691,9 @@ public:
     //! \return true if the arc is valid and has been added. Else return false
     //! if an arc is already present or nodes have the same type; call message()
     //! to get the exact reason.
+    //! \return error or information message.
     //--------------------------------------------------------------------------
-    bool addArc(Node& from, Node& to, float const duration = 0.0f);
+    std::string addArc(Node& from, Node& to, float const duration = 0.0f);
 
     //--------------------------------------------------------------------------
     //! \brief Add an arc with an intermediate place between the two given
@@ -994,11 +734,6 @@ public:
     bool removeArc(Node const& from, Node const& to);
 
     //--------------------------------------------------------------------------
-    //! \brief Return a error or information message.
-    //--------------------------------------------------------------------------
-    inline std::string error() const { return m_message.str(); }
-
-    //--------------------------------------------------------------------------
     //! \brief Populate or update Node::arcsIn and Node::arcsOut for all
     //! transitions and places in the Petri net.
     //--------------------------------------------------------------------------
@@ -1016,8 +751,10 @@ protected:
     //! \param[in] strict: if set true then types of nodes for \from and \to
     //! shall differ (one shall be Transition, the other shall be Place). If set
     //! to false then nodes can be of the same type.
+    //! \param[out] message: error or information message.
     //--------------------------------------------------------------------------
-    bool sanityArc(Node const& from, Node const& to, bool const strict) const;
+    bool sanityArc(Node const& from, Node const& to, bool const strict,
+            std::stringstream& message) const;
 
     //--------------------------------------------------------------------------
     //! \brief Helper method removing a transition. This function does not care
@@ -1026,7 +763,7 @@ protected:
     //! latest node in the container. To do that, we have to iterate from the end
     //! of the container.
     //--------------------------------------------------------------------------
-    void helperRemoveTransition(Node& node);
+    void helperRemoveTransition(Node const& node);
 
     //--------------------------------------------------------------------------
     //! \brief Helper method removing a place. This function does not care
@@ -1035,7 +772,7 @@ protected:
     //! latest node in the container. To do that, we have to iterate from the end
     //! of the container.
     //--------------------------------------------------------------------------
-    void helperRemovePlace(Node& node);
+    void helperRemovePlace(Node const& node);
 
     //--------------------------------------------------------------------------
     //! \brief Helper method removing all arcs linked to the given node.
@@ -1043,7 +780,14 @@ protected:
     //! latest arc in the container. To do that, we have to iterate from the end
     //! of the container.
     //--------------------------------------------------------------------------
-    void helperRemoveArcFromNode(Node& node);
+    void helperRemoveArcFromNode(Node const& node);
+
+public:
+
+    //! \brief Name of Petri net given by its filename once load() has been called.
+    std::string name;
+    //! \brief Editor has changed content and save is needed.
+    bool modified = false;
 
 private:
 
@@ -1063,53 +807,6 @@ private:
     //! \brief Auto increment unique identifier. Start from 0 (code placed in
     //! the cpp file). Note: their reset is possible through class friendship.
     size_t m_next_transition_id = 0u;
-    //! \brief Store current info/error message to the Petri net editor.
-    mutable std::stringstream m_message;
-
-public:
-
-    //! \brief Name of Petri net given by its filename once load() has been called.
-    std::string name;
-    //! \brief Editor has changed content and save is needed.
-    bool modified = false;
-    //! \brief GRAFCET is frozen by a forcing command (no evolution allowed)
-    mutable bool frozen = false;
-
-    //--------------------------------------------------------------------------
-    //! \brief Store current marking as initial marking (for forcing restore).
-    //--------------------------------------------------------------------------
-    void storeInitialMarking()
-    {
-        m_initial_marking.clear();
-        for (auto const& p : m_places)
-        {
-            m_initial_marking.push_back(p.tokens);
-        }
-    }
-
-    //--------------------------------------------------------------------------
-    //! \brief Restore marking to the stored initial marking.
-    //--------------------------------------------------------------------------
-    void restoreInitialMarking()
-    {
-        if (m_initial_marking.size() == m_places.size())
-        {
-            for (size_t i = 0; i < m_places.size(); ++i)
-            {
-                m_places[i].tokens = m_initial_marking[i];
-            }
-        }
-    }
-
-    //--------------------------------------------------------------------------
-    //! \brief Check if initial marking has been stored.
-    //--------------------------------------------------------------------------
-    bool hasInitialMarking() const { return !m_initial_marking.empty(); }
-
-private:
-
-    //! \brief Stored initial marking for forcing restore
-    std::vector<size_t> m_initial_marking;
 };
 
 //-----------------------------------------------------------------------------

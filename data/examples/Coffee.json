@@ -12,11 +12,11 @@
             { "id": 4, "caption": "Accepted", "tokens": 0, "x": 450, "y": 300 }
        ],
        "transitions": [
-            { "id": 0, "caption": "Brew", "x": 150, "y": 200, "angle": 0 },
-            { "id": 1, "caption": "Dispense", "x": 350, "y": 200, "angle": 0 },
-            { "id": 2, "caption": "Insert Coin", "x": 650, "y": 100, "angle": 0 },
-            { "id": 3, "caption": "Reject Coin", "x": 550, "y": 200, "angle": 0 },
-            { "id": 4, "caption": "Accept", "x": 600, "y": 300, "angle": 0 }
+            { "id": 0, "caption": "Brew", "x": 150, "y": 200 },
+            { "id": 1, "caption": "Dispense", "x": 350, "y": 200 },
+            { "id": 2, "caption": "Insert Coin", "x": 650, "y": 100 },
+            { "id": 3, "caption": "Reject Coin", "x": 550, "y": 200 },
+            { "id": 4, "caption": "Accept", "x": 600, "y": 300 }
        ],
        "arcs": [
             { "from": "P0", "to": "T0" },

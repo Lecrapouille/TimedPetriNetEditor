@@ -183,7 +183,7 @@ std::string ZeroMQRemote::cmdLoad(nlohmann::json const& params)
 {
     nlohmann::json response;
 
-    if (m_editor.simulation().running)
+    if (m_editor.simulation().isRunning())
     {
         response["status"] = "error";
         response["message"] = "Cannot load while simulation is running";
@@ -257,7 +257,7 @@ std::string ZeroMQRemote::cmdStart(nlohmann::json const& /*params*/)
         return response.dump();
     }
 
-    if (!m_editor.simulation().running)
+    if (!m_editor.simulation().isRunning())
     {
         m_editor.toogleStartAllSimulations();
     }
@@ -272,7 +272,7 @@ std::string ZeroMQRemote::cmdStop(nlohmann::json const& /*params*/)
 {
     nlohmann::json response;
 
-    if (m_editor.simulation().running)
+    if (m_editor.simulation().isRunning())
     {
         m_editor.toogleStartAllSimulations();
     }
@@ -287,7 +287,7 @@ std::string ZeroMQRemote::cmdFire(nlohmann::json const& params)
 {
     nlohmann::json response;
 
-    if (!m_editor.simulation().running)
+    if (!m_editor.simulation().isRunning())
     {
         response["status"] = "error";
         response["message"] = "Simulation is not running";
@@ -342,7 +342,7 @@ std::string ZeroMQRemote::cmdState(nlohmann::json const& /*params*/)
 {
     nlohmann::json response;
     response["status"] = "ok";
-    response["running"] = m_editor.simulation().running.load();
+    response["running"] = m_editor.simulation().isRunning();
 
     // Places with token counts
     nlohmann::json places = nlohmann::json::array();
@@ -410,7 +410,7 @@ std::string ZeroMQRemote::cmdClear(nlohmann::json const& /*params*/)
 {
     nlohmann::json response;
 
-    if (m_editor.simulation().running)
+    if (m_editor.simulation().isRunning())
     {
         response["status"] = "error";
         response["message"] = "Cannot clear while simulation is running";

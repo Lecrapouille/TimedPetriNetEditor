@@ -12,10 +12,10 @@
             { "id": 4, "caption": "Ready", "tokens": 2, "x": 600, "y": 200 }
        ],
        "transitions": [
-            { "id": 0, "caption": "Send", "x": 300, "y": 150, "angle": 0 },
-            { "id": 1, "caption": "Produce", "x": 100, "y": 150, "angle": 0 },
-            { "id": 2, "caption": "Accept", "x": 500, "y": 150, "angle": 0 },
-            { "id": 3, "caption": "Consume", "x": 700, "y": 150, "angle": 0 }
+            { "id": 0, "caption": "Send", "x": 300, "y": 150 },
+            { "id": 1, "caption": "Produce", "x": 100, "y": 150 },
+            { "id": 2, "caption": "Accept", "x": 500, "y": 150 },
+            { "id": 3, "caption": "Consume", "x": 700, "y": 150 }
        ],
        "arcs": [
             { "from": "P0", "to": "T0" },

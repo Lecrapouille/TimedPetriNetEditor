@@ -19,7 +19,7 @@
 //=============================================================================
 
 #include "PetriNet/Exports/Exports.hpp"
-#include "PetriNet/Receptivities.hpp"
+#include "PetriNet/Grafcet.hpp"
 #include "PetriNet/PetriNet.hpp"
 #include "nlohmann/json.hpp"
 #include <fstream>
@@ -53,7 +53,7 @@ static void writeNetToJSON(std::ofstream& file, Net const& net)
     {
         file << separator; separator = ",\n";
         file << "            { \"id\": " << t.id << ", \"caption\": \"" << t.caption << "\", \"x\": "
-             << t.x << ", \"y\": " << t.y << ", \"angle\": " << t.angle << " }";
+             << t.x << ", \"y\": " << t.y << " }";
     }
 
     // Arcs

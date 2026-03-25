@@ -13,13 +13,13 @@
             { "id": 5, "caption": "Going up", "tokens": 0, "x": 150, "y": 250 }
        ],
        "transitions": [
-            { "id": 0, "caption": "Start", "x": 500, "y": 150, "angle": 0 },
-            { "id": 1, "caption": "Arrive", "x": 500, "y": 350, "angle": 0 },
-            { "id": 2, "caption": "Open door", "x": 400, "y": 400, "angle": 0 },
-            { "id": 3, "caption": "Shut door", "x": 350, "y": 300, "angle": 0 },
-            { "id": 4, "caption": "Open Door", "x": 250, "y": 150, "angle": 0 },
-            { "id": 5, "caption": "Arrive", "x": 150, "y": 150, "angle": 0 },
-            { "id": 6, "caption": "Start", "x": 150, "y": 400, "angle": 0 }
+            { "id": 0, "caption": "Start", "x": 500, "y": 150 },
+            { "id": 1, "caption": "Arrive", "x": 500, "y": 350 },
+            { "id": 2, "caption": "Open door", "x": 400, "y": 400 },
+            { "id": 3, "caption": "Shut door", "x": 350, "y": 300 },
+            { "id": 4, "caption": "Open Door", "x": 250, "y": 150 },
+            { "id": 5, "caption": "Arrive", "x": 150, "y": 150 },
+            { "id": 6, "caption": "Start", "x": 150, "y": 400 }
        ],
        "arcs": [
             { "from": "P0", "to": "T0" },

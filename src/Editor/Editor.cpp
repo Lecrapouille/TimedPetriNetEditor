@@ -377,7 +377,7 @@ void Editor::view()
         }
 
         bool is_active_view = (i == doc.activeNetIndex());
-        bool show_interactive = is_active_view && !entry.simulation->running;
+        bool show_interactive = is_active_view && !entry.simulation->isRunning();
         m_view.loadViewState(entry.view_state);
         m_view.reshape();
         if (is_active_view)
@@ -407,7 +407,7 @@ void Editor::view()
 //------------------------------------------------------------------------------
 void Editor::close()
 {
-    simulation().running = false;
+    simulation().stop();
     m_states.request_quitting = true;
 }
 
@@ -457,8 +457,11 @@ void Editor::messagebox()
 //------------------------------------------------------------------------------
 void Editor::toogleStartSimulation()
 {
-    simulation().running = simulation().running ^ true;
-    if (simulation().running)
+    if (simulation().isRunning())
+        simulation().stop();
+    else
+        simulation().start();
+    if (simulation().isRunning())
     {
         m_view.clearAllSelections();
     }
@@ -493,15 +496,15 @@ void Editor::updateSimulationFramerate()
 //------------------------------------------------------------------------------
 bool Editor::switchOfNet(TypeOfNet const type)
 {
-    if (simulation().running)
+    if (simulation().isRunning())
         return false;
 
     std::vector<Arc*> arcs;
-    std::string error;
-    if (convertTo(net(), type, error, arcs))
+    std::string error_msg;
+    if (convertTo(net(), type, error_msg, arcs))
         return true;
 
-    m_messages.setError(net().error());
+    m_messages.setError(error_msg);
     return false;
 }
 
@@ -529,7 +532,6 @@ Transition& Editor::addTransition(float const x, float const y)
     auto action = std::make_unique<NetModificationAction>([this]() -> Net& { return net(); });
     action->before(net());
     Transition& transition = net().addTransition(x, y);
-    simulation().generateSensors();
     action->after(net());
     m_history.add(std::move(action));
     return transition;
@@ -548,14 +550,9 @@ void Editor::addPlace(float const x, float const y)
 //------------------------------------------------------------------------------
 void Editor::removeNode(Node& node)
 {
-    Node::Type type = node.type;
     auto action = std::make_unique<NetModificationAction>([this]() -> Net& { return net(); });
     action->before(net());
     net().removeNode(node);
-    if (type == Node::Type::Transition)
-    {
-        simulation().generateSensors();
-    }
     action->after(net());
     m_history.add(std::move(action));
 }
@@ -577,13 +574,7 @@ Node& Editor::addOppositeNode(Node::Type const type, float const x,
 {
     auto action = std::make_unique<NetModificationAction>([this]() -> Net& { return net(); });
     action->before(net());
-    simulation().generateSensors();
     Node& node = net().addOppositeNode(type, x, y, tokens);
-    if (node.type == Node::Type::Transition)
-    {
-        // FIXME simulation().generateSensor(node);
-        simulation().generateSensors();
-    }
     action->after(net());
     m_history.add(std::move(action));
     return node;
@@ -594,8 +585,12 @@ void Editor::addArc(Node& from, Node& to, float const duration)
 {
     auto action = std::make_unique<NetModificationAction>([this]() -> Net& { return net(); });
     action->before(net());
-    net().addArc(from, to, duration);
-    simulation().generateSensors();
+    auto error = net().addArc(from, to, duration);
+    if (!error.empty())
+    {
+        m_messages.setError(error);
+        return;
+    }
     action->after(net());
     m_history.add(std::move(action));
 }
@@ -603,7 +598,7 @@ void Editor::addArc(Node& from, Node& to, float const duration)
 //------------------------------------------------------------------------------
 void Editor::loadNetFile()
 {
-    if (simulation().running)
+    if (simulation().isRunning())
     {
         m_messages.setError("Cannot load during the simulation!");
         return;
@@ -650,7 +645,6 @@ void Editor::loadDocumentFromFile(std::string const& filepath)
         {
             auto& entry = doc.addNet(loaded_net.type(), loaded_net.name);
             entry.net = std::move(loaded_net);
-            entry.simulation->storeInitialMarking();
         }
 
         doc.setFilepath(filepath);
@@ -685,7 +679,6 @@ void Editor::loadDocumentFromFile(std::string const& filepath)
         return;
     }
 
-    entry.simulation->storeInitialMarking();
     doc.setFilepath(filepath);
     doc.setModified(false);
     setSavePath(filepath);
@@ -698,7 +691,7 @@ void Editor::loadDocumentFromFile(std::string const& filepath)
 //------------------------------------------------------------------------------
 void Editor::importNetFrom(Importer const& importer)
 {
-    if (simulation().running)
+    if (simulation().isRunning())
     {
         m_messages.setError("Cannot load during the simulation!");
         return ;
@@ -819,7 +812,7 @@ void Editor::saveDocumentAs()
 //------------------------------------------------------------------------------
 void Editor::exportNetTo(Exporter const& exporter)
 {
-    if (simulation().running)
+    if (simulation().isRunning())
     {
         m_messages.setError("Cannot save during the simulation!");
         return ;
@@ -923,7 +916,7 @@ void Editor::takeScreenshot()
 //--------------------------------------------------------------------------
 void Editor::clearNet()
 {
-    if (simulation().running)
+    if (simulation().isRunning())
         return ;
 
     auto action = std::make_unique<NetModificationAction>([this]() -> Net& { return net(); });
@@ -958,7 +951,7 @@ void Editor::clearLogs()
 //--------------------------------------------------------------------------
 void Editor::undo()
 {
-    if (simulation().running)
+    if (simulation().isRunning())
         return ;
 
     if (!m_history.undo())
@@ -975,7 +968,7 @@ void Editor::undo()
 //--------------------------------------------------------------------------
 void Editor::redo()
 {
-    if (simulation().running)
+    if (simulation().isRunning())
         return ;
 
     if (!m_history.redo())
@@ -986,7 +979,6 @@ void Editor::redo()
     {
         m_messages.setInfo("Redo!");
         net().modified = true;
-        simulation().compiled = false;
     }
 }
 

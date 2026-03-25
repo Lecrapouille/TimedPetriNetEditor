@@ -20,17 +20,17 @@
             { "id": 12, "caption": "Actions critiques", "tokens": 0, "x": 179, "y": 625 }
        ],
        "transitions": [
-            { "id": 0, "caption": "Critique", "x": 267, "y": 136, "angle": 315 },
-            { "id": 1, "caption": "T1", "x": 269, "y": 288, "angle": 270 },
-            { "id": 2, "caption": "T2", "x": 269, "y": 435, "angle": 90 },
-            { "id": 3, "caption": "T3", "x": 268, "y": 587, "angle": 90 },
-            { "id": 4, "caption": "Urgent", "x": 403, "y": 206, "angle": 270 },
-            { "id": 5, "caption": "Appel d'urgence", "x": 403, "y": 70, "angle": 90 },
-            { "id": 6, "caption": "T6", "x": 404, "y": 329, "angle": 270 },
-            { "id": 7, "caption": "T7", "x": 405, "y": 494, "angle": 270 },
-            { "id": 8, "caption": "Conseil", "x": 539, "y": 136, "angle": 225 },
-            { "id": 9, "caption": "T9", "x": 539, "y": 285, "angle": 270 },
-            { "id": 10, "caption": "T10", "x": 406, "y": 666, "angle": 270 }
+            { "id": 0, "caption": "Critique", "x": 267, "y": 136 },
+            { "id": 1, "caption": "T1", "x": 269, "y": 288 },
+            { "id": 2, "caption": "T2", "x": 269, "y": 435 },
+            { "id": 3, "caption": "T3", "x": 268, "y": 587 },
+            { "id": 4, "caption": "Urgent", "x": 403, "y": 206 },
+            { "id": 5, "caption": "Appel d'urgence", "x": 403, "y": 70 },
+            { "id": 6, "caption": "T6", "x": 404, "y": 329 },
+            { "id": 7, "caption": "T7", "x": 405, "y": 494 },
+            { "id": 8, "caption": "Conseil", "x": 539, "y": 136 },
+            { "id": 9, "caption": "T9", "x": 539, "y": 285 },
+            { "id": 10, "caption": "T10", "x": 406, "y": 666 }
        ],
        "arcs": [
             { "from": "P0", "to": "T0" },

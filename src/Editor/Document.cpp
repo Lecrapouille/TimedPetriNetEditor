@@ -20,7 +20,7 @@
 
 #include "Editor/Document.hpp"
 #include "PetriNet/Simulation.hpp"
-#include "PetriNet/Receptivities.hpp"
+#include "PetriNet/Grafcet.hpp"
 
 #include <stdexcept>
 #include <algorithm>
@@ -182,20 +182,20 @@ Document::NetEntry const& Document::activeNet() const
 }
 
 //------------------------------------------------------------------------------
-void Document::startAllSimulations()
+void Document::startAllSimulations() const
 {
-    for (auto& entry : m_nets)
+    for (auto const& entry : m_nets)
     {
-        entry->simulation->running = true;
+        entry->simulation->start();
     }
 }
 
 //------------------------------------------------------------------------------
-void Document::stopAllSimulations()
+void Document::stopAllSimulations() const
 {
-    for (auto& entry : m_nets)
+    for (auto const& entry : m_nets)
     {
-        entry->simulation->running = false;
+        entry->simulation->stop();
     }
 }
 
@@ -204,7 +204,7 @@ bool Document::isAnySimulationRunning() const
 {
     for (auto const& entry : m_nets)
     {
-        if (entry->simulation->running)
+        if (entry->simulation->isRunning())
         {
             return true;
         }
@@ -213,27 +213,27 @@ bool Document::isAnySimulationRunning() const
 }
 
 //------------------------------------------------------------------------------
-void Document::stepAllSimulations(float dt)
+void Document::stepAllSimulations(float dt) const
 {
-    for (auto& entry : m_nets)
+    for (auto const& entry : m_nets)
     {
         entry->simulation->step(dt);
     }
 }
 
 //------------------------------------------------------------------------------
-void Document::registerNets()
+void Document::registerNets() const
 {
-    for (auto& entry : m_nets)
+    for (auto const& entry : m_nets)
     {
         NetRegistry::instance().registerNet(entry->net.name, &entry->net);
     }
 }
 
 //------------------------------------------------------------------------------
-void Document::unregisterNets()
+void Document::unregisterNets() const
 {
-    for (auto& entry : m_nets)
+    for (auto const& entry : m_nets)
     {
         NetRegistry::instance().unregisterNet(entry->net.name);
     }

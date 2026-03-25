@@ -103,8 +103,7 @@ std::string importFromPNML(Net& net, std::string const& filename)
                             ->FirstChildElement("position")
                             ->Attribute("y"));
         }
-        int angle = 0;
-        net.addTransition(transition_id, caption, x, y, angle);
+        net.addTransition(transition_id, caption, x, y);
         transition_id++;
     }
 
@@ -137,11 +136,11 @@ std::string importFromPNML(Net& net, std::string const& filename)
                 return error.str();
             }
         }
-        if (!net.addArc(*from, *to, duration))
+        auto error_msg = net.addArc(*from, *to, duration);
+        if (!error_msg.empty())
         {
-            error << "Failed loading " << filename
-                << ". Arc " << from->key << " -> " << to->key
-                << " is badly formed" << std::endl;
+            error << "Failed parsing '" << filename << "'. Reason: '" << error_msg << "'" << std::endl;
+            return error.str();
         }
     }
     return {};

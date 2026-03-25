@@ -14,10 +14,10 @@
             { "id": 6, "caption": "P6", "tokens": 0, "x": 450, "y": 350 }
        ],
        "transitions": [
-            { "id": 0, "caption": "u", "x": 350, "y": 100, "angle": 90 },
-            { "id": 1, "caption": "x1", "x": 150, "y": 250, "angle": 0 },
-            { "id": 2, "caption": "x2", "x": 550, "y": 250, "angle": 0 },
-            { "id": 3, "caption": "y", "x": 350, "y": 400, "angle": 0 }
+            { "id": 0, "caption": "u", "x": 350, "y": 100 },
+            { "id": 1, "caption": "x1", "x": 150, "y": 250 },
+            { "id": 2, "caption": "x2", "x": 550, "y": 250 },
+            { "id": 3, "caption": "y", "x": 350, "y": 400 }
        ],
        "arcs": [
             { "from": "T0", "to": "P0", "duration": 1 },

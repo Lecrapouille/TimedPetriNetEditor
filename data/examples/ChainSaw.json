@@ -15,14 +15,14 @@
             { "id": 7, "caption": "Dead man switch off", "tokens": 1, "x": 200, "y": 500 }
        ],
        "transitions": [
-            { "id": 0, "caption": "T0", "x": 250, "y": 300, "angle": 0 },
-            { "id": 1, "caption": "T1", "x": 300, "y": 250, "angle": 0 },
-            { "id": 2, "caption": "T2", "x": 500, "y": 300, "angle": 0 },
-            { "id": 3, "caption": "T3", "x": 750, "y": 200, "angle": 0 },
-            { "id": 4, "caption": "T4", "x": 350, "y": 500, "angle": 0 },
-            { "id": 5, "caption": "T5", "x": 400, "y": 550, "angle": 0 },
-            { "id": 6, "caption": "T6", "x": 250, "y": 400, "angle": 0 },
-            { "id": 7, "caption": "T7", "x": 300, "y": 500, "angle": 0 }
+            { "id": 0, "caption": "T0", "x": 250, "y": 300 },
+            { "id": 1, "caption": "T1", "x": 300, "y": 250 },
+            { "id": 2, "caption": "T2", "x": 500, "y": 300 },
+            { "id": 3, "caption": "T3", "x": 750, "y": 200 },
+            { "id": 4, "caption": "T4", "x": 350, "y": 500 },
+            { "id": 5, "caption": "T5", "x": 400, "y": 550 },
+            { "id": 6, "caption": "T6", "x": 250, "y": 400 },
+            { "id": 7, "caption": "T7", "x": 300, "y": 500 }
        ],
        "arcs": [
             { "from": "P0", "to": "T0" },

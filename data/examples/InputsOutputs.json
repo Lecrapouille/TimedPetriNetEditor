@@ -13,12 +13,12 @@
             { "id": 5, "caption": "P5", "tokens": 0, "x": 550, "y": 300 }
        ],
        "transitions": [
-            { "id": 0, "caption": "T0", "x": 200, "y": 200, "angle": 0 },
-            { "id": 1, "caption": "T1", "x": 450, "y": 200, "angle": 0 },
-            { "id": 2, "caption": "T2", "x": 700, "y": 200, "angle": 0 },
-            { "id": 3, "caption": "T3", "x": 200, "y": 400, "angle": 0 },
-            { "id": 4, "caption": "T4", "x": 450, "y": 400, "angle": 0 },
-            { "id": 5, "caption": "T5", "x": 700, "y": 400, "angle": 0 }
+            { "id": 0, "caption": "T0", "x": 200, "y": 200 },
+            { "id": 1, "caption": "T1", "x": 450, "y": 200 },
+            { "id": 2, "caption": "T2", "x": 700, "y": 200 },
+            { "id": 3, "caption": "T3", "x": 200, "y": 400 },
+            { "id": 4, "caption": "T4", "x": 450, "y": 400 },
+            { "id": 5, "caption": "T5", "x": 700, "y": 400 }
        ],
        "arcs": [
             { "from": "T0", "to": "P0", "duration": 3 },

@@ -16,7 +16,7 @@ but the format is no longer compatible. Here, is an example of its content:
             { "id": 1, "caption": "P1", "tokens": 0, "x": 513, "y": 295 }
        ],
        "transitions": [
-            { "id": 0, "caption": "T0", "x": 351, "y": 295, "angle": 0 }
+            { "id": 0, "caption": "T0", "x": 351, "y": 295 }
        ],
        "arcs": [
             { "from": "P0", "to": "T0" },

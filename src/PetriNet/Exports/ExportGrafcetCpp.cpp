@@ -20,7 +20,7 @@
 
 #include "PetriNet/PetriNet.hpp"
 #include "PetriNet/Exports/Exports.hpp"
-#include "PetriNet/Receptivities.hpp"
+#include "PetriNet/Grafcet.hpp"
 #include <algorithm>
 #include <fstream>
 #include <cstring>

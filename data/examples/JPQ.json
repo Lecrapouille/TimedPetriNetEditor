@@ -13,10 +13,10 @@
             { "id": 5, "caption": "P5", "tokens": 0, "x": 459, "y": 90 }
        ],
        "transitions": [
-            { "id": 0, "caption": "Node 0", "x": 216, "y": 111, "angle": 0 },
-            { "id": 1, "caption": "Node 1", "x": 380, "y": 111, "angle": 0 },
-            { "id": 2, "caption": "y(k)", "x": 86, "y": 159, "angle": 0 },
-            { "id": 3, "caption": "u(k)", "x": 546, "y": 76, "angle": 0 }
+            { "id": 0, "caption": "Node 0", "x": 216, "y": 111 },
+            { "id": 1, "caption": "Node 1", "x": 380, "y": 111 },
+            { "id": 2, "caption": "y(k)", "x": 86, "y": 159 },
+            { "id": 3, "caption": "u(k)", "x": 546, "y": 76 }
        ],
        "arcs": [
             { "from": "T0", "to": "P0", "duration": 2 },

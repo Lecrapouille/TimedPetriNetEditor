@@ -1,10 +1,10 @@
 //=============================================================================
-// TimedNetEditor: A timed Petri net editor.
+// TimedPetriNetEditor: A timed Petri net editor.
 // Copyright 2021 -- 2026 Quentin Quadrat <lecrapouille@gmail.com>
 //
-// This file is part of TimedNetEditor.
+// This file is part of TimedPetriNetEditor.
 //
-// TimedNetEditor is free software: you can redistribute it and/or modify it
+// TimedPetriNetEditor is free software: you can redistribute it and/or modify it
 // under the terms of the GNU General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
 // (at your option) any later version.
@@ -18,14 +18,15 @@
 // along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.
 //=============================================================================
 
-#ifndef RECEPTIVITIES_HPP
-#  define RECEPTIVITIES_HPP
+#ifndef GRAFCET_HPP
+#  define GRAFCET_HPP
 
 #  include <memory>
 #  include <string>
 #  include <stack>
 #  include <map>
 #  include <vector>
+#  include <sstream>
 
 namespace tpne {
 
@@ -48,6 +49,7 @@ public:
         return (it != m_nets.end()) ? it->second : nullptr;
     }
     std::map<std::string, Net*> const& getRegistry() const { return m_nets; }
+    std::map<std::string, Net*>& getRegistry() { return m_nets; }
     void clear() { m_nets.clear(); }
 
 private:
@@ -84,9 +86,236 @@ public:
 };
 
 // *****************************************************************************
+//! \brief GRAFCET Forcing command for hierarchical control.
+//! Allows a master GRAFCET to force the state of a slave GRAFCET.
+//! Syntax: "TargetNet:{init}", "TargetNet:{2,8}", "TargetNet:{}", "TargetNet:{*}"
+// *****************************************************************************
+struct Forcing
+{
+    //! \brief Type of forcing command
+    enum class Type
+    {
+        Init,   // Force to initial state: "G2:{init}"
+        Freeze, // Freeze (no evolution): "G2:{*}"
+        Empty,  // Deactivate all steps: "G2:{}"
+        Steps   // Activate specific steps: "G2:{2,8}"
+    };
+
+    std::string targetNet;       // Name of the target GRAFCET
+    Type type = Type::Init;      // Type of forcing
+    std::vector<size_t> steps;   // For Type::Steps: list of steps to activate
+};
+
+//! \brief Convert Forcing::Type to string
+inline const char* forcingTypeToStr(Forcing::Type t)
+{
+    switch (t) {
+        case Forcing::Type::Init: return "init";
+        case Forcing::Type::Freeze: return "*";
+        case Forcing::Type::Empty: return "";
+        case Forcing::Type::Steps: return "steps";
+    }
+    return "init";
+}
+
+//! \brief Convert string to Forcing::Type
+inline Forcing::Type strToForcingType(std::string const& s)
+{
+    if (s == "*") return Forcing::Type::Freeze;
+    if (s == "" || s == "empty") return Forcing::Type::Empty;
+    if (s == "steps") return Forcing::Type::Steps;
+    return Forcing::Type::Init;
+}
+
+//! \brief Parse a forcing string like "Production:{init}" or "G2:{2,8}"
+inline Forcing parseForcing(std::string const& str)
+{
+    Forcing f;
+    size_t colonPos = str.find(':');
+    if (colonPos == std::string::npos)
+    {
+        f.targetNet = str;
+        f.type = Forcing::Type::Init;
+        return f;
+    }
+
+    f.targetNet = str.substr(0, colonPos);
+
+    // Find content between { }
+    size_t braceStart = str.find('{', colonPos);
+    size_t braceEnd = str.find('}', colonPos);
+    if (braceStart == std::string::npos || braceEnd == std::string::npos)
+    {
+        f.type = Forcing::Type::Init;
+        return f;
+    }
+
+    std::string content = str.substr(braceStart + 1, braceEnd - braceStart - 1);
+
+    // Trim whitespace
+    while (!content.empty() && std::isspace(content.front())) content.erase(0, 1);
+    while (!content.empty() && std::isspace(content.back())) content.pop_back();
+
+    if (content == "init")
+    {
+        f.type = Forcing::Type::Init;
+    }
+    else if (content == "*")
+    {
+        f.type = Forcing::Type::Freeze;
+    }
+    else if (content.empty())
+    {
+        f.type = Forcing::Type::Empty;
+    }
+    else
+    {
+        // Parse step numbers: "2,8" or "2, 8"
+        f.type = Forcing::Type::Steps;
+        std::stringstream ss(content);
+        std::string token;
+        while (std::getline(ss, token, ','))
+        {
+            while (!token.empty() && std::isspace(token.front())) token.erase(0, 1);
+            while (!token.empty() && std::isspace(token.back())) token.pop_back();
+            if (!token.empty())
+            {
+                try {
+                    f.steps.push_back(std::stoul(token));
+                } catch (...) {}
+            }
+        }
+    }
+    return f;
+}
+
+//! \brief Convert Forcing to string representation
+inline std::string forcingToStr(Forcing const& f)
+{
+    std::string result = f.targetNet + ":{";
+    switch (f.type) {
+        case Forcing::Type::Init:
+            result += "init";
+            break;
+        case Forcing::Type::Freeze:
+            result += "*";
+            break;
+        case Forcing::Type::Empty:
+            break;
+        case Forcing::Type::Steps:
+            for (size_t i = 0; i < f.steps.size(); ++i)
+            {
+                if (i > 0) result += ",";
+                result += std::to_string(f.steps[i]);
+            }
+            break;
+    }
+    result += "}";
+    return result;
+}
+
+// *****************************************************************************
+//! \brief GRAFCET Action associated with a Step (Place).
+//! Actions are operations performed when a step is active.
+//! Qualifiers define the behavior: N (normal), S (set), R (reset), etc.
+// *****************************************************************************
+struct Action
+{
+    //! \brief IEC 60848 Action qualifiers
+    enum class Qualifier
+    {
+        N,   // Normal: active while step is active
+        S,   // Set: latched ON at step activation
+        R,   // Reset: latched OFF at step activation
+        D,   // Delayed: active after delay while step active
+        L,   // Limited: active for limited time while step active
+        SD,  // Stored & Delayed: set after delay
+        DS,  // Delayed & Stored: delayed then latched
+        SL,  // Stored & Limited: set for limited time
+        P    // Pulse: single pulse at step activation
+    };
+
+    //! \brief LED colors for industrial visualization
+    enum class LedColor
+    {
+        Green,   // Default for most actions
+        Red,     // Alarms, errors
+        Orange,  // Warnings
+        Yellow,  // Caution
+        Blue,    // Information
+        White    // Neutral
+    };
+
+    Qualifier qualifier = Qualifier::N;
+    LedColor color = LedColor::Green;  // LED color for visualization
+    std::string name;        // Action name (e.g., "KM1", "Verin_A+")
+    std::string script;      // Code/description of the action
+    float duration = 0.0f;   // For D, L, SD, DS, SL qualifiers (seconds)
+
+    //! \brief Forcings to apply when this action is active (GRAFCET hierarchical control)
+    std::vector<Forcing> forcings;
+};
+
+//! \brief Convert Action::Qualifier to string
+inline const char* qualifierToStr(Action::Qualifier q)
+{
+    switch (q) {
+        case Action::Qualifier::N: return "N";
+        case Action::Qualifier::S: return "S";
+        case Action::Qualifier::R: return "R";
+        case Action::Qualifier::D: return "D";
+        case Action::Qualifier::L: return "L";
+        case Action::Qualifier::SD: return "SD";
+        case Action::Qualifier::DS: return "DS";
+        case Action::Qualifier::SL: return "SL";
+        case Action::Qualifier::P: return "P";
+    }
+    return "N";
+}
+
+//! \brief Convert string to Action::Qualifier
+inline Action::Qualifier strToQualifier(std::string const& s)
+{
+    if (s == "S") return Action::Qualifier::S;
+    if (s == "R") return Action::Qualifier::R;
+    if (s == "D") return Action::Qualifier::D;
+    if (s == "L") return Action::Qualifier::L;
+    if (s == "SD") return Action::Qualifier::SD;
+    if (s == "DS") return Action::Qualifier::DS;
+    if (s == "SL") return Action::Qualifier::SL;
+    if (s == "P") return Action::Qualifier::P;
+    return Action::Qualifier::N;
+}
+
+//! \brief Convert Action::LedColor to string
+inline const char* ledColorToStr(Action::LedColor c)
+{
+    switch (c) {
+        case Action::LedColor::Green: return "green";
+        case Action::LedColor::Red: return "red";
+        case Action::LedColor::Orange: return "orange";
+        case Action::LedColor::Yellow: return "yellow";
+        case Action::LedColor::Blue: return "blue";
+        case Action::LedColor::White: return "white";
+    }
+    return "green";
+}
+
+//! \brief Convert string to Action::LedColor
+inline Action::LedColor strToLedColor(std::string const& s)
+{
+    if (s == "red") return Action::LedColor::Red;
+    if (s == "orange") return Action::LedColor::Orange;
+    if (s == "yellow") return Action::LedColor::Yellow;
+    if (s == "blue") return Action::LedColor::Blue;
+    if (s == "white") return Action::LedColor::White;
+    return Action::LedColor::Green;
+}
+
+// *****************************************************************************
 //! \brief Receptivity is the boolean expression stored in GRAFCET transitions
-//! that make a tramsition fireable or not. This class allows to parse simple
-//! boolean expressions and create an abstrqct syntaxt tree (AST). For simplicity
+//! that make a transition fireable or not. This class allows to parse simple
+//! boolean expressions and create an abstract syntax tree (AST). For simplicity
 //! reasons the syntax use reversed polish notation (RPN). Therefore expression
 //! such as "(a or b) and X0" will be written as "a b or X0 and".
 // *****************************************************************************
@@ -120,14 +349,14 @@ public:
     {
     public:
 
-        //! \param[in] name Step (aka place0 name, i.e. "X0".
+        //! \param[in] name Step (aka place) name, i.e. "X0".
         StepExp(Net& net, std::string const& name);
         bool evaluate() const override;
 
     private:
 
         Net& m_net;
-        //! \brief Place ID. The GRAFCET net shall no remove the place t let this
+        //! \brief Place ID. The GRAFCET net shall no remove the place to let this
         //! ID valid.
         size_t m_id;
     };
@@ -210,7 +439,7 @@ public:
     };
 
     // *************************************************************************
-    //! \brief
+    //! \brief Expression for logical AND (i.e. "a b .")
     // *************************************************************************
     class AndExp : public BooleanExp
     {
@@ -232,7 +461,7 @@ public:
     };
 
     // *************************************************************************
-    //! \brief
+    //! \brief Expression for logical OR (i.e. "a b +")
     // *************************************************************************
     class OrExp : public BooleanExp
     {
@@ -277,26 +506,13 @@ public:
 
     private:
 
-        //--------------------------------------------------------------------------
-        //! brief
-        //--------------------------------------------------------------------------
         static bool isBinaryOperator(std::string const& token);
         static bool isUnitaryOperator(std::string const& token);
         static bool isConst(std::string const& token);
         static bool isState(std::string const& token);
         static bool isCrossGraphState(std::string const& token);
         static bool isVariable(std::string const& token);
-
-        //--------------------------------------------------------------------------
-        //! brief
-        //--------------------------------------------------------------------------
         static std::vector<std::string> tokenizer(std::string const& s, std::string const& delimiter);
-
-        //--------------------------------------------------------------------------
-        //! brief Convert a token from the reverse polish notation into the desired
-        //! language (currently: C language or Structure Text language). If not found
-        //! the token is returned as it.
-        //--------------------------------------------------------------------------
         static std::string convert(std::string const& token, std::string const& lang);
     };
 

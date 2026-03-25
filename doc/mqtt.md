@@ -20,7 +20,7 @@ Example:
 "Petri net", "nets": [ { "name": "Petri net",
 "places": [ { "id": 0, "caption": "P0", "tokens": 1, "x": 244, "y": 153 },
 { "id": 1, "caption": "P1", "tokens": 0, "x": 356, "y": 260 } ],
-"transitions": [ { "id": 0, "caption": "T0", "x": 298, "y": 207, "angle": 0 } ],
+"transitions": [ { "id": 0, "caption": "T0", "x": 298, "y": 207 } ],
 "arcs": [ { "from": "P0", "to": "T0" }, { "from": "T0", "to": "P1", "duration": 3 }
 ] } ] }'
 ```
