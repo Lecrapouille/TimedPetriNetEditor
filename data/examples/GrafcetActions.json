@@ -12,12 +12,12 @@
             { "id": 4, "caption": "Alarm", "tokens": 0, "x": 450, "y": 150 }
        ],
        "transitions": [
-            { "id": 0, "caption": "Start", "x": 300, "y": 150, "angle": 0 },
-            { "id": 1, "caption": "s1", "x": 300, "y": 350, "angle": 0 },
-            { "id": 2, "caption": "Timer1", "x": 300, "y": 550, "angle": 0 },
-            { "id": 3, "caption": "s0", "x": 50, "y": 400, "angle": 0 },
-            { "id": 4, "caption": "Error", "x": 450, "y": 250, "angle": 0 },
-            { "id": 5, "caption": "Reset", "x": 450, "y": 50, "angle": 0 }
+            { "id": 0, "caption": "Start", "x": 300, "y": 150 },
+            { "id": 1, "caption": "s1", "x": 300, "y": 350 },
+            { "id": 2, "caption": "Timer1", "x": 300, "y": 550 },
+            { "id": 3, "caption": "s0", "x": 50, "y": 400 },
+            { "id": 4, "caption": "Error", "x": 450, "y": 250 },
+            { "id": 5, "caption": "Reset", "x": 450, "y": 50 }
        ],
        "arcs": [
             { "from": "P0", "to": "T0" },

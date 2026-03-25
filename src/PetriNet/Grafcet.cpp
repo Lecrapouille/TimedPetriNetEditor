@@ -18,7 +18,7 @@
 // along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.
 //=============================================================================
 
-#include "PetriNet/Receptivities.hpp"
+#include "PetriNet/Grafcet.hpp"
 #include "PetriNet/PetriNet.hpp"
 #include <cassert>
 

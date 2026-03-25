@@ -169,7 +169,7 @@ int64_t petri_add_place(int64_t const pn, double const x, double const y,
 {
     CHECK_VALID_PETRI_HANDLE(pn, -1);
 
-    tpne::Place& p = g_petri_nets[size_t(pn)]->addPlace(float(x), float(y),
+    tpne::Place const& p = g_petri_nets[size_t(pn)]->addPlace(float(x), float(y),
                                                       size_t(tokens));
     return int64_t(p.id);
 }
@@ -179,7 +179,7 @@ int64_t petri_add_transition(int64_t const pn, double const x, double const y)
 {
     CHECK_VALID_PETRI_HANDLE(pn, -1);
 
-    tpne::Transition& t = g_petri_nets[size_t(pn)]->addTransition(float(x), float(y));
+    tpne::Transition const& t = g_petri_nets[size_t(pn)]->addTransition(float(x), float(y));
     return int64_t(t.id);
 }
 
@@ -305,9 +305,13 @@ int64_t petri_add_arc(int64_t const pn,const char* from, const char* to,
     if (node_to == nullptr)
         return -1;
 
-    if (!g_petri_nets[size_t(pn)]->addArc(*node_from, *node_to,
-                                              float(duration)))
+    std::string error = g_petri_nets[size_t(pn)]->addArc(*node_from, *node_to,
+                                              float(duration));
+    if (!error.empty())
+    {
+        std::cerr << error << std::endl;
         return -1;
+    }
 
     return int64_t(g_petri_nets[size_t(pn)]->arcs().size() - 1u);
 }
@@ -317,11 +321,11 @@ bool petri_remove_arc(int64_t const pn, const char* from, const char* to)
 {
     CHECK_VALID_PETRI_HANDLE(pn, false);
 
-    tpne::Node* node_from = g_petri_nets[size_t(pn)]->findNode(from);
+    tpne::Node const* node_from = g_petri_nets[size_t(pn)]->findNode(from);
     if (node_from == nullptr)
         return false;
 
-    tpne::Node* node_to = g_petri_nets[size_t(pn)]->findNode(to);
+    tpne::Node const* node_to = g_petri_nets[size_t(pn)]->findNode(to);
     if (node_to == nullptr)
         return false;
 

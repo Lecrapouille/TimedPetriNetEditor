@@ -74,7 +74,7 @@ public:
     //--------------------------------------------------------------------------
     //! \brief Constructor for a new empty document.
     //--------------------------------------------------------------------------
-    Document(Messages& messages);
+    explicit Document(Messages& messages);
 
     //--------------------------------------------------------------------------
     //! \brief Check if document has unsaved modifications.
@@ -154,12 +154,12 @@ public:
     //--------------------------------------------------------------------------
     //! \brief Start simulation for all nets in this document.
     //--------------------------------------------------------------------------
-    void startAllSimulations();
+    void startAllSimulations() const;
 
     //--------------------------------------------------------------------------
     //! \brief Stop simulation for all nets in this document.
     //--------------------------------------------------------------------------
-    void stopAllSimulations();
+    void stopAllSimulations() const;
 
     //--------------------------------------------------------------------------
     //! \brief Check if any simulation is running.
@@ -169,18 +169,18 @@ public:
     //--------------------------------------------------------------------------
     //! \brief Step all simulations forward by dt seconds.
     //--------------------------------------------------------------------------
-    void stepAllSimulations(float dt);
+    void stepAllSimulations(float dt) const;
 
     //--------------------------------------------------------------------------
     //! \brief Register all nets in this document to the global NetRegistry.
     //! This enables cross-graph references in receptivities.
     //--------------------------------------------------------------------------
-    void registerNets();
+    void registerNets() const;
 
     //--------------------------------------------------------------------------
     //! \brief Unregister all nets from the global NetRegistry.
     //--------------------------------------------------------------------------
-    void unregisterNets();
+    void unregisterNets() const;
 
     //--------------------------------------------------------------------------
     //! \brief Whether the document is open (for tab close handling).

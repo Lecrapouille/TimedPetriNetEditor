@@ -20,7 +20,7 @@
 
 #include "Imports.hpp"
 #include "PetriNet/PetriNet.hpp"
-#include "PetriNet/Receptivities.hpp"
+#include "PetriNet/Grafcet.hpp"
 #include "nlohmann/json.hpp"
 #include <sstream>
 #include <fstream>
@@ -72,7 +72,7 @@ static std::string parseNetFromJSON(Net& net, nlohmann::json const& jnet)
 
     // Transitions
     for (nlohmann::json const& t : jnet["transitions"]) {
-        net.addTransition(t["id"], t["caption"], t["x"], t["y"], t["angle"]);
+        net.addTransition(t["id"], t["caption"], t["x"], t["y"]);
     }
 
     // Arcs
@@ -97,7 +97,8 @@ static std::string parseNetFromJSON(Net& net, nlohmann::json const& jnet)
                 return error.str();
             }
         }
-        if (!net.addArc(*from, *to, duration))
+        auto error_msg = net.addArc(*from, *to, duration);
+        if (!error_msg.empty())
         {
             error << "Arc " << from->key << " -> " << to->key << " is badly formed";
             return error.str();

@@ -20,17 +20,17 @@
         { "id": 12, "caption": "Critical Actions", "tokens": 0, "x": 750, "y": 950 }
       ],
       "transitions": [
-        { "id": 0, "caption": "Critical Situation", "x": 500, "y": 100, "angle": 315 },
-        { "id": 1, "caption": "Level 2 Operator Answers Call", "x": 500, "y": 500, "angle": 270 },
-        { "id": 2, "caption": "Level 1 Operator Leaves Call", "x": -50, "y": 650, "angle": 90 },
-        { "id": 3, "caption": "End of Call", "x": 500, "y": 950, "angle": 90 },
-        { "id": 4, "caption": "Emergency Situation", "x": 1000, "y": 100, "angle": 270 },
-        { "id": 5, "caption": "Level 1 Operator Answers Call", "x": 750, "y": 0, "angle": 90 },
-        { "id": 6, "caption": "Transfer Call to Level 2 Operator", "x": -300, "y": 300, "angle": 270 },
-        { "id": 7, "caption": "Level 2 Operator Answers Call", "x": -300, "y": 750, "angle": 270 },
-        { "id": 8, "caption": "Advice Situation", "x": 750, "y": 200, "angle": 225 },
-        { "id": 9, "caption": "End of Call", "x": 200, "y": 50, "angle": 270 },
-        { "id": 10, "caption": "End of Call", "x": 500, "y": 850, "angle": 270 }
+        { "id": 0, "caption": "Critical Situation", "x": 500, "y": 100 },
+        { "id": 1, "caption": "Level 2 Operator Answers Call", "x": 500, "y": 500 },
+        { "id": 2, "caption": "Level 1 Operator Leaves Call", "x": -50, "y": 650 },
+        { "id": 3, "caption": "End of Call", "x": 500, "y": 950 },
+        { "id": 4, "caption": "Emergency Situation", "x": 1000, "y": 100 },
+        { "id": 5, "caption": "Level 1 Operator Answers Call", "x": 750, "y": 0 },
+        { "id": 6, "caption": "Transfer Call to Level 2 Operator", "x": -300, "y": 300 },
+        { "id": 7, "caption": "Level 2 Operator Answers Call", "x": -300, "y": 750 },
+        { "id": 8, "caption": "Advice Situation", "x": 750, "y": 200 },
+        { "id": 9, "caption": "End of Call", "x": 200, "y": 50 },
+        { "id": 10, "caption": "End of Call", "x": 500, "y": 850 }
       ],
       "arcs": [
         { "from": "P0", "to": "T0" },

@@ -16,14 +16,14 @@
             { "id": 8, "caption": "Remaining", "tokens": 3, "x": 399, "y": 307 }
        ],
        "transitions": [
-            { "id": 0, "caption": "Down", "x": 238.862, "y": 229.214, "angle": 0 },
-            { "id": 1, "caption": "Up", "x": 294.912, "y": 162.564, "angle": 0 },
-            { "id": 2, "caption": "Down", "x": 476.782, "y": 146.872, "angle": 0 },
-            { "id": 3, "caption": "Up", "x": 543.438, "y": 202.927, "angle": 0 },
-            { "id": 4, "caption": "Down", "x": 254.563, "y": 411.073, "angle": 0 },
-            { "id": 5, "caption": "Up", "x": 321.219, "y": 467.128, "angle": 0 },
-            { "id": 6, "caption": "Down", "x": 503.088, "y": 451.435, "angle": 0 },
-            { "id": 7, "caption": "Up", "x": 559.139, "y": 384.786, "angle": 0 }
+            { "id": 0, "caption": "Down", "x": 238.862, "y": 229.214 },
+            { "id": 1, "caption": "Up", "x": 294.912, "y": 162.564 },
+            { "id": 2, "caption": "Down", "x": 476.782, "y": 146.872 },
+            { "id": 3, "caption": "Up", "x": 543.438, "y": 202.927 },
+            { "id": 4, "caption": "Down", "x": 254.563, "y": 411.073 },
+            { "id": 5, "caption": "Up", "x": 321.219, "y": 467.128 },
+            { "id": 6, "caption": "Down", "x": 503.088, "y": 451.435 },
+            { "id": 7, "caption": "Up", "x": 559.139, "y": 384.786 }
        ],
        "arcs": [
             { "from": "P0", "to": "T0" },

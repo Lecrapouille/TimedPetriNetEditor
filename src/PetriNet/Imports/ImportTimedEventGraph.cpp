@@ -73,7 +73,7 @@ std::string importFromTimedEventGraph(Net& net, std::string const& filename)
         float angle = (transitions > 1u) ? two_pi * float(id) / float(transitions) : 0.0f;
         float x = cx + radius * std::cos(angle);
         float y = cy + radius * std::sin(angle);
-        net.addTransition(id, Transition::to_str(id), x, y, 0);
+        net.addTransition(id, Transition::to_str(id), x, y);
     }
 
     // Create arcs between created transitions. Places are automatically created

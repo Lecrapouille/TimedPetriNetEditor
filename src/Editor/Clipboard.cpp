@@ -32,7 +32,7 @@ void Clipboard::addPlace(Place const& place)
 void Clipboard::addTransition(Transition const& transition)
 {
     m_transitions.push_back({transition.id, transition.caption,
-                             transition.x, transition.y, transition.angle});
+                             transition.x, transition.y});
 }
 
 //------------------------------------------------------------------------------
@@ -74,7 +74,6 @@ void Clipboard::paste(Net& target_net, float x, float y,
     {
         Transition& new_trans = target_net.addTransition(t.x + offset_x, t.y + offset_y);
         new_trans.caption = t.caption;
-        new_trans.angle = t.angle;
         old_to_new_trans[t.id] = &new_trans;
         created_nodes.push_back(&new_trans);
     }

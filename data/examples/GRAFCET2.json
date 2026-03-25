@@ -16,15 +16,15 @@
             { "id": 8, "caption": "9", "tokens": 0, "x": 286, "y": 575 }
        ],
        "transitions": [
-            { "id": 0, "caption": "m", "x": 332, "y": 142, "angle": 0 },
-            { "id": 1, "caption": "a1", "x": 203, "y": 286, "angle": 0 },
-            { "id": 2, "caption": "a0", "x": 201, "y": 437, "angle": 0 },
-            { "id": 3, "caption": "b1 c1 .", "x": 455, "y": 270, "angle": 0 },
-            { "id": 4, "caption": "b0", "x": 460, "y": 420, "angle": 0 },
-            { "id": 5, "caption": "c0 m ! .", "x": 389, "y": 576, "angle": 0 },
-            { "id": 6, "caption": "c0 m .", "x": 559, "y": 579, "angle": 0 },
-            { "id": 7, "caption": "c1", "x": 566, "y": 453, "angle": 0 },
-            { "id": 8, "caption": "true", "x": 145, "y": 573, "angle": 0 }
+            { "id": 0, "caption": "m", "x": 332, "y": 142 },
+            { "id": 1, "caption": "a1", "x": 203, "y": 286 },
+            { "id": 2, "caption": "a0", "x": 201, "y": 437 },
+            { "id": 3, "caption": "b1 c1 .", "x": 455, "y": 270 },
+            { "id": 4, "caption": "b0", "x": 460, "y": 420 },
+            { "id": 5, "caption": "c0 m ! .", "x": 389, "y": 576 },
+            { "id": 6, "caption": "c0 m .", "x": 559, "y": 579 },
+            { "id": 7, "caption": "c1", "x": 566, "y": 453 },
+            { "id": 8, "caption": "true", "x": 145, "y": 573 }
        ],
        "arcs": [
             { "from": "P0", "to": "T0" },

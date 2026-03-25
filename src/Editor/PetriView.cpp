@@ -466,7 +466,7 @@ void PetriView::handleAddNode(ImGuiMouseButton button)
         return;
     }
 
-    if (!m_current_simulation->running)
+    if (!m_current_simulation->isRunning())
     {
         Node* node = m_editor.getNode(m_mouse.position);
         Arc* arc = getArc(m_mouse.position);
@@ -529,7 +529,7 @@ void PetriView::handleAddNode(ImGuiMouseButton button)
 //------------------------------------------------------------------------------
 void PetriView::handleArcOrigin()
 {
-    if (m_current_simulation->running)
+    if (m_current_simulation->isRunning())
         return;
 
     m_mouse.clicked_at = m_mouse.position;
@@ -643,7 +643,7 @@ void PetriView::onHandleInput(Net& net, Simulation& simulation)
     }
 
     // Double click to rename node
-    if (!simulation.running && ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left) && ImGui::IsItemHovered())
+    if (!simulation.isRunning() && ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left) && ImGui::IsItemHovered())
     {
         Node* node = m_editor.getNode(m_mouse.position);
         if (node != nullptr && m_mouse.editing_node == nullptr)
@@ -772,7 +772,7 @@ void PetriView::onHandleInput(Net& net, Simulation& simulation)
             m_editor.toogleStartAllSimulations();
         }
         // Undo/Redo and clipboard
-        else if (!simulation.running && ImGui::GetIO().KeyCtrl)
+        else if (!simulation.isRunning() && ImGui::GetIO().KeyCtrl)
         {
             if (ImGui::IsKeyPressed(KEY_UNDO, false))
             {
@@ -828,7 +828,7 @@ void PetriView::onHandleInput(Net& net, Simulation& simulation)
     }
 
     // Editing shortcuts (disabled during simulation)
-    if (ImGui::IsItemHovered() && can_use_shortcuts && !simulation.running)
+    if (ImGui::IsItemHovered() && can_use_shortcuts && !simulation.isRunning())
     {
         if (ImGui::IsKeyPressed(KEY_MOVE_PETRI_NODE, false))
         {
@@ -917,7 +917,7 @@ void PetriView::drawPetriNet(Net& net, Simulation& simulation, bool interactive,
     m_canvas.push();
 
     // Draw grid background
-    drawGrid(m_canvas.draw_list, simulation.running);
+    drawGrid(m_canvas.draw_list, simulation.isRunning());
 
     ImVec2 const& origin = m_canvas.origin;
     const float zoom = m_canvas.zoom;
@@ -1165,7 +1165,7 @@ void PetriView::drawPetriNet(Net& net, Simulation& simulation, bool interactive,
     {
         if (m_mouse.context_menu_node != nullptr)
         {
-            bool sim_running = m_current_simulation && m_current_simulation->running;
+            bool sim_running = m_current_simulation && m_current_simulation->isRunning();
             ImGui::Text("%s", m_mouse.context_menu_node->key.c_str());
             ImGui::Separator();
 
@@ -1245,7 +1245,7 @@ void PetriView::drawPetriNet(Net& net, Simulation& simulation, bool interactive,
     {
         if (m_mouse.context_menu_arc != nullptr)
         {
-            bool sim_running = m_current_simulation && m_current_simulation->running;
+            bool sim_running = m_current_simulation && m_current_simulation->isRunning();
             ImGui::Text("Arc: %s -> %s", m_mouse.context_menu_arc->from.key.c_str(),
                         m_mouse.context_menu_arc->to.key.c_str());
             ImGui::Separator();

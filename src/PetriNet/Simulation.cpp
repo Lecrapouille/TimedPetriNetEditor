@@ -18,26 +18,27 @@
 // along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.
 //=============================================================================
 
-#  include "PetriNet/Simulation.hpp"
+#include "PetriNet/Simulation.hpp"
+#include "PetriNet/PetriNet.hpp"
+#include "PetriNet/Grafcet.hpp"
 
-#  include "PetriNet/PetriNet.hpp"
-#  include "PetriNet/Receptivities.hpp"
-
-#  include <algorithm>
-#  include <cstdlib>
-#  include <ctime>
-#  include <iostream>
-#  include <random>
+#include <algorithm>
+#include <cstdlib>
+#include <ctime>
+#include <iostream>
+#include <random>
 
 namespace tpne {
+
+// Static member initialization
+Simulation::ActionState Simulation::s_dummy_action_state;
 
 //------------------------------------------------------------------------------
 static const char* current_time()
 {
     static char buffer[32];
-
     time_t t = ::time(nullptr);
-    strftime(buffer, sizeof (buffer), "[%H:%M:%S] ", localtime(&t));
+    strftime(buffer, sizeof(buffer), "[%H:%M:%S] ", localtime(&t));
     return buffer;
 }
 
@@ -49,23 +50,78 @@ Simulation::Simulation(Net& net)
 }
 
 //------------------------------------------------------------------------------
-std::vector<Transition*> const& Simulation::shuffle_transitions(bool const reset)
+void Simulation::start()
+{
+    m_running = true;
+}
+
+//------------------------------------------------------------------------------
+void Simulation::stop()
+{
+    m_running = false;
+}
+
+//------------------------------------------------------------------------------
+void Simulation::restart()
+{
+    stop();
+    start();
+}
+
+//------------------------------------------------------------------------------
+Simulation::ActionState const& Simulation::actionState(size_t place_id, size_t action_index) const
+{
+    auto key = std::make_pair(place_id, action_index);
+    auto it = m_action_states.find(key);
+    if (it != m_action_states.end())
+        return it->second;
+    return s_dummy_action_state;
+}
+
+//------------------------------------------------------------------------------
+void Simulation::initializeRuntimeState()
+{
+    // Initialize place activation states
+    m_place_was_active.clear();
+    m_place_was_active.resize(m_net.places().size(), false);
+
+    // Initialize transition delay timers
+    m_transition_delay_timers.clear();
+    m_transition_delay_timers.resize(m_net.transitions().size(), 0.0f);
+
+    // Initialize arc token counts
+    m_arc_token_counts.clear();
+    m_arc_token_counts.resize(m_net.arcs().size(), 0u);
+
+    // Initialize action states
+    m_action_states.clear();
+    for (auto const& place : m_net.places())
+    {
+        for (size_t i = 0; i < place.actions.size(); ++i)
+        {
+            m_action_states[std::make_pair(place.id, i)] = ActionState{};
+        }
+    }
+
+    m_frozen = false;
+}
+
+//------------------------------------------------------------------------------
+std::vector<Transition*> const& Simulation::shuffleTransitions(bool const reset)
 {
     static std::random_device rd;
     static std::mt19937 g(rd());
 
     if (reset)
     {
-        // Avoid useless copy at each iteration of the simulation. Do it
-        // once at the begining of the simulation.
         m_shuffled_transitions.clear();
         m_shuffled_transitions.reserve(m_net.transitions().size());
-        for (auto& trans: m_net.transitions()) {
+        for (auto& trans : m_net.transitions())
+        {
             m_shuffled_transitions.push_back(&trans);
         }
     }
-    std::shuffle(m_shuffled_transitions.begin(),
-                 m_shuffled_transitions.end(), g);
+    std::shuffle(m_shuffled_transitions.begin(), m_shuffled_transitions.end(), g);
     return m_shuffled_transitions;
 }
 
@@ -74,59 +130,49 @@ void Simulation::step(float const dt)
 {
     switch (m_state)
     {
-    case Simulation::State::Idle:
-        stateStarting();
+    case State::Idle:
+        handleIdleState();
         break;
-    case Simulation::State::Simulating:
-        stateSimulating(dt);
+    case State::Simulating:
+        handleSimulatingState(dt);
         break;
-    case Simulation::State::Halting:
-        stateHalting();
-        break;
-    default:
-        std::cerr << "Odd state in the state machine doing the "
-                  << "animation of the Petri net." << std::endl;
-        exit(1);
+    case State::Halting:
+        handleHaltingState();
         break;
     }
 }
 
 //------------------------------------------------------------------------------
-void Simulation::stateStarting()
+void Simulation::handleIdleState()
 {
-    // The user has requested to start the simulation ?
-    if (!running)
+    if (!m_running)
         return;
 
-    // Dummy Petri net: nothing to simulate
     if (m_net.isEmpty())
     {
         onWarning.emit("Starting simulation request ignored because the net is empty");
-        running = false;
-        return ;
+        m_running = false;
+        return;
     }
 
-    // Reset states of the simulator
+    // Initialize simulation state
     m_net.generateArcsInArcsOut();
-    m_initial_tokens = m_net.tokens();
-    m_net.storeInitialMarking();  // Store for forcing restore
-    shuffle_transitions(true);
+    storeInitialMarking();
+    initializeRuntimeState();
+    shuffleTransitions(true);
     m_timed_tokens.clear();
-    for (auto& a: m_net.arcs())
-    {
-        a.count = 0u;
-    }
 
-    // Reset values on transitivities and sensors for GRAFCET
+    // Reset receptivities and compile for GRAFCET
     m_net.resetReceptivies();
-    if (!generateSensors())
+    if (!compileReceptivities())
     {
-        running = false;
+        m_running = false;
+        return;
     }
 
-    //
     std::cout << current_time() << "Simulation has started!" << std::endl;
-    if (m_net.type() == TypeOfNet::PetriNet)
+
+    if ((m_net.type() == TypeOfNet::PetriNet) || (m_net.type() == TypeOfNet::TimedPetriNet))
     {
         onInfo.emit(
             "Simulation has started!\n"
@@ -134,87 +180,281 @@ void Simulation::stateStarting()
             "  Press the key '+' on Places for adding tokens\n"
             "  Press the key '-' on Places for removing tokens");
     }
+    else if (m_net.type() == TypeOfNet::GRAFCET)
+    {
+        onInfo.emit("Simulation has started!\nGo to the inputs tab and click on inputs for firing transitions!");
+    }
     else
     {
         onInfo.emit("Simulation has started!");
     }
 
-    m_state = Simulation::State::Simulating;
+    m_state = State::Simulating;
+    onStarted.emit();
 }
 
 //------------------------------------------------------------------------------
-// Generate sensors from transition captions, preserving existing values
-bool Simulation::generateSensors()
+void Simulation::handleHaltingState()
 {
-    // Check for GRAFCET if boolean expressions in transitivities have
-    // not syntaxical errors.
+    onInfo.emit("Simulation has ended!");
+    std::cout << current_time() << "Simulation has ended!" << std::endl << std::endl;
+
+    restoreInitialMarking();
+    m_net.resetReceptivies();
+    m_receptivities.clear();
+    m_timed_tokens.clear();
+    m_action_states.clear();
+    Sensors::instance().clear();
+
+    m_state = State::Idle;
+    onStopped.emit();
+}
+
+//------------------------------------------------------------------------------
+void Simulation::handleSimulatingState(float const dt)
+{
+    if (!m_running)
+    {
+        m_state = State::Halting;
+        return;
+    }
+
+    // Skip simulation if net is frozen by a forcing command
+    if (m_frozen)
+    {
+        if (m_net.type() == TypeOfNet::GRAFCET)
+        {
+            updateGrafcetActions(dt);
+        }
+        return;
+    }
+
+    evaluateReceptivities();
+    updateTransitionDelayTimers(dt);
+    fireTransitions();
+    animateTokens(dt);
+
     if (m_net.type() == TypeOfNet::GRAFCET)
     {
-        // Save existing sensor values before regenerating
-        std::map<std::string, int, std::less<>> saved_values;
-        for (const auto& [key, value] : Sensors::instance().database())
-        {
-            saved_values[key] = value;
-        }
-
-        // Don't clear - the compile() function will add new sensors as needed
-        // Sensors::instance().clear();
-        m_receptivities.clear();
-
-        bool all_ok = true;
-        for (auto const& it: m_net.transitions())
-        {
-            std::string error = m_receptivities[it.id].compile(it.caption, m_net);
-            if (!error.empty())
-            {
-                onWarning.emit(it.key + ": " + error);
-                all_ok = false;
-            }
-        }
-
-        // Restore saved values for sensors that existed before
-        for (const auto& [key, value] : saved_values)
-        {
-            auto& db = Sensors::instance().database();
-            if (db.find(key) != db.end())
-            {
-                db[key] = value;
-            }
-        }
-        if (!all_ok)
-            return false;
+        updateGrafcetActions(dt);
     }
-    this->compiled = true;
-    return true;
 }
 
 //------------------------------------------------------------------------------
-bool Simulation::generateSensor(Transition const& transition)
+bool Simulation::compileReceptivities()
+{
+    if (m_net.type() != TypeOfNet::GRAFCET)
+        return true;
+
+    // Save existing sensor values
+    std::map<std::string, int, std::less<>> saved_values;
+    for (const auto& [key, value] : Sensors::instance().database())
+    {
+        saved_values[key] = value;
+    }
+
+    m_receptivities.clear();
+
+    bool all_ok = true;
+    for (auto const& trans : m_net.transitions())
+    {
+        std::string error = m_receptivities[trans.id].compile(trans.caption, m_net);
+        if (!error.empty())
+        {
+            onWarning.emit(trans.key + ": " + error);
+            all_ok = false;
+        }
+    }
+
+    // Restore saved sensor values
+    for (const auto& [key, value] : saved_values)
+    {
+        auto& db = Sensors::instance().database();
+        if (db.find(key) != db.end())
+        {
+            db[key] = value;
+        }
+    }
+
+    return all_ok;
+}
+
+//------------------------------------------------------------------------------
+bool Simulation::compileReceptivity(Transition const& transition)
 {
     std::string error = m_receptivities[transition.id].compile(transition.caption, m_net);
     if (!error.empty())
     {
         onWarning.emit(error);
-        this->compiled = false;
         return false;
     }
     return true;
 }
 
 //------------------------------------------------------------------------------
-void Simulation::stateHalting()
+void Simulation::evaluateReceptivities()
 {
-    onInfo.emit("Simulation has ended!");
-    std::cout << current_time() << "Simulation has ended!"
-                << std::endl << std::endl;
+    if (m_net.type() != TypeOfNet::GRAFCET)
+        return;
 
-    // Restore consumed tokens from the simulation
-    m_net.tokens(m_initial_tokens);
-    m_net.resetReceptivies();
-    m_receptivities.clear();
-    m_timed_tokens.clear();
-    Sensors::instance().clear();
-    m_state = Simulation::State::Idle;
+    for (auto& t : m_net.transitions())
+    {
+        t.receptivity = m_receptivities[t.id].evaluate();
+    }
+}
+
+//------------------------------------------------------------------------------
+void Simulation::updateTransitionDelayTimers(float const dt)
+{
+    for (auto& t : m_net.transitions())
+    {
+        if (t.delay > 0.0f)
+        {
+            if (t.isEnabled() && t.receptivity)
+            {
+                m_transition_delay_timers[t.id] += dt;
+            }
+            else
+            {
+                m_transition_delay_timers[t.id] = 0.0f;
+            }
+        }
+    }
+}
+
+//------------------------------------------------------------------------------
+void Simulation::fireTransitions()
+{
+    size_t consuming = 0u;
+
+    // Reset arc token counts
+    std::fill(m_arc_token_counts.begin(), m_arc_token_counts.end(), 0u);
+
+    // Collect arcs that will carry animated tokens
+    std::vector<std::pair<Arc*, size_t>> arcs_to_animate; // arc, arc_index
+    arcs_to_animate.reserve(32u);
+
+    do
+    {
+        auto& transitions = shuffleTransitions();
+        consuming = 0u;
+
+        for (auto* trans : transitions)
+        {
+            // Check delay timer for GRAFCET temporization
+            if (trans->delay > 0.0f && m_transition_delay_timers[trans->id] < trans->delay)
+                continue;
+
+            const size_t tokens = trans->maxTokensToConsume();
+
+            if (tokens > 0u)
+            {
+                assert(tokens <= Net::Settings::maxTokens);
+                consuming = tokens;
+
+                if (trans->isInput())
+                {
+                    consuming = 0u;
+                    trans->receptivity = false;
+                }
+                else
+                {
+                    for (auto* a : trans->arcsIn)
+                    {
+                        size_t& tks = a->tokensIn();
+                        assert(tks >= tokens);
+                        tks = std::min(Net::Settings::maxTokens, tks - tokens);
+
+                        if (m_net.type() == TypeOfNet::PetriNet)
+                        {
+                            Transition& tr = reinterpret_cast<Transition&>(a->to);
+                            tr.receptivity = false;
+                        }
+                    }
+                }
+
+                // Count tokens for animation using arc indices
+                for (auto* a : trans->arcsOut)
+                {
+                    // Find arc index
+                    size_t arc_idx = 0;
+                    for (auto& arc : m_net.arcs())
+                    {
+                        if (&arc == a)
+                            break;
+                        ++arc_idx;
+                    }
+
+                    if (m_arc_token_counts[arc_idx] == 0u)
+                    {
+                        arcs_to_animate.push_back({a, arc_idx});
+                    }
+                    m_arc_token_counts[arc_idx] = std::min(
+                        Net::Settings::maxTokens,
+                        m_arc_token_counts[arc_idx] + tokens);
+                }
+            }
+        }
+    } while (consuming != 0u);
+
+    // Create animated tokens
+    for (auto& [arc, arc_idx] : arcs_to_animate)
+    {
+        size_t count = m_arc_token_counts[arc_idx];
+        if (count > 0u)
+        {
+            std::cout << current_time()
+                      << "Transition " << arc->from.caption << " consumed "
+                      << count << " token" << (count == 1u ? "" : "s")
+                      << std::endl;
+            m_timed_tokens.emplace_back(*arc, count, m_net.type());
+            m_arc_token_counts[arc_idx] = 0u;
+        }
+    }
+}
+
+//------------------------------------------------------------------------------
+void Simulation::animateTokens(float const dt)
+{
+    if (m_timed_tokens.empty())
+    {
+        if ((m_net.type() != TypeOfNet::PetriNet) && (m_net.type() != TypeOfNet::GRAFCET))
+        {
+            std::cout << current_time() << "The simulation cannot consume tokens." << std::endl;
+            m_running = false;
+            m_state = State::Halting;
+        }
+        return;
+    }
+
+    size_t i = m_timed_tokens.size();
+    while (i--)
+    {
+        TimedToken& token = m_timed_tokens[i];
+        if (token.update(dt))
+        {
+            std::cout << current_time()
+                      << "Place " << token.arc->to.caption
+                      << " got " << token.tokens << " token"
+                      << (token.tokens == 1u ? "" : "s")
+                      << std::endl;
+
+            token.arc->tokensOut() += token.tokens;
+
+            if (m_net.type() != TypeOfNet::PetriNet)
+            {
+                Transition& t = reinterpret_cast<Transition&>(token.arc->from);
+                if (t.isInput())
+                {
+                    t.receptivity = true;
+                }
+            }
+
+            // Remove by swapping with last
+            m_timed_tokens[i] = m_timed_tokens.back();
+            m_timed_tokens.pop_back();
+        }
+    }
 }
 
 //------------------------------------------------------------------------------
@@ -233,351 +473,151 @@ void Simulation::restoreInitialMarking()
 }
 
 //------------------------------------------------------------------------------
-void Simulation::stateSimulating(float const dt)
-{
-    size_t consuming = 0u;
-
-    // The user has requested to halt the simulation ?
-    if (!running)
-    {
-        m_state = Simulation::State::Halting;
-        return ;
-    }
-
-    // Skip simulation if net is frozen by a forcing command
-    if (m_net.frozen)
-    {
-        // Still update actions so forcings can be applied/removed
-        if (m_net.type() == TypeOfNet::GRAFCET)
-        {
-            updateActions(dt);
-        }
-        return;
-    }
-
-    // Interpret the code of receptivities.
-    if (m_net.type() == TypeOfNet::GRAFCET)
-    {
-        // TODO if (Sensors::modified) {
-        for (auto& t: m_net.transitions())
-            t.receptivity = m_receptivities[t.id].evaluate();
-        // }  Sensors::modified = false;
-    }
-
-    // Update transition delay timers (GRAFCET temporization)
-    for (auto& t: m_net.transitions())
-    {
-        if (t.delay > 0.0f)
-        {
-            // Check if transition is enabled (all input places have tokens)
-            if (t.isEnabled() && t.receptivity)
-            {
-                t.delayTimer += dt;
-            }
-            else
-            {
-                // Reset timer if transition is no longer enabled
-                t.delayTimer = 0.0f;
-            }
-        }
-    }
-
-    // For each transition check if it is activated (all incoming Places
-    // have at least one token to consume). If yes, we will consume
-    // the maximum possible of tokens in a single step for the animation.
-    // But in the aim to divide tokens the most kindly over the maximum
-    // transitions possible we have to iterate and consume tokens one by one.
-
-    // Collect arcs that will carry animated tokens (optimization: avoid
-    // iterating over all arcs at the end)
-    std::vector<Arc*> arcs_to_animate;
-    arcs_to_animate.reserve(32u);
-
-    do
-    {
-        // Randomize the order of fired transitions (shuffle once per outer iteration)
-        auto& transitions = shuffle_transitions();
-
-        consuming = 0u;
-        for (auto* trans: transitions)
-        {
-            // Check delay timer for GRAFCET temporization
-            if (trans->delay > 0.0f && trans->delayTimer < trans->delay)
-                continue;  // Delay not yet elapsed
-
-            // maxTokensToConsume() returns 0 if transition cannot fire,
-            // so no need to call canFire() separately (optimization)
-            const size_t tokens = trans->maxTokensToConsume();
-
-            if (tokens > 0u)
-            {
-                assert(tokens <= Net::Settings::maxTokens);
-
-                consuming = tokens;
-
-                // Input transition (source)
-                if (trans->isInput())
-                {
-                    consuming = 0u;
-                    trans->receptivity = false;
-                }
-                else
-                {
-                    // Consume tokens from each input place
-                    for (auto* a: trans->arcsIn)
-                    {
-                        size_t& tks = a->tokensIn();
-                        assert(tks >= tokens);
-                        tks = std::min(Net::Settings::maxTokens, tks - tokens);
-
-                        // Invalidate transitions of previous places
-                        if (m_net.type() == TypeOfNet::PetriNet)
-                        {
-                            Transition& tr = reinterpret_cast<Transition&>(a->to);
-                            tr.receptivity = false;
-                        }
-                    }
-                }
-
-                // Count the number of tokens for the animation and collect arcs
-                for (auto* a: trans->arcsOut)
-                {
-                    if (a->count == 0u)
-                    {
-                        arcs_to_animate.push_back(a);
-                    }
-                    a->count = std::min(Net::Settings::maxTokens, a->count + tokens);
-                }
-            }
-        }
-    } while (consuming != 0u);
-
-    // Create animated tokens from the collected arcs (optimization: O(k) instead of O(n))
-    for (auto* a: arcs_to_animate)
-    {
-        if (a->count > 0u)
-        {
-            std::cout << current_time()
-                      << "Transition " << a->from.caption << " consumed "
-                      << a->count << " token"
-                      << (a->count == 1u ? "" : "s")
-                      << std::endl;
-            m_timed_tokens.emplace_back(*a, a->count, m_net.type());
-            a->count = 0u;
-        }
-    }
-
-    // Tokens Transition --> Places are transitioning.
-    if (m_timed_tokens.size() > 0u)
-    {
-        size_t i = m_timed_tokens.size();
-        while (i--)
-        {
-            TimedToken& an = m_timed_tokens[i];
-            if (an.update(dt))
-            {
-                // Animated token reached its ddestination: Place
-                std::cout << current_time()
-                            << "Place " << an.arc->to.caption
-                            << " got " << an.tokens << " token"
-                            << (an.tokens == 1u ? "" : "s")
-                            << std::endl;
-
-                // Drop the number of tokens it was carrying.
-                an.arc->tokensOut() += an.tokens;
-
-                // Transition source. In Petri net we keep using the mouse to
-                // fire source transition to generate a single token by mouse
-                // click while in other mode the transition fires once the
-                // animation ends.
-                if (m_net.type() != TypeOfNet::PetriNet)
-                {
-                    Transition& t = reinterpret_cast<Transition&>(an.arc->from);
-                    if (t.isInput())
-                    {
-                        t.receptivity = true;
-                    }
-                }
-
-                // Remove it
-                m_timed_tokens[i] = m_timed_tokens[m_timed_tokens.size() - 1u];
-                m_timed_tokens.pop_back();
-            }
-        }
-    }
-    else if ((m_net.type() != TypeOfNet::PetriNet) && (m_net.type() != TypeOfNet::GRAFCET))
-    {
-        std::cout << current_time() << "The simulation cannot consume tokens."
-                  << std::endl;
-        running = false;
-        m_state = Simulation::State::Halting;
-    }
-
-    // Update GRAFCET action states based on qualifiers
-    if (m_net.type() == TypeOfNet::GRAFCET)
-    {
-        updateActions(dt);
-    }
-}
-
-//------------------------------------------------------------------------------
 void Simulation::resetStoredAction(std::string const& name)
 {
-    // Find and reset all stored actions with the given name
-    for (auto& place : m_net.places())
+    for (auto const& place : m_net.places())
     {
-        for (auto& action : place.actions)
+        for (size_t i = 0; i < place.actions.size(); ++i)
         {
+            auto const& action = place.actions[i];
             if (action.name == name &&
                 (action.qualifier == Action::Qualifier::S ||
                  action.qualifier == Action::Qualifier::SD ||
                  action.qualifier == Action::Qualifier::DS ||
                  action.qualifier == Action::Qualifier::SL))
             {
-                action.active = false;
-                action.timer = 0.0f;
+                auto key = std::make_pair(place.id, i);
+                m_action_states[key].active = false;
+                m_action_states[key].timer = 0.0f;
             }
         }
     }
 }
 
 //------------------------------------------------------------------------------
-void Simulation::updateActions(float const dt)
+void Simulation::updateGrafcetActions(float const dt)
 {
-    for (auto& place : m_net.places())
+    for (auto const& place : m_net.places())
     {
         bool step_active = (place.tokens > 0);
-        bool rising_edge = step_active && !place.wasActive;
-        bool falling_edge = !step_active && place.wasActive;
+        bool was_active = m_place_was_active[place.id];
+        bool rising_edge = step_active && !was_active;
+        bool falling_edge = !step_active && was_active;
 
-        for (auto& action : place.actions)
+        for (size_t i = 0; i < place.actions.size(); ++i)
         {
+            auto const& action = place.actions[i];
+            auto key = std::make_pair(place.id, i);
+            ActionState& state = m_action_states[key];
+
             switch (action.qualifier)
             {
             case Action::Qualifier::N:
-                // Normal: active while step is active
-                action.active = step_active;
-                if (!step_active) action.timer = 0.0f;
+                state.active = step_active;
+                if (!step_active) state.timer = 0.0f;
                 break;
 
             case Action::Qualifier::S:
-                // Set (Stored): latched ON at step activation
                 if (rising_edge)
-                    action.active = true;
+                    state.active = true;
                 break;
 
             case Action::Qualifier::R:
-                // Reset: resets stored actions with the same name
                 if (step_active)
-                {
                     resetStoredAction(action.name);
-                }
-                action.active = false;
+                state.active = false;
                 break;
 
             case Action::Qualifier::D:
-                // Delayed: active after delay while step active
                 if (step_active)
                 {
-                    action.timer += dt;
-                    action.active = (action.timer >= action.duration);
+                    state.timer += dt;
+                    state.active = (state.timer >= action.duration);
                 }
                 else
                 {
-                    action.timer = 0.0f;
-                    action.active = false;
+                    state.timer = 0.0f;
+                    state.active = false;
                 }
                 break;
 
             case Action::Qualifier::L:
-                // Limited: active for limited time while step active
                 if (step_active)
                 {
-                    if (action.timer < action.duration)
+                    if (state.timer < action.duration)
                     {
-                        action.timer += dt;
-                        action.active = true;
+                        state.timer += dt;
+                        state.active = true;
                     }
                     else
                     {
-                        action.active = false;
+                        state.active = false;
                     }
                 }
                 else
                 {
-                    action.timer = 0.0f;
-                    action.active = false;
+                    state.timer = 0.0f;
+                    state.active = false;
                 }
                 break;
 
             case Action::Qualifier::SD:
-                // Stored & Delayed: set after delay (stays on even if step deactivates)
                 if (step_active)
                 {
-                    action.timer += dt;
-                    if (action.timer >= action.duration)
-                        action.active = true;
+                    state.timer += dt;
+                    if (state.timer >= action.duration)
+                        state.active = true;
                 }
                 else if (falling_edge)
                 {
-                    action.timer = 0.0f;
-                    // Keep active state (stored)
+                    state.timer = 0.0f;
                 }
                 break;
 
             case Action::Qualifier::DS:
-                // Delayed & Stored: delayed then latched
                 if (step_active)
                 {
-                    action.timer += dt;
-                    if (action.timer >= action.duration)
-                        action.active = true;
+                    state.timer += dt;
+                    if (state.timer >= action.duration)
+                        state.active = true;
                 }
                 else
                 {
-                    action.timer = 0.0f;
-                    // Keep active state (stored) - only reset by R
+                    state.timer = 0.0f;
                 }
                 break;
 
             case Action::Qualifier::SL:
-                // Stored & Limited: set for limited time (stays on even if step deactivates)
                 if (rising_edge)
                 {
-                    action.active = true;
-                    action.timer = 0.0f;
+                    state.active = true;
+                    state.timer = 0.0f;
                 }
-                if (action.active)
+                if (state.active)
                 {
-                    action.timer += dt;
-                    if (action.timer >= action.duration)
-                        action.active = false;
+                    state.timer += dt;
+                    if (state.timer >= action.duration)
+                        state.active = false;
                 }
                 break;
 
             case Action::Qualifier::P:
-                // Pulse: single pulse at step activation (one cycle only)
-                action.active = rising_edge;
+                state.active = rising_edge;
                 break;
             }
         }
 
-        // Update wasActive for next cycle
-        place.wasActive = step_active;
+        m_place_was_active[place.id] = step_active;
     }
 
-    // Apply forcings from active actions
-    applyForcings();
+    applyGrafcetForcings();
 }
 
 //------------------------------------------------------------------------------
-void Simulation::applyForcings()
+void Simulation::applyGrafcetForcings()
 {
-    // First pass: clear frozen state on all nets (will be re-applied if needed)
-    for (auto& [name, net] : NetRegistry::instance().getRegistry())
-    {
-        if (net) net->frozen = false;
-    }
+    // First pass: clear frozen state on all nets
+    m_frozen = false;
 
     // Second pass: apply forcings from active actions
     for (auto const& place : m_net.places())
@@ -585,65 +625,92 @@ void Simulation::applyForcings()
         bool step_active = (place.tokens > 0);
         if (!step_active) continue;
 
-        for (auto const& action : place.actions)
+        for (size_t i = 0; i < place.actions.size(); ++i)
         {
+            auto const& action = place.actions[i];
+            auto key = std::make_pair(place.id, i);
+            ActionState const& state = m_action_states[key];
+
+            if (!state.active) continue;
+
             for (auto const& forcing : action.forcings)
             {
-                Net* target = NetRegistry::instance().findNet(forcing.targetNet);
-                if (target == nullptr)
+                // Check if forcing targets this net
+                if (forcing.targetNet == m_net.name)
                 {
-                    onWarning.emit("Forcing target '" + forcing.targetNet + "' not found");
-                    continue;
+                    switch (forcing.type)
+                    {
+                    case Forcing::Type::Init:
+                        restoreInitialMarking();
+                        break;
+
+                    case Forcing::Type::Freeze:
+                        m_frozen = true;
+                        break;
+
+                    case Forcing::Type::Empty:
+                        for (auto& p : m_net.places())
+                            p.tokens = 0;
+                        onInfo.emit("Forcing " + forcing.targetNet + " to empty state");
+                        break;
+
+                    case Forcing::Type::Steps:
+                        for (auto& p : m_net.places())
+                            p.tokens = 0;
+                        for (size_t step_id : forcing.steps)
+                        {
+                            Place* p = m_net.findPlace(step_id);
+                            if (p)
+                                p->tokens = 1;
+                            else
+                                onWarning.emit("Forcing step " + std::to_string(step_id) +
+                                             " not found in " + forcing.targetNet);
+                        }
+                        break;
+                    }
                 }
-
-                switch (forcing.type)
+                else
                 {
-                case Forcing::Type::Init:
-                    // Force to initial state: restore initial marking
-                    if (target->hasInitialMarking())
+                    // Cross-net forcing via registry
+                    Net* target = NetRegistry::instance().findNet(forcing.targetNet);
+                    if (target == nullptr)
                     {
-                        target->restoreInitialMarking();
+                        onWarning.emit("Forcing target '" + forcing.targetNet + "' not found");
+                        continue;
                     }
-                    else
-                    {
-                        onWarning.emit("No initial marking stored for " + forcing.targetNet);
-                    }
-                    break;
 
-                case Forcing::Type::Freeze:
-                    // Freeze: prevent any evolution
-                    target->frozen = true;
-                    break;
+                    switch (forcing.type)
+                    {
+                    case Forcing::Type::Init:
+                        // Cannot restore initial marking of other nets from here
+                        onWarning.emit("Cross-net Init forcing not supported");
+                        break;
 
-                case Forcing::Type::Empty:
-                    // Empty: deactivate all steps
-                    for (auto& p : target->places())
-                    {
-                        p.tokens = 0;
-                    }
-                    onInfo.emit("Forcing " + forcing.targetNet + " to empty state");
-                    break;
+                    case Forcing::Type::Freeze:
+                        // Cannot freeze other nets from here
+                        onWarning.emit("Cross-net Freeze forcing not supported");
+                        break;
 
-                case Forcing::Type::Steps:
-                    // Steps: activate only specific steps
-                    for (auto& p : target->places())
-                    {
-                        p.tokens = 0;
-                    }
-                    for (size_t step_id : forcing.steps)
-                    {
-                        Place* p = target->findPlace(step_id);
-                        if (p)
+                    case Forcing::Type::Empty:
+                        for (auto& p : target->places())
+                            p.tokens = 0;
+                        onInfo.emit("Forcing " + forcing.targetNet + " to empty state");
+                        break;
+
+                    case Forcing::Type::Steps:
+                        for (auto& p : target->places())
+                            p.tokens = 0;
+                        for (size_t step_id : forcing.steps)
                         {
-                            p->tokens = 1;
+                            Place* p = target->findPlace(step_id);
+                            if (p)
+                                p->tokens = 1;
+                            else
+                                onWarning.emit("Forcing step " + std::to_string(step_id) +
+                                             " not found in " + forcing.targetNet);
                         }
-                        else
-                        {
-                            onWarning.emit("Forcing step " + std::to_string(step_id) +
-                                         " not found in " + forcing.targetNet);
-                        }
+                        break;
                     }
-                    break;
                 }
             }
         }

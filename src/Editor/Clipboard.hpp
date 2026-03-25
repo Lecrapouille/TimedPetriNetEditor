@@ -100,7 +100,6 @@ private:
         std::string caption;
         float x;
         float y;
-        int angle;
     };
 
     //! \brief Stored arc data

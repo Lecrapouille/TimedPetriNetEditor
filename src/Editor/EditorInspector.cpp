@@ -19,7 +19,7 @@
 //=============================================================================
 
 #include "Editor/Editor.hpp"
-#include "PetriNet/Receptivities.hpp"
+#include "PetriNet/Grafcet.hpp"
 #include "imgui/imgui.h"
 #include <map>
 
@@ -31,7 +31,7 @@ namespace tpne {
 static void drawPlacesPanel(Net& net, Simulation& simulation, bool& modified,
                             bool& show_place_captions)
 {
-    const auto readonly = simulation.running ?
+    const auto readonly = simulation.isRunning() ?
         ImGuiInputTextFlags_ReadOnly : ImGuiInputTextFlags_None;
 
     ImGui::Begin(net.type() == TypeOfNet::GRAFCET ? "Steps" : "Places");
@@ -81,9 +81,9 @@ static void drawPlacesPanel(Net& net, Simulation& simulation, bool& modified,
 //! \brief Helper to display transitions panel.
 //------------------------------------------------------------------------------
 static void drawTransitionsPanel(Net& net, Simulation& simulation, [[maybe_unused]] bool& modified,
-                                 bool& compiled, bool& show_transition_captions)
+                                 bool& show_transition_captions)
 {
-    const auto readonly = simulation.running ?
+    const auto readonly = simulation.isRunning() ?
         ImGuiInputTextFlags_ReadOnly : ImGuiInputTextFlags_None;
 
     ImGui::Begin("Transitions");
@@ -98,13 +98,6 @@ static void drawTransitionsPanel(Net& net, Simulation& simulation, [[maybe_unuse
     ImGui::Separator();
     ImGui::Text("%s", (net.type() == TypeOfNet::GRAFCET) ? "Transitivities:" : "Captions:");
 
-    // Compile transitivities for GRAFCET
-    compiled |= simulation.compiled;
-    if ((net.type() == TypeOfNet::GRAFCET) && (!compiled))
-    {
-        compiled = simulation.generateSensors();
-    }
-
     // Transition list
     for (auto& t : net.transitions())
     {
@@ -118,7 +111,7 @@ static void drawTransitionsPanel(Net& net, Simulation& simulation, [[maybe_unuse
             });
 
         // GRAFCET receptivity validation
-        if ((net.type() == TypeOfNet::GRAFCET) && (!simulation.running))
+        if ((net.type() == TypeOfNet::GRAFCET) && (!simulation.isRunning()))
         {
             Simulation::Receptivities const& receptivities = simulation.receptivities();
             auto it = receptivities.find(t.id);
@@ -150,11 +143,15 @@ static void drawTransitionsPanel(Net& net, Simulation& simulation, [[maybe_unuse
             }
 
             // Show timer progress during simulation
-            if (simulation.running && t.delay > 0.0f && t.delayTimer > 0.0f)
+            if (simulation.isRunning() && t.delay > 0.0f)
             {
-                ImGui::SameLine();
-                float progress = t.delayTimer / t.delay;
-                ImGui::ProgressBar(progress, ImVec2(50, 0), "");
+                float timer = simulation.transitionDelayTimer(t.id);
+                if (timer > 0.0f)
+                {
+                    ImGui::SameLine();
+                    float progress = timer / t.delay;
+                    ImGui::ProgressBar(progress, ImVec2(50, 0), "");
+                }
             }
         }
 
@@ -173,7 +170,7 @@ static void drawGrafcetInputsPanel(Simulation& simulation, bool& modified)
 
     ImGui::Begin("Inputs");
 
-    if (simulation.running)
+    if (simulation.isRunning())
     {
         ImGui::Checkbox("Immediate mode", &immediate_mode);
         ImGui::SameLine();
@@ -209,10 +206,10 @@ static void drawGrafcetInputsPanel(Simulation& simulation, bool& modified)
 
         ImGui::PushID(it.first.c_str());
 
-        bool is_on = simulation.running
+        bool is_on = simulation.isRunning()
             ? (immediate_mode ? (current != 0) : (pending != 0))
             : (current != 0);
-        bool changed = simulation.running && (is_on != (current != 0));
+        bool changed = simulation.isRunning() && (is_on != (current != 0));
 
         // Color styling
         if (changed)
@@ -228,7 +225,7 @@ static void drawGrafcetInputsPanel(Simulation& simulation, bool& modified)
 
         if (ImGui::Button(is_on ? "ON " : "OFF", ImVec2(50, 25)))
         {
-            if (simulation.running)
+            if (simulation.isRunning())
             {
                 if (immediate_mode)
                 {
@@ -256,7 +253,7 @@ static void drawGrafcetInputsPanel(Simulation& simulation, bool& modified)
         ImGui::SameLine();
         ImGui::Text("%s", it.first.c_str());
 
-        if (changed && !immediate_mode && simulation.running)
+        if (changed && !immediate_mode && simulation.isRunning())
         {
             ImGui::SameLine();
             ImGui::TextColored(ImVec4(1.0f, 0.6f, 0.0f, 1.0f), "(pending)");
@@ -271,7 +268,7 @@ static void drawGrafcetInputsPanel(Simulation& simulation, bool& modified)
 //------------------------------------------------------------------------------
 //! \brief Helper to display GRAFCET outputs panel.
 //------------------------------------------------------------------------------
-static void drawGrafcetOutputsPanel(Net& net)
+static void drawGrafcetOutputsPanel(Net& net, Simulation& simulation)
 {
     ImGui::Begin("Outputs");
     ImGui::TextWrapped("Actuator states from active actions.");
@@ -285,25 +282,25 @@ static void drawGrafcetOutputsPanel(Net& net)
         Action::LedColor color = Action::LedColor::Green;
     };
 
-    // Collect actuator states from actions (using action.active computed by simulation)
+    // Collect actuator states from actions (using simulation.actionState())
     std::map<std::string, ActuatorInfo> actuator_states;
     for (const auto& place : net.places())
     {
-        for (const auto& action : place.actions)
+        for (size_t i = 0; i < place.actions.size(); ++i)
         {
+            const auto& action = place.actions[i];
             if (!action.name.empty())
             {
-                // Use action.active which is computed by Simulation::updateActions()
-                // This properly handles all qualifiers (N, S, R, D, L, SD, DS, SL, P)
+                bool is_active = simulation.actionState(place.id, i).active;
                 auto it = actuator_states.find(action.name);
                 if (it == actuator_states.end())
                 {
-                    actuator_states[action.name] = {action.active, action.color};
+                    actuator_states[action.name] = {is_active, action.color};
                 }
                 else
                 {
                     // OR the states (multiple actions can control the same actuator)
-                    it->second.active = it->second.active || action.active;
+                    it->second.active = it->second.active || is_active;
                 }
             }
         }
@@ -453,7 +450,7 @@ static void drawGrafcetActionsPanel(Net& net, Simulation& simulation, bool& modi
                 }
 
                 // Active state indicator
-                if (simulation.running && action.active)
+                if (simulation.isRunning() && simulation.actionState(place.id, i).active)
                 {
                     ImGui::SameLine();
                     ImGui::TextColored(ImVec4(0.0f, 1.0f, 0.0f, 1.0f), " ACTIVE");
@@ -625,7 +622,7 @@ static void drawGrafcetActionsPanel(Net& net, Simulation& simulation, bool& modi
 //------------------------------------------------------------------------------
 static void drawArcsPanel(Net& net, Simulation& simulation, bool& modified)
 {
-    const auto readonly = simulation.running ?
+    const auto readonly = simulation.isRunning() ?
         ImGuiInputTextFlags_ReadOnly : ImGuiInputTextFlags_None;
 
     if (net.type() == TypeOfNet::TimedEventGraph)
@@ -663,19 +660,18 @@ static void drawArcsPanel(Net& net, Simulation& simulation, bool& modified)
 void Editor::inspector()
 {
     static bool modified = false;
-    static bool compiled = false;
 
     // Places/Steps panel
     drawPlacesPanel(net(), simulation(), modified, m_states.show_place_captions);
 
     // Transitions panel
-    drawTransitionsPanel(net(), simulation(), modified, compiled, m_states.show_transition_captions);
+    drawTransitionsPanel(net(), simulation(), modified, m_states.show_transition_captions);
 
     // GRAFCET-specific panels
     if (net().type() == TypeOfNet::GRAFCET)
     {
         drawGrafcetInputsPanel(simulation(), modified);
-        drawGrafcetOutputsPanel(net());
+        drawGrafcetOutputsPanel(net(), simulation());
         drawGrafcetActionsPanel(net(), simulation(), modified);
     }
 
@@ -683,7 +679,6 @@ void Editor::inspector()
     drawArcsPanel(net(), simulation(), modified);
 
     // Update net state
-    simulation().compiled = compiled;
     net().modified |= modified;
     modified = false;
 }

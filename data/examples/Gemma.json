@@ -10,9 +10,9 @@
             { "id": 2, "caption": "Arret moteurs", "tokens": 0, "x": 200, "y": 550 }
        ],
        "transitions": [
-            { "id": 0, "caption": "Controle:X4 Dcy .", "x": 200, "y": 250, "angle": 0 },
-            { "id": 1, "caption": "Acy", "x": 200, "y": 450, "angle": 0 },
-            { "id": 2, "caption": "true", "x": 50, "y": 350, "angle": 0 }
+            { "id": 0, "caption": "Controle:X4 Dcy .", "x": 200, "y": 250 },
+            { "id": 1, "caption": "Acy", "x": 200, "y": 450 },
+            { "id": 2, "caption": "true", "x": 50, "y": 350 }
        ],
        "arcs": [
             { "from": "P0", "to": "T0" },
@@ -37,13 +37,13 @@
             { "id": 5, "caption": "Marche manuelle", "tokens": 0, "x": 350, "y": 1000 }
        ],
        "transitions": [
-            { "id": 0, "caption": "Val", "x": 350, "y": 100, "angle": 0 },
-            { "id": 1, "caption": "true", "x": 350, "y": 300, "angle": 0 },
-            { "id": 2, "caption": "Auto Val .", "x": 350, "y": 500, "angle": 0 },
-            { "id": 3, "caption": "Manu Val .", "x": 650, "y": 500, "angle": 0 },
-            { "id": 4, "caption": "true", "x": 350, "y": 700, "angle": 0 },
-            { "id": 5, "caption": "Manu Val .", "x": 350, "y": 900, "angle": 0 },
-            { "id": 6, "caption": "Auto Val .", "x": 100, "y": 500, "angle": 0 }
+            { "id": 0, "caption": "Val", "x": 350, "y": 100 },
+            { "id": 1, "caption": "true", "x": 350, "y": 300 },
+            { "id": 2, "caption": "Auto Val .", "x": 350, "y": 500 },
+            { "id": 3, "caption": "Manu Val .", "x": 650, "y": 500 },
+            { "id": 4, "caption": "true", "x": 350, "y": 700 },
+            { "id": 5, "caption": "Manu Val .", "x": 350, "y": 900 },
+            { "id": 6, "caption": "Auto Val .", "x": 100, "y": 500 }
        ],
        "arcs": [
             { "from": "P0", "to": "T0" },
@@ -72,8 +72,8 @@
             { "id": 1, "caption": "Attente", "tokens": 0, "x": 250, "y": 400 }
        ],
        "transitions": [
-            { "id": 0, "caption": "Au ! Rearm .", "x": 250, "y": 300, "angle": 0 },
-            { "id": 1, "caption": "Au", "x": 150, "y": 300, "angle": 0 }
+            { "id": 0, "caption": "Au ! Rearm .", "x": 250, "y": 300 },
+            { "id": 1, "caption": "Au", "x": 150, "y": 300 }
        ],
        "arcs": [
             { "from": "P0", "to": "T0" },

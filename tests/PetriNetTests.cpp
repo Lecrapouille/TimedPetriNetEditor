@@ -147,10 +147,9 @@ TEST(TestPetriNet, TestPlaceCreation)
 TEST(TestPetriNet, TestTransitionCreation)
 {
     // Check the default constructor
-    Transition t1(42u, "Hello", 3.5f, 4.0f, 45u, false);
+    Transition t1(42u, "Hello", 3.5f, 4.0f, false);
     ASSERT_EQ(t1.id, 42u);
     ASSERT_EQ(t1.type, Node::Transition);
-    ASSERT_EQ(t1.angle, 45);
     ASSERT_EQ(t1.x, 3.5f);
     ASSERT_EQ(t1.y, 4.0f);
     ASSERT_EQ(t1.receptivity, false);
@@ -167,7 +166,6 @@ TEST(TestPetriNet, TestTransitionCreation)
     Transition t2(t1);
     ASSERT_EQ(t2.id, 42u);
     ASSERT_EQ(t2.type, Node::Transition);
-    ASSERT_EQ(t2.angle, 45);
     ASSERT_EQ(t2.x, 3.5f);
     ASSERT_EQ(t2.y, 4.0f);
     ASSERT_EQ(t2.receptivity, false);
@@ -185,13 +183,12 @@ TEST(TestPetriNet, TestTransitionCreation)
     //ASSERT_EQ(t1 != t2, false);
 
     // Check the copy operator
-    Transition t3(0u, "world", 0.0f, 0.0f, 0u, false);
+    Transition t3(0u, "world", 0.0f, 0.0f, false);
     //ASSERT_EQ(t1 == t3, false);
     //ASSERT_EQ(t1 != t3, true);
     t3 = t1;
     ASSERT_EQ(t3.id, 42u);
     ASSERT_EQ(t3.type, Node::Transition);
-    ASSERT_EQ(t3.angle, 45);
     ASSERT_EQ(t3.x, 3.5f);
     ASSERT_EQ(t3.y, 4.0f);
     ASSERT_EQ(t3.receptivity, false);
@@ -212,7 +209,7 @@ TEST(TestPetriNet, TestTransitionCreation)
 //------------------------------------------------------------------------------
 TEST(TestPetriNet, TestArcCreation)
 {
-    Transition t1(42u, "", 3.5f, 4.0f, 45u, true);
+    Transition t1(42u, "", 3.5f, 4.0f, true);
     Place p1(43u, "", 4.6f, 5.1f, 13u);
 
     // Check the default constructor: Transition --> Place
@@ -234,7 +231,6 @@ TEST(TestPetriNet, TestArcCreation)
     ASSERT_STREQ(a1.to.caption.c_str(), "P43");
     ASSERT_EQ(a1.to.arcsIn.size(), 0u);
     ASSERT_EQ(a1.to.arcsOut.size(), 0u);
-    ASSERT_EQ(reinterpret_cast<Transition&>(a1.from).angle, 45);
     ASSERT_EQ(reinterpret_cast<Place&>(a1.to).tokens, 13u);
     ASSERT_EQ(a1.tokensOut(), 13u);
 
@@ -257,7 +253,6 @@ TEST(TestPetriNet, TestArcCreation)
     ASSERT_STREQ(a2.from.caption.c_str(), "P43");
     ASSERT_EQ(a2.from.arcsIn.size(), 0u);
     ASSERT_EQ(a2.from.arcsOut.size(), 0u);
-    ASSERT_EQ(reinterpret_cast<Transition&>(a2.to).angle, 45);
     ASSERT_EQ(reinterpret_cast<Place&>(a2.from).tokens, 13u);
     ASSERT_EQ(a2.tokensIn(), 13u);
 
@@ -284,7 +279,6 @@ TEST(TestPetriNet, TestArcCreation)
     ASSERT_STREQ(a3.to.caption.c_str(), "P43");
     ASSERT_EQ(a3.to.arcsIn.size(), 0u);
     ASSERT_EQ(a3.to.arcsOut.size(), 0u);
-    ASSERT_EQ(reinterpret_cast<Transition&>(a3.from).angle, 45);
     ASSERT_EQ(reinterpret_cast<Place&>(a3.to).tokens, 13u);
     ASSERT_EQ(a3.tokensOut(), 13u);
 
@@ -308,7 +302,6 @@ TEST(TestPetriNet, TestArcCreation)
     ASSERT_STREQ(a4.to.caption.c_str(), "P43");
     ASSERT_EQ(a4.to.arcsIn.size(), 0u);
     ASSERT_EQ(a4.to.arcsOut.size(), 0u);
-    ASSERT_EQ(reinterpret_cast<Transition&>(a4.from).angle, 45);
     ASSERT_EQ(reinterpret_cast<Place&>(a4.to).tokens, 13u);
     ASSERT_EQ(a4.tokensOut(), 13u);
 
@@ -651,11 +644,11 @@ TEST(TestPetriNet, TestDoubleAdd)
     ASSERT_STREQ(net.m_places[0].key.c_str(), "P42");
     ASSERT_STREQ(net.m_places[1].key.c_str(), "P42");
 
-    Transition& t1 = net.addTransition(43u, "", 3.5f, 4.0f, 45u);
+    Transition& t1 = net.addTransition(43u, "", 3.5f, 4.0f);
     ASSERT_EQ(net.m_next_place_id, 43u);
     ASSERT_EQ(net.m_next_transition_id, 44u);
 
-    /*Transition& t2 =*/ net.addTransition(43u, "", 3.5f, 4.0f, 45u);
+    /*Transition& t2 =*/ net.addTransition(43u, "", 3.5f, 4.0f);
     ASSERT_EQ(net.isEmpty(), false);
     ASSERT_EQ(net.m_next_place_id, 43u);
     ASSERT_EQ(net.m_next_transition_id, 44u);
@@ -683,8 +676,8 @@ TEST(TestPetriNet, TestInvalidAddArc)
 {
     Net net(TypeOfNet::TimedPetriNet);
 
-    Transition t1(42u, "", 3.5f, 4.0f, 45u, true);
-    Transition t2(43u, "", 3.5f, 4.0f, 45u, false);
+    Transition t1(42u, "", 3.5f, 4.0f, true);
+    Transition t2(43u, "", 3.5f, 4.0f, false);
     Place p1(44u, "", 4.6f, 5.1f, 13u);
     Place p2(45u, "", 4.6f, 5.1f, 13u);
 
@@ -721,7 +714,7 @@ TEST(TestPetriNet, TestInvalidAddArc)
     ASSERT_EQ(net.m_transitions.size(), 0u);
     ASSERT_EQ(net.m_arcs.size(), 0u);
 
-    Transition& t3 = net.addTransition(43u, "", 3.5f, 4.0f, 45u);
+    Transition& t3 = net.addTransition(43u, "", 3.5f, 4.0f);
     ASSERT_EQ(net.addArc(t3, p2), false);
     ASSERT_EQ(net.m_arcs.size(), 0u);
 }

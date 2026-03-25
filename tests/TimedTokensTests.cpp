@@ -32,7 +32,7 @@ using namespace ::tpne;
 TEST(TestPetriNet, TestTimedTokenCreation)
 {
     // Reminder: TimedToken not made for Place -> Transition
-    Transition t1(42u, "", 3.5f, 4.0f, 45u, true);
+    Transition t1(42u, "", 3.5f, 4.0f, true);
     Place p1(43u, "", 4.6f, 5.1f, 13u);
     Arc a1(t1, p1, 10.0f);
     TimedToken at1(a1, 3u, TypeOfNet::TimedPetriNet);
@@ -67,7 +67,7 @@ TEST(TestPetriNet, TestTimedTokenCreation)
     ASSERT_EQ(at2.offset, 0.0f);
     ASSERT_EQ(&at2.toPlace(), &p1);
 
-    Transition t2(45u, "", 13.5f, 14.0f, 145u, true);
+    Transition t2(45u, "", 13.5f, 14.0f, true);
     Place p2(46u, "", 14.6f, 15.1f, 113u);
     Arc a2(t2, p2, 110.0f);
     TimedToken at3(a2, 13u, TypeOfNet::TimedPetriNet);
@@ -102,7 +102,7 @@ TEST(TestPetriNet, TestTimedTokenCreation)
 TEST(TestPetriNet, TestTimedTokenUpdate)
 {
     // T1 --> P1 is 20 unit of distance along the X-axis
-    Transition t1(42u, "", 0.0f, 0.0f, 45u, true);
+    Transition t1(42u, "", 0.0f, 0.0f, true);
     Place p1(43u, "", 20.0f, 0.0f, 13u);
     Arc a1(t1, p1, 10.0f); // Duration: 10 units of time
     TimedToken at1(a1, 3u, TypeOfNet::TimedPetriNet);

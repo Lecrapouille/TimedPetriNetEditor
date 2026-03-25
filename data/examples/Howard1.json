@@ -11,8 +11,8 @@
             { "id": 3, "caption": "P3", "tokens": 2, "x": 54, "y": 282 }
        ],
        "transitions": [
-            { "id": 0, "caption": "T0", "x": 526, "y": 272, "angle": 0 },
-            { "id": 1, "caption": "T1", "x": 212, "y": 282, "angle": 0 }
+            { "id": 0, "caption": "T0", "x": 526, "y": 272 },
+            { "id": 1, "caption": "T1", "x": 212, "y": 282 }
        ],
        "arcs": [
             { "from": "T0", "to": "P0", "duration": 1 },

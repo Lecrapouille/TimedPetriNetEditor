@@ -339,7 +339,7 @@ void Editor::menuActions()
     ImGui::Separator();
 
     // Simulation controls
-    if (ImGui::MenuItem(simulation().running ? "Stop Simulation" : "Start Simulation",
+    if (ImGui::MenuItem(simulation().isRunning() ? "Stop Simulation" : "Start Simulation",
                         "Space", false))
     {
         toogleStartSimulation();
