@@ -1,5 +1,16 @@
-Flowshop 3 3
-          Part1  Part2  Part3
-Machine1  nan    1.0    5.0
-Machine2  3.0    2.0    3.0
-Machine3  4.0    3.0    nan
+# Simple Flowshop example (2x3)
+npieces: 3
+nmachines: 2
+
+# Tokens per machine class (nm) - horizontal cycle
+nm: 1 1
+
+# Tokens per piece class (np) - vertical cycle
+np: 1 1 1
+
+# Piece names (columns)
+pieces: P1 P2 P3
+
+# Processing times: machine_name: time1 time2 ... (nan = skip)
+M1: 2.0 3.0 1.0
+M2: 1.0 2.0 1.5
