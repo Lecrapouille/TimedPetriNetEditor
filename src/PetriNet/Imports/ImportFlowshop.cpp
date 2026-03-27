@@ -23,43 +23,267 @@
 #include <sstream>
 #include <fstream>
 #include <cstring>
-#include <iostream>
+#include <cmath>
 
 namespace tpne {
 
 //------------------------------------------------------------------------------
-std::vector<std::string> splitLine(std::ifstream& file)
+struct FlowshopData
 {
-    std::string s;
+    size_t npieces = 0;
+    size_t nmachines = 0;
+    std::vector<std::string> pieceNames;
+    std::vector<std::string> machineNames;
+    std::vector<size_t> np;  // tokens per piece (vertical cycle)
+    std::vector<size_t> nm;  // tokens per machine (horizontal cycle)
+    std::vector<std::vector<float>> PT;  // PT[machine][piece], nan = no operation
+};
 
-    std::getline(file, s);
-    std::cout << "Line " << s << std::endl;
-    std::stringstream ss(s);
-    std::vector<std::string> v;
+//------------------------------------------------------------------------------
+static std::string trim(std::string const& str)
+{
+    size_t first = str.find_first_not_of(" \t");
+    if (first == std::string::npos)
+        return "";
+    size_t last = str.find_last_not_of(" \t");
+    return str.substr(first, last - first + 1);
+}
 
-    while (std::getline(ss, s))
+//------------------------------------------------------------------------------
+static std::vector<std::string> splitBySpace(std::string const& str)
+{
+    std::vector<std::string> tokens;
+    std::istringstream iss(str);
+    std::string token;
+    while (iss >> token)
     {
-        std::cout << s << std::endl;
-        v.push_back(s);
+        tokens.push_back(token);
+    }
+    return tokens;
+}
+
+//------------------------------------------------------------------------------
+static std::string parseFlowshopFile(std::ifstream& file, FlowshopData& data)
+{
+    std::string line;
+    std::stringstream error;
+
+    while (std::getline(file, line))
+    {
+        line = trim(line);
+        if (line.empty() || line[0] == '#')
+            continue;
+
+        size_t colonPos = line.find(':');
+        if (colonPos == std::string::npos)
+        {
+            error << "Malformed line (missing ':'): " << line << std::endl;
+            return error.str();
+        }
+
+        std::string key = trim(line.substr(0, colonPos));
+        std::string value = trim(line.substr(colonPos + 1));
+
+        if (key == "npieces")
+        {
+            data.npieces = std::stoul(value);
+        }
+        else if (key == "nmachines")
+        {
+            data.nmachines = std::stoul(value);
+        }
+        else if (key == "nm")
+        {
+            auto tokens = splitBySpace(value);
+            for (auto const& t : tokens)
+            {
+                data.nm.push_back(std::stoul(t));
+            }
+        }
+        else if (key == "np")
+        {
+            auto tokens = splitBySpace(value);
+            for (auto const& t : tokens)
+            {
+                data.np.push_back(std::stoul(t));
+            }
+        }
+        else if (key == "pieces")
+        {
+            data.pieceNames = splitBySpace(value);
+        }
+        else
+        {
+            // Machine line: MachineName: val1 val2 val3 ...
+            data.machineNames.push_back(key);
+            auto tokens = splitBySpace(value);
+            std::vector<float> row;
+            for (auto const& t : tokens)
+            {
+                if (t == "nan" || t == "-inf")
+                {
+                    row.push_back(std::numeric_limits<float>::quiet_NaN());
+                }
+                else
+                {
+                    row.push_back(std::stof(t));
+                }
+            }
+            data.PT.push_back(row);
+        }
     }
 
-    return v;
+    // Validation
+    if (data.npieces == 0 || data.nmachines == 0)
+    {
+        error << "Missing npieces or nmachines" << std::endl;
+        return error.str();
+    }
+    if (data.nm.size() != data.nmachines)
+    {
+        error << "nm size (" << data.nm.size() << ") != nmachines (" << data.nmachines << ")" << std::endl;
+        return error.str();
+    }
+    if (data.np.size() != data.npieces)
+    {
+        error << "np size (" << data.np.size() << ") != npieces (" << data.npieces << ")" << std::endl;
+        return error.str();
+    }
+    if (data.pieceNames.size() != data.npieces)
+    {
+        error << "pieces count (" << data.pieceNames.size() << ") != npieces (" << data.npieces << ")" << std::endl;
+        return error.str();
+    }
+    if (data.PT.size() != data.nmachines)
+    {
+        error << "Machine rows (" << data.PT.size() << ") != nmachines (" << data.nmachines << ")" << std::endl;
+        return error.str();
+    }
+    for (size_t m = 0; m < data.nmachines; ++m)
+    {
+        if (data.PT[m].size() != data.npieces)
+        {
+            error << "Machine " << m << " has " << data.PT[m].size() << " values, expected " << data.npieces << std::endl;
+            return error.str();
+        }
+    }
+
+    return {};
+}
+
+//------------------------------------------------------------------------------
+static void buildFlowshopPetriNet(Net& net, FlowshopData const& data)
+{
+    const float dx = 300.0f;  // horizontal spacing (pieces)
+    const float dy = 300.0f;  // vertical spacing (machines)
+    const float margin = 50.0f;  // margin from origin
+    const float loopbackOffsetX = -100.0f;  // offset for nm loopback places (left of grid)
+    const float loopbackOffsetY = 100.0f;   // offset for np loopback places (below grid)
+
+    // Grid of transitions T[machine][piece]
+    // Use nullptr to indicate no transition at this position (nan in PT)
+    std::vector<std::vector<Transition*>> T(data.nmachines,
+        std::vector<Transition*>(data.npieces, nullptr));
+
+    // 1. Create transitions for each valid operation (PT[m][p] != nan)
+    for (size_t m = 0; m < data.nmachines; ++m)
+    {
+        for (size_t p = 0; p < data.npieces; ++p)
+        {
+            if (!std::isnan(data.PT[m][p]))
+            {
+                float x = margin + float(p) * dx;
+                float y = margin + float(m) * dy;
+                std::string caption = data.machineNames[m] + "_" + data.pieceNames[p];
+                Transition& t = net.addTransition(x, y);
+                t.caption = caption;
+                T[m][p] = &t;
+            }
+        }
+    }
+
+    // 2. Horizontal arcs (machine cycle through pieces) - yellow in Scilab
+    //    For each machine m: connect valid pieces in sequence, loopback with nm[m] tokens
+    for (size_t m = 0; m < data.nmachines; ++m)
+    {
+        std::vector<size_t> validPieces;
+        for (size_t p = 0; p < data.npieces; ++p)
+        {
+            if (T[m][p] != nullptr)
+            {
+                validPieces.push_back(p);
+            }
+        }
+
+        if (validPieces.size() < 2)
+            continue;
+
+        // Connect consecutive valid pieces (internal arcs, no tokens)
+        for (size_t i = 0; i < validPieces.size() - 1; ++i)
+        {
+            size_t p1 = validPieces[i];
+            size_t p2 = validPieces[i + 1];
+            float duration = data.PT[m][p1];
+            net.addArc(*T[m][p1], *T[m][p2], 0u, duration);
+        }
+
+        // Loopback arc: last -> first with nm[m] tokens
+        // Place the loopback place to the LEFT of the grid (offset in X)
+        size_t pFirst = validPieces.front();
+        size_t pLast = validPieces.back();
+        float duration = data.PT[m][pLast];
+        float loopX = margin + loopbackOffsetX;  // left of grid
+        float loopY = margin + float(m) * dy;    // same row as machine m
+        Place& loopPlace = net.addPlace(loopX, loopY, data.nm[m]);
+        loopPlace.caption = "nm_" + data.machineNames[m];
+        net.addArc(*T[m][pLast], loopPlace, duration);
+        net.addArc(loopPlace, *T[m][pFirst]);
+    }
+
+    // 3. Vertical arcs (piece cycle through machines) - blue in Scilab
+    //    For each piece p: connect valid machines in sequence, loopback with np[p] tokens
+    for (size_t p = 0; p < data.npieces; ++p)
+    {
+        std::vector<size_t> validMachines;
+        for (size_t m = 0; m < data.nmachines; ++m)
+        {
+            if (T[m][p] != nullptr)
+            {
+                validMachines.push_back(m);
+            }
+        }
+
+        if (validMachines.size() < 2)
+            continue;
+
+        // Connect consecutive valid machines (internal arcs, no tokens)
+        for (size_t i = 0; i < validMachines.size() - 1; ++i)
+        {
+            size_t m1 = validMachines[i];
+            size_t m2 = validMachines[i + 1];
+            float duration = data.PT[m1][p];
+            net.addArc(*T[m1][p], *T[m2][p], 0u, duration);
+        }
+
+        // Loopback arc: last -> first with np[p] tokens
+        // Place the loopback place BELOW the grid (offset in Y)
+        size_t mFirst = validMachines.front();
+        size_t mLast = validMachines.back();
+        float duration = data.PT[mLast][p];
+        float loopX = margin + float(p) * dx;  // same column as piece p
+        float loopY = margin + float(data.nmachines - 1) * dy + loopbackOffsetY;  // below grid
+        Place& loopPlace = net.addPlace(loopX, loopY, data.np[p]);
+        loopPlace.caption = "np_" + data.pieceNames[p];
+        net.addArc(*T[mLast][p], loopPlace, duration);
+        net.addArc(loopPlace, *T[mFirst][p]);
+    }
 }
 
 //------------------------------------------------------------------------------
 std::string importFlowshop(Net& net, std::string const& filename)
 {
-    struct DataMatrix
-    {
-        std::vector<std::string> columnNames;
-        std::vector<std::string> rowNames;
-        std::vector<std::vector<float>> data;
-    };
-
-    DataMatrix matrix;
     std::stringstream error;
 
-    // Check if file exists
     std::ifstream file(filename);
     if (!file)
     {
@@ -68,103 +292,16 @@ std::string importFlowshop(Net& net, std::string const& filename)
         return error.str();
     }
 
-    // Extract number of transitions and number of lines
-    size_t lines, rows;
-    std::string type;
+    net.reset(TypeOfNet::TimedPetriNet);
 
-    if (!(file >> type >> rows >> lines))
+    FlowshopData data;
+    std::string parseError = parseFlowshopFile(file, data);
+    if (!parseError.empty())
     {
-        error << "Malformed header. Needed 'Flowshop number_transitions number_lines'"
-            << std::endl;
-        return error.str();
-    }
-    if (type != "Flowshop")
-    {
-        error << "Malformed token. Expected to extract token 'TimedEventGraph'"
-            << std::endl;
-        return error.str();
+        return parseError;
     }
 
-    // windows screen.
-    // FIXME: get the exact dimension Editor::viewSize()
-    // FIXME: initial frame iteration: the screen size is not at its final size
-    const size_t w = 600u; const size_t h = 600u;
-    const size_t margin = 50u;
-    // Since the file does not give position, we place them as square
-    size_t dx = (w - 2u * margin) / rows;
-    size_t dy = (h - 2u * margin) / lines;
-    size_t x = margin + dx; size_t y = margin + dy;
-
-    size_t id = 0u;
-    std::string line;
-
-    // End the current line
-    getline(file, line);
-
-    // Read the column names
-    if (getline(file, line))
-    {
-        std::istringstream columnNamesStream(line);
-        std::string columnName;
-        while (columnNamesStream >> columnName)
-        {
-            matrix.columnNames.push_back(columnName);
-        }
-    }
-
-    // Read the following lines to obtain the row names and the data
-    while (getline(file, line))
-    {
-        std::istringstream lineStream(line);
-        std::string rowName;
-        if (lineStream >> rowName)
-        {
-            matrix.rowNames.push_back(rowName);
-
-            std::vector<float> row;
-            std::string value;
-            while (lineStream >> value)
-            {
-                row.push_back(stof(value));
-
-                if (value != "nan")
-                {
-                    net.addPlace(id, Transition::to_str(id), float(x), float(y), 0);
-                    id++;
-                }
-                x += dx;
-            }
-            matrix.data.push_back(row);
-        }
-        else
-        {
-            error << "Malformed line '" << line << "'" << std::endl;
-            return error.str();
-        }
-        x = margin + dx;
-        y += dy;
-    }
-
-    //float ymax = float(y);
-    //float xmax = float(margin + dx + dx * rows);
-
-    // Place this code outside the getline() loop to have id of internal transitions
-    // starting from 0.
-    x = margin + dx - dx / 2u; y = margin;
-    for (const auto& columnName : matrix.columnNames)
-    {
-        net.addPlace(id++, columnName, float(x), float(y), 0);
-        //net.addPlace(id++, columnName, x, ymax, 0);
-        x += dx;
-    }
-
-    x = margin; y = margin + dy + dy / 2u;
-    for (const auto& rowName : matrix.rowNames)
-    {
-        net.addPlace(id++, rowName, float(x), float(y), 0);
-        //net.addPlace(id++, rowName, xmax, y, 0);
-        y += dy;
-    }
+    buildFlowshopPetriNet(net, data);
 
     return {};
 }
