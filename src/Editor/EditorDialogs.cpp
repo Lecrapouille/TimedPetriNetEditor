@@ -37,11 +37,11 @@ void Editor::showStyleSelector()
     if (ImGui::BeginPopupModal("Theme selector",
                                NULL, ImGuiWindowFlags_AlwaysAutoResize))
     {
-        int idx = theme();
+        int idx = static_cast<int>(theme());
         if (ImGui::Combo("Colors##Selector", &idx, "Dark\0Light\0Classic\0"))
         {
-            theme() = ThemeId(idx);
-            switch (idx)
+            theme() = static_cast<ThemeId>(idx);
+            switch (theme())
             {
             case ThemeId::Dark: ImGui::StyleColorsDark(); break;
             case ThemeId::Light: ImGui::StyleColorsLight(); break;

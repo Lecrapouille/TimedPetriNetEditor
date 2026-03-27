@@ -31,7 +31,35 @@ Sensors: `Start`, `s0` (retracted position), `s1` (extended position), `Error`, 
 TimedPetriNetEditor data/examples/GrafcetActions.json
 ```
 
----
+## Graphe des Modes de Marche et Arret (GEMMA)
+
+Operating and Stopping Modes Graph (GEMMA)
+
+This example models the GEMMA (Graph for the Study of Modes and Actions) which defines the coordination of three combined GRAFCETs to control an automated cell. The managed modes are:
+
+- Normal production operation
+- Safety operation
+- Supervision/control of subordinate GRAFCETs
+
+Production Line Description:
+Workpieces are transported by a conveyor belt to an oven (KM3) for baking. The conveyor can move left or right thanks to two motors (KM2 and KM1).
+
+Operator Panel (HMI) Controls:
+
+- Emergency stop button (AU)
+- Reset button (Arm)
+- Validation button (Val)
+- Power-on indicator lamp (MST)
+- Selector switch for automatic (Auto) or manual (Manu) operation
+- Cycle start button (Dcy)
+- Cycle stop button (Acy)
+- Left (GA) and right (DR) buttons to move the conveyor in the desired direction during manual mode
+
+Credit: [NetProf](https://www.youtube.com/watch?v=y8lWIG71040&list=PLtbgSpNjNTOVxGj6zYv5MTdZuPwD7S1zh)
+
+```
+TimedPetriNetEditor data/examples/GEMMA.json
+```
 
 ## Coffee machine
 

@@ -144,12 +144,8 @@ public:
     //! supposed to be changed.
     std::string const key;
     //! \brief Position inside the window needed for the display.
-    //! \fixme: TBD to be moved inside the editor since we do not care of
-    //! position.
     float x;
     //! \brief Position in the window needed for the display.
-    //! \fixme: TBD to be moved inside the editor since we do not care of
-    //! position.
     float y;
     //! \brief Text displayed near a node the user can modify. Default value is
     //! the tring unique \c key.

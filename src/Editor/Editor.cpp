@@ -30,12 +30,15 @@
 
 #include <algorithm>
 #include <map>
+#include <fstream>
 
 namespace tpne {
 
 //! \brief path of the file storing dear imgui widgets. Cannot be placed
 //! as member variable of Editor class.
 static std::string g_ini_filename = "imgui.ini";
+//! \brief path of the file storing theme settings.
+static std::string g_theme_filename = "theme.ini";
 
 //--------------------------------------------------------------------------
 Editor::Editor(size_t const width, size_t const height,
@@ -45,9 +48,9 @@ Editor::Editor(size_t const width, size_t const height,
       m_view(*this)
 {
 #ifdef __EMSCRIPTEN__
-#  define FONT_SIZE 18.0f
+ constexpr float FONT_SIZE = 18.0f;
 #else
-#  define FONT_SIZE 13.0f
+ constexpr float FONT_SIZE = 13.0f;
 #endif
 
     m_messages.setInfo("Path: " + m_path.toString());
@@ -60,22 +63,72 @@ Editor::Editor(size_t const width, size_t const height,
     // Set imgui.ini loading/saving location
     ImGuiIO &io = ImGui::GetIO();
     g_ini_filename = m_path.expand("imgui.ini").c_str();
+    g_theme_filename = m_path.expand("theme.ini").c_str();
     io.IniFilename = g_ini_filename.c_str();
-    // std::cout << "imgui.ini path: " << io.IniFilename << std::endl;
 
     // Setup fonts
     io.Fonts->AddFontFromFileTTF(m_path.expand("font.ttf").c_str(), FONT_SIZE);
     reloadFonts();
 
-    // Theme
-    ImGui::StyleColorsDark();
+    // Load and apply theme
+    loadTheme();
+    applyTheme();
 
     // Initialize remote control
     initRemoteControl();
 }
 
 //------------------------------------------------------------------------------
-Editor::~Editor() = default;
+Editor::~Editor()
+{
+    saveTheme();
+}
+
+//------------------------------------------------------------------------------
+void Editor::loadTheme()
+{
+    std::string theme_path = m_path.expand("theme.ini");
+    std::ifstream file(theme_path);
+    if (file.is_open())
+    {
+        int theme_id = 0;
+        if (file >> theme_id)
+        {
+            if (theme_id >= 0 && theme_id <= 2)
+            {
+                theme() = static_cast<ThemeId>(theme_id);
+            }
+        }
+    }
+}
+
+//------------------------------------------------------------------------------
+void Editor::saveTheme()
+{
+    std::string theme_path = m_path.expand("theme.ini");
+    std::ofstream file(theme_path);
+    if (file.is_open())
+    {
+        file << static_cast<int>(theme());
+    }
+}
+
+//------------------------------------------------------------------------------
+void Editor::applyTheme()
+{
+    switch (theme())
+    {
+    case ThemeId::Dark:
+        ImGui::StyleColorsDark();
+        break;
+    case ThemeId::Light:
+        ImGui::StyleColorsLight();
+        break;
+    case ThemeId::Calssic:
+        ImGui::StyleColorsClassic();
+        break;
+    }
+}
 
 //------------------------------------------------------------------------------
 Document& Editor::activeDocument()
@@ -135,7 +188,7 @@ Document& Editor::createDocument()
 }
 
 //------------------------------------------------------------------------------
-void Editor::closeDocument(Document* doc)
+void Editor::closeDocument(Document const* doc)
 {
     if (doc == nullptr)
         return;
@@ -277,6 +330,12 @@ void Editor::onUpdate(float const dt)
     if (net().modified)
     {
         title(m_states.title + " -- " + net().name + " **");
+
+        // Validate GRAFCET receptivities when net is modified
+        if (net().type() == TypeOfNet::GRAFCET)
+        {
+            simulation().validateReceptivities();
+        }
     }
     else
     {
@@ -304,7 +363,7 @@ void Editor::onDraw()
         auto& doc = activeDocument();
         size_t count = doc.netCount();
 
-        ImGuiDockNode* central_node = ImGui::DockBuilderGetCentralNode(dockspace_id);
+        ImGuiDockNode const* central_node = ImGui::DockBuilderGetCentralNode(dockspace_id);
         ImGuiID target_id;
 
         if (central_node)
@@ -380,6 +439,7 @@ void Editor::view()
         bool show_interactive = is_active_view && !entry.simulation->isRunning();
         m_view.loadViewState(entry.view_state);
         m_view.reshape();
+
         if (is_active_view)
         {
             m_view.onHandleInput(entry.net, *entry.simulation);
@@ -447,7 +507,7 @@ void Editor::console()
 }
 
 //------------------------------------------------------------------------------
-void Editor::messagebox()
+void Editor::messagebox() const
 {
     ImGui::Begin("Message");
     ImGui::Text("%s", getError().c_str());
@@ -472,8 +532,7 @@ void Editor::toogleStartSimulation()
 void Editor::toogleStartAllSimulations()
 {
     // Toggle simulation for all nets in the document
-    bool any_running = activeDocument().isAnySimulationRunning();
-    if (any_running)
+    if (activeDocument().isAnySimulationRunning())
     {
         activeDocument().stopAllSimulations();
     }
@@ -558,7 +617,7 @@ void Editor::removeNode(Node& node)
 }
 
 //------------------------------------------------------------------------------
-void Editor::removeArc(Arc& arc)
+void Editor::removeArc(Arc const& arc)
 {
     auto action = std::make_unique<NetModificationAction>([this]() -> Net& { return net(); });
     action->before(net());
@@ -641,7 +700,7 @@ void Editor::loadDocumentFromFile(std::string const& filepath)
         auto& doc = activeDocument();
         doc.nets().clear();
 
-        for (auto& loaded_net : nets)
+        for (auto const& loaded_net : nets)
         {
             auto& entry = doc.addNet(loaded_net.type(), loaded_net.name);
             entry.net = std::move(loaded_net);
@@ -652,6 +711,20 @@ void Editor::loadDocumentFromFile(std::string const& filepath)
         setSavePath(filepath);
         doc.setActiveNetIndex(0);
         m_states.request_vertical_split = true;
+
+        // Center view on each loaded net and validate GRAFCET receptivities
+        for (auto const& entry : doc.nets())
+        {
+            m_view.centerOnNet(entry->net);
+            m_view.saveViewState(entry->view_state);
+
+            // Validate GRAFCET receptivities after loading
+            if (entry->net.type() == TypeOfNet::GRAFCET)
+            {
+                entry->simulation->validateReceptivities();
+            }
+        }
+
         m_messages.setInfo("Loaded '" + filepath + "' with " +
             std::to_string(nets.size()) + " net(s)");
         return;
@@ -685,6 +758,11 @@ void Editor::loadDocumentFromFile(std::string const& filepath)
     doc.setActiveNetIndex(0);
     if (importer->springify)
         springify();
+
+    // Center view on the loaded net
+    m_view.centerOnNet(entry.net);
+    m_view.saveViewState(entry.view_state);
+
     m_messages.setInfo("Loaded '" + filepath + "'");
 }
 

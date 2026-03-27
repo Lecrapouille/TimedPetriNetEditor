@@ -58,8 +58,6 @@ static inline float norm(T const& A, T const& B)
 static void drawArrow(ImDrawList* draw_list, ImVec2 const& A, ImVec2 const& B,
                       const ImU32 color, float zoom = 1.0f)
 {
-    constexpr float pi = 3.14159265358979323846f;
-
     const float place_radius = PLACE_RADIUS * zoom;
     const float arrow_spacing = ARROW_SPACING * zoom;
     const float arrow_length = ARROW_WIDTH * zoom;
@@ -68,7 +66,7 @@ static void drawArrow(ImDrawList* draw_list, ImVec2 const& A, ImVec2 const& B,
 
     // Orientation
     const float arrowAngle = std::atan((B.y - A.y) / (B.x - A.x))
-        + ((B.x < A.x) ? pi : ((B.y < A.y) ? (2.0f * pi) : 0.0f));
+        + ((B.x < A.x) ? M_PIf : ((B.y < A.y) ? (2.0f * M_PIf) : 0.0f));
     const float cos_a = std::cos(arrowAngle);
     const float sin_a = std::sin(arrowAngle);
 
@@ -96,11 +94,11 @@ static void drawArrow(ImDrawList* draw_list, ImVec2 const& A, ImVec2 const& B,
         to + rotate(head + ImVec2(arrow_length, arrow_half_width), cos_a, sin_a),
         to + rotate(head + ImVec2(0.0f, arrow_half_width * 2.0f), cos_a, sin_a)
     };
-    draw_list->AddConvexPolyFilled(points.data(), points.size(), color);
+    draw_list->AddConvexPolyFilled(points.data(), static_cast<int>(points.size()), color);
 }
 
 //------------------------------------------------------------------------------
-void drawArc(ImDrawList* draw_list, Node* from, Node* to, ImVec2* click_position,
+void drawArc(ImDrawList* draw_list, Node const* from, Node const* to, ImVec2 const* click_position,
              ImVec2 const& origin, ImVec2 const& cursor, float zoom)
 {
     if (from != nullptr)
@@ -147,7 +145,7 @@ void drawArc(ImDrawList* draw_list, Arc const& arc, TypeOfNet const type,
             return ;
 
         assert((arc.to.arcsOut.size() == 1u) && "malformed graph event");
-        Node& next = arc.to.arcsOut[0]->to;
+        Node const& next = arc.to.arcsOut[0]->to;
         drawArrow(draw_list,
                   origin + ImVec2(arc.from.x * zoom, arc.from.y * zoom),
                   origin + ImVec2(next.x * zoom, next.y * zoom), color, zoom);
@@ -261,7 +259,7 @@ static void drawPetriPlace(ImDrawList* draw_list, Place const& place, ImVec2 con
 
 //------------------------------------------------------------------------------
 static void drawGrafcetPlace(ImDrawList* draw_list, Place const& place, ImVec2 const& origin,
-                              float const alpha, float zoom, bool isInitialStep)
+                              bool const show_caption, float const alpha, float zoom, bool isInitialStep)
 {
     const ImVec2 p = origin + ImVec2(place.x * zoom, place.y * zoom);
     const float trans_width = TRANS_WIDTH * zoom;
@@ -306,7 +304,8 @@ static void drawGrafcetPlace(ImDrawList* draw_list, Place const& place, ImVec2 c
     }
 
     // Draw the caption inside the square
-    const char* text = place.caption.c_str();
+    // show_caption: true = caption (e.g. "Init"), false = key/identifier (e.g. "X0")
+    const char* text = show_caption ? place.caption.c_str() : place.key.c_str();
     ImVec2 dim = ImGui::CalcTextSize(text) / 2.0f;
     ImVec2 ptext = p - dim + ImVec2(0.0f, -trans_width / 3.0f + 5.0f * zoom);
     draw_list->AddText(ptext, CAPTION_COLOR, text);
@@ -322,7 +321,7 @@ void drawPlace(ImDrawList* draw_list, Place const& place, TypeOfNet const type,
 
     if (type == TypeOfNet::GRAFCET)
     {
-       drawGrafcetPlace(draw_list, place, origin, alpha, zoom, isInitialStep);
+       drawGrafcetPlace(draw_list, place, origin, show_caption, alpha, zoom, isInitialStep);
     }
     else
     {
@@ -373,17 +372,21 @@ void drawTransition(ImDrawList* draw_list, Transition const& transition,
     draw_list->AddRect(pmin, pmax, OUTLINE_COLOR, rounding, ImDrawFlags_None, outline_thickness);
 
     // Draw the caption
+    // show_caption: true = caption (e.g. "a b ."), false = key/identifier (e.g. "T0")
+    const float text_margin = 4.0f * zoom;
+    const char* text = show_caption ? transition.caption.c_str() : transition.key.c_str();
+    ImVec2 dim = ImGui::CalcTextSize(text);
+
     if (type == TypeOfNet::GRAFCET)
     {
-        const char* text = transition.caption.c_str();
-        ImVec2 dim = ImGui::CalcTextSize(text) / 2.0f;
-        draw_list->AddText(p + ImVec2(dim.x, -dim.y) + ImVec2(trans_width / 2.0f, 0.0f), CAPTION_COLOR, text);
+        // GRAFCET: text to the right of the transition, vertically centered
+        ImVec2 ptext = p + ImVec2(trans_width / 2.0f + text_margin, -dim.y / 2.0f);
+        draw_list->AddText(ptext, CAPTION_COLOR, text);
     }
     else
     {
-        const char* text = show_caption ? transition.caption.c_str() : transition.key.c_str();
-        ImVec2 dim = ImGui::CalcTextSize(text);
-        ImVec2 ptext = p - ImVec2(dim.x / 2.0f, trans_height / 2.0f + dim.y);
+        // Other types: text below the transition, horizontally centered
+        ImVec2 ptext = p + ImVec2(-dim.x / 2.0f, trans_height / 2.0f + text_margin);
         draw_list->AddText(ptext, CAPTION_COLOR, text);
     }
 }
@@ -394,7 +397,7 @@ void drawPlot(const char* title, const char* label, std::vector<float> const& x,
 {
     if (ImPlot::BeginPlot(title))
     {
-        ImPlot::PlotLine(label, x.data(), y.data(), x.size());
+        ImPlot::PlotLine(label, x.data(), y.data(), static_cast<int>(x.size()));
         ImPlot::EndPlot();
     }
 }

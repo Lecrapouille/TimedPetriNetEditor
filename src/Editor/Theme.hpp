@@ -21,7 +21,7 @@
 #ifndef DEAR_IMGUI_THEME_HPP
 #  define DEAR_IMGUI_THEME_HPP
 
-enum ThemeId { Dark = 0, Light, Calssic };
+enum class ThemeId { Dark = 0, Light, Calssic };
 ThemeId& theme();
 
 static const float ARROW_WIDTH = 12.0f;
