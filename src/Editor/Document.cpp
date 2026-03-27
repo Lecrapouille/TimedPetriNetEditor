@@ -23,7 +23,6 @@
 #include "PetriNet/Grafcet.hpp"
 
 #include <stdexcept>
-#include <algorithm>
 
 namespace tpne {
 
@@ -142,7 +141,7 @@ Document::NetEntry const& Document::getNet(size_t index) const
 //------------------------------------------------------------------------------
 Document::NetEntry* Document::findNet(std::string const& name)
 {
-    for (auto& entry : m_nets)
+    for (auto const& entry : m_nets)
     {
         if (entry->net.name == name)
         {

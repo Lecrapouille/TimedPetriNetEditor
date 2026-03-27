@@ -219,6 +219,14 @@ void Editor::menuView()
 
     ImGui::Separator();
 
+    // View centering
+    if (ImGui::MenuItem("Center View", "C"))
+    {
+        m_view.centerOnNet(net());
+    }
+
+    ImGui::Separator();
+
     // Remote control section
     if (ImGui::BeginMenu("Remote Control"))
     {
@@ -378,6 +386,10 @@ void Editor::menuActions()
 //------------------------------------------------------------------------------
 void Editor::menuGraphEvents()
 {
+    // Never show Graph Events menu for GRAFCET mode
+    if (net().type() == TypeOfNet::GRAFCET)
+        return;
+
     if ((net().type() != TypeOfNet::TimedEventGraph) && !isEventGraph(net()))
         return;
 

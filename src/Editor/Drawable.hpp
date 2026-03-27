@@ -27,7 +27,7 @@
 
 namespace tpne {
 
-void drawArc(ImDrawList* draw_list, Node* from, Node* to, ImVec2* click_position,
+void drawArc(ImDrawList* draw_list, Node const* from, Node const* to, ImVec2 const* click_position,
              ImVec2 const& origin, ImVec2 const& cursor, float zoom = 1.0f);
 void drawArc(ImDrawList* draw_list, Arc const& arc, TypeOfNet const type,
              ImVec2 const& origin, float const alpha, float zoom = 1.0f);

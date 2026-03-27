@@ -64,9 +64,8 @@ public:
 
     //--------------------------------------------------------------------------
     //! \brief Reshape the canvas to fit the available window space.
-    //! \return The new canvas size.
     //--------------------------------------------------------------------------
-    ImVec2 reshape();
+    void reshape();
 
     //--------------------------------------------------------------------------
     //! \brief Handle mouse and keyboard input for the Petri net view.
@@ -112,6 +111,12 @@ public:
     //--------------------------------------------------------------------------
     void clearAllSelections();
 
+    //--------------------------------------------------------------------------
+    //! \brief Center the view on the given net, adjusting scrolling and zoom.
+    //! \param[in] net The net to center on.
+    //--------------------------------------------------------------------------
+    void centerOnNet(Net const& net);
+
     //! \brief Grid layout configuration (public for menu access)
     GridLayout grid;
 
@@ -131,8 +136,8 @@ private:
         static constexpr float ZOOM_MAX = 5.0f;
         ImDrawList* draw_list = nullptr;
 
-        ImVec2 getMousePosition();
-        ImVec2 reshape();
+        ImVec2 getMousePosition() const;
+        void reshape();
         void push();
         void pop();
     };
@@ -165,27 +170,46 @@ private:
     };
 
     // Input handling helpers
-    bool isMouseClicked(ImGuiMouseButton& key);
-    bool isMouseReleased(ImGuiMouseButton& key);
-    bool isMouseDraggingView(ImGuiMouseButton const& key);
+    bool isMouseClicked(ImGuiMouseButton& key) const;
+    bool isMouseReleased(ImGuiMouseButton& key) const;
+    bool isMouseDraggingView(ImGuiMouseButton const& key) const;
     void handleAddNode(ImGuiMouseButton button);
     void handleArcOrigin();
     void handleMoveNode();
     void handleArcDestination();
     void handleSelection(ImGuiMouseButton button);
 
+    // Input handling helpers (split from onHandleInput)
+    void updateHoverState();
+    void handleContextMenu();
+    void handleDoubleClickRename(Simulation& simulation);
+    void handleMouseClicksAndDrags(Net& net, Simulation& simulation);
+    void handleMouseRelease(Net& net);
+    void handleMouseWheelZoom();
+    void handleKeyboardShortcuts(Net& net, Simulation& simulation);
+    void handleTokenShortcuts(Net& net);
+    void handleEditingShortcuts(Net& net, Simulation& simulation);
+
     // Drawing helpers
-    void drawGrid(ImDrawList* draw_list, bool const running);
+    void drawGrid(ImDrawList* draw_list, bool const running, bool const has_error = false);
     void drawRubberBand(ImDrawList* draw_list);
+    void drawNetElements(Net& net, Simulation& simulation, float alpha, float zoom);
+    void drawInteractiveElements(float zoom);
+    void drawHoverEffects(Net& net, float zoom);
+    void drawSelectionHighlights(Net& net, float zoom);
+
+    // Tooltip helpers
+    void showPlaceTooltip(Place const& place, TypeOfNet type);
+    void showTransitionTooltip(Transition const& trans, TypeOfNet type);
 
     // Selection management
-    bool isNodeSelected(Node* node) const;
+    bool isNodeSelected(Node const* node) const;
     void selectNode(Node* node, bool add_to_selection);
     void deselectNode(Node* node);
     void clearSelection();
     void selectNodesInRect(ImVec2 const& min, ImVec2 const& max);
     Arc* getArc(ImVec2 const& position);
-    bool isArcSelected(Arc* arc) const;
+    bool isArcSelected(Arc const* arc) const;
     void selectArc(Arc* arc, bool add_to_selection);
     void deselectArc(Arc* arc);
     void clearArcSelection();

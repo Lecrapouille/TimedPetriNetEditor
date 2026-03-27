@@ -25,6 +25,7 @@
 #include "Editor/KeyBindings.hpp"
 
 #include <algorithm>
+#include <limits>
 #include <map>
 #include <cmath>
 
@@ -50,7 +51,7 @@ void PetriView::Canvas::pop()
 }
 
 //------------------------------------------------------------------------------
-ImVec2 PetriView::Canvas::reshape()
+void PetriView::Canvas::reshape()
 {
     // ImDrawList API uses screen coordinates
     corners[0] = ImGui::GetCursorScreenPos();
@@ -63,13 +64,12 @@ ImVec2 PetriView::Canvas::reshape()
 
     // Lock scrolled origin
     origin = corners[0] + scrolling;
-    return size;
 }
 
 //------------------------------------------------------------------------------
-ImVec2 PetriView::reshape()
+void PetriView::reshape()
 {
-    return m_canvas.reshape();
+    m_canvas.reshape();
 }
 
 //------------------------------------------------------------------------------
@@ -89,17 +89,73 @@ void PetriView::saveViewState(Document::ViewState& state) const
 }
 
 //------------------------------------------------------------------------------
-ImVec2 PetriView::Canvas::getMousePosition()
+void PetriView::centerOnNet(Net const& net)
 {
-    ImGuiIO& io = ImGui::GetIO();
+    // Calculate bounding box of all nodes
+    if (net.places().empty() && net.transitions().empty())
+        return;
+
+    float min_x = std::numeric_limits<float>::max();
+    float min_y = std::numeric_limits<float>::max();
+    float max_x = std::numeric_limits<float>::lowest();
+    float max_y = std::numeric_limits<float>::lowest();
+
+    for (auto const& place : net.places())
+    {
+        min_x = std::min(min_x, place.x);
+        min_y = std::min(min_y, place.y);
+        max_x = std::max(max_x, place.x);
+        max_y = std::max(max_y, place.y);
+    }
+
+    for (auto const& trans : net.transitions())
+    {
+        min_x = std::min(min_x, trans.x);
+        min_y = std::min(min_y, trans.y);
+        max_x = std::max(max_x, trans.x);
+        max_y = std::max(max_y, trans.y);
+    }
+
+    // Add margin
+    const float margin = 50.0f;
+    min_x -= margin;
+    min_y -= margin;
+    max_x += margin;
+    max_y += margin;
+
+    float net_width = max_x - min_x;
+    float net_height = max_y - min_y;
+
+    // Calculate zoom to fit the net in the canvas
+    float zoom_x = m_canvas.size.x / net_width;
+    float zoom_y = m_canvas.size.y / net_height;
+    float new_zoom = std::min(zoom_x, zoom_y);
+
+    // Clamp zoom to reasonable bounds
+    new_zoom = std::clamp(new_zoom, Canvas::ZOOM_MIN, Canvas::ZOOM_MAX);
+    m_canvas.zoom = new_zoom;
+
+    // Center the net in the canvas
+    float center_x = (min_x + max_x) / 2.0f;
+    float center_y = (min_y + max_y) / 2.0f;
+
+    m_canvas.scrolling.x = m_canvas.size.x / 2.0f - center_x * new_zoom;
+    m_canvas.scrolling.y = m_canvas.size.y / 2.0f - center_y * new_zoom;
+    m_canvas.origin = m_canvas.corners[0] + m_canvas.scrolling;
+}
+
+//------------------------------------------------------------------------------
+ImVec2 PetriView::Canvas::getMousePosition() const
+{
+    ImGuiIO const& io = ImGui::GetIO();
     ImVec2 pos = io.MousePos - origin;
     return ImVec2(pos.x / zoom, pos.y / zoom);
 }
 
 //------------------------------------------------------------------------------
-bool PetriView::isMouseReleased(ImGuiMouseButton& key)
+bool PetriView::isMouseReleased(ImGuiMouseButton& key) const
 {
-    ImGuiIO& io = ImGui::GetIO();
+    ImGuiIO const& io = ImGui::GetIO();
     if ((io.MousePos.x >= m_canvas.corners[0].x) &&
         (io.MousePos.x <= m_canvas.corners[1].x) &&
         (io.MousePos.y >= m_canvas.corners[0].y) &&
@@ -125,9 +181,9 @@ bool PetriView::isMouseReleased(ImGuiMouseButton& key)
 }
 
 //------------------------------------------------------------------------------
-bool PetriView::isMouseClicked(ImGuiMouseButton& key)
+bool PetriView::isMouseClicked(ImGuiMouseButton& key) const
 {
-    ImGuiIO& io = ImGui::GetIO();
+    ImGuiIO const& io = ImGui::GetIO();
     if ((io.MousePos.x >= m_canvas.corners[0].x) &&
         (io.MousePos.x <= m_canvas.corners[1].x) &&
         (io.MousePos.y >= m_canvas.corners[0].y) &&
@@ -153,7 +209,7 @@ bool PetriView::isMouseClicked(ImGuiMouseButton& key)
 }
 
 //------------------------------------------------------------------------------
-bool PetriView::isMouseDraggingView(ImGuiMouseButton const& button)
+bool PetriView::isMouseDraggingView(ImGuiMouseButton const& button) const
 {
     (void) button;
     const float mouse_threshold_for_pan = grid.menu ? -1.0f : 0.0f;
@@ -163,7 +219,7 @@ bool PetriView::isMouseDraggingView(ImGuiMouseButton const& button)
 //------------------------------------------------------------------------------
 void PetriView::handleMoveNode()
 {
-    if (m_mouse.selection.size() == 0u)
+    if (m_mouse.selection.empty())
     {
         Node* node = m_editor.getNode(m_mouse.position);
         if (node != nullptr)
@@ -179,10 +235,10 @@ void PetriView::handleMoveNode()
 }
 
 //------------------------------------------------------------------------------
-bool PetriView::isNodeSelected(Node* node) const
+bool PetriView::isNodeSelected(Node const* node) const
 {
     if (node == nullptr) return false;
-    for (auto* n : m_mouse.selected_nodes)
+    for (auto const* n : m_mouse.selected_nodes)
     {
         if (n == node) return true;
     }
@@ -273,7 +329,22 @@ Arc* PetriView::getArc(ImVec2 const& position)
     for (auto& arc : m_current_net->arcs())
     {
         ImVec2 from_pos(arc.from.x, arc.from.y);
-        ImVec2 to_pos(arc.to.x, arc.to.y);
+        ImVec2 to_pos;
+
+        // In TimedEventGraph mode, arcs from Transition skip the implicit Place
+        // and are drawn directly to the next Transition
+        if (m_current_net->type() == TypeOfNet::TimedEventGraph &&
+            arc.from.type == Node::Type::Transition &&
+            !arc.to.arcsOut.empty())
+        {
+            Node const& next = arc.to.arcsOut[0]->to;
+            to_pos = ImVec2(next.x, next.y);
+        }
+        else
+        {
+            to_pos = ImVec2(arc.to.x, arc.to.y);
+        }
+
         float dist = pointToSegmentDistance(position, from_pos, to_pos);
         if (dist < min_dist)
         {
@@ -285,10 +356,10 @@ Arc* PetriView::getArc(ImVec2 const& position)
 }
 
 //------------------------------------------------------------------------------
-bool PetriView::isArcSelected(Arc* arc) const
+bool PetriView::isArcSelected(Arc const* arc) const
 {
     if (arc == nullptr) return false;
-    for (auto* a : m_mouse.selected_arcs)
+    for (auto const* a : m_mouse.selected_arcs)
     {
         if (a == arc) return true;
     }
@@ -347,7 +418,7 @@ void PetriView::copySelection()
 
     m_editor.clearClipboard();
 
-    float sum_x = 0.0f, sum_y = 0.0f;
+    float sum_x = 0.0f; float sum_y = 0.0f;
     for (auto* node : m_mouse.selected_nodes)
     {
         sum_x += node->x;
@@ -362,11 +433,11 @@ void PetriView::copySelection()
             m_editor.addToClipboard(*reinterpret_cast<Transition*>(node));
         }
     }
-    m_editor.setClipboardCenter(sum_x / m_mouse.selected_nodes.size(),
-                                sum_y / m_mouse.selected_nodes.size());
+    m_editor.setClipboardCenter(sum_x / static_cast<float>(m_mouse.selected_nodes.size()),
+                                sum_y / static_cast<float>(m_mouse.selected_nodes.size()));
 
     // Copy arcs between selected nodes
-    for (auto& arc : m_current_net->arcs())
+    for (auto const& arc : m_current_net->arcs())
     {
         bool from_selected = isNodeSelected(&arc.from);
         bool to_selected = isNodeSelected(&arc.to);
@@ -419,7 +490,7 @@ void PetriView::handleSelection(ImGuiMouseButton button)
             }
             m_mouse.is_dragging_nodes = true;
             m_mouse.drag_offsets.clear();
-            for (auto* n : m_mouse.selected_nodes)
+            for (auto const* n : m_mouse.selected_nodes)
             {
                 m_mouse.drag_offsets.push_back(
                     ImVec2(n->x - m_mouse.position.x, n->y - m_mouse.position.y));
@@ -468,8 +539,8 @@ void PetriView::handleAddNode(ImGuiMouseButton button)
 
     if (!m_current_simulation->isRunning())
     {
-        Node* node = m_editor.getNode(m_mouse.position);
-        Arc* arc = getArc(m_mouse.position);
+        Node const* node = m_editor.getNode(m_mouse.position);
+        Arc const* arc = getArc(m_mouse.position);
 
         if (button == MOUSE_BOUTON_ADD_PLACE)
         {
@@ -589,316 +660,308 @@ void PetriView::handleArcDestination()
 }
 
 //------------------------------------------------------------------------------
-void PetriView::onHandleInput(Net& net, Simulation& simulation)
+void PetriView::updateHoverState()
 {
-    // Store current net and simulation
-    m_current_net = &net;
-    m_current_simulation = &simulation;
-
-    // Create invisible button to catch interactions
-    ImGui::InvisibleButton("canvas", m_canvas.size,
-                           ImGuiButtonFlags_MouseButtonLeft |
-                           ImGuiButtonFlags_MouseButtonRight |
-                           ImGuiButtonFlags_MouseButtonMiddle);
-
-    m_mouse.position = m_canvas.getMousePosition();
-    ImGuiMouseButton button;
-
-    // Update hover state
     if (ImGui::IsItemHovered())
     {
         m_mouse.hovered_node = m_editor.getNode(m_mouse.position);
-        if (m_mouse.hovered_node == nullptr)
-        {
-            m_mouse.hovered_arc = getArc(m_mouse.position);
-        }
-        else
-        {
-            m_mouse.hovered_arc = nullptr;
-        }
+        m_mouse.hovered_arc = (m_mouse.hovered_node == nullptr)
+            ? getArc(m_mouse.position) : nullptr;
     }
     else
     {
         m_mouse.hovered_node = nullptr;
         m_mouse.hovered_arc = nullptr;
     }
+}
 
-    // Context menu on right click
-    if (ImGui::IsMouseClicked(ImGuiMouseButton_Right) && ImGui::IsItemHovered())
+//------------------------------------------------------------------------------
+void PetriView::handleContextMenu()
+{
+    if (!ImGui::IsMouseClicked(ImGuiMouseButton_Right) || !ImGui::IsItemHovered())
+        return;
+
+    Node* node = m_editor.getNode(m_mouse.position);
+    Arc* arc = getArc(m_mouse.position);
+
+    if (node != nullptr)
     {
-        Node* node = m_editor.getNode(m_mouse.position);
-        Arc* arc = getArc(m_mouse.position);
-        if (node != nullptr)
-        {
-            m_mouse.context_menu_node = node;
-            m_mouse.context_menu_arc = nullptr;
-            ImGui::OpenPopup("NodeContextMenu");
-        }
-        else if (arc != nullptr)
-        {
-            m_mouse.context_menu_node = nullptr;
-            m_mouse.context_menu_arc = arc;
-            ImGui::OpenPopup("ArcContextMenu");
-        }
+        m_mouse.context_menu_node = node;
+        m_mouse.context_menu_arc = nullptr;
+        ImGui::OpenPopup("NodeContextMenu");
     }
-
-    // Double click to rename node
-    if (!simulation.isRunning() && ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left) && ImGui::IsItemHovered())
+    else if (arc != nullptr)
     {
-        Node* node = m_editor.getNode(m_mouse.position);
-        if (node != nullptr && m_mouse.editing_node == nullptr)
-        {
-            m_mouse.editing_node = node;
-            strncpy(m_mouse.edit_buffer, node->caption.c_str(), sizeof(m_mouse.edit_buffer) - 1);
-            m_mouse.edit_buffer[sizeof(m_mouse.edit_buffer) - 1] = '\0';
-            m_mouse.edit_focus_requested = true;
-        }
+        m_mouse.context_menu_node = nullptr;
+        m_mouse.context_menu_arc = arc;
+        ImGui::OpenPopup("ArcContextMenu");
     }
+}
 
-    // Handle mouse clicks and drags
-    if (ImGui::IsItemActive() && ImGui::IsItemHovered())
+//------------------------------------------------------------------------------
+void PetriView::handleDoubleClickRename(Simulation& simulation)
+{
+    if (simulation.isRunning() || !ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left) ||
+        !ImGui::IsItemHovered())
+        return;
+
+    Node* node = m_editor.getNode(m_mouse.position);
+    if (node != nullptr && m_mouse.editing_node == nullptr)
     {
-        if (isMouseClicked(button))
-        {
-            m_editor.clearMarkedArcs();
-
-            if (button == MOUSE_BOUTON_HANDLE_ARC)
-            {
-                handleArcOrigin();
-            }
-            else
-            {
-                handleAddNode(button);
-            }
-        }
-        else if (isMouseDraggingView(button) && !m_mouse.handling_arc)
-        {
-            // Pan the view
-            ImGuiIO& io = ImGui::GetIO();
-            m_canvas.scrolling.x += io.MouseDelta.x;
-            m_canvas.scrolling.y += io.MouseDelta.y;
-        }
-        else if (m_mouse.is_dragging_nodes && !m_mouse.selected_nodes.empty())
-        {
-            // Drag selected nodes
-            for (size_t i = 0; i < m_mouse.selected_nodes.size(); ++i)
-            {
-                if (i < m_mouse.drag_offsets.size())
-                {
-                    m_mouse.selected_nodes[i]->x = m_mouse.position.x + m_mouse.drag_offsets[i].x;
-                    m_mouse.selected_nodes[i]->y = m_mouse.position.y + m_mouse.drag_offsets[i].y;
-                }
-            }
-            net.modified = true;
-        }
+        m_mouse.editing_node = node;
+        strncpy(m_mouse.edit_buffer, node->caption.c_str(), sizeof(m_mouse.edit_buffer) - 1);
+        m_mouse.edit_buffer[sizeof(m_mouse.edit_buffer) - 1] = '\0';
+        m_mouse.edit_focus_requested = true;
     }
+}
 
-    // Handle mouse release
-    if (isMouseReleased(button))
+//------------------------------------------------------------------------------
+void PetriView::handleMouseClicksAndDrags(Net& net, Simulation& simulation)
+{
+    if (!ImGui::IsItemActive() || !ImGui::IsItemHovered())
+        return;
+
+    ImGuiMouseButton button;
+    if (isMouseClicked(button))
     {
-        m_mouse.is_dragging_view = false;
-        m_mouse.selection.clear();
-
-        // Finish rubber band selection
-        if (m_mouse.is_rubber_band)
-        {
-            bool ctrl_pressed = ImGui::GetIO().KeyCtrl;
-            if (!ctrl_pressed)
-            {
-                clearSelection();
-            }
-            selectNodesInRect(m_mouse.rubber_band_start, m_mouse.position);
-            m_mouse.is_rubber_band = false;
-        }
-
-        // Snap dragged nodes to grid
-        if (m_mouse.is_dragging_nodes && grid.snap)
-        {
-            for (auto* node : m_mouse.selected_nodes)
-            {
-                node->x = grid.snapValue(node->x);
-                node->y = grid.snapValue(node->y);
-            }
-        }
-
-        m_mouse.is_dragging_nodes = false;
-        m_mouse.drag_offsets.clear();
-
-        // Finish arc creation
+        m_editor.clearMarkedArcs();
         if (button == MOUSE_BOUTON_HANDLE_ARC)
+            handleArcOrigin();
+        else
+            handleAddNode(button);
+    }
+    else if (isMouseDraggingView(button) && !m_mouse.handling_arc)
+    {
+        ImGuiIO const& io = ImGui::GetIO();
+        m_canvas.scrolling.x += io.MouseDelta.x;
+        m_canvas.scrolling.y += io.MouseDelta.y;
+    }
+    else if (m_mouse.is_dragging_nodes && !m_mouse.selected_nodes.empty())
+    {
+        for (size_t i = 0; i < m_mouse.selected_nodes.size(); ++i)
         {
-            if (!ImGui::GetIO().KeyCtrl)
+            if (i < m_mouse.drag_offsets.size())
             {
-                handleArcDestination();
+                m_mouse.selected_nodes[i]->x = m_mouse.position.x + m_mouse.drag_offsets[i].x;
+                m_mouse.selected_nodes[i]->y = m_mouse.position.y + m_mouse.drag_offsets[i].y;
             }
+        }
+        net.modified = true;
+    }
+}
+
+//------------------------------------------------------------------------------
+void PetriView::handleMouseRelease(Net& /*net*/)
+{
+    ImGuiMouseButton button;
+    if (!isMouseReleased(button))
+        return;
+
+    m_mouse.is_dragging_view = false;
+    m_mouse.selection.clear();
+
+    if (m_mouse.is_rubber_band)
+    {
+        if (!ImGui::GetIO().KeyCtrl)
+            clearSelection();
+        selectNodesInRect(m_mouse.rubber_band_start, m_mouse.position);
+        m_mouse.is_rubber_band = false;
+    }
+
+    if (m_mouse.is_dragging_nodes && grid.snap)
+    {
+        for (auto* node : m_mouse.selected_nodes)
+        {
+            node->x = grid.snapValue(node->x);
+            node->y = grid.snapValue(node->y);
         }
     }
 
-    // Mouse wheel zoom
-    if (ImGui::IsItemHovered())
+    m_mouse.is_dragging_nodes = false;
+    m_mouse.drag_offsets.clear();
+
+    if (button == MOUSE_BOUTON_HANDLE_ARC && !ImGui::GetIO().KeyCtrl)
     {
-        ImGuiIO& io = ImGui::GetIO();
-        if (io.MouseWheel != 0.0f)
-        {
-            float old_zoom = m_canvas.zoom;
-            float zoom_delta = io.MouseWheel * 0.1f;
-            float new_zoom = old_zoom + zoom_delta;
-            if (new_zoom < Canvas::ZOOM_MIN) new_zoom = Canvas::ZOOM_MIN;
-            if (new_zoom > Canvas::ZOOM_MAX) new_zoom = Canvas::ZOOM_MAX;
+        handleArcDestination();
+    }
+}
 
-            if (new_zoom != old_zoom)
-            {
-                // Keep mouse position stable during zoom
-                ImVec2 mouse_screen = io.MousePos - m_canvas.corners[0];
-                ImVec2 mouse_world = m_mouse.position;
+//------------------------------------------------------------------------------
+void PetriView::handleMouseWheelZoom()
+{
+    if (!ImGui::IsItemHovered())
+        return;
 
-                m_canvas.zoom = new_zoom;
-                m_canvas.scrolling.x = mouse_screen.x - mouse_world.x * new_zoom;
-                m_canvas.scrolling.y = mouse_screen.y - mouse_world.y * new_zoom;
-                m_canvas.origin = m_canvas.corners[0] + m_canvas.scrolling;
-            }
-        }
+    ImGuiIO const& io = ImGui::GetIO();
+    if (io.MouseWheel == 0.0f)
+        return;
+
+    float old_zoom = m_canvas.zoom;
+    float new_zoom = old_zoom + io.MouseWheel * 0.1f;
+    new_zoom = std::max(Canvas::ZOOM_MIN, std::min(Canvas::ZOOM_MAX, new_zoom));
+
+    if (new_zoom != old_zoom)
+    {
+        ImVec2 mouse_screen = io.MousePos - m_canvas.corners[0];
+        m_canvas.zoom = new_zoom;
+        m_canvas.scrolling.x = mouse_screen.x - m_mouse.position.x * new_zoom;
+        m_canvas.scrolling.y = mouse_screen.y - m_mouse.position.y * new_zoom;
+        m_canvas.origin = m_canvas.corners[0] + m_canvas.scrolling;
+    }
+}
+
+//------------------------------------------------------------------------------
+void PetriView::handleKeyboardShortcuts(Net& net, Simulation& simulation)
+{
+    if (ImGui::GetIO().WantTextInput)
+        return;
+
+    if (ImGui::IsKeyPressed(KEY_RUN_SIMULATION) ||
+        ImGui::IsKeyPressed(KEY_RUN_SIMULATION_ALT))
+    {
+        m_editor.toogleStartAllSimulations();
+        return;
     }
 
-    // Global keyboard shortcuts
-    bool can_use_shortcuts = !ImGui::GetIO().WantTextInput;
-
-    if (can_use_shortcuts)
+    if (!simulation.isRunning() && ImGui::GetIO().KeyCtrl)
     {
-        // Simulation toggle
-        if (ImGui::IsKeyPressed(KEY_RUN_SIMULATION) ||
-            ImGui::IsKeyPressed(KEY_RUN_SIMULATION_ALT))
+        if (ImGui::IsKeyPressed(KEY_UNDO, false))
+            m_editor.undo();
+        else if (ImGui::IsKeyPressed(KEY_REDO, false))
+            m_editor.redo();
+        else if (ImGui::IsKeyPressed(ImGuiKey_C, false))
+            copySelection();
+        else if (ImGui::IsKeyPressed(ImGuiKey_V, false))
+            pasteClipboard();
+        else if (ImGui::IsKeyPressed(ImGuiKey_A, false))
         {
-            m_editor.toogleStartAllSimulations();
-        }
-        // Undo/Redo and clipboard
-        else if (!simulation.isRunning() && ImGui::GetIO().KeyCtrl)
-        {
-            if (ImGui::IsKeyPressed(KEY_UNDO, false))
-            {
-                m_editor.undo();
-            }
-            else if (ImGui::IsKeyPressed(KEY_REDO, false))
-            {
-                m_editor.redo();
-            }
-            else if (ImGui::IsKeyPressed(ImGuiKey_C, false))
-            {
-                copySelection();
-            }
-            else if (ImGui::IsKeyPressed(ImGuiKey_V, false))
-            {
-                pasteClipboard();
-            }
-            else if (ImGui::IsKeyPressed(ImGuiKey_A, false))
-            {
-                // Select all
-                clearSelection();
-                for (auto& place : net.places())
-                    m_mouse.selected_nodes.push_back(&place);
-                for (auto& trans : net.transitions())
-                    m_mouse.selected_nodes.push_back(&trans);
-            }
+            clearSelection();
+            for (auto& place : net.places())
+                m_mouse.selected_nodes.push_back(&place);
+            for (auto& trans : net.transitions())
+                m_mouse.selected_nodes.push_back(&trans);
         }
     }
+}
 
-    // Token shortcuts (work during simulation)
-    if (ImGui::IsItemHovered() && can_use_shortcuts)
+//------------------------------------------------------------------------------
+void PetriView::handleTokenShortcuts(Net& net)
+{
+    if (!ImGui::IsItemHovered() || ImGui::GetIO().WantTextInput)
+        return;
+
+    bool increment = ImGui::IsKeyPressed(KEY_INCREMENT_TOKENS) ||
+                     ImGui::IsKeyPressed(ImGuiKey_Equal);
+    bool decrement = ImGui::IsKeyPressed(KEY_DECREMENT_TOKENS) ||
+                     ImGui::IsKeyPressed(ImGuiKey_Minus);
+
+    if (!increment && !decrement)
+        return;
+
+    Node* node = m_editor.getNode(m_mouse.position);
+    if (node != nullptr && node->type == Node::Type::Place)
     {
-        if (ImGui::IsKeyPressed(KEY_INCREMENT_TOKENS) ||
-            ImGui::IsKeyPressed(ImGuiKey_Equal))
+        Place* place = reinterpret_cast<Place*>(node);
+        if (increment)
+            place->increment(1u);
+        else
+            place->decrement(1u);
+        net.modified = true;
+    }
+}
+
+//------------------------------------------------------------------------------
+void PetriView::handleEditingShortcuts(Net& net, Simulation& simulation)
+{
+    if (!ImGui::IsItemHovered() || ImGui::GetIO().WantTextInput || simulation.isRunning())
+        return;
+
+    if (ImGui::IsKeyPressed(KEY_MOVE_PETRI_NODE, false) ||
+        ImGui::IsKeyPressed(ImGuiKey_M, false))
+    {
+        handleMoveNode();
+    }
+    else if (ImGui::IsKeyPressed(ImGuiKey_G, false))
+    {
+        grid.snap ^= true;
+    }
+    else if (ImGui::IsKeyPressed(ImGuiKey_C, false))
+    {
+        centerOnNet(net);
+    }
+    else if (ImGui::IsKeyPressed(KEY_SPRINGIFY_NET))
+    {
+        if (m_editor.m_force_directed.isRunning())
         {
-            Node* node = m_editor.getNode(m_mouse.position);
-            if ((node != nullptr) && (node->type == Node::Type::Place))
-            {
-                reinterpret_cast<Place*>(node)->increment(1u);
-                net.modified = true;
-            }
+            m_editor.m_force_directed.reset();
+            m_editor.m_messages.setInfo("Auto-layout stopped");
         }
-        else if (ImGui::IsKeyPressed(KEY_DECREMENT_TOKENS) ||
-                 ImGui::IsKeyPressed(ImGuiKey_Minus))
+        else
         {
-            Node* node = m_editor.getNode(m_mouse.position);
-            if ((node != nullptr) && (node->type == Node::Type::Place))
-            {
-                reinterpret_cast<Place*>(node)->decrement(1u);
-                net.modified = true;
-            }
+            m_editor.springify();
+            m_editor.m_messages.setInfo("Auto-layout started");
         }
     }
-
-    // Editing shortcuts (disabled during simulation)
-    if (ImGui::IsItemHovered() && can_use_shortcuts && !simulation.isRunning())
+    else if (ImGui::IsKeyPressed(KEY_DELETE_NODE))
     {
-        if (ImGui::IsKeyPressed(KEY_MOVE_PETRI_NODE, false))
+        bool deleted_something = false;
+
+        if (!m_mouse.selected_arcs.empty())
         {
-            handleMoveNode();
+            for (auto const* arc : m_mouse.selected_arcs)
+                m_editor.removeArc(*arc);
+            m_mouse.selected_arcs.clear();
+            deleted_something = true;
         }
-        else if (ImGui::IsKeyPressed(ImGuiKey_G, false))
+
+        if (!m_mouse.selected_nodes.empty())
         {
-            grid.snap ^= true;
+            for (auto const* node : m_mouse.selected_nodes)
+                m_editor.removeNode(const_cast<Node&>(*node));
+            m_mouse.selected_nodes.clear();
+            deleted_something = true;
         }
-        else if (ImGui::IsKeyPressed(KEY_SPRINGIFY_NET))
+
+        if (!deleted_something)
         {
-            // Toggle force-directed layout
-            if (m_editor.m_force_directed.isRunning())
+            Arc const* arc = getArc(m_mouse.position);
+            if (arc != nullptr)
             {
-                m_editor.m_force_directed.reset();
-                m_editor.m_messages.setInfo("Auto-layout stopped");
+                m_editor.removeArc(*arc);
             }
             else
             {
-                m_editor.springify();
-                m_editor.m_messages.setInfo("Auto-layout started");
-            }
-        }
-        else if (ImGui::IsKeyPressed(ImGuiKey_M, false))
-        {
-            handleMoveNode();
-        }
-        else if (ImGui::IsKeyPressed(KEY_DELETE_NODE))
-        {
-            // Delete selected elements
-            bool deleted_something = false;
-            if (!m_mouse.selected_arcs.empty())
-            {
-                for (auto* arc : m_mouse.selected_arcs)
-                {
-                    m_editor.removeArc(*arc);
-                }
-                m_mouse.selected_arcs.clear();
-                deleted_something = true;
-            }
-            if (!m_mouse.selected_nodes.empty())
-            {
-                for (auto* node : m_mouse.selected_nodes)
-                {
+                Node* node = m_editor.getNode(m_mouse.position);
+                if (node != nullptr)
                     m_editor.removeNode(*node);
-                }
-                m_mouse.selected_nodes.clear();
-                deleted_something = true;
-            }
-            // If nothing selected, delete hovered element
-            if (!deleted_something)
-            {
-                Arc* arc = getArc(m_mouse.position);
-                if (arc != nullptr)
-                {
-                    m_editor.removeArc(*arc);
-                }
-                else
-                {
-                    Node* node = m_editor.getNode(m_mouse.position);
-                    if (node != nullptr)
-                    {
-                        m_editor.removeNode(*node);
-                    }
-                }
             }
         }
     }
+}
 
-    // Check for window close
+//------------------------------------------------------------------------------
+void PetriView::onHandleInput(Net& net, Simulation& simulation)
+{
+    m_current_net = &net;
+    m_current_simulation = &simulation;
+
+    ImGui::InvisibleButton("canvas", m_canvas.size,
+                           ImGuiButtonFlags_MouseButtonLeft |
+                           ImGuiButtonFlags_MouseButtonRight |
+                           ImGuiButtonFlags_MouseButtonMiddle);
+
+    m_mouse.position = m_canvas.getMousePosition();
+
+    updateHoverState();
+    handleContextMenu();
+    handleDoubleClickRename(simulation);
+    handleMouseClicksAndDrags(net, simulation);
+    handleMouseRelease(net);
+    handleMouseWheelZoom();
+    handleKeyboardShortcuts(net, simulation);
+    handleTokenShortcuts(net);
+    handleEditingShortcuts(net, simulation);
+
     if (m_editor.windowShouldClose())
     {
         m_editor.close();
@@ -906,35 +969,20 @@ void PetriView::onHandleInput(Net& net, Simulation& simulation)
 }
 
 //------------------------------------------------------------------------------
-void PetriView::drawPetriNet(Net& net, Simulation& simulation, bool interactive,
-                             bool show_hover)
+void PetriView::drawNetElements(Net& net, Simulation& simulation, float alpha, float zoom)
 {
-    m_current_net = &net;
-    m_current_simulation = &simulation;
-
-    const float alpha = 1.0f;
-
-    m_canvas.push();
-
-    // Draw grid background
-    drawGrid(m_canvas.draw_list, simulation.isRunning());
-
     ImVec2 const& origin = m_canvas.origin;
-    const float zoom = m_canvas.zoom;
 
     // Draw arcs
-    for (auto const& it : net.arcs())
+    for (auto const& arc : net.arcs())
     {
-        drawArc(m_canvas.draw_list, it, net.type(), origin, alpha, zoom);
+        drawArc(m_canvas.draw_list, arc, net.type(), origin, alpha, zoom);
     }
 
     // Draw places
     auto const& places = net.places();
     for (size_t i = 0; i < places.size(); ++i)
     {
-        // For GRAFCET, determine if this is an initial step:
-        // - During simulation: use stored initial marking (so double square stays visible)
-        // - Before simulation: use current tokens (for editing)
         bool isInitialStep = false;
         if (net.type() == TypeOfNet::GRAFCET)
         {
@@ -948,172 +996,284 @@ void PetriView::drawPetriNet(Net& net, Simulation& simulation, bool interactive,
     }
 
     // Draw transitions
-    for (auto const& it : net.transitions())
+    for (auto const& trans : net.transitions())
     {
-        drawTransition(m_canvas.draw_list, it, net.type(), origin,
+        drawTransition(m_canvas.draw_list, trans, net.type(), origin,
                        m_editor.showTransitionCaptions(), alpha, zoom);
     }
 
-    // Draw timed tokens in transit
-    for (auto const& it : simulation.timedTokens())
+    // Draw animated tokens in transit
+    for (auto const& token : simulation.animatedTokens())
     {
-        drawTimedToken(m_canvas.draw_list, it.tokens,
-                       origin.x + it.x * zoom, origin.y + it.y * zoom, zoom);
-    }
-
-    if (interactive)
-    {
-        // Update node positions during legacy move
-        for (auto& it : m_mouse.selection)
-        {
-            it->x = m_mouse.position.x;
-            it->y = m_mouse.position.y;
-        }
-
-        // Draw arc being created
-        if (m_mouse.handling_arc)
-        {
-            drawArc(m_canvas.draw_list, m_mouse.from, m_mouse.to, &m_mouse.clicked_at,
-                    origin, m_mouse.position, zoom);
-        }
+        drawTimedToken(m_canvas.draw_list, token.tokens,
+                       origin.x + token.x * zoom, origin.y + token.y * zoom, zoom);
     }
 
     // Draw critical cycle arcs (highlighted)
-    for (auto& it : m_editor.markedArcs())
+    for (auto* arc : m_editor.markedArcs())
     {
-        drawArc(m_canvas.draw_list, *it, net.type(), origin, -1.0f, zoom);
+        drawArc(m_canvas.draw_list, *arc, net.type(), origin, -1.0f, zoom);
+    }
+}
+
+//------------------------------------------------------------------------------
+void PetriView::drawInteractiveElements(float zoom)
+{
+    // Update node positions during legacy move
+    for (auto* node : m_mouse.selection)
+    {
+        node->x = m_mouse.position.x;
+        node->y = m_mouse.position.y;
+    }
+
+    // Draw arc being created
+    if (m_mouse.handling_arc)
+    {
+        drawArc(m_canvas.draw_list, m_mouse.from, m_mouse.to, &m_mouse.clicked_at,
+                m_canvas.origin, m_mouse.position, zoom);
+    }
+}
+
+//------------------------------------------------------------------------------
+void PetriView::showPlaceTooltip(Place const& place, TypeOfNet type)
+{
+    ImGui::BeginTooltip();
+
+    if (type == TypeOfNet::GRAFCET)
+    {
+        ImGui::Text("%s: %s", place.key.c_str(), place.caption.c_str());
+        if (place.tokens > 0)
+        {
+            ImGui::SameLine();
+            ImGui::TextColored(ImVec4(0.4f, 1.0f, 0.4f, 1.0f), "[ACTIVE]");
+        }
+        if (!place.actions.empty())
+        {
+            ImGui::Separator();
+            ImGui::Text("Actions:");
+            for (const auto& action : place.actions)
+            {
+                const char* qual_str = qualifierToStr(action.qualifier);
+                ImVec4 badge_color = ImVec4(0.7f, 0.5f, 0.2f, 1.0f);
+                if (action.qualifier == Action::Qualifier::N)
+                    badge_color = ImVec4(0.4f, 0.4f, 0.8f, 1.0f);
+                else if (action.qualifier == Action::Qualifier::S)
+                    badge_color = ImVec4(0.2f, 0.7f, 0.2f, 1.0f);
+                else if (action.qualifier == Action::Qualifier::R)
+                    badge_color = ImVec4(0.8f, 0.2f, 0.2f, 1.0f);
+                else if (action.qualifier == Action::Qualifier::P)
+                    badge_color = ImVec4(0.6f, 0.2f, 0.6f, 1.0f);
+
+                ImGui::TextColored(badge_color, "[%s]", qual_str);
+                ImGui::SameLine();
+                ImGui::Text("%s", action.name.c_str());
+                if (!action.script.empty())
+                {
+                    ImGui::SameLine();
+                    ImGui::TextColored(ImVec4(0.6f, 0.6f, 0.6f, 1.0f), "- %s", action.script.c_str());
+                }
+                if (action.duration > 0.0f)
+                {
+                    ImGui::SameLine();
+                    ImGui::TextColored(ImVec4(0.5f, 0.5f, 0.5f, 1.0f), "(%.1fs)", action.duration);
+                }
+            }
+        }
+    }
+    else
+    {
+        ImGui::Text("%s", place.key.c_str());
+        if (!place.caption.empty())
+        {
+            ImGui::SameLine();
+            ImGui::TextColored(ImVec4(0.7f, 0.7f, 0.7f, 1.0f), "(%s)", place.caption.c_str());
+        }
+        ImGui::Text("Tokens: %zu", place.tokens);
+    }
+
+    ImGui::EndTooltip();
+}
+
+//------------------------------------------------------------------------------
+void PetriView::showTransitionTooltip(Transition const& trans, TypeOfNet type)
+{
+    ImGui::BeginTooltip();
+
+    ImGui::Text("%s", trans.key.c_str());
+    if (!trans.caption.empty())
+    {
+        ImGui::SameLine();
+        ImGui::TextColored(ImVec4(0.7f, 0.7f, 0.7f, 1.0f), "(%s)", trans.caption.c_str());
+    }
+
+    if (type == TypeOfNet::GRAFCET)
+    {
+        if (trans.receptivity)
+            ImGui::TextColored(ImVec4(0.4f, 1.0f, 0.4f, 1.0f), "Receptivity: TRUE");
+        else
+            ImGui::TextColored(ImVec4(1.0f, 0.4f, 0.4f, 1.0f), "Receptivity: FALSE");
+
+        if (trans.delay > 0.0f)
+            ImGui::Text("Delay: %.1fs", trans.delay);
+    }
+    else if (type == TypeOfNet::TimedPetriNet || type == TypeOfNet::TimedEventGraph)
+    {
+        if (trans.isEnabled())
+            ImGui::TextColored(ImVec4(0.4f, 1.0f, 0.4f, 1.0f), "Enabled");
+        if (trans.canFire())
+            ImGui::TextColored(ImVec4(0.2f, 0.8f, 0.2f, 1.0f), "Can Fire");
+    }
+    else
+    {
+        if (trans.isEnabled())
+            ImGui::TextColored(ImVec4(0.4f, 1.0f, 0.4f, 1.0f), "Enabled (can fire)");
+        else
+            ImGui::TextColored(ImVec4(1.0f, 0.4f, 0.4f, 1.0f), "Not enabled");
+    }
+
+    ImGui::EndTooltip();
+}
+
+//------------------------------------------------------------------------------
+void PetriView::drawHoverEffects(Net& net, float zoom)
+{
+    ImVec2 const& origin = m_canvas.origin;
+    const ImU32 hover_color = IM_COL32(200, 200, 255, 180);
+
+    // Draw hovered arc highlight
+    if (m_mouse.hovered_arc != nullptr && !isArcSelected(m_mouse.hovered_arc))
+    {
+        ImVec2 from_pos = origin + ImVec2(m_mouse.hovered_arc->from.x * zoom,
+                                          m_mouse.hovered_arc->from.y * zoom);
+        ImVec2 to_pos;
+
+        // In TimedEventGraph mode, arcs from Transition skip the implicit Place
+        if (net.type() == TypeOfNet::TimedEventGraph &&
+            m_mouse.hovered_arc->from.type == Node::Type::Transition &&
+            !m_mouse.hovered_arc->to.arcsOut.empty())
+        {
+            Node const& next = m_mouse.hovered_arc->to.arcsOut[0]->to;
+            to_pos = origin + ImVec2(next.x * zoom, next.y * zoom);
+        }
+        else
+        {
+            to_pos = origin + ImVec2(m_mouse.hovered_arc->to.x * zoom,
+                                     m_mouse.hovered_arc->to.y * zoom);
+        }
+        m_canvas.draw_list->AddLine(from_pos, to_pos, hover_color, 3.5f * zoom);
+    }
+
+    // Draw hovered node highlight and tooltip
+    if (m_mouse.hovered_node != nullptr && !isNodeSelected(m_mouse.hovered_node))
+    {
+        ImVec2 p = origin + ImVec2(m_mouse.hovered_node->x * zoom,
+                                   m_mouse.hovered_node->y * zoom);
+
+        if (m_mouse.hovered_node->type == Node::Type::Place)
+        {
+            if (net.type() == TypeOfNet::GRAFCET)
+            {
+                float w = TRANS_WIDTH * zoom / 2.0f + 2.0f * zoom;
+                m_canvas.draw_list->AddRect(ImVec2(p.x - w, p.y - w),
+                                            ImVec2(p.x + w, p.y + w),
+                                            hover_color, 0.0f, ImDrawFlags_None, 2.0f * zoom);
+            }
+            else
+            {
+                float radius = PLACE_RADIUS * zoom + 2.0f * zoom;
+                m_canvas.draw_list->AddCircle(p, radius, hover_color, 64, 2.0f * zoom);
+            }
+
+            Place const* place = reinterpret_cast<Place const*>(m_mouse.hovered_node);
+            showPlaceTooltip(*place, net.type());
+        }
+        else
+        {
+            float w = TRANS_WIDTH * zoom / 2.0f + 2.0f * zoom;
+            float h = TRANS_HEIGHT * zoom / 2.0f + 2.0f * zoom;
+            m_canvas.draw_list->AddRect(ImVec2(p.x - w, p.y - h),
+                                        ImVec2(p.x + w, p.y + h),
+                                        hover_color, 0.0f, ImDrawFlags_None, 2.0f * zoom);
+
+            Transition const* trans = reinterpret_cast<Transition const*>(m_mouse.hovered_node);
+            showTransitionTooltip(*trans, net.type());
+        }
+    }
+}
+
+//------------------------------------------------------------------------------
+void PetriView::drawSelectionHighlights(Net& net, float zoom)
+{
+    ImVec2 const& origin = m_canvas.origin;
+    const ImU32 selection_color = IM_COL32(50, 150, 255, 255);
+
+    // Draw selected arcs
+    const float arc_thickness = 4.0f * zoom;
+    for (auto const* arc : m_mouse.selected_arcs)
+    {
+        ImVec2 from_pos = origin + ImVec2(arc->from.x * zoom, arc->from.y * zoom);
+        ImVec2 to_pos = origin + ImVec2(arc->to.x * zoom, arc->to.y * zoom);
+        m_canvas.draw_list->AddLine(from_pos, to_pos, selection_color, arc_thickness);
+    }
+
+    // Draw selected nodes
+    const float node_thickness = 3.0f * zoom;
+    for (auto const* node : m_mouse.selected_nodes)
+    {
+        ImVec2 p = origin + ImVec2(node->x * zoom, node->y * zoom);
+
+        if (node->type == Node::Type::Place)
+        {
+            if (net.type() == TypeOfNet::GRAFCET)
+            {
+                float w = TRANS_WIDTH * zoom / 2.0f + 4.0f * zoom;
+                m_canvas.draw_list->AddRect(ImVec2(p.x - w, p.y - w),
+                                            ImVec2(p.x + w, p.y + w),
+                                            selection_color, 0.0f, ImDrawFlags_None, node_thickness);
+            }
+            else
+            {
+                float radius = PLACE_RADIUS * zoom + 4.0f * zoom;
+                m_canvas.draw_list->AddCircle(p, radius, selection_color, 64, node_thickness);
+            }
+        }
+        else
+        {
+            float w = TRANS_WIDTH * zoom / 2.0f + 4.0f * zoom;
+            float h = TRANS_HEIGHT * zoom / 2.0f + 4.0f * zoom;
+            m_canvas.draw_list->AddRect(ImVec2(p.x - w, p.y - h),
+                                        ImVec2(p.x + w, p.y + h),
+                                        selection_color, 0.0f, ImDrawFlags_None, node_thickness);
+        }
+    }
+
+    drawRubberBand(m_canvas.draw_list);
+}
+
+//------------------------------------------------------------------------------
+void PetriView::drawPetriNet(Net& net, Simulation& simulation, bool interactive,
+                             bool show_hover)
+{
+    m_current_net = &net;
+    m_current_simulation = &simulation;
+
+    const float alpha = 1.0f;
+    const float zoom = m_canvas.zoom;
+
+    m_canvas.push();
+
+    drawGrid(m_canvas.draw_list, simulation.isRunning(), simulation.hasReceptivityErrors());
+    drawNetElements(net, simulation, alpha, zoom);
+
+    if (interactive)
+    {
+        drawInteractiveElements(zoom);
     }
 
     if (show_hover)
     {
-        // Draw hover effect
-        const ImU32 hover_color = IM_COL32(200, 200, 255, 180);
-        if (m_mouse.hovered_arc != nullptr && !isArcSelected(m_mouse.hovered_arc))
-        {
-            ImVec2 from_pos = origin + ImVec2(m_mouse.hovered_arc->from.x * zoom, m_mouse.hovered_arc->from.y * zoom);
-            ImVec2 to_pos = origin + ImVec2(m_mouse.hovered_arc->to.x * zoom, m_mouse.hovered_arc->to.y * zoom);
-            m_canvas.draw_list->AddLine(from_pos, to_pos, hover_color, 3.5f * zoom);
-        }
-
-        if (m_mouse.hovered_node != nullptr && !isNodeSelected(m_mouse.hovered_node))
-        {
-            ImVec2 p = origin + ImVec2(m_mouse.hovered_node->x * zoom, m_mouse.hovered_node->y * zoom);
-            if (m_mouse.hovered_node->type == Node::Type::Place)
-            {
-                if (net.type() == TypeOfNet::GRAFCET)
-                {
-                    float w = TRANS_WIDTH * zoom / 2.0f + 2.0f * zoom;
-                    m_canvas.draw_list->AddRect(
-                        ImVec2(p.x - w, p.y - w),
-                        ImVec2(p.x + w, p.y + w),
-                        hover_color, 0.0f, ImDrawFlags_None, 2.0f * zoom);
-                }
-                else
-                {
-                    float radius = PLACE_RADIUS * zoom + 2.0f * zoom;
-                    m_canvas.draw_list->AddCircle(p, radius, hover_color, 64, 2.0f * zoom);
-                }
-            }
-            else
-            {
-                float w = TRANS_WIDTH * zoom / 2.0f + 2.0f * zoom;
-                float h = TRANS_HEIGHT * zoom / 2.0f + 2.0f * zoom;
-                m_canvas.draw_list->AddRect(
-                    ImVec2(p.x - w, p.y - h),
-                    ImVec2(p.x + w, p.y + h),
-                    hover_color, 0.0f, ImDrawFlags_None, 2.0f * zoom);
-            }
-
-            // Show tooltip for GRAFCET place with actions
-            if (net.type() == TypeOfNet::GRAFCET &&
-                m_mouse.hovered_node->type == Node::Type::Place)
-            {
-                Place* place = reinterpret_cast<Place*>(m_mouse.hovered_node);
-                if (!place->actions.empty())
-                {
-                    ImGui::BeginTooltip();
-                    ImGui::Text("%s: %s", place->key.c_str(), place->caption.c_str());
-                    if (place->tokens > 0)
-                    {
-                        ImGui::SameLine();
-                        ImGui::TextColored(ImVec4(0.4f, 1.0f, 0.4f, 1.0f), "[ACTIVE]");
-                    }
-                    ImGui::Separator();
-                    ImGui::Text("Actions:");
-                    for (const auto& action : place->actions)
-                    {
-                        const char* qual_str = qualifierToStr(action.qualifier);
-                        ImVec4 badge_color = ImVec4(0.7f, 0.5f, 0.2f, 1.0f);
-                        if (action.qualifier == Action::Qualifier::N)
-                            badge_color = ImVec4(0.4f, 0.4f, 0.8f, 1.0f);
-                        else if (action.qualifier == Action::Qualifier::S)
-                            badge_color = ImVec4(0.2f, 0.7f, 0.2f, 1.0f);
-                        else if (action.qualifier == Action::Qualifier::R)
-                            badge_color = ImVec4(0.8f, 0.2f, 0.2f, 1.0f);
-                        else if (action.qualifier == Action::Qualifier::P)
-                            badge_color = ImVec4(0.6f, 0.2f, 0.6f, 1.0f);
-                        ImGui::TextColored(badge_color, "[%s]", qual_str);
-                        ImGui::SameLine();
-                        ImGui::Text("%s", action.name.c_str());
-                        if (!action.script.empty())
-                        {
-                            ImGui::SameLine();
-                            ImGui::TextColored(ImVec4(0.6f, 0.6f, 0.6f, 1.0f), "- %s", action.script.c_str());
-                        }
-                        if (action.duration > 0.0f)
-                        {
-                            ImGui::SameLine();
-                            ImGui::TextColored(ImVec4(0.5f, 0.5f, 0.5f, 1.0f), "(%.1fs)", action.duration);
-                        }
-                    }
-                    ImGui::EndTooltip();
-                }
-            }
-        }
-
-        // Draw selection highlights
-        const ImU32 selection_color = IM_COL32(50, 150, 255, 255);
-        const float selection_thickness = 4.0f * zoom;
-        for (auto* arc : m_mouse.selected_arcs)
-        {
-            ImVec2 from_pos = origin + ImVec2(arc->from.x * zoom, arc->from.y * zoom);
-            ImVec2 to_pos = origin + ImVec2(arc->to.x * zoom, arc->to.y * zoom);
-            m_canvas.draw_list->AddLine(from_pos, to_pos, selection_color, selection_thickness);
-        }
-
-        const float node_selection_thickness = 3.0f * zoom;
-        for (auto* node : m_mouse.selected_nodes)
-        {
-            ImVec2 p = origin + ImVec2(node->x * zoom, node->y * zoom);
-            if (node->type == Node::Type::Place)
-            {
-                if (net.type() == TypeOfNet::GRAFCET)
-                {
-                    float w = TRANS_WIDTH * zoom / 2.0f + 4.0f * zoom;
-                    m_canvas.draw_list->AddRect(
-                        ImVec2(p.x - w, p.y - w),
-                        ImVec2(p.x + w, p.y + w),
-                        selection_color, 0.0f, ImDrawFlags_None, node_selection_thickness);
-                }
-                else
-                {
-                    float radius = PLACE_RADIUS * zoom + 4.0f * zoom;
-                    m_canvas.draw_list->AddCircle(p, radius, selection_color, 64, node_selection_thickness);
-                }
-            }
-            else
-            {
-                float w = TRANS_WIDTH * zoom / 2.0f + 4.0f * zoom;
-                float h = TRANS_HEIGHT * zoom / 2.0f + 4.0f * zoom;
-                m_canvas.draw_list->AddRect(
-                    ImVec2(p.x - w, p.y - h),
-                    ImVec2(p.x + w, p.y + h),
-                    selection_color, 0.0f, ImDrawFlags_None, node_selection_thickness);
-            }
-        }
-
-        // Draw rubber band
-        drawRubberBand(m_canvas.draw_list);
+        drawHoverEffects(net, zoom);
+        drawSelectionHighlights(net, zoom);
     }
 
     m_canvas.pop();
@@ -1284,12 +1444,29 @@ void PetriView::drawRubberBand(ImDrawList* draw_list)
 }
 
 //------------------------------------------------------------------------------
-void PetriView::drawGrid(ImDrawList* draw_list, bool const running)
+void PetriView::drawGrid(ImDrawList* draw_list, bool const running, bool const has_error)
 {
-    ImU32 border_color = running
-       ? IM_COL32(0, 255, 0, 255) : IM_COL32(255, 255, 255, 255);
-    ImU32 line_color = running
-       ? IM_COL32(0, 255, 0, 40) : IM_COL32(200, 200, 200, 40);
+    ImU32 border_color;
+    ImU32 line_color;
+
+    if (has_error)
+    {
+        // Red for errors (e.g., GRAFCET receptivity parsing errors)
+        border_color = IM_COL32(255, 80, 80, 255);
+        line_color = IM_COL32(255, 80, 80, 40);
+    }
+    else if (running)
+    {
+        // Green when simulation is running
+        border_color = IM_COL32(0, 255, 0, 255);
+        line_color = IM_COL32(0, 255, 0, 40);
+    }
+    else
+    {
+        // Default white/gray
+        border_color = IM_COL32(255, 255, 255, 255);
+        line_color = IM_COL32(200, 200, 200, 40);
+    }
 
     // Draw background
     draw_list->ChannelsSetCurrent(0);

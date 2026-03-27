@@ -21,7 +21,6 @@
 #ifndef SIMULATION_NET_HPP
 #  define SIMULATION_NET_HPP
 
-#  include "PetriNet/TimedTokens.hpp"
 #  include "PetriNet/Signal.hpp"
 
 #  include <atomic>
@@ -33,6 +32,8 @@ namespace tpne {
 
 class Net;
 class Arc;
+class Node;
+class Place;
 class Transition;
 class Receptivity;
 
@@ -44,7 +45,40 @@ class Simulation
 {
 public:
 
-    using TimedTokens = std::vector<TimedToken>;
+    // *************************************************************************
+    //! \brief Animated token moving along an arc from Transition to Place.
+    //! Stores pointers to origin and destination nodes for position calculation,
+    //! eliminating the need to store TypeOfNet.
+    // *************************************************************************
+    struct AnimatedToken
+    {
+        //! \brief Constructor.
+        //! \param[in] origin_ The origin node (Transition).
+        //! \param[in] destination_ The visual destination node (Place or next Transition for TEG).
+        //! \param[in] target_place_ The actual Place where tokens will be deposited.
+        //! \param[in] tokens_ Number of tokens being animated.
+        //! \param[in] duration Arc duration for speed calculation.
+        //! \param[in] default_duration Default duration if arc duration is 0.
+        AnimatedToken(Node& origin_, Node& destination_, Place& target_place_,
+                      size_t tokens_, float duration, float default_duration);
+
+        //! \brief Update position on the screen.
+        //! \param[in] dt Delta time in seconds.
+        //! \return true when arriving at destination, false otherwise.
+        bool update(float dt);
+
+        Node* origin;           //!< Origin node (Transition)
+        Node* destination;      //!< Visual destination (Place or next Transition for TEG)
+        Place* targetPlace;     //!< Actual Place where tokens are deposited
+        float x;                //!< Current X position for rendering
+        float y;                //!< Current Y position for rendering
+        size_t tokens;          //!< Number of tokens being carried
+        float magnitude;        //!< Length of the path
+        float speed;            //!< Animation speed
+        float offset = 0.0f;    //!< Progress along the path (0.0 to 1.0)
+    };
+
+    using AnimatedTokens = std::vector<AnimatedToken>;
     using Receptivities = std::map<size_t, Receptivity>;
 
     // *************************************************************************
@@ -69,11 +103,6 @@ public:
     void stop();
 
     //--------------------------------------------------------------------------
-    //! \brief Restart the simulation (stop then start).
-    //--------------------------------------------------------------------------
-    void restart();
-
-    //--------------------------------------------------------------------------
     //! \brief Check if the simulation is currently running.
     //--------------------------------------------------------------------------
     inline bool isRunning() const { return m_running; }
@@ -86,7 +115,7 @@ public:
     //--------------------------------------------------------------------------
     //! \brief Get the animated tokens for rendering.
     //--------------------------------------------------------------------------
-    inline TimedTokens const& timedTokens() const { return m_timed_tokens; }
+    inline AnimatedTokens const& animatedTokens() const { return m_animated_tokens; }
 
     //--------------------------------------------------------------------------
     //! \brief Get the receptivities map for inspection.
@@ -152,6 +181,17 @@ public:
     //! \brief Check if initial marking has been stored.
     //--------------------------------------------------------------------------
     inline bool hasInitialMarking() const { return !m_initial_tokens.empty(); }
+
+    //--------------------------------------------------------------------------
+    //! \brief Check if there are any receptivity parsing errors (GRAFCET).
+    //--------------------------------------------------------------------------
+    inline bool hasReceptivityErrors() const { return m_has_receptivity_errors; }
+
+    //--------------------------------------------------------------------------
+    //! \brief Validate receptivities without starting simulation.
+    //! \return true if all receptivities are valid, false otherwise.
+    //--------------------------------------------------------------------------
+    bool validateReceptivities();
 
     //! \brief Signal emitted when simulation starts successfully.
     Signal<> onStarted;
@@ -247,11 +287,13 @@ private:
     //! \brief List of shuffled Transitions for random firing order.
     std::vector<Transition*> m_shuffled_transitions;
     //! \brief Animated tokens transitioning from Transitions to Places.
-    TimedTokens m_timed_tokens;
+    AnimatedTokens m_animated_tokens;
     //! \brief Initial marking stored at simulation start.
     std::vector<size_t> m_initial_tokens;
     //! \brief Compiled GRAFCET receptivities (boolean expressions).
     Receptivities m_receptivities;
+    //! \brief True if there are receptivity parsing errors.
+    bool m_has_receptivity_errors = false;
     //! \brief Dummy action state returned for invalid queries.
     static ActionState s_dummy_action_state;
 };

@@ -25,6 +25,7 @@
 #include <algorithm>
 #include <cstdlib>
 #include <ctime>
+#include <cmath>
 #include <iostream>
 #include <random>
 
@@ -32,6 +33,34 @@ namespace tpne {
 
 // Static member initialization
 Simulation::ActionState Simulation::s_dummy_action_state;
+
+//------------------------------------------------------------------------------
+// Helper function to compute Euclidean distance
+//------------------------------------------------------------------------------
+static inline float norm(Node const& A, Node const& B)
+{
+    return std::sqrt((B.x - A.x) * (B.x - A.x) + (B.y - A.y) * (B.y - A.y));
+}
+
+//------------------------------------------------------------------------------
+Simulation::AnimatedToken::AnimatedToken(Node& origin_, Node& destination_,
+                                          Place& target_place_, size_t tokens_,
+                                          float duration, float default_duration)
+    : origin(&origin_), destination(&destination_), targetPlace(&target_place_),
+      x(origin_.x), y(origin_.y), tokens(tokens_)
+{
+    magnitude = norm(*origin, *destination);
+    speed = magnitude / std::max(0.000001f, duration > 0.0f ? duration : default_duration);
+}
+
+//------------------------------------------------------------------------------
+bool Simulation::AnimatedToken::update(float const dt)
+{
+    offset += dt * speed / magnitude;
+    x = origin->x + (destination->x - origin->x) * offset;
+    y = origin->y + (destination->y - origin->y) * offset;
+    return offset >= 1.0f;
+}
 
 //------------------------------------------------------------------------------
 static const char* current_time()
@@ -46,7 +75,7 @@ static const char* current_time()
 Simulation::Simulation(Net& net)
     : m_net(net)
 {
-    m_timed_tokens.reserve(128u);
+    m_animated_tokens.reserve(128u);
 }
 
 //------------------------------------------------------------------------------
@@ -62,13 +91,6 @@ void Simulation::stop()
 }
 
 //------------------------------------------------------------------------------
-void Simulation::restart()
-{
-    stop();
-    start();
-}
-
-//------------------------------------------------------------------------------
 Simulation::ActionState const& Simulation::actionState(size_t place_id, size_t action_index) const
 {
     auto key = std::make_pair(place_id, action_index);
@@ -81,6 +103,18 @@ Simulation::ActionState const& Simulation::actionState(size_t place_id, size_t a
 //------------------------------------------------------------------------------
 void Simulation::initializeRuntimeState()
 {
+    // Generate arcsIn and arcsOut for each transition
+    m_net.generateArcsInArcsOut();
+
+    // Memorize initial marking for restoring after the simulation
+    storeInitialMarking();
+
+    // Shuffle transitions for random firing order
+    shuffleTransitions(true);
+
+    // Clear animated tokens
+    m_animated_tokens.clear();
+
     // Initialize place activation states
     m_place_was_active.clear();
     m_place_was_active.resize(m_net.places().size(), false);
@@ -156,11 +190,7 @@ void Simulation::handleIdleState()
     }
 
     // Initialize simulation state
-    m_net.generateArcsInArcsOut();
-    storeInitialMarking();
     initializeRuntimeState();
-    shuffleTransitions(true);
-    m_timed_tokens.clear();
 
     // Reset receptivities and compile for GRAFCET
     m_net.resetReceptivies();
@@ -202,7 +232,7 @@ void Simulation::handleHaltingState()
     restoreInitialMarking();
     m_net.resetReceptivies();
     m_receptivities.clear();
-    m_timed_tokens.clear();
+    m_animated_tokens.clear();
     m_action_states.clear();
     Sensors::instance().clear();
 
@@ -276,6 +306,31 @@ bool Simulation::compileReceptivities()
         }
     }
 
+    m_has_receptivity_errors = !all_ok;
+    return all_ok;
+}
+
+//------------------------------------------------------------------------------
+bool Simulation::validateReceptivities()
+{
+    if (m_net.type() != TypeOfNet::GRAFCET)
+    {
+        m_has_receptivity_errors = false;
+        return true;
+    }
+
+    bool all_ok = true;
+    for (auto const& trans : m_net.transitions())
+    {
+        Receptivity temp;
+        std::string error = temp.compile(trans.caption, m_net);
+        if (!error.empty())
+        {
+            all_ok = false;
+        }
+    }
+
+    m_has_receptivity_errors = !all_ok;
     return all_ok;
 }
 
@@ -407,7 +462,33 @@ void Simulation::fireTransitions()
                       << "Transition " << arc->from.caption << " consumed "
                       << count << " token" << (count == 1u ? "" : "s")
                       << std::endl;
-            m_timed_tokens.emplace_back(*arc, count, m_net.type());
+
+            // Determine visual destination and default duration based on net type
+            Node& origin = arc->from;
+            Place& target_place = *reinterpret_cast<Place*>(&arc->to);
+            Node* destination = &arc->to;
+            float default_duration = 0.2f;  // Default for Petri net
+
+            if (m_net.type() == TypeOfNet::TimedEventGraph)
+            {
+                // For TEG, animate to the next transition (skip implicit place)
+                if (!arc->to.arcsOut.empty())
+                {
+                    destination = &arc->to.arcsOut[0]->to;
+                }
+                default_duration = arc->duration;
+            }
+            else if (m_net.type() == TypeOfNet::TimedPetriNet)
+            {
+                default_duration = arc->duration;
+            }
+            else if (m_net.type() == TypeOfNet::GRAFCET)
+            {
+                default_duration = 0.15f;  // Fast animation for GRAFCET
+            }
+
+            m_animated_tokens.emplace_back(origin, *destination, target_place,
+                                           count, arc->duration, default_duration);
             m_arc_token_counts[arc_idx] = 0u;
         }
     }
@@ -416,7 +497,7 @@ void Simulation::fireTransitions()
 //------------------------------------------------------------------------------
 void Simulation::animateTokens(float const dt)
 {
-    if (m_timed_tokens.empty())
+    if (m_animated_tokens.empty())
     {
         if ((m_net.type() != TypeOfNet::PetriNet) && (m_net.type() != TypeOfNet::GRAFCET))
         {
@@ -427,23 +508,23 @@ void Simulation::animateTokens(float const dt)
         return;
     }
 
-    size_t i = m_timed_tokens.size();
+    size_t i = m_animated_tokens.size();
     while (i--)
     {
-        TimedToken& token = m_timed_tokens[i];
+        AnimatedToken& token = m_animated_tokens[i];
         if (token.update(dt))
         {
             std::cout << current_time()
-                      << "Place " << token.arc->to.caption
+                      << "Place " << token.targetPlace->caption
                       << " got " << token.tokens << " token"
                       << (token.tokens == 1u ? "" : "s")
                       << std::endl;
 
-            token.arc->tokensOut() += token.tokens;
+            token.targetPlace->tokens += token.tokens;
 
             if (m_net.type() != TypeOfNet::PetriNet)
             {
-                Transition& t = reinterpret_cast<Transition&>(token.arc->from);
+                Transition& t = reinterpret_cast<Transition&>(*token.origin);
                 if (t.isInput())
                 {
                     t.receptivity = true;
@@ -451,8 +532,8 @@ void Simulation::animateTokens(float const dt)
             }
 
             // Remove by swapping with last
-            m_timed_tokens[i] = m_timed_tokens.back();
-            m_timed_tokens.pop_back();
+            m_animated_tokens[i] = m_animated_tokens.back();
+            m_animated_tokens.pop_back();
         }
     }
 }

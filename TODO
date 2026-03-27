@@ -1,40 +1,29 @@
-GRAFCET TODO
 
-Ne pas deplacer les doubles steps en simulation
+
+Gros bug de selection d'arcs en mode "Timed event graph" car il n'y a plus les Places affichées.
+placer les 3 GRAFCET dans un dictionnaire afin de trouver facilement les references.
+Colorier en rouge la grille des GRAFCET qui ont une erreur
+Parser 30s/X1/0s
+Gerer forcage init
+Ajouter actions if DR: KM1
+Placer le texte des transitions sous le rectangle
+
+Extraire les méthodes GRAFCET de Simulation vers Grafcet.hpp/cpp
+Ajouter le support des actions conditionnelles "if X: Y" pour GRAFCET
+
 Ne pas afficher les arcs P -> T
 Ajouter un time scaling + 0 timing en mode "remote"
-Ajouter un noeud n'est pas auto magnetisé
-Implementer les actions GRAFCET (surtout dans la generation de code arduino)
-Ameliorer generation de code arduino + connection en remote a l'editeur
-Finir l'exemple de https://www.youtube.com/watch?v=8_mZYlMHsds + ajouter dans le README
+Tester generation de code arduino + connection en remote a l'editeur
+Finir l'exemple de https://www.youtube.com/watch?v=8_mZYlMHsds dans GEMMA.json + ajouter dans le README
 Ajouter les reset et inhibitor cote Petri
-Finir flowshop + plot des donner
-Gros bug de selection d'arcs en mode "Timed event graph" car il n'y a plus les Places affichées.
-Ajouter une couleur aux actions et vu que le temps que le token se deplace les actions sont stoppées
-Mettre Traffic Lights en Grafcet
+Finir flowshop + plot des donnees
+
 Crash: modifier graphe, Clique sur X, sauver => boucle infinie
-Editeur si GRAFCET on voit les actions pour event graph
-Centrer le graphe
-Boucle infinie si je sauve fichier apres avoir clique sur X
-En mode grafcet afficher les noms P et T ne fonctionne pas
 En mode GRAFCET le focage fait iterer GC entre init et val
 
-if forzen if GRAFCET devrait etre inverse
+if frozen if GRAFCET devrait etre inverse dans le code
 
-
-Dans @src/PetriNet/TimedTokens.cpp je pense qu'il y a des trucs a ameliorer, 1/ pour le mode remote j'aimerai que les animations des tokens soient instantané car c'est du debug temps reel et 2. J'aimerai une option dans l'editeur pour normaliser le temps des deplacements des tokens. Par exemple si la plus grosse tempo est 5 min on peut vouloir la normaliser en une animation de 5s. Il y aussi le nombre de tokens a bruler est de 1 mais si on ajoute des arcs reset ou inhibiteur il faudra surement modifier
-
-Terminologie des réseaux de Petri
-Terme actuel	Terme correct en anglais	Explication
-receptivity	guard ou condition	Dans les réseaux de Petri standards, on parle de "guard" (garde) pour la condition booléenne d'une transition. "Receptivity" est un terme français du GRAFCET.
-marking	marking ✓	C'est correct ! Le "marking" (marquage) est le terme standard pour la distribution des tokens dans les places.
-fireable	enabled ou firable	Le terme standard est "enabled" (activée). "Fireable" n'est pas incorrect mais "enabled" est plus courant dans la littérature.
-isValidated	isEnabled	Une transition est "enabled" (activée) quand toutes ses places d'entrée ont suffisamment de tokens.
-burnt	consumed	Les tokens sont "consumed" (consommés), pas "burnt" (brûlés).
-fire	fire ✓	C'est correct ! "Fire" (tirer) est le terme standard.
-Voulez-vous que je renomme ces termes ? Cela impliquera des changements dans plusieurs fichiers. Voici ce que je propose :
-
-receptivity → guard (pour les réseaux de Petri) - mais garder pour GRAFCET car c'est le terme officiel
-isFireable() → canFire() ou garder isFireable() (acceptable)
-isValidated() → isEnabled()
-countBurnableTokens() → countConsumableTokens() ou maxFireCount()
+au lieu de faire un interpreteur type Forth parsons une vraie expression mathematique.
+Il faudrait gerer la forme «t1/variable/t2». Dans l’exemple ci-contre, la réceptivité
+n'est vraie que 3 s après que « a » passe de l’état 0 à l’état 1, elle ne redevient
+fausse que 7 s après que « a » passe de l’état 1 à l’état 0.

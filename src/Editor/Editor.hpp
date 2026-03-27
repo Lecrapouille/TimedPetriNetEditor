@@ -98,7 +98,7 @@ private: // Widgets
     void about() const;
     void help() const;
     void console();
-    void messagebox();
+    void messagebox() const;
     void inspector();
     void view();
     inline ImVec2 viewSize() const { return m_view.size(); }
@@ -114,7 +114,7 @@ private: // Document management
 
     void newDocument();
     Document& createDocument();
-    void closeDocument(Document* doc);
+    void closeDocument(Document const* doc);
     void setActiveDocument(size_t index);
     size_t documentCount() const { return m_documents.size(); }
     void addNetToActiveDocument(TypeOfNet type, std::string const& name);
@@ -149,7 +149,7 @@ private:
     Transition& addTransition(float const x, float const y);
     void addPlace(float const x, float const y);
     void removeNode(Node& node);
-    void removeArc(Arc& arc);
+    void removeArc(Arc const& arc);
     Node& addOppositeNode(Node::Type const type, float const x, float const y,
         size_t const tokens = 0u);
     void addArc(Node& from, Node& to, float const duration = 0.0f);
@@ -161,6 +161,12 @@ private: // Error logs
     std::vector<Messages::TimedMessage> const& getLogs() const;
     void clearLogs();
     void showStyleSelector();
+
+private: // Theme management
+
+    void loadTheme();
+    void saveTheme();
+    void applyTheme();
 
 protected: // Methods for PetriView access
 
