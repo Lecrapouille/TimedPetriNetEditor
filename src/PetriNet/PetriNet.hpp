@@ -22,6 +22,7 @@
 #  define PETRI_NET_HPP
 
 #  include "PetriNet/Grafcet.hpp"
+#  include "PetriNet/SafeFloat.hpp"
 
 #  include <cmath>
 #  include <string>
@@ -377,7 +378,7 @@ public:
     //--------------------------------------------------------------------------
     Arc(Node& from_, Node& to_, float duration_ = 0.0f)
         : from(from_), to(to_),
-          duration(from_.type == Node::Type::Transition ? duration_ : std::numeric_limits<float>::quiet_NaN())
+          duration(from_.type == Node::Type::Transition ? duration_ : safeNaNF())
     {
         assert(from.type != to.type);
     }

@@ -46,6 +46,16 @@
 namespace tpne {
 
 //------------------------------------------------------------------------------
+//! \brief Quiet NaN constant robust to -ffast-math / -Wnan-infinity-disabled (float).
+inline float safeNaNF()
+{
+    float value;
+    uint32_t const bits = 0x7FC00000u;
+    std::memcpy(&value, &bits, sizeof(value));
+    return value;
+}
+
+//------------------------------------------------------------------------------
 //! \brief NaN test robust to -ffast-math (32-bit IEEE-754).
 inline bool safeIsNaN(float value)
 {
@@ -108,6 +118,46 @@ template<typename T>
 inline bool safeIsInf(T value)
 {
     return safeIsNegInf(value) || safeIsPosInf(value);
+}
+
+//------------------------------------------------------------------------------
+//! \brief -Inf constant robust to -ffast-math / -Wnan-infinity-disabled (float).
+inline float safeNegInfF()
+{
+    float value;
+    uint32_t const bits = 0xFF800000u;
+    std::memcpy(&value, &bits, sizeof(value));
+    return value;
+}
+
+//------------------------------------------------------------------------------
+//! \brief +Inf constant robust to -ffast-math / -Wnan-infinity-disabled (float).
+inline float safePosInfF()
+{
+    float value;
+    uint32_t const bits = 0x7F800000u;
+    std::memcpy(&value, &bits, sizeof(value));
+    return value;
+}
+
+//------------------------------------------------------------------------------
+//! \brief -Inf constant robust to -ffast-math / -Wnan-infinity-disabled (double).
+inline double safeNegInf()
+{
+    double value;
+    uint64_t const bits = 0xFFF0000000000000ULL;
+    std::memcpy(&value, &bits, sizeof(value));
+    return value;
+}
+
+//------------------------------------------------------------------------------
+//! \brief +Inf constant robust to -ffast-math / -Wnan-infinity-disabled (double).
+inline double safePosInf()
+{
+    double value;
+    uint64_t const bits = 0x7FF0000000000000ULL;
+    std::memcpy(&value, &bits, sizeof(value));
+    return value;
 }
 
 } // namespace tpne

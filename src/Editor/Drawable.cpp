@@ -26,6 +26,10 @@
 
 namespace tpne {
 
+namespace {
+constexpr float kPi = 3.14159265358979323846f;
+} // namespace
+
 //------------------------------------------------------------------------------
 //! \brief Rotate a 2D vector by angle (given as cos/sin).
 //------------------------------------------------------------------------------
@@ -57,7 +61,7 @@ static void drawArrow(ImDrawList* draw_list, ImVec2 const& A, ImVec2 const& B,
 
     // Orientation
     const float arrowAngle = std::atan((B.y - A.y) / (B.x - A.x))
-        + ((B.x < A.x) ? M_PIf : ((B.y < A.y) ? (2.0f * M_PIf) : 0.0f));
+        + ((B.x < A.x) ? kPi : ((B.y < A.y) ? (2.0f * kPi) : 0.0f));
     const float cos_a = std::cos(arrowAngle);
     const float sin_a = std::sin(arrowAngle);
 

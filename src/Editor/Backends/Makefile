@@ -55,6 +55,7 @@ ifeq ($(DEAR_IMGUI_BACKEND),GLFW3)
     else ifeq ($(OS),Darwin)
         # GLFW/GLEW via pkg-config (Homebrew: /opt/homebrew on Apple Silicon).
         PKG_LIBS += glfw3 glew
+        DEFINES += -DGL_SILENCE_DEPRECATION
         LINKER_FLAGS += -framework OpenGL -framework Cocoa
         LINKER_FLAGS += -framework IOKit -framework CoreVideo
     else ifeq ($(OS),Emscripten)

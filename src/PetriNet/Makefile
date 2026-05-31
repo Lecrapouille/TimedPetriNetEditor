@@ -54,6 +54,7 @@ INCLUDES += $(THIRD_PARTIES_DIR)/json/include
 VPATH += $(THIRD_PARTIES_DIR)/tinyxml2
 LIB_FILES += $(THIRD_PARTIES_DIR)/tinyxml2/tinyxml2.cpp
 USER_CXXFLAGS := -Wno-old-style-cast -Wno-sign-conversion
+USER_CXXFLAGS += -Wno-nan-infinity-disabled -Wno-format-nonliteral -Wno-double-promotion
 
 ###################################################
 # MacOS X: get path inside the bundle application

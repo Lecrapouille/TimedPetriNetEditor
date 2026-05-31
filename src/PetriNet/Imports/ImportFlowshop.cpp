@@ -47,7 +47,7 @@ struct FlowshopData
 //! holding epsilon means "no operation" (a hole) for that machine/piece.
 static inline float epsilonMaxPlus()
 {
-    return -std::numeric_limits<float>::infinity();
+    return safeNegInfF();
 }
 
 //------------------------------------------------------------------------------
