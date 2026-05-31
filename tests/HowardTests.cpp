@@ -181,7 +181,7 @@ TEST(TestHoward, TestPetriNetSemiSimple)
     ASSERT_EQ(res.durations[1], 6.5);
     ASSERT_EQ(res.durations[2], 6.5);
     ASSERT_EQ(res.durations[3], 6.5);
-    ASSERT_EQ(res.arcs.size(), 8u);
+    ASSERT_EQ(res.arcs.size(), 6u);
     ASSERT_STREQ(res.arcs[0]->from.key.c_str(), "T0");
     ASSERT_STREQ(res.arcs[0]->to.key.c_str(), "P0");
     ASSERT_STREQ(res.arcs[1]->from.key.c_str(), "P0");
@@ -194,17 +194,12 @@ TEST(TestHoward, TestPetriNetSemiSimple)
     ASSERT_STREQ(res.arcs[4]->to.key.c_str(), "P2");
     ASSERT_STREQ(res.arcs[5]->from.key.c_str(), "P2");
     ASSERT_STREQ(res.arcs[5]->to.key.c_str(), "T1");
-    ASSERT_STREQ(res.arcs[6]->from.key.c_str(), "T3");
-    ASSERT_STREQ(res.arcs[6]->to.key.c_str(), "P3");
-    ASSERT_STREQ(res.arcs[7]->from.key.c_str(), "P3");
-    ASSERT_STREQ(res.arcs[7]->to.key.c_str(), "T0");
 
     std::stringstream expected;
     expected << "Found 1 connected components of the optimal policy:\n"
-             << "  T2 -> T0\n"
-             << "  T0 -> T1\n"
-             << "  T1 -> T2\n"
-             << "  T0 -> T3\n"
+             << "  T0 -> T2\n"
+             << "  T1 -> T0\n"
+             << "  T2 -> T1\n"
              << "Cycle durations [unit of time]:\n"
              << "  T0: 6.5\n"
              << "  T1: 6.5\n"
@@ -252,8 +247,8 @@ TEST(TestHoward, TestSemiHowardExample)
 
     std::stringstream expected;
     expected << "Found 2 connected components of the optimal policy:\n"
-             << "  T1 -> T0\n"
              << "  T0 -> T1\n"
+             << "  T1 -> T0\n"
              << "  T2 -> T2\n"
              << "Cycle durations [unit of time]:\n"
              << "  T0: 1\n"
@@ -294,7 +289,9 @@ TEST(TestHoward, TestSemiNetherlandsExample)
     ASSERT_NEAR(res.durations[5], 47.6667, 0.001);
     ASSERT_NEAR(res.durations[6], 47.6667, 0.001);
     ASSERT_NEAR(res.durations[7], 47.6667, 0.001);
-    ASSERT_EQ(res.arcs.size(), 16u);
+    // Only the arcs lying on the critical cycle (T0 -> T1 -> T3 -> T2 -> T0)
+    // are reported; the transient arcs towards T4..T7 are excluded.
+    ASSERT_EQ(res.arcs.size(), 8u);
     ASSERT_STREQ(res.arcs[0]->from.key.c_str(), "T0");
     ASSERT_STREQ(res.arcs[0]->to.key.c_str(), "P0");
     ASSERT_STREQ(res.arcs[1]->from.key.c_str(), "P0");
@@ -311,33 +308,13 @@ TEST(TestHoward, TestSemiNetherlandsExample)
     ASSERT_STREQ(res.arcs[6]->to.key.c_str(), "P4");
     ASSERT_STREQ(res.arcs[7]->from.key.c_str(), "P4");
     ASSERT_STREQ(res.arcs[7]->to.key.c_str(), "T2");
-    ASSERT_STREQ(res.arcs[8]->from.key.c_str(), "T4");
-    ASSERT_STREQ(res.arcs[8]->to.key.c_str(), "P7");
-    ASSERT_STREQ(res.arcs[9]->from.key.c_str(), "P7");
-    ASSERT_STREQ(res.arcs[9]->to.key.c_str(), "T6");
-    ASSERT_STREQ(res.arcs[10]->from.key.c_str(), "T5");
-    ASSERT_STREQ(res.arcs[10]->to.key.c_str(), "P8");
-    ASSERT_STREQ(res.arcs[11]->from.key.c_str(), "P8");
-    ASSERT_STREQ(res.arcs[11]->to.key.c_str(), "T4");
-    ASSERT_STREQ(res.arcs[12]->from.key.c_str(), "T6");
-    ASSERT_STREQ(res.arcs[12]->to.key.c_str(), "P9");
-    ASSERT_STREQ(res.arcs[13]->from.key.c_str(), "P9");
-    ASSERT_STREQ(res.arcs[13]->to.key.c_str(), "T1");
-    ASSERT_STREQ(res.arcs[14]->from.key.c_str(), "T7");
-    ASSERT_STREQ(res.arcs[14]->to.key.c_str(), "P11");
-    ASSERT_STREQ(res.arcs[15]->from.key.c_str(), "P11");
-    ASSERT_STREQ(res.arcs[15]->to.key.c_str(), "T5");
 
     std::stringstream expected;
     expected << "Found 1 connected components of the optimal policy:\n"
-             << "  T1 -> T0\n"
-             << "  T3 -> T1\n"
-             << "  T0 -> T2\n"
-             << "  T2 -> T3\n"
-             << "  T6 -> T4\n"
-             << "  T4 -> T5\n"
-             << "  T1 -> T6\n"
-             << "  T5 -> T7\n"
+             << "  T0 -> T1\n"
+             << "  T1 -> T3\n"
+             << "  T2 -> T0\n"
+             << "  T3 -> T2\n"
              << "Cycle durations [unit of time]:\n"
              << "  T0: 47.6667\n"
              << "  T1: 47.6667\n"
