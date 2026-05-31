@@ -55,7 +55,9 @@ jobs:
       - name: Install system packages
         run: |
           brew install pkg-config mosquitto zeromq glfw glew
-          echo "PKG_CONFIG_PATH=$(brew --prefix)/lib/pkgconfig:${PKG_CONFIG_PATH:-}" >> "$GITHUB_ENV"
+          echo "PKG_CONFIG_PATH=$(brew --prefix)/lib/pkgconfig:$(brew --prefix zeromq)/lib/pkgconfig:${PKG_CONFIG_PATH:-}" >> "$GITHUB_ENV"
+          echo "CPPFLAGS=-I$(brew --prefix zeromq)/include ${CPPFLAGS:-}" >> "$GITHUB_ENV"
+          echo "LDFLAGS=-L$(brew --prefix zeromq)/lib ${LDFLAGS:-}" >> "$GITHUB_ENV"
       - name: Checkout
         uses: actions/checkout@v6
         with:

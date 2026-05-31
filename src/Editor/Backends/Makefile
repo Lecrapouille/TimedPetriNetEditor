@@ -5,15 +5,19 @@ ifeq ($(OS),Emscripten)
 TPNE_ZEROMQ := 0
 endif
 
-# Disable ZeroMQ when libzmq is not available (e.g. missing pkg-config path on CI).
+# Disable ZeroMQ when libzmq is not available.
 ifneq ($(TPNE_ZEROMQ),0)
 ifneq ($(OS),Emscripten)
-ZMQ_FOUND := $(shell pkg-config --exists libzmq 2>/dev/null && echo 1)
-ifeq ($(ZMQ_FOUND),)
+ifeq ($(OS),Darwin)
+    # Homebrew: pkg-config may succeed without usable -I flags on macOS CI.
     ZMQ_BREW_PREFIX := $(shell brew --prefix zeromq 2>/dev/null)
     ifneq ($(ZMQ_BREW_PREFIX),)
-        ZMQ_FOUND := 1
+        ifneq ($(wildcard $(ZMQ_BREW_PREFIX)/include/zmq.h),)
+            ZMQ_FOUND := 1
+        endif
     endif
+else
+    ZMQ_FOUND := $(shell pkg-config --exists libzmq 2>/dev/null && echo 1)
 endif
 ifeq ($(ZMQ_FOUND),)
 $(warning libzmq not found; building with TPNE_ZEROMQ=0)
@@ -24,13 +28,14 @@ endif
 
 ifeq ($(TPNE_ZEROMQ),1)
 ifneq ($(OS),Emscripten)
-    # Link only -lzmq: do not add libzmq to PKG_LIBS because PKG_LIBS also
-    # contains "--static glfw3", and pkg-config --static pulls broken private
-    # deps from libzmq on Ubuntu (e.g. libprotokit.a for NORM).
+    # Do not add libzmq to PKG_LIBS: "--static glfw3" would pull broken private deps.
     USER_CXXFLAGS += $(shell pkg-config --cflags libzmq 2>/dev/null)
+ifeq ($(OS),Darwin)
     ifneq ($(ZMQ_BREW_PREFIX),)
         INCLUDES += -I$(ZMQ_BREW_PREFIX)/include
+        LINKER_FLAGS += -L$(ZMQ_BREW_PREFIX)/lib
     endif
+endif
     LINKER_FLAGS += $(shell pkg-config --libs-only-l libzmq 2>/dev/null || echo -lzmq)
 endif
     DEFINES += -DTPNE_USE_ZEROMQ=1
@@ -125,7 +130,8 @@ ifeq ($(DEAR_IMGUI_BACKEND),RayLib)
     endif
 
     USER_CXXFLAGS := -Wno-conversion -Wno-sign-conversion -Wno-float-equal -Wno-old-style-cast
-    USER_CXXFLAGS += -Wno-cast-qual -Wno-undef
+    USER_CXXFLAGS += -Wno-cast-qual -Wno-undef -Wno-unused-variable -Wno-missing-field-initializers
+    USER_CXXFLAGS += -Wno-sign-compare
 endif
 
 ###################################################
