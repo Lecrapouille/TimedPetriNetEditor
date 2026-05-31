@@ -26,16 +26,6 @@
 
 namespace tpne {
 
-#define FILL_COLOR(alpha)      ((ThemeId::Light == theme()) ? LIGHT_THEME_FILL_COLOR(alpha) : DARK_THEME_FILL_COLOR(alpha))
-#define OUTLINE_COLOR          ((ThemeId::Light == theme()) ? LIGHT_THEME_OUTLINE_COLOR : DARK_THEME_OUTLINE_COLOR)
-#define CAPTION_COLOR          ((ThemeId::Light == theme()) ? LIGHT_THEME_CAPTION_COLOR : DARK_THEME_CAPTION_COLOR)
-#define DURATION_COLOR         ((ThemeId::Light == theme()) ? LIGHT_THEME_DURATION_COLOR : DARK_THEME_DURATION_COLOR)
-#define TOKEN_COLOR            ((ThemeId::Light == theme()) ? LIGHT_THEME_TOKEN_COLOR : DARK_THEME_TOKEN_COLOR)
-#define CRITICAL_COLOR         ((ThemeId::Light == theme()) ? LIGHT_THEME_CRITICAL_COLOR : DARK_THEME_CRITICAL_COLOR)
-#define TRANS_FIREABLE_COLOR   ((ThemeId::Light == theme()) ? LIGHT_THEME_TRANS_FIREABLE_COLOR : DARK_THEME_TRANS_FIREABLE_COLOR)
-#define TRANS_VALIDATED_COLOR  ((ThemeId::Light == theme()) ? LIGHT_THEME_TRANS_VALIDATED_COLOR : DARK_THEME_TRANS_VALIDATED_COLOR)
-#define TRANS_ENABLED_COLOR    ((ThemeId::Light == theme()) ? LIGHT_THEME_TRANS_ENABLED_COLOR : DARK_THEME_TRANS_ENABLED_COLOR)
-
 //------------------------------------------------------------------------------
 //! \brief Rotate a 2D vector by angle (given as cos/sin).
 //------------------------------------------------------------------------------
@@ -106,21 +96,21 @@ void drawArc(ImDrawList* draw_list, Node const* from, Node const* to, ImVec2 con
         drawArrow(draw_list,
                   origin + ImVec2(from->x * zoom, from->y * zoom),
                   origin + ImVec2(cursor.x * zoom, cursor.y * zoom),
-                  OUTLINE_COLOR, zoom);
+                  themeOutlineColor(), zoom);
     }
     else if (to != nullptr)
     {
         drawArrow(draw_list,
                   origin + ImVec2(cursor.x * zoom, cursor.y * zoom),
                   origin + ImVec2(to->x * zoom, to->y * zoom),
-                  OUTLINE_COLOR, zoom);
+                  themeOutlineColor(), zoom);
     }
     else if (click_position != nullptr)
     {
         drawArrow(draw_list,
                   origin + ImVec2(click_position->x * zoom, click_position->y * zoom),
                   origin + ImVec2(cursor.x * zoom, cursor.y * zoom),
-                  OUTLINE_COLOR, zoom);
+                  themeOutlineColor(), zoom);
     }
 }
 
@@ -132,11 +122,11 @@ void drawArc(ImDrawList* draw_list, Arc const& arc, TypeOfNet const type,
 
     if (alpha >= 0.0f)
     {
-        color = OUTLINE_COLOR; // FIXME FILL_COLOR(alpha);
+        color = themeOutlineColor(); // FIXME themeFillColor(alpha);
     }
     else
     {
-        color = CRITICAL_COLOR;
+        color = themeCriticalColor();
     }
 
     if (type == TypeOfNet::TimedEventGraph)
@@ -154,7 +144,7 @@ void drawArc(ImDrawList* draw_list, Arc const& arc, TypeOfNet const type,
         float y = origin.y + (arc.from.y + (next.y - arc.from.y) / 2.0f) * zoom;
         std::stringstream stream;
         stream << std::fixed << std::setprecision(2) << arc.duration;
-        draw_list->AddText(ImVec2(x, y + 15.0f * zoom), DURATION_COLOR, stream.str().c_str());
+        draw_list->AddText(ImVec2(x, y + 15.0f * zoom), themeDurationColor(), stream.str().c_str());
         drawTimedToken(draw_list, reinterpret_cast<Place&>(arc.to).tokens, x, y, zoom);
     }
     else
@@ -169,7 +159,7 @@ void drawArc(ImDrawList* draw_list, Arc const& arc, TypeOfNet const type,
             float y = origin.y + (arc.from.y + (arc.to.y - arc.from.y) / 2.0f - 15.0f) * zoom;
             std::stringstream stream;
             stream << std::fixed << std::setprecision(1) << arc.duration;
-            draw_list->AddText(ImVec2(x, y), DURATION_COLOR, stream.str().c_str());
+            draw_list->AddText(ImVec2(x, y), themeDurationColor(), stream.str().c_str());
         }
     }
 }
@@ -177,14 +167,14 @@ void drawArc(ImDrawList* draw_list, Arc const& arc, TypeOfNet const type,
 //------------------------------------------------------------------------------
 void drawToken(ImDrawList* draw_list, float const x, float const y, float zoom)
 {
-    draw_list->AddCircleFilled(ImVec2(x, y), TOKEN_RADIUS * zoom, TOKEN_COLOR);
+    draw_list->AddCircleFilled(ImVec2(x, y), TOKEN_RADIUS * zoom, themeTokenColor());
 }
 
 //------------------------------------------------------------------------------
 void drawTimedToken(ImDrawList* draw_list, size_t tokens, float const x, float const y, float zoom)
 {
-    draw_list->AddCircleFilled(ImVec2(x, y), TOKEN_RADIUS * zoom, TOKEN_COLOR);
-    draw_list->AddText(ImVec2(x, y), CAPTION_COLOR, std::to_string(tokens).c_str());
+    draw_list->AddCircleFilled(ImVec2(x, y), TOKEN_RADIUS * zoom, themeTokenColor());
+    draw_list->AddText(ImVec2(x, y), themeCaptionColor(), std::to_string(tokens).c_str());
 }
 
 //------------------------------------------------------------------------------
@@ -203,16 +193,16 @@ static void drawPetriPlace(ImDrawList* draw_list, Place const& place, ImVec2 con
 
     // Draw the place as circle
     if (place.tokens == 0u)
-        draw_list->AddCircleFilled(p, place_radius, FILL_COLOR(alpha), 64);
+        draw_list->AddCircleFilled(p, place_radius, themeFillColor(alpha), 64);
     else
-        draw_list->AddCircleFilled(p, place_radius, FILL_COLOR(255), 64);
-    draw_list->AddCircle(p, place_radius, OUTLINE_COLOR, 64, outline_thickness);
+        draw_list->AddCircleFilled(p, place_radius, themeFillColor(255), 64);
+    draw_list->AddCircle(p, place_radius, themeOutlineColor(), 64, outline_thickness);
 
     // Draw the caption
     const char* text = show_caption ? place.caption.c_str() : place.key.c_str();
     ImVec2 dim = ImGui::CalcTextSize(text);
     ImVec2 ptext = p - ImVec2(dim.x / 2.0f, place_radius + dim.y);
-    draw_list->AddText(ptext, CAPTION_COLOR, text);
+    draw_list->AddText(ptext, themeCaptionColor(), text);
 
     // Draw the number of tokens
     if (place.tokens == 0u)
@@ -253,7 +243,7 @@ static void drawPetriPlace(ImDrawList* draw_list, Place const& place, ImVec2 con
     {
         drawToken(draw_list, p.x, p.y, zoom);
         std::string tokens = std::to_string(place.tokens);
-        draw_list->AddText(ImVec2(p.x, p.y), CAPTION_COLOR, tokens.c_str());
+        draw_list->AddText(ImVec2(p.x, p.y), themeCaptionColor(), tokens.c_str());
     }
 }
 
@@ -280,8 +270,8 @@ static void drawGrafcetPlace(ImDrawList* draw_list, Place const& place, ImVec2 c
         // Outer square (initial step indicator)
         const ImVec2 pmin(p.x - trans_width2 / 2.0f, p.y - trans_width2 / 2.0f);
         const ImVec2 pmax(p.x + trans_width2 / 2.0f, p.y + trans_width2 / 2.0f);
-        draw_list->AddRectFilled(pmin, pmax, FILL_COLOR(alpha));
-        draw_list->AddRect(pmin, pmax, OUTLINE_COLOR, 0.0f, ImDrawFlags_None, outline_thickness);
+        draw_list->AddRectFilled(pmin, pmax, themeFillColor(alpha));
+        draw_list->AddRect(pmin, pmax, themeOutlineColor(), 0.0f, ImDrawFlags_None, outline_thickness);
     }
     else
     {
@@ -294,8 +284,8 @@ static void drawGrafcetPlace(ImDrawList* draw_list, Place const& place, ImVec2 c
     // Inner square
     const ImVec2 pmin(p.x - trans_width / 2.0f, p.y - trans_width / 2.0f);
     const ImVec2 pmax(p.x + trans_width / 2.0f, p.y + trans_width / 2.0f);
-    draw_list->AddRectFilled(pmin, pmax, FILL_COLOR(alpha));
-    draw_list->AddRect(pmin, pmax, OUTLINE_COLOR, 0.0f, ImDrawFlags_None, outline_thickness);
+    draw_list->AddRectFilled(pmin, pmax, themeFillColor(alpha));
+    draw_list->AddRect(pmin, pmax, themeOutlineColor(), 0.0f, ImDrawFlags_None, outline_thickness);
 
     // Draw token if step is currently active
     if (place.tokens != 0u)
@@ -308,7 +298,7 @@ static void drawGrafcetPlace(ImDrawList* draw_list, Place const& place, ImVec2 c
     const char* text = show_caption ? place.caption.c_str() : place.key.c_str();
     ImVec2 dim = ImGui::CalcTextSize(text) / 2.0f;
     ImVec2 ptext = p - dim + ImVec2(0.0f, -trans_width / 3.0f + 5.0f * zoom);
-    draw_list->AddText(ptext, CAPTION_COLOR, text);
+    draw_list->AddText(ptext, themeCaptionColor(), text);
 }
 
 //------------------------------------------------------------------------------
@@ -342,20 +332,20 @@ void drawTransition(ImDrawList* draw_list, Transition const& transition,
     const float shadow_offset = SHADOW_OFFSET * zoom;
 
     // Color of the transition: green if validated else yellow if enabled
-    ImU32 color = FILL_COLOR(alpha);
+    ImU32 color = themeFillColor(alpha);
     if (transition.receptivity)
     {
         if ((type != TypeOfNet::TimedPetriNet) && (type != TypeOfNet::TimedEventGraph))
-            color = TRANS_ENABLED_COLOR;
+            color = COLOR_ENABLED_TRANSITION;
     }
     if (transition.canFire())
     {
-        color = TRANS_FIREABLE_COLOR;
+        color = COLOR_FIREABLE_TRANSITION;
     }
     else if (transition.isEnabled())
     {
         color = (type == TypeOfNet::PetriNet)
-            ? TRANS_FIREABLE_COLOR : TRANS_ENABLED_COLOR;
+            ? COLOR_FIREABLE_TRANSITION : COLOR_ENABLED_TRANSITION;
     }
 
     // Draw the transition
@@ -369,7 +359,7 @@ void drawTransition(ImDrawList* draw_list, Transition const& transition,
 
     // Main rectangle with rounding
     draw_list->AddRectFilled(pmin, pmax, color, rounding);
-    draw_list->AddRect(pmin, pmax, OUTLINE_COLOR, rounding, ImDrawFlags_None, outline_thickness);
+    draw_list->AddRect(pmin, pmax, themeOutlineColor(), rounding, ImDrawFlags_None, outline_thickness);
 
     // Draw the caption
     // show_caption: true = caption (e.g. "a b ."), false = key/identifier (e.g. "T0")
@@ -381,13 +371,13 @@ void drawTransition(ImDrawList* draw_list, Transition const& transition,
     {
         // GRAFCET: text to the right of the transition, vertically centered
         ImVec2 ptext = p + ImVec2(trans_width / 2.0f + text_margin, -dim.y / 2.0f);
-        draw_list->AddText(ptext, CAPTION_COLOR, text);
+        draw_list->AddText(ptext, themeCaptionColor(), text);
     }
     else
     {
         // Other types: text below the transition, horizontally centered
         ImVec2 ptext = p + ImVec2(-dim.x / 2.0f, trans_height / 2.0f + text_margin);
-        draw_list->AddText(ptext, CAPTION_COLOR, text);
+        draw_list->AddText(ptext, themeCaptionColor(), text);
     }
 }
 
