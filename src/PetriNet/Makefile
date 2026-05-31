@@ -83,6 +83,12 @@ USER_CXXFLAGS += -Wno-cast-qual -Wno-float-equal
 USER_CCFLAGS += -Wno-sign-conversion -Wno-float-equal -Wno-nan-infinity-disabled
 
 ###################################################
+# Public headers installed under
+# $(PREFIX)/include/TimedPetriNetEditor/$(PROJECT_VERSION)/.
+#
+HEADER_FILES += $(call rwildcard,$(P)/src/PetriNet,*.hpp)
+
+###################################################
 # Generic Makefile rules
 #
 include $(M)/rules/Makefile

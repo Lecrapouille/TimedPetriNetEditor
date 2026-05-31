@@ -112,19 +112,21 @@ ifeq ($(DEAR_IMGUI_BACKEND),RayLib)
     INCLUDES += $(THIRD_PARTIES_DIR)/rlImGui
     GUI_FILES += $(THIRD_PARTIES_DIR)/rlImGui/rlImGui.cpp
     INCLUDES += $(THIRD_PARTIES_DIR)/raylib/src
-    GUI_THIRD_PARTIES_LIBS += $(THIRD_PARTIES_DIR)/raylib/src/$(OS)/libraylib.a
+    ifeq ($(OS),Emscripten)
+        GUI_THIRD_PARTIES_LIBS += $(THIRD_PARTIES_DIR)/raylib/src/$(OS)/libraylib.web.a
+    else
+        GUI_THIRD_PARTIES_LIBS += $(THIRD_PARTIES_DIR)/raylib/src/$(OS)/libraylib.a
+    endif
     ifeq ($(OS),Emscripten)
         ifdef EXAEQUOS
             LINKER_FLAGS += -sMIN_WEBGL_VERSION=2 -sMAX_WEBGL_VERSION=2 -sFULL_ES3
             PKG_LIBS += exa-wayland --static raylib
         else
-            # We tell the linker that the game/library uses GLFW3
-            # library internally, it must be linked automatically
-            # (emscripten provides the implementation)
+            # We tell the linker that the game/library uses GLFW3 library internally,
+            # it must be linked automatically (emscripten provides the implementation)
             LINKER_FLAGS += -s USE_GLFW=3
-            # All webs need a "shell" structure to load and run the game,
-            # by default emscripten has a `shell.html` but we can provide
-            # our own.
+            # All webs need a "shell" structure to load and run the game, by default
+            # emscripten has a `shell.html` but we can provide our own.
             LINKER_FLAGS += --shell-file $(THIRD_PARTIES_DIR)/raylib/src/minshell.html
         endif
     endif
