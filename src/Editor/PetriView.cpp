@@ -716,7 +716,7 @@ void PetriView::handleDoubleClickRename(Simulation& simulation)
 }
 
 //------------------------------------------------------------------------------
-void PetriView::handleMouseClicksAndDrags(Net& net, Simulation& simulation)
+void PetriView::handleMouseClicksAndDrags(Net& net, Simulation& /*simulation*/)
 {
     if (!ImGui::IsItemActive() || !ImGui::IsItemHovered())
         return;

@@ -33,6 +33,11 @@ TARGET_DESCRIPTION := Library Editor for Petri nets
 include $(M)/project/Makefile
 
 ###################################################
+# Set json library.
+#
+INCLUDES += $(THIRD_PARTIES_DIR)/json/include
+
+###################################################
 # For the moment we only use Dear ImGui
 #
 include ./Backends/Makefile

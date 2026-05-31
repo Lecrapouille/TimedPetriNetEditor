@@ -112,6 +112,7 @@ USER_CXXFLAGS += -DIMGUI_DEFINE_MATH_OPERATORS
 #
 GUI_FILES += $(THIRD_PARTIES_DIR)/implot/implot_items.cpp
 GUI_FILES += $(THIRD_PARTIES_DIR)/implot/implot.cpp
+USER_CXXFLAGS += -Wno-deprecated-enum-enum-conversion
 
 ###################################################
 # Dear ImGui file dialog

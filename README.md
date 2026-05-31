@@ -38,6 +38,36 @@ Why developing another Petri editor? Because:
   C#, Java ..) or the code is too complex (no comments) to add my own extensions. This
   editor can be used for Julia language.
 
+## Prerequisites
+
+The editor uses [ZeroMQ](https://zeromq.org/) for remote control (JSON commands over TCP). Install the development package for your system before building:
+
+**Fedora / RHEL / CentOS:**
+```sh
+sudo dnf install zeromq-devel
+```
+
+**Debian / Ubuntu:**
+```sh
+sudo apt install libzmq3-dev
+```
+
+**Arch Linux:**
+```sh
+sudo pacman -S zeromq
+```
+
+**macOS (Homebrew):**
+```sh
+brew install zeromq
+```
+
+You can verify that `pkg-config` finds the library with:
+
+```sh
+pkg-config --exists libzmq && echo "ZeroMQ OK"
+```
+
 ## Compilation, Installation
 
 ```sh

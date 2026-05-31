@@ -147,7 +147,7 @@ size_t Transition::maxTokensToConsume() const
 
 //------------------------------------------------------------------------------
 Net::Net(TypeOfNet const type)
-    : m_type(type), name(to_str(type))
+    : name(to_str(type)), m_type(type)
 {
     applyNewNetSettings(type);
 }
