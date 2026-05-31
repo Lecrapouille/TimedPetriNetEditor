@@ -54,6 +54,7 @@ INCLUDES += $(THIRD_PARTIES_DIR)/json/include
 VPATH += $(THIRD_PARTIES_DIR)/tinyxml2
 LIB_FILES += $(THIRD_PARTIES_DIR)/tinyxml2/tinyxml2.cpp
 USER_CXXFLAGS := -Wno-old-style-cast -Wno-sign-conversion
+USER_CXXFLAGS += -Wno-nan-infinity-disabled -Wno-format-nonliteral -Wno-double-promotion
 
 ###################################################
 # MacOS X: get path inside the bundle application
@@ -79,7 +80,7 @@ INCLUDES += $(THIRD_PARTIES_DIR)/imgui
 LIB_FILES += $(call rwildcard,$(P)/src/PetriNet,*.cpp)
 LIB_FILES += $(call rwildcard,$(P)/src/PetriNet,*.c)
 USER_CXXFLAGS += -Wno-cast-qual -Wno-float-equal
-USER_CCFLAGS += -Wno-sign-conversion -Wno-float-equal
+USER_CCFLAGS += -Wno-sign-conversion -Wno-float-equal -Wno-nan-infinity-disabled
 
 ###################################################
 # Generic Makefile rules

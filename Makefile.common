@@ -7,6 +7,11 @@ COMPILATION_MODE := debug
 CXX_STANDARD := --std=c++17
 
 ###################################################
+# ZeroMQ remote control (set to 0 to build without libzmq).
+#
+TPNE_ZEROMQ ?= 1
+
+###################################################
 # Select the Dear ImGui backend: RayLib or GLFW3.
 #
 DEAR_IMGUI_BACKEND ?= GLFW3
