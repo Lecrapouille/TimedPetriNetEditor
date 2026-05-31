@@ -46,13 +46,14 @@ static inline float norm(T const& A, T const& B)
 
 //------------------------------------------------------------------------------
 static void drawArrow(ImDrawList* draw_list, ImVec2 const& A, ImVec2 const& B,
-                      const ImU32 color, float zoom = 1.0f)
+                      const ImU32 color, float zoom = 1.0f,
+                      float thickness_scale = 1.0f)
 {
     const float place_radius = PLACE_RADIUS * zoom;
     const float arrow_spacing = ARROW_SPACING * zoom;
     const float arrow_length = ARROW_WIDTH * zoom;
     const float arrow_half_width = arrow_length * 0.35f;
-    const float line_thickness = 2.5f * zoom;
+    const float line_thickness = 2.5f * zoom * thickness_scale;
 
     // Orientation
     const float arrowAngle = std::atan((B.y - A.y) / (B.x - A.x))
@@ -119,14 +120,20 @@ void drawArc(ImDrawList* draw_list, Arc const& arc, TypeOfNet const type,
              ImVec2 const& origin, float const alpha, float zoom)
 {
     ImU32 color;
+    float thickness = 1.0f;
 
     if (alpha >= 0.0f)
     {
-        color = themeOutlineColor(); // FIXME themeFillColor(alpha);
+        color = themeOutlineColor();
     }
     else
     {
+        // Critical cycle arc: highlighted color and a thicker stroke
+        // so it stays distinguishable from regular arcs whatever the
+        // theme (in the light theme red and the maroon outline are
+        // otherwise hard to tell apart).
         color = themeCriticalColor();
+        thickness = 2.4f;
     }
 
     if (type == TypeOfNet::TimedEventGraph)
@@ -138,7 +145,8 @@ void drawArc(ImDrawList* draw_list, Arc const& arc, TypeOfNet const type,
         Node const& next = arc.to.arcsOut[0]->to;
         drawArrow(draw_list,
                   origin + ImVec2(arc.from.x * zoom, arc.from.y * zoom),
-                  origin + ImVec2(next.x * zoom, next.y * zoom), color, zoom);
+                  origin + ImVec2(next.x * zoom, next.y * zoom), color, zoom,
+                  thickness);
 
         float x = origin.x + (arc.from.x + (next.x - arc.from.x) / 2.0f) * zoom;
         float y = origin.y + (arc.from.y + (next.y - arc.from.y) / 2.0f) * zoom;
@@ -151,7 +159,8 @@ void drawArc(ImDrawList* draw_list, Arc const& arc, TypeOfNet const type,
     {
         drawArrow(draw_list,
                   origin + ImVec2(arc.from.x * zoom, arc.from.y * zoom),
-                  origin + ImVec2(arc.to.x * zoom, arc.to.y * zoom), color, zoom);
+                  origin + ImVec2(arc.to.x * zoom, arc.to.y * zoom), color, zoom,
+                  thickness);
 
         if ((arc.from.type == Node::Type::Transition) && (type == TypeOfNet::TimedPetriNet))
         {
