@@ -23,7 +23,6 @@
 #include "PetriNet/Algorithms.hpp"
 #include "PetriNet/Imports/Imports.hpp"
 #include "PetriNet/Exports/Exports.hpp"
-#include "Editor/Path.hpp"
 
 #include <algorithm>
 #include <iostream>
@@ -147,7 +146,7 @@ size_t Transition::maxTokensToConsume() const
 
 //------------------------------------------------------------------------------
 Net::Net(TypeOfNet const type)
-    : m_type(type), name(to_str(type))
+    : name(to_str(type)), m_type(type)
 {
     applyNewNetSettings(type);
 }
@@ -211,6 +210,7 @@ void Net::clear()
     m_arcs.clear();
     m_next_place_id = 0u;
     m_next_transition_id = 0u;
+    m_error.clear();
     modified = true;
 }
 
@@ -231,6 +231,7 @@ bool Net::tokens(std::vector<size_t> const& tokens_)
 {
     if (m_places.size() != tokens_.size())
     {
+        m_error = "The container dimension holding tokens does not match the number of places\n";
         return false;
     }
 
@@ -240,6 +241,7 @@ bool Net::tokens(std::vector<size_t> const& tokens_)
         m_places[i].tokens = std::min(Net::Settings::maxTokens, tokens_[i]);
     }
 
+    m_error.clear();
     return true;
 }
 
@@ -773,9 +775,29 @@ void Net::resetReceptivies()
 }
 
 //------------------------------------------------------------------------------
+// TBD: duplicated with Path::extension() but I do not want to have Path.hpp
+// as dependency here.
+static std::string fileExtension(std::string const& path)
+{
+    std::string::size_type pos = path.find_last_of(".");
+    if (pos != std::string::npos)
+    {
+        std::string ext = path.substr(pos, std::string::npos);
+
+        // Ignore trailing ~ (backup files like foo.txt~)
+        if (!ext.empty() && ext.back() == '~')
+            ext.pop_back();
+
+        std::transform(ext.begin(), ext.end(), ext.begin(), ::tolower);
+        return ext;
+    }
+    return "";
+}
+
+//------------------------------------------------------------------------------
 std::string saveToFile(Net const& net, std::string const& filepath)
 {
-    Exporter const* exporter = getExporter(Path::extension(filepath));
+    Exporter const* exporter = getExporter(fileExtension(filepath));
     if (exporter == nullptr)
     {
         return "Cannot export '" + filepath + "'. Reason: 'unknown file extension'\n";
@@ -787,7 +809,7 @@ std::string saveToFile(Net const& net, std::string const& filepath)
 std::string loadFromFile(Net& net, std::string const& filepath, bool& springify)
 {
     // Search the importer
-    Importer const* importer = getImporter(Path::extension(filepath));
+    Importer const* importer = getImporter(fileExtension(filepath));
     if (importer == nullptr)
     {
         return "Cannot import '" + filepath + "'. Reason: 'unknown file extension'\n";

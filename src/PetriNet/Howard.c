@@ -30,6 +30,8 @@
 #include <stddef.h>
 #include <stdio.h>
 #include <math.h>
+#include <stdint.h>
+#include <string.h>
 #include "Howard.h"
 
 #if !defined(_WIN32)
@@ -37,9 +39,14 @@
 #    pragma GCC diagnostic ignored "-Wshadow"
 #endif
 
-#define EPSILON -HUGE_VAL
-/*#define EPSILON  -1.79769313486231570e308*/
-
+/* (max,+) zero = -infinity; bit pattern avoids INFINITY/HUGE_VAL with -ffast-math */
+static double HowardEpsilon(void)
+{
+    double value;
+    uint64_t const bits = 0xFFF0000000000000ULL;
+    memcpy(&value, &bits, sizeof(value));
+    return value;
+}
 
 /* GLOBAL VARIABLES */
 
@@ -198,12 +205,13 @@ static void Epsilon(double *a,int narcs,double *epsilon)
 static void Initial_Policy(void)
 {
     int i;
+    double const eps = HowardEpsilon();
 
     /* we loose a O(nnodes) time here ... */
     /* we use the auxiliary variable vaux to compute the row max of A */
     for (i=0; i< nnodes; i++)
     {
-        vaux[i] = EPSILON;
+        vaux[i] = eps;
     }
     for (i=0; i<narcs; i++)
     {
@@ -221,12 +229,13 @@ static void Initial_Policy(void)
 static void Semi_Initial_Policy(void)
 {
     int i;
+    double const eps = HowardEpsilon();
 
     /* we loose a O(nnodes) time here ... */
     /* heuristic rule to determine the initial policy... A */
     for (i=0; i< nnodes; i++)
     {
-        vaux[i] = EPSILON;
+        vaux[i] = eps;
     }
     for (i=0; i<narcs; i++)
     {

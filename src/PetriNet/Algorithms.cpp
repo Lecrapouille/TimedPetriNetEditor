@@ -205,7 +205,8 @@ void toSysLin(Net const& net,
             {
                 // System inputs: B U(n)
                 Transition& to = *reinterpret_cast<Transition*>(&(a->to));
-                B.set(indices[to.id], indices[from.id], float(arc.duration));
+                B.set(indices[to.id], indices[from.id],
+                      static_cast<double>(arc.duration));
             }
         }
         else // States or outputs
@@ -219,17 +220,20 @@ void toSysLin(Net const& net,
                     // Systems states: X(n) = D X(n) (+) A X(n-1)
                     if (p.tokens == 1u)
                     {
-                        A.set(indices[to.id], indices[from.id], arc.duration);
+                        A.set(indices[to.id], indices[from.id],
+                              static_cast<double>(arc.duration));
                     }
                     else
                     {
-                        D.set(indices[to.id], indices[from.id], arc.duration);
+                        D.set(indices[to.id], indices[from.id],
+                              static_cast<double>(arc.duration));
                     }
                 }
                 else if (to.isOutput())
                 {
                     // System outputs: Y(n) = C X(n)
-                    C.set(indices[to.id], indices[from.id], arc.duration);
+                    C.set(indices[to.id], indices[from.id],
+                          static_cast<double>(arc.duration));
                 }
             }
         }
@@ -310,8 +314,9 @@ bool toAdjacencyMatrices(Net const& net, SparseMatrix<MaxPlus>& tokens, SparseMa
 
         // Note origin and destination are inverted because we use the following
         // matrix product convension: M * x where x is a column vector.
-        durations.set(from.id, to.id, p.arcsIn[0]->duration);
-        tokens.set(from.id, to.id, float(p.tokens));
+        durations.set(from.id, to.id,
+                      static_cast<double>(p.arcsIn[0]->duration));
+        tokens.set(from.id, to.id, static_cast<double>(p.tokens));
     }
 
     return true;
@@ -448,7 +453,7 @@ CriticalCycleResult findCriticalCycle(Net const& net)
 
         IJ.push_back(int(from.id)); // Transposed is needed
         IJ.push_back(int(to.id));
-        T.push_back(p.arcsIn[0]->duration);
+        T.push_back(static_cast<double>(p.arcsIn[0]->duration));
         N.push_back(double(p.tokens));
     }
 
