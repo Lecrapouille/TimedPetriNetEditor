@@ -184,6 +184,12 @@ Document& Editor::createDocument()
     auto& doc = *m_documents.back();
     doc.addNet(TypeOfNet::PetriNet, "Net");
     doc.registerNets();
+    // A freshly created document holds only an empty default net: there is
+    // nothing to save yet, so it must not be flagged as modified (addNet() sets
+    // the flag for explicit user "Add Net" actions). Otherwise the application
+    // would consider the document dirty right from startup.
+    doc.setModified(false);
+    doc.activeNet().net.modified = false;
     return doc;
 }
 
@@ -329,6 +335,7 @@ void Editor::onUpdate(float const dt)
 {
     if (net().modified)
     {
+        activeDocument().setModified(true);
         title(m_states.title + " -- " + net().name + " **");
 
         // Validate GRAFCET receptivities when net is modified
@@ -451,16 +458,11 @@ void Editor::view()
 
     if (doc.netCount() == 1 && !doc.getNet(0).visible)
     {
-        if (doc.isModified())
-        {
+        doc.getNet(0).visible = true;
+        if (hasUnsavedChanges())
             m_states.request_quitting = true;
-            m_states.file_dialog = States::FileDialog::SaveAs;
-        }
         else
-        {
-            doc.getNet(0).visible = true;
             m_states.request_new = true;
-        }
     }
 }
 
@@ -864,18 +866,8 @@ void Editor::saveDocumentAs()
             for (size_t i = 0; i < doc.netCount(); ++i)
                 doc.getNet(i).net.modified = false;
 
-            if (m_states.request_quitting)
-            {
-                m_states.request_quitting = false;
-                halt();
-            }
-            if (m_states.request_new)
-            {
-                m_states.request_new = false;
-                m_marked_arcs.clear();
-                clearNet();
-                m_path_to_save.clear();
-            }
+            if (m_states.request_quitting || m_states.request_new || m_states.request_load)
+                fulfillPendingDocumentRequest();
         }
         else
         {
@@ -898,18 +890,10 @@ void Editor::exportNetTo(Exporter const& exporter)
 
     if (net().isEmpty())
     {
-        if (m_states.request_quitting)
+        if (m_states.request_quitting || m_states.request_new || m_states.request_load)
         {
-            m_states.request_quitting = false;
-            halt();
-        }
-        else if (m_states.request_new)
-        {
-            m_marked_arcs.clear();
-            clearNet();
-            net().modified = false;
-            m_path_to_save.clear();
-            m_states.request_new = false;
+            discardUnsavedChanges();
+            fulfillPendingDocumentRequest();
             m_states.file_dialog = States::FileDialog::None;
         }
         else
@@ -922,7 +906,8 @@ void Editor::exportNetTo(Exporter const& exporter)
     const char* title = (m_states.file_dialog == States::FileDialog::Export) ? "Choose the Petri file to export"
         : (m_states.request_quitting ? "Choose the Petri file to save before quitting"
         : (m_states.request_new ? "Choose the Petri file to save before creating new document"
-        : "Choose the Petri file to save"));
+        : (m_states.request_load ? "Choose the Petri file to save before opening another document"
+        : "Choose the Petri file to save")));
 
     FileDialogHelper::openSave("ExportDlgKey", title, exporter.extensions.c_str());
 
@@ -939,21 +924,11 @@ void Editor::exportNetTo(Exporter const& exporter)
             {
                 setSavePath(path);
                 m_messages.setInfo("Saved with success '" + path + "'");
+                activeDocument().setModified(false);
                 net().modified = false;
             }
-            if (m_states.request_quitting)
-            {
-                m_states.request_quitting = false;
-                halt();
-            }
-            if (m_states.request_new)
-            {
-                m_states.request_new = false;
-                m_marked_arcs.clear();
-                clearNet();
-                net().modified = false;
-                m_path_to_save.clear();
-            }
+            if (m_states.request_quitting || m_states.request_new || m_states.request_load)
+                fulfillPendingDocumentRequest();
         }
         else
         {
@@ -964,8 +939,6 @@ void Editor::exportNetTo(Exporter const& exporter)
     {
         m_states.file_dialog = States::FileDialog::None;
         m_states.pending_exporter = nullptr;
-        m_states.request_quitting = false;
-        m_states.request_new = false;
     }
 }
 
@@ -1004,6 +977,60 @@ void Editor::clearNet()
 
     action->after(net());
     m_history.add(std::move(action));
+}
+
+//------------------------------------------------------------------------------
+bool Editor::hasUnsavedChanges() const
+{
+    if (activeDocument().isModified())
+        return true;
+
+    auto const& doc = activeDocument();
+    for (size_t i = 0; i < doc.netCount(); ++i)
+    {
+        if (doc.getNet(i).net.modified)
+            return true;
+    }
+
+    return false;
+}
+
+//------------------------------------------------------------------------------
+void Editor::discardUnsavedChanges()
+{
+    activeDocument().stopAllSimulations();
+
+    auto& doc = activeDocument();
+    doc.setModified(false);
+    for (size_t i = 0; i < doc.netCount(); ++i)
+        doc.getNet(i).net.modified = false;
+
+    m_path_to_save.clear();
+    m_history.clear();
+}
+
+//------------------------------------------------------------------------------
+void Editor::fulfillPendingDocumentRequest()
+{
+    if (m_states.request_quitting)
+    {
+        m_states.request_quitting = false;
+        halt();
+    }
+    else if (m_states.request_new)
+    {
+        m_states.request_new = false;
+        m_marked_arcs.clear();
+        m_path_to_save.clear();
+        clearNet();
+    }
+    else if (m_states.request_load)
+    {
+        // The current document has been dealt with (saved or discarded); now
+        // open the load file dialog. loadDocumentFromFile() replaces the nets.
+        m_states.request_load = false;
+        m_states.file_dialog = States::FileDialog::Load;
+    }
 }
 
 //--------------------------------------------------------------------------

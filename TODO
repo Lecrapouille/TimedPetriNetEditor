@@ -18,7 +18,6 @@ Finir l'exemple de https://www.youtube.com/watch?v=8_mZYlMHsds dans GEMMA.json +
 Ajouter les reset et inhibitor cote Petri
 Finir flowshop + plot des donnees
 
-Crash: modifier graphe, Clique sur X, sauver => boucle infinie
 En mode GRAFCET le focage fait iterer GC entre init et val
 
 if frozen if GRAFCET devrait etre inverse dans le code
