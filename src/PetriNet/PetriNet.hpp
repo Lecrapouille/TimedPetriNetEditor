@@ -22,6 +22,7 @@
 #  define PETRI_NET_HPP
 
 #  include "PetriNet/Grafcet.hpp"
+#  include "PetriNet/SafeFloat.hpp"
 
 #  include <cmath>
 #  include <string>
@@ -377,7 +378,7 @@ public:
     //--------------------------------------------------------------------------
     Arc(Node& from_, Node& to_, float duration_ = 0.0f)
         : from(from_), to(to_),
-          duration(from_.type == Node::Type::Transition ? duration_ : std::numeric_limits<float>::quiet_NaN())
+          duration(from_.type == Node::Type::Transition ? duration_ : safeNaNF())
     {
         assert(from.type != to.type);
     }
@@ -785,7 +786,12 @@ public:
     //! \brief Editor has changed content and save is needed.
     bool modified = false;
 
+    //! \brief Last error message from Net operations (e.g. tokens()).
+    std::string const& error() const { return m_error; }
+
 private:
+
+    std::string m_error;
 
     //! \brief Type of net GRAFCET, Petri, Timed Petri ...
     TypeOfNet m_type;
