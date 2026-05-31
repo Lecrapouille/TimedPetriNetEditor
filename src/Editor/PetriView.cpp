@@ -716,7 +716,7 @@ void PetriView::handleDoubleClickRename(Simulation& simulation)
 }
 
 //------------------------------------------------------------------------------
-void PetriView::handleMouseClicksAndDrags(Net& net, Simulation& simulation)
+void PetriView::handleMouseClicksAndDrags(Net& net, Simulation& /*simulation*/)
 {
     if (!ImGui::IsItemActive() || !ImGui::IsItemHovered())
         return;
@@ -1471,9 +1471,7 @@ void PetriView::drawGrid(ImDrawList* draw_list, bool const running, bool const h
     // Draw background
     draw_list->ChannelsSetCurrent(0);
     draw_list->AddRectFilled(m_canvas.corners[0], m_canvas.corners[1],
-        ((ThemeId::Light == theme())
-            ? LIGHT_THEME_PETRI_VIEW_COLOR
-            : DARK_THEME_PETRI_VIEW_COLOR));
+        themePetriViewColor());
     draw_list->AddRect(m_canvas.corners[0], m_canvas.corners[1], border_color);
 
     if (!grid.show)
