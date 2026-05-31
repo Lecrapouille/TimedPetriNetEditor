@@ -488,12 +488,51 @@ CriticalCycleResult findCriticalCycle(Net const& net)
         << " connected components of the optimal policy:"
         << std::endl;
 
-    // optimal_policy returns a list of transitions. Reconstruct cycles
-    // to our internal format (including places).
+    // Howard returns a policy 'pi' (optimal_policy[to] = successor of node 'to').
+    // This is a functional graph: each node has exactly one outgoing policy arc
+    // 'to -> pi[to]'. Following it from any node always ends on a cycle, and only
+    // the arcs lying ON a cycle form the critical circuit(s). The transient arcs
+    // that merely feed into the cycles are NOT critical and must not be
+    // highlighted.
+    std::vector<char> visitState(nnodes, 0); // 0=unvisited, 1=on current path, 2=done
+    std::vector<char> onCycle(nnodes, 0);
+    for (size_t s = 0u; s < nnodes; ++s)
+    {
+        if (visitState[s] != 0)
+            continue;
+
+        std::vector<size_t> path;
+        size_t u = s;
+        while ((u < nnodes) && (visitState[u] == 0))
+        {
+            visitState[u] = 1;
+            path.push_back(u);
+            u = size_t(optimal_policy[u]);
+        }
+
+        // We closed a cycle iff we returned onto a node of the current path.
+        if ((u < nnodes) && (visitState[u] == 1))
+        {
+            size_t k = 0u;
+            while ((k < path.size()) && (path[k] != u))
+                ++k;
+            for (; k < path.size(); ++k)
+                onCycle[path[k]] = 1;
+        }
+
+        for (size_t const v : path)
+            visitState[v] = 2;
+    }
+
+    // Reconstruct only the critical-circuit arcs (those whose source node is on a
+    // policy cycle) into our internal format (including the in-between places).
     for (size_t to = 0u; to < optimal_policy.size(); ++to)
     {
+        if (onCycle[to] == 0)
+            continue;
+
         size_t from = size_t(optimal_policy[to]);
-        result.message << "  T" << from << " -> T" << to << std::endl;
+        result.message << "  T" << to << " -> T" << from << std::endl;
         // Search for all places that link our transitions.
         for (auto const& p: net.places())
         {
