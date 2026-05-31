@@ -11,6 +11,7 @@ np: 1 1 1
 # Piece names (columns)
 pieces: P1 P2 P3
 
-# Processing times: machine_name: time1 time2 ... (nan = skip)
+# Processing times: machine_name: time1 time2 ...
+# Note: (-inf means (max,+) 0 therefore no task to perform)
 M1: 2.0 3.0 1.0
 M2: 1.0 2.0 1.5

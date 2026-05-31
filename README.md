@@ -79,6 +79,22 @@ make -j8
 sudo make install
 ```
 
+## Developer note: `-ffast-math` and NaN/Inf
+
+This project is compiled with `-ffast-math` (see `PERFORMANCE_FLAGS` in
+`.makefile/rules/Makefile`), which implies `-ffinite-math-only`. Under this
+assumption the compiler considers that `NaN` and `±Inf` never occur, so
+`std::isnan()` / `std::isinf()` are constant-folded to `false` and direct
+comparisons such as `x == -inf` become unreliable. This previously broke the
+Flowshop import, where the `(max,+)` zero `%0 == -inf` (the holes imposed by the
+matrix) was silently treated as a regular processing time.
+
+When you need to detect a special floating-point value (the `(max,+)` zero
+`-inf`, the `NaN` "no duration" sentinel of `Place -> Transition` arcs, ...), use
+the bit-pattern based helpers from [`src/PetriNet/SafeFloat.hpp`](src/PetriNet/SafeFloat.hpp)
+(`safeIsNaN`, `safeIsNegInf`, `safeIsPosInf`, `safeIsInf`) instead of the
+standard library functions.
+
 ## Usage
 
 You can pass a Petri net file to the command line. See this [document](doc/save.md)
@@ -101,24 +117,20 @@ You can modify the `.vscode/launch.json` to indicate
 
 ## Julia integration
 
-The `make install` is needed for its usage with Julia. Once installed in your operating system, you can directly from
-the [Julia](https://github.com/JuliaLang/julia) REPL (this part
-is described in detail in a dedicated [document](julia.md)):
+The C++ files in [`src/julia`](src/julia) (`Julia.cpp` / `Julia.hpp`) build the
+C ABI shared library used by Julia. The Julia wrapper itself now lives in its
+own package, [TimedPetriNetEditor.jl](https://github.com/Lecrapouille/TimedPetriNetEditor.jl),
+which drives this build (`Pkg.build`) and exposes the API:
 
-```sh
-julia> include("src/julia/TimedPetriNetEditor.jl")
-counter (generic function with 1 method)
-
-julia> pn = petri_net()
-PetriNet(0)
-
-julia> petri_editor!(pn)
+```julia
+using TimedPetriNetEditor
+pn = petri_net()
+petri_editor!(pn)
 ```
 
-If you do not desire to install TimedPetriNetEditor on your operating system,
-you will have to adapt the `DEFINES` in Makefile to indicate the path of the
-`data/` folder (to find the fonts). You will also have to manually modify this
-Julia file to indicate the correct path of the shared library
-`libtimedpetrineteditor.so`.
+`TimedPetriNetEditor.jl` resolves the produced shared library automatically (no
+hard-coded path) and also adds the ScicosLab flowshop functions
+(`import_flowshop!`, `find_critical_cycle`, `show_cr_graph`) on top of
+[MaxPlus.jl](https://github.com/Lecrapouille/MaxPlus.jl).
 
 You can read this [cheatsheet](doc/julia.md) concerning the API for Julia.
