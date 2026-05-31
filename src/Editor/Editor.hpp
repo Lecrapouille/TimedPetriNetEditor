@@ -46,7 +46,9 @@ namespace tpne {
 class Editor: public Application
 {
     friend class PetriView;
+#  if TPNE_USE_ZEROMQ
     friend class ZeroMQRemote;
+#  endif
 
 public:
 
