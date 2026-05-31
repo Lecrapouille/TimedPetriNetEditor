@@ -50,6 +50,18 @@ typedef struct CSparseMatrix
     size_t M;
 } CSparseMatrix_t;
 
+//! \brief Plain-old-data view of a CriticalCycleResult for the Julia ABI.
+//! The pointers refer to memory owned by the C++ side (static buffers): the
+//! Julia caller must copy the values before the next call.
+typedef struct CCriticalCycle
+{
+    double* durations;    //!< Cycle time per transition (size = nnodes).
+    double* eigenvector;  //!< Bias vector per transition (size = nnodes).
+    size_t size;          //!< Number of transitions (length of both arrays).
+    size_t cycles;        //!< Number of connected components of the policy.
+    bool success;         //!< True if an optimal policy was found.
+} CCriticalCycle_t;
+
 // ****************************************************************************
 //! \brief Create a new empty timed Petri net.
 //! \return the handle of the Petri net needed by other functions.
@@ -216,7 +228,8 @@ extern "C" bool petri_remove_transition(int64_t const pn, int64_t const transiti
 //! \return -1 if Petri net handle is invalid or if one node name is invalid else
 //! return the arc identifier.
 // ****************************************************************************
-extern "C" int64_t petri_add_arc(int64_t const pn, const char* from, const char* to);
+extern "C" int64_t petri_add_arc(int64_t const pn, const char* from,
+                                 const char* to, double const duration);
 
 // ****************************************************************************
 //! \brief Remove an arc given its source and destination node names.
@@ -305,12 +318,35 @@ extern "C" bool petri_counter_equation(int64_t const pn, bool use_caption,
     bool minplus_notation);
 
 // ****************************************************************************
-//! \brief Show the critical cycle in the graph event.
+//! \brief Build a flowshop event graph into the given net from a `.flowshop`
+//! description file (same format as the editor importer). The net is reset
+//! before importing.
 //! \param[in] pn: the handle of the petri net created by create_petri_net().
-//! \return false if the Petri net handle is invalid or return true.
+//! \param[in] filename: path to the `.flowshop` file.
+//! \return false if the handle is invalid or the import failed, else true.
 // ****************************************************************************
-//extern "C" bool showCriticalCycle(int64_t const pn);
-//TODO get petri_get_critical_cycle(int64_t const pn);
+extern "C" bool petri_import_flowshop(int64_t const pn, const char* filename);
+
+// ****************************************************************************
+//! \brief Compute the critical cycle (semi-Howard) of the event graph and
+//! fill \p result. The arrays in \p result point to C++-owned static buffers
+//! valid until the next call: copy them on the Julia side.
+//! \param[in] pn: the handle of the petri net created by create_petri_net().
+//! \param[out] result: durations, eigenvector, sizes and success flag.
+//! \return the value of result->success (false if handle invalid / not an
+//! event graph / no optimal policy).
+// ****************************************************************************
+extern "C" bool petri_find_critical_cycle(int64_t const pn,
+                                          CCriticalCycle_t* result);
+
+// ****************************************************************************
+//! \brief Print the human-readable critical-cycle report to stdout (cycles,
+//! durations, eigenvector). Equivalent to `show_cr_graph` in ScicosLab.
+//! \param[in] pn: the handle of the petri net created by create_petri_net().
+//! \return false if the Petri net handle is invalid or the algorithm failed,
+//! else true.
+// ****************************************************************************
+extern "C" bool petri_show_critical_cycle(int64_t const pn);
 
 // ****************************************************************************
 //! \brief

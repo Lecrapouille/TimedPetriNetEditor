@@ -24,12 +24,15 @@
 #include "PetriNet/Algorithms.hpp"
 #include "PetriNet/SparseMatrix.hpp"
 #include "PetriNet/TropicalAlgebra.hpp"
+#include "PetriNet/Imports/Imports.hpp"
 
 #include "Editor/Editor.hpp" // Selected by Makefile
 
 #include <iostream>
 #include <deque>
 #include <memory>
+#include <map>
+#include <vector>
 
 //------------------------------------------------------------------------------
 //! \brief List of Petri nets.
@@ -413,14 +416,25 @@ int64_t petri_to_canonical(int64_t const pn)
 }
 
 //------------------------------------------------------------------------------
-static std::vector<size_t> temp_i, temp_j;
-static std::vector<tpne::MaxPlus> temp_d;
+// Backing storage for the C sparse matrices handed to Julia. Each destination
+// pointer keeps its OWN buffers (kept alive across calls): using a single shared
+// static buffer corrupts results when several matrices are filled in one call
+// (e.g. petri_to_adjacency_matrices fills N and T, petri_to_sys_lin fills D, A,
+// B, C). Julia copies the values right after the call returns.
+struct ConvertStorage
+{
+    std::vector<size_t> i;
+    std::vector<size_t> j;
+    std::vector<tpne::MaxPlus> d;
+};
+static std::map<CSparseMatrix_t*, ConvertStorage> g_convert_storage;
 
 static void convert(tpne::SparseMatrix<tpne::MaxPlus>& org, CSparseMatrix_t* dst)
 {
-    temp_i.clear();
-    temp_j.clear();
-    temp_d.clear();
+    ConvertStorage& store = g_convert_storage[dst];
+    store.i.clear();
+    store.j.clear();
+    store.d.clear();
 
     for (size_t row = 0; row < org.nbRows(); ++row)
     {
@@ -429,17 +443,17 @@ static void convert(tpne::SparseMatrix<tpne::MaxPlus>& org, CSparseMatrix_t* dst
             tpne::MaxPlus val = org.get(row, col);
             if (!(val == tpne::zero<tpne::MaxPlus>()))
             {
-                temp_i.push_back(row + 1);
-                temp_j.push_back(col + 1);
-                temp_d.push_back(val);
+                store.i.push_back(row + 1);
+                store.j.push_back(col + 1);
+                store.d.push_back(val);
             }
         }
     }
 
-    dst->i = temp_i.data();
-    dst->j = temp_j.data();
-    dst->d = temp_d.data();
-    dst->size = temp_d.size();
+    dst->i = store.i.data();
+    dst->j = store.j.data();
+    dst->d = store.d.data();
+    dst->size = store.d.size();
     dst->N = org.nbRows();
     dst->M = org.nbColumns();
 }
@@ -458,7 +472,11 @@ bool petri_to_adjacency_matrices(int64_t const pn, CSparseMatrix_t* pN, CSparseM
     CHECK_VALID_PETRI_HANDLE(pn, false);
     CHECK_IS_EVENT_GRAPH(pn, false);
 
-    if (tpne::toAdjacencyMatrices(*g_petri_nets[size_t(pn)], N, T))
+    if (!tpne::toAdjacencyMatrices(*g_petri_nets[size_t(pn)], N, T))
+    {
+        std::cerr << "Failed building adjacency matrices" << std::endl;
+        return false;
+    }
     convert(N, pN);
     convert(T, pT);
     return true;
@@ -510,7 +528,64 @@ bool petri_counter_equation(int64_t const pn, bool use_caption, bool minplus_not
     return true;
 }
 
-// TODO
 //------------------------------------------------------------------------------
-//bool petri_semihoward(int64_t const pn)
-//{}
+bool petri_import_flowshop(int64_t const pn, const char* filename)
+{
+    CHECK_VALID_PETRI_HANDLE(pn, false);
+
+    if (filename == nullptr)
+    {
+        std::cerr << "Sanity check: NULL filename" << std::endl;
+        return false;
+    }
+
+    std::string err = tpne::importFlowshop(*g_petri_nets[size_t(pn)], filename);
+    if (err.empty())
+        return true;
+    std::cerr << "Failed importing flowshop from " << filename
+        << ". Reason is '" << err << "'" << std::endl;
+    return false;
+}
+
+//------------------------------------------------------------------------------
+// Static buffers owning the critical-cycle results exposed to Julia. They are
+// kept alive between calls; the Julia side copies the values immediately.
+static std::vector<double> g_cc_durations;
+static std::vector<double> g_cc_eigenvector;
+
+bool petri_find_critical_cycle(int64_t const pn, CCriticalCycle_t* result)
+{
+    if (result == nullptr)
+    {
+        std::cerr << "Sanity check: NULL param" << std::endl;
+        return false;
+    }
+    CHECK_VALID_PETRI_HANDLE(pn, false);
+
+    tpne::CriticalCycleResult cc =
+        tpne::findCriticalCycle(*g_petri_nets[size_t(pn)]);
+
+    g_cc_durations = cc.durations;
+    g_cc_eigenvector = cc.eigenvector;
+    result->durations = g_cc_durations.data();
+    result->eigenvector = g_cc_eigenvector.data();
+    result->size = g_cc_durations.size();
+    result->cycles = cc.cycles;
+    result->success = cc.success;
+
+    if (!cc.success)
+        std::cerr << cc.message.str() << std::endl;
+
+    return cc.success;
+}
+
+//------------------------------------------------------------------------------
+bool petri_show_critical_cycle(int64_t const pn)
+{
+    CHECK_VALID_PETRI_HANDLE(pn, false);
+
+    tpne::CriticalCycleResult cc =
+        tpne::findCriticalCycle(*g_petri_nets[size_t(pn)]);
+    std::cout << cc.message.str() << std::endl;
+    return cc.success;
+}
