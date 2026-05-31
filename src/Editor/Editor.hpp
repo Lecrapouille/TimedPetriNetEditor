@@ -135,6 +135,9 @@ private: // Petri net services
     void updateSimulationFramerate();
     void takeScreenshot();
     void clearNet();
+    bool hasUnsavedChanges() const;
+    void discardUnsavedChanges();
+    void fulfillPendingDocumentRequest();
     void undo();
     void redo();
     void springify();
@@ -247,6 +250,9 @@ private:
         //! \brief Pending requests
         bool request_quitting = false;
         bool request_new = false;
+        //! \brief A document load (Open) has been requested but is still pending
+        //! the resolution of unsaved changes in the current document.
+        bool request_load = false;
         bool request_vertical_split = false;
 
         //! \brief Plot data for simulation visualization

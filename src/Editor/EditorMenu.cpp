@@ -76,7 +76,9 @@ void Editor::menuFile()
     // Open/Import
     if (ImGui::MenuItem("Open", nullptr, false))
     {
-        m_states.file_dialog = States::FileDialog::Load;
+        // Opening replaces the current document: ask to save it first if it has
+        // unsaved changes (handled in handleMenuActions / the unsaved dialog).
+        m_states.request_load = true;
     }
     if (ImGui::MenuItem("Open in New Document", nullptr, false))
     {
@@ -478,13 +480,14 @@ void Editor::handleMenuActions()
     // Quit request handling
     if (m_states.request_quitting)
     {
-        if (net().modified)
+        if (hasUnsavedChanges() &&
+            m_states.file_dialog != States::FileDialog::SaveAs)
         {
             m_states.show_unsaved_dialog = true;
-            m_states.request_quitting = false;
         }
-        else
+        else if (!hasUnsavedChanges())
         {
+            m_states.request_quitting = false;
             halt();
         }
     }
@@ -492,18 +495,33 @@ void Editor::handleMenuActions()
     // New document request handling
     if (m_states.request_new)
     {
-        if (net().modified)
+        if (hasUnsavedChanges() &&
+            m_states.file_dialog != States::FileDialog::SaveAs)
         {
             m_states.show_unsaved_dialog = true;
-            m_states.request_new = false;
         }
         else
         {
             m_marked_arcs.clear();
             clearNet();
-            net().modified = false;
-            m_path_to_save.clear();
+            discardUnsavedChanges();
             m_states.request_new = false;
+        }
+    }
+
+    // Open (load) request handling: prompt to save the current document first if
+    // it has unsaved changes, then open the load file dialog.
+    if (m_states.request_load)
+    {
+        if (hasUnsavedChanges() &&
+            m_states.file_dialog != States::FileDialog::SaveAs)
+        {
+            m_states.show_unsaved_dialog = true;
+        }
+        else
+        {
+            m_states.request_load = false;
+            m_states.file_dialog = States::FileDialog::Load;
         }
     }
 
@@ -535,13 +553,16 @@ void Editor::showUnsavedChangesDialog()
     ImGui::SameLine();
     if (ImGui::Button("Don't Save", ImVec2(120, 0)))
     {
-        net().modified = false;
-        halt();
+        discardUnsavedChanges();
+        fulfillPendingDocumentRequest();
         ImGui::CloseCurrentPopup();
     }
     ImGui::SameLine();
     if (ImGui::Button("Cancel", ImVec2(120, 0)))
     {
+        m_states.request_quitting = false;
+        m_states.request_new = false;
+        m_states.request_load = false;
         ImGui::CloseCurrentPopup();
     }
 
