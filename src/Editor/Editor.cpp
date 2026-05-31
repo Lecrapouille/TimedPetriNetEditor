@@ -25,7 +25,12 @@
 #include "Editor/Drawable.hpp"
 #include "Editor/FileDialogHelper.hpp"
 #include "Editor/KeyBindings.hpp"
-#include "Editor/Remote/ZeroMQRemote.hpp"
+#include "Editor/Remote/IRemoteControl.hpp"
+#  if TPNE_USE_ZEROMQ
+#    include "Editor/Remote/ZeroMQRemote.hpp"
+#  else
+#    include "Editor/Remote/NullRemoteControl.hpp"
+#  endif
 #include "imgui/imgui_internal.h"
 
 #include <algorithm>
@@ -263,6 +268,7 @@ void Editor::createGEMMADocument()
 //------------------------------------------------------------------------------
 void Editor::initRemoteControl()
 {
+#  if TPNE_USE_ZEROMQ
     m_remote = std::make_unique<ZeroMQRemote>(*this);
     if (m_remote->start("tcp://*:5555"))
     {
@@ -272,6 +278,9 @@ void Editor::initRemoteControl()
     {
         m_messages.setError("Failed to start remote: " + m_remote->error());
     }
+#  else
+    m_remote = std::make_unique<NullRemoteControl>();
+#  endif
 }
 
 //------------------------------------------------------------------------------

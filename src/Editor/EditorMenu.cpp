@@ -232,13 +232,13 @@ void Editor::menuView()
     // Remote control section
     if (ImGui::BeginMenu("Remote Control"))
     {
+#  if TPNE_USE_ZEROMQ
         bool is_running = m_remote && m_remote->isRunning();
         if (ImGui::MenuItem(is_running ? "Disable" : "Enable", nullptr, is_running))
         {
             toggleRemoteControl();
         }
 
-        // Show connection status and endpoint
         if (is_running)
         {
             ImGui::Separator();
@@ -248,6 +248,10 @@ void Editor::menuView()
                 ImGui::TextColored(ImVec4(1.0f, 0.3f, 0.3f, 1.0f), "Error: %s", m_remote->error().c_str());
             }
         }
+#  else
+        ImGui::MenuItem("Disabled at build time", nullptr, false, false);
+        ImGui::TextDisabled("Rebuild with TPNE_ZEROMQ=1");
+#  endif
         ImGui::EndMenu();
     }
 

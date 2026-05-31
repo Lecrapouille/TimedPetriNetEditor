@@ -1,28 +1,35 @@
+ZeroMQ:
+- Encore non testé
 
+Editeur;
+- Colorier en rouge la grille des GRAFCET qui ont une erreur
+- Centrage du graphe dans la fenetre KO
 
-Gros bug de selection d'arcs en mode "Timed event graph" car il n'y a plus les Places affichées.
-placer les 3 GRAFCET dans un dictionnaire afin de trouver facilement les references.
-Colorier en rouge la grille des GRAFCET qui ont une erreur
-Parser 30s/X1/0s
-Gerer forcage init
-Ajouter actions if DR: KM1
-Placer le texte des transitions sous le rectangle
+Timed event graph:
+- Gros bug de selection d'arcs car il n'y a plus les Places affichées.
+- Creer un arc vide en mode timed event graph: segfault
 
-Extraire les méthodes GRAFCET de Simulation vers Grafcet.hpp/cpp
-Ajouter le support des actions conditionnelles "if X: Y" pour GRAFCET
-
-Ne pas afficher les arcs P -> T
-Ajouter un time scaling + 0 timing en mode "remote"
-Tester generation de code arduino + connection en remote a l'editeur
-Finir l'exemple de https://www.youtube.com/watch?v=8_mZYlMHsds dans GEMMA.json + ajouter dans le README
-Ajouter les reset et inhibitor cote Petri
-Finir flowshop + plot des donnees
-
-En mode GRAFCET le focage fait iterer GC entre init et val
-
-if frozen if GRAFCET devrait etre inverse dans le code
-
-au lieu de faire un interpreteur type Forth parsons une vraie expression mathematique.
+GRAFCET:
+- placer les 3 GRAFCET dans un dictionnaire afin de trouver facilement les references.
+- Parser 30s/X1/0s
+- Gerer forcage init
+- Bug: En mode GRAFCET le focage fait iterer GC entre init et val
+- Ajouter actions if DR: KM1
+- Code: "if frozen if GRAFCET ..." devrait etre inverse dans le code
+- au lieu de faire un interpreteur type Forth parsons une vraie expression mathematique.
 Il faudrait gerer la forme «t1/variable/t2». Dans l’exemple ci-contre, la réceptivité
 n'est vraie que 3 s après que « a » passe de l’état 0 à l’état 1, elle ne redevient
 fausse que 7 s après que « a » passe de l’état 1 à l’état 0.
+
+Arduino:
+- Extraire les méthodes GRAFCET de Simulation vers Grafcet.hpp/cpp
+- Ajouter le support des actions conditionnelles "if X: Y" pour GRAFCET
+
+Flowshop:
+- plot les donnees de la simulation du flowshop
+
+Visualisation à distance:
+- Ajouter un time scaling + 0 timing en mode "remote"
+- Tester generation de code arduino + connection en remote a l'editeur
+- Finir l'exemple de https://www.youtube.com/watch?v=8_mZYlMHsds dans GEMMA.json + ajouter dans le README
+- Ajouter les reset et inhibitor cote Petri

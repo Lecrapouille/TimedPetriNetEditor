@@ -23,7 +23,6 @@
 #include "PetriNet/Algorithms.hpp"
 #include "PetriNet/Imports/Imports.hpp"
 #include "PetriNet/Exports/Exports.hpp"
-#include "Editor/Path.hpp"
 
 #include <algorithm>
 #include <iostream>
@@ -773,9 +772,29 @@ void Net::resetReceptivies()
 }
 
 //------------------------------------------------------------------------------
+// TBD: duplicated with Path::extension() but I do not want to have Path.hpp
+// as dependency here.
+static std::string fileExtension(std::string const& path)
+{
+    std::string::size_type pos = path.find_last_of(".");
+    if (pos != std::string::npos)
+    {
+        std::string ext = path.substr(pos, std::string::npos);
+
+        // Ignore trailing ~ (backup files like foo.txt~)
+        if (!ext.empty() && ext.back() == '~')
+            ext.pop_back();
+
+        std::transform(ext.begin(), ext.end(), ext.begin(), ::tolower);
+        return ext;
+    }
+    return "";
+}
+
+//------------------------------------------------------------------------------
 std::string saveToFile(Net const& net, std::string const& filepath)
 {
-    Exporter const* exporter = getExporter(Path::extension(filepath));
+    Exporter const* exporter = getExporter(fileExtension(filepath));
     if (exporter == nullptr)
     {
         return "Cannot export '" + filepath + "'. Reason: 'unknown file extension'\n";
@@ -787,7 +806,7 @@ std::string saveToFile(Net const& net, std::string const& filepath)
 std::string loadFromFile(Net& net, std::string const& filepath, bool& springify)
 {
     // Search the importer
-    Importer const* importer = getImporter(Path::extension(filepath));
+    Importer const* importer = getImporter(fileExtension(filepath));
     if (importer == nullptr)
     {
         return "Cannot import '" + filepath + "'. Reason: 'unknown file extension'\n";

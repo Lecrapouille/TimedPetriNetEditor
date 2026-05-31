@@ -61,7 +61,6 @@ INCLUDES += $(P)/src $(THIRD_PARTIES_DIR)
 #
 SRC_FILES += $(call rwildcard,$(P)/src/PetriNet,*.cpp)
 SRC_FILES += $(call rwildcard,$(P)/src/PetriNet,*.c)
-SRC_FILES += $(P)/src/Editor/Path.cpp
 SRC_FILES += $(call rwildcard,$(P)/tests,*.cpp)
 
 # BEWARE: Disable fast math for testing, else the tests on NaN will fail.

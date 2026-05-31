@@ -40,7 +40,13 @@ Why developing another Petri editor? Because:
 
 ## Prerequisites
 
-The editor uses [ZeroMQ](https://zeromq.org/) for remote control (JSON commands over TCP). Install the development package for your system before building:
+The editor can use [ZeroMQ](https://zeromq.org/) for remote control (JSON commands over TCP). This is enabled by default (`TPNE_ZEROMQ=1` in `Makefile.common`). To build without ZeroMQ:
+
+```sh
+make TPNE_ZEROMQ=0
+```
+
+When ZeroMQ is enabled, install the development package for your system before building:
 
 **Fedora / RHEL / CentOS:**
 ```sh

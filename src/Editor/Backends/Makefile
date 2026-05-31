@@ -1,8 +1,23 @@
 ###################################################
-# Set ZeroMQ Library for remote control.
+# ZeroMQ remote control (see TPNE_ZEROMQ in Makefile.common).
 #
+ifeq ($(OS),Emscripten)
+TPNE_ZEROMQ := 0
+endif
+
+ifeq ($(TPNE_ZEROMQ),1)
 ifneq ($(OS),Emscripten)
-    PKG_LIBS += libzmq
+    # Link only -lzmq: do not add libzmq to PKG_LIBS because PKG_LIBS also
+    # contains "--static glfw3", and pkg-config --static pulls broken private
+    # deps from libzmq on Ubuntu (e.g. libprotokit.a for NORM).
+    USER_CXXFLAGS += $(shell pkg-config --cflags libzmq 2>/dev/null)
+    LINKER_FLAGS += $(shell pkg-config --libs-only-l libzmq 2>/dev/null || echo -lzmq)
+endif
+    DEFINES += -DTPNE_USE_ZEROMQ=1
+    GUI_REMOTE_FILES := $(P)/src/Editor/Remote/ZeroMQRemote.cpp
+else
+    DEFINES += -DTPNE_USE_ZEROMQ=0
+    GUI_REMOTE_FILES := $(P)/src/Editor/Remote/NullRemoteControl.cpp
 endif
 
 ###################################################
@@ -38,12 +53,10 @@ ifeq ($(DEAR_IMGUI_BACKEND),GLFW3)
         LINKER_FLAGS += -lGL
         PKG_LIBS += --static glfw3
     else ifeq ($(OS),Darwin)
-        # OpenGL, GLEW, GLFW3
-        INCLUDES += -I/usr/local/include -I/opt/local/include
+        # GLFW/GLEW via pkg-config (Homebrew: /opt/homebrew on Apple Silicon).
+        PKG_LIBS += glfw3 glew
         LINKER_FLAGS += -framework OpenGL -framework Cocoa
         LINKER_FLAGS += -framework IOKit -framework CoreVideo
-        LINKER_FLAGS += -L/usr/local/lib -L/opt/local/lib
-        LINKER_FLAGS += -lGLEW -lglfw
     else ifeq ($(OS),Emscripten)
         ifdef EXAEQUOS
             # Wayland, OpenGL, GLEW, GLFW3 for ExaequOS
@@ -126,4 +139,4 @@ USER_CXXFLAGS += -Wno-unknown-pragmas -Wno-double-promotion
 INCLUDES += $(P)/src/Editor/Remote
 INCLUDES += $(P)/src
 GUI_FILES += $(wildcard $(P)/src/Editor/*.cpp)
-GUI_FILES += $(wildcard $(P)/src/Editor/Remote/*.cpp)
+GUI_FILES += $(GUI_REMOTE_FILES)

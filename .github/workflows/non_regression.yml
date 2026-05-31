@@ -15,7 +15,7 @@ jobs:
       - name: Install system packages
         run: |
           sudo apt-get update
-          sudo apt-get install libdw-dev pkg-config libmosquitto-dev libx11-dev libxinerama-dev
+          sudo apt-get install libdw-dev pkg-config libmosquitto-dev libzmq3-dev libx11-dev libxinerama-dev
           sudo apt-get install libasound2-dev libxrandr-dev libxi-dev libgl1-mesa-dev libglu1-mesa-dev libxcursor-dev
           sudo apt-get install libwayland-dev libxkbcommon-x11-dev libglfw3-dev libxcursor-dev libxinerama-dev
       - name: Checkout TimedPetriNetEditor
@@ -54,7 +54,8 @@ jobs:
     steps:
       - name: Install system packages
         run: |
-          brew install pkg-config mosquitto raylib glfw glew
+          brew install pkg-config mosquitto zeromq glfw glew
+          echo "PKG_CONFIG_PATH=$(brew --prefix)/lib/pkgconfig:${PKG_CONFIG_PATH:-}" >> "$GITHUB_ENV"
       - name: Checkout
         uses: actions/checkout@v6
         with:
