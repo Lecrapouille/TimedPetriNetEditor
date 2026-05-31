@@ -55,6 +55,10 @@ $(P)/src/Editor: $(P)/src/PetriNet
 # GUI
 #
 include $(abspath $(P)/src/Editor/Backends/Makefile)
+# rlImGui needs raylib at the final link (wasm/desktop); Backends sets GUI_THIRD_PARTIES_LIBS.
+ifeq ($(DEAR_IMGUI_BACKEND),RayLib)
+THIRD_PARTIES_LIBS += $(GUI_THIRD_PARTIES_LIBS)
+endif
 
 ###################################################
 # Embed assets for web version. Assets shall be

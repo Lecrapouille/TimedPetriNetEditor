@@ -112,7 +112,7 @@ ifeq ($(DEAR_IMGUI_BACKEND),RayLib)
     INCLUDES += $(THIRD_PARTIES_DIR)/rlImGui
     GUI_FILES += $(THIRD_PARTIES_DIR)/rlImGui/rlImGui.cpp
     INCLUDES += $(THIRD_PARTIES_DIR)/raylib/src
-    GUI_THIRDPART_LIBS += $(THIRD_PARTIES_DIR)/raylib/src/$(OS)/libraylib.a
+    GUI_THIRD_PARTIES_LIBS += $(THIRD_PARTIES_DIR)/raylib/src/$(OS)/libraylib.a
     ifeq ($(OS),Emscripten)
         ifdef EXAEQUOS
             LINKER_FLAGS += -sMIN_WEBGL_VERSION=2 -sMAX_WEBGL_VERSION=2 -sFULL_ES3
