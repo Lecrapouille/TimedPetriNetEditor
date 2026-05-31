@@ -64,7 +64,7 @@ SRC_FILES += $(call rwildcard,$(P)/src/PetriNet,*.c)
 SRC_FILES += $(call rwildcard,$(P)/tests,*.cpp)
 
 # BEWARE: Disable fast math for testing, else the tests on NaN will fail.
-USER_CXXFLAGS += -Wno-float-equal -fno-fast-math
+USER_CXXFLAGS += -Wno-float-equal -fno-fast-math -Wno-nan-infinity-disabled
 USER_CCFLAGS += -Wno-sign-conversion -Wno-float-equal -fno-fast-math
 
 ###################################################

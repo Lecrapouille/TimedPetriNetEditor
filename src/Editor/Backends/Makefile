@@ -5,12 +5,32 @@ ifeq ($(OS),Emscripten)
 TPNE_ZEROMQ := 0
 endif
 
+# Disable ZeroMQ when libzmq is not available (e.g. missing pkg-config path on CI).
+ifneq ($(TPNE_ZEROMQ),0)
+ifneq ($(OS),Emscripten)
+ZMQ_FOUND := $(shell pkg-config --exists libzmq 2>/dev/null && echo 1)
+ifeq ($(ZMQ_FOUND),)
+    ZMQ_BREW_PREFIX := $(shell brew --prefix zeromq 2>/dev/null)
+    ifneq ($(ZMQ_BREW_PREFIX),)
+        ZMQ_FOUND := 1
+    endif
+endif
+ifeq ($(ZMQ_FOUND),)
+$(warning libzmq not found; building with TPNE_ZEROMQ=0)
+TPNE_ZEROMQ := 0
+endif
+endif
+endif
+
 ifeq ($(TPNE_ZEROMQ),1)
 ifneq ($(OS),Emscripten)
     # Link only -lzmq: do not add libzmq to PKG_LIBS because PKG_LIBS also
     # contains "--static glfw3", and pkg-config --static pulls broken private
     # deps from libzmq on Ubuntu (e.g. libprotokit.a for NORM).
     USER_CXXFLAGS += $(shell pkg-config --cflags libzmq 2>/dev/null)
+    ifneq ($(ZMQ_BREW_PREFIX),)
+        INCLUDES += -I$(ZMQ_BREW_PREFIX)/include
+    endif
     LINKER_FLAGS += $(shell pkg-config --libs-only-l libzmq 2>/dev/null || echo -lzmq)
 endif
     DEFINES += -DTPNE_USE_ZEROMQ=1
@@ -118,8 +138,12 @@ GUI_FILES += $(THIRD_PARTIES_DIR)/imgui/imgui_draw.cpp
 GUI_FILES += $(THIRD_PARTIES_DIR)/imgui/imgui_tables.cpp
 GUI_FILES += $(THIRD_PARTIES_DIR)/imgui/imgui.cpp
 GUI_FILES += $(THIRD_PARTIES_DIR)/imgui/misc/cpp/imgui_stdlib.cpp
+ifneq ($(OS),Emscripten)
 USER_CXXFLAGS += -Wno-useless-cast
+endif
 USER_CXXFLAGS += -DIMGUI_DEFINE_MATH_OPERATORS
+# Third-party Dear ImGui extras (implot, file dialog): not built with -ffast-math-safe code.
+USER_CXXFLAGS += -Wno-nan-infinity-disabled -Wno-format-nonliteral
 
 ###################################################
 # Dear ImGui plot
@@ -133,6 +157,9 @@ USER_CXXFLAGS += -Wno-deprecated-enum-enum-conversion
 #
 GUI_FILES += $(THIRD_PARTIES_DIR)/ImGuiFileDialog/ImGuiFileDialog.cpp
 USER_CXXFLAGS += -Wno-unknown-pragmas -Wno-double-promotion
+ifeq ($(OS),Emscripten)
+USER_CXXFLAGS += -Wno-unknown-warning-option
+endif
 
 ###################################################
 # Petri Editor

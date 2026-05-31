@@ -62,7 +62,12 @@ void reloadFonts()
     Image image = GenImageColor(width, height, BLANK);
     memcpy(image.data, pixels, width * height * 4);
 
+#if IMGUI_VERSION_NUM >= 19200
+    Texture2D* fontTexture =
+        (Texture2D*)(intptr_t)io.Fonts->TexRef.GetTexID();
+#else
     Texture2D* fontTexture = (Texture2D*)io.Fonts->TexID;
+#endif
     if (fontTexture && fontTexture->id != 0)
     {
         UnloadTexture(*fontTexture);
@@ -72,7 +77,11 @@ void reloadFonts()
     fontTexture = (Texture2D*)MemAlloc(sizeof(Texture2D));
     *fontTexture = LoadTextureFromImage(image);
     UnloadImage(image);
-    io.Fonts->TexID = fontTexture;
+#if IMGUI_VERSION_NUM >= 19200
+    io.Fonts->TexRef = ImTextureRef((ImTextureID)(intptr_t)fontTexture);
+#else
+    io.Fonts->TexID = (ImTextureID)fontTexture;
+#endif
 }
 
 //------------------------------------------------------------------------------
@@ -120,7 +129,7 @@ Application::~Application()
 void Application::run()
 {
     // Iterate update()
-    tpne::Timer timer;
+    Timer timer;
     float timeSinceLastUpdate = 0.0f;
     const float time_per_frame = 1.0f / float(m_framerate);
 

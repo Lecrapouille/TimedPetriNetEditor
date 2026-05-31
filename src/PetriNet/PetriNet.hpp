@@ -786,7 +786,12 @@ public:
     //! \brief Editor has changed content and save is needed.
     bool modified = false;
 
+    //! \brief Last error message from Net operations (e.g. tokens()).
+    std::string const& error() const { return m_error; }
+
 private:
+
+    std::string m_error;
 
     //! \brief Type of net GRAFCET, Petri, Timed Petri ...
     TypeOfNet m_type;

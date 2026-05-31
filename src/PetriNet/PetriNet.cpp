@@ -210,6 +210,7 @@ void Net::clear()
     m_arcs.clear();
     m_next_place_id = 0u;
     m_next_transition_id = 0u;
+    m_error.clear();
     modified = true;
 }
 
@@ -230,6 +231,7 @@ bool Net::tokens(std::vector<size_t> const& tokens_)
 {
     if (m_places.size() != tokens_.size())
     {
+        m_error = "The container dimension holding tokens does not match the number of places\n";
         return false;
     }
 
@@ -239,6 +241,7 @@ bool Net::tokens(std::vector<size_t> const& tokens_)
         m_places[i].tokens = std::min(Net::Settings::maxTokens, tokens_[i]);
     }
 
+    m_error.clear();
     return true;
 }
 
