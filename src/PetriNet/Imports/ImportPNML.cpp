@@ -20,6 +20,7 @@
 
 #include "Imports.hpp"
 #include "PetriNet/PetriNet.hpp"
+#include "PetriNet/SafeFloat.hpp"
 #include "tinyxml2/tinyxml2.h"
 #include <sstream>
 #include <fstream>
@@ -123,7 +124,7 @@ std::string importFromPNML(Net& net, std::string const& filename)
             return error.str();
         }
 
-        float duration = NAN;
+        float duration = safeNaNF();
         if (child->FirstChildElement("inscription") != nullptr)
         {
             duration = std::stof(child->FirstChildElement("inscription")

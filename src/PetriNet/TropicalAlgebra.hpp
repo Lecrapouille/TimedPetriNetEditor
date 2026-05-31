@@ -22,6 +22,7 @@
 #  define TROPICAL_ALGEBRA_HPP
 
 #  include "PetriNet/ZeroOne.hpp"
+#  include "PetriNet/SafeFloat.hpp"
 
 #  include <cmath>
 #  include <ostream>
@@ -60,7 +61,7 @@ public:
     double val;
 };
 
-template<> inline MaxPlus zero<MaxPlus>() { return -std::numeric_limits<double>::infinity(); }
+template<> inline MaxPlus zero<MaxPlus>() { return MaxPlus(safeNegInf()); }
 template<> inline MaxPlus one<MaxPlus>()  { return 0.0; }
 inline std::ostream& operator<<(std::ostream& os, MaxPlus const& m) { return os << m.val; }
 
@@ -94,7 +95,7 @@ public:
     double val;
 };
 
-template<> inline MinPlus zero<MinPlus>() { return std::numeric_limits<double>::infinity(); }
+template<> inline MinPlus zero<MinPlus>() { return MinPlus(safePosInf()); }
 template<> inline MinPlus one<MinPlus>()  { return 0.0; }
 inline std::ostream& operator<<(std::ostream& os, MinPlus const& m) { return os << m.val; }
 

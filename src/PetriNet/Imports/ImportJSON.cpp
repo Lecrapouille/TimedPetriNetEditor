@@ -21,6 +21,7 @@
 #include "Imports.hpp"
 #include "PetriNet/PetriNet.hpp"
 #include "PetriNet/Grafcet.hpp"
+#include "PetriNet/SafeFloat.hpp"
 #include "nlohmann/json.hpp"
 #include <sstream>
 #include <fstream>
@@ -86,7 +87,7 @@ static std::string parseNetFromJSON(Net& net, nlohmann::json const& jnet)
             return error.str();
         }
 
-        float duration = std::numeric_limits<float>::quiet_NaN();
+        float duration = safeNaNF();
         auto const& it = a.find("duration");
         if (it != a.end())
         {
