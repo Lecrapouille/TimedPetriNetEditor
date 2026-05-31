@@ -55,6 +55,10 @@ $(P)/src/Editor: $(P)/src/PetriNet
 # GUI
 #
 include $(abspath $(P)/src/Editor/Backends/Makefile)
+# rlImGui needs raylib at the final link (wasm/desktop); Backends sets GUI_THIRD_PARTIES_LIBS.
+ifeq ($(DEAR_IMGUI_BACKEND),RayLib)
+THIRD_PARTIES_LIBS += $(GUI_THIRD_PARTIES_LIBS)
+endif
 
 ###################################################
 # Embed assets for web version. Assets shall be
@@ -73,14 +77,11 @@ ifeq ($(OS),Emscripten)
 endif
 
 ###################################################
-# OpenGL: glfw and glew libraries
+# OpenGL frameworks (GLFW/GLEW: pkg-config via Backends/Makefile)
 #
-ifeq ($(ARCHI),Darwin)
-INCLUDES += -I/usr/local/include -I/opt/local/include
+ifeq ($(OS),Darwin)
 LINKER_FLAGS += -framework OpenGL -framework Cocoa
 LINKER_FLAGS += -framework IOKit -framework CoreVideo
-LINKER_FLAGS += -L/usr/local/lib -L/opt/local/lib
-LINKER_FLAGS += -lGLEW -lglfw
 endif
 
 ###################################################
@@ -91,7 +92,7 @@ LINKER_FLAGS += -ldl -lpthread
 ###################################################
 # MacOS X
 #
-ifeq ($(ARCHI),Darwin)
+ifeq ($(OS),Darwin)
 BUILD_MACOS_APP_BUNDLE = 1
 APPLE_IDENTIFIER = lecrapouille
 MACOS_BUNDLE_ICON = data/TimedPetriNetEditor.icns

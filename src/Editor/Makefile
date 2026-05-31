@@ -33,6 +33,11 @@ TARGET_DESCRIPTION := Library Editor for Petri nets
 include $(M)/project/Makefile
 
 ###################################################
+# Set json library.
+#
+INCLUDES += $(THIRD_PARTIES_DIR)/json/include
+
+###################################################
 # For the moment we only use Dear ImGui
 #
 include ./Backends/Makefile
@@ -42,7 +47,8 @@ include ./Backends/Makefile
 #
 INCLUDES += $(P)/src
 LIB_FILES += $(GUI_FILES)
-THIRD_PARTIES_LIBS := $(GUI_THIRD_PARTIES_LIBS)
+# Raylib is linked by the top-level target (see root Makefile); not merged into this .a.
+THIRD_PARTIES_LIBS :=
 
 ###################################################
 # Generic Makefile rules
