@@ -758,38 +758,124 @@ vH7ÕŒ²XÍõ–‰hØNlØP'Õ0ŒM6ØO`tÌjp8T~&uİL´RÑÿh>`ò”"VâG}PÔNê¨—?ÚF‰xÌ
 Ä¯}†ºÀÆèWHzô3úR¾£¹Uğ ø ¼hoß!Ä‘Î
 ñ£}†Şj¡¥ºØàÂ¹·†š‚-ä9IÁšw6Ê8È®ED«WÛîşcÅ€ìjhÒøj”‚ ÈİÁCØÀ>°26 5Âü^ŞûÎCğ„-ÁÏªĞ˜ÆÇ‰#MÓi™ûû©–z_·¡.£¾¨7‹Gêî1´(´ÇĞ*TA»á`ÌƒSm	ï |ÀMÔu&RÃ/t|Oô8ÀH~HmuÚÏçCò§£Ã:QµßÜ^K€9#Têºã8H. uÛAü¨¥eÀÜT­¸àïõFs¸óî@À€5üzí-ÙíÂK·M0g|Ç›?HÛ€¹ŞÎ»T„€ãw¬=Ï¥ÖÎ:Úª˜+fØ~%^—ö(m­İcnÎÛyw Àvõ;™ğ“ÙÖ¤1 s¥os™4Ó†e=GñÔˆaü1ÇqŞ8àcîLô?J*Ñ›á¼_€hÖ
 à†PŞs,ïØªQœ§ì Ÿ£Ñ”ÿœ´WgÓ²§ñNK8p à@À€8p à@À€ı	ÿZ¡” U;{    IEND®B`‚{
-  "revision": 3,
+  "revision": 4,
   "type": "Petri net",
   "nets": [
     {
-       "name": "AppelsDurgence",
+       "name": "Chain Saw",
        "places": [
-            { "id": 0, "caption": "Filtrage de l'appel", "tokens": 0, "x": 402, "y": 72 },
-            { "id": 1, "caption": "Attente d'une conference a 3", "tokens": 0, "x": 523, "y": 259 },
-            { "id": 2, "caption": "Conference a trois", "tokens": 0, "x": 83, "y": 438 },
-            { "id": 3, "caption": "Instructions avec operateur de niveau 2", "tokens": 0, "x": -40, "y": 505 },
-            { "id": 4, "caption": "Centrale d'operateurs de niveau 2", "tokens": 4, "x": 351, "y": 553 },
-            { "id": 5, "caption": "Instructions avec operateur de niveau 1", "tokens": 0, "x": 297, "y": 290 },
-            { "id": 6, "caption": "Musique d'attente", "tokens": 0, "x": 158, "y": 360 },
-            { "id": 7, "caption": "Instructions avec operateur de niveau 2", "tokens": 0, "x": 622, "y": 449 },
-            { "id": 8, "caption": "Instructions avec operateur de niveau 1", "tokens": 0, "x": 125, "y": 138 },
-            { "id": 9, "caption": "Centrale d'operateurs de niveau 1", "tokens": 4, "x": -38, "y": -20 },
-            { "id": 10, "caption": "Victimes appellant les urgences", "tokens": 7, "x": 403, "y": -109 },
-            { "id": 11, "caption": "Actions urgentes", "tokens": 0, "x": 383, "y": 642 },
-            { "id": 12, "caption": "Actions critiques", "tokens": 0, "x": 200, "y": 643 }
+            { "id": 0, "caption": "Chain brake on", "tokens": 1, "x": 250, "y": 200 },
+            { "id": 1, "caption": "Off", "tokens": 0, "x": 350, "y": 300 },
+            { "id": 2, "caption": "Chain running", "tokens": 0, "x": 750, "y": 50 },
+            { "id": 3, "caption": "Stopped", "tokens": 1, "x": 650, "y": 300 },
+            { "id": 4, "caption": "On", "tokens": 0, "x": 350, "y": 400 },
+            { "id": 5, "caption": "On", "tokens": 1, "x": 450, "y": 500 },
+            { "id": 6, "caption": "Safety throttle off", "tokens": 0, "x": 300, "y": 600 },
+            { "id": 7, "caption": "Dead man switch off", "tokens": 1, "x": 200, "y": 500 }
        ],
        "transitions": [
-            { "id": 0, "caption": "Situation critique", "x": 524, "y": 110, "angle": 315 },
-            { "id": 1, "caption": "Operateur de niveau 2 repond a l'appel", "x": 247, "y": 439, "angle": 270 },
-            { "id": 2, "caption": "Operateur de niveau 1 quitte l'appel", "x": -39, "y": 361, "angle": 90 },
-            { "id": 3, "caption": "Fin de l'appel", "x": -40, "y": 602, "angle": 90 },
-            { "id": 4, "caption": "Situation d'urgence", "x": 404, "y": 181, "angle": 270 },
-            { "id": 5, "caption": "Operateur de niveau 1 repond a l'appel", "x": 403, "y": -21, "angle": 90 },
-            { "id": 6, "caption": "Transfer l'appel ver moperateur de niveau 2", "x": 36, "y": 243, "angle": 270 },
-            { "id": 7, "caption": "Operateur de niveau 2 repond a l'appel", "x": 523, "y": 362, "angle": 270 },
-            { "id": 8, "caption": "Situation de conseil", "x": 286, "y": 138, "angle": 225 },
-            { "id": 9, "caption": "Fin de l'appel", "x": 50, "y": 47, "angle": 270 },
-            { "id": 10, "caption": "Fin de l'appel", "x": 529, "y": 553, "angle": 270 }
+            { "id": 0, "caption": "T0", "x": 250, "y": 300 },
+            { "id": 1, "caption": "T1", "x": 300, "y": 250 },
+            { "id": 2, "caption": "T2", "x": 500, "y": 300 },
+            { "id": 3, "caption": "T3", "x": 750, "y": 200 },
+            { "id": 4, "caption": "T4", "x": 350, "y": 500 },
+            { "id": 5, "caption": "T5", "x": 400, "y": 550 },
+            { "id": 6, "caption": "T6", "x": 250, "y": 400 },
+            { "id": 7, "caption": "T7", "x": 300, "y": 500 }
+       ],
+       "arcs": [
+            { "from": "P0", "to": "T0" },
+            { "from": "T0", "to": "P1", "duration": 1 },
+            { "from": "P1", "to": "T1" },
+            { "from": "T1", "to": "P0", "duration": 2 },
+            { "from": "P1", "to": "T2" },
+            { "from": "T2", "to": "P1", "duration": 1 },
+            { "from": "T2", "to": "P2", "duration": 1 },
+            { "from": "P2", "to": "T3" },
+            { "from": "T3", "to": "P3", "duration": 1 },
+            { "from": "P3", "to": "T2" },
+            { "from": "T2", "to": "P4", "duration": 3 },
+            { "from": "P4", "to": "T2" },
+            { "from": "T2", "to": "P5", "duration": 5 },
+            { "from": "P5", "to": "T4" },
+            { "from": "T4", "to": "P6", "duration": 2 },
+            { "from": "P6", "to": "T5" },
+            { "from": "T5", "to": "P5", "duration": 2 },
+            { "from": "P4", "to": "T6" },
+            { "from": "T6", "to": "P7", "duration": 3 },
+            { "from": "P7", "to": "T7" },
+            { "from": "T7", "to": "P4", "duration": 1 }
+       ],
+       "actions": [
+       ]
+    }
+  ],
+  "inputs": [
+  ]
+}
+{
+  "revision": 4,
+  "type": "Petri net",
+  "nets": [
+    {
+       "name": "Coffee",
+       "places": [
+            { "id": 0, "caption": "Cold", "tokens": 1, "x": 250, "y": 100 },
+            { "id": 1, "caption": "Hot", "tokens": 0, "x": 250, "y": 300 },
+            { "id": 2, "caption": "Ready", "tokens": 1, "x": 450, "y": 100 },
+            { "id": 3, "caption": "Coin Inserted", "tokens": 0, "x": 700, "y": 200 },
+            { "id": 4, "caption": "Accepted", "tokens": 0, "x": 450, "y": 300 }
+       ],
+       "transitions": [
+            { "id": 0, "caption": "Brew", "x": 150, "y": 200 },
+            { "id": 1, "caption": "Dispense", "x": 350, "y": 200 },
+            { "id": 2, "caption": "Insert Coin", "x": 650, "y": 100 },
+            { "id": 3, "caption": "Reject Coin", "x": 550, "y": 200 },
+            { "id": 4, "caption": "Accept", "x": 600, "y": 300 }
+       ],
+       "arcs": [
+            { "from": "P0", "to": "T0" },
+            { "from": "T0", "to": "P1", "duration": 2 },
+            { "from": "P1", "to": "T1" },
+            { "from": "T1", "to": "P2", "duration": 2 },
+            { "from": "P2", "to": "T2" },
+            { "from": "T2", "to": "P3", "duration": 2 },
+            { "from": "P3", "to": "T3" },
+            { "from": "T3", "to": "P2", "duration": 2 },
+            { "from": "P3", "to": "T4" },
+            { "from": "T4", "to": "P4", "duration": 2 },
+            { "from": "P4", "to": "T1" },
+            { "from": "T1", "to": "P0", "duration": 2 }
+       ],
+       "actions": [
+       ]
+    }
+  ],
+  "inputs": [
+  ]
+}
+{
+  "revision": 4,
+  "type": "Petri net",
+  "nets": [
+    {
+       "name": "Elevator Control",
+       "places": [
+            { "id": 0, "caption": "Ground floor", "tokens": 1, "x": 400, "y": 50 },
+            { "id": 1, "caption": "Going down", "tokens": 0, "x": 500, "y": 250 },
+            { "id": 2, "caption": "Basement", "tokens": 0, "x": 350, "y": 500 },
+            { "id": 3, "caption": "Door open", "tokens": 1, "x": 250, "y": 400 },
+            { "id": 4, "caption": "Door shut", "tokens": 0, "x": 400, "y": 150 },
+            { "id": 5, "caption": "Going up", "tokens": 0, "x": 150, "y": 250 }
+       ],
+       "transitions": [
+            { "id": 0, "caption": "Start", "x": 500, "y": 150 },
+            { "id": 1, "caption": "Arrive", "x": 500, "y": 350 },
+            { "id": 2, "caption": "Open door", "x": 400, "y": 400 },
+            { "id": 3, "caption": "Shut door", "x": 350, "y": 300 },
+            { "id": 4, "caption": "Open Door", "x": 250, "y": 150 },
+            { "id": 5, "caption": "Arrive", "x": 150, "y": 150 },
+            { "id": 6, "caption": "Start", "x": 150, "y": 400 }
        ],
        "arcs": [
             { "from": "P0", "to": "T0" },
@@ -799,89 +885,119 @@ vH7ÕŒ²XÍõ–‰hØNlØP'Õ0ŒM6ØO`tÌjp8T~&uİL´RÑÿh>`ò”"VâG}PÔNê¨—?ÚF‰xÌ
             { "from": "P2", "to": "T2" },
             { "from": "T2", "to": "P3", "duration": 3 },
             { "from": "P3", "to": "T3" },
-            { "from": "P0", "to": "T4" },
             { "from": "T3", "to": "P4", "duration": 3 },
-            { "from": "T5", "to": "P0", "duration": 2 },
-            { "from": "P4", "to": "T1" },
-            { "from": "T4", "to": "P5", "duration": 2 },
-            { "from": "P5", "to": "T6" },
-            { "from": "T6", "to": "P6", "duration": 3 },
-            { "from": "P6", "to": "T7" },
-            { "from": "T7", "to": "P7", "duration": 2 },
-            { "from": "P0", "to": "T8" },
-            { "from": "T8", "to": "P8", "duration": 4 },
-            { "from": "P8", "to": "T9" },
-            { "from": "T9", "to": "P9", "duration": 4 },
-            { "from": "P9", "to": "T5" },
-            { "from": "T6", "to": "P9", "duration": 4 },
-            { "from": "T2", "to": "P9", "duration": 1 },
-            { "from": "P7", "to": "T10" },
-            { "from": "T10", "to": "P4", "duration": 1 },
-            { "from": "P10", "to": "T5" },
-            { "from": "T10", "to": "P11", "duration": 4 },
-            { "from": "T3", "to": "P12", "duration": 5 },
-            { "from": "P4", "to": "T7" }
+            { "from": "P4", "to": "T0" },
+            { "from": "T4", "to": "P0", "duration": 5 },
+            { "from": "P4", "to": "T4" },
+            { "from": "P5", "to": "T5" },
+            { "from": "T5", "to": "P0", "duration": 3 },
+            { "from": "P0", "to": "T4" },
+            { "from": "P2", "to": "T6" },
+            { "from": "T6", "to": "P5", "duration": 4 },
+            { "from": "P4", "to": "T2" },
+            { "from": "P4", "to": "T6" },
+            { "from": "T4", "to": "P3", "duration": 1 },
+            { "from": "T0", "to": "P4", "duration": 5 },
+            { "from": "T6", "to": "P4", "duration": 5 },
+            { "from": "T2", "to": "P2", "duration": 5 }
+       ],
+       "actions": [
        ]
     }
+  ],
+  "inputs": [
   ]
 }
 {
-  "revision": 3,
-  "type": "Timed Petri net",
+  "revision": 4,
+  "type": "Petri net",
   "nets": [
     {
-       "name": "Coffee",
-       "places": [
-            { "id": 0, "caption": "Cold", "tokens": 1, "x": 239, "y": 104 },
-            { "id": 1, "caption": "Hot", "tokens": 0, "x": 245, "y": 251 },
-            { "id": 2, "caption": "Ready", "tokens": 1, "x": 392, "y": 90 },
-            { "id": 3, "caption": "Coin Inserted", "tokens": 0, "x": 598, "y": 172 },
-            { "id": 4, "caption": "Accepted", "tokens": 0, "x": 387, "y": 250 }
-       ],
-       "transitions": [
-            { "id": 0, "caption": "Brew", "x": 156, "y": 179, "angle": 0 },
-            { "id": 1, "caption": "Dispense", "x": 314, "y": 180, "angle": 0 },
-            { "id": 2, "caption": "Insert Coin", "x": 529, "y": 90, "angle": 0 },
-            { "id": 3, "caption": "Reject Coin", "x": 465, "y": 172, "angle": 0 },
-            { "id": 4, "caption": "Accept", "x": 525, "y": 250, "angle": 0 }
-       ],
-       "arcs": [
-            { "from": "P0", "to": "T0" },
-            { "from": "T0", "to": "P1", "duration": 5 },
-            { "from": "P1", "to": "T1" },
-            { "from": "T1", "to": "P2", "duration": 0.2 },
-            { "from": "P2", "to": "T2" },
-            { "from": "T2", "to": "P3", "duration": 2 },
-            { "from": "P3", "to": "T3" },
-            { "from": "T3", "to": "P2", "duration": 2 },
-            { "from": "P3", "to": "T4" },
-            { "from": "T4", "to": "P4", "duration": 0.2 },
-            { "from": "P4", "to": "T1" },
-            { "from": "T1", "to": "P0", "duration": 0.2 }
-       ]
+      "name": "Emergency Calls",
+      "places": [
+        { "id": 0, "caption": "Call Screening", "tokens": 0, "x": 750, "y": 100 },
+        { "id": 1, "caption": "Waiting for Three-Way Conference", "tokens": 0, "x": 500, "y": 400 },
+        { "id": 2, "caption": "Three-Way Conference", "tokens": 0, "x": 500, "y": 650 },
+        { "id": 3, "caption": "Instructions with Level 2 Operator", "tokens": 0, "x": -50, "y": 950 },
+        { "id": 4, "caption": "Level 2 Operator Center", "tokens": 4, "x": 200, "y": 750 },
+        { "id": 5, "caption": "Instructions with Level 1 Operator", "tokens": 0, "x": 1000, "y": 300 },
+        { "id": 6, "caption": "Hold Music", "tokens": 0, "x": -300, "y": 550 },
+        { "id": 7, "caption": "Instructions with Level 2 Operator", "tokens": 0, "x": -300, "y": 850 },
+        { "id": 8, "caption": "Instructions with Level 1 Operator", "tokens": 0, "x": 200, "y": 200 },
+        { "id": 9, "caption": "Level 1 Operator Center", "tokens": 4, "x": -50, "y": 0 },
+        { "id": 10, "caption": "Victims Calling Emergency", "tokens": 7, "x": 750, "y": -100 },
+        { "id": 11, "caption": "Urgent Actions", "tokens": 0, "x": 750, "y": 850 },
+        { "id": 12, "caption": "Critical Actions", "tokens": 0, "x": 750, "y": 950 }
+      ],
+      "transitions": [
+        { "id": 0, "caption": "Critical Situation", "x": 500, "y": 100 },
+        { "id": 1, "caption": "Level 2 Operator Answers Call", "x": 500, "y": 500 },
+        { "id": 2, "caption": "Level 1 Operator Leaves Call", "x": -50, "y": 650 },
+        { "id": 3, "caption": "End of Call", "x": 500, "y": 950 },
+        { "id": 4, "caption": "Emergency Situation", "x": 1000, "y": 100 },
+        { "id": 5, "caption": "Level 1 Operator Answers Call", "x": 750, "y": 0 },
+        { "id": 6, "caption": "Transfer Call to Level 2 Operator", "x": -300, "y": 300 },
+        { "id": 7, "caption": "Level 2 Operator Answers Call", "x": -300, "y": 750 },
+        { "id": 8, "caption": "Advice Situation", "x": 750, "y": 200 },
+        { "id": 9, "caption": "End of Call", "x": 200, "y": 50 },
+        { "id": 10, "caption": "End of Call", "x": 500, "y": 850 }
+      ],
+      "arcs": [
+        { "from": "P0", "to": "T0" },
+        { "from": "T0", "to": "P1", "duration": 3 },
+        { "from": "P1", "to": "T1" },
+        { "from": "T1", "to": "P2", "duration": 5 },
+        { "from": "P2", "to": "T2" },
+        { "from": "T2", "to": "P3", "duration": 3 },
+        { "from": "P3", "to": "T3" },
+        { "from": "P0", "to": "T4" },
+        { "from": "T3", "to": "P4", "duration": 3 },
+        { "from": "T5", "to": "P0", "duration": 2 },
+        { "from": "P4", "to": "T1" },
+        { "from": "T4", "to": "P5", "duration": 2 },
+        { "from": "P5", "to": "T6" },
+        { "from": "T6", "to": "P6", "duration": 3 },
+        { "from": "P6", "to": "T7" },
+        { "from": "T7", "to": "P7", "duration": 2 },
+        { "from": "P0", "to": "T8" },
+        { "from": "T8", "to": "P8", "duration": 4 },
+        { "from": "P8", "to": "T9" },
+        { "from": "T9", "to": "P9", "duration": 4 },
+        { "from": "P9", "to": "T5" },
+        { "from": "T6", "to": "P9", "duration": 4 },
+        { "from": "T2", "to": "P9", "duration": 1 },
+        { "from": "P7", "to": "T10" },
+        { "from": "T10", "to": "P4", "duration": 1 },
+        { "from": "P10", "to": "T5" },
+        { "from": "T10", "to": "P11", "duration": 4 },
+        { "from": "T3", "to": "P12", "duration": 5 },
+        { "from": "P4", "to": "T7" }
+      ],
+      "actions": []
     }
-  ]
+  ],
+  "inputs": []
 }
 {
-  "revision": 3,
+  "revision": 4,
   "type": "Timed event graph",
   "nets": [
     {
        "name": "EventGraph",
        "places": [
-            { "id": 0, "caption": "P0", "tokens": 0, "x": 219, "y": 128 },
-            { "id": 1, "caption": "P1", "tokens": 0, "x": 484, "y": 121 },
-            { "id": 2, "caption": "P2", "tokens": 2, "x": 25, "y": 226 },
-            { "id": 3, "caption": "P3", "tokens": 1, "x": 350, "y": 176 },
-            { "id": 4, "caption": "P4", "tokens": 1, "x": 346, "y": 278 },
-            { "id": 5, "caption": "P5", "tokens": 0, "x": 229, "y": 344 },
-            { "id": 6, "caption": "P6", "tokens": 0, "x": 474, "y": 350 }
+            { "id": 0, "caption": "P0", "tokens": 0, "x": 200, "y": 150 },
+            { "id": 1, "caption": "P1", "tokens": 0, "x": 500, "y": 100 },
+            { "id": 2, "caption": "P2", "tokens": 2, "x": 50, "y": 250 },
+            { "id": 3, "caption": "P3", "tokens": 1, "x": 350, "y": 200 },
+            { "id": 4, "caption": "P4", "tokens": 1, "x": 350, "y": 300 },
+            { "id": 5, "caption": "P5", "tokens": 0, "x": 250, "y": 350 },
+            { "id": 6, "caption": "P6", "tokens": 0, "x": 450, "y": 350 }
        ],
        "transitions": [
-            { "id": 0, "caption": "u", "x": 350, "y": 75, "angle": 90 },
-            { "id": 1, "caption": "x1", "x": 125, "y": 226, "angle": 0 },
-            { "id": 2, "caption": "x2", "x": 550, "y": 225, "angle": 0 },
-            { "id": 3, "caption": "y", "x": 350, "y": 375, "angle": 0 }
+            { "id": 0, "caption": "u", "x": 350, "y": 100 },
+            { "id": 1, "caption": "x1", "x": 150, "y": 250 },
+            { "id": 2, "caption": "x2", "x": 550, "y": 250 },
+            { "id": 3, "caption": "y", "x": 350, "y": 400 }
        ],
        "arcs": [
             { "from": "T0", "to": "P0", "duration": 1 },
@@ -898,55 +1014,59 @@ vH7ÕŒ²XÍõ–‰hØNlØP'Õ0ŒM6ØO`tÌjp8T~&uİL´RÑÿh>`ò”"VâG}PÔNê¨—?ÚF‰xÌ
             { "from": "T2", "to": "P4", "duration": 1 },
             { "from": "P4", "to": "T1" },
             { "from": "P2", "to": "T1" }
+       ],
+       "actions": [
        ]
     }
+  ],
+  "inputs": [
   ]
 }
 {
-  "revision": 3,
+  "revision": 4,
   "type": "Petri net",
   "nets": [
     {
        "name": "FourRoadJunctions",
        "places": [
-            { "id": 0, "caption": "P0", "tokens": 3, "x": 200, "y": 125 },
-            { "id": 1, "caption": "P1", "tokens": 0, "x": 125, "y": 275 },
-            { "id": 2, "caption": "P2", "tokens": 0, "x": 400, "y": 275 },
-            { "id": 3, "caption": "P3", "tokens": 2, "x": 675, "y": 175 },
-            { "id": 4, "caption": "P4", "tokens": 0, "x": 500, "y": 150 },
-            { "id": 5, "caption": "P5", "tokens": 0, "x": 575, "y": 300 },
-            { "id": 6, "caption": "P6", "tokens": 1, "x": 675, "y": 350 },
-            { "id": 7, "caption": "P7", "tokens": 0, "x": 250, "y": 225 },
-            { "id": 8, "caption": "P8", "tokens": 0, "x": 200, "y": 325 },
-            { "id": 9, "caption": "P9", "tokens": 1, "x": 300, "y": 175 },
-            { "id": 10, "caption": "P10", "tokens": 0, "x": 200, "y": 575 },
-            { "id": 11, "caption": "P11", "tokens": 0, "x": 325, "y": 475 },
-            { "id": 12, "caption": "P12", "tokens": 0, "x": 500, "y": 425 },
-            { "id": 13, "caption": "P13", "tokens": 0, "x": 575, "y": 475 },
-            { "id": 14, "caption": "P14", "tokens": 0, "x": 450, "y": 550 },
-            { "id": 15, "caption": "P15", "tokens": 1, "x": 400, "y": 575 },
-            { "id": 16, "caption": "P16", "tokens": 2, "x": 500, "y": 650 },
-            { "id": 17, "caption": "P17", "tokens": 0, "x": 175, "y": 450 },
-            { "id": 18, "caption": "P18", "tokens": 1, "x": 100, "y": 400 },
-            { "id": 19, "caption": "P19", "tokens": 4, "x": 50, "y": 475 }
+            { "id": 0, "caption": "P0", "tokens": 5, "x": 200, "y": 150 },
+            { "id": 1, "caption": "P1", "tokens": 2, "x": 150, "y": 300 },
+            { "id": 2, "caption": "P2", "tokens": 0, "x": 550, "y": 300 },
+            { "id": 3, "caption": "P3", "tokens": 5, "x": 850, "y": 200 },
+            { "id": 4, "caption": "P4", "tokens": 0, "x": 650, "y": 150 },
+            { "id": 5, "caption": "P5", "tokens": 1, "x": 750, "y": 350 },
+            { "id": 6, "caption": "P6", "tokens": 0, "x": 850, "y": 400 },
+            { "id": 7, "caption": "P7", "tokens": 0, "x": 250, "y": 250 },
+            { "id": 8, "caption": "P8", "tokens": 1, "x": 200, "y": 400 },
+            { "id": 9, "caption": "P9", "tokens": 1, "x": 300, "y": 200 },
+            { "id": 10, "caption": "P10", "tokens": 2, "x": 200, "y": 700 },
+            { "id": 11, "caption": "P11", "tokens": 2, "x": 350, "y": 600 },
+            { "id": 12, "caption": "P12", "tokens": 0, "x": 750, "y": 550 },
+            { "id": 13, "caption": "P13", "tokens": 0, "x": 850, "y": 600 },
+            { "id": 14, "caption": "P14", "tokens": 0, "x": 700, "y": 650 },
+            { "id": 15, "caption": "P15", "tokens": 1, "x": 650, "y": 700 },
+            { "id": 16, "caption": "P16", "tokens": 2, "x": 750, "y": 800 },
+            { "id": 17, "caption": "P17", "tokens": 0, "x": 150, "y": 550 },
+            { "id": 18, "caption": "P18", "tokens": 1, "x": 100, "y": 500 },
+            { "id": 19, "caption": "P19", "tokens": 3, "x": 50, "y": 600 }
        ],
        "transitions": [
-            { "id": 0, "caption": "u1", "x": 200, "y": 50, "angle": 90 },
-            { "id": 1, "caption": "y0", "x": 500, "y": 75, "angle": 90 },
-            { "id": 2, "caption": "T2", "x": 200, "y": 175, "angle": 90 },
-            { "id": 3, "caption": "y1", "x": 50, "y": 275, "angle": 180 },
-            { "id": 4, "caption": "T4", "x": 300, "y": 275, "angle": 0 },
-            { "id": 5, "caption": "T5", "x": 675, "y": 275, "angle": 0 },
-            { "id": 6, "caption": "u0", "x": 675, "y": 75, "angle": 90 },
-            { "id": 7, "caption": "T7", "x": 500, "y": 350, "angle": 270 },
-            { "id": 8, "caption": "T8", "x": 200, "y": 400, "angle": 270 },
-            { "id": 9, "caption": "y2", "x": 100, "y": 625, "angle": 270 },
-            { "id": 10, "caption": "T10", "x": 400, "y": 475, "angle": 0 },
-            { "id": 11, "caption": "y3", "x": 675, "y": 475, "angle": 0 },
-            { "id": 12, "caption": "T12", "x": 500, "y": 575, "angle": 270 },
-            { "id": 13, "caption": "u3", "x": 675, "y": 650, "angle": 180 },
-            { "id": 14, "caption": "T14", "x": 100, "y": 475, "angle": 0 },
-            { "id": 15, "caption": "u2", "x": 50, "y": 625, "angle": 270 }
+            { "id": 0, "caption": "u1", "x": 200, "y": 50 },
+            { "id": 1, "caption": "y0", "x": 650, "y": 50 },
+            { "id": 2, "caption": "T2", "x": 200, "y": 200 },
+            { "id": 3, "caption": "y1", "x": 50, "y": 300 },
+            { "id": 4, "caption": "T4", "x": 350, "y": 300 },
+            { "id": 5, "caption": "T5", "x": 850, "y": 300 },
+            { "id": 6, "caption": "u0", "x": 850, "y": 100 },
+            { "id": 7, "caption": "T7", "x": 650, "y": 400 },
+            { "id": 8, "caption": "T8", "x": 200, "y": 500 },
+            { "id": 9, "caption": "y2", "x": 200, "y": 800 },
+            { "id": 10, "caption": "T10", "x": 650, "y": 600 },
+            { "id": 11, "caption": "y3", "x": 950, "y": 600 },
+            { "id": 12, "caption": "T12", "x": 750, "y": 700 },
+            { "id": 13, "caption": "u3", "x": 950, "y": 800 },
+            { "id": 14, "caption": "T14", "x": 100, "y": 600 },
+            { "id": 15, "caption": "u2", "x": 50, "y": 750 }
        ],
        "arcs": [
             { "from": "T0", "to": "P0", "duration": 2 },
@@ -997,8 +1117,12 @@ vH7ÕŒ²XÍõ–‰hØNlØP'Õ0ŒM6ØO`tÌjp8T~&uİL´RÑÿh>`ò”"VâG}PÔNê¨—?ÚF‰xÌ
             { "from": "P19", "to": "T14" },
             { "from": "T15", "to": "P19", "duration": 5 },
             { "from": "T14", "to": "P10", "duration": 3 }
+       ],
+       "actions": [
        ]
     }
+  ],
+  "inputs": [
   ]
 }
 {
@@ -1013,10 +1137,10 @@ vH7ÕŒ²XÍõ–‰hØNlØP'Õ0ŒM6ØO`tÌjp8T~&uİL´RÑÿh>`ò”"VâG}PÔNê¨—?ÚF‰xÌ
             { "id": 2, "caption": "P2", "tokens": 0, "x": 446, "y": 242 }
        ],
        "transitions": [
-            { "id": 0, "caption": "A B ! .", "x": 448, "y": 112, "angle": 0 },
-            { "id": 1, "caption": "A B .", "x": 246, "y": 123, "angle": 0 },
-            { "id": 2, "caption": "true", "x": 389, "y": 164.5, "angle": 0 },
-            { "id": 3, "caption": "true", "x": 289, "y": 169.5, "angle": 0 }
+            { "id": 0, "caption": "A B ! .", "x": 448, "y": 112 },
+            { "id": 1, "caption": "A B .", "x": 246, "y": 123 },
+            { "id": 2, "caption": "true", "x": 389, "y": 164.5 },
+            { "id": 3, "caption": "true", "x": 289, "y": 169.5 }
        ],
        "arcs": [
             { "from": "P0", "to": "T0" },
@@ -1027,6 +1151,268 @@ vH7ÕŒ²XÍõ–‰hØNlØP'Õ0ŒM6ØO`tÌjp8T~&uİL´RÑÿh>`ò”"VâG}PÔNê¨—?ÚF‰xÌ
             { "from": "T2", "to": "P0", "duration": 2 },
             { "from": "P1", "to": "T3" },
             { "from": "T3", "to": "P0", "duration": 3 }
+       ]
+    }
+  ]
+}
+{
+  "revision": 3,
+  "type": "GRAFCET",
+  "nets": [
+    {
+       "name": "Timed Petri net",
+       "places": [
+            { "id": 0, "caption": "1", "tokens": 1, "x": 145, "y": 88 },
+            { "id": 1, "caption": "6", "tokens": 0, "x": 202, "y": 199 },
+            { "id": 2, "caption": "7", "tokens": 0, "x": 200, "y": 365 },
+            { "id": 3, "caption": "8", "tokens": 0, "x": 318, "y": 492 },
+            { "id": 4, "caption": "2", "tokens": 0, "x": 455, "y": 187 },
+            { "id": 5, "caption": "3", "tokens": 0, "x": 457, "y": 339 },
+            { "id": 6, "caption": "4", "tokens": 0, "x": 461, "y": 500 },
+            { "id": 7, "caption": "5", "tokens": 0, "x": 647, "y": 501 },
+            { "id": 8, "caption": "9", "tokens": 0, "x": 286, "y": 575 }
+       ],
+       "transitions": [
+            { "id": 0, "caption": "m", "x": 332, "y": 142 },
+            { "id": 1, "caption": "a1", "x": 203, "y": 286 },
+            { "id": 2, "caption": "a0", "x": 201, "y": 437 },
+            { "id": 3, "caption": "b1 c1 .", "x": 455, "y": 270 },
+            { "id": 4, "caption": "b0", "x": 460, "y": 420 },
+            { "id": 5, "caption": "c0 m ! .", "x": 389, "y": 576 },
+            { "id": 6, "caption": "c0 m .", "x": 559, "y": 579 },
+            { "id": 7, "caption": "c1", "x": 566, "y": 453 },
+            { "id": 8, "caption": "true", "x": 145, "y": 573 }
+       ],
+       "arcs": [
+            { "from": "P0", "to": "T0" },
+            { "from": "T0", "to": "P1", "duration": 4 },
+            { "from": "P1", "to": "T1" },
+            { "from": "T1", "to": "P2", "duration": 2 },
+            { "from": "P2", "to": "T2" },
+            { "from": "T2", "to": "P3", "duration": 4 },
+            { "from": "T0", "to": "P4", "duration": 5 },
+            { "from": "P4", "to": "T3" },
+            { "from": "T3", "to": "P5", "duration": 2 },
+            { "from": "P5", "to": "T4" },
+            { "from": "T4", "to": "P6", "duration": 5 },
+            { "from": "P6", "to": "T5" },
+            { "from": "P6", "to": "T6" },
+            { "from": "T6", "to": "P7", "duration": 3 },
+            { "from": "P7", "to": "T7" },
+            { "from": "T7", "to": "P6", "duration": 5 },
+            { "from": "T5", "to": "P8", "duration": 1 },
+            { "from": "P8", "to": "T8" },
+            { "from": "P3", "to": "T8" },
+            { "from": "T8", "to": "P0", "duration": 2 }
+       ],
+       "sensors": [
+            { "name": "a0", "value": 0 },
+            { "name": "a1", "value": 0 },
+            { "name": "b0", "value": 0 },
+            { "name": "b1", "value": 0 },
+            { "name": "c0", "value": 0 },
+            { "name": "c1", "value": 0 },
+            { "name": "m", "value": 0 }
+       ]
+    }
+  ]
+}
+{
+  "revision": 4,
+  "type": "GRAFCET",
+  "nets": [
+    {
+       "name": "Production",
+       "places": [
+            { "id": 0, "caption": "Attente depart", "tokens": 1, "x": 200, "y": 150 },
+            { "id": 1, "caption": "Demarrage moteurs", "tokens": 0, "x": 200, "y": 350 },
+            { "id": 2, "caption": "Arret moteurs", "tokens": 0, "x": 200, "y": 550 }
+       ],
+       "transitions": [
+            { "id": 0, "caption": "Controle:X4 Dcy .", "x": 200, "y": 250 },
+            { "id": 1, "caption": "Acy", "x": 200, "y": 450 },
+            { "id": 2, "caption": "true", "x": 50, "y": 350 }
+       ],
+       "arcs": [
+            { "from": "P0", "to": "T0" },
+            { "from": "T0", "to": "P1", "duration": 5 },
+            { "from": "P1", "to": "T1" },
+            { "from": "T1", "to": "P2", "duration": 1 },
+            { "from": "P2", "to": "T2" },
+            { "from": "T2", "to": "P0", "duration": 4 }
+       ],
+       "actions": [
+            { "place_id": 1, "qualifier": "N", "color": "green", "name": "Moteur", "script": "Demarrage des moteurs", "duration": 0 }
+       ]
+    },
+    {
+       "name": "Controle",
+       "places": [
+            { "id": 0, "caption": "Attente validation panne", "tokens": 1, "x": 350, "y": 0 },
+            { "id": 1, "caption": "Debarasser cartons", "tokens": 0, "x": 350, "y": 200 },
+            { "id": 2, "caption": "Attente selec manu ou auto", "tokens": 0, "x": 350, "y": 400 },
+            { "id": 3, "caption": "Debarasser cartons", "tokens": 0, "x": 350, "y": 600 },
+            { "id": 4, "caption": "Production normale", "tokens": 0, "x": 350, "y": 800 },
+            { "id": 5, "caption": "Marche manuelle", "tokens": 0, "x": 350, "y": 1000 }
+       ],
+       "transitions": [
+            { "id": 0, "caption": "Val", "x": 350, "y": 100 },
+            { "id": 1, "caption": "true", "x": 350, "y": 300 },
+            { "id": 2, "caption": "Auto Val .", "x": 350, "y": 500 },
+            { "id": 3, "caption": "Manu Val .", "x": 650, "y": 500 },
+            { "id": 4, "caption": "true", "x": 350, "y": 700 },
+            { "id": 5, "caption": "Manu Val .", "x": 350, "y": 900 },
+            { "id": 6, "caption": "Auto Val .", "x": 100, "y": 500 }
+       ],
+       "arcs": [
+            { "from": "P0", "to": "T0" },
+            { "from": "T0", "to": "P1", "duration": 3 },
+            { "from": "P1", "to": "T1" },
+            { "from": "T1", "to": "P2", "duration": 4 },
+            { "from": "P2", "to": "T2" },
+            { "from": "P2", "to": "T3" },
+            { "from": "T2", "to": "P3", "duration": 4 },
+            { "from": "P3", "to": "T4" },
+            { "from": "T4", "to": "P4", "duration": 4 },
+            { "from": "P4", "to": "T5" },
+            { "from": "T5", "to": "P5", "duration": 5 },
+            { "from": "T3", "to": "P5", "duration": 5 },
+            { "from": "P5", "to": "T6" },
+            { "from": "T6", "to": "P0", "duration": 5 }
+       ],
+       "actions": [
+            { "place_id": 5, "qualifier": "N", "color": "green", "name": "Reset Production", "script": "Force Production to initial state", "duration": 0, "forcing": ["Production:{init}"] }
+       ]
+    },
+    {
+       "name": "Securite",
+       "places": [
+            { "id": 0, "caption": "Forcage GPN & GC", "tokens": 1, "x": 250, "y": 200 },
+            { "id": 1, "caption": "Attente", "tokens": 0, "x": 250, "y": 400 }
+       ],
+       "transitions": [
+            { "id": 0, "caption": "Au ! Rearm .", "x": 250, "y": 300 },
+            { "id": 1, "caption": "Au", "x": 150, "y": 300 }
+       ],
+       "arcs": [
+            { "from": "P0", "to": "T0" },
+            { "from": "T0", "to": "P1", "duration": 2 },
+            { "from": "P1", "to": "T1" },
+            { "from": "T1", "to": "P0", "duration": 4 }
+       ],
+       "actions": [
+            { "place_id": 0, "qualifier": "N", "color": "red", "name": "Force Init", "script": "Force Production and Controle to initial state", "duration": 0, "forcing": ["Production:{init}", "Controle:{init}"] }
+       ]
+    }
+  ],
+  "inputs": [
+    { "name": "Acy", "initial": 0 },
+    { "name": "Au", "initial": 0 },
+    { "name": "Auto", "initial": 0 },
+    { "name": "Dcy", "initial": 0 },
+    { "name": "Manu", "initial": 0 },
+    { "name": "Rearm", "initial": 0 },
+    { "name": "Val", "initial": 0 }
+  ]
+}
+{
+  "revision": 4,
+  "type": "GRAFCET",
+  "nets": [
+    {
+       "name": "German Traffic Lights",
+       "places": [
+            { "id": 0, "caption": "Red", "tokens": 0, "x": 272, "y": 102 },
+            { "id": 1, "caption": "Yellow", "tokens": 0, "x": 268, "y": 312 },
+            { "id": 2, "caption": "Green", "tokens": 1, "x": 274, "y": 470 },
+            { "id": 3, "caption": "Red+Yellow", "tokens": 0, "x": 429.5, "y": 201 }
+       ],
+       "transitions": [
+            { "id": 0, "caption": "1", "x": 429, "y": 103 },
+            { "id": 1, "caption": "1", "x": 271, "y": 199 },
+            { "id": 2, "caption": "1", "x": 108, "y": 311 },
+            { "id": 3, "caption": "1", "x": 429, "y": 311 }
+       ],
+       "arcs": [
+            { "from": "P0", "to": "T0" },
+            { "from": "T0", "to": "P1", "duration": 2 },
+            { "from": "P1", "to": "T1" },
+            { "from": "T1", "to": "P0", "duration": 4 },
+            { "from": "P0", "to": "T2" },
+            { "from": "P1", "to": "T2" },
+            { "from": "T2", "to": "P2", "duration": 4 },
+            { "from": "P2", "to": "T3" },
+            { "from": "T3", "to": "P1", "duration": 3 },
+            { "from": "T3", "to": "P3", "duration": 3 },
+            { "from": "P3", "to": "T0" },
+            { "from": "P3", "to": "T1" },
+            { "from": "T1", "to": "P3", "duration": 5 },
+            { "from": "T0", "to": "P0", "duration": 4 }
+       ],
+       "actions": [
+            { "place_id": 0, "qualifier": "N", "color": "red", "name": "Red LED", "script": "Red light only", "duration": 0 },
+            { "place_id": 1, "qualifier": "N", "color": "yellow", "name": "Yellow LED", "script": "Yellow light only", "duration": 0 },
+            { "place_id": 2, "qualifier": "N", "color": "green", "name": "Green LED", "script": "Green light only", "duration": 0 },
+            { "place_id": 3, "qualifier": "N", "color": "red", "name": "Red LED", "script": "Red light (with yellow)", "duration": 0 },
+            { "place_id": 3, "qualifier": "N", "color": "yellow", "name": "Yellow LED", "script": "Yellow light (with red)", "duration": 0 }
+       ],
+       "sensors": [
+       ]
+    }
+  ]
+}
+{
+  "revision": 4,
+  "type": "GRAFCET",
+  "nets": [
+    {
+       "name": "Cylinder Control",
+       "places": [
+            { "id": 0, "caption": "Init", "tokens": 1, "x": 300, "y": 50 },
+            { "id": 1, "caption": "Extending", "tokens": 0, "x": 300, "y": 250 },
+            { "id": 2, "caption": "Extended", "tokens": 0, "x": 300, "y": 450 },
+            { "id": 3, "caption": "Retracting", "tokens": 0, "x": 300, "y": 650 },
+            { "id": 4, "caption": "Alarm", "tokens": 0, "x": 450, "y": 150 }
+       ],
+       "transitions": [
+            { "id": 0, "caption": "Start", "x": 300, "y": 150 },
+            { "id": 1, "caption": "s1", "x": 300, "y": 350 },
+            { "id": 2, "caption": "Timer1", "x": 300, "y": 550 },
+            { "id": 3, "caption": "s0", "x": 50, "y": 400 },
+            { "id": 4, "caption": "Error", "x": 450, "y": 250 },
+            { "id": 5, "caption": "Reset", "x": 450, "y": 50 }
+       ],
+       "arcs": [
+            { "from": "P0", "to": "T0" },
+            { "from": "T0", "to": "P1", "duration": 0 },
+            { "from": "P1", "to": "T1" },
+            { "from": "T1", "to": "P2", "duration": 0 },
+            { "from": "P2", "to": "T2" },
+            { "from": "T2", "to": "P3", "duration": 0 },
+            { "from": "P3", "to": "T3" },
+            { "from": "T3", "to": "P0", "duration": 0 },
+            { "from": "P1", "to": "T4" },
+            { "from": "T4", "to": "P4", "duration": 0 },
+            { "from": "P4", "to": "T5" },
+            { "from": "T5", "to": "P0", "duration": 0 }
+       ],
+       "actions": [
+            { "place_id": 1, "qualifier": "N", "name": "V1+", "script": "Extend cylinder valve", "duration": 0 },
+            { "place_id": 2, "qualifier": "D", "name": "Timer1", "script": "Wait before retract", "duration": 2 },
+            { "place_id": 2, "qualifier": "S", "name": "Lamp1", "script": "Position indicator ON", "duration": 0 },
+            { "place_id": 3, "qualifier": "N", "name": "V1-", "script": "Retract cylinder valve", "duration": 0 },
+            { "place_id": 3, "qualifier": "R", "name": "Lamp1", "script": "Position indicator OFF", "duration": 0 },
+            { "place_id": 4, "qualifier": "N", "name": "Buzzer", "script": "Alarm sound", "duration": 0 },
+            { "place_id": 4, "qualifier": "L", "name": "AlarmLamp", "script": "Flash for 5s", "duration": 5 }
+       ],
+       "inputs": [
+            { "name": "Error", "initial": 0 },
+            { "name": "Reset", "initial": 0 },
+            { "name": "Start", "initial": 0 },
+            { "name": "T6", "initial": 0 },
+            { "name": "Timer1", "initial": 0 },
+            { "name": "s0", "initial": 0 },
+            { "name": "s1", "initial": 0 }
        ]
     }
   ]
@@ -1044,8 +1430,8 @@ vH7ÕŒ²XÍõ–‰hØNlØP'Õ0ŒM6ØO`tÌjp8T~&uİL´RÑÿh>`ò”"VâG}PÔNê¨—?ÚF‰xÌ
             { "id": 3, "caption": "P3", "tokens": 2, "x": 54, "y": 282 }
        ],
        "transitions": [
-            { "id": 0, "caption": "T0", "x": 526, "y": 272, "angle": 0 },
-            { "id": 1, "caption": "T1", "x": 212, "y": 282, "angle": 0 }
+            { "id": 0, "caption": "T0", "x": 526, "y": 272 },
+            { "id": 1, "caption": "T1", "x": 212, "y": 282 }
        ],
        "arcs": [
             { "from": "T0", "to": "P0", "duration": 1 },
@@ -1061,23 +1447,23 @@ vH7ÕŒ²XÍõ–‰hØNlØP'Õ0ŒM6ØO`tÌjp8T~&uİL´RÑÿh>`ò”"VâG}PÔNê¨—?ÚF‰xÌ
   ]
 }
 {
-  "revision": 3,
+  "revision": 4,
   "type": "Timed event graph",
   "nets": [
     {
        "name": "Howard2",
        "places": [
-            { "id": 0, "caption": "P0", "tokens": 2, "x": 208, "y": 250 },
-            { "id": 1, "caption": "P1", "tokens": 0, "x": 562, "y": 276 },
-            { "id": 2, "caption": "P2", "tokens": 0, "x": 304, "y": 398 },
+            { "id": 0, "caption": "P0", "tokens": 2, "x": 200, "y": 250 },
+            { "id": 1, "caption": "P1", "tokens": 0, "x": 550, "y": 300 },
+            { "id": 2, "caption": "P2", "tokens": 0, "x": 300, "y": 400 },
             { "id": 3, "caption": "P3", "tokens": 0, "x": 650, "y": 200 },
-            { "id": 4, "caption": "P4", "tokens": 0, "x": 428, "y": 550 }
+            { "id": 4, "caption": "P4", "tokens": 0, "x": 450, "y": 550 }
        ],
        "transitions": [
-            { "id": 0, "caption": "T0", "x": 320, "y": 128, "angle": 0 },
-            { "id": 1, "caption": "T1", "x": 458, "y": 398, "angle": 0 },
-            { "id": 2, "caption": "T2", "x": 120, "y": 388, "angle": 0 },
-            { "id": 3, "caption": "T3", "x": 734, "y": 406, "angle": 0 }
+            { "id": 0, "caption": "T0", "x": 300, "y": 150 },
+            { "id": 1, "caption": "T1", "x": 450, "y": 400 },
+            { "id": 2, "caption": "T2", "x": 100, "y": 400 },
+            { "id": 3, "caption": "T3", "x": 750, "y": 400 }
        ],
        "arcs": [
             { "from": "P3", "to": "T0" },
@@ -1090,52 +1476,60 @@ vH7ÕŒ²XÍõ–‰hØNlØP'Õ0ŒM6ØO`tÌjp8T~&uİL´RÑÿh>`ò”"VâG}PÔNê¨—?ÚF‰xÌ
             { "from": "T2", "to": "P4", "duration": 1 },
             { "from": "P4", "to": "T3" },
             { "from": "T3", "to": "P3", "duration": 1 }
+       ],
+       "actions": [
        ]
     }
+  ],
+  "inputs": [
   ]
 }
 {
-  "revision": 3,
+  "revision": 4,
   "type": "Timed Petri net",
   "nets": [
     {
        "name": "Infinite",
        "places": [
-            { "id": 0, "caption": "P0", "tokens": 1, "x": 184, "y": 295 },
-            { "id": 1, "caption": "P1", "tokens": 0, "x": 513, "y": 295 }
+            { "id": 0, "caption": "P0", "tokens": 1, "x": 200, "y": 300 },
+            { "id": 1, "caption": "P1", "tokens": 0, "x": 500, "y": 300 }
        ],
        "transitions": [
-            { "id": 0, "caption": "T0", "x": 351, "y": 295, "angle": 0 }
+            { "id": 0, "caption": "T0", "x": 350, "y": 300 }
        ],
        "arcs": [
             { "from": "P0", "to": "T0" },
             { "from": "T0", "to": "P1", "duration": 1 },
             { "from": "T0", "to": "P0", "duration": 1 }
+       ],
+       "actions": [
        ]
     }
+  ],
+  "inputs": [
   ]
 }
 {
-  "revision": 3,
+  "revision": 4,
   "type": "Timed Petri net",
   "nets": [
     {
        "name": "Example6",
        "places": [
-            { "id": 0, "caption": "P0", "tokens": 1, "x": 275, "y": 175 },
-            { "id": 1, "caption": "P1", "tokens": 0, "x": 525, "y": 175 },
-            { "id": 2, "caption": "P2", "tokens": 0, "x": 275, "y": 375 },
-            { "id": 3, "caption": "P3", "tokens": 1, "x": 575, "y": 375 },
-            { "id": 4, "caption": "P4", "tokens": 2, "x": 300, "y": 275 },
-            { "id": 5, "caption": "P5", "tokens": 0, "x": 525, "y": 275 }
+            { "id": 0, "caption": "P0", "tokens": 1, "x": 300, "y": 200 },
+            { "id": 1, "caption": "P1", "tokens": 0, "x": 600, "y": 200 },
+            { "id": 2, "caption": "P2", "tokens": 0, "x": 300, "y": 400 },
+            { "id": 3, "caption": "P3", "tokens": 1, "x": 600, "y": 400 },
+            { "id": 4, "caption": "P4", "tokens": 2, "x": 350, "y": 300 },
+            { "id": 5, "caption": "P5", "tokens": 0, "x": 550, "y": 300 }
        ],
        "transitions": [
-            { "id": 0, "caption": "T0", "x": 98, "y": 175, "angle": 0 },
-            { "id": 1, "caption": "T1", "x": 400, "y": 175, "angle": 0 },
-            { "id": 2, "caption": "T2", "x": 700, "y": 175, "angle": 0 },
-            { "id": 3, "caption": "T3", "x": 100, "y": 375, "angle": 0 },
-            { "id": 4, "caption": "T4", "x": 425, "y": 375, "angle": 0 },
-            { "id": 5, "caption": "T5", "x": 699, "y": 375, "angle": 0 }
+            { "id": 0, "caption": "T0", "x": 200, "y": 200 },
+            { "id": 1, "caption": "T1", "x": 450, "y": 200 },
+            { "id": 2, "caption": "T2", "x": 700, "y": 200 },
+            { "id": 3, "caption": "T3", "x": 200, "y": 400 },
+            { "id": 4, "caption": "T4", "x": 450, "y": 400 },
+            { "id": 5, "caption": "T5", "x": 700, "y": 400 }
        ],
        "arcs": [
             { "from": "T0", "to": "P0", "duration": 3 },
@@ -1150,8 +1544,12 @@ vH7ÕŒ²XÍõ–‰hØNlØP'Õ0ŒM6ØO`tÌjp8T~&uİL´RÑÿh>`ò”"VâG}PÔNê¨—?ÚF‰xÌ
             { "from": "P4", "to": "T1" },
             { "from": "T1", "to": "P5", "duration": 1 },
             { "from": "P5", "to": "T4" }
+       ],
+       "actions": [
        ]
     }
+  ],
+  "inputs": [
   ]
 }
 {
@@ -1169,10 +1567,10 @@ vH7ÕŒ²XÍõ–‰hØNlØP'Õ0ŒM6ØO`tÌjp8T~&uİL´RÑÿh>`ò”"VâG}PÔNê¨—?ÚF‰xÌ
             { "id": 5, "caption": "P5", "tokens": 0, "x": 459, "y": 90 }
        ],
        "transitions": [
-            { "id": 0, "caption": "Node 0", "x": 216, "y": 111, "angle": 0 },
-            { "id": 1, "caption": "Node 1", "x": 380, "y": 111, "angle": 0 },
-            { "id": 2, "caption": "y(k)", "x": 86, "y": 159, "angle": 0 },
-            { "id": 3, "caption": "u(k)", "x": 546, "y": 76, "angle": 0 }
+            { "id": 0, "caption": "Node 0", "x": 216, "y": 111 },
+            { "id": 1, "caption": "Node 1", "x": 380, "y": 111 },
+            { "id": 2, "caption": "y(k)", "x": 86, "y": 159 },
+            { "id": 3, "caption": "u(k)", "x": 546, "y": 76 }
        ],
        "arcs": [
             { "from": "T0", "to": "P0", "duration": 2 },
@@ -1196,25 +1594,72 @@ vH7ÕŒ²XÍõ–‰hØNlØP'Õ0ŒM6ØO`tÌjp8T~&uİL´RÑÿh>`ò”"VâG}PÔNê¨—?ÚF‰xÌ
   "type": "Petri net",
   "nets": [
     {
-       "name": "Philosophers",
+       "name": "Landing Gear",
        "places": [
-            { "id": 0, "caption": "Phi0 Not Eating", "tokens": 1, "x": -82, "y": 189 },
-            { "id": 1, "caption": "Phi1 Eating", "tokens": 0, "x": 138, "y": 105 },
-            { "id": 2, "caption": "Phi1 Not Eating", "tokens": 1, "x": 227, "y": 184 },
-            { "id": 3, "caption": "Phi0 Eating", "tokens": 0, "x": -185, "y": 100 },
-            { "id": 4, "caption": "Phi2 Not Eating", "tokens": 1, "x": 539, "y": 186 },
-            { "id": 5, "caption": "Phi2 Eating", "tokens": 0, "x": 453, "y": 111 },
-            { "id": 6, "caption": "Fork", "tokens": 1, "x": 138, "y": 386 },
-            { "id": 7, "caption": "Knife", "tokens": 1, "x": 451, "y": 386 },
-            { "id": 8, "caption": "Knife", "tokens": 1, "x": -189, "y": 386 }
+            { "id": 0, "caption": "High speed", "tokens": 0, "x": 165, "y": 155 },
+            { "id": 1, "caption": "Low speed", "tokens": 1, "x": 469, "y": 142 },
+            { "id": 2, "caption": "Gear up", "tokens": 0, "x": 388, "y": 290 },
+            { "id": 3, "caption": "Gear down", "tokens": 1, "x": 383, "y": 436 },
+            { "id": 4, "caption": "Warning on", "tokens": 0, "x": 102, "y": 503 },
+            { "id": 5, "caption": "Warning off", "tokens": 1, "x": 250, "y": 508 }
        ],
        "transitions": [
-            { "id": 0, "caption": "T0", "x": 0, "y": 100, "angle": 225 },
-            { "id": 1, "caption": "T1", "x": -186, "y": 262, "angle": 90 },
-            { "id": 2, "caption": "T2", "x": 321, "y": 104, "angle": 135 },
-            { "id": 3, "caption": "T3", "x": 137, "y": 261, "angle": 90 },
-            { "id": 4, "caption": "T4", "x": 640, "y": 110, "angle": 315 },
-            { "id": 5, "caption": "T5", "x": 452, "y": 259, "angle": 270 }
+            { "id": 0, "caption": "Slower", "x": 316, "y": 86 },
+            { "id": 1, "caption": "Faster", "x": 317, "y": 211 },
+            { "id": 2, "caption": "Retract", "x": 311, "y": 361 },
+            { "id": 3, "caption": "Extend", "x": 470, "y": 359 },
+            { "id": 4, "caption": "Start warning", "x": 167, "y": 437 },
+            { "id": 5, "caption": "Ack", "x": 171, "y": 589 }
+       ],
+       "arcs": [
+            { "from": "P0", "to": "T0" },
+            { "from": "T0", "to": "P1", "duration": 3 },
+            { "from": "P1", "to": "T1" },
+            { "from": "T1", "to": "P0", "duration": 3 },
+            { "from": "P3", "to": "T2" },
+            { "from": "T2", "to": "P2", "duration": 1 },
+            { "from": "P1", "to": "T3" },
+            { "from": "T3", "to": "P1", "duration": 1 },
+            { "from": "P2", "to": "T3" },
+            { "from": "T3", "to": "P3", "duration": 2 },
+            { "from": "P0", "to": "T4" },
+            { "from": "T4", "to": "P3", "duration": 4 },
+            { "from": "T4", "to": "P0", "duration": 1 },
+            { "from": "P3", "to": "T4" },
+            { "from": "T4", "to": "P4", "duration": 1 },
+            { "from": "P4", "to": "T5" },
+            { "from": "T5", "to": "P5", "duration": 2 },
+            { "from": "P5", "to": "T4" }
+       ],
+       "sensors": [
+       ]
+    }
+  ]
+}
+{
+  "revision": 4,
+  "type": "Petri net",
+  "nets": [
+    {
+       "name": "Philosophers",
+       "places": [
+            { "id": 0, "caption": "Phi0 Not Eating", "tokens": 1, "x": 466.189, "y": 50 },
+            { "id": 1, "caption": "Phi1 Eating", "tokens": 0, "x": 570.031, "y": 848 },
+            { "id": 2, "caption": "Phi1 Not Eating", "tokens": 1, "x": 998.639, "y": 848 },
+            { "id": 3, "caption": "Phi0 Eating", "tokens": 0, "x": 299.912, "y": 300.542 },
+            { "id": 4, "caption": "Phi2 Not Eating", "tokens": 1, "x": 1330.35, "y": 357.63 },
+            { "id": 5, "caption": "Phi2 Eating", "tokens": 0, "x": 1190.56, "y": 80.866 },
+            { "id": 6, "caption": "Fork", "tokens": 1, "x": 602.355, "y": 546.698 },
+            { "id": 7, "caption": "Knife", "tokens": 1, "x": 996.825, "y": 564.721 },
+            { "id": 8, "caption": "Knife", "tokens": 1, "x": 820.867, "y": 229.612 }
+       ],
+       "transitions": [
+            { "id": 0, "caption": "T0", "x": 575.388, "y": 220.45 },
+            { "id": 1, "caption": "T1", "x": 503.026, "y": 326.042 },
+            { "id": 2, "caption": "T2", "x": 787.52, "y": 820.581 },
+            { "id": 3, "caption": "T3", "x": 787.879, "y": 692.608 },
+            { "id": 4, "caption": "T4", "x": 1125.75, "y": 357.039 },
+            { "id": 5, "caption": "T5", "x": 1066.54, "y": 244.177 }
        ],
        "arcs": [
             { "from": "P0", "to": "T0" },
@@ -1241,28 +1686,32 @@ vH7ÕŒ²XÍõ–‰hØNlØP'Õ0ŒM6ØO`tÌjp8T~&uİL´RÑÿh>`ò”"VâG}PÔNê¨—?ÚF‰xÌ
             { "from": "T1", "to": "P8", "duration": 1 },
             { "from": "T5", "to": "P8", "duration": 1 },
             { "from": "P8", "to": "T4" }
+       ],
+       "actions": [
        ]
     }
+  ],
+  "inputs": [
   ]
 }
 {
-  "revision": 3,
+  "revision": 4,
   "type": "Petri net",
   "nets": [
     {
-       "name": "ProducerConsumer",
+       "name": "Producer Consumer",
        "places": [
-            { "id": 0, "caption": "Producer ready", "tokens": 1, "x": 100, "y": 75 },
-            { "id": 1, "caption": "Idle", "tokens": 1, "x": 100, "y": 225 },
-            { "id": 2, "caption": "Buffer", "tokens": 3, "x": 300, "y": 150 },
-            { "id": 3, "caption": "Accepted", "tokens": 0, "x": 500, "y": 75 },
-            { "id": 4, "caption": "Ready", "tokens": 2, "x": 500, "y": 225 }
+            { "id": 0, "caption": "Producer ready", "tokens": 1, "x": 200, "y": 100 },
+            { "id": 1, "caption": "Idle", "tokens": 1, "x": 200, "y": 200 },
+            { "id": 2, "caption": "Buffer", "tokens": 3, "x": 400, "y": 150 },
+            { "id": 3, "caption": "Accepted", "tokens": 0, "x": 600, "y": 100 },
+            { "id": 4, "caption": "Ready", "tokens": 2, "x": 600, "y": 200 }
        ],
        "transitions": [
-            { "id": 0, "caption": "Send", "x": 175, "y": 150, "angle": 0 },
-            { "id": 1, "caption": "Produce", "x": 25, "y": 150, "angle": 0 },
-            { "id": 2, "caption": "Accept", "x": 425, "y": 150, "angle": 0 },
-            { "id": 3, "caption": "Consume", "x": 575, "y": 150, "angle": 0 }
+            { "id": 0, "caption": "Send", "x": 300, "y": 150 },
+            { "id": 1, "caption": "Produce", "x": 100, "y": 150 },
+            { "id": 2, "caption": "Accept", "x": 500, "y": 150 },
+            { "id": 3, "caption": "Consume", "x": 700, "y": 150 }
        ],
        "arcs": [
             { "from": "P0", "to": "T0" },
@@ -1275,11 +1724,76 @@ vH7ÕŒ²XÍõ–‰hØNlØP'Õ0ŒM6ØO`tÌjp8T~&uİL´RÑÿh>`ò”"VâG}PÔNê¨—?ÚF‰xÌ
             { "from": "P3", "to": "T3" },
             { "from": "T3", "to": "P4", "duration": 1 },
             { "from": "P4", "to": "T2" }
+       ],
+       "actions": [
        ]
     }
+  ],
+  "inputs": [
   ]
 }
 # Petri Net Examples
+
+## GRAFCET Action Qualifiers
+
+In GRAFCET mode, each step can have actions with different qualifiers that define their behavior according to IEC 60848:
+
+| Qualifier | Name | Description |
+|-----------|------|-------------|
+| **N** | Normal | Action is active while the step is active |
+| **S** | Set (Stored) | Action is latched ON when step becomes active, remains ON until Reset |
+| **R** | Reset | Action is latched OFF when step becomes active |
+| **D** | Delayed | Action becomes active after delay, only while step remains active |
+| **L** | Limited | Action is active for limited duration while step is active |
+| **SD** | Stored & Delayed | Action is set after delay (combination of S and D) |
+| **DS** | Delayed & Stored | Action starts delayed, then stored (combination of D and S) |
+| **SL** | Stored & Limited | Action is set for limited time (combination of S and L) |
+| **P** | Pulse | Single pulse at step activation (impulse action) |
+
+## GRAFCET with Actions (Cylinder Control)
+
+This example demonstrates a pneumatic cylinder control sequence with various action qualifiers:
+- **Init**: Initial waiting state
+- **Extending**: Activates valve V1+ (Normal action)
+- **Extended**: Starts a 2s timer (Delayed) and sets position indicator (Set)
+- **Retracting**: Activates valve V1- (Normal) and resets indicator (Reset)
+- **Alarm**: Sound buzzer (Normal) and flash lamp for 5s (Limited)
+
+Sensors: `Start`, `s0` (retracted position), `s1` (extended position), `Error`, `Reset`
+
+```
+TimedPetriNetEditor data/examples/GrafcetActions.json
+```
+
+## Graphe des Modes de Marche et Arret (GEMMA)
+
+Operating and Stopping Modes Graph (GEMMA)
+
+This example models the GEMMA (Graph for the Study of Modes and Actions) which defines the coordination of three combined GRAFCETs to control an automated cell. The managed modes are:
+
+- Normal production operation
+- Safety operation
+- Supervision/control of subordinate GRAFCETs
+
+Production Line Description:
+Workpieces are transported by a conveyor belt to an oven (KM3) for baking. The conveyor can move left or right thanks to two motors (KM2 and KM1).
+
+Operator Panel (HMI) Controls:
+
+- Emergency stop button (AU)
+- Reset button (Arm)
+- Validation button (Val)
+- Power-on indicator lamp (MST)
+- Selector switch for automatic (Auto) or manual (Manu) operation
+- Cycle start button (Dcy)
+- Cycle stop button (Acy)
+- Left (GA) and right (DR) buttons to move the conveyor in the desired direction during manual mode
+
+Credit: [NetProf](https://www.youtube.com/watch?v=y8lWIG71040&list=PLtbgSpNjNTOVxGj6zYv5MTdZuPwD7S1zh)
+
+```
+TimedPetriNetEditor data/examples/GEMMA.json
+```
 
 ## Coffee machine
 
@@ -1301,6 +1815,17 @@ Two traffic lights (red, orange, red lights) synchronized by the Place `P6`.
 ```
 TimedPetriNetEditor data/examples/TrafficLights.json
 ```
+
+## German Traffic Lights
+
+One traffic ligth. The particularity of German traffic lights is they are at the same time red and yellow before swaitching to green.
+
+```
+TimedPetriNetEditor data/examples/GermanTrafficLights.json
+```
+
+Credit: YAWL User Group
+https://www.youtube.com/shorts/ZQZCpDRqwKY
 
 ## Philosphers
 
@@ -1365,6 +1890,43 @@ https://www.rocq.inria.fr/metalau/cohen/SED/book-online.html.
 ```
 TimedPetriNetEditor data/examples/EventGraph.json
 ```
+
+## Chainsaw Safety
+
+Show security such as dead man works on a chainsaw.
+
+```
+TimedPetriNetEditor data/examples/Chainsaw.json
+```
+
+Credit: YAWL User Group
+https://www.youtube.com/shorts/V42WiF2Ib3w
+
+## Landing Gear
+
+Show how to prevent damaging aircraft landing gear.
+- The aircraft has initially its gear down and at low speed.
+- On high speed, extending gears is not possible.
+- If gears are down and aircraft go to high speed a warning is triggered.
+
+
+```
+TimedPetriNetEditor data/examples/LandingGear.json
+```
+
+Credit: YAWL User Group
+https://www.youtube.com/shorts/IqMyF5JKoE4
+
+## Smarthome Safety
+
+Prevent shuttering down the last roller shutters.
+
+```
+TimedPetriNetEditor data/examples/SmarthomeSafety.json
+```
+
+Credit: YAWL User Group
+https://www.youtube.com/shorts/BB5N9Nxtq00
 TimedEventGraph 3 5
 
 0 1:   0   1
@@ -1389,7 +1951,7 @@ TimedEventGraph 3 5
   "type": "Timed Petri net",
   "nets": [
     {
-       "name": "Timed Petri net",
+       "name": "Simple",
        "places": [
             { "id": 0, "caption": "P0", "tokens": 1, "x": 105, "y": 130 },
             { "id": 1, "caption": "P1", "tokens": 2, "x": 485, "y": 131 },
@@ -1397,11 +1959,11 @@ TimedEventGraph 3 5
             { "id": 3, "caption": "P3", "tokens": 1, "x": 69, "y": 342 }
        ],
        "transitions": [
-            { "id": 0, "caption": "T0", "x": 280, "y": 130, "angle": 0 },
-            { "id": 1, "caption": "T1", "x": 353, "y": 227, "angle": 0 },
-            { "id": 2, "caption": "T2", "x": 602, "y": 239, "angle": 0 },
-            { "id": 3, "caption": "T3", "x": 237, "y": 342, "angle": 0 },
-            { "id": 4, "caption": "T4", "x": 13, "y": 233, "angle": 0 }
+            { "id": 0, "caption": "T0", "x": 280, "y": 130 },
+            { "id": 1, "caption": "T1", "x": 353, "y": 227 },
+            { "id": 2, "caption": "T2", "x": 602, "y": 239 },
+            { "id": 3, "caption": "T3", "x": 237, "y": 342 },
+            { "id": 4, "caption": "T4", "x": 13, "y": 233 }
        ],
        "arcs": [
             { "from": "P0", "to": "T0" },
@@ -1420,27 +1982,86 @@ TimedEventGraph 3 5
   ]
 }
 {
-  "revision": 3,
-  "type": "Timed Petri net",
+  "revision": 4,
+  "type": "Petri net",
   "nets": [
     {
-       "name": "TrafficLights",
+       "name": "Smart Home Safety",
        "places": [
-            { "id": 0, "caption": "Light 1 Red", "tokens": 1, "x": 146, "y": 250 },
-            { "id": 1, "caption": "Light 1 Green", "tokens": 0, "x": 389, "y": 173 },
-            { "id": 2, "caption": "Light 1 Orange", "tokens": 0, "x": 615, "y": 173 },
-            { "id": 3, "caption": "Light 2 Red", "tokens": 1, "x": 153, "y": 408 },
-            { "id": 4, "caption": "Light 2 Green", "tokens": 0, "x": 397, "y": 444 },
-            { "id": 5, "caption": "Light 2 Orange", "tokens": 0, "x": 639, "y": 444 },
-            { "id": 6, "caption": "P6", "tokens": 1, "x": 209, "y": 318 }
+            { "id": 0, "caption": "Shutter up", "tokens": 1, "x": 231.931, "y": 75.1778 },
+            { "id": 1, "caption": "Shutter down", "tokens": 0, "x": 141.967, "y": 182.158 },
+            { "id": 2, "caption": "Shutter up", "tokens": 1, "x": 523.852, "y": 50 },
+            { "id": 3, "caption": "Shutter down", "tokens": 0, "x": 630.821, "y": 139.937 },
+            { "id": 4, "caption": "Shutter up", "tokens": 1, "x": 167.18, "y": 474.062 },
+            { "id": 5, "caption": "Shutter down", "tokens": 0, "x": 274.148, "y": 564 },
+            { "id": 6, "caption": "Shutter up", "tokens": 1, "x": 656.032, "y": 431.845 },
+            { "id": 7, "caption": "Shutter down", "tokens": 0, "x": 566.066, "y": 538.823 },
+            { "id": 8, "caption": "Remaining", "tokens": 3, "x": 399, "y": 307 }
        ],
        "transitions": [
-            { "id": 0, "caption": "T0", "x": 272, "y": 173, "angle": 315 },
-            { "id": 1, "caption": "T1", "x": 496, "y": 173, "angle": 0 },
-            { "id": 2, "caption": "T2", "x": 497, "y": 255, "angle": 0 },
-            { "id": 3, "caption": "T3", "x": 283, "y": 444, "angle": 225 },
-            { "id": 4, "caption": "T4", "x": 497, "y": 444, "angle": 0 },
-            { "id": 5, "caption": "T5", "x": 497, "y": 339, "angle": 0 }
+            { "id": 0, "caption": "Down", "x": 238.862, "y": 229.214 },
+            { "id": 1, "caption": "Up", "x": 294.912, "y": 162.564 },
+            { "id": 2, "caption": "Down", "x": 476.782, "y": 146.872 },
+            { "id": 3, "caption": "Up", "x": 543.438, "y": 202.927 },
+            { "id": 4, "caption": "Down", "x": 254.563, "y": 411.073 },
+            { "id": 5, "caption": "Up", "x": 321.219, "y": 467.128 },
+            { "id": 6, "caption": "Down", "x": 503.088, "y": 451.435 },
+            { "id": 7, "caption": "Up", "x": 559.139, "y": 384.786 }
+       ],
+       "arcs": [
+            { "from": "P0", "to": "T0" },
+            { "from": "T0", "to": "P1", "duration": 1 },
+            { "from": "P1", "to": "T1" },
+            { "from": "T1", "to": "P0", "duration": 5 },
+            { "from": "P2", "to": "T2" },
+            { "from": "T2", "to": "P3", "duration": 1 },
+            { "from": "P3", "to": "T3" },
+            { "from": "T3", "to": "P2", "duration": 3 },
+            { "from": "P4", "to": "T4" },
+            { "from": "T4", "to": "P5", "duration": 3 },
+            { "from": "P5", "to": "T5" },
+            { "from": "T5", "to": "P4", "duration": 1 },
+            { "from": "P6", "to": "T6" },
+            { "from": "T6", "to": "P7", "duration": 4 },
+            { "from": "P7", "to": "T7" },
+            { "from": "T7", "to": "P6", "duration": 1 },
+            { "from": "T1", "to": "P8", "duration": 1 },
+            { "from": "P8", "to": "T2" },
+            { "from": "T3", "to": "P8", "duration": 2 },
+            { "from": "P8", "to": "T0" },
+            { "from": "P8", "to": "T4" },
+            { "from": "T5", "to": "P8", "duration": 2 },
+            { "from": "P8", "to": "T6" },
+            { "from": "T7", "to": "P8", "duration": 3 }
+       ],
+       "actions": [
+       ]
+    }
+  ],
+  "inputs": [
+  ]
+}
+{
+  "revision": 4,
+  "type": "Petri net",
+  "nets": [
+    {
+       "name": "Traffic Lights",
+       "places": [
+            { "id": 0, "caption": "Light 1 Red", "tokens": 1, "x": 100, "y": 100 },
+            { "id": 1, "caption": "Light 1 Green", "tokens": 0, "x": 100, "y": 500 },
+            { "id": 2, "caption": "Light 1 Orange", "tokens": 0, "x": 100, "y": 300 },
+            { "id": 3, "caption": "Light 2 Red", "tokens": 0, "x": 500, "y": 100 },
+            { "id": 4, "caption": "Light 2 Green", "tokens": 1, "x": 500, "y": 500 },
+            { "id": 5, "caption": "Light 2 Orange", "tokens": 0, "x": 500, "y": 300 }
+       ],
+       "transitions": [
+            { "id": 0, "caption": "T0", "x": 250, "y": 250 },
+            { "id": 1, "caption": "T1", "x": 100, "y": 400 },
+            { "id": 2, "caption": "T2", "x": 100, "y": 200 },
+            { "id": 3, "caption": "T3", "x": 350, "y": 250 },
+            { "id": 4, "caption": "T4", "x": 500, "y": 400 },
+            { "id": 5, "caption": "T5", "x": 500, "y": 200 }
        ],
        "arcs": [
             { "from": "P0", "to": "T0" },
@@ -1455,86 +2076,47 @@ TimedEventGraph 3 5
             { "from": "T4", "to": "P5", "duration": 3 },
             { "from": "P5", "to": "T5" },
             { "from": "T5", "to": "P3", "duration": 3 },
-            { "from": "P6", "to": "T0" },
-            { "from": "P6", "to": "T3" },
-            { "from": "T2", "to": "P6", "duration": 4 },
-            { "from": "T5", "to": "P6", "duration": 3 }
+            { "from": "P3", "to": "T0" },
+            { "from": "T0", "to": "P3", "duration": 1 },
+            { "from": "P0", "to": "T3" },
+            { "from": "T3", "to": "P0", "duration": 1 }
+       ],
+       "actions": [
+            { "place_id": 0, "qualifier": "N", "color": "red", "name": "Red 1", "script": "Traffic light 1 - Red", "duration": 0 },
+            { "place_id": 1, "qualifier": "N", "color": "green", "name": "Green 1", "script": "Traffic light 1 - Green", "duration": 0 },
+            { "place_id": 2, "qualifier": "N", "color": "orange", "name": "Orange 1", "script": "Traffic light 1 - Orange", "duration": 0 },
+            { "place_id": 3, "qualifier": "N", "color": "red", "name": "Red 2", "script": "Traffic light 2 - Red", "duration": 0 },
+            { "place_id": 4, "qualifier": "N", "color": "green", "name": "Green 2", "script": "Traffic light 2 - Green", "duration": 0 },
+            { "place_id": 5, "qualifier": "N", "color": "orange", "name": "Orange 2", "script": "Traffic light 2 - Orange", "duration": 0 }
        ]
     }
+  ],
+  "inputs": [
   ]
 }
-Flowshop 6 8
-          Piece1  Piece2  Piece3  Piece4  Piece5  Piece6
-Machine1  2.0     3.9     0.95    1.1     0.7     1.4
-Machine2  nan     nan     2.0     1.2     nan     1.7
-Machine3  3.7     nan     2.2     nan     6.4     nan
-Machine4  nan     nan     2.0     nan     1.0     1.0
-Machine5  1.7     3.1     3.0     nan     1.3     nan
-Machine6  0.5     3.2     4.3     1.9     1.6     0.4
-Machine7  1.0     1.0     1.0     1.0     1.0     1.0
-Machine8  1.5     1.5     1.5     1.2     1.2     1.2
-{
-  "revision": 2,
-  "type": "GRAFCET",
-  "nets": [
-    {
-       "name": "dualband",
-       "places": [
-            { "id": 0, "caption": "Attente depart", "tokens": 1, "x": 126, "y": 200 },
-            { "id": 1, "caption": "Demarrage moteurs", "tokens": 0, "x": 276, "y": 200 },
-            { "id": 2, "caption": "Arret moteurs", "tokens": 0, "x": 101, "y": 375 },
-            { "id": 3, "caption": "Attente validation panne", "tokens": 1, "x": 429, "y": 75 },
-            { "id": 4, "caption": "Debarasser cartons", "tokens": 0, "x": 625, "y": 75 },
-            { "id": 5, "caption": "Attente selec manu ou auto", "tokens": 0, "x": 647, "y": 192 },
-            { "id": 6, "caption": "Debarasser cartons", "tokens": 0, "x": 650, "y": 247 },
-            { "id": 7, "caption": "Production normale", "tokens": 0, "x": 650, "y": 298 },
-            { "id": 8, "caption": "Marche manuelle", "tokens": 0, "x": 845, "y": 364 },
-            { "id": 9, "caption": "Forcage GPN & GC", "tokens": 1, "x": 172, "y": 451 },
-            { "id": 10, "caption": "Attente", "tokens": 0, "x": 177, "y": 571 }
-       ],
-       "transitions": [
-            { "id": 0, "caption": "X7 Dcy .", "x": 201, "y": 125, "angle": 0 },
-            { "id": 1, "caption": "Acy", "x": 176, "y": 300, "angle": 0 },
-            { "id": 2, "caption": "true", "x": 51, "y": 275, "angle": 0 },
-            { "id": 3, "caption": "Val", "x": 545, "y": 75, "angle": 0 },
-            { "id": 4, "caption": "true", "x": 725, "y": 75, "angle": 0 },
-            { "id": 5, "caption": "Auto Val .", "x": 526, "y": 225, "angle": 0 },
-            { "id": 6, "caption": "Manu Val .", "x": 766, "y": 218, "angle": 0 },
-            { "id": 7, "caption": "true", "x": 525, "y": 280, "angle": 0 },
-            { "id": 8, "caption": "Manu Val .", "x": 525, "y": 328, "angle": 0 },
-            { "id": 9, "caption": "Auto Val .", "x": 429, "y": 364, "angle": 0 },
-            { "id": 10, "caption": "Au ! Rearm .", "x": 255, "y": 496, "angle": 0 },
-            { "id": 11, "caption": "Au", "x": 72, "y": 519, "angle": 0 }
-       ],
-       "arcs": [
-            { "from": "P0", "to": "T0" },
-            { "from": "T0", "to": "P1", "duration": 5 },
-            { "from": "P1", "to": "T1" },
-            { "from": "T1", "to": "P2", "duration": 1 },
-            { "from": "P2", "to": "T2" },
-            { "from": "T2", "to": "P0", "duration": 4 },
-            { "from": "P3", "to": "T3" },
-            { "from": "T3", "to": "P4", "duration": 3 },
-            { "from": "P4", "to": "T4" },
-            { "from": "T4", "to": "P5", "duration": 4 },
-            { "from": "P5", "to": "T5" },
-            { "from": "P5", "to": "T6" },
-            { "from": "T5", "to": "P6", "duration": 4 },
-            { "from": "P6", "to": "T7" },
-            { "from": "T7", "to": "P7", "duration": 4 },
-            { "from": "P7", "to": "T8" },
-            { "from": "T8", "to": "P8", "duration": 5 },
-            { "from": "T6", "to": "P8", "duration": 5 },
-            { "from": "P8", "to": "T9" },
-            { "from": "T9", "to": "P3", "duration": 5 },
-            { "from": "P9", "to": "T10" },
-            { "from": "T10", "to": "P10", "duration": 2 },
-            { "from": "P10", "to": "T11" },
-            { "from": "T11", "to": "P9", "duration": 4 }
-       ]
-    }
-  ]
-}
+# Flowshop definition
+npieces: 6
+nmachines: 8
+
+# Tokens per machine class (nm) - horizontal cycle
+nm: 1 1 1 1 1 1 1 1
+
+# Tokens per piece class (np) - vertical cycle
+np: 1 1 1 1 1 1
+
+# Piece names (columns)
+pieces: Piece1 Piece2 Piece3 Piece4 Piece5 Piece6
+
+# Processing times: machine_name: time1 time2 ...
+# Note: (-inf means (max,+) 0 therefore no task to perform)
+Machine1: 2.0  3.9  0.95 1.1  0.7  1.4
+Machine2: -inf -inf 2.0  1.2  -inf 1.7
+Machine3: 3.7  -inf 2.2  -inf 6.4  -inf
+Machine4: -inf -inf 2.0  -inf 1.0  1.0
+Machine5: 1.7  3.1  3.0  -inf 1.3  -inf
+Machine6: 0.5  3.2  4.3  1.9  1.6  0.4
+Machine7: 1.0  1.0  1.0  1.0  1.0  1.0
+Machine8: 1.5  1.5  1.5  1.2  1.2  1.2
 ‰PNG
 
    IHDR        ÓØB   	pHYs  Â  ÂnĞu>  òPLTEÿÿÿôôôTTT   ÃÃÃıış¿ÿ¿¿¿ÿ   ÿ¿¿ğğğddd———ûûülll
@@ -2649,11 +3231,23 @@ oàíhº+7AÇ+èìÕL~J°ÅlÒÂ<Ö.¼[Í#õ…ªISZzHÂÒÇ¶Ü*ËìW‡ZI×FÏ›XŒ^~ÔëÏ/7µÂF£~Õºí¬¯mÈ
 zšiz!à¼0á-(N>ñjökÀ›mÈVv›É×K¬!gîØJ8œõ/ÿŞm5ÑoÌXNÔ½d÷ìG)XÌúíQ&.Z]÷†øå®„	¿£±»-Šh1ß·®2jùÜ#&<àZdôäaÂõÙ»côtfä«@¥(‘ß!Ûg¼ı"?ªvô¦ÿ±ØñMeS‘}<ïxÖÏê2éÍ(MN[Z×iz"*‘§ĞÈ)¤ë¥æı—µÕI‘º·ÀĞÕõé¯%aR	E¿ÂÄºË¿G‰ï¼¥XÑ] í¨l`è°3ØQ^F,ñcè€™ú ås=…iÈbÇd ©øâ7q fú›ÅU¥ßZ’·7%TĞK˜şÃâêÉÌt_yÌ¤|­ñ÷¦?Y]-¼†»ĞÂªHJê{ë*%«¿]gc&9`6ˆ^Âdù¤-Ós
 İ ¿C0f"ïŞàÎÂ””—»`Í³Ş$E„)·À>ÎÂÈ÷&Ë'm‰0EO¹±¬yƒKÃ€9¸@˜†[m`²¤¼ÑÊÆŞè3ı‚eïaÊVZ-}(¼²+è8ƒy¦ø¦ÍUeíû^ù<:jıÚçÓGlÃk¹^Âd¹š§%²x¤ïY…gXÑêÖ|S[İû_›w|.¶åeq°—0Y®æµµ¯¿O”	{?·eÁ¾p›0÷½ô9o÷'nn¦Ã;¤q5°±Û×»µ!à6aêÛœg¿EÊmÂÔ·9ÏOşÛŞBŸİ&L·ıjşuÛÑn¦«~¡³~´éaéÕ·	SßÔê½šjö}·	“Ğxæz›±kÍÙ³Íîçòs0õ»;‘ı“ºN˜úÜ´<³ÄÏuÂt]2¸k?ûv`_R×	S_º’-]E³Ş¦7ë„Ixégáø®;º:ı=Ó«W÷Ü+Ğ½ª¹?"Ü'L·ıPÓyÃşîp3	}QÓ¹åŸûÛß5•øÇù—îòÏŒS0Œ¶¬ÍÆ‹NwöË¯ÿÔÍ™q
 †AèÄ—¼1ÓN]´°i°UŞIş‡ÿİİ™q>“A4®ÏF_‰Ú±Á2ÌHş¯ÿ§»3ã|&ƒõ¼nÖB—w:ƒÍòJrQt_M÷Ãò¯/´@±'ÿÛşX@v´ipCÜ¾?tQ«ëŞJü‹±ƒYËÍÑ·‚LÏvÛD£ì„~Ü³ÀDÖF>Á.lŸ¯5±­&guİ0²%.@g2ünÌî¶©½ënæI}hºbfR@çWïUI¯4ó5«÷ËóÈWºˆv7 ·:·¿ÚŞ–nt}ëVlÔ¬Şú¡¿8÷ÔUSŸ¦WYr®“l-Y¼mÔt¦ÎšÇğãÚÖ1âmAâ¬ Ğµ!çßàõMïcÎKgn´í;Ü)âõMá{¯ù&ÃÕ„âmD@,—nº’S¹Ñxm¬wŠÏ6»BwÖ(\y§9PS¸­5Ï5GNÅÚÆPñ´P¾­•^4¡+ßlÔ×D­G!Ş§<4šbÏjÇ·>m´ÍİyGv:«•Î:3@ö\Çùõ'N»gÇ…æ[-õèÌ‡›üsèê·b'á¶_¸.×6Jùã—ú÷úYıÇùM£„'¡ÖYúæ5ˆo1tÍüñ³]­±Q:ÀË	½Ö¨¯‰¬]=×ò…B¡‘?şQ„VĞbè^8tõ"VïDCRß# ¯ƒ.2 $ @   @   @   @   @   @   @   @   @   @   @   @ÀTş?½Ÿ"6
-pZ    IEND®B`‚Flowshop 3 3
-          Part1  Part2  Part3
-Machine1  nan    1.0    5.0
-Machine2  3.0    2.0    3.0
-Machine3  4.0    3.0    nan
+pZ    IEND®B`‚# Simple Flowshop example (2x3)
+npieces: 3
+nmachines: 2
+
+# Tokens per machine class (nm) - horizontal cycle
+nm: 1 1
+
+# Tokens per piece class (np) - vertical cycle
+np: 1 1 1
+
+# Piece names (columns)
+pieces: P1 P2 P3
+
+# Processing times: machine_name: time1 time2 ...
+# Note: (-inf means (max,+) 0 therefore no task to perform)
+M1: 2.0 3.0 1.0
+M2: 1.0 2.0 1.5
        @DSIGÌ<Lj …´  \LTSHV”Ø/  H  OS/2GuÃ  È   VVDMXtñ|m  Ì  àcmapèM‹‹  À  Œcvt L¢A  #ˆ  ˜edt04R |è  Êfpgm7QÑ)  !  ögasp  	      glyf%;  Ÿœ ªjhdmx	IÍ  3  lˆheadÌé™  L   6hhea;	Ğ  „   $hmtxÉr>  %   ôkernu¿~S pP  –loca²s,  L  ümaxpøâ  ¨    name)V™D  0  postÑÆm° J  &HprepyeØÿ  ¬  ã    nğ*#İ_<õ      ª~D)    ¸œÿšşY“   	          şR  ,ÿšûÔ“               }   } b  k    / V  ã      š3  %š3    x§   ‡            MS   @  ûşY Ê®  Ÿ             ÿÿ    (æ        C          C        J       2 Q        ƒ        Š        –       /      Ì     Ø     è     ô      	   †  	  š  	  ¨  	  d¶  	    	  (  	  @  	  ^N  
   ¬    ¸    È    Ô    à    î                 (    6    F    R  $  ^  -  l  
   z    †  
@@ -4818,7 +5412,630 @@ a*     0*†H†÷  À0	*†H†÷	1
 +‚70	*†H†÷	1H½‹Èüy¬‡ùÙÁ’¹Äct0d
 +‚71V0T *€( V e r d a n a   R e g u l a r   F o n t¡&€$http://www.microsoft.com/typography 0	*†H†÷ €m~uŒ²Rr$×şŒív}F{·P;Ï%xÒ’uXiõêôÃÙ‹’Óï^ö§šüÍÙ‡ŠÎ£“q4ï_pÓ=ûAz;?ÁŠ™fï6WÖ²Ä¯©¨ÇÃ˜çãÅ
 	ãÓÛ‹ DQ³5Sq[.Œ+KM@ƒNn8û‘NZ›¡‚L0‚H	*†H†÷	1‚90‚50³010U
-VeriSign Trust Network10UVeriSign, Inc.1,0*U#VeriSign Time Stamping Service Root1402U+NO LIABILITY ACCEPTED, (c)97 VeriSign, Inc.zm\ob“OºÄıCá0*†H†÷  Y0	*†H†÷	1	*†H†÷0	*†H†÷	1011106225055Z0	*†H†÷	1={aË"'ˆë9Ü”+;0	*†H†÷ ‚ PìB$G1V½Fº¶ASÚoPB{»áÄ8^'7Æowijî‹IÔ/·hFTø(¥$RÉ%‰AÃ‰|¶6v·½ÁG(çº=/Œw´ğ”x.:'`FÆ¼Ù%-ïÒa¡×ô[©X·}‰¹U‰4D[G}‰Dî¹çŸš±*é9“¼}^DdcïW ßšLÖè–İmNKày¤¥ëôªeUíwó	ê†K«×V–ş¨3s#™]ïsuu€†_X”KÇÙ“PÆyé¼Ö(¡ÕêùáS¨Û×s½··Êìä_xkÔàíg7^!:s8ŸÇX€¡æÅat¸  [Window][DockSpaceViewport_11111111]
+VeriSign Trust Network10UVeriSign, Inc.1,0*U#VeriSign Time Stamping Service Root1402U+NO LIABILITY ACCEPTED, (c)97 VeriSign, Inc.zm\ob“OºÄıCá0*†H†÷  Y0	*†H†÷	1	*†H†÷0	*†H†÷	1011106225055Z0	*†H†÷	1={aË"'ˆë9Ü”+;0	*†H†÷ ‚ PìB$G1V½Fº¶ASÚoPB{»áÄ8^'7Æowijî‹IÔ/·hFTø(¥$RÉ%‰AÃ‰|¶6v·½ÁG(çº=/Œw´ğ”x.:'`FÆ¼Ù%-ïÒa¡×ô[©X·}‰¹U‰4D[G}‰Dî¹çŸš±*é9“¼}^DdcïW ßšLÖè–İmNKày¤¥ëôªeUíwó	ê†K«×V–ş¨3s#™]ïsuu€†_X”KÇÙ“PÆyé¼Ö(¡ÕêùáS¨Û×s½··Êìä_xkÔàíg7^!:s8ŸÇX€¡æÅat¸  % ---------------------------------------------------------------------------- %
+%                                GRAFCET2 0.1                                  %
+% ---------------------------------------------------------------------------- %
+%         Ruslan Nagimov                                                       %
+%         github: http://nagimov.github.com/grafcet2/                          %
+%         e-mail: nagimov@outlook.com                                          %
+% ---------------------------------------------------------------------------- %
+% This package is based on Pierre Chatelier's GRAFCET package:                 %
+%         GRAFCET 1.0                                                          %
+%         e-mail: pierre.chatelier@club-internet.fr                            %
+%         web:    http://perso.club-internet.fr/ktd                            %
+% More commands were added, variable names and comments were translated to     %
+% English.                                                                     %
+% ---------------------------------------------------------------------------- %
+% This package allows to draw nice grafcets (sequential function charts) using %
+% latex.                                                                       %
+%                                                                              %
+% Required packages:                                                           %
+%     # float                                                                  %
+%     # ifthen                                                                 %
+%     # hhline                                                                 %
+%     # tikz                                                                   %
+% ---------------------------------------------------------------------------- %
+% The syntax of commands:                                                      %
+%                                                                              %
+%     \Transition{text}                                                        %
+%         Transition block represents the line, connecting two steps. The text %
+%         usually represents the condition which has to be met in order to     %
+%         proceed execution.                                                   %
+%                                                                              %
+%     \Step{text}                                                              %
+%         Step block represents the square, executing command.                 %
+%                                                                              %
+%     \FirstStep{text}                                                         %
+%         The same as \Step, drawn with a double line, used for the first step %
+%         in the function/routine.                                             %
+%                                                                              %
+%     \MacroStep{text}                                                         %
+%         The same as \Step, drawn with extra lines at a top and a bottom of   %
+%         the block.                                                           %
+%                                                                              %
+%     \Jump{text}                                                              %
+%         Jump block represents unconditional jump to another step in the      %
+%         code. It's somehow equivalent to GOTO command in different           %
+%         languages. The jump point has to be described in the text block.     %
+%                                                                              %
+%     \Divergence{...}{...}                                                    %
+%         Divergence block is used to represent "OR" conditions. Creates       %
+%         single horizontal line.                                              %
+%                                                                              %
+%     \Fork{...}{...}                                                          %
+%         Fork block is used to represent "AND" conditions (parallel           %
+%         processing). Creates double horizontal line.                         %
+%                                                                              %
+%     \Loop{...}                                                               %
+%         Loop block is used to create cycled execution path.                  %
+%                                                                              %
+%     \Nop                                                                     %
+%         Creates blank space with vertical line (useful for filling blank     %
+%         steps after forks).                                                  %
+% ---------------------------------------------------------------------------- %
+%                                                                              %
+%                     Pseudographic explanation of commands                    %
+%                                                                              %
+%                     â•”â•â•â•â•â•â•â•â•â•â•â•â•â•â•—                                          %
+%                     â•‘             â•‘                                          %
+%                     â•‘ First  Step â•‘                                          %
+%                     â•‘             â•‘                                          %
+%                     â•šâ•â•â•â•â•â•â•¤â•â•â•â•â•â•â•                                          %
+%                            â”‚                                                 %
+%                            â”‚                                                 %
+%                           â”€â”¼â”€ Transition                                     %
+%                            â”‚                                                 %
+%                            â”‚                                                 %
+%                     â”€â”€â”€â”€â”€â”€â”€â”¼â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”¬â”€â”€â”€â”€â”€â”€â”€  # Divergence      %
+%                            â”‚                     â”‚                           %
+%                            â”‚                     â”‚                           %
+%                     â”Œâ”€â”€â”€â”€â”€â”€â”´â”€â”€â”€â”€â”€â”€â”       â”Œâ”€â”€â”€â”€â”€â”€â”´â”€â”€â”€â”€â”€â”€â”\                   %
+%                     â”œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”¤       â”‚             â”‚ \                  %
+%                     â”‚ Macro  Step â”‚       â”‚  Jump Step  â”‚  >                 %
+%                     â”œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”¤       â”‚             â”‚ /                  %
+%                     â””â”€â”€â”€â”€â”€â”€â”¬â”€â”€â”€â”€â”€â”€â”˜       â””â”€â”€â”€â”€â”€â”€â”¬â”€â”€â”€â”€â”€â”€â”˜/                   %
+%                            â”‚                     â”‚                           %
+%                            â”‚                     â”‚                           %
+%                     â”€â”€â”€â”€â”€â”€â”€â”¼â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”´â”€â”€â”€â”€â”€â”€â”€                    %
+%                            â”‚                                                 %
+%                            â”‚                                                 %
+%                            â”‚                                                 %
+%                            â”‚                                                 %
+%                     â•â•â•â•â•â•â•â•ªâ•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•¤â•â•â•â•â•â•â•  # Fork            %
+%                            â”‚                     â”‚                           %
+%                            â”‚                     â”‚                           %
+%                     â”Œâ”€â”€â”€â”€â”€â”€â”´â”€â”€â”€â”€â”€â”€â”       â”Œâ”€â”€â”€â”€â”€â”€â”´â”€â”€â”€â”€â”€â”€â”                    %
+%                     â”‚             â”‚       â”‚             â”‚                    %
+%                     â”‚    Step     â”‚       â”‚    Step     â”‚                    %
+%                     â”‚             â”‚       â”‚             â”‚                    %
+%                     â””â”€â”€â”€â”€â”€â”€â”¬â”€â”€â”€â”€â”€â”€â”˜       â””â”€â”€â”€â”€â”€â”€â”¬â”€â”€â”€â”€â”€â”€â”˜                    %
+%                            â”‚                     â”‚                           %
+%                            â”‚                     â”‚                           %
+%                     â•â•â•â•â•â•â•â•ªâ•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•§â•â•â•â•â•â•â•                    %
+%                            â”‚                                                 %
+%                            â”‚                                                 %
+%                            â”‚                                                 %
+%                            â”‚                                                 %
+%                            â”‚<â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”  # Loop                            %
+%                            â”‚            â”‚                                    %
+%                            â”‚            â”‚                                    %
+%                     â”Œâ”€â”€â”€â”€â”€â”€â”´â”€â”€â”€â”€â”€â”€â”     â”‚                                    %
+%                     â”‚             â”‚     â”‚                                    %
+%                     â”‚    Step     â”‚     ^                                    %
+%                     â”‚             â”‚     â”‚                                    %
+%                     â””â”€â”€â”€â”€â”€â”€â”¬â”€â”€â”€â”€â”€â”€â”˜     â”‚                                    %
+%                            â”‚            â”‚                                    %
+%                            â”‚            â”‚                                    %
+%                            â””â”€â”€â”€â”€â”€â”€>â”€â”€â”€â”€â”€â”˜                                    %
+%                                                                              %
+% ---------------------------------------------------------------------------- %
+
+
+%  INIT
+\NeedsTeXFormat{LaTeX2e}
+\ProvidesClass{grafcet2}
+
+
+%  IMPORTS
+\RequirePackage{float}  %%
+\RequirePackage{ifthen} %%\ifthenelse{}{}
+\RequirePackage{hhline} %%\hhline{}
+\RequirePackage{tikz} %%\hhline{}
+
+
+% LANGUAGE
+\@ifpackageloaded{babel}
+{
+  \iflanguage{french}{\def\gra@language{french}}{}
+  \iflanguage{english}{\def\gra@language{english}}{}
+  \iflanguage{american}{\def\gra@language{english}}{}
+}
+{
+  \def\gra@language{english}
+}
+\ifthenelse{\equal{\gra@language}{french}}
+{
+  \def\gra@floatname{Grafcet}
+  \def\gra@listname{Liste des Grafcets}
+}{}
+\ifthenelse{\equal{\gra@language}{english}}
+{
+  \def\gra@floatname{Grafcets}
+  \def\gra@listname{List of Grafcets}
+}{}
+
+
+% MATCHING "FLOAT" PACKAGE FOR \listofgrafcets COMMAND
+\newcommand\floatc@gra[2]{\begin{center}{\bfseries\rmfamily #1:} #2\end{center}}
+\newcommand\fs@gra{
+   \let\@fs@capt\floatc@gra
+   \def\@fs@pre{}\def\@fs@post{}\def\@fs@mid{\vspace{3pt}}
+   \let\@fs@iftopcapt\iftrue}
+\newfloat{grafcetfloat}{h}{lor}
+\floatname{grafcetfloat}{\gra@floatname}
+\newcommand{\listofgrafcets}{\listof{grafcetfloat}{\gra@listname}}
+
+
+% STEPS COUNTER AND STUFF
+\newcounter{StepsCounter}
+\renewcommand{\theStepsCounter}{\arabic{StepsCounter}}
+\newbox\LHS
+\newbox\RHS
+\newbox\LHSS
+\newbox\RHSS
+\newdimen\Lskip
+\newdimen\Rskip
+\newlength{\diff}
+\newlength{\difff}
+\newlength{\LLHS}
+\newlength{\LRHS}
+
+
+% MAIN COMMANDS
+\newcommand{\SimpleBox}[1]{\begin{tabular}{|c|}\hline\rule{0pt}{3.5ex}\LARGE#1\\\hline\end{tabular}}
+\newcommand{\DoubleBox}[1]{\begin{tabular}{|c|}\hhline{|=|}\rule{0pt}{3.5ex}\LARGE#1\\\hhline{|=|}\end{tabular}}
+
+% TRANSITION
+% ----------
+\newcommand{\Transition}[1]{%
+                        \setbox\LHSS\hbox{\hspace{-1.67em}\rule{1em}{.4pt}\rule[-3ex]{.4pt}{6ex}\rule{1em}{.4pt}\hspace{.5em}}
+                        \setbox\RHSS\hbox{\begin{tabular}{@{}c}#1\end{tabular}}%
+                        \ifthenelse{\dp\LHSS < \dp\RHSS}
+                        {
+                            \setlength{\diff}{\dp\RHSS}
+                            \addtolength{\diff}{-\dp\LHSS}
+                            \setlength{\difff}{\dp\LHSS}
+                            \addtolength{\difff}{\diff}
+                            \begin{tabular}{@{}c@{}l@{}}%
+                                \raise - \difff
+                                \vbox{
+                                    \hsize\wd\LHSS
+                                    \hbox to \hsize{\hfill\vrule height \diff\hfill}
+                                    \box\LHSS
+                                    \hbox to \hsize{\hfill\vrule height \diff\hfill}
+                                }
+                                &
+                                \raise - 1.2ex
+                                \vbox{
+                                    \box\RHSS%
+                                }
+                            \end{tabular}%
+                        }%else if left > right
+                        {
+                            \setlength{\diff}{\dp\LHSS}
+                            \addtolength{\diff}{-\dp\RHSS}
+                            \setlength{\difff}{\dp\RHSS}
+                            \begin{tabular}{@{}c@{}l@{}}%
+                                \raise - \difff
+                                \vbox{
+                                    \box\LHSS
+                                }
+                                &
+                                \raise - 1.2ex
+                                \vbox{
+                                    \box\RHSS%
+                                }
+                            \end{tabular}%
+                        }%ifthenelse end
+\\}%Transition end
+
+% NOP
+% ---
+\newcommand{\Nop}{\begin{tabular}{@{}p{1em}@{}|@{}p{1em}l@{}}&&\\\end{tabular}\\}%
+
+% STEP
+% ----
+\newcommand{\Step}[2][\theStepsCounter]{%
+                        \hspace{1em}\vrule\\
+                        \setbox\LHSS\hbox{\SimpleBox{#1}\hrulefill}
+                        \setbox\RHSS\hbox{\raisebox{.5ex}{\rule{1em}{.4pt}}\begin{tabular}{@{}|l|l|}\hline#2\\\hline\end{tabular}}%
+                        \ifthenelse{\dp\LHSS < \dp\RHSS}
+                        {
+                            \setlength{\diff}{\dp\RHSS}
+                            \addtolength{\diff}{-\dp\LHSS}
+                            \setlength{\difff}{\dp\LHSS}
+                            \ifthenelse{#1<10}{\hspace{-1.63em}}{\hspace{-2.05em}}%
+                            \begin{tabular}{@{}c@{}l@{}}%
+                                \raise - \difff
+                                \vbox{
+                                    \hsize\wd\LHSS
+                                    \hbox to \hsize{\hfill\vrule height \diff\hfill}
+                                    \box\LHSS
+                                    \hbox to \hsize{\hfill\vrule height \diff\hfill}
+                                }
+                                &
+                                \raise + \diff
+                                \vbox{
+                                    \box\RHSS%
+                                }
+                            \end{tabular}%
+                            \setcounter{StepsCounter}{#1}
+                            \stepcounter{StepsCounter}%
+                        }%else if left > right
+                        {
+                            \setlength{\diff}{\dp\LHSS}
+                            \addtolength{\diff}{-\dp\RHSS}
+                            \setlength{\difff}{\dp\RHSS}
+                            \ifthenelse{#1<10}{\hspace{-1.63em}}{\hspace{-2.05em}}%
+                            \begin{tabular}{@{}c@{}l@{}}%
+                                \raise - \difff
+                                \vbox{
+                                    \box\LHSS
+                                }
+                                &
+                                \raise - \difff
+                                \vbox{
+                                    \box\RHSS%
+                                }
+                            \end{tabular}%
+                            \setcounter{StepsCounter}{#1}
+                            \stepcounter{StepsCounter}%
+                        }%ifthenelse end
+\\}%Step end
+
+% MACRO STEP
+% ----------
+\newcommand{\MacroStep}[2][\theStepsCounter]{%
+                        \hspace{1em}\vrule\\ %%
+                        \setbox\LHSS\hbox{\DoubleBox{#1}\hrulefill}
+                        \setbox\RHSS\hbox{\raisebox{.5ex}{\rule{1em}{.4pt}}\begin{tabular}{@{}|l|l|}\hline#2\\\hline\end{tabular}}%
+                        \ifthenelse{\dp\LHSS < \dp\RHSS}
+                        {
+                            \setlength{\diff}{\dp\RHSS}
+                            \addtolength{\diff}{-\dp\LHSS}
+                            \setlength{\difff}{\dp\LHSS}
+                            \ifthenelse{#1<10}{\hspace{-1.64em}}{\hspace{-2.05em}}%
+                            \begin{tabular}{@{}c@{}l@{}}%
+                                \raise - \difff
+                                \vbox{
+                                    \hsize\wd\LHSS
+                                    \hbox to \hsize{\hfill\vrule height \diff\hfill}
+                                    \box\LHSS
+                                    \hbox to \hsize{\hfill\vrule height \diff\hfill}
+                                }
+                                &
+                                \raise + \diff
+                                \vbox{
+                                    \box\RHSS%
+                                }
+                            \end{tabular}%
+                            \setcounter{StepsCounter}{#1}
+                            \stepcounter{StepsCounter}%
+                        }%else if left > right
+                        {
+                            \setlength{\diff}{\dp\LHSS}
+                            \addtolength{\diff}{-\dp\RHSS}
+                            \setlength{\difff}{\dp\RHSS}
+                            \ifthenelse{#1<10}{\hspace{-1.64em}}{\hspace{-2.05em}}%
+                            \begin{tabular}{@{}c@{}l@{}}%
+                                \raise - \difff
+                                \vbox{
+                                    \box\LHSS
+                                }
+                                &
+                                \raise - \difff
+                                \vbox{
+                                    \box\RHSS%
+                                }
+                            \end{tabular}%
+                            \setcounter{StepsCounter}{#1}
+                            \stepcounter{StepsCounter}%
+                        }%ifthenelse end
+\\}%MacroStep end
+
+% FIRSTSTEP
+% ---------
+\newcommand{\FirstStep}[2][\theStepsCounter]{%
+                        \hspace{1em}\vrule\\
+                        \setbox\LHSS\hbox{\fbox{\fbox{\LARGE #1}}\hrulefill}
+                        \setbox\RHSS\hbox{\raisebox{.5ex}{\rule{1em}{.4pt}}\begin{tabular}{@{}|l|l|}\hline#2\\\hline\end{tabular}}%
+                        \ifthenelse{\dp\LHSS < \dp\RHSS}
+                        {
+                            \setlength{\diff}{\dp\RHSS}
+                            \addtolength{\diff}{-\dp\LHSS}
+                            \setlength{\difff}{\dp\LHSS}
+                            \addtolength{\difff}{\diff}
+                            \ifthenelse{#1<10}{\hspace{-2.07em}}{\hspace{-2.4em}}%
+                            \begin{tabular}{@{}c@{}l@{}}%
+                                \raise - \difff
+                                \vbox{
+                                    \hsize\wd\LHSS
+                                    \box\LHSS
+                                    \hbox to \hsize{\hfill\vrule height \diff\hfill}
+                                }
+                                &
+                                \raise + \diff
+                                \vbox{
+                                    \box\RHSS%
+                                }
+                            \end{tabular}%
+                            \setcounter{StepsCounter}{#1}
+                            \stepcounter{StepsCounter}%
+                        }%else if left > right
+                        {
+                            \setlength{\diff}{\dp\LHSS}
+                            \addtolength{\diff}{-\dp\RHSS}
+                            \setlength{\difff}{\dp\RHSS}
+                            \addtolength{\difff}{\diff}
+                            \ifthenelse{#1<10}{\hspace{-2.07em}}{\hspace{-2.4em}}%
+                            \begin{tabular}{@{}c@{}l@{}}%
+                                \raise - \difff
+                                \vbox{
+                                    \box\LHSS
+                                }
+                                &
+                                \vbox{
+                                    \box\RHSS%
+                                }
+                            \end{tabular}%
+                            \setcounter{StepsCounter}{#1}
+                            \stepcounter{StepsCounter}%
+                        }%ifthenelse end
+\\}%FisrtStep end
+
+% DIVERGENCE
+% ----------
+\newcommand{\Divergence}[2]
+{
+  \hspace{1em}\vrule\\
+  \setbox\LHS\hbox{\hspace{-2.33em}\begin{tabular}{@{}l}#1\end{tabular}}%
+  \setbox\RHS\hbox{\begin{tabular}{@{}l}#2\end{tabular}}%
+  \setlength{\LLHS}{\wd\LHS}
+  \setlength{\LRHS}{\wd\RHS}
+
+  \ifthenelse{\dp\LHS < \dp\RHS}
+  {
+  \setlength{\diff}{\dp\RHS}
+  \addtolength{\diff}{-\dp\LHS}
+  \setlength{\difff}{\dp\LHS}
+  \addtolength{\difff}{\diff}
+  \begin{tabular}{@{}l@{}l@{}}
+          \raise - \difff
+          \vbox{%
+              \hsize\LLHS
+              \hbox to \hsize{\hspace{-2.5em}\rule{\LLHS}{.4pt}\rule{4.5em}{.4pt}}
+              \hbox to \hsize{\hspace{-1.35em}\vrule height \diff}
+              \box\LHS
+              \hbox to \hsize{\hspace{-1.35em}\vrule height \diff}
+              \hbox to \LLHS{\hspace{-2.5em}\rule[-.4pt]{\LLHS}{.4pt}\rule[-.4pt]{4.5em}{.4pt}}
+          }%
+          &
+          \box\RHS
+   \end{tabular}
+  }
+  {
+  \setlength{\diff}{\dp\LHS}
+  \addtolength{\diff}{-\dp\RHS}
+  \setlength{\difff}{\dp\RHS}
+  \addtolength{\difff}{\diff}
+  \begin{tabular}{@{}l@{}l@{}}
+          \raise - \difff
+          \vbox{%
+              \hsize\LLHS
+              \hbox to \hsize{\hspace{-2.5em}\rule{\LLHS}{.4pt}\rule{4.5em}{.4pt}}
+              \box\LHS
+              \hbox to \hsize{\hspace{-2.5em}\rule{\LLHS}{.4pt}\rule{4.5em}{.4pt}}
+          }%
+          &
+          \addtolength{\difff}{-.4pt}   
+          \raise - \difff
+          \vbox{%
+              \hsize\LRHS
+              \hbox to \hsize{\hspace{1em}\vrule height \diff}
+              \box\RHS
+              \hbox to \hsize{\hspace{1em}\vrule height \diff}
+          }
+   \end{tabular}
+  }
+\\}%divergence end
+
+% LOOP
+% ----
+\newcommand{\Loop}[1]
+{
+  \hspace{1.01em}\vrule\\
+  \setbox\LHS\hbox{\hspace{-2.33em}\begin{tabular}{@{}l}#1\end{tabular}}%
+  \setbox\RHS\hbox{\hspace{.2pt}\begin{tabular}{@{}c@{}|@{}c@{}}&\hspace{-.8ex}{$\wedge$}\\\end{tabular}}
+
+  \setlength{\LLHS}{\wd\LHS}
+  \setlength{\LRHS}{\wd\RHS}  
+
+  \setlength{\diff}{\dp\LHS}
+  \addtolength{\diff}{-\dp\RHS}
+  \setlength{\difff}{\dp\RHS}
+  \addtolength{\difff}{\diff}
+  \begin{tabular}{@{}l@{}l@{}}
+          \raise - \diff
+          \vbox{%
+              \hsize\LLHS
+              \addtolength{\LLHS}{1.33em}
+              \addtolength{\LLHS}{-.4pt}              
+              \hbox to \hsize{\hspace{-1.33em}\vrule\rule{\LLHS}{.4pt}\hspace{1pt}\hspace{-.5\LLHS}\raisebox{-.5ex}{$<$}}
+              \box\LHS
+              %\hbox to \hsize{\hspace{-1.33em}\hspace{-.2pt}\vrule\rule[.05pt]{\LLHS}{.4pt}}
+              \hbox to \hsize{\hspace{-1.35em}\rule[.5ex]{.4pt}{2.5ex}\rule[.5ex]{\LLHS}{.4pt}\hspace{1pt}\hspace{-.5\LLHS}$>$}              
+          }%
+          &
+          \raise - \diff
+          \vbox{%
+              \hsize.4pt
+              \addtolength{\diff}{.8pt}
+              \addtolength{\diff}{1.4ex}              
+              \hbox to \hsize{\rule{.4pt}{\diff}}
+              \box\RHS
+              %\addtolength{\diff}{1ex}
+              \hbox to \hsize{\rule[.5ex]{.4pt}{\diff}}
+          }\\
+   \end{tabular}\\
+}% Loop end
+
+% FORK
+% ----
+\newcommand{\Fork}[2]
+{
+  \hspace{1em}\vrule\\
+  \setbox\LHS\hbox{\hspace{-2.65em}\begin{tabular}{@{}l}#1\end{tabular}}%
+  \setbox\RHS\hbox{\begin{tabular}{@{}l}#2\end{tabular}}%
+  \setlength{\LLHS}{\wd\LHS}
+  \setlength{\LRHS}{\wd\RHS}
+
+  \ifthenelse{\dp\LHS < \dp\RHS}
+  {
+  \setlength{\diff}{\dp\RHS}
+  \addtolength{\diff}{-\dp\LHS}
+  \setlength{\difff}{\dp\LHS}
+  \addtolength{\difff}{\diff}
+  \begin{tabular}{@{\hspace{.31em}}l@{}l@{}}
+          \raise - \difff
+          \vbox{%
+              \hsize\LLHS
+              \hbox to \hsize{\hspace{-2.5em}\rule{\LLHS}{.4pt}\rule{4.5em}{.4pt}}
+              \hbox to \hsize{\hspace{-2.5em}\rule[-.75ex]{\LLHS}{.4pt}\rule[-.75ex]{4.5em}{.4pt}}
+              \hbox to \hsize{\hspace{-1.65em}\vrule height \diff}
+              \box\LHS
+              \hbox to \hsize{\hspace{-1.65em}\vrule height \diff}
+              \hbox to \hsize{\hspace{-2.5em}\rule{\LLHS}{.4pt}\rule{4.5em}{.4pt}}
+              \hbox to \hsize{\hspace{-2.5em}\rule[-.75ex]{\LLHS}{.4pt}\rule[-.75ex]{4.5em}{.4pt}}
+          }%
+          &
+          \raise + .4pt
+          \vbox{
+          \box\RHS
+          }
+   \end{tabular}\\
+  \hspace{1em}\vrule
+  }
+  {
+  \setlength{\diff}{\dp\LHS}
+  \addtolength{\diff}{-\dp\RHS}
+  \setlength{\difff}{\dp\RHS}
+  \addtolength{\difff}{\diff}
+  \begin{tabular}{@{\hspace{.31em}}l@{}l@{}}
+          \raise - \difff
+          \vbox{%
+              \hsize\LLHS
+              \hbox to \hsize{\hspace{-2.5em}\rule{\LLHS}{.4pt}\rule{4.5em}{.4pt}}
+              \hbox to \hsize{\hspace{-2.5em}\rule[-.75ex]{\LLHS}{.4pt}\rule[-.75ex]{4.5em}{.4pt}}
+              \box\LHS
+              \hbox to \hsize{\hspace{-2.5em}\rule{\LLHS}{.4pt}\rule{4.5em}{.4pt}}
+              \hbox to \hsize{\hspace{-2.5em}\rule[-.75ex]{\LLHS}{.4pt}\rule[-.75ex]{4.5em}{.4pt}}
+          }%
+          &
+          \addtolength{\difff}{-.4pt}
+          \raise - \difff
+          \vbox{%
+              \hsize\LRHS
+              \hbox to \hsize{\hspace{1em}\vrule height \diff}
+              \box\RHS
+              \hbox to \hsize{\hspace{1em}\vrule height \diff}
+          }
+   \end{tabular}\\
+  \hspace{1em}\vrule
+  }
+\\}%fork end
+
+% JUMP
+% ----
+\newcommand{\Jump}[2][\theStepsCounter]{%
+                        \hspace{1em}\vrule\\
+                        \setbox\LHSS\hbox{\SimpleBox{#1}\hrulefill}
+                        \setbox\RHSS\hbox{\raisebox{.5ex}{\rule{1em}{.4pt}}\begin{tabular}{@{}|l|l|}\hline#2\\\hline\end{tabular}}%
+                        \ifthenelse{\dp\LHSS < \dp\RHSS}
+                        {
+                            \setlength{\diff}{\dp\RHSS}
+                            \addtolength{\diff}{-\dp\LHSS}
+                            \setlength{\difff}{\dp\LHSS}
+                            \ifthenelse{#1<10}{\hspace{-1.63em}}{\hspace{-2.05em}}%
+                            \begin{tabular}{@{}c@{}l@{}}%
+                                \raise - \difff
+                                \vbox{
+                                    \hsize\wd\LHSS
+                                    \hbox to \hsize{\hfill\vrule height \diff\hfill}
+                                    \box\LHSS
+                                    \hbox to \hsize{\hfill\vrule height \diff\hfill}
+                                }
+                                \begin{tikzpicture}[baseline=1.4,anchor=east,inner sep=0]
+                                    \path[use as bounding box] (-0.45,0) rectangle (\tabcolsep-7,\baselineskip);
+                                    \node[minimum width=\tabcolsep+1em,minimum height=\baselineskip+2em-1] (box) {};
+                                    \draw (box.north west) -- (box.east);
+                                    \draw (box.south west) -- (box.east);
+                                \end{tikzpicture}
+                                &
+                                \raise + \diff
+                                \vbox{
+                                    \box\RHSS%
+                                }
+                            \end{tabular}%
+                            \setcounter{StepsCounter}{#1}
+                            \stepcounter{StepsCounter}%
+                        }%else if left > right
+                        {
+                            \setlength{\diff}{\dp\LHSS}
+                            \addtolength{\diff}{-\dp\RHSS}
+                            \setlength{\difff}{\dp\RHSS}
+                            \ifthenelse{#1<10}{\hspace{-1.63em}}{\hspace{-2.05em}}%
+                            \begin{tabular}{@{}c@{}l@{}}%
+                                \raise - \difff
+                                \vbox{
+                                    \box\LHSS
+                                }
+                                
+                                \begin{tikzpicture}[baseline=1.4,anchor=east,inner sep=0]
+                                    \path[use as bounding box] (-0.45,0) rectangle (\tabcolsep-7,\baselineskip);
+                                    \node[minimum width=\tabcolsep+1em,minimum height=\baselineskip+2em-1] (box) {};
+                                    \draw (box.north west) -- (box.east);
+                                    \draw (box.south west) -- (box.east);
+                                \end{tikzpicture}
+
+                                &
+                                \raise - \difff
+                                \vbox{
+                                    \box\RHSS%
+                                }
+                            \end{tabular}%
+                            \setcounter{StepsCounter}{#1}
+                            \stepcounter{StepsCounter}%
+                        }%ifthenelse end
+\\}%Step end
+
+
+
+
+
+
+
+% LATEX GRAFCET ENVIRENMENT
+\newenvironment{grafcet}[1][H]
+{
+    \begin{grafcetfloat}[#1]
+    \setcounter{StepsCounter}{0}
+    \begin{tabular}{@{}l@{}}
+}%
+{%
+    \end{tabular}
+    \end{grafcetfloat}
+}%
+[Window][DockSpaceViewport_11111111]
 Pos=0,19
 Size=1065,749
 Collapsed=0
@@ -4829,45 +6046,46 @@ Size=400,400
 Collapsed=0
 
 [Window][Console]
-Pos=0,670
-Size=796,98
+Pos=0,842
+Size=1920,164
 Collapsed=0
-DockId=0x00000003,0
+DockId=0x00000006,0
 
 [Window][Message]
-Pos=0,670
-Size=796,98
+Pos=0,842
+Size=1920,164
+Collapsed=0
+DockId=0x00000006,1
+
+[Window][Places]
+Pos=1527,19
+Size=393,821
 Collapsed=0
 DockId=0x00000003,1
 
-[Window][Places]
-Pos=798,19
-Size=302,749
-Collapsed=0
-DockId=0x00000001,1
-
 [Window][Arcs]
-Pos=798,19
-Size=302,749
+Pos=1527,19
+Size=393,821
 Collapsed=0
-DockId=0x00000001,2
+DockId=0x00000003,2
 
 [Window][Petri net]
 Pos=0,19
-Size=796,649
+Size=1546,933
 Collapsed=0
-DockId=0x00000002,0
+DockId=0x00000072,0
 
 [Window][Transitions]
-Pos=798,19
-Size=302,749
+Pos=1527,19
+Size=393,821
 Collapsed=0
-DockId=0x00000001,0
+DockId=0x00000003,0
 
 [Window][Sensors]
-Pos=1651,493
-Size=269,461
+Pos=798,19
+Size=302,325
 Collapsed=0
+DockId=0x00000003,2
 
 [Window][Choose the Petri file to save before quitting##ChooseFileDlgKey]
 Pos=151,195
@@ -4880,8 +6098,8 @@ Size=603,445
 Collapsed=0
 
 [Window][Choose the Petri file to save##ChooseFileDlgKey]
-Pos=118,227
-Size=581,330
+Pos=120,227
+Size=579,330
 Collapsed=0
 
 [Window][Help TimedPetriNetEditor]
@@ -4900,10 +6118,10 @@ Size=565,338
 Collapsed=0
 
 [Window][Steps]
-Pos=1618,19
-Size=302,1010
+Pos=1492,19
+Size=428,468
 Collapsed=0
-DockId=0x00000001,1
+DockId=0x00000003,1
 
 [Window][(max, +) dynamic linear system]
 Pos=342,307
@@ -4917,12 +6135,104 @@ Collapsed=0
 
 [Window][WindowOverViewport_11111111]
 Pos=0,19
-Size=1100,749
+Size=1920,987
 Collapsed=0
 
 [Window][Critical Cycle]
-Pos=366,307
-Size=367,154
+Pos=809,289
+Size=301,428
+Collapsed=0
+
+[Window][Choose the Petri file to save before creating new document##ChooseFileDlgKey]
+Pos=154,287
+Size=609,293
+Collapsed=0
+
+[Window][The selected file already exists!##Choose the Petri file to saveChooseFileDlgKeyOverWriteDialog]
+Pos=297,366
+Size=224,71
+Collapsed=0
+
+[Window][Actions]
+Pos=1492,19
+Size=428,468
+Collapsed=0
+DockId=0x00000003,2
+
+[Window][Outputs]
+Pos=1734,489
+Size=186,397
+Collapsed=0
+DockId=0x00000008,0
+
+[Window][Inputs]
+Pos=1492,489
+Size=240,397
+Collapsed=0
+DockId=0x00000007,0
+
+[Window][Net0]
+Pos=0,19
+Size=1525,821
+Collapsed=0
+DockId=0x00000072,0
+
+[Window][Net1]
+Pos=368,19
+Size=623,867
+Collapsed=0
+DockId=0x00000071,0
+
+[Window][Net2]
+Pos=993,19
+Size=497,867
+Collapsed=0
+DockId=0x00000072,0
+
+[Window][Choose the file to save##SaveDocDlgKey]
+Pos=599,442
+Size=649,315
+Collapsed=0
+
+[Window][Unsaved Changes]
+Pos=705,479
+Size=392,93
+Collapsed=0
+
+[Window][Theme selector]
+Pos=829,464
+Size=262,77
+Collapsed=0
+
+[Window][Choose the Petri file to load##LoadFileDlgKey]
+Pos=156,239
+Size=730,334
+Collapsed=0
+
+[Window][Choose the Petri file to save before quitting##ExportDlgKey]
+Pos=61,60
+Size=573,402
+Collapsed=0
+
+[Window][Step Forcing]
+Pos=1492,19
+Size=428,468
+Collapsed=0
+DockId=0x00000003,3
+
+[Window][Choose the Petri file to export##ExportDlgKey]
+Pos=507,286
+Size=666,391
+Collapsed=0
+
+[Window][The selected file already exists!##Choose the Petri file to save before quittingExportDlgKeyOverWriteDialog]
+Pos=235,235
+Size=224,71
+Collapsed=0
+
+[Window][Choose the Petri file to load##ImportDlgKey]
+Pos=110,116
+Size=634,371
 Collapsed=0
 
 [Table][0x90C2C115,4]
@@ -5153,10 +6463,315 @@ Column 0  Sort=0v
 RefScale=13
 Column 0  Sort=0v
 
-[Docking][Data]
-DockSpace     ID=0x7C6B3D9B Window=0xA87D555D Pos=0,19 Size=1100,749 Split=X
-  DockNode    ID=0x00000004 Parent=0x7C6B3D9B SizeRef=798,762 Split=Y
-    DockNode  ID=0x00000002 Parent=0x00000004 SizeRef=1102,662 CentralNode=1 Selected=0x249E7C8C
-    DockNode  ID=0x00000003 Parent=0x00000004 SizeRef=1102,98 Selected=0x6B041B99
-  DockNode    ID=0x00000001 Parent=0x7C6B3D9B SizeRef=302,762 Selected=0xBB186BEF
+[Table][0xE6F6FB69,4]
+RefScale=13
+Column 0  Sort=0v
 
+[Table][0x025D08EB,4]
+RefScale=13
+Column 0  Sort=0v
+
+[Table][0xE720F91C,4]
+RefScale=13
+Column 0  Sort=0v
+
+[Table][0xD2B24DF9,4]
+RefScale=13
+Column 0  Sort=0v
+
+[Table][0xD4C0647B,4]
+RefScale=13
+Column 0  Sort=0v
+
+[Table][0x19260BEB,4]
+RefScale=13
+Column 0  Sort=0v
+
+[Table][0x26837E24,4]
+RefScale=13
+Column 0  Sort=0v
+
+[Table][0x5CDF2C93,4]
+RefScale=13
+Column 0  Sort=0v
+
+[Table][0x0CCB987C,4]
+RefScale=13
+Column 0  Sort=0v
+
+[Table][0x0F4917EB,4]
+RefScale=13
+Column 0  Sort=0v
+
+[Table][0x25660DEA,4]
+RefScale=13
+Column 0  Sort=0v
+
+[Table][0xEE7A187F,4]
+RefScale=13
+Column 0  Sort=0v
+
+[Table][0xBE07C982,4]
+RefScale=13
+Column 0  Sort=0v
+
+[Table][0x751BDC17,4]
+RefScale=13
+Column 0  Sort=0v
+
+[Table][0x2A1D2165,4]
+RefScale=13
+Column 0  Sort=0v
+
+[Table][0xA8872F01,4]
+RefScale=13
+Column 0  Sort=0v
+
+[Table][0x134705F3,4]
+RefScale=13
+Column 0  Sort=0v
+
+[Table][0x0740B361,4]
+RefScale=13
+Column 0  Sort=0v
+
+[Table][0x24247972,4]
+RefScale=13
+Column 0  Sort=0v
+
+[Table][0x0CAFDBDC,4]
+RefScale=13
+Column 0  Sort=0v
+
+[Table][0x373B86CE,4]
+RefScale=13
+Column 0  Sort=0v
+
+[Table][0xAA8C9EF6,4]
+RefScale=13
+Column 0  Sort=0v
+
+[Table][0x6E72A9B9,4]
+RefScale=13
+Column 0  Sort=0v
+
+[Table][0xEF3B3257,4]
+RefScale=13
+Column 0  Sort=0v
+
+[Table][0x606E39C6,4]
+RefScale=13
+Column 0  Sort=0v
+
+[Table][0x099C2FC4,4]
+RefScale=13
+Column 0  Sort=0v
+
+[Table][0x86C92455,4]
+RefScale=13
+Column 0  Sort=0v
+
+[Table][0x8BDBC5DD,4]
+RefScale=13
+Column 0  Sort=0v
+
+[Table][0x298A7021,4]
+RefScale=13
+Column 0  Sort=0v
+
+[Table][0xA6DF7BB0,4]
+RefScale=13
+Column 0  Sort=0v
+
+[Table][0x77DB0363,4]
+RefScale=13
+Column 0  Sort=0v
+
+[Table][0x2CE901CD,4]
+RefScale=13
+Column 0  Sort=0v
+
+[Table][0x3CD95940,4]
+RefScale=13
+Column 0  Sort=0v
+
+[Table][0x5FF81639,4]
+RefScale=13
+Column 0  Sort=0v
+
+[Table][0xB3E17F29,4]
+RefScale=13
+Column 0  Sort=0v
+
+[Table][0x601542CE,4]
+RefScale=13
+Column 0  Sort=0v
+
+[Table][0xC5645D24,4]
+RefScale=13
+Column 0  Sort=0v
+
+[Table][0xE85BDFE4,4]
+RefScale=13
+Column 0  Sort=0v
+
+[Table][0xA7C8912C,4]
+RefScale=13
+Column 0  Sort=0v
+
+[Table][0x2411140E,4]
+RefScale=13
+Column 0  Sort=0v
+
+[Table][0x951A6524,4]
+RefScale=13
+Column 0  Sort=0v
+
+[Table][0x2762A113,4]
+RefScale=13
+Column 0  Sort=0v
+
+[Table][0x06175160,4]
+RefScale=13
+Column 0  Sort=0v
+
+[Table][0x5D8FBD56,4]
+RefScale=13
+Column 0  Sort=0v
+
+[Table][0x54B1B01A,4]
+RefScale=13
+Column 0  Sort=0v
+
+[Table][0xBB6366C6,4]
+RefScale=13
+Column 0  Sort=0v
+
+[Table][0xE308F7D6,4]
+RefScale=13
+Column 0  Sort=0v
+
+[Table][0xBB04281A,4]
+RefScale=13
+Column 0  Sort=0v
+
+[Table][0xCBCBF068,4]
+RefScale=13
+Column 0  Sort=0v
+
+[Docking][Data]
+DockSpace                                                                                                             ID=0x08BD597D Window=0x1BBC0F80 Pos=0,19 Size=1920,987 Split=Y
+  DockNode                                                                                                            ID=0x00000005 Parent=0x08BD597D SizeRef=1100,867 Split=X
+    DockNode                                                                                                          ID=0x00000002 Parent=0x00000005 SizeRef=1525,749 Split=X Selected=0xACD08B34
+      DockNode                                                                                                        ID=0x0000000B Parent=0x00000002 SizeRef=651,768 Selected=0x68006E5B
+      DockNode                                                                                                        ID=0x0000000C Parent=0x00000002 SizeRef=525,768 Split=X Selected=0x501101F7
+        DockNode                                                                                                      ID=0x00000009 Parent=0x0000000C SizeRef=366,768 Selected=0x501101F7
+        DockNode                                                                                                      ID=0x0000000A Parent=0x0000000C SizeRef=732,768 Split=X
+          DockNode                                                                                                    ID=0x0000000D Parent=0x0000000A SizeRef=676,768 Selected=0x68006E5B
+          DockNode                                                                                                    ID=0x0000000E Parent=0x0000000A SizeRef=541,768 Split=X Selected=0x2033DEAF
+            DockNode                                                                                                  ID=0x00000011 Parent=0x0000000E SizeRef=365,768 Selected=0x68006E5B
+            DockNode                                                                                                  ID=0x00000012 Parent=0x0000000E SizeRef=365,768 Split=X Selected=0x501101F7
+              DockNode                                                                                                ID=0x0000000F Parent=0x00000012 SizeRef=366,768 Selected=0x501101F7
+              DockNode                                                                                                ID=0x00000010 Parent=0x00000012 SizeRef=732,768 Split=X
+                DockNode                                                                                              ID=0x00000013 Parent=0x00000010 SizeRef=365,768 Selected=0x68006E5B
+                DockNode                                                                                              ID=0x00000014 Parent=0x00000010 SizeRef=365,768 Split=X Selected=0x2033DEAF
+                  DockNode                                                                                            ID=0x00000015 Parent=0x00000014 SizeRef=366,768 Selected=0x501101F7
+                  DockNode                                                                                            ID=0x00000016 Parent=0x00000014 SizeRef=446,768 Split=X
+                    DockNode                                                                                          ID=0x00000017 Parent=0x00000016 SizeRef=619,768 Selected=0x68006E5B
+                    DockNode                                                                                          ID=0x00000018 Parent=0x00000016 SizeRef=645,768 Split=X Selected=0x2033DEAF
+                      DockNode                                                                                        ID=0x00000019 Parent=0x00000018 SizeRef=366,768 Selected=0x501101F7
+                      DockNode                                                                                        ID=0x0000001A Parent=0x00000018 SizeRef=732,768 Split=X
+                        DockNode                                                                                      ID=0x0000001B Parent=0x0000001A SizeRef=655,768 Selected=0x68006E5B
+                        DockNode                                                                                      ID=0x0000001C Parent=0x0000001A SizeRef=609,768 Split=X Selected=0x2033DEAF
+                          DockNode                                                                                    ID=0x0000001F Parent=0x0000001C SizeRef=365,768 Selected=0x68006E5B
+                          DockNode                                                                                    ID=0x00000020 Parent=0x0000001C SizeRef=365,768 Split=X Selected=0x501101F7
+                            DockNode                                                                                  ID=0x0000001D Parent=0x00000020 SizeRef=430,768 Selected=0x501101F7
+                            DockNode                                                                                  ID=0x0000001E Parent=0x00000020 SizeRef=1058,768 Split=X
+                              DockNode                                                                                ID=0x00000021 Parent=0x0000001E SizeRef=569,768 Selected=0x68006E5B
+                              DockNode                                                                                ID=0x00000022 Parent=0x0000001E SizeRef=487,768 Split=X Selected=0x2033DEAF
+                                DockNode                                                                              ID=0x00000023 Parent=0x00000022 SizeRef=366,768 Selected=0x501101F7
+                                DockNode                                                                              ID=0x00000024 Parent=0x00000022 SizeRef=732,768 Split=X
+                                  DockNode                                                                            ID=0x00000025 Parent=0x00000024 SizeRef=543,768 Selected=0x68006E5B
+                                  DockNode                                                                            ID=0x00000026 Parent=0x00000024 SizeRef=577,768 Split=X Selected=0x2033DEAF
+                                    DockNode                                                                          ID=0x00000027 Parent=0x00000026 SizeRef=366,768 Selected=0x501101F7
+                                    DockNode                                                                          ID=0x00000028 Parent=0x00000026 SizeRef=732,768 Split=X
+                                      DockNode                                                                        ID=0x00000029 Parent=0x00000028 SizeRef=754,768 Selected=0x68006E5B
+                                      DockNode                                                                        ID=0x0000002A Parent=0x00000028 SizeRef=366,768 Split=X Selected=0x2033DEAF
+                                        DockNode                                                                      ID=0x0000002D Parent=0x0000002A SizeRef=671,768 Selected=0x68006E5B
+                                        DockNode                                                                      ID=0x0000002E Parent=0x0000002A SizeRef=398,768 Split=X Selected=0x501101F7
+                                          DockNode                                                                    ID=0x0000002B Parent=0x0000002E SizeRef=366,768 Selected=0x501101F7
+                                          DockNode                                                                    ID=0x0000002C Parent=0x0000002E SizeRef=732,768 Split=X
+                                            DockNode                                                                  ID=0x0000002F Parent=0x0000002C SizeRef=569,768 Selected=0x68006E5B
+                                            DockNode                                                                  ID=0x00000030 Parent=0x0000002C SizeRef=551,768 Split=X Selected=0x2033DEAF
+                                              DockNode                                                                ID=0x00000031 Parent=0x00000030 SizeRef=366,768 Selected=0x501101F7
+                                              DockNode                                                                ID=0x00000032 Parent=0x00000030 SizeRef=732,768 Split=X
+                                                DockNode                                                              ID=0x00000033 Parent=0x00000032 SizeRef=365,768 Selected=0x68006E5B
+                                                DockNode                                                              ID=0x00000034 Parent=0x00000032 SizeRef=365,768 Split=X Selected=0x2033DEAF
+                                                  DockNode                                                            ID=0x00000035 Parent=0x00000034 SizeRef=416,768 Selected=0x501101F7
+                                                  DockNode                                                            ID=0x00000036 Parent=0x00000034 SizeRef=1072,768 Split=X
+                                                    DockNode                                                          ID=0x00000037 Parent=0x00000036 SizeRef=623,768 Selected=0x68006E5B
+                                                    DockNode                                                          ID=0x00000038 Parent=0x00000036 SizeRef=447,768 Split=X Selected=0x2033DEAF
+                                                      DockNode                                                        ID=0x00000039 Parent=0x00000038 SizeRef=381,768 Selected=0x501101F7
+                                                      DockNode                                                        ID=0x0000003A Parent=0x00000038 SizeRef=1107,768 Split=X
+                                                        DockNode                                                      ID=0x0000003B Parent=0x0000003A SizeRef=575,768 Selected=0x68006E5B
+                                                        DockNode                                                      ID=0x0000003C Parent=0x0000003A SizeRef=530,768 Split=X Selected=0x2033DEAF
+                                                          DockNode                                                    ID=0x0000003D Parent=0x0000003C SizeRef=366,768 Selected=0x501101F7
+                                                          DockNode                                                    ID=0x0000003E Parent=0x0000003C SizeRef=732,768 Split=X
+                                                            DockNode                                                  ID=0x0000003F Parent=0x0000003E SizeRef=365,768 Selected=0x68006E5B
+                                                            DockNode                                                  ID=0x00000040 Parent=0x0000003E SizeRef=365,768 Split=X Selected=0x2033DEAF
+                                                              DockNode                                                ID=0x00000041 Parent=0x00000040 SizeRef=366,768 Selected=0x501101F7
+                                                              DockNode                                                ID=0x00000042 Parent=0x00000040 SizeRef=732,768 Split=X
+                                                                DockNode                                              ID=0x00000043 Parent=0x00000042 SizeRef=365,768 Selected=0x68006E5B
+                                                                DockNode                                              ID=0x00000044 Parent=0x00000042 SizeRef=365,768 Split=X Selected=0x2033DEAF
+                                                                  DockNode                                            ID=0x00000045 Parent=0x00000044 SizeRef=366,768 Selected=0x501101F7
+                                                                  DockNode                                            ID=0x00000046 Parent=0x00000044 SizeRef=732,768 Split=X
+                                                                    DockNode                                          ID=0x00000047 Parent=0x00000046 SizeRef=557,768 Selected=0x68006E5B
+                                                                    DockNode                                          ID=0x00000048 Parent=0x00000046 SizeRef=563,768 Split=X Selected=0x2033DEAF
+                                                                      DockNode                                        ID=0x00000049 Parent=0x00000048 SizeRef=366,768 Selected=0x501101F7
+                                                                      DockNode                                        ID=0x0000004A Parent=0x00000048 SizeRef=732,768 Split=X
+                                                                        DockNode                                      ID=0x0000004B Parent=0x0000004A SizeRef=674,768 Selected=0x68006E5B
+                                                                        DockNode                                      ID=0x0000004C Parent=0x0000004A SizeRef=446,768 Split=X Selected=0x2033DEAF
+                                                                          DockNode                                    ID=0x0000004F Parent=0x0000004C SizeRef=536,768 Selected=0x68006E5B
+                                                                          DockNode                                    ID=0x00000050 Parent=0x0000004C SizeRef=571,768 Split=X Selected=0x501101F7
+                                                                            DockNode                                  ID=0x00000051 Parent=0x00000050 SizeRef=530,768 Selected=0x68006E5B
+                                                                            DockNode                                  ID=0x00000052 Parent=0x00000050 SizeRef=410,768 Split=X Selected=0x501101F7
+                                                                              DockNode                                ID=0x00000053 Parent=0x00000052 SizeRef=238,768 Selected=0x68006E5B
+                                                                              DockNode                                ID=0x00000054 Parent=0x00000052 SizeRef=755,768 Split=X Selected=0x501101F7
+                                                                                DockNode                              ID=0x0000004D Parent=0x00000054 SizeRef=366,768 Selected=0x501101F7
+                                                                                DockNode                              ID=0x0000004E Parent=0x00000054 SizeRef=732,768 Split=X
+                                                                                  DockNode                            ID=0x00000055 Parent=0x0000004E SizeRef=766,768 Selected=0x68006E5B
+                                                                                  DockNode                            ID=0x00000056 Parent=0x0000004E SizeRef=354,768 Split=X Selected=0x2033DEAF
+                                                                                    DockNode                          ID=0x00000057 Parent=0x00000056 SizeRef=487,768 Selected=0x501101F7
+                                                                                    DockNode                          ID=0x00000058 Parent=0x00000056 SizeRef=1001,768 Split=X
+                                                                                      DockNode                        ID=0x00000059 Parent=0x00000058 SizeRef=526,768 Selected=0x68006E5B
+                                                                                      DockNode                        ID=0x0000005A Parent=0x00000058 SizeRef=473,768 Split=X Selected=0x2033DEAF
+                                                                                        DockNode                      ID=0x0000005B Parent=0x0000005A SizeRef=366,768 Selected=0x501101F7
+                                                                                        DockNode                      ID=0x0000005C Parent=0x0000005A SizeRef=732,768 Split=X
+                                                                                          DockNode                    ID=0x0000005D Parent=0x0000005C SizeRef=365,768 Selected=0x68006E5B
+                                                                                          DockNode                    ID=0x0000005E Parent=0x0000005C SizeRef=365,768 Split=X Selected=0x2033DEAF
+                                                                                            DockNode                  ID=0x0000005F Parent=0x0000005E SizeRef=366,768 Selected=0x501101F7
+                                                                                            DockNode                  ID=0x00000060 Parent=0x0000005E SizeRef=732,768 Split=X
+                                                                                              DockNode                ID=0x00000061 Parent=0x00000060 SizeRef=676,768 Selected=0x68006E5B
+                                                                                              DockNode                ID=0x00000062 Parent=0x00000060 SizeRef=444,768 Split=X Selected=0x2033DEAF
+                                                                                                DockNode              ID=0x00000063 Parent=0x00000062 SizeRef=366,768 Selected=0x501101F7
+                                                                                                DockNode              ID=0x00000064 Parent=0x00000062 SizeRef=732,768 Split=X
+                                                                                                  DockNode            ID=0x00000065 Parent=0x00000064 SizeRef=558,768 Selected=0x68006E5B
+                                                                                                  DockNode            ID=0x00000066 Parent=0x00000064 SizeRef=562,768 Split=X Selected=0x2033DEAF
+                                                                                                    DockNode          ID=0x00000067 Parent=0x00000066 SizeRef=366,768 Selected=0x501101F7
+                                                                                                    DockNode          ID=0x00000068 Parent=0x00000066 SizeRef=732,768 Split=X
+                                                                                                      DockNode        ID=0x00000069 Parent=0x00000068 SizeRef=547,768 Selected=0x68006E5B
+                                                                                                      DockNode        ID=0x0000006A Parent=0x00000068 SizeRef=573,768 Split=X Selected=0x2033DEAF
+                                                                                                        DockNode      ID=0x0000006B Parent=0x0000006A SizeRef=361,768 Selected=0x501101F7
+                                                                                                        DockNode      ID=0x0000006C Parent=0x0000006A SizeRef=1127,768 Split=X
+                                                                                                          DockNode    ID=0x0000006D Parent=0x0000006C SizeRef=618,768 Selected=0x68006E5B
+                                                                                                          DockNode    ID=0x0000006E Parent=0x0000006C SizeRef=507,768 Split=X Selected=0x2033DEAF
+                                                                                                            DockNode  ID=0x00000071 Parent=0x0000006E SizeRef=623,768 Selected=0x68006E5B
+                                                                                                            DockNode  ID=0x00000072 Parent=0x0000006E SizeRef=497,768 CentralNode=1 Selected=0x501101F7
+    DockNode                                                                                                          ID=0x00000001 Parent=0x00000005 SizeRef=393,749 Split=Y Selected=0x142E3D6D
+      DockNode                                                                                                        ID=0x00000003 Parent=0x00000001 SizeRef=302,468 Selected=0xCB595B90
+      DockNode                                                                                                        ID=0x00000004 Parent=0x00000001 SizeRef=302,397 Split=X Selected=0x0E1F77DA
+        DockNode                                                                                                      ID=0x00000007 Parent=0x00000004 SizeRef=240,322 Selected=0xA48EA2F1
+        DockNode                                                                                                      ID=0x00000008 Parent=0x00000004 SizeRef=186,322 Selected=0x0E1F77DA
+  DockNode                                                                                                            ID=0x00000006 Parent=0x08BD597D SizeRef=1100,164 Selected=0xEA83D666
+
+1
