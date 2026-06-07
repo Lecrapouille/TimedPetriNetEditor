@@ -419,6 +419,13 @@ void Editor::menuGraphEvents()
         m_states.do_adjency = true;
     }
 
+    ImGui::Separator();
+
+    if (ImGui::MenuItem("Real-time Output Plot", nullptr, m_states.show_simulation_plot))
+    {
+        m_states.show_simulation_plot = !m_states.show_simulation_plot;
+    }
+
     ImGui::EndMenu();
 }
 
@@ -479,6 +486,7 @@ void Editor::handleMenuActions()
     if (m_states.do_adjency) { showAdjacencyMatrices(); }
     if (m_states.do_counter_or_dater) { showCounterOrDaterEquation(); }
     if (m_states.do_syslin) { showDynamicLinearSystem(); }
+    if (m_states.show_simulation_plot) { showSimulationPlot(); }
     if (m_states.do_find_critical_circuit) { showCriticalCircuit(); }
 
     // Quit request handling

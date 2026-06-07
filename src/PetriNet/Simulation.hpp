@@ -161,6 +161,35 @@ public:
     //--------------------------------------------------------------------------
     bool validateReceptivities();
 
+    //--------------------------------------------------------------------------
+    //! \brief Current simulation time, accumulated since start().
+    //--------------------------------------------------------------------------
+    inline float simulationTime() const { return m_sim_time; }
+
+    //--------------------------------------------------------------------------
+    //! \brief Firing dates of a transition since start(). y[k] is the time at
+    //! which the transition fired for the (k+1)-th time, analogous to the
+    //! flowshop_simu outputs y(k) of ScicosLab/MaxPlus.jl.
+    //--------------------------------------------------------------------------
+    inline std::vector<float> const& firingDates(size_t transition_id) const
+    {
+        static std::vector<float> const empty;
+        return transition_id < m_firing_dates.size()
+            ? m_firing_dates[transition_id] : empty;
+    }
+
+    //--------------------------------------------------------------------------
+    //! \brief Total number of recorded firings across all transitions.
+    //--------------------------------------------------------------------------
+    size_t totalFirings() const;
+
+    //--------------------------------------------------------------------------
+    //! \brief (max,+) eigenvalue (cycle time λ) of the Timed Event Graph,
+    //! cached once at simulation start. Returns 0 if not a TEG or if the
+    //! Howard algorithm failed.
+    //--------------------------------------------------------------------------
+    inline double eigenvalue() const { return m_eigenvalue; }
+
     //! \brief Signal emitted when simulation starts successfully.
     Signal<> onStarted;
     //! \brief Signal emitted when simulation stops.
@@ -258,6 +287,14 @@ private:
     TimedTokens m_timed_tokens;
     //! \brief Initial marking stored at simulation start.
     std::vector<size_t> m_initial_tokens;
+    //! \brief Accumulated simulation time since start().
+    float m_sim_time = 0.0f;
+    //! \brief Firing dates per transition (indexed by Transition::id).
+    //! Only filled when the net is a Timed Event Graph.
+    std::vector<std::vector<float>> m_firing_dates;
+    //! \brief (max,+) cycle time λ, computed once at simulation start when
+    //! the net is a Timed Event Graph. Zero otherwise.
+    double m_eigenvalue = 0.0;
     //! \brief Compiled GRAFCET receptivities (boolean expressions).
     Receptivities m_receptivities;
     //! \brief True if there are receptivity parsing errors.

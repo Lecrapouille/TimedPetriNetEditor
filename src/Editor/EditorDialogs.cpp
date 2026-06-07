@@ -24,9 +24,12 @@
 #include "PetriNet/Algorithms.hpp"
 #include "PetriNet/SparseMatrix.hpp"
 #include "imgui/imgui.h"
+#include "implot/implot.h"
+#include <algorithm>
 #include <iomanip>
 #include <set>
 #include <sstream>
+#include <vector>
 
 namespace tpne {
 
@@ -501,6 +504,131 @@ void Editor::help() const
 
         ImGui::EndPopup();
     }
+}
+
+//------------------------------------------------------------------------------
+void Editor::showSimulationPlot()
+{
+    if (!ImGui::Begin("Real-time output plot", &m_states.show_simulation_plot))
+    {
+        ImGui::End();
+        return;
+    }
+
+    Simulation const& sim = simulation();
+    Net const& current = net();
+    auto const& transitions = current.transitions();
+
+    // Per-transition selection persisted across frames. Reset when the net
+    // topology changes (different number of transitions).
+    static std::vector<bool> selected;
+    static size_t selected_size = 0;
+    static bool subtract_drift = true;
+    static bool only_outputs = true;
+
+    if (selected_size != transitions.size())
+    {
+        selected.assign(transitions.size(), true);
+        selected_size = transitions.size();
+    }
+
+    bool const is_teg = (current.type() == TypeOfNet::TimedEventGraph);
+    double const lambda = sim.eigenvalue();
+
+    ImGui::TextDisabled("t = %.3f s, firings = %zu, transitions = %zu, λ = %.4f",
+                        double(sim.simulationTime()), sim.totalFirings(),
+                        transitions.size(), lambda);
+
+    ImGui::Checkbox("Subtract drift λ·k", &subtract_drift);
+    if (is_teg)
+    {
+        ImGui::SameLine();
+        ImGui::Checkbox("Outputs only (out_*)", &only_outputs);
+        if (ImGui::IsItemHovered())
+        {
+            ImGui::SetTooltip("Show only transitions whose caption starts "
+                              "with \"out_\" (flowshop output convention).");
+        }
+    }
+
+    // Transition selector: scrollable child with checkboxes.
+    if (ImGui::CollapsingHeader("Transitions"))
+    {
+        if (ImGui::SmallButton("All"))
+            std::fill(selected.begin(), selected.end(), true);
+        ImGui::SameLine();
+        if (ImGui::SmallButton("None"))
+            std::fill(selected.begin(), selected.end(), false);
+
+        ImGui::BeginChild("trans_selector", ImVec2(0, 100), true);
+        for (size_t i = 0u; i < transitions.size(); ++i)
+        {
+            bool v = selected[i];
+            std::string const label = transitions[i].key +
+                (transitions[i].caption.empty() ? "" : " (" + transitions[i].caption + ")");
+            if (ImGui::Checkbox(label.c_str(), &v))
+                selected[i] = v;
+        }
+        ImGui::EndChild();
+    }
+
+    ImPlotFlags const plot_flags = ImPlotFlags_NoTitle;
+    if (!ImPlot::BeginPlot("##firing_dates", ImVec2(-1, -1), plot_flags))
+    {
+        ImGui::End();
+        return;
+    }
+
+    ImPlot::SetupAxes("k (firing index)",
+                      subtract_drift ? "y(k) - λ·k [time units]"
+                                     : "y(k) [time units]",
+                      ImPlotAxisFlags_AutoFit, ImPlotAxisFlags_AutoFit);
+    ImPlot::SetupLegend(ImPlotLocation_NorthWest);
+
+    // Plot one line per selected transition.
+    std::vector<double> xs;
+    std::vector<double> ys;
+    for (size_t i = 0u; i < transitions.size(); ++i)
+    {
+        if (!selected[i])
+            continue;
+        if (only_outputs && is_teg)
+        {
+            // In a flowshop TEG every transition has both incoming and
+            // outgoing arcs (because of the controller feedback loops), so
+            // Transition::isOutput() is never true. Instead the importer
+            // names the system outputs "out_<piece|machine>".
+            std::string const& name = transitions[i].caption.empty()
+                ? transitions[i].key : transitions[i].caption;
+            if (name.rfind("out_", 0) != 0)
+                continue;
+        }
+
+        auto const& dates = sim.firingDates(transitions[i].id);
+        if (dates.empty())
+            continue;
+
+        xs.clear();
+        ys.clear();
+        xs.reserve(dates.size());
+        ys.reserve(dates.size());
+        for (size_t k = 0u; k < dates.size(); ++k)
+        {
+            xs.push_back(double(k + 1u));
+            double y = double(dates[k]);
+            if (subtract_drift)
+                y -= lambda * double(k + 1u);
+            ys.push_back(y);
+        }
+        std::string const label = transitions[i].caption.empty()
+            ? transitions[i].key
+            : transitions[i].caption;
+        ImPlot::PlotLine(label.c_str(), xs.data(), ys.data(),
+                         int(xs.size()));
+    }
+
+    ImPlot::EndPlot();
+    ImGui::End();
 }
 
 } // namespace tpne

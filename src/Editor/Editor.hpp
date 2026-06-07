@@ -123,6 +123,7 @@ private: // Show results from Petri algorithms
     void showDynamicLinearSystem() const;
     void showCounterOrDaterEquation() const;
     void showAdjacencyMatrices() const;
+    void showSimulationPlot();
 
 private: // Document management
 
@@ -242,6 +243,8 @@ private:
         bool do_find_critical_circuit = false;
         bool do_syslin = false;
         bool do_adjency = false;
+        //! \brief Real-time simulation plot (firing dates per transition).
+        bool show_simulation_plot = false;
 
         //! \brief File operation dialog state (mutually exclusive)
         FileDialog file_dialog = FileDialog::None;
