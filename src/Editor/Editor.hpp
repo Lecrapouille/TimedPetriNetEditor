@@ -106,7 +106,7 @@ private: // Widgets
 
 private: // Show results from Petri algorithms
 
-    void showCriticalCycles();// const;
+    void showCriticalCircuit();// const;
     void showDynamicLinearSystem() const;
     void showCounterOrDaterEquation() const;
     void showAdjacencyMatrices() const;
@@ -226,7 +226,7 @@ private:
 
         //! \brief Algorithm analysis dialogs
         bool do_counter_or_dater = false;
-        bool do_find_critical_cycle = false;
+        bool do_find_critical_circuit = false;
         bool do_syslin = false;
         bool do_adjency = false;
 
