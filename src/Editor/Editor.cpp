@@ -568,7 +568,10 @@ bool Editor::switchOfNet(TypeOfNet const type)
     std::vector<Arc*> arcs;
     std::string error_msg;
     if (convertTo(net(), type, error_msg, arcs))
+    {
+        simulation().validateReceptivities();
         return true;
+    }
 
     m_messages.setError(error_msg);
     return false;

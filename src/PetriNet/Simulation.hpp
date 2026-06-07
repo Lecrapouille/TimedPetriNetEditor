@@ -153,7 +153,7 @@ public:
     //--------------------------------------------------------------------------
     //! \brief Check if there are any receptivity parsing errors (GRAFCET).
     //--------------------------------------------------------------------------
-    inline bool hasReceptivityErrors() const { return m_has_receptivity_errors; }
+    bool hasReceptivityErrors() const;
 
     //--------------------------------------------------------------------------
     //! \brief Validate receptivities without starting simulation.
