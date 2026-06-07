@@ -2,12 +2,10 @@ ZeroMQ:
 - Encore non testé
 
 Editeur;
-- Colorier en rouge la grille des GRAFCET qui ont une erreur
 - Centrage du graphe dans la fenetre KO
 
 Timed event graph:
 - Gros bug de selection d'arcs car il n'y a plus les Places affichées.
-- Creer un arc vide en mode timed event graph: segfault
 
 GRAFCET:
 - placer les 3 GRAFCET dans un dictionnaire afin de trouver facilement les references.

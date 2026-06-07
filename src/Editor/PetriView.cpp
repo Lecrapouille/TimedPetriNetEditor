@@ -634,17 +634,11 @@ void PetriView::handleArcDestination()
 
     if (m_current_net->type() == TypeOfNet::TimedEventGraph)
     {
-        // In TimedEventGraph mode we only create transitions
+        // Timed event graph: arcs link transitions (implicit place inserted by addArc).
         if (m_mouse.from == nullptr)
-        {
-            assert(m_mouse.to != nullptr);
             m_mouse.from = &m_editor.addTransition(m_mouse.clicked_at.x, m_mouse.clicked_at.y);
-        }
         if (m_mouse.to == nullptr)
-        {
-            assert(m_mouse.from != nullptr);
             m_mouse.to = &m_editor.addTransition(m_mouse.position.x, m_mouse.position.y);
-        }
     }
     else
     {
@@ -654,18 +648,19 @@ void PetriView::handleArcDestination()
 
         if (m_mouse.from == nullptr)
         {
-            assert(m_mouse.to != nullptr);
             m_mouse.from = &m_editor.addOppositeNode(m_mouse.to->type, m_mouse.clicked_at.x, m_mouse.clicked_at.y);
         }
         else if (m_mouse.to == nullptr)
         {
-            assert(m_mouse.from != nullptr);
             m_mouse.to = &m_editor.addOppositeNode(m_mouse.from->type, m_mouse.position.x, m_mouse.position.y);
         }
     }
 
-    assert(m_mouse.from != nullptr);
-    assert(m_mouse.to != nullptr);
+    if ((m_mouse.from == nullptr) || (m_mouse.to == nullptr))
+    {
+        m_mouse.from = m_mouse.to = nullptr;
+        return;
+    }
 
     // The case where two nodes have the same type is managed by addArc
     float duration = 1.0f;
