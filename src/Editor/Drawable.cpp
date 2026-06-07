@@ -23,11 +23,68 @@
 #include "implot/implot.h"
 
 #include <iomanip> // std::setprecision
+#include <sstream>
 
 namespace tpne {
 
 namespace {
 constexpr float kPi = 3.14159265358979323846f;
+
+//------------------------------------------------------------------------------
+static ImVec2 lerpPoint(ImVec2 const& a, ImVec2 const& b, float const t)
+{
+    return ImVec2(a.x + (b.x - a.x) * t, a.y + (b.y - a.y) * t);
+}
+
+//------------------------------------------------------------------------------
+//! \brief Unit normal pointing to the left of the arc (screen coordinates).
+//------------------------------------------------------------------------------
+static ImVec2 arcNormal(ImVec2 const& from, ImVec2 const& to)
+{
+    float const dx = to.x - from.x;
+    float const dy = to.y - from.y;
+    float const len = std::sqrt(dx * dx + dy * dy);
+    if (len < 0.001f)
+        return ImVec2(0.0f, -1.0f);
+    return ImVec2(-dy / len, dx / len);
+}
+
+//------------------------------------------------------------------------------
+static void drawCenteredText(ImDrawList* draw_list, ImVec2 const& center,
+                             ImU32 const color, std::string const& text)
+{
+    ImVec2 const dim = ImGui::CalcTextSize(text.c_str());
+    draw_list->AddText(ImVec2(center.x - dim.x * 0.5f, center.y - dim.y * 0.5f),
+                       color, text.c_str());
+}
+
+//------------------------------------------------------------------------------
+//! \brief Token marker near arc start; duration label centered on the arc.
+//------------------------------------------------------------------------------
+static void drawTegArcLabels(ImDrawList* draw_list, ImVec2 const& from,
+                             ImVec2 const& to, size_t const tokens,
+                             float const duration, float const zoom)
+{
+    ImVec2 const normal = arcNormal(from, to);
+    float const offset = 11.0f * zoom;
+
+    if (tokens > 0u)
+    {
+        ImVec2 const token_pos = lerpPoint(from, to, 0.16f);
+        drawToken(draw_list, token_pos.x, token_pos.y, zoom);
+        // if (tokens > 1u)
+        {
+            drawCenteredText(draw_list, token_pos - normal * offset,
+                             themeCaptionColor(), std::to_string(tokens));
+        }
+    }
+
+    std::ostringstream stream;
+    stream << std::fixed << std::setprecision(2) << duration;
+    drawCenteredText(draw_list, lerpPoint(from, to, 0.5f) + normal * offset,
+                     themeDurationColor(), stream.str());
+}
+
 } // namespace
 
 //------------------------------------------------------------------------------
@@ -147,17 +204,12 @@ void drawArc(ImDrawList* draw_list, Arc const& arc, TypeOfNet const type,
 
         assert((arc.to.arcsOut.size() == 1u) && "malformed graph event");
         Node const& next = arc.to.arcsOut[0]->to;
-        drawArrow(draw_list,
-                  origin + ImVec2(arc.from.x * zoom, arc.from.y * zoom),
-                  origin + ImVec2(next.x * zoom, next.y * zoom), color, zoom,
-                  thickness);
+        ImVec2 const from(origin.x + arc.from.x * zoom, origin.y + arc.from.y * zoom);
+        ImVec2 const to(origin.x + next.x * zoom, origin.y + next.y * zoom);
+        drawArrow(draw_list, from, to, color, zoom, thickness);
 
-        float x = origin.x + (arc.from.x + (next.x - arc.from.x) / 2.0f) * zoom;
-        float y = origin.y + (arc.from.y + (next.y - arc.from.y) / 2.0f) * zoom;
-        std::stringstream stream;
-        stream << std::fixed << std::setprecision(2) << arc.duration;
-        draw_list->AddText(ImVec2(x, y + 15.0f * zoom), themeDurationColor(), stream.str().c_str());
-        drawTimedToken(draw_list, reinterpret_cast<Place&>(arc.to).tokens, x, y, zoom);
+        size_t const tokens = reinterpret_cast<Place&>(arc.to).tokens;
+        drawTegArcLabels(draw_list, from, to, tokens, arc.duration, zoom);
     }
     else
     {
@@ -168,11 +220,13 @@ void drawArc(ImDrawList* draw_list, Arc const& arc, TypeOfNet const type,
 
         if ((arc.from.type == Node::Type::Transition) && (type == TypeOfNet::TimedPetriNet))
         {
-            float x = origin.x + (arc.from.x + (arc.to.x - arc.from.x) / 2.0f) * zoom;
-            float y = origin.y + (arc.from.y + (arc.to.y - arc.from.y) / 2.0f - 15.0f) * zoom;
-            std::stringstream stream;
+            ImVec2 const from(origin.x + arc.from.x * zoom, origin.y + arc.from.y * zoom);
+            ImVec2 const to(origin.x + arc.to.x * zoom, origin.y + arc.to.y * zoom);
+            std::ostringstream stream;
             stream << std::fixed << std::setprecision(1) << arc.duration;
-            draw_list->AddText(ImVec2(x, y), themeDurationColor(), stream.str().c_str());
+            drawCenteredText(draw_list,
+                             lerpPoint(from, to, 0.5f) + arcNormal(from, to) * (11.0f * zoom),
+                             themeDurationColor(), stream.str());
         }
     }
 }
