@@ -73,6 +73,22 @@ void PetriView::reshape()
 }
 
 //------------------------------------------------------------------------------
+bool PetriView::screenshotRect(int& x, int& y, int& width, int& height) const
+{
+    if (m_canvas.size.x < 1.0f || m_canvas.size.y < 1.0f)
+        return false;
+
+    ImGuiIO const& io = ImGui::GetIO();
+    ImVec2 const scale = io.DisplayFramebufferScale;
+
+    width = std::max(1, int(m_canvas.size.x * scale.x + 0.5f));
+    height = std::max(1, int(m_canvas.size.y * scale.y + 0.5f));
+    x = std::max(0, int(m_canvas.corners[0].x * scale.x + 0.5f));
+    y = std::max(0, int(m_canvas.corners[0].y * scale.y + 0.5f));
+    return true;
+}
+
+//------------------------------------------------------------------------------
 void PetriView::loadViewState(Document::ViewState const& state)
 {
     m_canvas.scrolling.x = state.scrolling_x;

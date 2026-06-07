@@ -959,7 +959,14 @@ void Editor::setAutoScreenshot(std::string const& path, bool const exit_after)
 //--------------------------------------------------------------------------
 bool Editor::saveScreenshot(std::string const& path)
 {
-    return Application::screenshot(path);
+    int x = 0;
+    int y = 0;
+    int width = 0;
+    int height = 0;
+    if (!m_view.screenshotRect(x, y, width, height))
+        return false;
+
+    return Application::screenshot(path, x, y, width, height);
 }
 
 //--------------------------------------------------------------------------
@@ -967,6 +974,12 @@ void Editor::onFrameEnd()
 {
     if (!m_auto_screenshot_pending || m_auto_screenshot_path.empty())
         return;
+
+    if (m_screenshot_defer_frames > 0)
+    {
+        --m_screenshot_defer_frames;
+        return;
+    }
 
     std::string const path = m_auto_screenshot_path;
     m_last_screenshot_ok = saveScreenshot(path);
@@ -991,6 +1004,7 @@ void Editor::takeScreenshot()
     if (FileDialogHelper::display("ScreenshotDlgKey", [this](std::string const& path)
     {
         setAutoScreenshot(path, false);
+        m_screenshot_defer_frames = 1;
     }))
     {
         m_states.file_dialog = States::FileDialog::None;

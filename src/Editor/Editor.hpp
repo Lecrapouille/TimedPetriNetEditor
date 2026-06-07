@@ -309,6 +309,7 @@ private:
     bool m_auto_screenshot_pending = false;
     bool m_exit_after_screenshot = false;
     bool m_last_screenshot_ok = false;
+    int m_screenshot_defer_frames = 0;
 };
 
 } // namespace tpne

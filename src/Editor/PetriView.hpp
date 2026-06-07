@@ -95,6 +95,13 @@ public:
     inline ImVec2 const& size() const { return m_canvas.size; }
 
     //--------------------------------------------------------------------------
+    //! \brief Framebuffer rectangle of the canvas for screenshots.
+    //! Coordinates use a top-left origin (ImGui screen space, scaled to pixels).
+    //! \return false if the canvas has no valid size.
+    //--------------------------------------------------------------------------
+    bool screenshotRect(int& x, int& y, int& width, int& height) const;
+
+    //--------------------------------------------------------------------------
     //! \brief Load view state from document.
     //! \param[in] state The view state to load.
     //--------------------------------------------------------------------------

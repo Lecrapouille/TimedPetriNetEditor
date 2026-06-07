@@ -53,9 +53,14 @@ public:
     void framerate(size_t const framerate);
 
     //--------------------------------------------------------------------------
-    //! \brief Take a screenshot of the game and save it as PNG to the given path.
+    //! \brief Take a screenshot and save it as PNG to the given path.
+    //! \param[in] x Top-left X in framebuffer pixels (0 = full window).
+    //! \param[in] y Top-left Y in framebuffer pixels (0 = full window).
+    //! \param[in] width Region width; 0 captures the full window.
+    //! \param[in] height Region height; 0 captures the full window.
     //--------------------------------------------------------------------------
-    bool screenshot(std::string const& screenshot_path);
+    bool screenshot(std::string const& screenshot_path, int x = 0, int y = 0,
+                    int width = 0, int height = 0);
 
     //--------------------------------------------------------------------------
     //! \brief Set title.

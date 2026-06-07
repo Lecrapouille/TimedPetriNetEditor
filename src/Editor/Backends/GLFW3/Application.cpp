@@ -169,19 +169,30 @@ void Application::framerate(size_t const framerate)
 }
 
 //------------------------------------------------------------------------------
-bool Application::screenshot(std::string const& path)
+bool Application::screenshot(std::string const& path, int const region_x,
+                             int const region_y, int const region_w,
+                             int const region_h)
 {
     if (path.empty() || m_window == nullptr)
         return false;
 
-    int width = 0;
-    int height = 0;
-    glfwGetFramebufferSize(m_window, &width, &height);
-    if (width <= 0 || height <= 0)
+    int fb_width = 0;
+    int fb_height = 0;
+    glfwGetFramebufferSize(m_window, &fb_width, &fb_height);
+    if (fb_width <= 0 || fb_height <= 0)
+        return false;
+
+    int const width = (region_w > 0) ? region_w : fb_width;
+    int const height = (region_h > 0) ? region_h : fb_height;
+    int const x = (region_w > 0) ? region_x : 0;
+    int const y_top = (region_h > 0) ? region_y : 0;
+    int const y = (region_h > 0) ? (fb_height - y_top - height) : 0;
+
+    if (x < 0 || y < 0 || x + width > fb_width || y + height > fb_height)
         return false;
 
     std::vector<unsigned char> pixels(size_t(width) * size_t(height) * 4u);
-    glReadPixels(0, 0, width, height, GL_RGBA, GL_UNSIGNED_BYTE, pixels.data());
+    glReadPixels(x, y, width, height, GL_RGBA, GL_UNSIGNED_BYTE, pixels.data());
 
     std::vector<unsigned char> flipped(pixels.size());
     size_t const row_bytes = size_t(width) * 4u;

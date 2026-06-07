@@ -173,10 +173,39 @@ void Application::framerate(size_t const framerate)
 //------------------------------------------------------------------------------
 // Siiiiiight! Poor RayLib API. Only manage file name not file path :(
 // TakeScreenshot has been hot patched to use with absolute path.
-bool Application::screenshot(std::string const& path)
+bool Application::screenshot(std::string const& path, int const region_x,
+                             int const region_y, int const region_w,
+                             int const region_h)
 {
-    TakeScreenshot(path.c_str());
-    return FileExists(path.c_str());
+    if (path.empty())
+        return false;
+
+    if (region_w <= 0 || region_h <= 0)
+    {
+        TakeScreenshot(path.c_str());
+        return FileExists(path.c_str());
+    }
+
+    std::string const temp = path + ".tmp.full.png";
+    TakeScreenshot(temp.c_str());
+    if (!FileExists(temp.c_str()))
+        return false;
+
+    Image img = LoadImage(temp.c_str());
+    RemoveFile(temp.c_str());
+    if (img.data == nullptr)
+        return false;
+
+    Image const crop = ImageFromImage(
+        img, (Rectangle){ float(region_x), float(region_y),
+                          float(region_w), float(region_h) });
+    UnloadImage(img);
+    if (crop.data == nullptr)
+        return false;
+
+    bool const ok = ExportImage(crop, path.c_str());
+    UnloadImage(crop);
+    return ok && FileExists(path.c_str());
 }
 
 //------------------------------------------------------------------------------
