@@ -233,7 +233,10 @@ void Simulation::handleSimulatingState(float const dt)
 bool Simulation::compileReceptivities()
 {
     if (m_net.type() != TypeOfNet::GRAFCET)
+    {
+        m_has_receptivity_errors = false;
         return true;
+    }
 
     // Save existing sensor values
     std::map<std::string, int, std::less<>> saved_values;
@@ -291,6 +294,12 @@ bool Simulation::validateReceptivities()
 
     m_has_receptivity_errors = !all_ok;
     return all_ok;
+}
+
+//------------------------------------------------------------------------------
+bool Simulation::hasReceptivityErrors() const
+{
+    return m_net.type() == TypeOfNet::GRAFCET && m_has_receptivity_errors;
 }
 
 //------------------------------------------------------------------------------
