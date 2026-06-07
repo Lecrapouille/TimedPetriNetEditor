@@ -145,6 +145,7 @@ void Application::run()
         ClearBackground(WHITE); // gui->background_color);
 
         ImGui_ImplRaylib_RenderDrawData(ImGui::GetDrawData());
+        onFrameEnd();
         EndDrawing(); // Stop raylib content
     }
 }
