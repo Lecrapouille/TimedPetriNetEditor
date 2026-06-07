@@ -207,9 +207,11 @@ julia> places(pn)
  Place(607.0, 266.0, 0)
 ```
 """
-function petri_editor!(pn::PetriNet; screenshot::Union{Nothing,String}=nothing)
+function petri_editor!(pn::PetriNet; screenshot::Union{Nothing,String}=nothing,
+                       critical_cycle::Bool=false)
     sc = screenshot === nothing ? C_NULL : screenshot
-    ccall((:petri_editor, libtpne), Bool, (Clonglong, Cstring), pn.handle, sc) || throw_error()
+    ccall((:petri_editor, libtpne), Bool, (Clonglong, Cstring, Bool),
+          pn.handle, sc, critical_cycle) || throw_error()
 end
 
 """
@@ -241,9 +243,10 @@ Once presed ESCAPE key, the editor will quit and modifications applied on the du
 while the original net is not modified.
 Throw an exception if the Petri net handle is invalid.
 """
-function petri_editor(pn::PetriNet)
+function petri_editor(pn::PetriNet; critical_cycle::Bool=false)
     pn1 = petri_net(pn)
-    ccall((:petri_editor, libtpne), Bool, (Clonglong, Cstring), pn1.handle, C_NULL) || throw_error()
+    ccall((:petri_editor, libtpne), Bool, (Clonglong, Cstring, Bool),
+          pn1.handle, C_NULL, critical_cycle) || throw_error()
     return pn1
 end
 
