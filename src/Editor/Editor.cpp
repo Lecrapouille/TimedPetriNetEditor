@@ -316,9 +316,17 @@ void Editor::setSavePath(std::string const& filepath)
 }
 
 //------------------------------------------------------------------------------
-void Editor::run(Net const& net_to_load)
+void Editor::run(Net const& net_to_load, bool show_critical_cycle)
 {
     this->net() = net_to_load;
+
+    if (show_critical_cycle)
+    {
+        m_states.do_find_critical_circuit = true;
+        CriticalCycleResult const cc = findCriticalCycle(this->net());
+        if (cc.success)
+            m_marked_arcs = cc.arcs;
+    }
 
     // Start the infinite loop
     Application::run();

@@ -70,7 +70,7 @@ public:
     //! string if you do not want to load a Petri net file.
     //-------------------------------------------------------------------------
     void run(std::string const& petri_file);
-    void run(Net const& net);
+    void run(Net const& net, bool show_critical_cycle = false);
 
     //-------------------------------------------------------------------------
     //! \brief Save a screenshot after the next rendered frame.

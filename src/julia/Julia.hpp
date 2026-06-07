@@ -95,10 +95,13 @@ extern "C" bool petri_is_empty(int64_t const pn, bool* empty);
 //! \param[in] pn: the handle of the petri net created by create_petri_net().
 //! \param[in] screenshot_path: optional PNG path saved after the first frame.
 //! Pass nullptr to skip.
+//! \param[in] show_critical_cycle: if true, highlight the critical cycle and
+//! open the analysis dialog on startup (as in ScicosLab show_cr_graph).
 //! \return false if the handle is invalid or the GUI cannot be started else
 //! return true.
 // ****************************************************************************
-extern "C" bool petri_editor(int64_t const pn, char const* screenshot_path);
+extern "C" bool petri_editor(int64_t const pn, char const* screenshot_path,
+                             bool show_critical_cycle);
 
 // ****************************************************************************
 //! \brief Open the editor, save a PNG screenshot after the first frame, then

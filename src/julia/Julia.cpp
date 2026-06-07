@@ -101,7 +101,8 @@ bool petri_is_empty(int64_t const pn, bool* empty)
 // Equivalent to the main() but separated to allow to export function and create
 // shared library.
 // -----------------------------------------------------------------------------
-bool petri_editor(int64_t const pn, char const* screenshot_path)
+bool petri_editor(int64_t const pn, char const* screenshot_path,
+                  bool show_critical_cycle)
 {
     CHECK_VALID_PETRI_HANDLE(pn, false);
 
@@ -112,7 +113,7 @@ bool petri_editor(int64_t const pn, char const* screenshot_path)
 
     try
     {
-        editor.run(*g_petri_nets[size_t(pn)]);
+        editor.run(*g_petri_nets[size_t(pn)], show_critical_cycle);
         *g_petri_nets[size_t(pn)] = editor.net();
     }
     catch (std::string const& msg)
