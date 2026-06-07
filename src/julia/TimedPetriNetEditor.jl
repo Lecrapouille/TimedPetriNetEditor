@@ -207,8 +207,30 @@ julia> places(pn)
  Place(607.0, 266.0, 0)
 ```
 """
-function petri_editor!(pn::PetriNet)
-    ccall((:petri_editor, libtpne), Bool, (Clonglong,), pn.handle) || throw_error()
+function petri_editor!(pn::PetriNet; screenshot::Union{Nothing,String}=nothing)
+    sc = screenshot === nothing ? C_NULL : screenshot
+    ccall((:petri_editor, libtpne), Bool, (Clonglong, Cstring), pn.handle, sc) || throw_error()
+end
+
+"""
+    petri_screenshot(pn, file)
+
+Open the editor briefly, save a PNG screenshot of the first rendered frame to
+`file`, then close the editor without user interaction.
+Throw an exception if the handle is invalid or the screenshot failed.
+
+# Examples
+```julia-repl
+julia> pn = petri_net("../../data/examples/Simple.json")
+
+julia> petri_screenshot(pn, "/tmp/simple.png")
+true
+```
+"""
+function petri_screenshot(pn::PetriNet, file::String)
+    ccall((:petri_screenshot, libtpne), Bool, (Clonglong, Cstring), pn.handle, file) ||
+        error("Invalid Petri net handle or failed to save screenshot")
+    return true
 end
 
 """
@@ -221,7 +243,7 @@ Throw an exception if the Petri net handle is invalid.
 """
 function petri_editor(pn::PetriNet)
     pn1 = petri_net(pn)
-    ccall((:petri_editor, libtpne), Bool, (Clonglong,), pn1.handle) || throw_error()
+    ccall((:petri_editor, libtpne), Bool, (Clonglong, Cstring), pn1.handle, C_NULL) || throw_error()
     return pn1
 end
 

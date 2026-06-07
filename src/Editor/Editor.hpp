@@ -72,6 +72,17 @@ public:
     void run(std::string const& petri_file);
     void run(Net const& net);
 
+    //-------------------------------------------------------------------------
+    //! \brief Save a screenshot after the next rendered frame.
+    //! \param[in] exit_after if true, close the editor right after the capture.
+    //-------------------------------------------------------------------------
+    void setAutoScreenshot(std::string const& path, bool exit_after = false);
+
+    //-------------------------------------------------------------------------
+    //! \brief Whether the last automatic screenshot succeeded.
+    //-------------------------------------------------------------------------
+    bool lastScreenshotSucceeded() const { return m_last_screenshot_ok; }
+
     // Document management
     Document& activeDocument();
     Document const& activeDocument() const;
@@ -84,6 +95,7 @@ private: // Inheritance from Application class
 
     virtual void onUpdate(float const dt) override;
     virtual void onDraw() override;
+    void onFrameEnd() override;
     void close();
 
 private: // Widgets
@@ -136,6 +148,7 @@ private: // Petri net services
     void toogleStartAllSimulations();
     void updateSimulationFramerate();
     void takeScreenshot();
+    bool saveScreenshot(std::string const& path);
     void clearNet();
     bool hasUnsavedChanges() const;
     void discardUnsavedChanges();
@@ -291,6 +304,11 @@ private:
     mutable States m_states;
     //! \brief Cache the path to save the loaded Petri file.
     std::string m_path_to_save;
+    //! \brief Optional screenshot requested before run() (Julia API, batch export).
+    std::string m_auto_screenshot_path;
+    bool m_auto_screenshot_pending = false;
+    bool m_exit_after_screenshot = false;
+    bool m_last_screenshot_ok = false;
 };
 
 } // namespace tpne

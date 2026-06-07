@@ -101,11 +101,14 @@ bool petri_is_empty(int64_t const pn, bool* empty)
 // Equivalent to the main() but separated to allow to export function and create
 // shared library.
 // -----------------------------------------------------------------------------
-bool petri_editor(int64_t const pn)
+bool petri_editor(int64_t const pn, char const* screenshot_path)
 {
     CHECK_VALID_PETRI_HANDLE(pn, false);
 
     tpne::Editor editor(1024, 768, "Petri Net Editor");
+
+    if (screenshot_path != nullptr && screenshot_path[0] != '\0')
+        editor.setAutoScreenshot(screenshot_path, false);
 
     try
     {
@@ -119,6 +122,33 @@ bool petri_editor(int64_t const pn)
     }
 
     return true;
+}
+
+//------------------------------------------------------------------------------
+bool petri_screenshot(int64_t const pn, char const* filepath)
+{
+    CHECK_VALID_PETRI_HANDLE(pn, false);
+
+    if (filepath == nullptr || filepath[0] == '\0')
+    {
+        std::cerr << "Sanity check: empty screenshot path" << std::endl;
+        return false;
+    }
+
+    tpne::Editor editor(1024, 768, "Petri Net Editor");
+    editor.setAutoScreenshot(filepath, true);
+
+    try
+    {
+        editor.run(*g_petri_nets[size_t(pn)]);
+    }
+    catch (std::string const& msg)
+    {
+        std::cerr << "Fatal: " << msg << std::endl;
+        return false;
+    }
+
+    return editor.lastScreenshotSucceeded();
 }
 
 //------------------------------------------------------------------------------

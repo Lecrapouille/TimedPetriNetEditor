@@ -948,6 +948,41 @@ void Editor::exportNetTo(Exporter const& exporter)
 }
 
 //--------------------------------------------------------------------------
+void Editor::setAutoScreenshot(std::string const& path, bool const exit_after)
+{
+    m_auto_screenshot_path = path;
+    m_auto_screenshot_pending = !path.empty();
+    m_exit_after_screenshot = exit_after;
+    m_last_screenshot_ok = false;
+}
+
+//--------------------------------------------------------------------------
+bool Editor::saveScreenshot(std::string const& path)
+{
+    return Application::screenshot(path);
+}
+
+//--------------------------------------------------------------------------
+void Editor::onFrameEnd()
+{
+    if (!m_auto_screenshot_pending || m_auto_screenshot_path.empty())
+        return;
+
+    std::string const path = m_auto_screenshot_path;
+    m_last_screenshot_ok = saveScreenshot(path);
+    m_auto_screenshot_pending = false;
+    m_auto_screenshot_path.clear();
+
+    if (m_last_screenshot_ok)
+        m_messages.setInfo("Screenshot taken as file '" + path + "'");
+    else
+        m_messages.setError("Failed to save screenshot to file '" + path + "'");
+
+    if (m_exit_after_screenshot)
+        halt();
+}
+
+//--------------------------------------------------------------------------
 void Editor::takeScreenshot()
 {
     FileDialogHelper::openSave("ScreenshotDlgKey",
@@ -955,14 +990,7 @@ void Editor::takeScreenshot()
 
     if (FileDialogHelper::display("ScreenshotDlgKey", [this](std::string const& path)
     {
-        if (Application::screenshot(path))
-        {
-            m_messages.setInfo("Screenshot taken as file '" + path + "'");
-        }
-        else
-        {
-            m_messages.setError("Failed to save screenshot to file '" + path + "'");
-        }
+        setAutoScreenshot(path, false);
     }))
     {
         m_states.file_dialog = States::FileDialog::None;

@@ -20,10 +20,17 @@
 
 #include "Editor/Backends/GLFW3/Application.hpp"
 
+#include <algorithm>
 #include <cstdlib>
+#include <cstring>
 #include <functional>
 #include <iostream>
 #include <stdio.h>
+#include <vector>
+
+#define STB_IMAGE_WRITE_IMPLEMENTATION
+#define STB_IMAGE_WRITE_STATIC
+#include "stb_image_write.h"
 
 //------------------------------------------------------------------------------
 void reloadFonts()
@@ -143,6 +150,8 @@ void Application::run()
             glClear(GL_COLOR_BUFFER_BIT);
             ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 
+            onFrameEnd();
+
             glfwSwapBuffers(m_window);
             m_lastFrameTime = now;
         }
@@ -162,9 +171,29 @@ void Application::framerate(size_t const framerate)
 //------------------------------------------------------------------------------
 bool Application::screenshot(std::string const& path)
 {
-    (void) path;
-    std::cerr << "Application::screenshot: Not implemented yet" << std::endl;
-    return false;
+    if (path.empty() || m_window == nullptr)
+        return false;
+
+    int width = 0;
+    int height = 0;
+    glfwGetFramebufferSize(m_window, &width, &height);
+    if (width <= 0 || height <= 0)
+        return false;
+
+    std::vector<unsigned char> pixels(size_t(width) * size_t(height) * 4u);
+    glReadPixels(0, 0, width, height, GL_RGBA, GL_UNSIGNED_BYTE, pixels.data());
+
+    std::vector<unsigned char> flipped(pixels.size());
+    size_t const row_bytes = size_t(width) * 4u;
+    for (int y = 0; y < height; ++y)
+    {
+        std::memcpy(flipped.data() + size_t(y) * row_bytes,
+                    pixels.data() + size_t(height - 1 - y) * row_bytes,
+                    row_bytes);
+    }
+
+    return stbi_write_png(path.c_str(), width, height, 4, flipped.data(),
+                          int(row_bytes)) != 0;
 }
 
 //------------------------------------------------------------------------------
