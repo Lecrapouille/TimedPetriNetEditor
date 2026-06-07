@@ -8,6 +8,7 @@
 #include "PetriNet/Simulation.hpp"
 #include "PetriNet/PetriNet.hpp"
 #include "PetriNet/Grafcet.hpp"
+#include "PetriNet/Algorithms.hpp"
 
 #include <algorithm>
 #include <cstdlib>
@@ -97,6 +98,19 @@ void Simulation::initializeRuntimeState()
     }
 
     m_frozen = false;
+
+    m_sim_time = 0.0f;
+    m_firing_dates.assign(m_net.transitions().size(), {});
+
+    // Pre-compute the (max,+) eigenvalue (cycle time λ) once for TEGs.
+    // Used by the real-time output plot to subtract the cyclic drift λ·k.
+    m_eigenvalue = 0.0;
+    if (m_net.type() == TypeOfNet::TimedEventGraph)
+    {
+        CriticalCycleResult const cc = findCriticalCycle(m_net);
+        if (cc.success && !cc.durations.empty())
+            m_eigenvalue = cc.durations.front();
+    }
 }
 
 //------------------------------------------------------------------------------
@@ -200,6 +214,15 @@ void Simulation::handleHaltingState()
 }
 
 //------------------------------------------------------------------------------
+size_t Simulation::totalFirings() const
+{
+    size_t n = 0u;
+    for (auto const& dates : m_firing_dates)
+        n += dates.size();
+    return n;
+}
+
+//------------------------------------------------------------------------------
 void Simulation::handleSimulatingState(float const dt)
 {
     if (!m_running)
@@ -217,6 +240,8 @@ void Simulation::handleSimulatingState(float const dt)
         }
         return;
     }
+
+    m_sim_time += dt;
 
     evaluateReceptivities();
     updateTransitionDelayTimers(dt);
@@ -374,6 +399,13 @@ void Simulation::fireTransitions()
             {
                 assert(tokens <= Net::Settings::maxTokens);
                 consuming = tokens;
+
+                if ((m_net.type() == TypeOfNet::TimedEventGraph) &&
+                    (trans->id < m_firing_dates.size()))
+                {
+                    for (size_t k = 0u; k < tokens; ++k)
+                        m_firing_dates[trans->id].push_back(m_sim_time);
+                }
 
                 if (trans->isInput())
                 {
