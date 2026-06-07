@@ -277,7 +277,7 @@ static void buildFlowshopPetriNet(Net& net, FlowshopData const& data)
                 {
                     size_t b = newNode(margin + float(i) * dx - loopX,
                                        margin - dy,
-                                       "np_" + data.pieceNames[i]);
+                                       data.pieceNames[i]);
                     bp[i] = b;
                     edges.push_back({ b, cur, 0.0f, data.np[i] });
                 }
@@ -289,7 +289,7 @@ static void buildFlowshopPetriNet(Net& net, FlowshopData const& data)
                 {
                     size_t b = newNode(margin - dx,
                                        margin + float(j) * dy - loopY,
-                                       "nm_" + data.machineNames[j]);
+                                       data.machineNames[j]);
                     bm[j] = b;
                     edges.push_back({ b, cur, 0.0f, data.nm[j] });
                 }
