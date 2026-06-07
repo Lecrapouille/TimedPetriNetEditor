@@ -24,9 +24,22 @@
 #include "PetriNet/Algorithms.hpp"
 #include "PetriNet/SparseMatrix.hpp"
 #include "imgui/imgui.h"
+#include <iomanip>
+#include <set>
 #include <sstream>
 
 namespace tpne {
+
+namespace {
+
+std::string formatTimeUnits(double const value)
+{
+    std::ostringstream os;
+    os << std::fixed << std::setprecision(2) << value;
+    return os.str();
+}
+
+} // namespace
 
 //------------------------------------------------------------------------------
 void Editor::showStyleSelector()
@@ -228,12 +241,13 @@ void Editor::showDynamicLinearSystem() const
 }
 
 //------------------------------------------------------------------------------
-void Editor::showCriticalCycles()
+void Editor::showCriticalCircuit()
 {
-    ImGui::OpenPopup("Critical Cycle");
+    ImGui::OpenPopup("Critical circuit analysis");
     ImGui::SetNextWindowPos(m_states.viewport_center, ImGuiCond_Appearing,
                             ImVec2(0.5f, 0.5f));
-    if (ImGui::BeginPopupModal("Critical Cycle", NULL, ImGuiWindowFlags_AlwaysAutoResize))
+    if (ImGui::BeginPopupModal("Critical circuit analysis", NULL,
+                               ImGuiWindowFlags_AlwaysAutoResize))
     {
         static CriticalCycleResult cached;
         static bool cached_valid = false;
@@ -250,59 +264,109 @@ void Editor::showCriticalCycles()
         }
         else
         {
-            ImGui::Text("Found %zu connected components of the optimal policy", res.cycles);
+            ImGui::TextWrapped(
+                "Howard policy for this timed event graph. "
+                "Highlighted arcs on the canvas form the critical circuit(s).");
+            ImGui::Spacing();
+            ImGui::Text("Strongly connected components: %zu", res.cycles);
+
+            std::set<double> const lambdas(res.durations.begin(), res.durations.end());
+            if (!lambdas.empty())
+            {
+                if (lambdas.size() == 1u)
+                {
+                    ImGui::Text("Cycle time λ: %s time units.",
+                                formatTimeUnits(*lambdas.begin()).c_str());
+                }
+                else
+                {
+                    std::ostringstream os;
+                    auto it = lambdas.begin();
+                    os << formatTimeUnits(*it++);
+                    for (; it != lambdas.end(); ++it)
+                        os << ", " << formatTimeUnits(*it);
+                    ImGui::Text("Cycle times λ: %s time units.", os.str().c_str());
+                }
+            }
 
             m_marked_arcs = res.arcs;
             ImGuiTabBarFlags tab_bar_flags = ImGuiTabBarFlags_None;
             if (ImGui::BeginTabBar("CriticalCycleResult", tab_bar_flags))
             {
-                if (ImGui::BeginTabItem("Critical cycle"))
+                if (ImGui::BeginTabItem("Circuit arcs"))
                 {
-                    std::stringstream txt;
-                    if (net().type() == TypeOfNet::TimedEventGraph)
+                    ImGuiTableFlags const flags =
+                        ImGuiTableFlags_Borders | ImGuiTableFlags_RowBg |
+                        ImGuiTableFlags_SizingFixedFit;
+                    if (ImGui::BeginTable("CriticalCircuitArcs", 3, flags))
                     {
+                        ImGui::TableSetupColumn("From");
+                        ImGui::TableSetupColumn("Place");
+                        ImGui::TableSetupColumn("To");
+                        ImGui::TableHeadersRow();
                         for (size_t it = 0u; it < res.arcs.size(); it += 2u)
                         {
-                            txt << res.arcs[it]->from.key << " -> "
-                                << res.arcs[it + 1u]->to.key
-                                << std::endl;
+                            ImGui::TableNextRow();
+                            ImGui::TableNextColumn();
+                            ImGui::TextUnformatted(res.arcs[it]->from.key.c_str());
+                            ImGui::TableNextColumn();
+                            ImGui::TextUnformatted(res.arcs[it]->to.key.c_str());
+                            ImGui::TableNextColumn();
+                            ImGui::TextUnformatted(res.arcs[it + 1u]->to.key.c_str());
                         }
+                        ImGui::EndTable();
                     }
-                    else
+                    ImGui::EndTabItem();
+                }
+                if (ImGui::BeginTabItem("Bias"))
+                {
+                    auto const& transitions = net().transitions();
+                    ImGuiTableFlags const flags =
+                        ImGuiTableFlags_Borders | ImGuiTableFlags_RowBg |
+                        ImGuiTableFlags_SizingFixedFit;
+                    if (ImGui::BeginTable("CriticalCircuitBias", 2, flags))
                     {
-                        for (size_t it = 0u; it < res.arcs.size(); it += 2u)
+                        ImGui::TableSetupColumn("Transition");
+                        ImGui::TableSetupColumn("Bias [time units]");
+                        ImGui::TableHeadersRow();
+                        size_t const n = std::min(transitions.size(),
+                                                  res.eigenvector.size());
+                        for (size_t i = 0; i < n; ++i)
                         {
-                            txt << res.arcs[it]->from.key << " -> "
-                                << res.arcs[it]->to.key << " -> "
-                                << res.arcs[it + 1u]->to.key
-                                << std::endl;
+                            ImGui::TableNextRow();
+                            ImGui::TableNextColumn();
+                            ImGui::TextUnformatted(transitions[i].key.c_str());
+                            ImGui::TableNextColumn();
+                            ImGui::TextUnformatted(
+                                formatTimeUnits(res.eigenvector[i]).c_str());
                         }
+                        ImGui::EndTable();
                     }
-                    ImGui::Text("%s", txt.str().c_str());
                     ImGui::EndTabItem();
                 }
-                if (ImGui::BeginTabItem("Cycle durations"))
+                if (ImGui::BeginTabItem("Help"))
                 {
-                    const auto& tr = net().transitions();
-                    std::stringstream txt;
-                    for (size_t i = 0u; i < res.durations.size(); ++i)
-                    {
-                        txt << "From " << tr[i].key << ": "
-                            << res.durations[i]
-                            << " units of time"
-                            << std::endl;
-                    }
-                    ImGui::Text("%s", txt.str().c_str());
-                    ImGui::EndTabItem();
-                }
-                if (ImGui::BeginTabItem("Eigenvector"))
-                {
-                    std::stringstream txt;
-                    for (auto const& it : res.eigenvector)
-                    {
-                        txt << it << std::endl;
-                    }
-                    ImGui::Text("%s", txt.str().c_str());
+                    float const help_wrap = ImGui::GetCursorPos().x + 420.0f;
+                    ImGui::PushTextWrapPos(help_wrap);
+                    ImGui::TextDisabled("Cycle time λ");
+                    ImGui::TextWrapped(
+                        "Max-plus eigenvalue of the timed event graph (same time "
+                        "units as arc durations). Average duration of one turn around "
+                        "a circuit in the optimal (Howard) policy—the bottleneck of "
+                        "the steady periodic regime.");
+                    ImGui::Spacing();
+                    ImGui::TextDisabled("Critical circuit");
+                    ImGui::TextWrapped(
+                        "Arcs of the optimal policy that lie on a cycle and set λ. "
+                        "They are highlighted on the canvas (listed in the "
+                        "Circuit arcs tab).");
+                    ImGui::Spacing();
+                    ImGui::TextDisabled("Bias");
+                    ImGui::TextWrapped(
+                        "Initial time offset of each transition in the optimal "
+                        "policy, in the same time units. Transitions on the same "
+                        "circuit share the same λ but may have different biases.");
+                    ImGui::PopTextWrapPos();
                     ImGui::EndTabItem();
                 }
                 ImGui::EndTabBar();
@@ -313,7 +377,7 @@ void Editor::showCriticalCycles()
         if (ImGui::Button("OK", ImVec2(120, 0)))
         {
             ImGui::CloseCurrentPopup();
-            m_states.do_find_critical_cycle = false;
+            m_states.do_find_critical_circuit = false;
             cached_valid = false;
         }
         ImGui::EndPopup();

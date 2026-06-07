@@ -404,7 +404,7 @@ void Editor::menuGraphEvents()
 
     if (ImGui::MenuItem("Show Critical Circuit", nullptr, false))
     {
-        m_states.do_find_critical_cycle = true;
+        m_states.do_find_critical_circuit = true;
     }
     if (ImGui::MenuItem("Show (max, +) Dynamic Linear System", nullptr, false))
     {
@@ -479,7 +479,7 @@ void Editor::handleMenuActions()
     if (m_states.do_adjency) { showAdjacencyMatrices(); }
     if (m_states.do_counter_or_dater) { showCounterOrDaterEquation(); }
     if (m_states.do_syslin) { showDynamicLinearSystem(); }
-    if (m_states.do_find_critical_cycle) { showCriticalCycles(); }
+    if (m_states.do_find_critical_circuit) { showCriticalCircuit(); }
 
     // Quit request handling
     if (m_states.request_quitting)
