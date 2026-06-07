@@ -133,3 +133,29 @@ TEST(TestPetriNet, TestTimedTokenUpdate)
     ASSERT_EQ(at1.x, 20.0f);
     ASSERT_EQ(at1.y, 0.0f);
 }
+
+//------------------------------------------------------------------------------
+TEST(TestPetriNet, TestTimedTokenPetriNetVisualDuration)
+{
+    // Petri net mode: animation duration is fixed (0.2 s), not arc->duration.
+    Transition t1(42u, "", 0.0f, 0.0f, true);
+    Place p_short(43u, "", 10.0f, 0.0f, 0u);
+    Place p_long(44u, "", 200.0f, 0.0f, 0u);
+    Arc short_arc(t1, p_short, 50.0f);
+    Arc long_arc(t1, p_long, 50.0f);
+
+    TimedToken short_token(short_arc, 1u, TypeOfNet::PetriNet);
+    TimedToken long_token(long_arc, 1u, TypeOfNet::PetriNet);
+
+    ASSERT_FLOAT_EQ(short_token.speed, 10.0f / 0.2f);
+    ASSERT_FLOAT_EQ(long_token.speed, 200.0f / 0.2f);
+
+    float dt = 0.05f;
+    for (int i = 0; i < 3; ++i)
+    {
+        ASSERT_FALSE(short_token.update(dt));
+        ASSERT_FALSE(long_token.update(dt));
+    }
+    ASSERT_TRUE(short_token.update(dt));
+    ASSERT_TRUE(long_token.update(dt));
+}
