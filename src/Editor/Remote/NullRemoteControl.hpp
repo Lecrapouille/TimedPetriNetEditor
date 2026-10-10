@@ -1,7 +1,9 @@
-//=============================================================================
-// TimedPetriNetEditor: A timed Petri net editor.
-// Copyright 2021 -- 2026 Quentin Quadrat <lecrapouille@gmail.com>
-//=============================================================================
+// SPDX-License-Identifier: GPL-3.0-or-later OR LicenseRef-TimedPetriNetEditor-Commercial
+// Copyright (c) 2020-2026 Quentin Quadrat
+//
+// This file is part of TimedPetriNetEditor. It is available under the GNU GPL v3 or,
+// for users who cannot use the GPL, under a commercial license.
+// See LICENSING.md for details.
 
 #ifndef NULL_REMOTE_CONTROL_HPP
 #  define NULL_REMOTE_CONTROL_HPP

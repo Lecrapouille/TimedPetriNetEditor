@@ -1,1 +1,12 @@
+# Authors
+
+## Main author
+
 Quentin Quadrat <lecrapouille@gmail.com>
+
+## Contributors
+
+- Stéphane Gaubert <Stephane.Gaubert@inria.fr> — Howard's algorithm (`src/MaxPlus/Howard.c`), from the Scilab (max,+) toolbox
+- Claude — code
+- Grok — code
+- ChatGPT — architecture
