@@ -59,6 +59,40 @@ static std::string sanitizeName(std::string const& name)
 //------------------------------------------------------------------------------
 std::string exportToGrafcetCpp(Net const& net, std::string const& filename)
 {
+    // Inputs: declared ones and the ones read by receptivities. Receptivities
+    // are translated to C: constructs with a memory (edges, time operators)
+    // and inputs that are not C identifiers are not supported yet.
+    std::map<std::string, int> inputs = net.inputs;
+    std::map<size_t, std::string> receptivities;
+    for (auto const& t : net.transitions())
+    {
+        bool supported = true;
+        try
+        {
+            receptivities[t.id] = Receptivity::translate(t.caption, "C", supported);
+        }
+        catch (std::exception const& e)
+        {
+            return "Cannot export " + t.key + " '" + t.caption + "': " + e.what();
+        }
+        if (!supported)
+        {
+            return "Cannot export " + t.key + " '" + t.caption + "': edges and time "
+                   "operators are not exported to C++ yet";
+        }
+        for (auto const& name : Receptivity::inputs(t.caption))
+            inputs.emplace(name, 0);
+    }
+    for (auto const& input : inputs)
+    {
+        std::string const& name = input.first;
+        bool identifier = !name.empty() && (std::isalpha(static_cast<unsigned char>(name[0])) || (name[0] == '_'));
+        for (char const c : name)
+            identifier &= (std::isalnum(static_cast<unsigned char>(c)) || (c == '_'));
+        if (!identifier)
+            return "Cannot export the input '" + name + "': not a C identifier";
+    }
+
     std::ofstream file(filename);
     if (!file)
     {
@@ -247,7 +281,7 @@ std::string exportToGrafcetCpp(Net const& net, std::string const& filename)
 
     // Read sensors
     file << "        // 1. Read sensors\n";
-    for (auto const& s : Sensors::instance().database())
+    for (auto const& s : inputs)
     {
         file << "        " << s.first << " = readSensor" << camelCase(s.first) << "();\n";
     }
@@ -446,6 +480,12 @@ std::string exportToGrafcetCpp(Net const& net, std::string const& filename)
                      << "do" << camelCase(a.name) << "Pulse();";
                 file << "  // P " << a.name << " (step " << p.id << ")\n";
                 break;
+
+            case Action::Qualifier::P0:  // Pulse on falling edge
+                file << "        if (!X[" << p.id << "] && m_prev_X[" << p.id << "]) "
+                     << "do" << camelCase(a.name) << "Pulse();";
+                file << "  // P0 " << a.name << " (step " << p.id << ")\n";
+                break;
             }
         }
     }
@@ -582,7 +622,7 @@ std::string exportToGrafcetCpp(Net const& net, std::string const& filename)
 
     // Sensor reading methods
     file << "    // Sensor reading methods (implement these for your hardware)\n";
-    for (auto const& s : Sensors::instance().database())
+    for (auto const& s : inputs)
     {
         file << "    bool readSensor" << camelCase(s.first) << "() { return "
              << s.first << "; }  // TODO: read from GPIO\n";
@@ -602,7 +642,7 @@ std::string exportToGrafcetCpp(Net const& net, std::string const& filename)
     bool has_pulse = false;
     for (auto const& a : all_actions)
     {
-        if (a.qualifier == Action::Qualifier::P)
+        if ((a.qualifier == Action::Qualifier::P) || (a.qualifier == Action::Qualifier::P0))
         {
             if (!has_pulse)
             {
@@ -618,7 +658,7 @@ std::string exportToGrafcetCpp(Net const& net, std::string const& filename)
     file << "    // Receptivity (transition guard) methods\n";
     for (auto const& t : net.transitions())
     {
-        std::string translated = Receptivity::Parser::translate(t.caption, "C");
+        std::string const& translated = receptivities[t.id];
         file << "    bool R" << t.id << "() const { return !!(" << translated << "); }  // " << t.caption << "\n";
     }
     file << "\n";
@@ -651,10 +691,10 @@ std::string exportToGrafcetCpp(Net const& net, std::string const& filename)
     }
 
     // Sensors
-    if (!Sensors::instance().database().empty())
+    if (!inputs.empty())
     {
         file << "    // Sensors\n";
-        for (auto const& s : Sensors::instance().database())
+        for (auto const& s : inputs)
         {
             file << "    GRAFCET_SENSOR_TYPE " << s.first << " = " << s.second << ";\n";
         }

@@ -10,86 +10,148 @@
 #include "PetriNet/PetriNet.hpp"
 #include "nlohmann/json.hpp"
 #include <fstream>
+#include <cmath>
 #include <cstring>
+#include <map>
+#include <sstream>
+#include <vector>
 
 namespace tpne {
+
+//------------------------------------------------------------------------------
+//! \brief Quoted and escaped JSON string.
+static std::string quote(std::string const& text)
+{
+    return nlohmann::json(text).dump();
+}
+
+//------------------------------------------------------------------------------
+//! \brief Readable one line JSON: { "id": 0, "x": 200 } (spaces, and whole
+//! numbers without ".0").
+static std::string format(nlohmann::ordered_json const& value)
+{
+    if (value.is_object())
+    {
+        std::string text = "{ ";
+        bool first = true;
+        for (auto const& it : value.items())
+        {
+            text += (first ? "" : ", ") + quote(it.key()) + ": " + format(it.value());
+            first = false;
+        }
+        return text + " }";
+    }
+    if (value.is_array())
+    {
+        std::string text = "[";
+        for (size_t i = 0u; i < value.size(); ++i)
+            text += (i ? ", " : "") + format(value[i]);
+        return text + "]";
+    }
+    if (value.is_number_float())
+    {
+        double const number = value.get<double>();
+        if ((number == std::floor(number)) && (std::fabs(number) < 1e15))
+            return std::to_string(static_cast<long long>(number));
+    }
+    return value.dump();
+}
+
+//------------------------------------------------------------------------------
+//! \brief One line per element, with a comma between elements.
+static void writeList(std::ofstream& file, std::vector<nlohmann::ordered_json> const& items,
+                      char const* indent)
+{
+    for (size_t i = 0u; i < items.size(); ++i)
+    {
+        file << "\n" << indent << format(items[i]) << ((i + 1u < items.size()) ? "," : "");
+    }
+}
+
+//------------------------------------------------------------------------------
+//! \brief GRAFCET inputs: [{ "name": ..., "initial": ... }].
+static std::vector<nlohmann::ordered_json> inputsToJSON(std::map<std::string, int> const& inputs)
+{
+    std::vector<nlohmann::ordered_json> items;
+    for (auto const& it : inputs)
+        items.push_back({ { "name", it.first }, { "initial", it.second } });
+    return items;
+}
 
 //------------------------------------------------------------------------------
 // Helper function to write a single net to JSON
 static void writeNetToJSON(std::ofstream& file, Net const& net)
 {
-    std::string separator("\n");
-
-    file << "    {" << std::endl;
-    file << "       \"name\": \"" << net.name << "\"," << std::endl;
+    file << "    {\n";
+    file << "       \"name\": " << quote(net.name) << ",\n";
 
     // Places
-    file << "       \"places\": [";
+    std::vector<nlohmann::ordered_json> items;
     for (auto const& p: net.places())
     {
-        file << separator; separator = ",\n";
-        file << "            { \"id\": " << p.id << ", \"caption\": \"" << p.caption
-             << "\", \"tokens\": " << p.tokens << ", \"x\": " << p.x
-             << ", \"y\": " << p.y << " }";
+        items.push_back({ { "id", p.id }, { "caption", p.caption }, { "tokens", p.tokens },
+                          { "x", p.x }, { "y", p.y } });
     }
+    file << "       \"places\": [";
+    writeList(file, items, "            ");
 
     // Transitions
-    separator = "\n";
-    file << "\n       ],\n       \"transitions\": [";
+    items.clear();
     for (auto const& t: net.transitions())
     {
-        file << separator; separator = ",\n";
-        file << "            { \"id\": " << t.id << ", \"caption\": \"" << t.caption << "\", \"x\": "
-             << t.x << ", \"y\": " << t.y << " }";
+        nlohmann::ordered_json item = { { "id", t.id }, { "caption", t.caption },
+                                        { "x", t.x }, { "y", t.y } };
+        if (t.delay > 0.0f)
+            item["delay"] = t.delay;
+        items.push_back(item);
     }
+    file << "\n       ],\n       \"transitions\": [";
+    writeList(file, items, "            ");
 
     // Arcs
-    separator = "\n";
-    file << "\n       ],\n       \"arcs\": [";
+    items.clear();
     for (auto const& a: net.arcs())
     {
-        file << separator; separator = ",\n";
-        file << "            { \"from\": \"" << a.from.key << "\", " << "\"to\": \"" << a.to.key << "\"";
+        nlohmann::ordered_json item = { { "from", a.from.key }, { "to", a.to.key } };
         if (a.from.type == Node::Type::Transition)
-            file << ", \"duration\": " << a.duration;
-        file << " }";
+            item["duration"] = std::isnan(a.duration) ? 0.0f : a.duration;
+        items.push_back(item);
     }
+    file << "\n       ],\n       \"arcs\": [";
+    writeList(file, items, "            ");
 
     // GRAFCET actions
-    separator = "\n";
-    file << "\n       ],\n       \"actions\": [";
+    items.clear();
     for (auto const& p: net.places())
     {
         for (auto const& action : p.actions)
         {
-            file << separator; separator = ",\n";
-            file << "            { \"place_id\": " << p.id
-                 << ", \"qualifier\": \"" << qualifierToStr(action.qualifier)
-                 << "\", \"color\": \"" << ledColorToStr(action.color)
-                 << "\", \"name\": \"" << action.name
-                 << "\", \"script\": \"" << action.script
-                 << "\", \"duration\": " << action.duration;
-            // Export forcings if any
+            nlohmann::ordered_json item = {
+                { "place_id", p.id }, { "qualifier", qualifierToStr(action.qualifier) },
+                { "color", ledColorToStr(action.color) }, { "name", action.name },
+                { "script", action.script }, { "duration", action.duration } };
+            if (!action.condition.empty())
+                item["condition"] = action.condition;
             if (!action.forcings.empty())
             {
-                file << ", \"forcing\": [";
-                for (size_t i = 0; i < action.forcings.size(); ++i)
-                {
-                    if (i > 0) file << ", ";
-                    file << "\"" << forcingToStr(action.forcings[i]) << "\"";
-                }
-                file << "]";
+                nlohmann::ordered_json forcings = nlohmann::ordered_json::array();
+                for (auto const& forcing : action.forcings)
+                    forcings.push_back(forcingToStr(forcing));
+                item["forcing"] = forcings;
             }
-            file << " }";
+            items.push_back(item);
         }
     }
-    file << "\n       ]" << std::endl;
+    file << "\n       ],\n       \"actions\": [";
+    writeList(file, items, "            ");
+    file << "\n       ]\n";
 
     file << "    }";
 }
 
 //------------------------------------------------------------------------------
-std::string exportAllNetsToJSON(std::vector<Net> const& nets, std::string const& filename)
+//! \brief Write a document made of the given nets.
+static std::string writeDocument(std::vector<Net const*> const& nets, std::string const& filename)
 {
     if (nets.empty())
     {
@@ -106,76 +168,43 @@ std::string exportAllNetsToJSON(std::vector<Net> const& nets, std::string const&
     }
 
     // Use the type of the first net for the document
-    file << "{" << std::endl;
-    file << "  \"revision\": 4," << std::endl;
-    file << "  \"type\": \"" << to_str(nets[0].type()) << "\"," << std::endl;
-    file << "  \"nets\": [" << std::endl;
+    file << "{\n";
+    file << "  \"revision\": 5,\n";
+    file << "  \"type\": " << quote(to_str(nets[0]->type())) << ",\n";
+    file << "  \"nets\": [\n";
 
     // Write all nets
+    std::map<std::string, int> inputs;
     for (size_t i = 0; i < nets.size(); ++i)
     {
-        writeNetToJSON(file, nets[i]);
-        if (i < nets.size() - 1)
-        {
-            file << ",";
-        }
-        file << std::endl;
+        writeNetToJSON(file, *nets[i]);
+        file << ((i + 1u < nets.size()) ? ",\n" : "\n");
+        inputs.insert(nets[i]->inputs.begin(), nets[i]->inputs.end());
     }
+    file << "  ],\n";
 
-    file << "  ]," << std::endl;
-
-    // Inputs (shared between all nets)
-    std::string separator("\n");
+    // GRAFCET inputs (shared between all nets) with their initial value
     file << "  \"inputs\": [";
-    for (auto& it: Sensors::instance().database())
-    {
-        file << separator; separator = ",\n";
-        file << "    { \"name\": \"" << it.first.c_str() << "\", "
-             << "\"initial\": " << it.second << " }";
-    }
-    file << "\n  ]" << std::endl;
+    writeList(file, inputsToJSON(inputs), "    ");
+    file << "\n  ]\n";
 
-    file << "}" << std::endl;
+    file << "}\n";
     return {};
+}
+
+//------------------------------------------------------------------------------
+std::string exportAllNetsToJSON(std::vector<Net> const& nets, std::string const& filename)
+{
+    std::vector<Net const*> pointers;
+    for (auto const& net : nets)
+        pointers.push_back(&net);
+    return writeDocument(pointers, filename);
 }
 
 //------------------------------------------------------------------------------
 std::string exportToJSON(Net const& net, std::string const& filename)
 {
-    std::string separator("\n");
-
-    std::ofstream file(filename);
-    if (!file)
-    {
-        std::stringstream error;
-        error << "Failed saving the Petri net in '" << filename
-              << "'. Reason: " << strerror(errno) << std::endl;
-        return error.str();
-    }
-
-    file << "{" << std::endl;
-    file << "  \"revision\": 4," << std::endl;
-    file << "  \"type\": \"" << to_str(net.type()) << "\"," << std::endl;
-    file << "  \"nets\": [" << std::endl;
-
-    writeNetToJSON(file, net);
-    file << std::endl;
-
-    file << "  ]," << std::endl;
-
-    // Inputs with initial value
-    separator = "\n";
-    file << "  \"inputs\": [";
-    for (auto& it: Sensors::instance().database())
-    {
-        file << separator; separator = ",\n";
-        file << "    { \"name\": \"" << it.first.c_str() << "\", "
-             << "\"initial\": " << it.second << " }";
-    }
-    file << "\n  ]" << std::endl;
-
-    file << "}" << std::endl;
-    return {};
+    return writeDocument({ &net }, filename);
 }
 
 } // namespace tpne

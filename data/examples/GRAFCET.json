@@ -1,5 +1,5 @@
 {
-  "revision": 3,
+  "revision": 5,
   "type": "GRAFCET",
   "nets": [
     {
@@ -10,8 +10,8 @@
             { "id": 2, "caption": "P2", "tokens": 0, "x": 446, "y": 242 }
        ],
        "transitions": [
-            { "id": 0, "caption": "A B ! .", "x": 448, "y": 112 },
-            { "id": 1, "caption": "A B .", "x": 246, "y": 123 },
+            { "id": 0, "caption": "A . /B", "x": 448, "y": 112 },
+            { "id": 1, "caption": "A . B", "x": 246, "y": 123 },
             { "id": 2, "caption": "true", "x": 389, "y": 164.5 },
             { "id": 3, "caption": "true", "x": 289, "y": 169.5 }
        ],
@@ -24,7 +24,11 @@
             { "from": "T2", "to": "P0", "duration": 2 },
             { "from": "P1", "to": "T3" },
             { "from": "T3", "to": "P0", "duration": 3 }
+       ],
+       "actions": [
        ]
     }
+  ],
+  "inputs": [
   ]
 }

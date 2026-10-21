@@ -437,21 +437,28 @@ void Editor::help() const
                 ImGui::Text("%s", help.str().c_str());
                 ImGui::EndTabItem();
             }
-            if (ImGui::BeginTabItem("Transitivity Syntax"))
+            if (ImGui::BeginTabItem("Receptivity Syntax"))
             {
-                std::stringstream help;
-                help << "Transitivities are boolean expression beteween sensors and states of GRAFCET steps." << std::endl
-                     << "The syntax used for expression is Reverse Polish Notation (RPN): operators follow their operands." << std::endl
-                     << "  And operator:         ." << std::endl
-                     << "  Or operator:          +" << std::endl
-                     << "  Negation operator:    !" << std::endl
-                     << "  State of Step 42:     X42" << std::endl
-                     << "  Sensor name:          any consecutive char" << std::endl
-                     << "  true operand:         true" << std::endl
-                     << "  false operand:        false" << std::endl
-                     << "Example:\n  X42 sensor-temp + sensor2 ! .\nmeans:\n . (Step42 or sensor-temp) and (not sensor2)" << std::endl;
-
-                ImGui::Text("%s", help.str().c_str());
+                ImGui::TextUnformatted(
+                    "GRAFCET receptivities are boolean expressions (IEC 60848) on inputs,\n"
+                    "steps and time. Precedence: not, and, or. Parentheses are allowed.\n\n"
+                    "  And:               a . b    (also a * b, a and b)\n"
+                    "  Or:                a + b    (also a | b, a or b)\n"
+                    "  Not:               /a       (also !a, not a)\n"
+                    "  Constants:         1  0  true  false\n"
+                    "  Step 42 active:    X42\n"
+                    "  Step of a graph:   Safety:X3\n"
+                    "  Rising edge:       ↑a       (also ^a, rising(a))\n"
+                    "  Falling edge:      ↓a       (also falling(a))\n"
+                    "  Time:              3s/X2    (true 3 s after X2 became active)\n"
+                    "                     2s/a/5s  (and false 5 s after a became false)\n"
+                    "                     units: ms s min h\n"
+                    "  Integer input:     [count >= 3]   (= != < <= > >=)\n"
+                    "  Input names:       Dcy, sensor_2, holding(cube) ...\n\n"
+                    "Example:\n  X42 . (start + ↑button) . /emergency\n\n"
+                    "Actions: N continuous, S set, R reset, D delayed, L limited,\n"
+                    "SD, DS, SL stored and timed, P1/P0 pulse on (de)activation.\n"
+                    "A condition makes an action conditional.");
                 ImGui::EndTabItem();
             }
             if (ImGui::BeginTabItem("Pathes"))

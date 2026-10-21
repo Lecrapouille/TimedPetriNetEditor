@@ -100,16 +100,10 @@ static void drawTransitionsPanel(Net& net, Simulation& simulation, [[maybe_unuse
         // GRAFCET receptivity validation
         if ((net.type() == TypeOfNet::GRAFCET) && (!simulation.isRunning()))
         {
-            Simulation::Receptivities const& receptivities = simulation.receptivities();
-            auto it = receptivities.find(t.id);
-            if (it == receptivities.end())
+            std::string const error = Receptivity::check(t.caption);
+            if (!error.empty())
             {
-                ImGui::TextColored(ImVec4(1.0f, 0.5f, 0.0f, 1.0f),
-                    "Receptivity not compiled for %s", t.key.c_str());
-            }
-            else if (!it->second.isValid())
-            {
-                ImGui::TextColored(ImVec4(1.0f, 0.0f, 0.0f, 1.0f), "%s", it->second.error().c_str());
+                ImGui::TextColored(ImVec4(1.0f, 0.0f, 0.0f, 1.0f), "%s", error.c_str());
                 ImGui::TextColored(ImVec4(1.0f, 0.0f, 0.0f, 1.0f), "%s", "See help for the syntax");
             }
         }
@@ -148,40 +142,42 @@ static void drawTransitionsPanel(Net& net, Simulation& simulation, [[maybe_unuse
 }
 
 //------------------------------------------------------------------------------
-//! \brief Helper to display GRAFCET inputs panel.
+//! \brief Helper to display GRAFCET inputs panel. While the GRAFCET runs, a
+//! click changes the input (at once in immediate mode, else at the next
+//! Apply). Else a click changes the initial value saved with the document.
 //------------------------------------------------------------------------------
 static void drawGrafcetInputsPanel(Simulation& simulation, bool& modified)
 {
-    static std::map<std::string, int> pending_values;
+    GrafcetEngine& engine = simulation.grafcet();
+    // Values waiting for Apply, per engine (one engine per document).
+    static std::map<GrafcetEngine const*, std::map<std::string, int>> all_pending;
+    std::map<std::string, int>& pending_values = all_pending[&engine];
     static bool immediate_mode = false;
+    bool const running = simulation.isRunning();
 
     ImGui::Begin("Inputs");
 
-    if (simulation.isRunning())
+    if (running)
     {
         ImGui::Checkbox("Immediate mode", &immediate_mode);
         ImGui::SameLine();
         if (ImGui::Button("Apply (F7)") || ImGui::IsKeyPressed(ImGuiKey_F7))
         {
-            for (auto& it : pending_values)
-            {
-                auto db_it = Sensors::instance().database().find(it.first);
-                if (db_it != Sensors::instance().database().end())
-                {
-                    db_it->second = it.second;
-                }
-            }
+            for (auto const& it : pending_values)
+                engine.setInput(it.first, it.second);
         }
     }
     else
     {
+        pending_values.clear();
         ImGui::TextColored(ImVec4(0.6f, 0.6f, 0.6f, 1.0f), "Set initial values:");
     }
 
     ImGui::Separator();
 
-    // Sensor buttons
-    for (auto& it : Sensors::instance().database())
+    // Copy: setInput() may insert while iterating.
+    std::map<std::string, int> const inputs = engine.inputs();
+    for (auto const& it : inputs)
     {
         if (pending_values.find(it.first) == pending_values.end())
         {
@@ -189,14 +185,14 @@ static void drawGrafcetInputsPanel(Simulation& simulation, bool& modified)
         }
 
         int& pending = pending_values[it.first];
-        int current = it.second;
+        int const current = it.second;
 
         ImGui::PushID(it.first.c_str());
 
-        bool is_on = simulation.isRunning()
+        bool is_on = running
             ? (immediate_mode ? (current != 0) : (pending != 0))
             : (current != 0);
-        bool changed = simulation.isRunning() && (is_on != (current != 0));
+        bool changed = running && (is_on != (current != 0));
 
         // Color styling
         if (changed)
@@ -212,22 +208,21 @@ static void drawGrafcetInputsPanel(Simulation& simulation, bool& modified)
 
         if (ImGui::Button(is_on ? "ON " : "OFF", ImVec2(50, 25)))
         {
-            if (simulation.isRunning())
+            int const toggled = current ? 0 : 1;
+            if (running && !immediate_mode)
             {
-                if (immediate_mode)
-                {
-                    it.second = it.second ? 0 : 1;
-                    pending = it.second;
-                }
-                else
-                {
-                    pending = pending ? 0 : 1;
-                }
+                pending = pending ? 0 : 1;
             }
             else
             {
-                it.second = it.second ? 0 : 1;
-                pending = it.second;
+                engine.setInput(it.first, toggled);
+                pending = toggled;
+            }
+            if (!running)
+            {
+                // Initial value, saved in the nets of the document.
+                for (Net* net : engine.graphs())
+                    net->inputs[it.first] = toggled;
                 modified = true;
             }
         }
@@ -240,7 +235,7 @@ static void drawGrafcetInputsPanel(Simulation& simulation, bool& modified)
         ImGui::SameLine();
         ImGui::Text("%s", it.first.c_str());
 
-        if (changed && !immediate_mode && simulation.isRunning())
+        if (changed && !immediate_mode && running)
         {
             ImGui::SameLine();
             ImGui::TextColored(ImVec4(1.0f, 0.6f, 0.0f, 1.0f), "(pending)");
@@ -278,7 +273,10 @@ static void drawGrafcetOutputsPanel(Net& net, Simulation& simulation)
             const auto& action = place.actions[i];
             if (!action.name.empty())
             {
-                bool is_active = simulation.actionState(place.id, i).active;
+                // Output of the action name: also true for stored actions
+                // set by another step.
+                bool is_active = simulation.isRunning() &&
+                    simulation.grafcet().output(action.name);
                 auto it = actuator_states.find(action.name);
                 if (it == actuator_states.end())
                 {
@@ -413,7 +411,8 @@ static void drawGrafcetActionsPanel(Net& net, Simulation& simulation, bool& modi
                     case Action::Qualifier::SD:
                     case Action::Qualifier::DS:
                     case Action::Qualifier::SL: badge_color = ImVec4(0.7f, 0.5f, 0.2f, 1.0f); break;
-                    case Action::Qualifier::P: badge_color = ImVec4(0.6f, 0.2f, 0.6f, 1.0f); break;
+                    case Action::Qualifier::P:
+                    case Action::Qualifier::P0: badge_color = ImVec4(0.6f, 0.2f, 0.6f, 1.0f); break;
                 }
 
                 ImGui::TextColored(badge_color, "[%s]", qual_str);
@@ -482,7 +481,8 @@ static void drawGrafcetActionsPanel(Net& net, Simulation& simulation, bool& modi
                     const char* qualifiers[] = {
                         "N - Normal", "S - Set (Stored)", "R - Reset",
                         "D - Delayed", "L - Limited", "SD - Stored & Delayed",
-                        "DS - Delayed & Stored", "SL - Stored & Limited", "P - Pulse"
+                        "DS - Delayed & Stored", "SL - Stored & Limited",
+                        "P1 - Pulse on activation", "P0 - Pulse on deactivation"
                     };
                     int qual_idx = static_cast<int>(action.qualifier);
                     if (ImGui::Combo("Qualifier", &qual_idx, qualifiers, IM_ARRAYSIZE(qualifiers)))
@@ -522,6 +522,22 @@ static void drawGrafcetActionsPanel(Net& net, Simulation& simulation, bool& modi
                     if (ImGui::IsItemHovered())
                     {
                         ImGui::SetTooltip("Description of the action (used as comment in generated code)");
+                    }
+
+                    // Assignment condition (conditional action)
+                    if (ImGui::InputText("Condition", &action.condition))
+                    {
+                        modified = true;
+                    }
+                    if (ImGui::IsItemHovered())
+                    {
+                        ImGui::SetTooltip("The action runs only while this condition is true\n"
+                                          "(same syntax as receptivities, empty = always).");
+                    }
+                    std::string const condition_error = Receptivity::check(action.condition);
+                    if (!condition_error.empty())
+                    {
+                        ImGui::TextColored(ImVec4(1.0f, 0.0f, 0.0f, 1.0f), "%s", condition_error.c_str());
                     }
 
                     // Duration for timed qualifiers

@@ -10,8 +10,10 @@
 
 #  include "PetriNet/Signal.hpp"
 #  include "PetriNet/TimedTokens.hpp"
+#  include "PetriNet/GrafcetEngine.hpp"
 
 #  include <atomic>
+#  include <memory>
 #  include <string>
 #  include <vector>
 #  include <map>
@@ -34,18 +36,24 @@ class Simulation
 public:
 
     using TimedTokens = std::vector<TimedToken>;
-    using Receptivities = std::map<size_t, Receptivity>;
-
-    // *************************************************************************
-    //! \brief Runtime state for GRAFCET actions (indexed by place_id, action_index)
-    // *************************************************************************
-    struct ActionState
-    {
-        bool active = false;
-        float timer = 0.0f;
-    };
+    using ActionState = GrafcetEngine::ActionState;
 
     explicit Simulation(Net& net);
+    ~Simulation();
+
+    //--------------------------------------------------------------------------
+    //! \brief GRAFCET: run this net with the given engine, shared with the
+    //! other graphs of a document (cross-graph receptivities and forcings).
+    //! The owner of the shared engine steps it. Null: the simulation uses its
+    //! own engine running this net alone.
+    //--------------------------------------------------------------------------
+    void grafcet(GrafcetEngine* shared);
+
+    //--------------------------------------------------------------------------
+    //! \brief GRAFCET engine used by this simulation.
+    //--------------------------------------------------------------------------
+    GrafcetEngine& grafcet() { return *m_engine; }
+    GrafcetEngine const& grafcet() const { return *m_engine; }
 
     //--------------------------------------------------------------------------
     //! \brief Start the simulation. Emits onStarted signal on success.
@@ -73,9 +81,10 @@ public:
     inline TimedTokens const& animatedTokens() const { return m_timed_tokens; }
 
     //--------------------------------------------------------------------------
-    //! \brief Get the receptivities map for inspection.
+    //! \brief GRAFCET: compiled receptivity of a transition while running, or
+    //! null.
     //--------------------------------------------------------------------------
-    inline Receptivities const& receptivities() const { return m_receptivities; }
+    Receptivity const* receptivity(size_t transition_id) const;
 
     //--------------------------------------------------------------------------
     //! \brief Get the arc token count for animation (indexed by arc position).
@@ -102,40 +111,25 @@ public:
     ActionState const& actionState(size_t place_id, size_t action_index) const;
 
     //--------------------------------------------------------------------------
-    //! \brief Check if a place was active in the previous cycle (for edge detection).
+    //! \brief Get the delay timer for a transition (GRAFCET).
     //--------------------------------------------------------------------------
-    inline bool wasPlaceActive(size_t place_id) const
-    {
-        return place_id < m_place_was_active.size() && m_place_was_active[place_id];
-    }
+    float transitionDelayTimer(size_t transition_id) const;
 
     //--------------------------------------------------------------------------
-    //! \brief Get the delay timer for a transition.
+    //! \brief Check if the net is frozen by a forcing command (GRAFCET).
     //--------------------------------------------------------------------------
-    inline float transitionDelayTimer(size_t transition_id) const
-    {
-        return transition_id < m_transition_delay_timers.size()
-            ? m_transition_delay_timers[transition_id] : 0.0f;
-    }
-
-    //--------------------------------------------------------------------------
-    //! \brief Check if the net is frozen by a forcing command.
-    //--------------------------------------------------------------------------
-    inline bool isFrozen() const { return m_frozen; }
+    bool isFrozen() const;
 
     //--------------------------------------------------------------------------
     //! \brief Check if a place is an initial step (had tokens at simulation start).
     //! \param[in] place_id The place ID (0-based, consecutive).
     //--------------------------------------------------------------------------
-    inline bool isInitialStep(size_t place_id) const
-    {
-        return place_id < m_initial_tokens.size() && m_initial_tokens[place_id] > 0;
-    }
+    bool isInitialStep(size_t place_id) const;
 
     //--------------------------------------------------------------------------
     //! \brief Check if initial marking has been stored.
     //--------------------------------------------------------------------------
-    inline bool hasInitialMarking() const { return !m_initial_tokens.empty(); }
+    bool hasInitialMarking() const;
 
     //--------------------------------------------------------------------------
     //! \brief Check if there are any receptivity parsing errors (GRAFCET).
@@ -211,24 +205,14 @@ private:
     // Initialization
     //--------------------------------------------------------------------------
     void initializeRuntimeState();
-    bool compileReceptivities();
-    bool compileReceptivity(Transition const& transition);
 
     //--------------------------------------------------------------------------
     // Simulation logic
     //--------------------------------------------------------------------------
-    void evaluateReceptivities();
     void updateTransitionDelayTimers(float const dt);
     void fireTransitions();
     void animateTokens(float const dt);
     std::vector<Transition*> const& shuffleTransitions(bool const reset = false);
-
-    //--------------------------------------------------------------------------
-    // GRAFCET specific
-    //--------------------------------------------------------------------------
-    void updateGrafcetActions(float const dt);
-    void resetStoredAction(std::string const& name);
-    void applyGrafcetForcings();
 
     //--------------------------------------------------------------------------
     // Marking management
@@ -244,25 +228,22 @@ private:
     State m_state{State::Idle};
     //! \brief True if the simulation is running.
     std::atomic<bool> m_running{false};
-    //! \brief GRAFCET frozen state (no evolution allowed).
-    bool m_frozen = false;
+    //! \brief GRAFCET engine running this net: m_own_engine or an engine
+    //! shared with the other graphs of a document.
+    GrafcetEngine* m_engine;
+    //! \brief Engine used when no engine is shared.
+    std::unique_ptr<GrafcetEngine> m_own_engine;
 
     //--------------------------------------------------------------------------
     // Runtime state vectors (indexed by node IDs which are consecutive from 0)
     //--------------------------------------------------------------------------
 
-    //! \brief Previous activation state of places (for rising/falling edge detection).
-    //! Indexed by Place::id.
-    std::vector<bool> m_place_was_active;
     //! \brief Delay timers for transitions with temporization.
     //! Indexed by Transition::id.
     std::vector<float> m_transition_delay_timers;
     //! \brief Token counts for arcs during animation.
     //! Indexed by arc position in Net::arcs().
     std::vector<size_t> m_arc_token_counts;
-    //! \brief Runtime state for GRAFCET actions.
-    //! Key: (place_id, action_index), Value: ActionState.
-    std::map<std::pair<size_t, size_t>, ActionState> m_action_states;
 
     //--------------------------------------------------------------------------
     // Other simulation data
@@ -282,12 +263,8 @@ private:
     //! \brief (max,+) cycle time λ, computed once at simulation start when
     //! the net is a Timed Event Graph. Zero otherwise.
     double m_eigenvalue = 0.0;
-    //! \brief Compiled GRAFCET receptivities (boolean expressions).
-    Receptivities m_receptivities;
     //! \brief True if there are receptivity parsing errors.
     bool m_has_receptivity_errors = false;
-    //! \brief Dummy action state returned for invalid queries.
-    static ActionState s_dummy_action_state;
 };
 
 } // namespace tpne

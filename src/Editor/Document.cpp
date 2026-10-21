@@ -60,6 +60,9 @@ Document::NetEntry& Document::NetEntry::operator=(NetEntry&& other) noexcept
 Document::Document(Messages& messages)
     : m_messages(messages)
 {
+    m_grafcet.onWarning = [this](std::string const& msg) {
+        m_messages.setWarning(msg);
+    };
 }
 
 //------------------------------------------------------------------------------
@@ -83,7 +86,7 @@ std::string Document::title() const
 Document::NetEntry& Document::addNet(TypeOfNet type, std::string const& name)
 {
     m_nets.push_back(std::make_unique<NetEntry>(type, name, m_messages));
-    NetRegistry::instance().registerNet(name, &m_nets.back()->net);
+    registerNets();
     m_modified = true;
     return *m_nets.back();
 }
@@ -96,9 +99,8 @@ bool Document::removeNet(size_t index)
         return false;
     }
 
-    NetRegistry::instance().unregisterNet(m_nets[index]->net.name);
-
     m_nets.erase(m_nets.begin() + static_cast<ptrdiff_t>(index));
+    registerNets();
 
     if (m_active_net_index >= m_nets.size() && !m_nets.empty())
     {
@@ -172,8 +174,9 @@ Document::NetEntry const& Document::activeNet() const
 }
 
 //------------------------------------------------------------------------------
-void Document::startAllSimulations() const
+void Document::startAllSimulations()
 {
+    registerNets();
     for (auto const& entry : m_nets)
     {
         entry->simulation->start();
@@ -203,29 +206,44 @@ bool Document::isAnySimulationRunning() const
 }
 
 //------------------------------------------------------------------------------
-void Document::stepAllSimulations(float dt) const
+void Document::stepAllSimulations(float dt)
 {
     for (auto const& entry : m_nets)
     {
         entry->simulation->step(dt);
     }
-}
 
-//------------------------------------------------------------------------------
-void Document::registerNets() const
-{
-    for (auto const& entry : m_nets)
+    // The GRAFCET graphs evolve together, once per cycle.
+    if (m_grafcet.isRunning())
     {
-        NetRegistry::instance().registerNet(entry->net.name, &entry->net);
+        m_grafcet.step(dt);
     }
 }
 
 //------------------------------------------------------------------------------
-void Document::unregisterNets() const
+void Document::registerNets()
 {
+    if (m_grafcet.isRunning())
+        return;
+
+    std::vector<Net*> graphs;
     for (auto const& entry : m_nets)
     {
-        NetRegistry::instance().unregisterNet(entry->net.name);
+        bool const grafcet = (entry->net.type() == TypeOfNet::GRAFCET);
+        entry->simulation->grafcet(grafcet ? &m_grafcet : nullptr);
+        if (grafcet)
+            graphs.push_back(&entry->net);
+    }
+    m_grafcet.graphs(graphs);
+}
+
+//------------------------------------------------------------------------------
+void Document::unregisterNets()
+{
+    m_grafcet.graphs({});
+    for (auto const& entry : m_nets)
+    {
+        entry->simulation->grafcet(nullptr);
     }
 }
 

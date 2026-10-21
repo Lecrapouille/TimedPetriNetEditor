@@ -1,5 +1,5 @@
 {
-  "revision": 4,
+  "revision": 5,
   "type": "GRAFCET",
   "nets": [
     {
@@ -14,7 +14,7 @@
        "transitions": [
             { "id": 0, "caption": "Start", "x": 300, "y": 150 },
             { "id": 1, "caption": "s1", "x": 300, "y": 350 },
-            { "id": 2, "caption": "Timer1", "x": 300, "y": 550 },
+            { "id": 2, "caption": "2s/X2", "x": 300, "y": 550 },
             { "id": 3, "caption": "s0", "x": 50, "y": 400 },
             { "id": 4, "caption": "Error", "x": 450, "y": 250 },
             { "id": 5, "caption": "Reset", "x": 450, "y": 50 }
@@ -34,23 +34,21 @@
             { "from": "T5", "to": "P0", "duration": 0 }
        ],
        "actions": [
-            { "place_id": 1, "qualifier": "N", "name": "V1+", "script": "Extend cylinder valve", "duration": 0 },
-            { "place_id": 2, "qualifier": "D", "name": "Timer1", "script": "Wait before retract", "duration": 2 },
-            { "place_id": 2, "qualifier": "S", "name": "Lamp1", "script": "Position indicator ON", "duration": 0 },
-            { "place_id": 3, "qualifier": "N", "name": "V1-", "script": "Retract cylinder valve", "duration": 0 },
-            { "place_id": 3, "qualifier": "R", "name": "Lamp1", "script": "Position indicator OFF", "duration": 0 },
-            { "place_id": 4, "qualifier": "N", "name": "Buzzer", "script": "Alarm sound", "duration": 0 },
-            { "place_id": 4, "qualifier": "L", "name": "AlarmLamp", "script": "Flash for 5s", "duration": 5 }
-       ],
-       "inputs": [
-            { "name": "Error", "initial": 0 },
-            { "name": "Reset", "initial": 0 },
-            { "name": "Start", "initial": 0 },
-            { "name": "T6", "initial": 0 },
-            { "name": "Timer1", "initial": 0 },
-            { "name": "s0", "initial": 0 },
-            { "name": "s1", "initial": 0 }
+            { "place_id": 1, "qualifier": "N", "color": "green", "name": "V1+", "script": "Extend cylinder valve", "duration": 0 },
+            { "place_id": 2, "qualifier": "D", "color": "green", "name": "Timer1", "script": "Wait before retract", "duration": 2 },
+            { "place_id": 2, "qualifier": "S", "color": "green", "name": "Lamp1", "script": "Position indicator ON", "duration": 0 },
+            { "place_id": 3, "qualifier": "N", "color": "green", "name": "V1-", "script": "Retract cylinder valve", "duration": 0 },
+            { "place_id": 3, "qualifier": "R", "color": "green", "name": "Lamp1", "script": "Position indicator OFF", "duration": 0 },
+            { "place_id": 4, "qualifier": "N", "color": "green", "name": "Buzzer", "script": "Alarm sound", "duration": 0 },
+            { "place_id": 4, "qualifier": "L", "color": "green", "name": "AlarmLamp", "script": "Flash for 5s", "duration": 5 }
        ]
     }
+  ],
+  "inputs": [
+    { "name": "Error", "initial": 0 },
+    { "name": "Reset", "initial": 0 },
+    { "name": "Start", "initial": 0 },
+    { "name": "s0", "initial": 0 },
+    { "name": "s1", "initial": 0 }
   ]
 }

@@ -10,67 +10,15 @@
 
 #  include <memory>
 #  include <string>
-#  include <stack>
 #  include <map>
+#  include <set>
 #  include <vector>
 #  include <sstream>
 
 namespace tpne {
 
 class Net;
-
-// ****************************************************************************
-//! \brief Registry for cross-graph references in GRAFCET multi-net documents.
-//! Maps net names to their Net pointers for resolving references like "Security:X5"
-// ****************************************************************************
-class NetRegistry
-{
-public:
-    static NetRegistry& instance() { static NetRegistry registry; return registry; }
-
-    void registerNet(std::string const& name, Net* net) { m_nets[name] = net; }
-    void unregisterNet(std::string const& name) { m_nets.erase(name); }
-    Net* findNet(std::string const& name)
-    {
-        auto it = m_nets.find(name);
-        return (it != m_nets.end()) ? it->second : nullptr;
-    }
-    std::map<std::string, Net*> const& getRegistry() const { return m_nets; }
-    std::map<std::string, Net*>& getRegistry() { return m_nets; }
-    void clear() { m_nets.clear(); }
-
-private:
-    NetRegistry() = default;
-    std::map<std::string, Net*> m_nets;
-};
-
-// ****************************************************************************
-//! \brief Quick and dirty container of sensor boolean values.
-//! \fixme should store analogical value.
-// ****************************************************************************
-class Sensors
-{
-public:
-
-    static Sensors& instance() { static Sensors sensor; return sensor; }
-
-    //! \brief Get the value of the given sensor. Throw if the sensor is unkown.
-    bool get(std::string const& sensor) { return m_values.at(sensor); modified = true; }
-    void set(std::string const& sensor, int const value) { m_values[sensor] = value; }
-    std::map<const std::string, int>& database() { return m_values; }
-    void clear() { m_values.clear(); modified = false; }
-
-private:
-
-    Sensors() = default;
-
-private:
-
-    std::map<const std::string, int> m_values;
-
-public:
-    bool modified = false;
-};
+class Place;
 
 // *****************************************************************************
 //! \brief GRAFCET Forcing command for hierarchical control.
@@ -219,7 +167,8 @@ struct Action
         SD,  // Stored & Delayed: set after delay
         DS,  // Delayed & Stored: delayed then latched
         SL,  // Stored & Limited: set for limited time
-        P    // Pulse: single pulse at step activation
+        P,   // Pulse on activation (P1): single pulse when the step activates
+        P0   // Pulse on deactivation: single pulse when the step deactivates
     };
 
     //! \brief LED colors for industrial visualization
@@ -238,6 +187,10 @@ struct Action
     std::string name;        // Action name (e.g., "KM1", "Verin_A+")
     std::string script;      // Code/description of the action
     float duration = 0.0f;   // For D, L, SD, DS, SL qualifiers (seconds)
+    //! \brief Assignment condition (IEC 60848 conditional action): the action
+    //! only runs while this receptivity-like expression is true. Empty means
+    //! always true. Only for continuous actions (N, D, L).
+    std::string condition;
 
     //! \brief Forcings to apply when this action is active (GRAFCET hierarchical control)
     std::vector<Forcing> forcings;
@@ -255,7 +208,8 @@ inline const char* qualifierToStr(Action::Qualifier q)
         case Action::Qualifier::SD: return "SD";
         case Action::Qualifier::DS: return "DS";
         case Action::Qualifier::SL: return "SL";
-        case Action::Qualifier::P: return "P";
+        case Action::Qualifier::P: return "P1";
+        case Action::Qualifier::P0: return "P0";
     }
     return "N";
 }
@@ -270,7 +224,8 @@ inline Action::Qualifier strToQualifier(std::string const& s)
     if (s == "SD") return Action::Qualifier::SD;
     if (s == "DS") return Action::Qualifier::DS;
     if (s == "SL") return Action::Qualifier::SL;
-    if (s == "P") return Action::Qualifier::P;
+    if ((s == "P") || (s == "P1")) return Action::Qualifier::P;
+    if (s == "P0") return Action::Qualifier::P0;
     return Action::Qualifier::N;
 }
 
@@ -300,215 +255,116 @@ inline Action::LedColor strToLedColor(std::string const& s)
 }
 
 // *****************************************************************************
-//! \brief Receptivity is the boolean expression stored in GRAFCET transitions
-//! that make a transition fireable or not. This class allows to parse simple
-//! boolean expressions and create an abstract syntax tree (AST). For simplicity
-//! reasons the syntax use reversed polish notation (RPN). Therefore expression
-//! such as "(a or b) and X0" will be written as "a b or X0 and".
+//! \brief Receptivity of a GRAFCET transition: the boolean condition that lets
+//! the transition fire when all its upstream steps are active.
+//!
+//! The syntax follows IEC 60848 written with ASCII characters:
+//!   - operators: `a.b` (and, also `a*b`), `a+b` (or), `/a` or `!a` (not),
+//!     parentheses; precedence: not, and, or.
+//!   - constants: `1`, `0`, `true`, `false`.
+//!   - steps: `X3` (step 3 of the same graph), `Safety:X3` (another graph).
+//!   - edges: `↑a` or `^a` (rising), `↓a` (falling), also `rising(a)`,
+//!     `falling(a)`. An edge is true during one instant only.
+//!   - time: `3s/a` (true 3 s after a became true), `3s/a/7s` (and stays
+//!     true 7 s after a became false), `500ms/X2`. Units: ms, s, min, h.
+//!   - comparison of an integer input: `[count >= 3]` (=, !=, <, <=, >, >=).
+//!   - inputs: names like `Dcy`, `sensor_2`, or with arguments like
+//!     `holding(red_cube)` or `done(Grasp(red_cube))`, so that a host
+//!     application can give them a meaning.
+//! An empty receptivity is always true.
 // *****************************************************************************
 class Receptivity
 {
 public:
 
-    std::string compile(std::string const& code, Net& net);
+    // *************************************************************************
+    //! \brief Gives the parser the values that a receptivity reads. The
+    //! returned pointers must stay valid while the receptivity is used.
+    // *************************************************************************
+    class Resolver
+    {
+    public:
+
+        virtual ~Resolver() = default;
+
+        //----------------------------------------------------------------------
+        //! \brief Value of the input of the given name. Unknown inputs are
+        //! created (value 0) by the resolver. Never null.
+        //----------------------------------------------------------------------
+        virtual int const* input(std::string const& name) = 0;
+
+        //----------------------------------------------------------------------
+        //! \brief Step `id` of the graph `graph` (empty name: the graph owning
+        //! the receptivity). Return null if unknown.
+        //----------------------------------------------------------------------
+        virtual Place const* step(std::string const& graph, size_t id) = 0;
+    };
+
+    // *************************************************************************
+    //! \brief Node of the abstract syntax tree.
+    // *************************************************************************
+    class Node
+    {
+    public:
+
+        virtual ~Node() = default;
+        //! \brief Value at the current instant.
+        virtual bool evaluate() const = 0;
+        //! \brief Let time pass (timers). Called once per cycle.
+        virtual void tick(float /*dt*/) {}
+        //! \brief End of an instant: edges are consumed.
+        virtual void endOfInstant() {}
+        //! \brief End of a cycle (graphs stable): time operators see the
+        //! changes made by the evolution.
+        virtual void endOfCycle() {}
+        //! \brief Write the expression in C ("C") or Structured Text ("ST").
+        //! Set `supported` to false for constructs with a memory (edges,
+        //! timers) that have no direct translation.
+        virtual std::string translate(std::string const& lang, bool& supported) const = 0;
+    };
+
+    //--------------------------------------------------------------------------
+    //! \brief Parse the expression. Return false on syntax error (see error()).
+    //--------------------------------------------------------------------------
+    bool compile(std::string const& code, Resolver& resolver);
+
+    //--------------------------------------------------------------------------
+    //! \brief Check the syntax only. Return the error message, or empty.
+    //--------------------------------------------------------------------------
+    static std::string check(std::string const& code);
+
+    //--------------------------------------------------------------------------
+    //! \brief Translate the expression to "C" or "ST" (Structured Text).
+    //! \param[out] supported false if the expression has edges or timers,
+    //! which need a memory not generated by the translation.
+    //! \throw std::runtime_error on syntax error.
+    //--------------------------------------------------------------------------
+    static std::string translate(std::string const& code, std::string const& lang,
+                                 bool& supported);
+    static std::string translate(std::string const& code, std::string const& lang)
+    {
+        bool supported;
+        return translate(code, lang, supported);
+    }
+
+    //--------------------------------------------------------------------------
+    //! \brief Names of the inputs read by the expression.
+    //--------------------------------------------------------------------------
+    static std::set<std::string> inputs(std::string const& code);
+
     inline bool isValid() const { return m_valid; }
     inline std::string const& error() const { return m_error; }
     bool evaluate() const;
-
-    // *************************************************************************
-    //! \brief Base class of boolean expression used as AST node.
-    // *************************************************************************
-    class BooleanExp
-    {
-    public:
-
-        virtual ~BooleanExp() = default;
-        virtual bool evaluate() const = 0;
-    };
-
-    // *************************************************************************
-    //! \brief Expression for GRAFCET place state. In GRAFCET places are named
-    //! steps and are named X0, X1 ... (while inside the editor places ID are
-    //! named P0, P1, ...) we are following the GRAFCET standard.
-    //! \note the GRAFCET net shall no remove the place !
-    // *************************************************************************
-    class StepExp : public BooleanExp
-    {
-    public:
-
-        //! \param[in] name Step (aka place) name, i.e. "X0".
-        StepExp(Net& net, std::string const& name);
-        bool evaluate() const override;
-
-    private:
-
-        Net& m_net;
-        //! \brief Place ID. The GRAFCET net shall no remove the place to let this
-        //! ID valid.
-        size_t m_id;
-    };
-
-    // *************************************************************************
-    //! \brief Expression for cross-graph step references in GRAFCET.
-    //! Syntax: "GraphName:Xn" where GraphName is the net name and n is step id.
-    //! Example: "Security:X5" refers to step X5 in the "Security" graph.
-    // *************************************************************************
-    class CrossGraphStepExp : public BooleanExp
-    {
-    public:
-
-        //! \param[in] graph_name Name of the target graph/net.
-        //! \param[in] step_name Step name (e.g. "X5").
-        CrossGraphStepExp(std::string const& graph_name, std::string const& step_name);
-        bool evaluate() const override;
-
-    private:
-
-        std::string m_graph_name;
-        size_t m_step_id;
-    };
-
-    // *************************************************************************
-    //! \brief Expression for sensor variable name (i.e. "foo")
-    // *************************************************************************
-    class VariableExp : public BooleanExp
-    {
-    public:
-
-        explicit VariableExp(std::string const& name)
-            : m_name(name)
-        {}
-
-        bool evaluate() const override;
-
-    private:
-
-        std::string m_name;
-    };
-
-    // *************************************************************************
-    //! \brief Expression for constant (i.e. "true" and "false")
-    // *************************************************************************
-    class ConstExp : public BooleanExp
-    {
-    public:
-
-        explicit ConstExp(std::string const& operand);
-        bool evaluate() const override
-        {
-            return m_operand;
-        }
-
-    private:
-
-        bool m_operand;
-    };
-
-    // *************************************************************************
-    //! \brief Expression for negation (i.e. "foo !")
-    // *************************************************************************
-    class NotExp : public BooleanExp
-    {
-    public:
-
-        explicit NotExp(std::shared_ptr<BooleanExp> operand)
-            : m_operand(operand)
-        {}
-
-        bool evaluate() const override
-        {
-            return !m_operand->evaluate();
-        }
-
-    private:
-
-        std::shared_ptr<BooleanExp> m_operand;
-    };
-
-    // *************************************************************************
-    //! \brief Expression for logical AND (i.e. "a b .")
-    // *************************************************************************
-    class AndExp : public BooleanExp
-    {
-    public:
-
-        explicit AndExp(std::shared_ptr<BooleanExp> op1, std::shared_ptr<BooleanExp> op2)
-            : m_operand1(op1), m_operand2(op2)
-        {}
-
-        bool evaluate() const override
-        {
-            return m_operand1->evaluate() && m_operand2->evaluate();
-        }
-
-    private:
-
-        std::shared_ptr<BooleanExp> m_operand1;
-        std::shared_ptr<BooleanExp> m_operand2;
-    };
-
-    // *************************************************************************
-    //! \brief Expression for logical OR (i.e. "a b +")
-    // *************************************************************************
-    class OrExp : public BooleanExp
-    {
-    public:
-
-        OrExp(std::shared_ptr<BooleanExp> op1, std::shared_ptr<BooleanExp> op2)
-            : m_operand1(op1), m_operand2(op2)
-        {}
-
-        bool evaluate() const override
-        {
-            return m_operand1->evaluate() || m_operand2->evaluate();
-        }
-
-    private:
-
-        std::shared_ptr<BooleanExp> m_operand1;
-        std::shared_ptr<BooleanExp> m_operand2;
-    };
-
-    // *****************************************************************************
-    //! \brief Quick Reverse Polish Notation parser of boolean expression set inside
-    //! GRAFCET transitions (i.e. "a b . X0 + !" for "not((a and b) or X0)").
-    //! \fixme Currently management of bad syntax is not made (assert and throw).
-    // *****************************************************************************
-    class Parser
-    {
-    public:
-
-        //--------------------------------------------------------------------------
-        //! \brief Translate the given RPN code of the receptivity to a desired
-        //! language. Currently supported languages are:
-        //!  - C language "C"
-        //!  - Structure Text language "ST".
-        //--------------------------------------------------------------------------
-        static std::string translate(std::string const& code, std::string const& lang);
-
-        //--------------------------------------------------------------------------
-        //! \brief Parse a postfix notation into an AST.
-        //--------------------------------------------------------------------------
-        static std::shared_ptr<BooleanExp> compile(std::string const& code, Net& net, std::string& error);
-
-    private:
-
-        static bool isBinaryOperator(std::string const& token);
-        static bool isUnitaryOperator(std::string const& token);
-        static bool isConst(std::string const& token);
-        static bool isState(std::string const& token);
-        static bool isCrossGraphState(std::string const& token);
-        static bool isVariable(std::string const& token);
-        static std::vector<std::string> tokenizer(std::string const& s, std::string const& delimiter);
-        static std::string convert(std::string const& token, std::string const& lang);
-    };
+    void tick(float dt) { if (m_ast) m_ast->tick(dt); }
+    void endOfInstant() { if (m_ast) m_ast->endOfInstant(); }
+    void endOfCycle() { if (m_ast) m_ast->endOfCycle(); }
 
 private:
 
     //! \brief Valid or invalid syntax (invalid may also mean not parsed).
     bool m_valid = false;
-    //! \brief Abstract syntax tree of the boolean expression (GRAFCET transitivity).
-    std::shared_ptr<BooleanExp> m_ast;
+    //! \brief Abstract syntax tree (null for an always true receptivity).
+    std::shared_ptr<Node> m_ast;
     //! \brief Parsing error
     std::string m_error;
 };

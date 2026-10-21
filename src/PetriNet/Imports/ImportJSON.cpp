@@ -13,12 +13,93 @@
 #include <sstream>
 #include <fstream>
 #include <cstring>
+#include <map>
+#include <vector>
 
 namespace tpne {
 
 //------------------------------------------------------------------------------
+//! \brief Files before revision 5 wrote GRAFCET receptivities in reverse
+//! polish notation ("a b . !"). Return the infix form ("/(a . b)"), or the
+//! code itself if it is not in this notation.
+static std::string rpnToInfix(std::string const& code)
+{
+    std::vector<std::string> tokens;
+    std::istringstream stream(code);
+    std::string token;
+    while (stream >> token)
+        tokens.push_back(token);
+    if (tokens.size() < 2u)
+        return code;
+
+    // Operand stack: text and whether it is a compound expression.
+    std::vector<std::pair<std::string, bool>> stack;
+    for (auto const& t : tokens)
+    {
+        if ((t == ".") || (t == "+"))
+        {
+            if (stack.size() < 2u)
+                return code;
+            auto right = stack.back(); stack.pop_back();
+            auto left = stack.back(); stack.pop_back();
+            auto const wrap = [&t](std::pair<std::string, bool> const& e) {
+                // "a + b" inside an and needs parentheses.
+                return (e.second && (t == ".")) ? "(" + e.first + ")" : e.first;
+            };
+            stack.push_back({ wrap(left) + " " + t + " " + wrap(right), t == "+" });
+        }
+        else if (t == "!")
+        {
+            if (stack.empty())
+                return code;
+            auto operand = stack.back(); stack.pop_back();
+            bool const simple = (operand.first.find(' ') == std::string::npos);
+            stack.push_back({ "/" + (simple ? operand.first : "(" + operand.first + ")"), false });
+        }
+        else
+        {
+            stack.push_back({ t, false });
+        }
+    }
+    return (stack.size() == 1u) ? stack.back().first : code;
+}
+
+//------------------------------------------------------------------------------
+//! \brief Read a GRAFCET action.
+static Action parseAction(nlohmann::json const& a)
+{
+    Action action;
+    action.qualifier = strToQualifier(a.value("qualifier", "N"));
+    action.color = strToLedColor(a.value("color", "green"));
+    action.name = a.value("name", "");
+    action.script = a.value("script", "");
+    action.duration = a.value("duration", 0.0f);
+    action.condition = a.value("condition", "");
+    if (a.contains("forcing"))
+    {
+        for (nlohmann::json const& f : a["forcing"])
+        {
+            action.forcings.push_back(parseForcing(f.get<std::string>()));
+        }
+    }
+    return action;
+}
+
+//------------------------------------------------------------------------------
+//! \brief Read GRAFCET inputs: [{ "name": "a", "initial": 0 }, ...]. Old files
+//! used "sensors" with "value".
+static void parseInputs(nlohmann::json const& jinputs, std::map<std::string, int>& inputs)
+{
+    for (nlohmann::json const& i : jinputs)
+    {
+        std::string const name = i["name"];
+        inputs[name] = i.value("initial", i.value("value", 0));
+    }
+}
+
+//------------------------------------------------------------------------------
 // Helper function to parse a single net from JSON
-static std::string parseNetFromJSON(Net& net, nlohmann::json const& jnet)
+static std::string parseNetFromJSON(Net& net, nlohmann::json const& jnet, int const revision)
 {
     std::stringstream error;
 
@@ -39,28 +120,20 @@ static std::string parseNetFromJSON(Net& net, nlohmann::json const& jnet)
         {
             for (nlohmann::json const& a : p["actions"])
             {
-                Action action;
-                action.qualifier = strToQualifier(a.value("qualifier", "N"));
-                action.color = strToLedColor(a.value("color", "green"));
-                action.name = a.value("name", "");
-                action.script = a.value("script", "");
-                action.duration = a.value("duration", 0.0f);
-                // Parse forcings
-                if (a.contains("forcing"))
-                {
-                    for (nlohmann::json const& f : a["forcing"])
-                    {
-                        action.forcings.push_back(parseForcing(f.get<std::string>()));
-                    }
-                }
-                place.actions.push_back(action);
+                place.actions.push_back(parseAction(a));
             }
         }
     }
 
-    // Transitions
+    // Transitions. GRAFCET receptivities were in reverse polish notation
+    // before revision 5.
+    bool const old_grafcet = (net.type() == TypeOfNet::GRAFCET) && (revision < 5);
     for (nlohmann::json const& t : jnet["transitions"]) {
-        net.addTransition(t["id"], t["caption"], t["x"], t["y"]);
+        std::string caption = t["caption"];
+        if (old_grafcet)
+            caption = rpnToInfix(caption);
+        Transition& transition = net.addTransition(t["id"], caption, t["x"], t["y"]);
+        transition.delay = t.value("delay", 0.0f);
     }
 
     // Arcs
@@ -102,24 +175,16 @@ static std::string parseNetFromJSON(Net& net, nlohmann::json const& jnet)
             Place* place = net.findPlace(place_id);
             if (place != nullptr)
             {
-                Action action;
-                action.qualifier = strToQualifier(a.value("qualifier", "N"));
-                action.color = strToLedColor(a.value("color", "green"));
-                action.name = a.value("name", "");
-                action.script = a.value("script", "");
-                action.duration = a.value("duration", 0.0f);
-                // Parse forcings
-                if (a.contains("forcing"))
-                {
-                    for (nlohmann::json const& f : a["forcing"])
-                    {
-                        action.forcings.push_back(parseForcing(f.get<std::string>()));
-                    }
-                }
-                place->actions.push_back(action);
+                place->actions.push_back(parseAction(a));
             }
         }
     }
+
+    // GRAFCET inputs of this net
+    if (jnet.contains("inputs"))
+        parseInputs(jnet["inputs"], net.inputs);
+    else if (jnet.contains("sensors"))
+        parseInputs(jnet["sensors"], net.inputs);
 
     net.resetReceptivies();
     return {};
@@ -178,11 +243,12 @@ std::string importAllNetsFromJSON(std::vector<Net>& nets, std::string const& fil
     }
 
     // Parse all nets
+    int const revision = json.value("revision", 0);
     nets.clear();
     for (nlohmann::json const& jnet : json["nets"])
     {
         Net net(netType);
-        std::string parseError = parseNetFromJSON(net, jnet);
+        std::string parseError = parseNetFromJSON(net, jnet, revision);
         if (!parseError.empty())
         {
             error << "Failed parsing '" << filename << "'. Reason: '" << parseError << "'" << std::endl;
@@ -191,39 +257,13 @@ std::string importAllNetsFromJSON(std::vector<Net>& nets, std::string const& fil
         nets.push_back(net);
     }
 
-    // GRAFCET inputs (shared between all nets)
-    Sensors::instance().clear();
+    // GRAFCET inputs shared between all nets of the document.
     if (json.contains("inputs"))
     {
-        for (nlohmann::json const& i : json["inputs"])
-        {
-            std::string name = i["name"];
-            int initial = i.value("initial", 0);
-            Sensors::instance().set(name, initial);
-        }
-    }
-    // Also check in first net for backward compatibility
-    else if (!nets.empty())
-    {
-        nlohmann::json const& jnet = json["nets"][0];
-        if (jnet.contains("inputs"))
-        {
-            for (nlohmann::json const& i : jnet["inputs"])
-            {
-                std::string name = i["name"];
-                int initial = i.value("initial", 0);
-                Sensors::instance().set(name, initial);
-            }
-        }
-        else if (jnet.contains("sensors"))
-        {
-            for (nlohmann::json const& s : jnet["sensors"])
-            {
-                std::string name = s["name"];
-                int value = s.value("value", s.value("initial", 0));
-                Sensors::instance().set(name, value);
-            }
-        }
+        std::map<std::string, int> inputs;
+        parseInputs(json["inputs"], inputs);
+        for (auto& net : nets)
+            net.inputs.insert(inputs.begin(), inputs.end());
     }
 
     return {};
