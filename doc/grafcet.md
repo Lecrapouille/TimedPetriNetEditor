@@ -9,16 +9,37 @@ generating GRAFCET in a single C++ header file. Since my project mainly concerns
 timed Petri net, the editor is not intended to follow all the GRAFCET norms
 (GitHub pull requests are welcome).
 
-Inside the editor, set your net type to GRAFCET and you can add code inside transitions caption using the postfix notation aka Reverse Polish Notation (RPN): operators follow their operands.
+Inside the editor, set your net type to GRAFCET. Transitions captions are the
+receptivities, written with the IEC 60848 notation (files saved before the
+revision 5 used reverse polish notation; they are converted when loaded):
 
-| Operator name     | Symbol |
-| And operator      |   .    |
-| Or operator       |   +    |
-| Negation operator |   !    |
-| Step 42           |   X42  |
-| Sensor name       | any consecutive char |
-| True operand      | true   |
-| False operand:    | false  |
+| What                       | Syntax                                     |
+|----------------------------|--------------------------------------------|
+| And, or, not               | `a . b`, `a + b`, `/a` (also `*`, `!`, `and`, `or`, `not`) |
+| Constants                  | `1`, `0`, `true`, `false`                  |
+| Step 42 is active          | `X42`                                      |
+| Step of another graph      | `Safety:X3`                                |
+| Rising / falling edge      | `↑a` (`^a`, `rising(a)`), `↓a` (`falling(a)`) |
+| Time                       | `3s/X2`, `2s/a/5s` (units `ms`, `s`, `min`, `h`) |
+| Integer input              | `[count >= 3]` (`=`, `!=`, `<`, `<=`, `>`, `>=`) |
+| Inputs                     | `Dcy`, `sensor_2`, `holding(cube)` ...     |
+
+Precedence: not, then and, then or. An empty receptivity is always true.
+
+How the GRAFCET runs (class `GrafcetEngine`, usable without the editor):
+- all the transitions that can fire fire together; a step activated and
+  deactivated at the same time stays active;
+- after a change of inputs, graphs evolve until they are stable before actions
+  are computed (an edge is seen during one instant only);
+- actions: `N` continuous, `S`/`R` stored by name, `D` delayed, `L` limited,
+  `SD`, `DS`, `SL` stored and timed, `P1`/`P0` pulse on activation /
+  deactivation. An action can have a condition (same syntax);
+- forcing orders (`Production:{init}`, `{*}`, `{}`, `{2,8}`) are continuous
+  actions with priority: the forced graph takes the situation and does not
+  evolve while forced.
+
+The C++ export below does not support edges and time operators yet.
+
 
 Example `a X0 ! .` means `and(a, not(X0))`.
 
