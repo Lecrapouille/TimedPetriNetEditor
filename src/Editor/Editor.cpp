@@ -213,8 +213,6 @@ void Editor::closeDocument(Document const* doc)
     {
         if (m_documents[i].get() == doc)
         {
-            // Unregister nets from the global registry before closing
-            doc->unregisterNets();
             m_documents.erase(m_documents.begin() + static_cast<ptrdiff_t>(i));
             if (m_active_document_index >= m_documents.size() && !m_documents.empty())
             {
@@ -366,11 +364,15 @@ void Editor::onUpdate(float const dt)
         title(m_states.title + " -- " + entry.net.name);
     }
 
-    // Check GRAFCET receptivities once per change of the net, not per frame.
-    if ((entry.net.type() == TypeOfNet::GRAFCET) &&
-        (entry.checked_revision != entry.net.modified.revision()))
+    // Check GRAFCET receptivities once per change of the net, not per frame,
+    // and give the GRAFCET nets (their inputs ...) to the document engine.
+    if (entry.checked_revision != entry.net.modified.revision())
     {
-        entry.simulation->validateReceptivities();
+        if (entry.net.type() == TypeOfNet::GRAFCET)
+        {
+            entry.simulation->validateReceptivities();
+        }
+        activeDocument().registerNets();
         entry.checked_revision = entry.net.modified.revision();
     }
 
@@ -561,6 +563,13 @@ void Editor::messagebox() const
 //------------------------------------------------------------------------------
 void Editor::toogleStartSimulation()
 {
+    // The GRAFCET graphs of a document run together (shared engine).
+    if (net().type() == TypeOfNet::GRAFCET)
+    {
+        toogleStartAllSimulations();
+        return;
+    }
+
     if (simulation().isRunning())
         simulation().stop();
     else
@@ -607,6 +616,7 @@ bool Editor::switchOfNet(TypeOfNet const type)
     if (convertTo(net(), type, error_msg, arcs))
     {
         simulation().validateReceptivities();
+        activeDocument().registerNets();
         return true;
     }
 

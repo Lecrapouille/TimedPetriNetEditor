@@ -32,9 +32,6 @@
 
 namespace tpne {
 
-// Static member initialization
-Simulation::ActionState Simulation::s_dummy_action_state;
-
 //------------------------------------------------------------------------------
 static const char* current_time()
 {
@@ -46,9 +43,19 @@ static const char* current_time()
 
 //------------------------------------------------------------------------------
 Simulation::Simulation(Net& net)
-    : m_net(net)
+    : m_net(net), m_own_engine(std::make_unique<GrafcetEngine>())
 {
+    m_engine = m_own_engine.get();
     m_timed_tokens.reserve(128u);
+}
+
+//------------------------------------------------------------------------------
+Simulation::~Simulation() = default;
+
+//------------------------------------------------------------------------------
+void Simulation::grafcet(GrafcetEngine* shared)
+{
+    m_engine = (shared != nullptr) ? shared : m_own_engine.get();
 }
 
 //------------------------------------------------------------------------------
@@ -66,11 +73,42 @@ void Simulation::stop()
 //------------------------------------------------------------------------------
 Simulation::ActionState const& Simulation::actionState(size_t place_id, size_t action_index) const
 {
-    auto key = std::make_pair(place_id, action_index);
-    auto it = m_action_states.find(key);
-    if (it != m_action_states.end())
-        return it->second;
-    return s_dummy_action_state;
+    return m_engine->actionState(m_net, place_id, action_index);
+}
+
+//------------------------------------------------------------------------------
+Receptivity const* Simulation::receptivity(size_t transition_id) const
+{
+    return m_engine->receptivity(m_net, transition_id);
+}
+
+//------------------------------------------------------------------------------
+float Simulation::transitionDelayTimer(size_t transition_id) const
+{
+    if (m_net.type() == TypeOfNet::GRAFCET)
+        return m_engine->transitionTimer(m_net, transition_id);
+    return transition_id < m_transition_delay_timers.size()
+        ? m_transition_delay_timers[transition_id] : 0.0f;
+}
+
+//------------------------------------------------------------------------------
+bool Simulation::isFrozen() const
+{
+    return m_engine->isFrozen(m_net);
+}
+
+//------------------------------------------------------------------------------
+bool Simulation::isInitialStep(size_t place_id) const
+{
+    std::vector<size_t> const& initial = m_engine->isRunning()
+        ? m_engine->initialMarking(m_net) : m_initial_tokens;
+    return place_id < initial.size() && initial[place_id] > 0;
+}
+
+//------------------------------------------------------------------------------
+bool Simulation::hasInitialMarking() const
+{
+    return !m_initial_tokens.empty() || !m_engine->initialMarking(m_net).empty();
 }
 
 //------------------------------------------------------------------------------
@@ -88,10 +126,6 @@ void Simulation::initializeRuntimeState()
     // Clear animated tokens
     m_timed_tokens.clear();
 
-    // Initialize place activation states
-    m_place_was_active.clear();
-    m_place_was_active.resize(m_net.places().size(), false);
-
     // Initialize transition delay timers
     m_transition_delay_timers.clear();
     m_transition_delay_timers.resize(m_net.transitions().size(), 0.0f);
@@ -99,18 +133,6 @@ void Simulation::initializeRuntimeState()
     // Initialize arc token counts
     m_arc_token_counts.clear();
     m_arc_token_counts.resize(m_net.arcs().size(), 0u);
-
-    // Initialize action states
-    m_action_states.clear();
-    for (auto const& place : m_net.places())
-    {
-        for (size_t i = 0; i < place.actions.size(); ++i)
-        {
-            m_action_states[std::make_pair(place.id, i)] = ActionState{};
-        }
-    }
-
-    m_frozen = false;
 
     m_sim_time = 0.0f;
     m_firing_dates.assign(m_net.transitions().size(), {});
@@ -178,12 +200,25 @@ void Simulation::handleIdleState()
     // Initialize simulation state
     initializeRuntimeState();
 
-    // Reset receptivities and compile for GRAFCET
+    // GRAFCET: compile receptivities and start the engine (shared with the
+    // other graphs of the document, it may already run).
     m_net.resetReceptivies();
-    if (!compileReceptivities())
+    if (m_net.type() == TypeOfNet::GRAFCET)
     {
-        m_running = false;
-        return;
+        if (m_engine == m_own_engine.get())
+        {
+            m_engine->graphs({ &m_net });
+            m_engine->onWarning = [this](std::string const& msg) { onWarning.emit(msg); };
+        }
+        if (!m_engine->isRunning() && !m_engine->start())
+        {
+            for (auto const& error : m_engine->errors())
+                onWarning.emit(error);
+            m_has_receptivity_errors = true;
+            m_running = false;
+            return;
+        }
+        m_has_receptivity_errors = false;
     }
 
     std::cout << current_time() << "Simulation has started!" << std::endl;
@@ -215,12 +250,13 @@ void Simulation::handleHaltingState()
     onInfo.emit("Simulation has ended!");
     std::cout << current_time() << "Simulation has ended!" << std::endl << std::endl;
 
+    if ((m_net.type() == TypeOfNet::GRAFCET) && m_engine->isRunning())
+    {
+        m_engine->stop();
+    }
     restoreInitialMarking();
     m_net.resetReceptivies();
-    m_receptivities.clear();
     m_timed_tokens.clear();
-    m_action_states.clear();
-    Sensors::instance().clear();
 
     m_state = State::Idle;
     onStopped.emit();
@@ -244,70 +280,26 @@ void Simulation::handleSimulatingState(float const dt)
         return;
     }
 
-    // Skip simulation if net is frozen by a forcing command
-    if (m_frozen)
+    m_sim_time += dt;
+
+    // GRAFCET: the engine evolves the graphs (instantaneous firing, no token
+    // animation). A shared engine is stepped once per cycle by its owner.
+    if (m_net.type() == TypeOfNet::GRAFCET)
     {
-        if (m_net.type() == TypeOfNet::GRAFCET)
+        if (m_engine == m_own_engine.get())
         {
-            updateGrafcetActions(dt);
+            m_engine->step(dt);
+        }
+        if (!m_engine->isRunning())
+        {
+            m_running = false;
         }
         return;
     }
 
-    m_sim_time += dt;
-
-    evaluateReceptivities();
     updateTransitionDelayTimers(dt);
     fireTransitions();
     animateTokens(dt);
-
-    if (m_net.type() == TypeOfNet::GRAFCET)
-    {
-        updateGrafcetActions(dt);
-    }
-}
-
-//------------------------------------------------------------------------------
-bool Simulation::compileReceptivities()
-{
-    if (m_net.type() != TypeOfNet::GRAFCET)
-    {
-        m_has_receptivity_errors = false;
-        return true;
-    }
-
-    // Save existing sensor values
-    std::map<std::string, int, std::less<>> saved_values;
-    for (const auto& [key, value] : Sensors::instance().database())
-    {
-        saved_values[key] = value;
-    }
-
-    m_receptivities.clear();
-
-    bool all_ok = true;
-    for (auto const& trans : m_net.transitions())
-    {
-        std::string error = m_receptivities[trans.id].compile(trans.caption, m_net);
-        if (!error.empty())
-        {
-            onWarning.emit(trans.key + ": " + error);
-            all_ok = false;
-        }
-    }
-
-    // Restore saved sensor values
-    for (const auto& [key, value] : saved_values)
-    {
-        auto& db = Sensors::instance().database();
-        if (db.find(key) != db.end())
-        {
-            db[key] = value;
-        }
-    }
-
-    m_has_receptivity_errors = !all_ok;
-    return all_ok;
 }
 
 //------------------------------------------------------------------------------
@@ -322,12 +314,12 @@ bool Simulation::validateReceptivities()
     bool all_ok = true;
     for (auto const& trans : m_net.transitions())
     {
-        Receptivity temp;
-        std::string error = temp.compile(trans.caption, m_net);
-        if (!error.empty())
-        {
-            all_ok = false;
-        }
+        all_ok &= Receptivity::check(trans.caption).empty();
+    }
+    for (auto const& place : m_net.places())
+    {
+        for (auto const& action : place.actions)
+            all_ok &= Receptivity::check(action.condition).empty();
     }
 
     m_has_receptivity_errors = !all_ok;
@@ -338,30 +330,6 @@ bool Simulation::validateReceptivities()
 bool Simulation::hasReceptivityErrors() const
 {
     return m_net.type() == TypeOfNet::GRAFCET && m_has_receptivity_errors;
-}
-
-//------------------------------------------------------------------------------
-bool Simulation::compileReceptivity(Transition const& transition)
-{
-    std::string error = m_receptivities[transition.id].compile(transition.caption, m_net);
-    if (!error.empty())
-    {
-        onWarning.emit(error);
-        return false;
-    }
-    return true;
-}
-
-//------------------------------------------------------------------------------
-void Simulation::evaluateReceptivities()
-{
-    if (m_net.type() != TypeOfNet::GRAFCET)
-        return;
-
-    for (auto& t : m_net.transitions())
-    {
-        t.receptivity = m_receptivities[t.id].evaluate();
-    }
 }
 
 //------------------------------------------------------------------------------
@@ -538,251 +506,6 @@ void Simulation::restoreInitialMarking()
     if (!m_initial_tokens.empty())
     {
         m_net.tokens(m_initial_tokens);
-    }
-}
-
-//------------------------------------------------------------------------------
-void Simulation::resetStoredAction(std::string const& name)
-{
-    for (auto const& place : m_net.places())
-    {
-        for (size_t i = 0; i < place.actions.size(); ++i)
-        {
-            auto const& action = place.actions[i];
-            if (action.name == name &&
-                (action.qualifier == Action::Qualifier::S ||
-                 action.qualifier == Action::Qualifier::SD ||
-                 action.qualifier == Action::Qualifier::DS ||
-                 action.qualifier == Action::Qualifier::SL))
-            {
-                auto key = std::make_pair(place.id, i);
-                m_action_states[key].active = false;
-                m_action_states[key].timer = 0.0f;
-            }
-        }
-    }
-}
-
-//------------------------------------------------------------------------------
-void Simulation::updateGrafcetActions(float const dt)
-{
-    for (auto const& place : m_net.places())
-    {
-        bool step_active = (place.tokens > 0);
-        bool was_active = m_place_was_active[place.id];
-        bool rising_edge = step_active && !was_active;
-        bool falling_edge = !step_active && was_active;
-
-        for (size_t i = 0; i < place.actions.size(); ++i)
-        {
-            auto const& action = place.actions[i];
-            auto key = std::make_pair(place.id, i);
-            ActionState& state = m_action_states[key];
-
-            switch (action.qualifier)
-            {
-            case Action::Qualifier::N:
-                state.active = step_active;
-                if (!step_active) state.timer = 0.0f;
-                break;
-
-            case Action::Qualifier::S:
-                if (rising_edge)
-                    state.active = true;
-                break;
-
-            case Action::Qualifier::R:
-                if (step_active)
-                    resetStoredAction(action.name);
-                state.active = false;
-                break;
-
-            case Action::Qualifier::D:
-                if (step_active)
-                {
-                    state.timer += dt;
-                    state.active = (state.timer >= action.duration);
-                }
-                else
-                {
-                    state.timer = 0.0f;
-                    state.active = false;
-                }
-                break;
-
-            case Action::Qualifier::L:
-                if (step_active)
-                {
-                    if (state.timer < action.duration)
-                    {
-                        state.timer += dt;
-                        state.active = true;
-                    }
-                    else
-                    {
-                        state.active = false;
-                    }
-                }
-                else
-                {
-                    state.timer = 0.0f;
-                    state.active = false;
-                }
-                break;
-
-            case Action::Qualifier::SD:
-                if (step_active)
-                {
-                    state.timer += dt;
-                    if (state.timer >= action.duration)
-                        state.active = true;
-                }
-                else if (falling_edge)
-                {
-                    state.timer = 0.0f;
-                }
-                break;
-
-            case Action::Qualifier::DS:
-                if (step_active)
-                {
-                    state.timer += dt;
-                    if (state.timer >= action.duration)
-                        state.active = true;
-                }
-                else
-                {
-                    state.timer = 0.0f;
-                }
-                break;
-
-            case Action::Qualifier::SL:
-                if (rising_edge)
-                {
-                    state.active = true;
-                    state.timer = 0.0f;
-                }
-                if (state.active)
-                {
-                    state.timer += dt;
-                    if (state.timer >= action.duration)
-                        state.active = false;
-                }
-                break;
-
-            case Action::Qualifier::P:
-                state.active = rising_edge;
-                break;
-            }
-        }
-
-        m_place_was_active[place.id] = step_active;
-    }
-
-    applyGrafcetForcings();
-}
-
-//------------------------------------------------------------------------------
-void Simulation::applyGrafcetForcings()
-{
-    // First pass: clear frozen state on all nets
-    m_frozen = false;
-
-    // Second pass: apply forcings from active actions
-    for (auto const& place : m_net.places())
-    {
-        bool step_active = (place.tokens > 0);
-        if (!step_active) continue;
-
-        for (size_t i = 0; i < place.actions.size(); ++i)
-        {
-            auto const& action = place.actions[i];
-            auto key = std::make_pair(place.id, i);
-            ActionState const& state = m_action_states[key];
-
-            if (!state.active) continue;
-
-            for (auto const& forcing : action.forcings)
-            {
-                // Check if forcing targets this net
-                if (forcing.targetNet == m_net.name)
-                {
-                    switch (forcing.type)
-                    {
-                    case Forcing::Type::Init:
-                        restoreInitialMarking();
-                        break;
-
-                    case Forcing::Type::Freeze:
-                        m_frozen = true;
-                        break;
-
-                    case Forcing::Type::Empty:
-                        for (auto& p : m_net.places())
-                            p.tokens = 0;
-                        onInfo.emit("Forcing " + forcing.targetNet + " to empty state");
-                        break;
-
-                    case Forcing::Type::Steps:
-                        for (auto& p : m_net.places())
-                            p.tokens = 0;
-                        for (size_t step_id : forcing.steps)
-                        {
-                            Place* p = m_net.findPlace(step_id);
-                            if (p)
-                                p->tokens = 1;
-                            else
-                                onWarning.emit("Forcing step " + std::to_string(step_id) +
-                                             " not found in " + forcing.targetNet);
-                        }
-                        break;
-                    }
-                }
-                else
-                {
-                    // Cross-net forcing via registry
-                    Net* target = NetRegistry::instance().findNet(forcing.targetNet);
-                    if (target == nullptr)
-                    {
-                        onWarning.emit("Forcing target '" + forcing.targetNet + "' not found");
-                        continue;
-                    }
-
-                    switch (forcing.type)
-                    {
-                    case Forcing::Type::Init:
-                        // Cannot restore initial marking of other nets from here
-                        onWarning.emit("Cross-net Init forcing not supported");
-                        break;
-
-                    case Forcing::Type::Freeze:
-                        // Cannot freeze other nets from here
-                        onWarning.emit("Cross-net Freeze forcing not supported");
-                        break;
-
-                    case Forcing::Type::Empty:
-                        for (auto& p : target->places())
-                            p.tokens = 0;
-                        onInfo.emit("Forcing " + forcing.targetNet + " to empty state");
-                        break;
-
-                    case Forcing::Type::Steps:
-                        for (auto& p : target->places())
-                            p.tokens = 0;
-                        for (size_t step_id : forcing.steps)
-                        {
-                            Place* p = target->findPlace(step_id);
-                            if (p)
-                                p->tokens = 1;
-                            else
-                                onWarning.emit("Forcing step " + std::to_string(step_id) +
-                                             " not found in " + forcing.targetNet);
-                        }
-                        break;
-                    }
-                }
-            }
-        }
     }
 }
 

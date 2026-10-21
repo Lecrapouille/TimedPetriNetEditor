@@ -28,6 +28,8 @@
 #include <vector>
 #include <memory>
 
+#  include "PetriNet/GrafcetEngine.hpp"
+
 namespace tpne { class Simulation; }
 
 namespace tpne {
@@ -162,7 +164,7 @@ public:
     //--------------------------------------------------------------------------
     //! \brief Start simulation for all nets in this document.
     //--------------------------------------------------------------------------
-    void startAllSimulations() const;
+    void startAllSimulations();
 
     //--------------------------------------------------------------------------
     //! \brief Stop simulation for all nets in this document.
@@ -177,18 +179,26 @@ public:
     //--------------------------------------------------------------------------
     //! \brief Step all simulations forward by dt seconds.
     //--------------------------------------------------------------------------
-    void stepAllSimulations(float dt) const;
+    void stepAllSimulations(float dt);
 
     //--------------------------------------------------------------------------
-    //! \brief Register all nets in this document to the global NetRegistry.
-    //! This enables cross-graph references in receptivities.
+    //! \brief Give the GRAFCET nets of this document to the GRAFCET engine
+    //! shared by their simulations: they run together, which enables
+    //! cross-graph receptivities (Safety:X3) and forcing orders. Call it after
+    //! adding, removing or changing the type of nets.
     //--------------------------------------------------------------------------
-    void registerNets() const;
+    void registerNets();
 
     //--------------------------------------------------------------------------
-    //! \brief Unregister all nets from the global NetRegistry.
+    //! \brief Stop the GRAFCET engine and forget the nets (before clearing).
     //--------------------------------------------------------------------------
-    void unregisterNets() const;
+    void unregisterNets();
+
+    //--------------------------------------------------------------------------
+    //! \brief GRAFCET engine running all the GRAFCET nets of the document.
+    //--------------------------------------------------------------------------
+    GrafcetEngine& grafcet() { return m_grafcet; }
+    GrafcetEngine const& grafcet() const { return m_grafcet; }
 
     //--------------------------------------------------------------------------
     //! \brief Whether the document is open (for tab close handling).
@@ -198,6 +208,8 @@ public:
 private:
 
     Messages& m_messages;
+    //! \brief Engine shared by the GRAFCET nets of the document.
+    GrafcetEngine m_grafcet;
     std::string m_filepath;
     std::vector<std::unique_ptr<NetEntry>> m_nets;
     size_t m_active_net_index = 0;

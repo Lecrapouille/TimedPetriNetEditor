@@ -1,5 +1,5 @@
 {
-  "revision": 4,
+  "revision": 5,
   "type": "GRAFCET",
   "nets": [
     {
@@ -38,9 +38,9 @@
             { "place_id": 2, "qualifier": "N", "color": "green", "name": "Green LED", "script": "Green light only", "duration": 0 },
             { "place_id": 3, "qualifier": "N", "color": "red", "name": "Red LED", "script": "Red light (with yellow)", "duration": 0 },
             { "place_id": 3, "qualifier": "N", "color": "yellow", "name": "Yellow LED", "script": "Yellow light (with red)", "duration": 0 }
-       ],
-       "sensors": [
        ]
     }
+  ],
+  "inputs": [
   ]
 }

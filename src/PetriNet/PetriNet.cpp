@@ -179,6 +179,7 @@ Net::Net(Net const& other)
     m_next_place_id = other.m_next_place_id;
     m_next_transition_id = other.m_next_transition_id;
     name = other.name;
+    inputs = other.inputs;
     modified = false;
 }
 

@@ -1111,7 +1111,8 @@ void PetriView::showPlaceTooltip(Place const& place, TypeOfNet type)
                     badge_color = ImVec4(0.2f, 0.7f, 0.2f, 1.0f);
                 else if (action.qualifier == Action::Qualifier::R)
                     badge_color = ImVec4(0.8f, 0.2f, 0.2f, 1.0f);
-                else if (action.qualifier == Action::Qualifier::P)
+                else if ((action.qualifier == Action::Qualifier::P) ||
+                         (action.qualifier == Action::Qualifier::P0))
                     badge_color = ImVec4(0.6f, 0.2f, 0.6f, 1.0f);
 
                 ImGui::TextColored(badge_color, "[%s]", qual_str);

@@ -26,7 +26,9 @@
 
 #  include <cmath>
 #  include <string>
+#  include <atomic>
 #  include <deque>
+#  include <map>
 #  include <vector>
 #  include <cassert>
 #  include <sstream>
@@ -469,23 +471,40 @@ class ModifiedFlag
 {
 public:
 
+    ModifiedFlag() : m_revision(nextRevision()) {}
+    ModifiedFlag(ModifiedFlag const&) : m_revision(nextRevision()) {}
+
+    ModifiedFlag& operator=(ModifiedFlag const& other)
+    {
+        m_value = other.m_value;
+        m_revision = nextRevision();
+        return *this;
+    }
+
     ModifiedFlag& operator=(bool const value)
     {
         m_value = value;
         if (value)
-            ++m_revision;
+            m_revision = nextRevision();
         return *this;
     }
 
     operator bool() const { return m_value; }
 
-    //! \brief Number of changes made to the net since it was created.
+    //! \brief Changes when the net changes. Unique among all nets, so a net
+    //! rebuilt at the same address does not reuse an old revision.
     size_t revision() const { return m_revision; }
 
 private:
 
+    static size_t nextRevision()
+    {
+        static std::atomic<size_t> counter{0u};
+        return ++counter;
+    }
+
     bool m_value = false;
-    size_t m_revision = 0u;
+    size_t m_revision;
 };
 
 // *****************************************************************************
@@ -812,6 +831,10 @@ public:
 
     //! \brief Name of Petri net given by its filename once load() has been called.
     std::string name;
+    //! \brief GRAFCET only: inputs (sensors, buttons ...) declared with their
+    //! initial value. Inputs read by receptivities but not declared here
+    //! start at 0.
+    std::map<std::string, int> inputs;
     //! \brief Editor has changed content and save is needed. Each time it is
     //! set to true, modified.revision() increases: caches of results computed
     //! from the net (analysis, compiled receptivities) compare it.
