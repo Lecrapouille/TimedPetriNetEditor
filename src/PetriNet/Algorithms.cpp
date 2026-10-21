@@ -190,7 +190,7 @@ void toSysLin(Net const& net,
             Place& p = *reinterpret_cast<Place*>(&(arc.to));
             for (auto& a: p.arcsOut)
             {
-                // System inputs: B U(n)
+                // System inputs: B U(k)
                 Transition& to = *reinterpret_cast<Transition*>(&(a->to));
                 B.set(indices[to.id], indices[from.id],
                       static_cast<double>(arc.duration));
@@ -204,7 +204,7 @@ void toSysLin(Net const& net,
                 Transition& to = *reinterpret_cast<Transition*>(&(a->to));
                 if (to.isState())
                 {
-                    // Systems states: X(n) = D X(n) (+) A X(n-1)
+                    // Systems states: X(k) = D X(k) (+) A X(k-1)
                     if (p.tokens == 1u)
                     {
                         A.set(indices[to.id], indices[from.id],
@@ -218,7 +218,7 @@ void toSysLin(Net const& net,
                 }
                 else if (to.isOutput())
                 {
-                    // System outputs: Y(n) = C X(n)
+                    // System outputs: Y(k) = C X(k)
                     C.set(indices[to.id], indices[from.id],
                           static_cast<double>(arc.duration));
                 }
@@ -370,7 +370,7 @@ std::stringstream showDaterEquation(Net const& net, std::string const& comment,
         if (t.arcsIn.size() == 0u)
             continue;
 
-        ss << comment << (use_caption ? t.caption : t.key) << "(n) = ";
+        ss << comment << (use_caption ? t.caption : t.key) << "(k) = ";
         ss << (maxplus_notation ? "" : "max(");
         std::string separator1;
         for (auto const& ai: t.arcsIn)
@@ -384,7 +384,7 @@ std::stringstream showDaterEquation(Net const& net, std::string const& comment,
                 {
                     ss << ao->duration << (maxplus_notation ? " " : " + ");
                 }
-                ss << (use_caption ? ao->from.caption : ao->from.key) << "(n";
+                ss << (use_caption ? ao->from.caption : ao->from.key) << "(k";
                 if (ai->tokensIn() != 0u)
                 {
                     ss << " - " << ai->tokensIn();

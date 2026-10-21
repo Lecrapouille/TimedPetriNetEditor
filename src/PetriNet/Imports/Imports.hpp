@@ -14,11 +14,15 @@
 namespace tpne {
 
 class Net;
+struct DocumentInfo;
 
 //! \brief JSON is the main format used for saving Petri by this editor.
 std::string importFromJSON(Net& net, std::string const& filename);
-//! \brief Import all nets from a JSON file (for multi-net documents)
-std::string importAllNetsFromJSON(std::vector<Net>& nets, std::string const& filename);
+//! \brief Import all nets from a JSON file (for multi-net documents). When
+//! info is not null, it receives the description of the document and of its
+//! GRAFCET inputs and outputs.
+std::string importAllNetsFromJSON(std::vector<Net>& nets, std::string const& filename,
+                                  DocumentInfo* info = nullptr);
 //! \brief Import http://www.cmap.polytechnique.fr/~gaubert/HOWARD2.html
 std::string importFromTimedEventGraph(Net& net, std::string const& filename);
 //! \brief Import https://gitlab.com/porky11/pn-editor

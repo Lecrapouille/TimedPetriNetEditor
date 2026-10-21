@@ -19,9 +19,9 @@
 namespace tpne {
 
 //------------------------------------------------------------------------------
-//! \brief Files before revision 5 wrote GRAFCET receptivities in reverse
-//! polish notation ("a b . !"). Return the infix form ("/(a . b)"), or the
-//! code itself if it is not in this notation.
+//! \brief Old files wrote GRAFCET receptivities in reverse polish notation
+//! ("a b . !"). Return the infix form ("/(a . b)"), or the code itself if it
+//! is not in this notation.
 static std::string rpnToInfix(std::string const& code)
 {
     std::vector<std::string> tokens;
@@ -86,20 +86,54 @@ static Action parseAction(nlohmann::json const& a)
 }
 
 //------------------------------------------------------------------------------
-//! \brief Read GRAFCET inputs: [{ "name": "a", "initial": 0 }, ...]. Old files
-//! used "sensors" with "value".
-static void parseInputs(nlohmann::json const& jinputs, std::map<std::string, int>& inputs)
+//! \brief Read GRAFCET inputs: [{ "name": "a", "kind": "button", "initial": 0,
+//! "description": "..." }, ...]. Old files used "sensors" with "value".
+//! The initial values go to `inputs`, the whole descriptions to `described`
+//! when it is not null.
+static void parseInputs(nlohmann::json const& jinputs, std::map<std::string, int>& inputs,
+                        std::vector<GrafcetInput>* described)
 {
     for (nlohmann::json const& i : jinputs)
     {
-        std::string const name = i["name"];
-        inputs[name] = i.value("initial", i.value("value", 0));
+        GrafcetInput input;
+        input.name = i["name"];
+        input.initial = i.value("initial", i.value("value", 0));
+        inputs[input.name] = input.initial;
+        if (described == nullptr)
+            continue;
+        input.kind = strToInputKind(i.value("kind", "switch"));
+        input.description = i.value("description", "");
+        input.group = i.value("group", "");
+        input.color = i.value("color", "");
+        input.min = i.value("min", 0);
+        input.max = i.value("max", 100);
+        input.unit = i.value("unit", "");
+        input.driven_by = i.value("driven_by", "");
+        input.rise = i.value("rise", 0.0f);
+        input.fall = i.value("fall", 0.0f);
+        input.period = i.value("period", 1.0f);
+        described->push_back(input);
+    }
+}
+
+//------------------------------------------------------------------------------
+//! \brief Read GRAFCET outputs: [{ "name": "Motor", "kind": "motor",
+//! "description": "..." }, ...].
+static void parseOutputs(nlohmann::json const& joutputs, std::vector<GrafcetOutput>& outputs)
+{
+    for (nlohmann::json const& o : joutputs)
+    {
+        GrafcetOutput output;
+        output.name = o["name"];
+        output.kind = strToOutputKind(o.value("kind", "light"));
+        output.description = o.value("description", "");
+        outputs.push_back(output);
     }
 }
 
 //------------------------------------------------------------------------------
 // Helper function to parse a single net from JSON
-static std::string parseNetFromJSON(Net& net, nlohmann::json const& jnet, int const revision)
+static std::string parseNetFromJSON(Net& net, nlohmann::json const& jnet)
 {
     std::stringstream error;
 
@@ -110,6 +144,7 @@ static std::string parseNetFromJSON(Net& net, nlohmann::json const& jnet, int co
         return error.str();
     }
     net.name = std::string(jnet["name"]);
+    net.description = jnet.value("description", "");
 
     // Places
     for (nlohmann::json const& p : jnet["places"]) {
@@ -125,12 +160,12 @@ static std::string parseNetFromJSON(Net& net, nlohmann::json const& jnet, int co
         }
     }
 
-    // Transitions. GRAFCET receptivities were in reverse polish notation
-    // before revision 5.
-    bool const old_grafcet = (net.type() == TypeOfNet::GRAFCET) && (revision < 5);
+    // Transitions. Old files wrote GRAFCET receptivities in reverse polish
+    // notation: converted when they are not a valid infix expression.
+    bool const grafcet = (net.type() == TypeOfNet::GRAFCET);
     for (nlohmann::json const& t : jnet["transitions"]) {
         std::string caption = t["caption"];
-        if (old_grafcet)
+        if (grafcet && !Receptivity::check(caption).empty())
             caption = rpnToInfix(caption);
         Transition& transition = net.addTransition(t["id"], caption, t["x"], t["y"]);
         transition.delay = t.value("delay", 0.0f);
@@ -182,16 +217,17 @@ static std::string parseNetFromJSON(Net& net, nlohmann::json const& jnet, int co
 
     // GRAFCET inputs of this net
     if (jnet.contains("inputs"))
-        parseInputs(jnet["inputs"], net.inputs);
+        parseInputs(jnet["inputs"], net.inputs, nullptr);
     else if (jnet.contains("sensors"))
-        parseInputs(jnet["sensors"], net.inputs);
+        parseInputs(jnet["sensors"], net.inputs, nullptr);
 
     net.resetReceptivies();
     return {};
 }
 
 //------------------------------------------------------------------------------
-std::string importAllNetsFromJSON(std::vector<Net>& nets, std::string const& filename)
+std::string importAllNetsFromJSON(std::vector<Net>& nets, std::string const& filename,
+                                  DocumentInfo* info)
 {
     std::stringstream error;
 
@@ -243,12 +279,11 @@ std::string importAllNetsFromJSON(std::vector<Net>& nets, std::string const& fil
     }
 
     // Parse all nets
-    int const revision = json.value("revision", 0);
     nets.clear();
     for (nlohmann::json const& jnet : json["nets"])
     {
         Net net(netType);
-        std::string parseError = parseNetFromJSON(net, jnet, revision);
+        std::string parseError = parseNetFromJSON(net, jnet);
         if (!parseError.empty())
         {
             error << "Failed parsing '" << filename << "'. Reason: '" << parseError << "'" << std::endl;
@@ -258,12 +293,20 @@ std::string importAllNetsFromJSON(std::vector<Net>& nets, std::string const& fil
     }
 
     // GRAFCET inputs shared between all nets of the document.
+    if (info != nullptr)
+        *info = DocumentInfo{};
     if (json.contains("inputs"))
     {
         std::map<std::string, int> inputs;
-        parseInputs(json["inputs"], inputs);
+        parseInputs(json["inputs"], inputs, (info != nullptr) ? &info->inputs : nullptr);
         for (auto& net : nets)
             net.inputs.insert(inputs.begin(), inputs.end());
+    }
+    if (info != nullptr)
+    {
+        info->description = json.value("description", "");
+        if (json.contains("outputs"))
+            parseOutputs(json["outputs"], info->outputs);
     }
 
     return {};

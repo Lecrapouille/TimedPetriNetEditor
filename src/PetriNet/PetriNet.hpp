@@ -806,6 +806,23 @@ protected:
     //--------------------------------------------------------------------------
     void helperRemovePlace(Node const& node);
 
+public:
+
+    //--------------------------------------------------------------------------
+    //! \brief GRAFCET: the step `from` is now numbered `to` (a removed step
+    //! gives its number to the last one): the receptivities, the conditions
+    //! and the forcing orders of this net that name it follow.
+    //--------------------------------------------------------------------------
+    void renameStep(size_t from, size_t to);
+
+    //--------------------------------------------------------------------------
+    //! \brief GRAFCET: the same in this net for the step of another graph
+    //! ("Production:X3", forcing orders of Production).
+    //--------------------------------------------------------------------------
+    void renameStepOf(std::string const& graph, size_t from, size_t to);
+
+private:
+
     //--------------------------------------------------------------------------
     //! \brief Helper method removing all arcs linked to the given node.
     //! Note: For fastest deletion, we simply swap the undesired arc with the
@@ -818,6 +835,8 @@ public:
 
     //! \brief Name of Petri net given by its filename once load() has been called.
     std::string name;
+    //! \brief What the net does, for the reader (shown by the editor).
+    std::string description;
     //! \brief GRAFCET only: inputs (sensors, buttons ...) declared with their
     //! initial value. Inputs read by receptivities but not declared here
     //! start at 0.

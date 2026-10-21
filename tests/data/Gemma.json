@@ -1,0 +1,118 @@
+{
+  "revision": 1,
+  "type": "GRAFCET",
+  "description": "GRAFCET d'un séchoir, découpé selon le GEMMA en trois graphes : Securite (arrêt d'urgence et réarmement), Controle (modes de marche : validation après panne, chauffage du four, production normale en automatique ou marche manuelle) et Production (cycle normal : le moteur gauche fait entrer les cartons, ils sèchent, le moteur droit les fait sortir). Pour démarrer : Rearm, Val, sélecteur sur Auto puis Val, attendre la température, puis Dcy.",
+  "nets": [
+    {
+       "name": "Production",
+       "description": "Production normale : le moteur gauche fait entrer les cartons pendant 30 s, ils sèchent jusqu'à l'arrêt de cycle (Acy), puis le moteur droit les fait sortir pendant 30 s.",
+       "places": [
+            { "id": 0, "caption": "Attente départ", "tokens": 1, "x": 100, "y": 60 },
+            { "id": 1, "caption": "Démarrage moteurs", "tokens": 0, "x": 100, "y": 200 },
+            { "id": 2, "caption": "Arrêt moteurs", "tokens": 0, "x": 100, "y": 340 },
+            { "id": 3, "caption": "Arrêt", "tokens": 0, "x": 100, "y": 480 }
+       ],
+       "transitions": [
+            { "id": 0, "caption": "Controle:X4 . Dcy", "x": 100, "y": 130 },
+            { "id": 1, "caption": "30s/X1", "x": 100, "y": 270 },
+            { "id": 2, "caption": "Acy", "x": 100, "y": 410 },
+            { "id": 3, "caption": "30s/X3", "x": 100, "y": 550 }
+       ],
+       "arcs": [
+            { "from": "P0", "to": "T0" },
+            { "from": "T0", "to": "P1", "duration": 0 },
+            { "from": "P1", "to": "T1" },
+            { "from": "T1", "to": "P2", "duration": 0 },
+            { "from": "P2", "to": "T2" },
+            { "from": "T2", "to": "P3", "duration": 0 },
+            { "from": "P3", "to": "T3" },
+            { "from": "T3", "to": "P0", "duration": 0 }
+       ],
+       "actions": [
+            { "place_id": 1, "qualifier": "N", "color": "green", "name": "Moteur Gauche", "script": "Fait entrer les cartons" },
+            { "place_id": 3, "qualifier": "N", "color": "green", "name": "Moteur Droit", "script": "Fait sortir les cartons" }
+       ]
+    },
+    {
+       "name": "Controle",
+       "description": "Modes de marche : après une panne, validation (Val) et débarrassage des cartons, puis choix du mode avec le sélecteur. En automatique, le four chauffe jusqu'à la température avant la production normale. En manuel, les boutons Dr et Ga commandent les moteurs et la production est maintenue dans son état initial.",
+       "places": [
+            { "id": 0, "caption": "Attente validation panne", "tokens": 1, "x": 100, "y": 60 },
+            { "id": 1, "caption": "Débarrasser cartons", "tokens": 0, "x": 100, "y": 200 },
+            { "id": 2, "caption": "Attente sélection manu ou auto", "tokens": 0, "x": 100, "y": 340 },
+            { "id": 3, "caption": "Chauffage", "tokens": 0, "x": 20, "y": 480 },
+            { "id": 4, "caption": "Production normale", "tokens": 0, "x": 20, "y": 620 },
+            { "id": 5, "caption": "Marche manuelle", "tokens": 0, "x": 300, "y": 480 }
+       ],
+       "transitions": [
+            { "id": 0, "caption": "↑Val", "x": 100, "y": 130 },
+            { "id": 1, "caption": "true", "x": 100, "y": 270 },
+            { "id": 2, "caption": "Auto . ↑Val", "x": 20, "y": 410 },
+            { "id": 3, "caption": "Manu . ↑Val", "x": 300, "y": 410 },
+            { "id": 4, "caption": "[Temperature >= 80]", "x": 20, "y": 550 },
+            { "id": 5, "caption": "Manu . ↑Val", "x": 20, "y": 690 },
+            { "id": 6, "caption": "Auto . ↑Val", "x": 300, "y": 550 }
+       ],
+       "arcs": [
+            { "from": "P0", "to": "T0" },
+            { "from": "T0", "to": "P1", "duration": 0 },
+            { "from": "P1", "to": "T1" },
+            { "from": "T1", "to": "P2", "duration": 0 },
+            { "from": "P2", "to": "T2" },
+            { "from": "P2", "to": "T3" },
+            { "from": "T2", "to": "P3", "duration": 0 },
+            { "from": "P3", "to": "T4" },
+            { "from": "T4", "to": "P4", "duration": 0 },
+            { "from": "P4", "to": "T5" },
+            { "from": "T5", "to": "P5", "duration": 0 },
+            { "from": "T3", "to": "P5", "duration": 0 },
+            { "from": "P5", "to": "T6" },
+            { "from": "T6", "to": "P0", "duration": 0 }
+       ],
+       "actions": [
+            { "place_id": 3, "qualifier": "N", "color": "orange", "name": "Four", "script": "Chauffe le séchoir" },
+            { "place_id": 5, "qualifier": "N", "color": "green", "name": "Moteur Droit", "script": "Marche manuelle du moteur droit", "condition": "Dr" },
+            { "place_id": 5, "qualifier": "N", "color": "green", "name": "Moteur Gauche", "script": "Marche manuelle du moteur gauche", "condition": "Ga" },
+            { "place_id": 5, "script": "Production maintenue dans son état initial", "forcing": ["Production:{init}"] }
+       ]
+    },
+    {
+       "name": "Securite",
+       "description": "Sécurité : tant que l'arrêt d'urgence est enfoncé, puis jusqu'au réarmement (Rearm), la production et les modes de marche sont forcés dans leur état initial.",
+       "places": [
+            { "id": 0, "caption": "Forçage GPN & GC", "tokens": 1, "x": 100, "y": 60 },
+            { "id": 1, "caption": "Attente", "tokens": 0, "x": 100, "y": 200 }
+       ],
+       "transitions": [
+            { "id": 0, "caption": "/Au . Rearm", "x": 100, "y": 130 },
+            { "id": 1, "caption": "Au", "x": 100, "y": 270 }
+       ],
+       "arcs": [
+            { "from": "P0", "to": "T0" },
+            { "from": "T0", "to": "P1", "duration": 0 },
+            { "from": "P1", "to": "T1" },
+            { "from": "T1", "to": "P0", "duration": 0 }
+       ],
+       "actions": [
+            { "place_id": 0, "script": "Production et Controle dans leur état initial", "forcing": ["Production:{init}", "Controle:{init}"] }
+       ]
+    }
+  ],
+  "inputs": [
+    { "name": "Au", "kind": "emergency", "description": "Arrêt d'urgence (coup de poing)", "initial": 0 },
+    { "name": "Rearm", "kind": "button", "description": "Réarmement après un arrêt d'urgence", "initial": 0, "color": "blue" },
+    { "name": "Val", "kind": "button", "description": "Validation (après une panne, du mode choisi)", "initial": 0, "color": "white" },
+    { "name": "Dcy", "kind": "button", "description": "Départ cycle", "initial": 0, "color": "green" },
+    { "name": "Acy", "kind": "button", "description": "Arrêt de cycle : fin du séchage", "initial": 0, "color": "red" },
+    { "name": "Ga", "kind": "button", "description": "Marche manuelle du moteur gauche", "initial": 0, "color": "black" },
+    { "name": "Dr", "kind": "button", "description": "Marche manuelle du moteur droit", "initial": 0, "color": "black" },
+    { "name": "Manu", "kind": "selector", "description": "Mode manuel", "initial": 0, "group": "Mode" },
+    { "name": "Auto", "kind": "selector", "description": "Mode automatique", "initial": 1, "group": "Mode" },
+    { "name": "Temperature", "kind": "value", "description": "Capteur de température du séchoir", "initial": 20, "min": 20, "max": 120, "unit": "°C", "driven_by": "Four", "rise": 6, "fall": 1 }
+  ],
+  "outputs": [
+    { "name": "Moteur Gauche", "kind": "motor", "description": "Convoyeur d'entrée des cartons" },
+    { "name": "Moteur Droit", "kind": "motor", "description": "Convoyeur de sortie des cartons" },
+    { "name": "Four", "kind": "heater", "description": "Résistance de chauffage du séchoir" }
+  ]
+}
