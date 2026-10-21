@@ -329,15 +329,22 @@ Arc* PetriView::getArc(ImVec2 const& position)
     Arc* closest_arc = nullptr;
     float min_dist = threshold;
 
+    bool const is_teg = (m_current_net->type() == TypeOfNet::TimedEventGraph);
     for (auto& arc : m_current_net->arcs())
     {
+        // In TimedEventGraph mode, places are hidden: a Transition -> Place ->
+        // Transition pair is drawn as one arc between the two transitions.
+        // Only the first half can be picked, else the hidden half, which lies
+        // on the same segment, could be picked instead.
+        if (is_teg && (arc.from.type == Node::Type::Place))
+            continue;
+
         ImVec2 from_pos(arc.from.x, arc.from.y);
         ImVec2 to_pos;
 
         // In TimedEventGraph mode, arcs from Transition skip the implicit Place
         // and are drawn directly to the next Transition
-        if (m_current_net->type() == TypeOfNet::TimedEventGraph &&
-            arc.from.type == Node::Type::Transition &&
+        if (is_teg && arc.from.type == Node::Type::Transition &&
             !arc.to.arcsOut.empty())
         {
             Node const& next = arc.to.arcsOut[0]->to;
@@ -904,19 +911,38 @@ void PetriView::handleEditingShortcuts(Net& net, Simulation& simulation)
     {
         bool deleted_something = false;
 
+        // Removing a node or an arc moves the others in their containers:
+        // remember the keys first, and look each one up again before removal.
         if (!m_mouse.selected_arcs.empty())
         {
+            std::vector<std::pair<std::string, std::string>> keys;
             for (auto const* arc : m_mouse.selected_arcs)
-                m_editor.removeArc(*arc);
+                keys.emplace_back(arc->from.key, arc->to.key);
             m_mouse.selected_arcs.clear();
+            for (auto const& key : keys)
+            {
+                Node* from = m_current_net->findNode(key.first);
+                Node* to = m_current_net->findNode(key.second);
+                Arc* arc = ((from != nullptr) && (to != nullptr))
+                    ? m_current_net->findArc(*from, *to) : nullptr;
+                if (arc != nullptr)
+                    m_editor.removeArc(*arc);
+            }
             deleted_something = true;
         }
 
         if (!m_mouse.selected_nodes.empty())
         {
+            std::vector<std::string> keys;
             for (auto const* node : m_mouse.selected_nodes)
-                m_editor.removeNode(const_cast<Node&>(*node));
+                keys.push_back(node->key);
             m_mouse.selected_nodes.clear();
+            for (auto const& key : keys)
+            {
+                Node* node = m_current_net->findNode(key);
+                if (node != nullptr)
+                    m_editor.removeNode(*node);
+            }
             deleted_something = true;
         }
 

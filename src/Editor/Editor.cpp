@@ -648,11 +648,21 @@ void Editor::removeNode(Node& node)
     net().removeNode(node);
     action->after(net());
     m_history.add(std::move(action));
+    net().modified = true;
 }
 
 //------------------------------------------------------------------------------
 void Editor::removeArc(Arc const& arc)
 {
+    // In a timed event graph an arc between two transitions is made of a
+    // hidden place and its two arcs: remove the place, which removes both.
+    if ((net().type() == TypeOfNet::TimedEventGraph) &&
+        (arc.to.type == Node::Type::Place))
+    {
+        removeNode(arc.to);
+        return;
+    }
+
     auto action = std::make_unique<NetModificationAction>([this]() -> Net& { return net(); });
     action->before(net());
     net().removeArc(arc);
