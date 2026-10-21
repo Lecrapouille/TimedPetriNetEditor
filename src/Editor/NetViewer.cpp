@@ -18,6 +18,10 @@
 // along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.
 //=============================================================================
 
+// ImVec2 operators (+, -, *): also defined when the host does not.
+#ifndef IMGUI_DEFINE_MATH_OPERATORS
+#  define IMGUI_DEFINE_MATH_OPERATORS
+#endif
 #include "Editor/NetViewer.hpp"
 #include "Editor/Drawable.hpp"
 #include "Editor/Theme.hpp"
