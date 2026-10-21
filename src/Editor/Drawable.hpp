@@ -35,7 +35,6 @@ void drawStepActions(ImDrawList* draw_list, Place const& place, ImVec2 const& or
                      float zoom, bool (*is_active)(size_t index, void* data) = nullptr,
                      void* data = nullptr);
 
-void drawPlot(const char* title, const char* label, std::vector<float> const& x, std::vector<float> const& y);
 
 } // namespace tpne
 

@@ -7,7 +7,6 @@
 
 #include "Editor/Drawable.hpp"
 
-#include "implot/implot.h"
 
 #include <algorithm>
 #include <cfloat>
@@ -494,17 +493,6 @@ void drawStepActions(ImDrawList* draw_list, Place const& place, ImVec2 const& or
         draw_list->AddText(font, font_size,
                            ImVec2(x0 + qualifier_width + padding, y + padding),
                            text_color, action.name.c_str());
-    }
-}
-
-//------------------------------------------------------------------------------
-void drawPlot(const char* title, const char* label, std::vector<float> const& x,
-    std::vector<float> const& y)
-{
-    if (ImPlot::BeginPlot(title))
-    {
-        ImPlot::PlotLine(label, x.data(), y.data(), static_cast<int>(x.size()));
-        ImPlot::EndPlot();
     }
 }
 
