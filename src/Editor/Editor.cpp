@@ -48,8 +48,6 @@ Editor::Editor(size_t const width, size_t const height,
  constexpr float FONT_SIZE = 13.0f;
 #endif
 
-    m_messages.setInfo("Path: " + m_path.toString());
-
     m_states.title = title;
 
     // Create initial empty document
@@ -60,7 +58,9 @@ Editor::Editor(size_t const width, size_t const height,
     // and is shared). A first start builds the default layout.
     ImGuiIO &io = ImGui::GetIO();
     std::filesystem::path const settings = settingsFolder();
-    g_ini_filename = (settings / "layout.ini").string();
+    // The name changes with the windows of the default layout: a new layout
+    // is built instead of reusing one made for other windows.
+    g_ini_filename = (settings / "layout-2.ini").string();
     g_theme_filename = (settings / "theme.ini").string();
     io.IniFilename = g_ini_filename.c_str();
     m_states.reset_layout = !std::filesystem::exists(g_ini_filename);
@@ -182,22 +182,25 @@ std::filesystem::path Editor::settingsFolder()
 //------------------------------------------------------------------------------
 void Editor::setupDefaultLayout(unsigned int const id)
 {
-    // Nets in the middle, their inspector on the right, the GRAFCET inputs
-    // and the analysis under it, the messages at the bottom.
+    // Nets in the middle, their inspector on the right, the GRAFCET control
+    // panel and the analysis under it, the console and the GRAFCET outputs
+    // at the bottom.
     ImGuiViewport const* viewport = ImGui::GetMainViewport();
     ImGui::DockBuilderRemoveNode(id);
     ImGui::DockBuilderAddNode(id, ImGuiDockNodeFlags_DockSpace);
     ImGui::DockBuilderSetNodeSize(id, viewport->WorkSize);
     ImGuiID center = id;
     ImGuiID right = ImGui::DockBuilderSplitNode(center, ImGuiDir_Right, 0.28f, nullptr, &center);
-    ImGuiID bottom = ImGui::DockBuilderSplitNode(center, ImGuiDir_Down, 0.18f, nullptr, &center);
-    ImGuiID right_bottom = ImGui::DockBuilderSplitNode(right, ImGuiDir_Down, 0.45f, nullptr, &right);
-    for (char const* name : { "Places###Places", "Transitions", "Arcs", "Actions" })
+    ImGuiID bottom = ImGui::DockBuilderSplitNode(center, ImGuiDir_Down, 0.22f, nullptr, &center);
+    ImGuiID bottom_right = ImGui::DockBuilderSplitNode(bottom, ImGuiDir_Right, 0.40f, nullptr, &bottom);
+    ImGuiID right_bottom = ImGui::DockBuilderSplitNode(right, ImGuiDir_Down, 0.52f, nullptr, &right);
+    for (char const* name : { "Document", "Places###Places", "Transitions", "Arcs", "Actions" })
         ImGui::DockBuilderDockWindow(name, right);
-    for (char const* name : { "Inputs", "Outputs", "Analysis" })
+    for (char const* name : { "Control panel", "Analysis" })
         ImGui::DockBuilderDockWindow(name, right_bottom);
-    for (char const* name : { "Console", "Message" })
-        ImGui::DockBuilderDockWindow(name, bottom);
+    ImGui::DockBuilderDockWindow("Console", bottom);
+    ImGui::DockBuilderDockWindow("Timing diagram", bottom);
+    ImGui::DockBuilderDockWindow("Outputs", bottom_right);
     for (int i = 0; i < 16; ++i)
         ImGui::DockBuilderDockWindow(("###Net" + std::to_string(i)).c_str(), center);
     ImGui::DockBuilderFinish(id);
@@ -440,6 +443,8 @@ void Editor::run(std::string const& filepath)
     {
         loadDocumentFromFile(filepath);
     }
+    if (m_start_simulation)
+        toogleStartSimulation();
 
     Application::run();
 }
@@ -473,8 +478,12 @@ void Editor::onUpdate(float const dt)
         entry.checked_revision = entry.net.modified.revision();
     }
 
-    // Step all simulations in the active document
-    activeDocument().stepAllSimulations(dt);
+    // Step all simulations in the active document, at the chosen speed. A
+    // pause freezes them (a stop is never paused: see toogleStartSimulation).
+    if (!activeDocument().isAnySimulationRunning())
+        m_states.paused = false;
+    if (!m_states.paused)
+        activeDocument().stepAllSimulations(dt * m_states.time_scale);
     m_force_directed.update();
 
     // Poll remote control for commands
@@ -580,17 +589,90 @@ void Editor::onDraw()
         m_busy_frames = BUSY_FRAMES;
     }
 
+    keepNetProportions();
     menu();
     console();
-    messagebox();
     inspector();
     view();
+    notifications();
+}
+
+//------------------------------------------------------------------------------
+void Editor::keepNetProportions()
+{
+    // Dear ImGui gives the change of size of the main window to the central
+    // node only: the last net would shrink alone. Keep the share of each net
+    // window instead (the user may change it with the splitters).
+    auto& doc = activeDocument();
+    size_t const count = doc.netCount();
+    std::vector<ImGuiDockNode*> nodes;
+    float total = 0.0f;
+    for (size_t i = 0u; i < count; ++i)
+    {
+        ImGuiWindow* window = ImGui::FindWindowByName(("###Net" + std::to_string(i)).c_str());
+        ImGuiDockNode* node = (window != nullptr) ? window->DockNode : nullptr;
+        // Only nets side by side, one per dock node.
+        if ((node == nullptr) || (node->ParentNode == nullptr) ||
+            (node->ParentNode->SplitAxis != ImGuiAxis_X) ||
+            (std::find(nodes.begin(), nodes.end(), node) != nodes.end()))
+        {
+            m_states.net_ratios.clear();
+            m_states.nets_width = 0.0f;
+            return;
+        }
+        nodes.push_back(node);
+        total += node->Size.x;
+    }
+    if ((count < 2u) || (total < 1.0f))
+    {
+        m_states.net_ratios.clear();
+        m_states.nets_width = 0.0f;
+        return;
+    }
+
+    auto& ratios = m_states.net_ratios;
+    bool const resized = (ratios.size() == count) && (m_states.nets_width > 0.0f) &&
+                         (std::fabs(total - m_states.nets_width) >= 1.0f);
+    if (resized)
+    {
+        // Applied by the docking at the next frame.
+        for (size_t i = 0u; i < count; ++i)
+            nodes[i]->SizeRef.x = std::max(1.0f, std::floor(ratios[i] * total));
+        m_busy_frames = std::max(m_busy_frames, 2);
+    }
+    else
+    {
+        ratios.resize(count);
+        for (size_t i = 0u; i < count; ++i)
+            ratios[i] = nodes[i]->Size.x / total;
+    }
+    m_states.nets_width = total;
 }
 
 //------------------------------------------------------------------------------
 void Editor::view()
 {
     auto& doc = activeDocument();
+
+    // A click in the window of a net makes it the active net at once: the
+    // focus given by Dear ImGui comes at the end of the frame (and never for
+    // the right button), so the first click would be lost.
+    ImGuiWindow const* hovered = ImGui::GetCurrentContext()->HoveredWindow;
+    bool const clicked = ImGui::IsMouseClicked(ImGuiMouseButton_Left) ||
+                         ImGui::IsMouseClicked(ImGuiMouseButton_Right) ||
+                         ImGui::IsMouseClicked(ImGuiMouseButton_Middle);
+    if (clicked && (hovered != nullptr))
+    {
+        for (size_t i = 0; i < doc.netCount(); ++i)
+        {
+            ImGuiWindow* window = ImGui::FindWindowByName(("###Net" + std::to_string(i)).c_str());
+            if ((window != nullptr) && (window == hovered) && (i != doc.activeNetIndex()))
+            {
+                doc.setActiveNetIndex(i);
+                ImGui::FocusWindow(window);
+            }
+        }
+    }
 
     for (size_t i = 0; i < doc.netCount(); ++i)
     {
@@ -614,12 +696,36 @@ void Editor::view()
 
         bool is_active_view = (i == doc.activeNetIndex());
         bool show_interactive = is_active_view && !entry.simulation->isRunning();
-        m_view.loadViewState(entry.view_state);
+        Document::ViewState& state = entry.view_state;
+        m_view.loadViewState(state);
         m_view.reshape();
-        if (entry.view_state.center_request > 0)
+        m_view.consumeUserMoved();
+
+        // The window changed size (main window, splitters, a new layout): fit
+        // the net again while the user has not moved the view, else keep the
+        // point at its center.
+        ImVec2 const size = m_view.size();
+        if ((state.canvas_width > 0.0f) &&
+            ((std::fabs(size.x - state.canvas_width) > 0.5f) ||
+             (std::fabs(size.y - state.canvas_height) > 0.5f)))
+        {
+            if (state.auto_fit)
+                state.center_request = std::max(state.center_request, 1);
+            else
+                m_view.keepCenter(ImVec2(state.canvas_width, state.canvas_height));
+        }
+        state.canvas_width = size.x;
+        state.canvas_height = size.y;
+        if (state.center_request > 0)
         {
             m_view.centerOnNet(entry.net);
-            --entry.view_state.center_request;
+            --state.center_request;
+            state.auto_fit = true;
+        }
+        if (is_active_view && (state.zoom_request != 1.0f))
+        {
+            m_view.zoomBy(state.zoom_request);
+            state.zoom_request = 1.0f;
         }
 
         if (is_active_view)
@@ -627,7 +733,10 @@ void Editor::view()
             m_view.onHandleInput(entry.net, *entry.simulation);
         }
         m_view.drawPetriNet(entry.net, *entry.simulation, show_interactive, is_active_view);
-        m_view.saveViewState(entry.view_state);
+        if (m_view.consumeUserMoved())
+            state.auto_fit = false;
+        m_view.saveViewState(state);
+
         ImGui::End();
     }
 
@@ -648,38 +757,154 @@ void Editor::close()
     m_states.request_quitting = true;
 }
 
+//! \brief Color of the messages of a level, readable on the dark and light
+//! themes.
+static ImVec4 levelColor(Messages::Level const level)
+{
+    switch (level)
+    {
+    case Messages::Level::Info: return ImGui::GetStyleColorVec4(ImGuiCol_Text);
+    case Messages::Level::Warning: return ImVec4(0.95f, 0.55f, 0.05f, 1.0f);
+    case Messages::Level::Error: return ImVec4(0.92f, 0.22f, 0.22f, 1.0f);
+    case Messages::Level::Trace: return ImVec4(0.30f, 0.60f, 0.95f, 1.0f);
+    }
+    return ImGui::GetStyleColorVec4(ImGuiCol_Text);
+}
+
+//! \brief Short name of a level.
+static char const* levelName(Messages::Level const level)
+{
+    switch (level)
+    {
+    case Messages::Level::Info: return "info";
+    case Messages::Level::Warning: return "warning";
+    case Messages::Level::Error: return "error";
+    case Messages::Level::Trace: return "simulation";
+    }
+    return "info";
+}
+
+//! \brief Message on one line: its line breaks become " | ".
+static std::string oneLine(std::string const& text)
+{
+    std::string line;
+    line.reserve(text.size());
+    for (size_t i = 0u; i < text.size(); ++i)
+    {
+        if (text[i] == '\n')
+        {
+            while ((i + 1u < text.size()) && (text[i + 1u] == ' '))
+                ++i;
+            if (i + 1u < text.size())
+                line += " | ";
+        }
+        else
+            line += text[i];
+    }
+    return line;
+}
+
+//! \brief True if the text contains the filter, ignoring the case.
+static bool containsNoCase(std::string const& text, std::string const& filter)
+{
+    if (filter.empty())
+        return true;
+    auto const it = std::search(text.begin(), text.end(), filter.begin(), filter.end(),
+        [](char a, char b) { return std::tolower(static_cast<unsigned char>(a)) ==
+                                    std::tolower(static_cast<unsigned char>(b)); });
+    return it != text.end();
+}
+
 //------------------------------------------------------------------------------
 void Editor::console()
 {
-    ImGui::Begin("Console");
-    ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, 6.f);
-    if (ImGui::Button("Clear##console_clear")) {
-        clearLogs();
+    if (!ImGui::Begin("Console"))
+    {
+        ImGui::End();
+        return;
     }
 
-    ImGui::PopStyleVar();
-    ImGui::Spacing();
+    // What to show: one toggle per level with its count, a text filter.
+    static char const* NAMES[] = { "Info", "Warnings", "Errors", "Simulation" };
+    for (size_t level = 0u; level < Messages::LEVELS; ++level)
+    {
+        bool& shown = m_states.console_levels[level];
+        std::string const label = std::string(NAMES[level]) + " " +
+            std::to_string(m_messages.count(Messages::Level(level))) + "##level" + std::to_string(level);
+        ImVec4 color = levelColor(Messages::Level(level));
+        if (!shown)
+            color.w = 0.45f;
+        ImGui::PushStyleColor(ImGuiCol_Text, color);
+        ImGui::PushStyleColor(ImGuiCol_Button, shown ? ImGui::GetStyleColorVec4(ImGuiCol_FrameBgActive)
+                                                     : ImGui::GetStyleColorVec4(ImGuiCol_FrameBg));
+        if (ImGui::SmallButton(label.c_str()))
+            shown ^= true;
+        ImGui::PopStyleColor(2);
+        if (ImGui::IsItemHovered())
+            ImGui::SetTooltip(shown ? "Click to hide these messages" : "Click to show these messages");
+        ImGui::SameLine();
+    }
+    ImGui::SetNextItemWidth(std::max(80.0f, ImGui::GetContentRegionAvail().x - 120.0f));
+    ImGui::InputTextWithHint("##console_filter", "Filter", &m_states.console_filter);
+    ImGui::SameLine();
+    bool const copy = ImGui::SmallButton("Copy");
+    if (ImGui::IsItemHovered())
+        ImGui::SetTooltip("Copy the shown messages");
+    ImGui::SameLine();
+    if (ImGui::SmallButton("Clear"))
+        clearLogs();
+    ImGui::Separator();
 
     // Newest first. Only the visible lines are drawn (the log can be long).
-    static ImVec4 const COLORS[] = {
-        ImVec4(0.0f, 1.0f, 0.0f, 1.0f), // Info
-        ImVec4(1.0f, 0.6f, 0.0f, 1.0f), // Warning
-        ImVec4(1.0f, 0.2f, 0.2f, 1.0f), // Error
-    };
-    static char const* LABELS[] = { "info", "warn", "error" };
-
     auto const& logs = getLogs();
-    ImGui::BeginChild("##console_logs");
+    std::vector<size_t> shown;
+    shown.reserve(logs.size());
+    for (size_t i = logs.size(); i-- > 0u;)
+    {
+        auto const& log = logs[i];
+        if (m_states.console_levels[size_t(log.level)] &&
+            containsNoCase(log.message, m_states.console_filter))
+            shown.push_back(i);
+    }
+    if (copy)
+    {
+        std::string text;
+        for (size_t i : shown)
+        {
+            text += logs[i].time + "[" + levelName(logs[i].level) + "] " + logs[i].message;
+            if (logs[i].count > 1u)
+                text += " (x" + std::to_string(logs[i].count) + ")";
+            text += "\n";
+        }
+        ImGui::SetClipboardText(text.c_str());
+    }
+
+    ImGui::BeginChild("##console_logs", ImVec2(0.0f, 0.0f), ImGuiChildFlags_None,
+                      ImGuiWindowFlags_HorizontalScrollbar);
+    ImVec4 const dim = ImGui::GetStyleColorVec4(ImGuiCol_TextDisabled);
     ImGuiListClipper clipper;
-    clipper.Begin(int(logs.size()));
+    clipper.Begin(int(shown.size()));
     while (clipper.Step())
     {
         for (int row = clipper.DisplayStart; row < clipper.DisplayEnd; ++row)
         {
-            auto const& log = logs[logs.size() - 1u - size_t(row)];
-            size_t const level = size_t(log.level);
-            ImGui::TextColored(COLORS[level], "%s[%s]: %s", log.time.c_str(),
-                               LABELS[level], log.message.c_str());
+            auto const& log = logs[shown[size_t(row)]];
+            ImGui::TextColored(dim, "%s", log.time.c_str());
+            ImGui::SameLine(0.0f, 0.0f);
+            ImVec4 const color = levelColor(log.level);
+            if (log.level != Messages::Level::Info)
+            {
+                ImGui::TextColored(color, "%s:", levelName(log.level));
+                ImGui::SameLine();
+            }
+            ImGui::TextColored(color, "%s", oneLine(log.message).c_str());
+            if (log.count > 1u)
+            {
+                ImGui::SameLine();
+                ImGui::TextColored(dim, "(x%zu)", log.count);
+            }
+            if ((log.message.find('\n') != std::string::npos) && ImGui::IsItemHovered())
+                ImGui::SetTooltip("%s", log.message.c_str());
         }
     }
     ImGui::EndChild();
@@ -687,16 +912,85 @@ void Editor::console()
 }
 
 //------------------------------------------------------------------------------
-void Editor::messagebox() const
+void Editor::notifications()
 {
-    ImGui::Begin("Message");
-    ImGui::TextUnformatted(getError().c_str());
-    ImGui::End();
+    // The last messages (not the traces of the simulation) for a few seconds
+    // in the bottom right corner, newest at the bottom; all are in the
+    // console.
+    static constexpr double LIFE_INFO = 3.0;
+    static constexpr double LIFE_ALERT = 6.0;
+    static constexpr int MAX_SHOWN = 3;
+    double const now = Messages::now();
+    auto const& logs = getLogs();
+    // In the bottom right corner of the nets (where the user looks), above
+    // the zoom of the last one.
+    ImGuiViewport const* viewport = ImGui::GetMainViewport();
+    ImVec2 corner = viewport->WorkPos + viewport->WorkSize - ImVec2(10.0f, 10.0f);
+    float left = viewport->WorkPos.x;
+    bool found = false;
+    for (size_t i = 0u; i < activeDocument().netCount(); ++i)
+    {
+        ImGuiWindow* window = ImGui::FindWindowByName(("###Net" + std::to_string(i)).c_str());
+        if ((window == nullptr) || !window->Active)
+            continue;
+        ImVec2 const end = window->Pos + window->Size - ImVec2(10.0f, 34.0f);
+        corner = found ? ImVec2(std::max(corner.x, end.x), std::max(corner.y, end.y)) : end;
+        left = found ? std::min(left, window->Pos.x) : window->Pos.x;
+        found = true;
+    }
+    // Never out of the screen when the nets are narrow.
+    corner.x = std::max(corner.x, std::min(left + 380.0f, viewport->WorkPos.x + viewport->WorkSize.x - 10.0f));
+    float y = corner.y;
+    float const x = corner.x;
+    int shown = 0;
+    for (size_t i = logs.size(); (i-- > 0u) && (shown < MAX_SHOWN);)
+    {
+        auto const& log = logs[i];
+        if (log.level == Messages::Level::Trace)
+            continue;
+        double const age = now - log.stamp;
+        if (age > LIFE_ALERT)
+            continue;
+        double const life = (log.level == Messages::Level::Info) ? LIFE_INFO : LIFE_ALERT;
+        if (age > life)
+            continue;
+        float const alpha = float(std::clamp((life - age) / 0.5, 0.0, 1.0));
+
+        ImGui::SetNextWindowPos(ImVec2(x, y), ImGuiCond_Always, ImVec2(1.0f, 1.0f));
+        ImGui::SetNextWindowViewport(viewport->ID);
+        ImGui::SetNextWindowBgAlpha(0.94f * alpha);
+        ImGui::PushStyleVar(ImGuiStyleVar_Alpha, alpha);
+        ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 6.0f);
+        ImGuiWindowFlags const flags = ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_AlwaysAutoResize |
+            ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoFocusOnAppearing |
+            ImGuiWindowFlags_NoNav | ImGuiWindowFlags_NoDocking | ImGuiWindowFlags_NoInputs;
+        std::string const id = "##notification" + std::to_string(shown);
+        if (ImGui::Begin(id.c_str(), nullptr, flags))
+        {
+            ImVec4 const color = levelColor(log.level);
+            ImVec2 const p = ImGui::GetWindowPos();
+            ImGui::GetWindowDrawList()->AddRectFilled(p, p + ImVec2(4.0f, ImGui::GetWindowHeight()),
+                                                      ImGui::GetColorU32(color), 6.0f,
+                                                      ImDrawFlags_RoundCornersLeft);
+            ImGui::PushTextWrapPos(ImGui::GetCursorPosX() + 340.0f);
+            if (log.level != Messages::Level::Info)
+                ImGui::TextColored(color, "%s", (log.level == Messages::Level::Error) ? "Error" : "Warning");
+            ImGui::TextUnformatted(log.message.c_str());
+            if (log.count > 1u)
+                ImGui::TextDisabled("(x%zu)", log.count);
+            ImGui::PopTextWrapPos();
+            y -= ImGui::GetWindowHeight() + 6.0f;
+        }
+        ImGui::End();
+        ImGui::PopStyleVar(2);
+        ++shown;
+    }
 }
 
 //------------------------------------------------------------------------------
 void Editor::toogleStartSimulation()
 {
+    m_states.paused = false;
     // The GRAFCET graphs of a document run together (shared engine).
     if (net().type() == TypeOfNet::GRAFCET)
     {
@@ -718,6 +1012,7 @@ void Editor::toogleStartSimulation()
 //------------------------------------------------------------------------------
 void Editor::toogleStartAllSimulations()
 {
+    m_states.paused = false;
     // Toggle simulation for all nets in the document
     if (activeDocument().isAnySimulationRunning())
     {
@@ -802,7 +1097,24 @@ void Editor::removeNode(Node& node)
 {
     auto action = std::make_unique<NetModificationAction>([this]() -> Net& { return net(); });
     action->before(net());
+    // A removed step gives its number to the last step: the other graphs of
+    // the document that read it ("Production:X3") follow (this graph is done
+    // by the net itself).
+    size_t const last = net().places().empty() ? 0u : net().places().back().id;
+    bool const renumbered = (net().type() == TypeOfNet::GRAFCET) && (node.type == Node::Type::Place);
+    size_t const removed = node.id;
     net().removeNode(node);
+    if (renumbered)
+    {
+        for (auto const& entry : activeDocument().nets())
+        {
+            if (&entry->net != &net())
+            {
+                entry->net.renameStepOf(net().name, removed, last + 1u);
+                entry->net.renameStepOf(net().name, last, removed);
+            }
+        }
+    }
     action->after(net());
     m_history.add(std::move(action));
     net().modified = true;
@@ -856,13 +1168,25 @@ void Editor::addArc(Node& from, Node& to, float const duration)
 }
 
 //------------------------------------------------------------------------------
+bool Editor::stopSimulationFor(char const* what)
+{
+    // The simulation changes the marking: stop it first. The marking is
+    // restored at the next update, so the file operation goes on at the next
+    // frame (the caller keeps its request).
+    if (!activeDocument().isAnySimulationRunning())
+        return false;
+    m_states.paused = false;
+    activeDocument().stopAllSimulations();
+    updateSimulationFramerate();
+    m_messages.setInfo(std::string("Simulation stopped to ") + what);
+    return true;
+}
+
+//------------------------------------------------------------------------------
 void Editor::loadNetFile()
 {
-    if (simulation().isRunning())
-    {
-        m_messages.setError("Cannot load during the simulation!");
+    if (stopSimulationFor("open a file"))
         return;
-    }
 
     FileDialogHelper::openLoad("LoadFileDlgKey",
         "Choose the Petri file to load", ".json");
@@ -884,7 +1208,8 @@ void Editor::loadDocumentFromFile(std::string const& filepath)
     if (ext == ".json" || (importer == nullptr && ext.empty()))
     {
         std::vector<Net> nets;
-        std::string error = importAllNetsFromJSON(nets, filepath);
+        DocumentInfo info;
+        std::string error = importAllNetsFromJSON(nets, filepath, &info);
         if (!error.empty())
         {
             m_messages.setError(error);
@@ -906,6 +1231,9 @@ void Editor::loadDocumentFromFile(std::string const& filepath)
             auto& entry = doc.addNet(loaded_net.type(), loaded_net.name);
             entry.net = std::move(loaded_net);
         }
+        doc.info() = std::move(info);
+        m_marked_arcs.clear();
+        m_history.clear();
 
         doc.setFilepath(filepath);
         doc.setModified(false);
@@ -914,10 +1242,10 @@ void Editor::loadDocumentFromFile(std::string const& filepath)
         m_states.request_vertical_split = true;
 
         // Center view on each loaded net and validate GRAFCET receptivities
+        m_busy_frames = BUSY_FRAMES;
         for (auto const& entry : doc.nets())
         {
             entry->view_state.center_request = Document::ViewState::CENTER_FRAMES;
-        m_busy_frames = BUSY_FRAMES;
 
             // Validate GRAFCET receptivities after loading
             if (entry->net.type() == TypeOfNet::GRAFCET)
@@ -942,6 +1270,7 @@ void Editor::loadDocumentFromFile(std::string const& filepath)
     activeDocument().unregisterNets();
     auto& doc = activeDocument();
     doc.nets().clear();
+    doc.info() = DocumentInfo{};
     auto& entry = doc.addNet(TypeOfNet::TimedPetriNet, "Imported");
     std::string error = importer->importFct(entry.net, filepath);
 
@@ -970,11 +1299,8 @@ void Editor::loadDocumentFromFile(std::string const& filepath)
 //------------------------------------------------------------------------------
 void Editor::importNetFrom(Importer const& importer)
 {
-    if (simulation().isRunning())
-    {
-        m_messages.setError("Cannot load during the simulation!");
-        return ;
-    }
+    if (stopSimulationFor("import a file"))
+        return;
 
     FileDialogHelper::openLoad("ImportDlgKey",
         "Choose the Petri file to load", importer.extensions.c_str());
@@ -1021,50 +1347,47 @@ void Editor::springify()
 //--------------------------------------------------------------------------
 void Editor::saveNetAs()
 {
-    if (activeDocument().netCount() > 1)
+    // Always the whole document: its nets and their description.
+    saveDocumentAs();
+}
+
+//------------------------------------------------------------------------------
+std::string Editor::writeDocument(std::string const& path)
+{
+    std::vector<Net> nets;
+    auto& doc = activeDocument();
+    doc.pruneInfo();
+    nets.reserve(doc.netCount());
+    for (size_t i = 0; i < doc.netCount(); ++i)
+        nets.push_back(doc.getNet(i).net);
+
+    std::string const error = exportAllNetsToJSON(nets, path, &doc.info());
+    if (error.empty())
     {
-        saveDocumentAs();
+        setSavePath(path);
+        doc.setFilepath(path);
+        doc.setModified(false);
+        for (size_t i = 0; i < doc.netCount(); ++i)
+            doc.getNet(i).net.modified = false;
     }
-    else
-    {
-        static Exporter exporter{"TimedPetriNetEditor", ".json", exportToJSON};
-        exportNetTo(exporter);
-    }
+    return error;
 }
 
 //------------------------------------------------------------------------------
 void Editor::saveDocumentAs()
 {
-    if (activeDocument().isAnySimulationRunning())
-    {
-        m_messages.setError("Cannot save during the simulation!");
+    if (stopSimulationFor("save"))
         return;
-    }
 
     FileDialogHelper::openSave("SaveDocDlgKey",
         "Choose the file to save", ".json");
 
     if (FileDialogHelper::display("SaveDocDlgKey", [this](std::string const& path)
     {
-        // Collect all nets from the document
-        std::vector<Net> nets;
-        auto& doc = activeDocument();
-        nets.reserve(doc.netCount());
-        for (size_t i = 0; i < doc.netCount(); ++i)
-        {
-            nets.push_back(doc.getNet(i).net);
-        }
-
-        std::string error = exportAllNetsToJSON(nets, path);
+        std::string error = writeDocument(path);
         if (error.empty())
         {
-            setSavePath(path);
-            doc.setFilepath(path);
-            doc.setModified(false);
             m_messages.setInfo("Saved with success '" + path + "'");
-            for (size_t i = 0; i < doc.netCount(); ++i)
-                doc.getNet(i).net.modified = false;
-
             if (m_states.request_quitting || m_states.request_new || m_states.request_load)
                 fulfillPendingDocumentRequest();
         }
@@ -1081,11 +1404,8 @@ void Editor::saveDocumentAs()
 //------------------------------------------------------------------------------
 void Editor::exportNetTo(Exporter const& exporter)
 {
-    if (simulation().isRunning())
-    {
-        m_messages.setError("Cannot save during the simulation!");
-        return ;
-    }
+    if (stopSimulationFor("export"))
+        return;
 
     if (net().isEmpty())
     {
@@ -1142,8 +1462,10 @@ void Editor::exportNetTo(Exporter const& exporter)
 }
 
 //--------------------------------------------------------------------------
-void Editor::setAutoScreenshot(std::string const& path, bool const exit_after)
+void Editor::setAutoScreenshot(std::string const& path, bool const exit_after,
+                               bool const whole_window)
 {
+    m_screenshot_window = whole_window;
     m_auto_screenshot_path = path;
     m_auto_screenshot_pending = !path.empty();
     m_exit_after_screenshot = exit_after;
@@ -1155,6 +1477,9 @@ void Editor::setAutoScreenshot(std::string const& path, bool const exit_after)
 //--------------------------------------------------------------------------
 bool Editor::saveScreenshot(std::string const& path)
 {
+    if (m_screenshot_window)
+        return Application::screenshot(path);
+
     int x = 0;
     int y = 0;
     int width = 0;
@@ -1241,6 +1566,7 @@ bool Editor::hasUnsavedChanges() const
 //------------------------------------------------------------------------------
 void Editor::discardUnsavedChanges()
 {
+    m_states.paused = false;
     activeDocument().stopAllSimulations();
 
     auto& doc = activeDocument();
@@ -1274,15 +1600,6 @@ void Editor::fulfillPendingDocumentRequest()
         m_states.request_load = false;
         m_states.file_dialog = States::FileDialog::Load;
     }
-}
-
-//--------------------------------------------------------------------------
-std::string const& Editor::getError() const
-{
-    static std::string const NO_MESSAGE;
-    if (m_messages.getMessages().empty())
-        return NO_MESSAGE;
-    return m_messages.getMessage().message;
 }
 
 //--------------------------------------------------------------------------

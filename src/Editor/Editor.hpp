@@ -21,6 +21,7 @@
 #  include "PetriNet/ForceDirected.hpp"
 #  include "PetriNet/Algorithms.hpp"
 
+#  include <deque>
 #  include <vector>
 #  include <filesystem>
 #  include <map>
@@ -65,8 +66,15 @@ public:
     //-------------------------------------------------------------------------
     //! \brief Save a screenshot after the next rendered frame.
     //! \param[in] exit_after if true, close the editor right after the capture.
+    //! \param[in] whole_window the whole window, else the canvas of the net.
     //-------------------------------------------------------------------------
-    void setAutoScreenshot(std::string const& path, bool exit_after = false);
+    void setAutoScreenshot(std::string const& path, bool exit_after = false,
+                           bool whole_window = false);
+
+    //-------------------------------------------------------------------------
+    //! \brief Start the simulation of the document once it is loaded.
+    //-------------------------------------------------------------------------
+    void startSimulationAtLaunch() { m_start_simulation = true; }
 
     //-------------------------------------------------------------------------
     //! \brief Whether the last automatic screenshot succeeded.
@@ -109,11 +117,27 @@ private: // Widgets
     void saveCurrentDocument();
     void about() const;
     void help() const;
+    void openHelp(int tab) { m_states.show_help = true; m_states.help_tab = tab; }
     void console();
-    void messagebox() const;
+    void notifications();
     void inspector();
     void view();
+    void keepNetProportions();
     inline ImVec2 viewSize() const { return m_view.size(); }
+
+private: // GRAFCET control panel and description of the document (EditorPanel.cpp)
+
+    void controlPanel();
+    void outputsPanel();
+    //! \brief Timing diagram of the steps, inputs and outputs (EditorTiming.cpp).
+    void timingDiagram();
+    void documentPanel();
+    void inputWidget(GrafcetInput& input, bool running);
+    void selectorWidget(std::vector<GrafcetInput*> const& positions, bool running);
+    void setPanelInput(std::string const& name, int value, bool running);
+    //! \brief Inputs and outputs read and written by the GRAFCET nets of the
+    //! active document, described (added to the document info if missing).
+    void collectGrafcetIo(std::vector<GrafcetInput*>& inputs, std::vector<GrafcetOutput*>& outputs);
 
 private: // Show results from Petri algorithms
 
@@ -141,10 +165,16 @@ private: // Petri net services
     Node* getNode(ImVec2 const& position);
     void exportNetTo(Exporter const& exporter);
     void importNetFrom(Importer const& importer);
+    //! \brief Stop the simulation before a file operation. Return true if it
+    //! was running: the operation is then done at the next frame.
+    bool stopSimulationFor(char const* what);
     void loadNetFile();
     void loadDocumentFromFile(std::string const& filepath);
     void saveNetAs();
     void saveDocumentAs();
+    //! \brief Save all the nets of the active document and its description
+    //! in a JSON file. Return the error, or empty.
+    std::string writeDocument(std::string const& path);
     void closeNet();
     void toogleStartSimulation();
     void toogleStartAllSimulations();
@@ -177,7 +207,6 @@ private:
 private: // Error logs
 
     void setSavePath(std::string const& filepath);
-    std::string const& getError() const;
     std::vector<Messages::TimedMessage> const& getLogs() const;
     void clearLogs();
     void showStyleSelector();
@@ -190,10 +219,12 @@ private: // Theme management
 
 protected: // Methods for PetriView access
 
-    //! \brief Get caption display state for places.
-    bool showPlaceCaptions() const { return m_states.show_place_captions; }
-    //! \brief Get caption display state for transitions.
-    bool showTransitionCaptions() const { return m_states.show_transition_captions; }
+    //! \brief Draw the identifiers of places (P0, step numbers).
+    bool showPlaceIdentifiers() const { return m_states.show_place_identifiers; }
+    //! \brief Draw the identifiers of transitions (T0, "(0)" for GRAFCET).
+    bool showTransitionIdentifiers() const { return m_states.show_transition_identifiers; }
+    //! \brief GRAFCET: draw the boxes of the actions, else a small tag.
+    bool showActionBoxes() const { return m_states.show_action_boxes; }
     //! \brief Get marked arcs (critical cycle, errors).
     std::vector<Arc*>& markedArcs() { return m_marked_arcs; }
     //! \brief Clear marked arcs.
@@ -289,12 +320,48 @@ private:
         //! \brief Modal info dialogs
         bool show_about = false;
         bool show_help = false;
+        //! \brief Tab of the help to bring in front (-1: none).
+        int help_tab = -1;
         bool show_theme = false;
         bool show_unsaved_dialog = false;
 
         //! \brief Display options
-        bool show_place_captions = true;
-        bool show_transition_captions = true;
+        bool show_place_identifiers = true;
+        bool show_transition_identifiers = true;
+        //! \brief GRAFCET: the boxes of the actions (else a small tag).
+        bool show_action_boxes = true;
+
+        //! \brief Console: levels shown (Messages::Level), text filter.
+        bool console_levels[Messages::LEVELS] = { true, true, true, true };
+        std::string console_filter;
+
+        //! \brief Simulation: time goes this times faster than the wall
+        //! clock; paused: the simulation does not evolve.
+        float time_scale = 1.0f;
+        bool paused = false;
+
+        //! \brief Timing diagram: what to show, time span shown (s), end of
+        //! the span when it does not follow the simulation.
+        bool timing_steps = true;
+        bool timing_inputs = true;
+        bool timing_outputs = true;
+        bool timing_used_only = true;
+        float timing_span = 30.0f;
+        bool timing_follow = true;
+        float timing_end = 30.0f;
+
+        //! \brief Control panel: changes of inputs applied together (F7).
+        bool batch_inputs = false;
+        std::map<std::string, int> pending_inputs;
+        //! \brief Control panel: editing how the inputs and outputs are drawn.
+        bool edit_io = false;
+        //! \brief Control panel and outputs: smaller to fit their window.
+        bool fit_panel = true;
+
+        //! \brief Widths of the windows of the nets, as fractions of their
+        //! total, kept when the main window changes size.
+        std::vector<float> net_ratios;
+        float nets_width = 0.0f;
 
         //! \brief Viewport state
         ImVec2 viewport_center;
@@ -303,6 +370,9 @@ private:
         //! \brief Pending requests
         bool request_quitting = false;
         bool request_new = false;
+        //! \brief Frame at which to save the document (0: none), after the
+        //! simulation stopped.
+        int request_save_frame = 0;
         //! \brief A document load (Open) has been requested but is still pending
         //! the resolution of unsaved changes in the current document.
         bool request_load = false;
@@ -372,11 +442,17 @@ private:
     bool m_auto_screenshot_pending = false;
     bool m_exit_after_screenshot = false;
     bool m_last_screenshot_ok = false;
+    bool m_screenshot_window = false;
+    bool m_start_simulation = false;
     int m_screenshot_defer_frames = 0;
     //! \brief Frames to draw before sleeping (docking and centering settle).
     static constexpr int BUSY_FRAMES = 20;
     int m_busy_frames = BUSY_FRAMES;
-    //! \brief Number of nets the layout of the windows was made for.
+    //! \brief GRAFCET inputs and outputs not described by the document, with
+    //! a default description for the frame (see collectGrafcetIo()).
+    std::deque<GrafcetInput> m_undescribed_inputs;
+    std::deque<GrafcetOutput> m_undescribed_outputs;
+        //! \brief Number of nets the layout of the windows was made for.
     size_t m_layout_nets = 0u;
 };
 

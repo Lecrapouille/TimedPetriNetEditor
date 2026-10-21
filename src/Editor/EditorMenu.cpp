@@ -11,9 +11,12 @@
 #include "Remote/IRemoteControl.hpp"
 #include "PetriNet/Algorithms.hpp"
 #include "PetriNet/Layout.hpp"
+#include "Editor/KeyBindings.hpp"
 #include "imgui/imgui.h"
+#include "imgui/imgui_internal.h"
 
 #include <algorithm>
+#include <cstdio>
 #include <cmath>
 #include <map>
 #include <vector>
@@ -45,22 +48,36 @@ void Editor::menu()
 //------------------------------------------------------------------------------
 void Editor::shortcuts()
 {
+    // Space starts and stops the simulation, wherever the focus is (but in a
+    // text field). The editor owns the key: the keyboard navigation of Dear
+    // ImGui would else also press the last clicked button with it.
+    static ImGuiID const SPACE_OWNER = ImHashStr("SimulationKey");
+    ImGui::SetKeyOwner(KEY_RUN_SIMULATION, SPACE_OWNER);
+
     ImGuiIO const& io = ImGui::GetIO();
     if (io.WantTextInput)
         return;
+    if (ImGui::IsKeyPressed(KEY_RUN_SIMULATION, ImGuiInputFlags_None, SPACE_OWNER) &&
+        !io.KeyCtrl && !io.KeyAlt && !ImGui::IsAnyItemActive())
+    {
+        toogleStartSimulation();
+    }
+
     auto const pressed = [](ImGuiKeyChord chord) {
         return ImGui::Shortcut(chord, ImGuiInputFlags_RouteGlobal);
     };
+    Document::ViewState& view = activeDocument().activeNet().view_state;
     if (pressed(ImGuiMod_Ctrl | ImGuiKey_N)) m_states.request_new = true;
     if (pressed(ImGuiMod_Ctrl | ImGuiKey_O)) m_states.request_load = true;
     if (pressed(ImGuiMod_Ctrl | ImGuiKey_S)) saveCurrentDocument();
     if (pressed(ImGuiMod_Ctrl | ImGuiMod_Shift | ImGuiKey_S)) m_states.file_dialog = States::FileDialog::SaveAs;
     if (pressed(ImGuiMod_Ctrl | ImGuiKey_Q)) close();
-    if (pressed(ImGuiKey_F5)) toogleStartSimulation();
-    if (pressed(ImGuiMod_Ctrl | ImGuiKey_Equal)) m_view.zoomBy(1.25f);
-    if (pressed(ImGuiMod_Ctrl | ImGuiKey_Minus)) m_view.zoomBy(0.8f);
+    if (pressed(ImGuiMod_Ctrl | ImGuiKey_Equal)) view.zoom_request *= 1.25f;
+    if (pressed(ImGuiMod_Ctrl | ImGuiKey_Minus)) view.zoom_request *= 0.8f;
     if (pressed(ImGuiMod_Ctrl | ImGuiKey_0))
-        activeDocument().activeNet().view_state.center_request = Document::ViewState::CENTER_FRAMES;
+        view.center_request = Document::ViewState::CENTER_FRAMES;
+    if (pressed(ImGuiKey_F1)) openHelp(0);
+    if (pressed(ImGuiKey_P) && activeDocument().isAnySimulationRunning()) m_states.paused ^= true;
 }
 
 //------------------------------------------------------------------------------
@@ -75,7 +92,32 @@ void Editor::toolbar()
         toogleStartSimulation();
     ImGui::PopStyleColor();
     if (ImGui::IsItemHovered())
-        ImGui::SetTooltip("Start or stop the simulation (R, F5)");
+        ImGui::SetTooltip("Start or stop the simulation (Space)");
+
+    // Pause and speed of the simulation (to follow the Gantt chart, the
+    // timing diagram ...).
+    ImGui::BeginDisabled(!running);
+    if (ImGui::MenuItem(m_states.paused ? "Resume##toolbar" : "Pause##toolbar", nullptr, m_states.paused))
+        m_states.paused ^= true;
+    ImGui::EndDisabled();
+    if (ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled))
+        ImGui::SetTooltip("Pause or resume the simulation (P)");
+    static float const SPEEDS[] = { 0.1f, 0.25f, 0.5f, 1.0f, 2.0f, 5.0f, 10.0f, 20.0f, 50.0f };
+    char speed[32];
+    std::snprintf(speed, sizeof(speed), "x%g", double(m_states.time_scale));
+    ImGui::SetNextItemWidth(70.0f);
+    if (ImGui::BeginCombo("##speed", speed))
+    {
+        for (float value : SPEEDS)
+        {
+            std::snprintf(speed, sizeof(speed), "x%g", double(value));
+            if (ImGui::Selectable(speed, value == m_states.time_scale))
+                m_states.time_scale = value;
+        }
+        ImGui::EndCombo();
+    }
+    if (ImGui::IsItemHovered())
+        ImGui::SetTooltip("Speed of the simulation time (x2: 30s/X1 lasts 15 s)");
 
     // Type of the active net.
     ImGui::SetNextItemWidth(150.0f);
@@ -305,19 +347,23 @@ void Editor::menuView()
     if (ImGui::MenuItem("Fit the net", "F"))
         activeDocument().activeNet().view_state.center_request = Document::ViewState::CENTER_FRAMES;
     if (ImGui::MenuItem("Zoom in", "Ctrl+=, wheel"))
-        m_view.zoomBy(1.25f);
+        activeDocument().activeNet().view_state.zoom_request *= 1.25f;
     if (ImGui::MenuItem("Zoom out", "Ctrl+-, wheel"))
-        m_view.zoomBy(0.8f);
+        activeDocument().activeNet().view_state.zoom_request *= 0.8f;
 
     ImGui::Separator();
     if (ImGui::MenuItem("Grid", nullptr, m_view.grid.show))
         m_view.grid.show ^= true;
     if (ImGui::MenuItem("Snap to the grid", "G", m_view.grid.snap))
         m_view.grid.snap ^= true;
-    if (ImGui::MenuItem("Place captions", nullptr, m_states.show_place_captions))
-        m_states.show_place_captions ^= true;
-    if (ImGui::MenuItem("Transition captions", nullptr, m_states.show_transition_captions))
-        m_states.show_transition_captions ^= true;
+    if (ImGui::MenuItem("Place identifiers", nullptr, m_states.show_place_identifiers))
+        m_states.show_place_identifiers ^= true;
+    if (ImGui::MenuItem("Transition identifiers", nullptr, m_states.show_transition_identifiers))
+        m_states.show_transition_identifiers ^= true;
+    if (ImGui::MenuItem("GRAFCET action boxes", nullptr, m_states.show_action_boxes))
+        m_states.show_action_boxes ^= true;
+    if (ImGui::IsItemHovered())
+        ImGui::SetTooltip("Hidden: a small tag with the number of actions, for a compact net");
 
     ImGui::Separator();
     if (ImGui::BeginMenu("Theme"))
@@ -365,8 +411,21 @@ void Editor::menuSimulation()
         return;
 
     bool const running = simulation().isRunning();
-    if (ImGui::MenuItem(running ? "Stop" : "Start", "R, F5"))
+    if (ImGui::MenuItem(running ? "Stop" : "Start", "Space"))
         toogleStartSimulation();
+    if (ImGui::MenuItem(m_states.paused ? "Resume" : "Pause", "P", m_states.paused, running))
+        m_states.paused ^= true;
+    if (ImGui::BeginMenu("Speed"))
+    {
+        for (float value : { 0.1f, 0.25f, 0.5f, 1.0f, 2.0f, 5.0f, 10.0f, 20.0f, 50.0f })
+        {
+            char label[32];
+            std::snprintf(label, sizeof(label), "x%g", double(value));
+            if (ImGui::MenuItem(label, nullptr, value == m_states.time_scale))
+                m_states.time_scale = value;
+        }
+        ImGui::EndMenu();
+    }
     if (activeDocument().netCount() > 1)
     {
         bool any_running = activeDocument().isAnySimulationRunning();
@@ -420,8 +479,14 @@ void Editor::menuHelp()
 {
     if (!ImGui::BeginMenu("Help"))
         return;
-    if (ImGui::MenuItem("Mouse, keys and syntax"))
-        m_states.show_help = true;
+    if (ImGui::MenuItem("Mouse and keys", "F1"))
+        openHelp(0);
+    if (ImGui::MenuItem("GRAFCET receptivities"))
+        openHelp(1);
+    if (ImGui::MenuItem("GRAFCET actions (qualifiers)"))
+        openHelp(2);
+    if (ImGui::MenuItem("GRAFCET control panel"))
+        openHelp(3);
     ImGui::Separator();
     if (ImGui::MenuItem("About"))
         m_states.show_about = true;
@@ -460,6 +525,12 @@ void Editor::handleMenuActions()
             break;
     }
 
+    if ((m_states.request_save_frame > 0) && (ImGui::GetFrameCount() >= m_states.request_save_frame))
+    {
+        m_states.request_save_frame = 0;
+        saveCurrentDocument();
+    }
+
     // Analysis window (dockable, not modal)
     if (m_states.show_analysis) { analysisWindow(); }
 
@@ -490,6 +561,7 @@ void Editor::handleMenuActions()
         {
             m_marked_arcs.clear();
             clearNet();
+            activeDocument().info() = DocumentInfo{};
             discardUnsavedChanges();
             m_states.request_new = false;
         }
@@ -561,41 +633,19 @@ void Editor::saveCurrentDocument()
     if (m_path_to_save == "")
     {
         m_states.file_dialog = States::FileDialog::SaveAs;
+        return;
     }
-    else if (activeDocument().netCount() > 1)
+    if (stopSimulationFor("save"))
     {
-        std::vector<Net> nets;
-        auto& doc = activeDocument();
-        nets.reserve(doc.netCount());
-        for (size_t i = 0; i < doc.netCount(); ++i)
-            nets.push_back(doc.getNet(i).net);
-
-        std::string error = exportAllNetsToJSON(nets, m_path_to_save);
-        if (error.empty())
-        {
-            m_messages.setInfo("Saved with success " + m_path_to_save);
-            doc.setModified(false);
-            for (size_t i = 0; i < doc.netCount(); ++i)
-                doc.getNet(i).net.modified = false;
-        }
-        else
-        {
-            m_messages.setError(error);
-        }
+        // Saved at the next frame, once the marking is restored.
+        m_states.request_save_frame = ImGui::GetFrameCount() + 1;
+        return;
     }
+    std::string const error = writeDocument(m_path_to_save);
+    if (error.empty())
+        m_messages.setInfo("Saved with success " + m_path_to_save);
     else
-    {
-        std::string error = saveToFile(net(), m_path_to_save);
-        if (error.empty())
-        {
-            m_messages.setInfo("Saved with success " + m_path_to_save);
-            net().modified = false;
-        }
-        else
-        {
-            m_messages.setError(error);
-        }
-    }
+        m_messages.setError(error);
 }
 
 } // namespace tpne

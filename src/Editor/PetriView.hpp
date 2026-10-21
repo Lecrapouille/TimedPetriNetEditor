@@ -31,11 +31,14 @@ class NetModificationAction;
 //! |-----------------|--------------------------------|---------------------|
 //! | nothing, left   | add a place (clears the selection first if any) | select in a rectangle |
 //! | nothing, right  | add a transition               | move the view       |
-//! | node, left      | select it (Ctrl: add/remove)   | move it (and the selection) |
-//! | node, right     | menu of the node               | draw an arc from it |
+//! | node, left      | select it (Ctrl: add/remove)   | draw an arc from it |
+//! | node, right     | menu of the node               | move it (and the selection) |
 //! | arc, left       | select it                      | select in a rectangle |
 //! | arc, right      | menu of the arc                | move the view       |
 //! | middle button   |                                | move the view       |
+//!
+//! The left button draws (places, arcs, selection), the right button moves
+//! (nodes, view).
 //!
 //! Double click: rename a node, edit the duration of an arc. Wheel: zoom
 //! around the mouse. The status bar shows what each button would do now
@@ -90,6 +93,12 @@ public:
     std::string const& hint() const { return m_hint; }
     //! \brief Number of selected nodes and arcs.
     size_t selectionSize() const { return m_mouse.selected_nodes.size() + m_mouse.selected_arcs.size(); }
+    //! \brief True once if the user moved or zoomed the view since the last
+    //! call (the net is then no longer fitted when its window changes size).
+    bool consumeUserMoved() { bool const moved = m_user_moved; m_user_moved = false; return moved; }
+    //! \brief Keep the point of the net at the center of the canvas when its
+    //! size changes from the old one.
+    void keepCenter(ImVec2 const& old_size);
 
     GridLayout grid;
 
@@ -163,6 +172,8 @@ private:
     void drawGrid(ImDrawList* draw_list, bool const running, bool const has_error = false);
     void drawNetElements(Net& net, Simulation& simulation, float zoom);
     void drawOverlays(Net& net, Simulation& simulation, float zoom);
+    //! \brief GRAFCET: state of the timers of the transitions.
+    void drawTimers(Net const& net, Simulation const& simulation, float zoom);
     void drawEditWidgets(Net& net);
     void drawContextMenus(Net& net);
     void drawBadges(Net const& net, Simulation const& simulation);
@@ -196,6 +207,8 @@ private:
     Canvas m_canvas;
     MouseState m_mouse;
     std::string m_hint;
+    //! \brief The user moved or zoomed the view (see consumeUserMoved()).
+    bool m_user_moved = false;
     //! \brief Net before the nodes are moved (undo of a move).
     std::unique_ptr<NetModificationAction> m_move_action;
 };

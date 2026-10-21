@@ -82,16 +82,25 @@ void drawTimedToken(ImDrawList* draw_list, size_t tokens, float const x, float c
 
 //------------------------------------------------------------------------------
 //! \brief Draw a place (a step for GRAFCET) and its caption.
+//! \param[in] show_caption the caption (true) or the identifier (false) as
+//! label.
+//! \param[in] show_identifier also the identifier: small, over a Petri place
+//! whose caption is not its identifier; the number of a GRAFCET step (else
+//! only its caption).
 //------------------------------------------------------------------------------
 void drawPlace(ImDrawList* draw_list, Place const& place, TypeOfNet const type,
                ImVec2 const& origin, bool const show_caption, float const alpha,
-               float zoom = 1.0f, bool isInitialStep = false);
+               float zoom = 1.0f, bool isInitialStep = false, bool show_identifier = true);
 
 //------------------------------------------------------------------------------
 //! \brief Draw a transition and its caption (receptivity for GRAFCET).
+//! \param[in] show_identifier also the identifier: small, over a Petri
+//! transition whose caption is not its identifier; "(3)" on the left of a
+//! GRAFCET transition.
 //------------------------------------------------------------------------------
 void drawTransition(ImDrawList* draw_list, Transition const& transition, TypeOfNet const type,
-                    ImVec2 const& origin, bool const show_caption, float const alpha, float zoom = 1.0f);
+                    ImVec2 const& origin, bool const show_caption, float const alpha, float zoom = 1.0f,
+                    bool show_identifier = true);
 
 //------------------------------------------------------------------------------
 //! \brief Draw the outline of a node grown by margin pixels (hover, selection).
@@ -107,13 +116,16 @@ ImVec2 nodeHalfSize(Node const& node, TypeOfNet type);
 
 //------------------------------------------------------------------------------
 //! \brief Draw the actions of a GRAFCET step as IEC 60848 boxes on its right:
-//! one line per action with its qualifier and its name.
+//! one line per action with its qualifier and its name, one line in a double
+//! frame per forcing order ("Production{init}").
 //! \param[in] is_active tells if the action of the given index is running
 //! (drawn highlighted). Can be null: then no action is highlighted.
+//! \param[in] compact only a small tag with the number of actions (green
+//! when one runs), to keep the net compact.
 //------------------------------------------------------------------------------
 void drawStepActions(ImDrawList* draw_list, Place const& place, ImVec2 const& origin,
                      float zoom, bool (*is_active)(size_t index, void* data) = nullptr,
-                     void* data = nullptr);
+                     void* data = nullptr, bool compact = false);
 
 } // namespace tpne
 

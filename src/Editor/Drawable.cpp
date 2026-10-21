@@ -551,9 +551,20 @@ static void drawPlaceTokens(ImDrawList* draw_list, size_t tokens, ImVec2 const& 
 // Places and GRAFCET steps
 // ============================================================================
 
+//! \brief Identifier of a Petri node, small, above its right corner, when its
+//! caption says something else.
+static void identifier(ImDrawList* draw_list, Node const& node, ImVec2 const& corner, float zoom)
+{
+    if (node.caption.empty() || (node.caption == node.key))
+        return;
+    float const size = fontSizeAt(zoom * 0.75f);
+    ImVec2 const dim = textSize(node.key.c_str(), size);
+    text(draw_list, ImVec2(corner.x, corner.y - dim.y), palette().secondary, node.key.c_str(), size);
+}
+
 //! \brief Petri place: circle, tokens, caption below.
 static void drawPetriPlace(ImDrawList* draw_list, Place const& place, ImVec2 const& origin,
-                           bool show_caption, float zoom)
+                           bool show_caption, float zoom, bool show_identifier)
 {
     Palette const& pal = palette();
     ImVec2 const p = screen(origin, zoom, ImVec2(place.x, place.y));
@@ -566,6 +577,8 @@ static void drawPetriPlace(ImDrawList* draw_list, Place const& place, ImVec2 con
     char const* label = show_caption ? place.caption.c_str() : place.key.c_str();
     caption(draw_list, p.x, p.y + r + 3.0f * zoom, show_caption ? pal.caption : pal.secondary,
             label, fontSizeAt(zoom));
+    if (show_identifier && show_caption)
+        identifier(draw_list, place, p + ImVec2(r * 0.7f, -r * 0.7f), zoom);
 }
 
 //! \brief Horizontal line from x0 to x1 (net units) at y, one or two strokes.
@@ -592,7 +605,7 @@ static void busLine(ImDrawList* draw_list, ImVec2 const& origin, float zoom,
 //! \brief GRAFCET step: square with its number (double for the initial step),
 //! a dot when active, caption on its left, OR lines of alternative sequences.
 static void drawGrafcetStep(ImDrawList* draw_list, Place const& place, ImVec2 const& origin,
-                            bool show_caption, float zoom, bool initial)
+                            bool show_caption, float zoom, bool initial, bool show_identifier)
 {
     Palette const& pal = palette();
     ImVec2 const p = screen(origin, zoom, ImVec2(place.x, place.y));
@@ -615,20 +628,38 @@ static void drawGrafcetStep(ImDrawList* draw_list, Place const& place, ImVec2 co
 
     // Step number inside; under it the caption, small and cut to the square
     // (the whole caption is in the tooltip); a dot in the corner when active.
+    // Without the identifiers: the caption alone, larger.
+    bool const caption = show_caption && !place.caption.empty();
+    bool const number = show_identifier || !caption;
     float const size = fontSizeAt(zoom * 1.1f);
-    float const small = fontSizeAt(zoom * 0.62f);
-    bool const caption = show_caption && !place.caption.empty() && (small > 0.0f);
-    textCentered(draw_list, p - ImVec2(0.0f, caption ? 5.0f * zoom : 0.0f), pal.caption,
-                 std::to_string(place.id).c_str(), size);
-    if (caption)
+    float const small = fontSizeAt(zoom * (number ? 0.62f : 0.8f));
+    if (number)
     {
+        textCentered(draw_list, p - ImVec2(0.0f, (caption && (small > 0.0f)) ? 5.0f * zoom : 0.0f),
+                     pal.caption, std::to_string(place.id).c_str(), size);
+    }
+    if (caption && (small > 0.0f))
+    {
+        // Cut on a character boundary (UTF-8: not inside a multi-byte one).
         std::string label = place.caption;
         float const room = 2.0f * h - 6.0f * zoom;
-        while ((label.size() > 1u) && (textSize(label.c_str(), small).x > room))
+        auto const shorten = [&label]() {
             label.pop_back();
+            while (!label.empty() && ((static_cast<unsigned char>(label.back()) & 0xC0u) == 0x80u))
+                label.pop_back();
+            if (!label.empty() && (static_cast<unsigned char>(label.back()) >= 0xC0u))
+                label.pop_back();
+        };
+        while ((label.size() > 1u) && (textSize(label.c_str(), small).x > room))
+            shorten();
         if (label.size() < place.caption.size())
-            label.back() = '.';
-        textCentered(draw_list, p + ImVec2(0.0f, 9.0f * zoom), pal.secondary, label.c_str(), small);
+        {
+            if (label.size() > 1u)
+                shorten();
+            label += ".";
+        }
+        textCentered(draw_list, p + ImVec2(0.0f, number ? 9.0f * zoom : 0.0f),
+                     number ? pal.secondary : pal.caption, label.c_str(), small);
     }
     if (active)
         drawToken(draw_list, p.x + h * 0.62f, p.y - h * 0.62f, zoom);
@@ -658,14 +689,14 @@ static void drawGrafcetStep(ImDrawList* draw_list, Place const& place, ImVec2 co
 //------------------------------------------------------------------------------
 void drawPlace(ImDrawList* draw_list, Place const& place, TypeOfNet const type,
                ImVec2 const& origin, bool const show_caption, float const /*alpha*/,
-               float zoom, bool isInitialStep)
+               float zoom, bool isInitialStep, bool show_identifier)
 {
     if (type == TypeOfNet::TimedEventGraph)
         return; // places are drawn on their arcs
     if (type == TypeOfNet::GRAFCET)
-        drawGrafcetStep(draw_list, place, origin, show_caption, zoom, isInitialStep);
+        drawGrafcetStep(draw_list, place, origin, show_caption, zoom, isInitialStep, show_identifier);
     else
-        drawPetriPlace(draw_list, place, origin, show_caption, zoom);
+        drawPetriPlace(draw_list, place, origin, show_caption, zoom, show_identifier);
 }
 
 // ============================================================================
@@ -675,7 +706,8 @@ void drawPlace(ImDrawList* draw_list, Place const& place, TypeOfNet const type,
 //------------------------------------------------------------------------------
 void drawTransition(ImDrawList* draw_list, Transition const& transition,
                     TypeOfNet const type, ImVec2 const& origin,
-                    bool const show_caption, float const /*alpha*/, float zoom)
+                    bool const show_caption, float const /*alpha*/, float zoom,
+                    bool const show_identifier)
 {
     Palette const& pal = palette();
     ImVec2 const p = screen(origin, zoom, ImVec2(transition.x, transition.y));
@@ -720,11 +752,14 @@ void drawTransition(ImDrawList* draw_list, Transition const& transition,
             text(draw_list, ImVec2(p.x + half.x + 6.0f * zoom + dim.x, p.y - dim.y * 0.5f),
                  pal.duration, delay.c_str(), size);
         }
-        float const small = fontSizeAt(zoom * 0.8f);
-        std::string const id = "(" + std::to_string(transition.id) + ")";
-        ImVec2 const idim = textSize(id.c_str(), small);
-        text(draw_list, ImVec2(p.x - half.x - 4.0f * zoom - idim.x, p.y - idim.y * 0.5f),
-             pal.secondary, id.c_str(), small);
+        if (show_identifier)
+        {
+            float const small = fontSizeAt(zoom * 0.8f);
+            std::string const id = "(" + std::to_string(transition.id) + ")";
+            ImVec2 const idim = textSize(id.c_str(), small);
+            text(draw_list, ImVec2(p.x - half.x - 4.0f * zoom - idim.x, p.y - idim.y * 0.5f),
+                 pal.secondary, id.c_str(), small);
+        }
         return;
     }
 
@@ -745,6 +780,8 @@ void drawTransition(ImDrawList* draw_list, Transition const& transition,
     char const* label = show_caption ? transition.caption.c_str() : transition.key.c_str();
     caption(draw_list, p.x, p.y + half.y + 3.0f * zoom, show_caption ? pal.caption : pal.secondary,
             label, fontSizeAt(zoom));
+    if (show_identifier && show_caption)
+        identifier(draw_list, transition, p + ImVec2(half.x + 2.0f * zoom, -half.y), zoom);
 }
 
 // ============================================================================
@@ -770,7 +807,8 @@ void drawNodeOutline(ImDrawList* draw_list, Node const& node, TypeOfNet type,
 
 //------------------------------------------------------------------------------
 void drawStepActions(ImDrawList* draw_list, Place const& place, ImVec2 const& origin,
-                     float zoom, bool (*is_active)(size_t index, void* data), void* data)
+                     float zoom, bool (*is_active)(size_t index, void* data), void* data,
+                     bool compact)
 {
     if (place.actions.empty())
         return;
@@ -778,58 +816,109 @@ void drawStepActions(ImDrawList* draw_list, Place const& place, ImVec2 const& or
     Palette const& pal = palette();
     ImVec2 const p = screen(origin, zoom, ImVec2(place.x, place.y));
     float const half = STEP_SIZE * 0.5f * zoom;
+    float const t = stroke(1.4f, zoom);
+    bool any_active = false;
+    for (size_t i = 0u; i < place.actions.size(); ++i)
+        any_active = any_active || ((is_active != nullptr) && is_active(i, data));
+
+    // Compact: a small tag "3 ▸" on the right of the step.
+    if (compact)
+    {
+        float const size = fontSizeAt(zoom * 0.75f);
+        std::string const label = std::to_string(place.actions.size());
+        ImVec2 const dim = textSize(label.c_str(), size);
+        float const pad = 3.0f * zoom;
+        ImVec2 const a(p.x + half + 6.0f * zoom, p.y - dim.y * 0.5f - pad);
+        ImVec2 const b(a.x + dim.x + 2.0f * pad, p.y + dim.y * 0.5f + pad);
+        draw_list->AddLine(ImVec2(p.x + half, p.y), ImVec2(a.x, p.y), pal.outline, t);
+        draw_list->AddRectFilled(a, b, any_active ? mix(pal.fill, pal.active, 0.55f) : pal.fill, 2.0f * zoom);
+        draw_list->AddRect(a, b, pal.outline, 2.0f * zoom, ImDrawFlags_None, t);
+        text(draw_list, ImVec2(a.x + pad, a.y + pad), pal.caption, label.c_str(), size);
+        return;
+    }
+
+    // One row per action, one row per forcing order (IEC 60848: in a double
+    // frame, without qualifier).
+    struct Row { size_t action; Forcing const* forcing; };
+    std::vector<Row> rows;
+    for (size_t i = 0u; i < place.actions.size(); ++i)
+    {
+        Action const& action = place.actions[i];
+        if (!action.name.empty() || action.forcings.empty())
+            rows.push_back({ i, nullptr });
+        for (Forcing const& forcing : action.forcings)
+            rows.push_back({ i, &forcing });
+    }
+
     float const gap = 14.0f * zoom;
     float const size = fontSizeAt(zoom * 0.9f);
     float const padding = 5.0f * zoom;
-    float const row = std::max(STEP_SIZE * zoom / float(std::max<size_t>(place.actions.size(), 1u)),
+    float const row = std::max(STEP_SIZE * zoom / float(std::max<size_t>(rows.size(), 1u)),
                                (size > 0.0f ? size : 6.0f) + 2.0f * padding * 0.6f);
-    float const t = stroke(1.4f, zoom);
 
     // Width of the qualifier column and of the text column.
     float qualifier_width = 0.0f;
     float name_width = 0.0f;
-    for (auto const& action : place.actions)
+    for (Row const& r : rows)
     {
+        Action const& action = place.actions[r.action];
+        if (r.forcing != nullptr)
+        {
+            name_width = std::max(name_width, textSize(forcingLabel(*r.forcing).c_str(), size).x);
+            continue;
+        }
         qualifier_width = std::max(qualifier_width, textSize(qualifierToStr(action.qualifier), size).x);
         std::string label = action.name;
         if (!action.condition.empty())
-            label += "  if " + action.condition;
+            label = "if " + action.condition + ": " + label;
         if (action.duration > 0.0f)
             label += "  " + number(action.duration) + " s";
         name_width = std::max(name_width, textSize(label.c_str(), size).x);
     }
     qualifier_width += 2.0f * padding;
     name_width += 2.0f * padding;
+    float const width = qualifier_width + name_width;
 
     // The boxes are as high as the step (IEC 60848), centered on it.
-    float const total = row * float(place.actions.size());
+    float const total = row * float(rows.size());
     float const x0 = p.x + half + gap;
     float const y0 = p.y - total * 0.5f;
     draw_list->AddLine(ImVec2(p.x + half, p.y), ImVec2(x0, p.y), pal.outline, t);
 
-    for (size_t i = 0u; i < place.actions.size(); ++i)
+    for (size_t i = 0u; i < rows.size(); ++i)
     {
-        Action const& action = place.actions[i];
+        Action const& action = place.actions[rows[i].action];
         float const y = y0 + float(i) * row;
         ImVec2 const a(x0, y);
-        ImVec2 const b(x0 + qualifier_width + name_width, y + row);
-        bool const active = (is_active != nullptr) && is_active(i, data);
+        ImVec2 const b(x0 + width, y + row);
+        bool const active = (is_active != nullptr) && is_active(rows[i].action, data);
         draw_list->AddRectFilled(a, b, active ? mix(pal.fill, pal.active, 0.55f) : pal.fill);
         draw_list->AddRect(a, b, pal.outline, 0.0f, ImDrawFlags_None, t);
+        float const ty = y + (row - size) * 0.5f;
+
+        if (rows[i].forcing != nullptr)
+        {
+            float const g = std::max(2.0f, 2.5f * zoom);
+            draw_list->AddRect(a + ImVec2(g, g), b - ImVec2(g, g), pal.outline, 0.0f, ImDrawFlags_None, t);
+            std::string const label = forcingLabel(*rows[i].forcing);
+            text(draw_list, ImVec2(x0 + (width - textSize(label.c_str(), size).x) * 0.5f, ty),
+                 pal.caption, label.c_str(), size);
+            continue;
+        }
+
         draw_list->AddLine(ImVec2(x0 + qualifier_width, y), ImVec2(x0 + qualifier_width, y + row),
                            pal.outline, t);
-
-        float const ty = y + (row - size) * 0.5f;
         text(draw_list, ImVec2(x0 + padding, ty), pal.secondary, qualifierToStr(action.qualifier), size);
-        std::string label = action.name;
-        text(draw_list, ImVec2(x0 + qualifier_width + padding, ty), pal.caption, label.c_str(), size);
-        float x = x0 + qualifier_width + padding + textSize(label.c_str(), size).x;
+        // Conditional action: "if Dr: Motor" (the condition dimmed).
+        float x = x0 + qualifier_width + padding;
         if (!action.condition.empty())
         {
-            std::string const condition = "  if " + action.condition;
+            std::string const condition = "if " + action.condition + ": ";
             text(draw_list, ImVec2(x, ty), pal.secondary, condition.c_str(), size);
             x += textSize(condition.c_str(), size).x;
         }
+        text(draw_list, ImVec2(x, ty), pal.caption, action.name.c_str(), size);
+        x += textSize(action.name.c_str(), size).x;
         if (action.duration > 0.0f)
         {
             std::string const duration = "  " + number(action.duration) + " s";

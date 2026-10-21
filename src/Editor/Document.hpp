@@ -11,6 +11,7 @@
 #include "PetriNet/PetriNet.hpp"
 #include "Editor/Messages.hpp"
 
+#include <map>
 #include <string>
 #include <vector>
 #include <memory>
@@ -44,6 +45,15 @@ public:
         //! the docking layout may still resize it during the first frames.
         int center_request = CENTER_FRAMES;
         static constexpr int CENTER_FRAMES = 4;
+        //! \brief The net is fitted again each time its window changes size,
+        //! until the user moves or zooms the view.
+        bool auto_fit = true;
+        //! \brief Size of the canvas at the previous frame (0: unknown).
+        float canvas_width = 0.0f;
+        float canvas_height = 0.0f;
+        //! \brief Zoom factor asked by a menu or a key, applied when the net
+        //! is drawn (1: none).
+        float zoom_request = 1.0f;
     };
 
     struct NetEntry
@@ -188,13 +198,101 @@ public:
     GrafcetEngine const& grafcet() const { return m_grafcet; }
 
     //--------------------------------------------------------------------------
+    //! \brief Description of the document and of its GRAFCET inputs and
+    //! outputs (control panel), saved with the nets.
+    //--------------------------------------------------------------------------
+    DocumentInfo& info() { return m_info; }
+    DocumentInfo const& info() const { return m_info; }
+
+    //--------------------------------------------------------------------------
+    //! \brief Description of the GRAFCET input of the given name, added (a
+    //! switch) if the file did not describe it.
+    //--------------------------------------------------------------------------
+    GrafcetInput& describedInput(std::string const& name);
+
+    //--------------------------------------------------------------------------
+    //! \brief Description of the GRAFCET output of the given name, added (a
+    //! light) if the file did not describe it.
+    //--------------------------------------------------------------------------
+    GrafcetOutput& describedOutput(std::string const& name);
+
+    //--------------------------------------------------------------------------
+    //! \brief Forget the GRAFCET inputs and outputs that no net uses any more
+    //! and that say nothing more than the defaults (before saving).
+    //--------------------------------------------------------------------------
+    void pruneInfo();
+
+    //--------------------------------------------------------------------------
+    //! \brief GRAFCET input changed by the operator: the value is given to
+    //! the engine and written in the console.
+    //--------------------------------------------------------------------------
+    void setInput(std::string const& name, int value);
+
+    //--------------------------------------------------------------------------
+    //! \brief GRAFCET input set to 1 during the next cycle of the engine only
+    //! (pulse, or a push button released before the engine saw it).
+    //--------------------------------------------------------------------------
+    void pulseInput(std::string const& name);
+
+    // *************************************************************************
+    //! \brief One signal of the timing diagram of a GRAFCET: a step, an input
+    //! or an output, and its changes during the simulation.
+    // *************************************************************************
+    struct Track
+    {
+        enum class Kind { Step, Input, Output };
+        std::string name;
+        Kind kind;
+        //! \brief Index of the graph (steps), for the order of the rows.
+        size_t graph = 0u;
+        //! \brief (time, value) at each change, the first one at the start.
+        std::vector<std::pair<float, int>> changes;
+        //! \brief The value was not 0 at least once.
+        bool used = false;
+    };
+
+    //--------------------------------------------------------------------------
+    //! \brief Signals of the GRAFCET recorded since the start of the last
+    //! simulation (kept after its end).
+    //--------------------------------------------------------------------------
+    std::vector<Track> const& tracks() const { return m_tracks; }
+
+    //--------------------------------------------------------------------------
+    //! \brief Time of the last recorded cycle.
+    //--------------------------------------------------------------------------
+    float recordedTime() const { return m_recorded_time; }
+
+    //--------------------------------------------------------------------------
     //! \brief Whether the document is open (for tab close handling).
     //--------------------------------------------------------------------------
     bool open = true;
 
 private:
 
+    //! \brief Inputs that change by themselves: clocks, values driven by an
+    //! output (the model of the machine).
+    void stepInputs(float dt);
+    //! \brief Write the firings of the last GRAFCET cycle in the console.
+    void traceGrafcet();
+    //! \brief Add the values of the last GRAFCET cycle to the tracks.
+    void record();
+    //! \brief Value of a track at the last cycle.
+    void sample(std::string const& name, Track::Kind kind, size_t graph, int value, float time);
+
+private:
+
     Messages& m_messages;
+    //! \brief Description of the document, its inputs and outputs.
+    DocumentInfo m_info;
+    //! \brief Inputs to set back to 0 after the next cycle of the engine.
+    std::vector<std::string> m_pulses;
+    //! \brief Exact values of the inputs driven by an output (the engine
+    //! only knows integers).
+    std::map<std::string, float> m_driven;
+    //! \brief Timing diagram.
+    std::vector<Track> m_tracks;
+    std::map<std::string, size_t> m_track_index;
+    float m_recorded_time = -1.0f;
     //! \brief Engine shared by the GRAFCET nets of the document.
     GrafcetEngine m_grafcet;
     std::string m_filepath;

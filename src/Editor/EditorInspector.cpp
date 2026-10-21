@@ -6,43 +6,59 @@
 // See LICENSING.md for details.
 
 #include "Editor/Editor.hpp"
+#include "Editor/GrafcetHelp.hpp"
 #include "PetriNet/Grafcet.hpp"
 #include "imgui/imgui.h"
+
+#include <algorithm>
+#include <cmath>
+#include <cstdio>
 #include <map>
 
 namespace tpne {
 
 //------------------------------------------------------------------------------
+//! \brief Small "(?)" text with a tooltip. Return true when clicked.
+//------------------------------------------------------------------------------
+static bool helpMarker(char const* tooltip)
+{
+    ImGui::TextDisabled("(?)");
+    if (ImGui::IsItemHovered())
+        ImGui::SetTooltip("%s", tooltip);
+    return ImGui::IsItemClicked();
+}
+
+//------------------------------------------------------------------------------
 //! \brief Helper to display places/steps panel.
 //------------------------------------------------------------------------------
 static void drawPlacesPanel(Net& net, Simulation& simulation, bool& modified,
-                            bool& show_place_captions)
+                            bool& show_identifiers)
 {
     const auto readonly = simulation.isRunning() ?
         ImGuiInputTextFlags_ReadOnly : ImGuiInputTextFlags_None;
+    bool const grafcet = (net.type() == TypeOfNet::GRAFCET);
 
-    ImGui::Begin(net.type() == TypeOfNet::GRAFCET ? "Steps###Places" : "Places###Places");
-
-    // Caption toggle option
-    ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(0, 0));
-    ImGui::Checkbox(show_place_captions ?
-                    "Show place identifiers" : "Show place captions",
-                    &show_place_captions);
-    ImGui::PopStyleVar();
+    ImGui::Begin(grafcet ? "Steps###Places" : "Places###Places");
+    ImGui::Checkbox(grafcet ? "Show step identifiers" : "Show place identifiers", &show_identifiers);
+    if (ImGui::IsItemHovered())
+    {
+        ImGui::SetTooltip(grafcet ? "Draw the number of each step above its caption"
+                                  : "Draw the identifier (P0, P1 ...) of each place next to its caption");
+    }
     ImGui::Separator();
+    ImGui::TextDisabled(grafcet ? "Captions and active steps:" : "Captions and tokens:");
 
-    // Place list with token controls
     for (auto& place : net.places())
     {
         ImGui::PushID(place.key.c_str());
         ImGui::AlignTextToFramePadding();
-        ImGui::InputText(place.key.c_str(), &place.caption,
-            readonly | ImGuiInputTextFlags_CallbackEdit,
-            [](ImGuiInputTextCallbackData*) { return 0; });
+        ImGui::SetNextItemWidth(std::max(80.0f, ImGui::GetContentRegionAvail().x - 120.0f));
+        if (ImGui::InputText(place.key.c_str(), &place.caption, readonly))
+            modified = true;
 
         // Token increment/decrement buttons
         ImGui::SameLine();
-        ImGui::PushButtonRepeat(true);
+        ImGui::PushItemFlag(ImGuiItemFlags_ButtonRepeat, true);
         if (ImGui::ArrowButton("##left", ImGuiDir_Left))
         {
             place.decrement();
@@ -54,10 +70,17 @@ static void drawPlacesPanel(Net& net, Simulation& simulation, bool& modified,
             place.increment();
             modified = true;
         }
-        ImGui::PopButtonRepeat();
+        ImGui::PopItemFlag();
 
         ImGui::SameLine();
         ImGui::Text("%zu", place.tokens);
+
+        // GRAFCET: how long the step is active.
+        if (grafcet && simulation.isRunning() && (place.tokens > 0u))
+        {
+            ImGui::SameLine();
+            ImGui::TextDisabled("%.1f s", double(simulation.grafcet().stepTime(net, place.id)));
+        }
 
         ImGui::PopID();
     }
@@ -65,51 +88,46 @@ static void drawPlacesPanel(Net& net, Simulation& simulation, bool& modified,
 }
 
 //------------------------------------------------------------------------------
-//! \brief Helper to display transitions panel.
+//! \brief Helper to display transitions panel. For GRAFCET, open_help is set
+//! when the user asks for the syntax of the receptivities.
 //------------------------------------------------------------------------------
-static void drawTransitionsPanel(Net& net, Simulation& simulation, [[maybe_unused]] bool& modified,
-                                 bool& show_transition_captions)
+static void drawTransitionsPanel(Net& net, Simulation& simulation, bool& modified,
+                                 bool& show_identifiers, bool& open_help)
 {
     const auto readonly = simulation.isRunning() ?
         ImGuiInputTextFlags_ReadOnly : ImGuiInputTextFlags_None;
+    bool const grafcet = (net.type() == TypeOfNet::GRAFCET);
 
     ImGui::Begin("Transitions");
-
-    // Caption toggle option
-    ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(0, 0));
-    ImGui::Checkbox(show_transition_captions
-                    ? "Show transition identifiers"
-                    : "Show transition captions",
-                    &show_transition_captions);
-    ImGui::PopStyleVar();
+    ImGui::Checkbox("Show transition identifiers", &show_identifiers);
     ImGui::Separator();
-    ImGui::Text("%s", (net.type() == TypeOfNet::GRAFCET) ? "Transitivities:" : "Captions:");
+    if (grafcet)
+    {
+        ImGui::TextDisabled("Receptivities and delays:");
+        ImGui::SameLine();
+        if (ImGui::SmallButton("Syntax help"))
+            open_help = true;
+        if (ImGui::IsItemHovered())
+            ImGui::SetTooltip("a . b (and), a + b (or), /a (not), ↑a (rising edge),\n"
+                              "X3 (step 3 active), 3s/X2 (timer), [temp >= 80] ...\n"
+                              "Click for the whole syntax.");
+    }
+    else
+    {
+        ImGui::TextDisabled("Captions:");
+    }
 
-    // Transition list
     for (auto& t : net.transitions())
     {
         ImGui::PushID(static_cast<int>(t.id));
 
-        ImGui::InputText(t.key.c_str(), &t.caption,
-            readonly | ImGuiInputTextFlags_CallbackEdit,
-            [](ImGuiInputTextCallbackData*)
-            {
-                return 0;
-            });
-
-        // GRAFCET receptivity validation
-        if ((net.type() == TypeOfNet::GRAFCET) && (!simulation.isRunning()))
-        {
-            std::string const error = Receptivity::check(t.caption);
-            if (!error.empty())
-            {
-                ImGui::TextColored(ImVec4(1.0f, 0.0f, 0.0f, 1.0f), "%s", error.c_str());
-                ImGui::TextColored(ImVec4(1.0f, 0.0f, 0.0f, 1.0f), "%s", "See help for the syntax");
-            }
-        }
+        ImGui::SetNextItemWidth(std::max(80.0f, ImGui::GetContentRegionAvail().x -
+                                         (grafcet ? 110.0f : 40.0f)));
+        if (ImGui::InputText(t.key.c_str(), &t.caption, readonly))
+            modified = true;
 
         // GRAFCET transition delay (temporization)
-        if (net.type() == TypeOfNet::GRAFCET)
+        if (grafcet)
         {
             ImGui::SameLine();
             ImGui::SetNextItemWidth(60.0f);
@@ -120,18 +138,43 @@ static void drawTransitionsPanel(Net& net, Simulation& simulation, [[maybe_unuse
             }
             if (ImGui::IsItemHovered())
             {
-                ImGui::SetTooltip("Delay before transition can fire (0 = immediate)");
+                ImGui::SetTooltip("Delay before the transition can fire (0 = immediate).\n"
+                                  "Same as writing 3s/X1 in the receptivity.");
             }
 
-            // Show timer progress during simulation
-            if (simulation.isRunning() && t.delay > 0.0f)
+            // Timers counting during the simulation: the time operators of
+            // the receptivity (30s/X1) and the delay.
+            if (simulation.isRunning())
             {
-                float timer = simulation.transitionDelayTimer(t.id);
-                if (timer > 0.0f)
+                std::vector<Receptivity::Timer> timers;
+                if (Receptivity const* receptivity = simulation.receptivity(t.id))
+                    timers = receptivity->timers();
+                if (t.delay > 0.0f)
                 {
+                    float const elapsed = simulation.transitionDelayTimer(t.id);
+                    timers.push_back({ std::min(elapsed, t.delay), t.delay, elapsed > 0.0f, elapsed >= t.delay });
+                }
+                for (auto const& timer : timers)
+                {
+                    if (timer.duration <= 0.0f)
+                        continue;
+                    char text[64];
+                    std::snprintf(text, sizeof(text), "%.1f / %.4g s", double(timer.elapsed), double(timer.duration));
+                    ImGui::ProgressBar(timer.running ? timer.elapsed / timer.duration : (timer.output ? 1.0f : 0.0f),
+                                       ImVec2(-1.0f, 0.0f), timer.running ? text : (timer.output ? "elapsed" : "waiting"));
+                }
+            }
+
+            // GRAFCET receptivity validation
+            if (!simulation.isRunning())
+            {
+                std::string const error = Receptivity::check(t.caption);
+                if (!error.empty())
+                {
+                    ImGui::TextColored(ImVec4(0.92f, 0.22f, 0.22f, 1.0f), "%s", error.c_str());
                     ImGui::SameLine();
-                    float progress = timer / t.delay;
-                    ImGui::ProgressBar(progress, ImVec2(50, 0), "");
+                    if (ImGui::SmallButton("Syntax"))
+                        open_help = true;
                 }
             }
         }
@@ -142,552 +185,326 @@ static void drawTransitionsPanel(Net& net, Simulation& simulation, [[maybe_unuse
 }
 
 //------------------------------------------------------------------------------
-//! \brief Helper to display GRAFCET inputs panel. While the GRAFCET runs, a
-//! click changes the input (at once in immediate mode, else at the next
-//! Apply). Else a click changes the initial value saved with the document.
+//! \brief Color of the qualifier badge.
 //------------------------------------------------------------------------------
-static void drawGrafcetInputsPanel(Simulation& simulation, bool& modified)
+static ImVec4 qualifierColor(Action::Qualifier const qualifier)
 {
-    GrafcetEngine& engine = simulation.grafcet();
-    // Values waiting for Apply, per engine (one engine per document).
-    static std::map<GrafcetEngine const*, std::map<std::string, int>> all_pending;
-    std::map<std::string, int>& pending_values = all_pending[&engine];
-    static bool immediate_mode = false;
-    bool const running = simulation.isRunning();
-
-    ImGui::Begin("Inputs");
-
-    if (running)
+    switch (qualifier)
     {
-        ImGui::Checkbox("Immediate mode", &immediate_mode);
-        ImGui::SameLine();
-        if (ImGui::Button("Apply (F7)") || ImGui::IsKeyPressed(ImGuiKey_F7))
-        {
-            for (auto const& it : pending_values)
-                engine.setInput(it.first, it.second);
-        }
+    case Action::Qualifier::N: return ImVec4(0.45f, 0.55f, 0.95f, 1.0f);
+    case Action::Qualifier::S: return ImVec4(0.25f, 0.70f, 0.30f, 1.0f);
+    case Action::Qualifier::R: return ImVec4(0.90f, 0.30f, 0.30f, 1.0f);
+    case Action::Qualifier::D:
+    case Action::Qualifier::L:
+    case Action::Qualifier::SD:
+    case Action::Qualifier::DS:
+    case Action::Qualifier::SL: return ImVec4(0.85f, 0.60f, 0.20f, 1.0f);
+    case Action::Qualifier::P:
+    case Action::Qualifier::P0: return ImVec4(0.70f, 0.35f, 0.80f, 1.0f);
     }
-    else
+    return ImVec4(0.45f, 0.55f, 0.95f, 1.0f);
+}
+
+//------------------------------------------------------------------------------
+//! \brief True for the qualifiers using Action::duration.
+//------------------------------------------------------------------------------
+static bool isTimed(Action::Qualifier const qualifier)
+{
+    return (qualifier == Action::Qualifier::D) || (qualifier == Action::Qualifier::L) ||
+           (qualifier == Action::Qualifier::SD) || (qualifier == Action::Qualifier::DS) ||
+           (qualifier == Action::Qualifier::SL);
+}
+
+//------------------------------------------------------------------------------
+//! \brief Edit one action of a step: qualifier (with its timing diagram),
+//! name, condition, duration, forcing orders.
+//------------------------------------------------------------------------------
+static void editAction(Place& place, Action& action, bool& modified, bool& open_help)
+{
+    // Qualifier: the list says what each one does, the diagram shows it.
+    static Action::Qualifier const QUALIFIERS[] = {
+        Action::Qualifier::N, Action::Qualifier::S, Action::Qualifier::R, Action::Qualifier::D,
+        Action::Qualifier::L, Action::Qualifier::SD, Action::Qualifier::DS, Action::Qualifier::SL,
+        Action::Qualifier::P, Action::Qualifier::P0 };
+    static char const* NAMES[] = {
+        "N - Normal", "S - Set (stored)", "R - Reset", "D - Delayed", "L - Limited",
+        "SD - Stored then delayed", "DS - Delayed then stored", "SL - Stored and limited",
+        "P1 - Pulse on activation", "P0 - Pulse on deactivation" };
+    int current = 0;
+    for (int i = 0; i < IM_ARRAYSIZE(QUALIFIERS); ++i)
+        if (QUALIFIERS[i] == action.qualifier)
+            current = i;
+    ImGui::SetNextItemWidth(220.0f);
+    if (ImGui::BeginCombo("Qualifier", NAMES[current]))
     {
-        pending_values.clear();
-        ImGui::TextColored(ImVec4(0.6f, 0.6f, 0.6f, 1.0f), "Set initial values:");
-    }
-
-    ImGui::Separator();
-
-    // Copy: setInput() may insert while iterating.
-    std::map<std::string, int> const inputs = engine.inputs();
-    for (auto const& it : inputs)
-    {
-        if (pending_values.find(it.first) == pending_values.end())
+        for (int i = 0; i < IM_ARRAYSIZE(QUALIFIERS); ++i)
         {
-            pending_values[it.first] = it.second;
-        }
-
-        int& pending = pending_values[it.first];
-        int const current = it.second;
-
-        ImGui::PushID(it.first.c_str());
-
-        bool is_on = running
-            ? (immediate_mode ? (current != 0) : (pending != 0))
-            : (current != 0);
-        bool changed = running && (is_on != (current != 0));
-
-        // Color styling
-        if (changed)
-        {
-            ImGui::PushStyleColor(ImGuiCol_Button, IM_COL32(255, 200, 100, 255));
-            ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(0, 0, 0, 255));
-        }
-        else if (is_on)
-        {
-            ImGui::PushStyleColor(ImGuiCol_Button, IM_COL32(100, 200, 100, 255));
-            ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(0, 0, 0, 255));
-        }
-
-        if (ImGui::Button(is_on ? "ON " : "OFF", ImVec2(50, 25)))
-        {
-            int const toggled = current ? 0 : 1;
-            if (running && !immediate_mode)
+            if (ImGui::Selectable(NAMES[i], i == current))
             {
-                pending = pending ? 0 : 1;
-            }
-            else
-            {
-                engine.setInput(it.first, toggled);
-                pending = toggled;
-            }
-            if (!running)
-            {
-                // Initial value, saved in the nets of the document.
-                for (Net* net : engine.graphs())
-                    net->inputs[it.first] = toggled;
+                action.qualifier = QUALIFIERS[i];
                 modified = true;
             }
+            if (ImGui::IsItemHovered())
+            {
+                ImGui::BeginTooltip();
+                ImGui::PushTextWrapPos(300.0f);
+                ImGui::TextUnformatted(qualifierMeaning(QUALIFIERS[i]));
+                ImGui::PopTextWrapPos();
+                qualifierChronogram(QUALIFIERS[i], 280.0f);
+                ImGui::EndTooltip();
+            }
         }
+        ImGui::EndCombo();
+    }
+    ImGui::SameLine();
+    if (helpMarker("Click for the help of all the qualifiers"))
+        open_help = true;
+    ImGui::PushTextWrapPos(ImGui::GetCursorPosX() + std::max(200.0f, ImGui::GetContentRegionAvail().x));
+    ImGui::TextDisabled("%s", qualifierMeaning(action.qualifier));
+    ImGui::PopTextWrapPos();
+    qualifierChronogram(action.qualifier, std::min(320.0f, ImGui::GetContentRegionAvail().x));
 
-        if (changed || is_on)
+    if (isTimed(action.qualifier))
+    {
+        ImGui::SetNextItemWidth(120.0f);
+        if (ImGui::InputFloat("Duration d (s)", &action.duration, 0.5f, 1.0f, "%.1f"))
         {
-            ImGui::PopStyleColor(2);
+            action.duration = std::max(0.0f, action.duration);
+            modified = true;
         }
+    }
 
+    if (ImGui::InputText("Name", &action.name))
+        modified = true;
+    if (ImGui::IsItemHovered())
+        ImGui::SetTooltip("Name of the output (actuator) set by the action: \"Motor\", \"KM1\" ...\n"
+                          "Empty for an action that only forces other graphs.");
+
+    if (ImGui::InputTextWithHint("Condition", "always", &action.condition))
+        modified = true;
+    if (ImGui::IsItemHovered())
+    {
+        ImGui::SetTooltip("Conditional action, drawn \"if Dr: Motor\": the action runs only\n"
+                          "while this condition is true (same syntax as receptivities).");
+    }
+    std::string const condition_error = Receptivity::check(action.condition);
+    if (!condition_error.empty())
+        ImGui::TextColored(ImVec4(0.92f, 0.22f, 0.22f, 1.0f), "%s", condition_error.c_str());
+
+    // LED Color of the pilot light (industrial standard colors)
+    const char* colors[] = { "Green", "Red", "Orange", "Yellow", "Blue", "White" };
+    int color_idx = static_cast<int>(action.color);
+    ImGui::SetNextItemWidth(120.0f);
+    if (ImGui::Combo("Light color", &color_idx, colors, IM_ARRAYSIZE(colors)))
+    {
+        action.color = static_cast<Action::LedColor>(color_idx);
+        modified = true;
+    }
+
+    if (ImGui::InputText("Comment", &action.script))
+        modified = true;
+    if (ImGui::IsItemHovered())
+        ImGui::SetTooltip("What the action does (comment in the generated code)");
+
+    // Forcing orders (hierarchical GRAFCET control)
+    ImGui::SeparatorText("Forcing orders");
+    for (size_t fi = 0; fi < action.forcings.size(); ++fi)
+    {
+        ImGui::PushID(static_cast<int>(fi));
+        ImGui::TextColored(ImVec4(0.9f, 0.6f, 0.2f, 1.0f), "%s", forcingLabel(action.forcings[fi]).c_str());
         ImGui::SameLine();
-        ImGui::Text("%s", it.first.c_str());
-
-        if (changed && !immediate_mode && running)
+        if (ImGui::SmallButton("Remove"))
         {
-            ImGui::SameLine();
-            ImGui::TextColored(ImVec4(1.0f, 0.6f, 0.0f, 1.0f), "(pending)");
+            action.forcings.erase(action.forcings.begin() + static_cast<ptrdiff_t>(fi));
+            modified = true;
+            ImGui::PopID();
+            break;
         }
-
         ImGui::PopID();
     }
-
-    ImGui::End();
-}
-
-//------------------------------------------------------------------------------
-//! \brief Helper to display GRAFCET outputs panel.
-//------------------------------------------------------------------------------
-static void drawGrafcetOutputsPanel(Net& net, Simulation& simulation)
-{
-    ImGui::Begin("Outputs");
-    ImGui::TextWrapped("Actuator states from active actions.");
-    ImGui::Separator();
-
-    ImDrawList* draw_list = ImGui::GetWindowDrawList();
-
-    // Structure to hold actuator state and color
-    struct ActuatorInfo {
-        bool active = false;
-        Action::LedColor color = Action::LedColor::Green;
-    };
-
-    // Collect actuator states from actions (using simulation.actionState())
-    std::map<std::string, ActuatorInfo> actuator_states;
-    for (const auto& place : net.places())
+    // Text of the new order, per step.
+    static std::map<Place const*, std::string> buffers;
+    std::string& buffer = buffers[&place];
+    ImGui::SetNextItemWidth(160.0f);
+    bool const enter = ImGui::InputTextWithHint("##new_forcing", "Production{init}", &buffer,
+                                                ImGuiInputTextFlags_EnterReturnsTrue);
+    if (ImGui::IsItemHovered())
     {
-        for (size_t i = 0; i < place.actions.size(); ++i)
-        {
-            const auto& action = place.actions[i];
-            if (!action.name.empty())
-            {
-                // Output of the action name: also true for stored actions
-                // set by another step.
-                bool is_active = simulation.isRunning() &&
-                    simulation.grafcet().output(action.name);
-                auto it = actuator_states.find(action.name);
-                if (it == actuator_states.end())
-                {
-                    actuator_states[action.name] = {is_active, action.color};
-                }
-                else
-                {
-                    // OR the states (multiple actions can control the same actuator)
-                    it->second.active = it->second.active || is_active;
-                }
-            }
-        }
+        ImGui::SetTooltip("Forcing order while the step is active:\n"
+                          "  Graph{init}  its initial steps\n"
+                          "  Graph{2,5}   steps 2 and 5 only\n"
+                          "  Graph{}      no active step\n"
+                          "  Graph{*}     frozen");
     }
-
-    // Helper to convert LedColor to ImU32
-    auto ledColorToImU32 = [](Action::LedColor color, bool active) -> ImU32 {
-        if (!active) return IM_COL32(60, 60, 60, 255);
-        switch (color) {
-            case Action::LedColor::Green:  return IM_COL32(50, 255, 50, 255);
-            case Action::LedColor::Red:    return IM_COL32(255, 50, 50, 255);
-            case Action::LedColor::Orange: return IM_COL32(255, 165, 0, 255);
-            case Action::LedColor::Yellow: return IM_COL32(255, 255, 50, 255);
-            case Action::LedColor::Blue:   return IM_COL32(50, 150, 255, 255);
-            case Action::LedColor::White:  return IM_COL32(255, 255, 255, 255);
-        }
-        return IM_COL32(50, 255, 50, 255);
-    };
-
-    auto ledColorToGlow = [](Action::LedColor color) -> ImU32 {
-        switch (color) {
-            case Action::LedColor::Green:  return IM_COL32(50, 255, 50, 60);
-            case Action::LedColor::Red:    return IM_COL32(255, 50, 50, 60);
-            case Action::LedColor::Orange: return IM_COL32(255, 165, 0, 60);
-            case Action::LedColor::Yellow: return IM_COL32(255, 255, 50, 60);
-            case Action::LedColor::Blue:   return IM_COL32(50, 150, 255, 60);
-            case Action::LedColor::White:  return IM_COL32(255, 255, 255, 60);
-        }
-        return IM_COL32(50, 255, 50, 60);
-    };
-
-    auto ledColorToTextColor = [](Action::LedColor color) -> ImVec4 {
-        switch (color) {
-            case Action::LedColor::Green:  return ImVec4(0.4f, 1.0f, 0.4f, 1.0f);
-            case Action::LedColor::Red:    return ImVec4(1.0f, 0.4f, 0.4f, 1.0f);
-            case Action::LedColor::Orange: return ImVec4(1.0f, 0.65f, 0.0f, 1.0f);
-            case Action::LedColor::Yellow: return ImVec4(1.0f, 1.0f, 0.4f, 1.0f);
-            case Action::LedColor::Blue:   return ImVec4(0.4f, 0.6f, 1.0f, 1.0f);
-            case Action::LedColor::White:  return ImVec4(1.0f, 1.0f, 1.0f, 1.0f);
-        }
-        return ImVec4(0.4f, 1.0f, 0.4f, 1.0f);
-    };
-
-    if (actuator_states.empty())
+    ImGui::SameLine();
+    if ((ImGui::SmallButton("Add order") || enter) && !buffer.empty())
     {
-        ImGui::TextColored(ImVec4(0.5f, 0.5f, 0.5f, 1.0f), "No actions defined");
+        action.forcings.push_back(parseForcing(buffer));
+        buffer.clear();
+        modified = true;
     }
-    else
-    {
-        for (const auto& [name, info] : actuator_states)
-        {
-            ImVec2 led_pos = ImGui::GetCursorScreenPos();
-            const float led_radius = 8.0f;
-            ImVec2 led_center(led_pos.x + led_radius + 4.0f, led_pos.y + 10.0f);
-
-            ImU32 led_color = ledColorToImU32(info.color, info.active);
-
-            if (info.active)
-            {
-                draw_list->AddCircleFilled(led_center, led_radius + 3.0f, ledColorToGlow(info.color));
-            }
-            draw_list->AddCircleFilled(led_center, led_radius, led_color);
-            draw_list->AddCircle(led_center, led_radius, IM_COL32(100, 100, 100, 255), 32, 1.5f);
-
-            ImGui::Dummy(ImVec2(led_radius * 2 + 12.0f, 20.0f));
-            ImGui::SameLine();
-
-            if (info.active)
-                ImGui::TextColored(ledColorToTextColor(info.color), "%s", name.c_str());
-            else
-                ImGui::Text("%s", name.c_str());
-        }
-    }
-
-    ImGui::End();
 }
 
 //------------------------------------------------------------------------------
 //! \brief Helper to display GRAFCET actions panel.
 //------------------------------------------------------------------------------
-static void drawGrafcetActionsPanel(Net& net, Simulation& simulation, bool& modified)
+static void drawGrafcetActionsPanel(Net& net, Simulation& simulation, bool& modified,
+                                    bool& show_boxes, bool& open_help)
 {
     ImGui::Begin("Actions");
-    ImGui::TextWrapped("Actions for each step. Right-click step on canvas > Edit Actions.");
+    ImGui::Checkbox("Show the action boxes", &show_boxes);
+    if (ImGui::IsItemHovered())
+        ImGui::SetTooltip("Hidden: a small tag with the number of actions, for a compact net");
+    ImGui::SameLine();
+    if (ImGui::SmallButton("Qualifiers help"))
+        open_help = true;
     ImGui::Separator();
 
     for (auto& place : net.places())
     {
         bool is_active = (place.tokens > 0);
         if (is_active)
-        {
-            ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(100, 255, 100, 255));
-        }
-
-        bool open = ImGui::TreeNode(place.key.c_str(), "%s: %s %s",
-            place.key.c_str(), place.caption.c_str(),
-            is_active ? "[ACTIVE]" : "");
-
+            ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(100, 220, 100, 255));
+        bool open = ImGui::TreeNode(place.key.c_str(), "X%zu  %s%s  (%zu)", place.id,
+            place.caption.c_str(), is_active ? "  [active]" : "", place.actions.size());
         if (is_active)
-        {
             ImGui::PopStyleColor();
+        if (!open)
+            continue;
+
+        ImGui::PushID(place.key.c_str());
+
+        // List of the actions: a click selects the one to edit.
+        int& selected = *ImGui::GetStateStorage()->GetIntRef(ImGui::GetID("selected_action"), 0);
+        if (selected >= static_cast<int>(place.actions.size()))
+            selected = 0;
+        for (size_t i = 0; i < place.actions.size(); ++i)
+        {
+            Action& action = place.actions[i];
+            ImGui::PushID(static_cast<int>(i));
+            bool const running = simulation.isRunning() && simulation.actionState(place.id, i).active;
+            std::string label;
+            if (!action.condition.empty())
+                label += "if " + action.condition + ": ";
+            label += action.name;
+            for (auto const& forcing : action.forcings)
+                label += (label.empty() ? "" : "  ") + forcingLabel(forcing);
+            ImGui::TextColored(qualifierColor(action.qualifier), "%-2s", action.forcings.empty() || !action.name.empty()
+                               ? qualifierToStr(action.qualifier) : "F");
+            ImGui::SameLine();
+            if (ImGui::Selectable((label + "##action").c_str(), selected == int(i)))
+                selected = int(i);
+            if (running)
+            {
+                ImGui::SameLine();
+                ImGui::TextColored(ImVec4(0.3f, 0.85f, 0.4f, 1.0f), "on");
+            }
+            // Timed qualifiers: how far the duration d is.
+            if (simulation.isRunning() && isTimed(action.qualifier) && (action.duration > 0.0f))
+            {
+                Simulation::ActionState const& state = simulation.actionState(place.id, i);
+                if (state.timer > 0.0f)
+                {
+                    char text[64];
+                    std::snprintf(text, sizeof(text), "%.1f / %.4g s", double(std::min(state.timer, action.duration)),
+                                  double(action.duration));
+                    ImGui::ProgressBar(std::min(state.timer / action.duration, 1.0f), ImVec2(-1.0f, 0.0f), text);
+                }
+            }
+            ImGui::PopID();
         }
 
-        if (open)
+        if (ImGui::SmallButton("+ Add action"))
         {
-            ImGui::PushID(place.key.c_str());
-
-            // List actions
-            for (size_t i = 0; i < place.actions.size(); ++i)
+            Action new_action;
+            new_action.name = "Action" + std::to_string(place.actions.size() + 1);
+            place.actions.push_back(new_action);
+            selected = int(place.actions.size()) - 1;
+            modified = true;
+        }
+        if (!place.actions.empty())
+        {
+            ImGui::SameLine();
+            if (ImGui::SmallButton("Delete this action"))
             {
-                Action& action = place.actions[i];
-                ImGui::PushID(static_cast<int>(i));
-
-                // Qualifier badge
-                const char* qual_str = qualifierToStr(action.qualifier);
-                ImVec4 badge_color;
-                switch (action.qualifier) {
-                    case Action::Qualifier::N: badge_color = ImVec4(0.4f, 0.4f, 0.8f, 1.0f); break;
-                    case Action::Qualifier::S: badge_color = ImVec4(0.2f, 0.7f, 0.2f, 1.0f); break;
-                    case Action::Qualifier::R: badge_color = ImVec4(0.8f, 0.2f, 0.2f, 1.0f); break;
-                    case Action::Qualifier::D:
-                    case Action::Qualifier::L:
-                    case Action::Qualifier::SD:
-                    case Action::Qualifier::DS:
-                    case Action::Qualifier::SL: badge_color = ImVec4(0.7f, 0.5f, 0.2f, 1.0f); break;
-                    case Action::Qualifier::P:
-                    case Action::Qualifier::P0: badge_color = ImVec4(0.6f, 0.2f, 0.6f, 1.0f); break;
-                }
-
-                ImGui::TextColored(badge_color, "[%s]", qual_str);
-                ImGui::SameLine();
-                ImGui::Text("%s", action.name.c_str());
-                if (!action.script.empty())
-                {
-                    ImGui::SameLine();
-                    ImGui::TextColored(ImVec4(0.6f, 0.6f, 0.6f, 1.0f), "(%s)", action.script.c_str());
-                }
-
-                // Timer for timed qualifiers
-                if (action.qualifier == Action::Qualifier::D ||
-                    action.qualifier == Action::Qualifier::L ||
-                    action.qualifier == Action::Qualifier::SD ||
-                    action.qualifier == Action::Qualifier::DS ||
-                    action.qualifier == Action::Qualifier::SL)
-                {
-                    ImGui::SameLine();
-                    ImGui::TextColored(ImVec4(0.5f, 0.5f, 0.5f, 1.0f), "[%.1fs]", action.duration);
-                }
-
-                // Active state indicator
-                if (simulation.isRunning() && simulation.actionState(place.id, i).active)
-                {
-                    ImGui::SameLine();
-                    ImGui::TextColored(ImVec4(0.0f, 1.0f, 0.0f, 1.0f), " ACTIVE");
-                }
-
-                ImGui::PopID();
-            }
-
-            // Add action button
-            if (ImGui::SmallButton("+ Add Action"))
-            {
-                Action new_action;
-                new_action.name = "Action" + std::to_string(place.actions.size() + 1);
-                place.actions.push_back(new_action);
+                place.actions.erase(place.actions.begin() + selected);
+                if (selected > 0)
+                    selected--;
                 modified = true;
             }
-
-            // Edit selected action
-            if (!place.actions.empty())
-            {
-                ImGui::Separator();
-                ImGui::Text("Edit action:");
-
-                // Selected action of this step, kept by Dear ImGui per step.
-                int& selected_action = *ImGui::GetStateStorage()->GetIntRef(
-                    ImGui::GetID(("selected_action_" + place.key).c_str()), 0);
-                if (selected_action >= static_cast<int>(place.actions.size()))
-                    selected_action = 0;
-
-                std::vector<const char*> action_names;
-                for (auto& a : place.actions)
-                    action_names.push_back(a.name.c_str());
-
-                ImGui::Combo("##action_select", &selected_action,
-                    action_names.data(), static_cast<int>(action_names.size()));
-
-                if (selected_action < static_cast<int>(place.actions.size()))
-                {
-                    Action& action = place.actions[selected_action];
-
-                    // Qualifier selector
-                    const char* qualifiers[] = {
-                        "N - Normal", "S - Set (Stored)", "R - Reset",
-                        "D - Delayed", "L - Limited", "SD - Stored & Delayed",
-                        "DS - Delayed & Stored", "SL - Stored & Limited",
-                        "P1 - Pulse on activation", "P0 - Pulse on deactivation"
-                    };
-                    int qual_idx = static_cast<int>(action.qualifier);
-                    if (ImGui::Combo("Qualifier", &qual_idx, qualifiers, IM_ARRAYSIZE(qualifiers)))
-                    {
-                        action.qualifier = static_cast<Action::Qualifier>(qual_idx);
-                        modified = true;
-                    }
-
-                    // LED Color selector (industrial standard colors)
-                    const char* colors[] = {
-                        "Green", "Red", "Orange", "Yellow", "Blue", "White"
-                    };
-                    int color_idx = static_cast<int>(action.color);
-                    if (ImGui::Combo("LED Color", &color_idx, colors, IM_ARRAYSIZE(colors)))
-                    {
-                        action.color = static_cast<Action::LedColor>(color_idx);
-                        modified = true;
-                    }
-
-                    // Name input
-                    char name_buf[128];
-                    strncpy(name_buf, action.name.c_str(), sizeof(name_buf) - 1);
-                    if (ImGui::InputText("Name", name_buf, sizeof(name_buf)))
-                    {
-                        action.name = name_buf;
-                        modified = true;
-                    }
-
-                    // Script/Description input (used as comment in generated code)
-                    char script_buf[256];
-                    strncpy(script_buf, action.script.c_str(), sizeof(script_buf) - 1);
-                    if (ImGui::InputText("Description", script_buf, sizeof(script_buf)))
-                    {
-                        action.script = script_buf;
-                        modified = true;
-                    }
-                    if (ImGui::IsItemHovered())
-                    {
-                        ImGui::SetTooltip("Description of the action (used as comment in generated code)");
-                    }
-
-                    // Assignment condition (conditional action)
-                    if (ImGui::InputText("Condition", &action.condition))
-                    {
-                        modified = true;
-                    }
-                    if (ImGui::IsItemHovered())
-                    {
-                        ImGui::SetTooltip("The action runs only while this condition is true\n"
-                                          "(same syntax as receptivities, empty = always).");
-                    }
-                    std::string const condition_error = Receptivity::check(action.condition);
-                    if (!condition_error.empty())
-                    {
-                        ImGui::TextColored(ImVec4(1.0f, 0.0f, 0.0f, 1.0f), "%s", condition_error.c_str());
-                    }
-
-                    // Duration for timed qualifiers
-                    if (action.qualifier == Action::Qualifier::D ||
-                        action.qualifier == Action::Qualifier::L ||
-                        action.qualifier == Action::Qualifier::SD ||
-                        action.qualifier == Action::Qualifier::DS ||
-                        action.qualifier == Action::Qualifier::SL)
-                    {
-                        if (ImGui::InputFloat("Duration (s)", &action.duration, 0.1f, 1.0f))
-                        {
-                            modified = true;
-                        }
-                    }
-
-                    // Forcings section (hierarchical GRAFCET control)
-                    ImGui::Separator();
-                    ImGui::Text("Forcings (hierarchical control):");
-
-                    // List existing forcings
-                    for (size_t fi = 0; fi < action.forcings.size(); ++fi)
-                    {
-                        Forcing& f = action.forcings[fi];
-                        ImGui::PushID(static_cast<int>(fi));
-
-                        // Display forcing as text
-                        ImGui::TextColored(ImVec4(0.9f, 0.6f, 0.2f, 1.0f), "%s",
-                            forcingToStr(f).c_str());
-
-                        ImGui::SameLine();
-                        if (ImGui::SmallButton("X##del_forcing"))
-                        {
-                            action.forcings.erase(action.forcings.begin() + static_cast<ptrdiff_t>(fi));
-                            modified = true;
-                            ImGui::PopID();
-                            break;
-                        }
-
-                        ImGui::PopID();
-                    }
-
-                    // Add new forcing
-                    static char new_forcing_buf[128] = "";
-                    ImGui::InputText("##new_forcing", new_forcing_buf, sizeof(new_forcing_buf));
-                    if (ImGui::IsItemHovered())
-                    {
-                        ImGui::SetTooltip(
-                            "Forcing syntax:\n"
-                            "  NetName:{init}  - Force to initial state\n"
-                            "  NetName:{*}     - Freeze (no evolution)\n"
-                            "  NetName:{}      - Empty (all steps OFF)\n"
-                            "  NetName:{2,5}   - Activate steps 2 and 5");
-                    }
-                    ImGui::SameLine();
-                    if (ImGui::SmallButton("+ Add Forcing"))
-                    {
-                        if (strlen(new_forcing_buf) > 0)
-                        {
-                            action.forcings.push_back(parseForcing(new_forcing_buf));
-                            new_forcing_buf[0] = '\0';
-                            modified = true;
-                        }
-                    }
-
-                    ImGui::Separator();
-
-                    // Delete button
-                    if (ImGui::SmallButton("Delete Action"))
-                    {
-                        place.actions.erase(place.actions.begin() + selected_action);
-                        if (selected_action > 0) selected_action--;
-                        modified = true;
-                    }
-                }
-            }
-
-            ImGui::PopID();
-            ImGui::TreePop();
         }
+
+        if (selected < static_cast<int>(place.actions.size()))
+        {
+            ImGui::Separator();
+            editAction(place, place.actions[size_t(selected)], modified, open_help);
+        }
+
+        ImGui::PopID();
+        ImGui::TreePop();
     }
 
     ImGui::End();
 }
 
 //------------------------------------------------------------------------------
-//! \brief Helper to display arc durations panel.
+//! \brief Helper to display arc durations panel. Only the arcs going out of a
+//! transition have a duration (the time of the tokens on their way).
 //------------------------------------------------------------------------------
 static void drawArcsPanel(Net& net, Simulation& simulation, bool& modified)
 {
     const auto readonly = simulation.isRunning() ?
         ImGuiInputTextFlags_ReadOnly : ImGuiInputTextFlags_None;
 
-    if (net.type() == TypeOfNet::TimedEventGraph)
+    if ((net.type() != TypeOfNet::TimedEventGraph) && (net.type() != TypeOfNet::TimedPetriNet))
+        return;
+
+    ImGui::Begin("Arcs");
+    ImGui::TextDisabled("Durations (transition -> place):");
+    for (auto& arc : net.arcs())
     {
-        ImGui::Begin("Arcs");
-        ImGui::Text("%s", "Durations:");
-        for (auto& arc : net.arcs())
-        {
-            if (arc.from.type == Node::Type::Transition)
-            {
-                std::string text(arc.from.key + " -> " + arc.to.arcsOut[0]->to.key);
-                float prev_value = arc.duration;
-                ImGui::InputFloat(text.c_str(), &arc.duration, 0.01f, 1.0f, "%.3f", readonly);
-                modified = (prev_value != arc.duration);
-            }
-        }
-        ImGui::End();
+        if (arc.from.type != Node::Type::Transition)
+            continue;
+        std::string const text = (net.type() == TypeOfNet::TimedEventGraph) && !arc.to.arcsOut.empty()
+            ? arc.from.key + " -> " + arc.to.arcsOut[0]->to.key
+            : arc.from.key + " -> " + arc.to.key;
+        if (std::isnan(arc.duration))
+            arc.duration = 0.0f;
+        float const prev_value = arc.duration;
+        ImGui::InputFloat(text.c_str(), &arc.duration, 0.01f, 1.0f, "%.3f", readonly);
+        arc.duration = std::max(0.0f, arc.duration);
+        modified |= (prev_value != arc.duration);
     }
-    else if (net.type() == TypeOfNet::TimedPetriNet)
-    {
-        ImGui::Begin("Arcs");
-        ImGui::Text("%s", "Durations:");
-        for (auto& arc : net.arcs())
-        {
-            std::string text(arc.from.key + " -> " + arc.to.key);
-            float prev_value = arc.duration;
-            ImGui::InputFloat(text.c_str(), &arc.duration, 0.01f, 1.0f, "%.3f", readonly);
-            modified = (prev_value != arc.duration);
-        }
-        ImGui::End();
-    }
+    ImGui::End();
 }
 
 //------------------------------------------------------------------------------
 void Editor::inspector()
 {
     bool modified = false;
+    bool receptivity_help = false;
+    bool qualifier_help = false;
 
-    // Places/Steps panel
-    drawPlacesPanel(net(), simulation(), modified, m_states.show_place_captions);
-
-    // Transitions panel
-    drawTransitionsPanel(net(), simulation(), modified, m_states.show_transition_captions);
-
-    // GRAFCET-specific panels
+    drawPlacesPanel(net(), simulation(), modified, m_states.show_place_identifiers);
+    drawTransitionsPanel(net(), simulation(), modified, m_states.show_transition_identifiers,
+                         receptivity_help);
     if (net().type() == TypeOfNet::GRAFCET)
     {
-        drawGrafcetInputsPanel(simulation(), modified);
-        drawGrafcetOutputsPanel(net(), simulation());
-        drawGrafcetActionsPanel(net(), simulation(), modified);
+        drawGrafcetActionsPanel(net(), simulation(), modified, m_states.show_action_boxes,
+                                qualifier_help);
+        controlPanel();
+        outputsPanel();
+        timingDiagram();
     }
-
-    // Arc durations panel (for timed nets)
     drawArcsPanel(net(), simulation(), modified);
+    documentPanel();
 
-    // Update net state
+    if (receptivity_help)
+        openHelp(1);
+    if (qualifier_help)
+        openHelp(2);
     if (modified)
-    {
         net().modified = true;
-    }
 }
 
 } // namespace tpne
