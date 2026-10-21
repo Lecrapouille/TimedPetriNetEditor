@@ -51,7 +51,9 @@ Document::NetEntry::~NetEntry() = default;
 Document::NetEntry::NetEntry(NetEntry&& other) noexcept
     : net(std::move(other.net)),
       simulation(std::move(other.simulation)),
-      visible(other.visible)
+      visible(other.visible),
+      view_state(other.view_state),
+      checked_revision(other.checked_revision)
 {}
 
 //------------------------------------------------------------------------------
@@ -61,6 +63,8 @@ Document::NetEntry& Document::NetEntry::operator=(NetEntry&& other) noexcept
         net = std::move(other.net);
         simulation = std::move(other.simulation);
         visible = other.visible;
+        view_state = other.view_state;
+        checked_revision = other.checked_revision;
     }
     return *this;
 }

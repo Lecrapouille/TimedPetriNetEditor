@@ -346,20 +346,23 @@ void Editor::run(std::string const& filepath)
 //------------------------------------------------------------------------------
 void Editor::onUpdate(float const dt)
 {
-    if (net().modified)
+    auto& entry = activeDocument().activeNet();
+    if (entry.net.modified)
     {
         activeDocument().setModified(true);
-        title(m_states.title + " -- " + net().name + " **");
-
-        // Validate GRAFCET receptivities when net is modified
-        if (net().type() == TypeOfNet::GRAFCET)
-        {
-            simulation().validateReceptivities();
-        }
+        title(m_states.title + " -- " + entry.net.name + " **");
     }
     else
     {
-        title(m_states.title + " -- " + net().name);
+        title(m_states.title + " -- " + entry.net.name);
+    }
+
+    // Check GRAFCET receptivities once per change of the net, not per frame.
+    if ((entry.net.type() == TypeOfNet::GRAFCET) &&
+        (entry.checked_revision != entry.net.modified.revision()))
+    {
+        entry.simulation->validateReceptivities();
+        entry.checked_revision = entry.net.modified.revision();
     }
 
     // Step all simulations in the active document
@@ -371,6 +374,15 @@ void Editor::onUpdate(float const dt)
     {
         m_remote->poll();
     }
+}
+
+//------------------------------------------------------------------------------
+bool Editor::isAnimating() const
+{
+    return activeDocument().isAnySimulationRunning() ||
+           m_force_directed.isRunning() ||
+           (m_remote && m_remote->isRunning()) ||
+           m_auto_screenshot_pending || (m_screenshot_defer_frames > 0);
 }
 
 //------------------------------------------------------------------------------

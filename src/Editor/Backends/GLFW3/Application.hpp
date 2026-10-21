@@ -28,6 +28,7 @@
 #include "implot/implot.h"
 #include "ImGuiFileDialog/ImGuiFileDialog.h"
 #include <GLFW/glfw3.h>
+#include <string>
 
 //------------------------------------------------------------------------------
 void reloadFonts();
@@ -78,6 +79,20 @@ public:
     virtual void onFrameEnd() {}
 
     //--------------------------------------------------------------------------
+    //! \brief Return true while something moves without user input (running
+    //! simulation, graph layout, remote control ...). When false, the main
+    //! loop sleeps until the next keyboard or mouse event instead of drawing
+    //! frames that are all the same.
+    //--------------------------------------------------------------------------
+    virtual bool isAnimating() const { return true; }
+
+    //--------------------------------------------------------------------------
+    //! \brief Wake up the main loop (thread safe). Call it when the state
+    //! changes outside an input event, for example from a network thread.
+    //--------------------------------------------------------------------------
+    void wakeUp();
+
+    //--------------------------------------------------------------------------
     //! \brief
     //--------------------------------------------------------------------------
     bool windowShouldClose(); // FIXME: doublon with halt()
@@ -95,6 +110,11 @@ private:
     size_t m_framerate = 60u;
     double m_lastUpdateTime = 0.0;  // number of seconds since the last loop
     double m_lastFrameTime = 0.0;   // number of seconds since the last frame
+    //! \brief Frames drawn since the last event while nothing animates. Dear
+    //! ImGui needs a few frames to settle after an input (hover, popups).
+    size_t m_idle_frames = 0u;
+    //! \brief Last title given to the window, to call the OS only on change.
+    std::string m_title;
 };
 
 #endif

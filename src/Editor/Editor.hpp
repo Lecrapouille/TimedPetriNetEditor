@@ -96,6 +96,7 @@ private: // Inheritance from Application class
     virtual void onUpdate(float const dt) override;
     virtual void onDraw() override;
     void onFrameEnd() override;
+    bool isAnimating() const override;
     void close();
 
 private: // Widgets

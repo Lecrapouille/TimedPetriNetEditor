@@ -82,6 +82,17 @@ public:
     virtual void onFrameEnd() {}
 
     //--------------------------------------------------------------------------
+    //! \brief Return true while something moves without user input. When
+    //! false, the main loop waits for the next event instead of drawing.
+    //--------------------------------------------------------------------------
+    virtual bool isAnimating() const { return true; }
+
+    //--------------------------------------------------------------------------
+    //! \brief Draw the next frames even if nothing animates.
+    //--------------------------------------------------------------------------
+    void wakeUp() { m_idle_frames = 0u; }
+
+    //--------------------------------------------------------------------------
     //! \brief
     //--------------------------------------------------------------------------
     bool windowShouldClose(); // FIXME: doublon with halt()
@@ -96,6 +107,10 @@ private:
     Rectangle m_screen_resolution;
     bool m_exit_window = false;
     size_t m_framerate = 60u;
+    //! \brief Frames drawn since the last event while nothing animates.
+    size_t m_idle_frames = 0u;
+    //! \brief Last title given to the window.
+    std::string m_title;
 };
 
 #endif

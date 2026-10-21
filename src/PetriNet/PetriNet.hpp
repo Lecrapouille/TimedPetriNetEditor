@@ -460,6 +460,35 @@ public:
 };
 
 // *****************************************************************************
+//! \brief Dirty flag of a net that also counts the changes. Editing code
+//! writes `net.modified = true`; saving writes `net.modified = false`. Each
+//! `= true` increases revision(), so a cache made for an older revision is
+//! known to be stale.
+// *****************************************************************************
+class ModifiedFlag
+{
+public:
+
+    ModifiedFlag& operator=(bool const value)
+    {
+        m_value = value;
+        if (value)
+            ++m_revision;
+        return *this;
+    }
+
+    operator bool() const { return m_value; }
+
+    //! \brief Number of changes made to the net since it was created.
+    size_t revision() const { return m_revision; }
+
+private:
+
+    bool m_value = false;
+    size_t m_revision = 0u;
+};
+
+// *****************************************************************************
 //! \brief Class storing and managing Places, Transitions and Arcs.
 //! This class does not offer method for the simulation but has to be seen as a
 //! a container with helper methods for implementing algorithms.
@@ -783,8 +812,10 @@ public:
 
     //! \brief Name of Petri net given by its filename once load() has been called.
     std::string name;
-    //! \brief Editor has changed content and save is needed.
-    bool modified = false;
+    //! \brief Editor has changed content and save is needed. Each time it is
+    //! set to true, modified.revision() increases: caches of results computed
+    //! from the net (analysis, compiled receptivities) compare it.
+    ModifiedFlag modified;
 
     //! \brief Last error message from Net operations (e.g. tokens()).
     std::string const& error() const { return m_error; }

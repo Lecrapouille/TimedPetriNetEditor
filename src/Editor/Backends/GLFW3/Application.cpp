@@ -113,54 +113,91 @@ Application::~Application()
 //------------------------------------------------------------------------------
 void Application::run()
 {
+    // Frames drawn after the last event before sleeping: Dear ImGui needs a
+    // couple of them to settle hover states, popups and window resizes.
+    constexpr size_t SETTLE_FRAMES = 3u;
+    // When idle, wake up anyway at this period (seconds) for tooltips delays
+    // and blinking cursors.
+    constexpr double IDLE_WAKEUP = 0.5;
+
     m_lastUpdateTime = 0.0;
     m_lastFrameTime = 0.0;
-    const double time_per_frame = 1.0 / double(m_framerate);
+    m_idle_frames = 0u;
 
-    while (!m_exit_window)//!glfwWindowShouldClose(m_window))
+    while (!m_exit_window)
     {
-        // For the display framerate
-        double now = glfwGetTime();
-        //double deltaTime = now - m_lastUpdateTime;
+        const double time_per_frame = 1.0 / double(m_framerate);
+        const bool animating = isAnimating();
 
-        // Poll events like key presses, mouse movements etc.
+#ifdef __EMSCRIPTEN__
+        // The browser paces the frames.
         glfwPollEvents();
-
-        if ((now - m_lastFrameTime) >= time_per_frame)
+#else
+        if (!animating && (m_idle_frames >= SETTLE_FRAMES))
         {
-            // Start the Dear ImGui frame
-            ImGui_ImplOpenGL3_NewFrame();
-            ImGui_ImplGlfw_NewFrame();
-            ImGui::NewFrame();
-
-            onUpdate(time_per_frame);
-
-            // Main loop of the underlying app
-            onDraw();
-
-            // Rendering
-            ImGui::Render();
-            int display_w, display_h;
-            glfwGetFramebufferSize(m_window, &display_w, &display_h);
-            glViewport(0, 0, display_w, display_h);
-            glClearColor(m_clear_color.x * m_clear_color.w,
-                        m_clear_color.y * m_clear_color.w,
-                        m_clear_color.z * m_clear_color.w,
-                        m_clear_color.w);
-            glClear(GL_COLOR_BUFFER_BIT);
-            ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
-
-            onFrameEnd();
-
-            glfwSwapBuffers(m_window);
-            m_lastFrameTime = now;
+            // Nothing moves: sleep until an event (or the wake up period)
+            // instead of spinning. This was the cause of a high CPU usage
+            // when the net was not simulated (mainly visible on macOS where
+            // the buffer swap does not always block on vsync).
+            glfwWaitEventsTimeout(IDLE_WAKEUP);
+            m_idle_frames = 0u;
         }
+        else
+        {
+            // Sleep until the next frame, but wake up on events.
+            const double remaining = time_per_frame - (glfwGetTime() - m_lastFrameTime);
+            if (remaining > 0.0)
+            {
+                glfwWaitEventsTimeout(remaining);
+                if ((glfwGetTime() - m_lastFrameTime) < time_per_frame)
+                    continue;
+            }
+            else
+            {
+                glfwPollEvents();
+            }
+        }
+#endif
 
+        const double now = glfwGetTime();
+
+        // Start the Dear ImGui frame
+        ImGui_ImplOpenGL3_NewFrame();
+        ImGui_ImplGlfw_NewFrame();
+        ImGui::NewFrame();
+
+        onUpdate(float(time_per_frame));
+
+        // Main loop of the underlying app
+        onDraw();
+
+        // Rendering
+        ImGui::Render();
+        int display_w, display_h;
+        glfwGetFramebufferSize(m_window, &display_w, &display_h);
+        glViewport(0, 0, display_w, display_h);
+        glClearColor(m_clear_color.x * m_clear_color.w,
+                     m_clear_color.y * m_clear_color.w,
+                     m_clear_color.z * m_clear_color.w,
+                     m_clear_color.w);
+        glClear(GL_COLOR_BUFFER_BIT);
+        ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+
+        onFrameEnd();
+
+        glfwSwapBuffers(m_window);
+        m_lastFrameTime = now;
         m_lastUpdateTime = now;
+        m_idle_frames = animating ? 0u : m_idle_frames + 1u;
     }
 }
 
-//------------------------------------------------------------------------------
+void Application::wakeUp()
+{
+    m_idle_frames = 0u;
+    glfwPostEmptyEvent();
+}
+
 void Application::framerate(size_t const framerate)
 {
     m_framerate = framerate;
@@ -210,7 +247,11 @@ bool Application::screenshot(std::string const& path, int const region_x,
 //------------------------------------------------------------------------------
 void Application::title(std::string const& title_)
 {
-    glfwSetWindowTitle(m_window, title_.c_str());
+    // Setting the title is an OS call (costly on macOS): only on change.
+    if (title_ == m_title)
+        return;
+    m_title = title_;
+    glfwSetWindowTitle(m_window, m_title.c_str());
 }
 
 //------------------------------------------------------------------------------
