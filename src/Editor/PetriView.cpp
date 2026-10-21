@@ -1017,6 +1017,19 @@ void PetriView::drawNetElements(Net& net, Simulation& simulation, float alpha, f
         }
         drawPlace(m_canvas.draw_list, places[i], net.type(), origin,
                   m_editor.showPlaceCaptions(), alpha, zoom, isInitialStep);
+
+        // GRAFCET actions on the right of their step, green while running.
+        if (net.type() == TypeOfNet::GRAFCET)
+        {
+            struct Step { Simulation const* simulation; size_t place_id; };
+            Step step { &simulation, places[i].id };
+            drawStepActions(m_canvas.draw_list, places[i], origin, zoom,
+                [](size_t const index, void* data) -> bool {
+                    Step const& s = *static_cast<Step const*>(data);
+                    return s.simulation->isRunning() &&
+                           s.simulation->actionState(s.place_id, index).active;
+                }, &step);
+        }
     }
 
     // Draw transitions

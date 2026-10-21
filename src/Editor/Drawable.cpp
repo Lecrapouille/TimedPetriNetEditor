@@ -9,6 +9,8 @@
 
 #include "implot/implot.h"
 
+#include <algorithm>
+#include <cfloat>
 #include <iomanip> // std::setprecision
 #include <sstream>
 
@@ -432,6 +434,66 @@ void drawTransition(ImDrawList* draw_list, Transition const& transition,
         // Other types: text below the transition, horizontally centered
         ImVec2 ptext = p + ImVec2(-dim.x / 2.0f, trans_height / 2.0f + text_margin);
         draw_list->AddText(ptext, themeCaptionColor(), text);
+    }
+}
+
+//------------------------------------------------------------------------------
+void drawStepActions(ImDrawList* draw_list, Place const& place, ImVec2 const& origin,
+                     float zoom, bool (*is_active)(size_t index, void* data), void* data)
+{
+    if (place.actions.empty())
+        return;
+
+    const ImVec2 p = origin + ImVec2(place.x * zoom, place.y * zoom);
+    const float half = TRANS_WIDTH * zoom / 2.0f;
+    const float gap = 12.0f * zoom;
+    const float padding = 4.0f * zoom;
+    const float font_size = ImGui::GetFontSize() * zoom;
+    const float line_height = font_size + 2.0f * padding;
+    const float thickness = std::max(1.0f, 1.5f * zoom);
+    ImFont* font = ImGui::GetFont();
+
+    // Width of the qualifier column and of the name column.
+    float qualifier_width = 0.0f;
+    float name_width = 0.0f;
+    for (auto const& action : place.actions)
+    {
+        char const* qualifier = qualifierToStr(action.qualifier);
+        qualifier_width = std::max(qualifier_width,
+            font->CalcTextSizeA(font_size, FLT_MAX, 0.0f, qualifier).x);
+        name_width = std::max(name_width,
+            font->CalcTextSizeA(font_size, FLT_MAX, 0.0f, action.name.c_str()).x);
+    }
+    qualifier_width += 2.0f * padding;
+    name_width += 2.0f * padding;
+
+    // Link from the step to the first box.
+    const float x0 = p.x + half + gap;
+    const float y0 = p.y - line_height / 2.0f;
+    draw_list->AddLine(ImVec2(p.x + half, p.y), ImVec2(x0, p.y), themeOutlineColor(), thickness);
+
+    for (size_t i = 0u; i < place.actions.size(); ++i)
+    {
+        Action const& action = place.actions[i];
+        const float y = y0 + float(i) * line_height;
+        const ImVec2 box_min(x0, y);
+        const ImVec2 box_max(x0 + qualifier_width + name_width, y + line_height);
+        const bool active = (is_active != nullptr) && is_active(i, data);
+
+        draw_list->AddRectFilled(box_min, box_max, active
+            ? COLOR_FIREABLE_TRANSITION : themeFillColor(255));
+        draw_list->AddRect(box_min, box_max, themeOutlineColor(), 0.0f,
+                           ImDrawFlags_None, thickness);
+        draw_list->AddLine(ImVec2(x0 + qualifier_width, y),
+                           ImVec2(x0 + qualifier_width, y + line_height),
+                           themeOutlineColor(), thickness);
+
+        const ImU32 text_color = active ? IM_COL32(0, 0, 0, 255) : themeCaptionColor();
+        draw_list->AddText(font, font_size, ImVec2(x0 + padding, y + padding),
+                           text_color, qualifierToStr(action.qualifier));
+        draw_list->AddText(font, font_size,
+                           ImVec2(x0 + qualifier_width + padding, y + padding),
+                           text_color, action.name.c_str());
     }
 }
 
