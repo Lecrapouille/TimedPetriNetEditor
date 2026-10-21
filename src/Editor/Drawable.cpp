@@ -367,10 +367,12 @@ static void drawGrafcetPlace(ImDrawList* draw_list, Place const& place, ImVec2 c
 
     // Draw the caption inside the square
     // show_caption: true = caption (e.g. "Init"), false = key/identifier (e.g. "X0")
+    // The text follows the zoom, so that it stays inside the square.
     const char* text = show_caption ? place.caption.c_str() : place.key.c_str();
-    ImVec2 dim = ImGui::CalcTextSize(text) / 2.0f;
+    const float font_size = ImGui::GetFontSize() * std::min(zoom, 1.0f);
+    ImVec2 dim = ImGui::GetFont()->CalcTextSizeA(font_size, FLT_MAX, 0.0f, text) / 2.0f;
     ImVec2 ptext = p - dim + ImVec2(0.0f, -trans_width / 3.0f + 5.0f * zoom);
-    draw_list->AddText(ptext, themeCaptionColor(), text);
+    draw_list->AddText(ImGui::GetFont(), font_size, ptext, themeCaptionColor(), text);
 }
 
 //------------------------------------------------------------------------------
@@ -441,9 +443,12 @@ void drawTransition(ImDrawList* draw_list, Transition const& transition,
 
     if (type == TypeOfNet::GRAFCET)
     {
-        // GRAFCET: text to the right of the transition, vertically centered
+        // GRAFCET: text to the right of the transition, vertically centered,
+        // following the zoom (long receptivities would cover the graph).
+        const float font_size = ImGui::GetFontSize() * std::min(zoom, 1.0f);
+        dim = ImGui::GetFont()->CalcTextSizeA(font_size, FLT_MAX, 0.0f, text);
         ImVec2 ptext = p + ImVec2(trans_width / 2.0f + text_margin, -dim.y / 2.0f);
-        draw_list->AddText(ptext, themeCaptionColor(), text);
+        draw_list->AddText(ImGui::GetFont(), font_size, ptext, themeCaptionColor(), text);
     }
     else
     {
