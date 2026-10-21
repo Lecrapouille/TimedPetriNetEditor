@@ -171,10 +171,10 @@ where `t - 5`, `t - 3` and `t - 1` are delays implied by duration on arcs and `m
 
 The dater form of the event graph in figure 2 is:
 ```
-T0(n) = max(1 + T3(n - 0), 5 + T1(n - 0))
-T1(n) = max(3 + T2(n - 0))
-T2(n) = max(5 + T0(n - 2))
-T3(n) = max(1 + T2(n - 0))
+T0(k) = max(1 + T3(k - 0), 5 + T1(k - 0))
+T1(k) = max(3 + T2(k - 0))
+T2(k) = max(5 + T0(k - 2))
+T3(k) = max(1 + T2(k - 0))
 ```
 
 where `n - 0` and `n - 2` are delays implied by tokens from incoming places and
@@ -209,10 +209,10 @@ T3(t) = T2(t - 1)
 
 The dater form of the event graph in (min,+) algebra is:
 ```
-T0(n) = 1 T3(n - 2) ⨁ 5 T1(n - 0)
-T1(n) = 3 T0(n - 0)
-T2(n) = 5 T0(n - 2)
-T3(n) = 1 T2(n)
+T0(k) = 1 T3(k - 2) ⨁ 5 T1(k - 0)
+T1(k) = 3 T0(k - 0)
+T2(k) = 5 T0(k - 2)
+T3(k) = 1 T2(k)
 ```
 
 ### Canonical Event Graph
@@ -245,17 +245,17 @@ an implicit dynamic linear system with the (max,+) algebra, which has the
 following form:
 
 ```
-    X(n) = D ⨂ X(n) ⨁ A ⨂ X(n-1) ⨁ B ⨂ U(n)
-    Y(n) = C ⨂ X(n)
+    X(k) = D ⨂ X(k) ⨁ A ⨂ X(k-1) ⨁ B ⨂ U(k)
+    Y(k) = C ⨂ X(k)
 ```
 
 Or using the compact syntax:
 ```
-    X(n) = D X(n) ⨁ A X(n-1) ⨁ B U(n)
-    Y(n) = C X(n)
+    X(k) = D X(k) ⨁ A X(k-1) ⨁ B U(k)
+    Y(k) = C X(k)
 ```
 
-In where `A, B, C, D` are (max,+) matrices: `B` is named controlled matrix, `C` the observation matrix, `A` the state matrix (places with 1 token), and `D` the implicit matrix (places without token). `U` the column vector of system inputs (transitions with no predecessor), `Y` the system outputs (transitions with no successor), and `X` the systems states as a column vector (transitions with successor and predecessor), `n` in `X(n)`, `U(n)`, `Y(n)` are places with no token, and `n-1` in `X(n-1)` are places having a single token. Note: that is why, in the previous section, we said that canonical form has its input and
+In where `A, B, C, D` are (max,+) matrices: `B` is named controlled matrix, `C` the observation matrix, `A` the state matrix (places with 1 token), and `D` the implicit matrix (places without token). `U` the column vector of system inputs (transitions with no predecessor), `Y` the system outputs (transitions with no successor), and `X` the systems states as a column vector (transitions with successor and predecessor), `k` in `X(k)`, `U(k)`, `Y(k)` are places with no token, and `k-1` in `X(k-1)` are places having a single token. Note: that is why, in the previous section, we said that canonical form has its input and
 output places with no token. This editor can generate these (max,+) sparse matrices (for Julia), for example from figure 3:
 
 ```

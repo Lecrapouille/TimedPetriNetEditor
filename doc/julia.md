@@ -190,12 +190,12 @@ pn5 = canonic(pn4)
 output = @capture_out begin
 show_dater_equation(pn4, false, false)
 end
-@assert output == "Timed event graph represented as dater equation:\nT0(n) = max(1 + T3(n), 5 + T1(n))\nT1(n) = max(3 + T2(n))\nT2(n) = max(5 + T0(n - 2))\nT3(n) = max(1 + T2(n))\n\n"
+@assert output == "Timed event graph represented as dater equation:\nT0(k) = max(1 + T3(k), 5 + T1(k))\nT1(k) = max(3 + T2(k))\nT2(k) = max(5 + T0(k - 2))\nT3(k) = max(1 + T2(k))\n\n"
 
 output = @capture_out begin
 show_dater_equation(pn4, false, true)
 end
-@assert output == "Timed event graph represented as dater equation (max-plus algebra):\nT0(n) = 1 T3(n) (+) 5 T1(n)\nT1(n) = 3 T2(n)\nT2(n) = 5 T0(n - 2)\nT3(n) = 1 T2(n)\n\n"
+@assert output == "Timed event graph represented as dater equation (max-plus algebra):\nT0(k) = 1 T3(k) (+) 5 T1(k)\nT1(k) = 3 T2(k)\nT2(k) = 5 T0(k - 2)\nT3(k) = 1 T2(k)\n\n"
 
 output = @capture_out begin
 show_counter_equation(pn4, false, false)

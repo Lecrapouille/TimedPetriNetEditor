@@ -341,7 +341,7 @@ TEST(TestGrafcetJSON, ExamplesCompileAndRun)
 {
     for (char const* file : { "../data/examples/GRAFCET.json", "../data/examples/GRAFCET2.json",
                               "../data/examples/GermanTrafficLights.json",
-                              "../data/examples/GrafcetActions.json", "../data/examples/Gemma.json" })
+                              "../data/examples/GrafcetActions.json", "../data/examples/GEMMA-Dryer.json" })
     {
         std::vector<Net> nets;
         ASSERT_STREQ(importAllNetsFromJSON(nets, file).c_str(), "") << file;
