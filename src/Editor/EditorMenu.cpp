@@ -98,19 +98,20 @@ void Editor::toolbar()
         switchOfNet(TypeOfNet(type));
     ImGui::EndDisabled();
 
-    if (ImGui::MenuItem("Fit"))
+    if (ImGui::MenuItem("Fit##toolbar"))
         activeDocument().activeNet().view_state.center_request = Document::ViewState::CENTER_FRAMES;
     if (ImGui::IsItemHovered())
         ImGui::SetTooltip("Fit the net in its window (F)");
-    if (ImGui::MenuItem("Grid", nullptr, m_view.grid.show))
+    if (ImGui::MenuItem("Grid##toolbar", nullptr, m_view.grid.show))
         m_view.grid.show ^= true;
-    if (ImGui::MenuItem("Snap", nullptr, m_view.grid.snap))
+    if (ImGui::MenuItem("Snap##toolbar", nullptr, m_view.grid.snap))
         m_view.grid.snap ^= true;
     if (ImGui::IsItemHovered())
         ImGui::SetTooltip("Snap the nodes to the grid when they move (G)");
     if ((net().type() == TypeOfNet::TimedEventGraph) || isEventGraph(net()))
     {
-        if (ImGui::MenuItem("Analysis", nullptr, m_states.show_analysis))
+        // Not "Analysis": the menu of the same name is in this menu bar.
+        if (ImGui::MenuItem("Analysis window##toolbar", nullptr, m_states.show_analysis))
             m_states.show_analysis ^= true;
     }
 }
