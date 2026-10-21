@@ -44,21 +44,32 @@ This example models the GEMMA (Graph for the Study of Modes and Actions) which d
 Production Line Description:
 Workpieces are transported by a conveyor belt to an oven (KM3) for baking. The conveyor can move left or right thanks to two motors (KM2 and KM1).
 
-Operator Panel (HMI) Controls:
+Operator Panel (HMI) Controls, with their names in the file (the French
+names of the original course in parentheses):
 
-- Emergency stop button (AU)
-- Reset button (Arm)
-- Validation button (Val)
-- Power-on indicator lamp (MST)
-- Selector switch for automatic (Auto) or manual (Manu) operation
-- Cycle start button (Dcy)
-- Cycle stop button (Acy)
-- Left (GA) and right (DR) buttons to move the conveyor in the desired direction during manual mode
+- Emergency stop button `EStop` (AU)
+- Rearm button `Rearm` (Réarm)
+- Acknowledge button `Ack` (Val)
+- Selector switch for automatic `Auto` or manual `Manual` operation (Auto, Manu)
+- Cycle start button `Start` (Dcy)
+- Cycle stop button `Stop` (Acy)
+- `Left` and `Right` buttons to move the conveyor during manual mode (GA, DR)
+- Temperature sensor `Temperature` of the dryer
+
+In the file, the dryer has three graphs: Safety (forces the two others to
+their initial steps until Rearm), Control (acknowledgement and clearing of
+the boxes, heating of the oven until the temperature reaches 80 °C,
+automatic or manual production) and Production (the belt runs and the oven
+heats until Stop, then the belt runs 3 s more). The control panel of the
+editor shows these buttons, the Auto / Manual selector and the temperature
+sensor (heated by the oven while the simulation runs); the Outputs window
+shows the two motors and the oven. To start: Rearm, Ack, the selector on
+Auto then Ack, wait for the temperature, then Start.
 
 Credit: [NetProf](https://www.youtube.com/watch?v=y8lWIG71040&list=PLtbgSpNjNTOVxGj6zYv5MTdZuPwD7S1zh)
 
 ```
-TimedPetriNetEditor data/examples/GEMMA.json
+TimedPetriNetEditor data/examples/GEMMA-Dryer.json
 ```
 
 ## Coffee machine

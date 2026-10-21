@@ -10,8 +10,11 @@ timed Petri net, the editor is not intended to follow all the GRAFCET norms
 (GitHub pull requests are welcome).
 
 Inside the editor, set your net type to GRAFCET. Transitions captions are the
-receptivities, written with the IEC 60848 notation (files saved before the
-revision 5 used reverse polish notation; they are converted when loaded):
+receptivities, written with the IEC 60848 notation (old files used reverse
+polish notation; they are converted when loaded). *Help > GRAFCET
+receptivities* has the same table, *Help > GRAFCET actions* the timing diagram
+of each qualifier, and the control panel of the editor shows the inputs as
+push buttons, selectors, sensors ... (see doc/save.md, doc/gui.md):
 
 | What                       | Syntax                                     |
 |----------------------------|--------------------------------------------|
@@ -34,9 +37,16 @@ How the GRAFCET runs (class `GrafcetEngine`, usable without the editor):
 - actions: `N` continuous, `S`/`R` stored by name, `D` delayed, `L` limited,
   `SD`, `DS`, `SL` stored and timed, `P1`/`P0` pulse on activation /
   deactivation. An action can have a condition (same syntax);
-- forcing orders (`Production:{init}`, `{*}`, `{}`, `{2,8}`) are continuous
-  actions with priority: the forced graph takes the situation and does not
-  evolve while forced.
+- forcing orders (`Production{init}`, `{*}`, `{}`, `{2,8}`, the colon of
+  `Production:{init}` is optional) are continuous actions with priority: the
+  forced graph takes the situation and does not evolve while forced.
+
+The example `data/examples/Gemma.json` is the GRAFCET of a dryer split by the
+GEMMA into three graphs: Securite (emergency stop, rearm), Controle (modes:
+validation after a failure, heating, automatic or manual production) and
+Production (left motor 30 s, drying until Acy, right motor 30 s). Its control
+panel has the emergency stop, the push buttons, the Auto / Manu selector and
+a temperature sensor heated by the oven.
 
 The C++ export below does not support edges and time operators yet.
 
