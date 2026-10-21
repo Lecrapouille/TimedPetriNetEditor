@@ -1,27 +1,10 @@
 ZeroMQ:
 - Encore non testé
 
-Editeur;
-- Centrage du graphe dans la fenetre KO
-
-Timed event graph:
-- Gros bug de selection d'arcs car il n'y a plus les Places affichées.
-
 GRAFCET:
-- placer les 3 GRAFCET dans un dictionnaire afin de trouver facilement les references.
-- Parser 30s/X1/0s
-- Gerer forcage init
-- Bug: En mode GRAFCET le focage fait iterer GC entre init et val
-- Ajouter actions if DR: KM1
-- Code: "if frozen if GRAFCET ..." devrait etre inverse dans le code
-- au lieu de faire un interpreteur type Forth parsons une vraie expression mathematique.
-Il faudrait gerer la forme «t1/variable/t2». Dans l’exemple ci-contre, la réceptivité
-n'est vraie que 3 s après que « a » passe de l’état 0 à l’état 1, elle ne redevient
-fausse que 7 s après que « a » passe de l’état 1 à l’état 0.
-
-Arduino:
-- Extraire les méthodes GRAFCET de Simulation vers Grafcet.hpp/cpp
-- Ajouter le support des actions conditionnelles "if X: Y" pour GRAFCET
+- Export C++/Arduino: fronts et temporisations t1/X/t2 des receptivites,
+  conditions des actions.
+- Animation des jetons en mode GRAFCET (le moteur franchit en un instant).
 
 Flowshop:
 - plot les donnees de la simulation du flowshop
