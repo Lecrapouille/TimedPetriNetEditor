@@ -38,6 +38,16 @@ void drawPlace(ImDrawList* draw_list, Place const& place, TypeOfNet const type,
                float zoom = 1.0f, bool isInitialStep = false);
 void drawTransition(ImDrawList* draw_list, Transition const& transition, TypeOfNet const type,
                     ImVec2 const& origin, bool const show_caption, float const alpha, float zoom = 1.0f);
+//------------------------------------------------------------------------------
+//! \brief Draw the actions of a GRAFCET step as IEC 60848 boxes on its right:
+//! one line per action with its qualifier and its name.
+//! \param[in] is_active tells if the action of the given index is running
+//! (drawn highlighted). Can be null: then no action is highlighted.
+//------------------------------------------------------------------------------
+void drawStepActions(ImDrawList* draw_list, Place const& place, ImVec2 const& origin,
+                     float zoom, bool (*is_active)(size_t index, void* data) = nullptr,
+                     void* data = nullptr);
+
 void drawPlot(const char* title, const char* label, std::vector<float> const& x, std::vector<float> const& y);
 
 } // namespace tpne
