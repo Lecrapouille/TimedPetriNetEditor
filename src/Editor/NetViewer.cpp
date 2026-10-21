@@ -154,16 +154,6 @@ void NetViewer::draw(char const* id, Net const& net, Options const& options)
             else
                 drawStepActions(draw_list, place, origin, m_zoom);
         }
-
-        // Active GRAFCET steps are outlined in green to be seen from far.
-        if ((type == TypeOfNet::GRAFCET) && (place.tokens > 0u))
-        {
-            float const half = TRANS_WIDTH * m_zoom / 2.0f + 3.0f * m_zoom;
-            ImVec2 const p(origin.x + place.x * m_zoom, origin.y + place.y * m_zoom);
-            draw_list->AddRect(ImVec2(p.x - half, p.y - half), ImVec2(p.x + half, p.y + half),
-                               COLOR_FIREABLE_TRANSITION, 0.0f, ImDrawFlags_None,
-                               std::max(1.5f, 3.0f * m_zoom));
-        }
     }
     for (auto const& transition : net.transitions())
     {

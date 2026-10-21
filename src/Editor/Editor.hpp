@@ -22,6 +22,7 @@
 #  include "PetriNet/Algorithms.hpp"
 
 #  include <vector>
+#  include <filesystem>
 #  include <map>
 #  include <memory>
 
@@ -92,10 +93,17 @@ private: // Widgets
 
     void menu();
     void menuFile();
+    void menuEdit();
     void menuView();
-    void menuActions();
+    void menuSimulation();
     void menuGraphEvents();
     void menuHelp();
+    void toolbar();
+    void shortcuts();
+    void statusBar();
+    void setupDefaultLayout(unsigned int dockspace_id);
+    //! \brief Folder of the settings of the user (layout, theme), created.
+    static std::filesystem::path settingsFolder();
     void handleMenuActions();
     void showUnsavedChangesDialog();
     void saveCurrentDocument();
@@ -109,12 +117,14 @@ private: // Widgets
 
 private: // Show results from Petri algorithms
 
-    void showCriticalCircuit();// const;
-    void showDynamicLinearSystem() const;
-    void showCounterOrDaterEquation() const;
-    void showAdjacencyMatrices() const;
-    void showSimulationPlot();
-    void showGanttChart();
+    void analysisWindow();
+    void analysisCritical();
+    void analysisSyslin();
+    void analysisEquations();
+    void analysisAdjacency();
+    void analysisGantt();
+    void analysisPlot();
+    void openAnalysis(int tab) { m_states.show_analysis = true; m_states.analysis_tab = tab; }
 
 private: // Document management
 
@@ -266,15 +276,9 @@ private:
         //! \brief Enum for mutually exclusive file dialogs
         enum class FileDialog { None, Load, SaveAs, Export, Import, Screenshot };
 
-        //! \brief Algorithm analysis dialogs
-        bool do_counter_or_dater = false;
-        bool do_find_critical_circuit = false;
-        bool do_syslin = false;
-        bool do_adjency = false;
-        //! \brief Real-time simulation plot (firing dates per transition).
-        bool show_simulation_plot = false;
-        //! \brief Gantt chart of the earliest dates of a timed event graph.
-        bool show_gantt = false;
+        //! \brief Analysis window and the tab to bring in front (-1: none).
+        bool show_analysis = false;
+        int analysis_tab = -1;
         int gantt_cycles = 3;
 
         //! \brief File operation dialog state (mutually exclusive)
@@ -303,6 +307,8 @@ private:
         //! the resolution of unsaved changes in the current document.
         bool request_load = false;
         bool request_vertical_split = false;
+        //! \brief Rebuild the default layout of the windows.
+        bool reset_layout = false;
 
         //! \brief Plot data for simulation visualization
         PlotData plot;
@@ -367,6 +373,11 @@ private:
     bool m_exit_after_screenshot = false;
     bool m_last_screenshot_ok = false;
     int m_screenshot_defer_frames = 0;
+    //! \brief Frames to draw before sleeping (docking and centering settle).
+    static constexpr int BUSY_FRAMES = 20;
+    int m_busy_frames = BUSY_FRAMES;
+    //! \brief Number of nets the layout of the windows was made for.
+    size_t m_layout_nets = 0u;
 };
 
 } // namespace tpne

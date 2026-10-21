@@ -12,19 +12,99 @@
 #  include "PetriNet/PetriNet.hpp"
 #  include "imgui/imgui.h"
 
+#  include <vector>
+
+// *****************************************************************************
+//! \file Drawing of the nets with Dear ImGui draw lists, shared by the editor
+//! and by NetViewer. Positions of nodes are in net units; a view gives its
+//! origin (screen position of the net point 0, 0) and its zoom.
+//!
+//! GRAFCET follows IEC 60848: a step is a square with its number, the initial
+//! step a double square, a transition a short thick line with its receptivity
+//! on its right; links are vertical and horizontal lines, with an arrow only
+//! when they go up; a double line opens and closes parallel sequences (AND),
+//! a single line the alternative ones (OR).
+// *****************************************************************************
+
 namespace tpne {
 
-void drawArc(ImDrawList* draw_list, Node const* from, Node const* to, ImVec2 const* click_position,
-             ImVec2 const& origin, ImVec2 const& cursor, float zoom = 1.0f);
+// ****************************************************************************
+//! \brief Line of an arc in net units, as drawn.
+// ****************************************************************************
+struct ArcPath
+{
+    //! \brief Polyline from the source to the destination.
+    std::vector<ImVec2> points;
+    //! \brief Arrow head at the last point.
+    bool arrow_end = true;
+    //! \brief Arrow in the middle of this segment (GRAFCET link going up),
+    //! or -1.
+    int arrow_segment = -1;
+};
+
+//------------------------------------------------------------------------------
+//! \brief Line of the arc. Empty for arcs that are not drawn (the hidden
+//! Place -> Transition half of a timed event graph arc).
+//------------------------------------------------------------------------------
+ArcPath arcPath(Arc const& arc, TypeOfNet type);
+
+//------------------------------------------------------------------------------
+//! \brief Distance (net units) between a point and the line of the arc, as
+//! drawn. A large value for arcs that are not drawn.
+//------------------------------------------------------------------------------
+float distanceToArc(Arc const& arc, TypeOfNet type, ImVec2 const& point);
+
+//------------------------------------------------------------------------------
+//! \brief Font size for a zoom; 0 when the text is too small to be read.
+//------------------------------------------------------------------------------
+float fontSizeAt(float zoom);
+
+//------------------------------------------------------------------------------
+//! \brief Draw an arc. A negative alpha draws it as a critical circuit arc.
+//------------------------------------------------------------------------------
 void drawArc(ImDrawList* draw_list, Arc const& arc, TypeOfNet const type,
              ImVec2 const& origin, float const alpha, float zoom = 1.0f);
+
+//------------------------------------------------------------------------------
+//! \brief Draw the line of an arc over it (hover, selection).
+//------------------------------------------------------------------------------
+void drawArcHighlight(ImDrawList* draw_list, Arc const& arc, TypeOfNet type,
+                      ImVec2 const& origin, float zoom, ImU32 color, float thickness);
+
+//------------------------------------------------------------------------------
+//! \brief Draw the arc being created from a node (or a point) to the cursor.
+//------------------------------------------------------------------------------
+void drawArc(ImDrawList* draw_list, Node const* from, Node const* to, ImVec2 const* click_position,
+             ImVec2 const& origin, ImVec2 const& cursor, float zoom = 1.0f);
+
 void drawToken(ImDrawList* draw_list, float const x, float const y, float zoom = 1.0f);
 void drawTimedToken(ImDrawList* draw_list, size_t tokens, float const x, float const y, float zoom = 1.0f);
+
+//------------------------------------------------------------------------------
+//! \brief Draw a place (a step for GRAFCET) and its caption.
+//------------------------------------------------------------------------------
 void drawPlace(ImDrawList* draw_list, Place const& place, TypeOfNet const type,
                ImVec2 const& origin, bool const show_caption, float const alpha,
                float zoom = 1.0f, bool isInitialStep = false);
+
+//------------------------------------------------------------------------------
+//! \brief Draw a transition and its caption (receptivity for GRAFCET).
+//------------------------------------------------------------------------------
 void drawTransition(ImDrawList* draw_list, Transition const& transition, TypeOfNet const type,
                     ImVec2 const& origin, bool const show_caption, float const alpha, float zoom = 1.0f);
+
+//------------------------------------------------------------------------------
+//! \brief Draw the outline of a node grown by margin pixels (hover, selection).
+//------------------------------------------------------------------------------
+void drawNodeOutline(ImDrawList* draw_list, Node const& node, TypeOfNet type,
+                     ImVec2 const& origin, float zoom, ImU32 color, float margin,
+                     float thickness);
+
+//------------------------------------------------------------------------------
+//! \brief Half size of a node in net units (radius for a Petri place).
+//------------------------------------------------------------------------------
+ImVec2 nodeHalfSize(Node const& node, TypeOfNet type);
+
 //------------------------------------------------------------------------------
 //! \brief Draw the actions of a GRAFCET step as IEC 60848 boxes on its right:
 //! one line per action with its qualifier and its name.
@@ -34,7 +114,6 @@ void drawTransition(ImDrawList* draw_list, Transition const& transition, TypeOfN
 void drawStepActions(ImDrawList* draw_list, Place const& place, ImVec2 const& origin,
                      float zoom, bool (*is_active)(size_t index, void* data) = nullptr,
                      void* data = nullptr);
-
 
 } // namespace tpne
 

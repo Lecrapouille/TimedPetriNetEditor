@@ -6,9 +6,17 @@
 // See LICENSING.md for details.
 
 #include "Editor/Editor.hpp"
+#include "Editor/EditorState.hpp"
+#include "Editor/Theme.hpp"
 #include "Remote/IRemoteControl.hpp"
 #include "PetriNet/Algorithms.hpp"
+#include "PetriNet/Layout.hpp"
 #include "imgui/imgui.h"
+
+#include <algorithm>
+#include <cmath>
+#include <map>
+#include <vector>
 
 namespace tpne {
 
@@ -17,29 +25,81 @@ void Editor::menu()
 {
     if (ImGui::BeginMainMenuBar())
     {
-        // File menu
         menuFile();
-
-        // View menu (NEW - contains Theme, grid options, caption options)
+        menuEdit();
         menuView();
-
-        // Actions menu
-        menuActions();
-
-        // Graph Events menu (only for event graphs)
+        menuSimulation();
         menuGraphEvents();
-
-        // Help menu
         menuHelp();
-
+        toolbar();
         ImGui::EndMainMenuBar();
     }
 
     // Store viewport center for dialogs
     m_states.viewport_center = ImGui::GetMainViewport()->GetCenter();
 
-    // Handle pending actions
+    shortcuts();
     handleMenuActions();
+}
+
+//------------------------------------------------------------------------------
+void Editor::shortcuts()
+{
+    ImGuiIO const& io = ImGui::GetIO();
+    if (io.WantTextInput)
+        return;
+    auto const pressed = [](ImGuiKeyChord chord) {
+        return ImGui::Shortcut(chord, ImGuiInputFlags_RouteGlobal);
+    };
+    if (pressed(ImGuiMod_Ctrl | ImGuiKey_N)) m_states.request_new = true;
+    if (pressed(ImGuiMod_Ctrl | ImGuiKey_O)) m_states.request_load = true;
+    if (pressed(ImGuiMod_Ctrl | ImGuiKey_S)) saveCurrentDocument();
+    if (pressed(ImGuiMod_Ctrl | ImGuiMod_Shift | ImGuiKey_S)) m_states.file_dialog = States::FileDialog::SaveAs;
+    if (pressed(ImGuiMod_Ctrl | ImGuiKey_Q)) close();
+    if (pressed(ImGuiKey_F5)) toogleStartSimulation();
+    if (pressed(ImGuiMod_Ctrl | ImGuiKey_Equal)) m_view.zoomBy(1.25f);
+    if (pressed(ImGuiMod_Ctrl | ImGuiKey_Minus)) m_view.zoomBy(0.8f);
+    if (pressed(ImGuiMod_Ctrl | ImGuiKey_0))
+        activeDocument().activeNet().view_state.center_request = Document::ViewState::CENTER_FRAMES;
+}
+
+//------------------------------------------------------------------------------
+void Editor::toolbar()
+{
+    // Quick controls on the right of the menus.
+    ImGui::Separator();
+    bool const running = simulation().isRunning();
+    ImGui::PushStyleColor(ImGuiCol_Text, running ? ImVec4(0.97f, 0.32f, 0.29f, 1.0f)
+                                                 : ImVec4(0.25f, 0.73f, 0.31f, 1.0f));
+    if (ImGui::MenuItem(running ? "■ Stop" : "▶ Run"))
+        toogleStartSimulation();
+    ImGui::PopStyleColor();
+    if (ImGui::IsItemHovered())
+        ImGui::SetTooltip("Start or stop the simulation (R, F5)");
+
+    // Type of the active net.
+    ImGui::SetNextItemWidth(150.0f);
+    int type = int(net().type());
+    ImGui::BeginDisabled(running);
+    if (ImGui::Combo("##type", &type, "Petri net\0Timed Petri net\0Timed event graph\0GRAFCET\0"))
+        switchOfNet(TypeOfNet(type));
+    ImGui::EndDisabled();
+
+    if (ImGui::MenuItem("Fit"))
+        activeDocument().activeNet().view_state.center_request = Document::ViewState::CENTER_FRAMES;
+    if (ImGui::IsItemHovered())
+        ImGui::SetTooltip("Fit the net in its window (F)");
+    if (ImGui::MenuItem("Grid", nullptr, m_view.grid.show))
+        m_view.grid.show ^= true;
+    if (ImGui::MenuItem("Snap", nullptr, m_view.grid.snap))
+        m_view.grid.snap ^= true;
+    if (ImGui::IsItemHovered())
+        ImGui::SetTooltip("Snap the nodes to the grid when they move (G)");
+    if ((net().type() == TypeOfNet::TimedEventGraph) || isEventGraph(net()))
+    {
+        if (ImGui::MenuItem("Analysis", nullptr, m_states.show_analysis))
+            m_states.show_analysis ^= true;
+    }
 }
 
 //------------------------------------------------------------------------------
@@ -48,35 +108,45 @@ void Editor::menuFile()
     if (!ImGui::BeginMenu("File"))
         return;
 
-    // New document options
-    if (ImGui::MenuItem("New Document", nullptr, false))
+    if (ImGui::BeginMenu("New"))
     {
+        struct Kind { char const* label; TypeOfNet type; };
+        for (Kind const& kind : { Kind{ "Petri net", TypeOfNet::PetriNet },
+                                  Kind{ "Timed Petri net", TypeOfNet::TimedPetriNet },
+                                  Kind{ "Timed event graph", TypeOfNet::TimedEventGraph },
+                                  Kind{ "GRAFCET", TypeOfNet::GRAFCET } })
+        {
+            if (ImGui::MenuItem(kind.label))
+            {
+                newDocument();
+                switchOfNet(kind.type);
+                net().name = kind.label;
+            }
+        }
+        ImGui::Separator();
+        if (ImGui::MenuItem("GEMMA (3 GRAFCETs)"))
+        {
+            newDocument();
+            createGEMMADocument();
+        }
+        ImGui::EndMenu();
+    }
+    if (ImGui::MenuItem("Clear the document", "Ctrl+N"))
         m_states.request_new = true;
-    }
-    if (ImGui::MenuItem("New Document (Keep Current)", nullptr, false))
-    {
-        newDocument();
-    }
 
     ImGui::Separator();
-
-    // Open/Import
-    if (ImGui::MenuItem("Open", nullptr, false))
-    {
-        // Opening replaces the current document: ask to save it first if it has
-        // unsaved changes (handled in handleMenuActions / the unsaved dialog).
+    if (ImGui::MenuItem("Open...", "Ctrl+O"))
         m_states.request_load = true;
-    }
-    if (ImGui::MenuItem("Open in New Document", nullptr, false))
+    if (ImGui::MenuItem("Open in a new document..."))
     {
         newDocument();
         m_states.file_dialog = States::FileDialog::Load;
     }
-    if (ImGui::BeginMenu("Import from"))
+    if (ImGui::BeginMenu("Import"))
     {
         for (auto const& it : importers())
         {
-            if (ImGui::MenuItem(it.format.c_str(), nullptr, false))
+            if (ImGui::MenuItem(it.format.c_str()))
             {
                 m_states.file_dialog = States::FileDialog::Import;
                 m_states.pending_importer = &it;
@@ -86,21 +156,15 @@ void Editor::menuFile()
     }
 
     ImGui::Separator();
-
-    // Save/Export
-    if (ImGui::MenuItem("Save", nullptr, false))
-    {
+    if (ImGui::MenuItem("Save", "Ctrl+S"))
         saveCurrentDocument();
-    }
-    if (ImGui::MenuItem("Save as", nullptr, false))
-    {
+    if (ImGui::MenuItem("Save as...", "Ctrl+Shift+S"))
         m_states.file_dialog = States::FileDialog::SaveAs;
-    }
-    if (ImGui::BeginMenu("Export to"))
+    if (ImGui::BeginMenu("Export"))
     {
         for (auto const& it : exporters())
         {
-            if (ImGui::MenuItem(it.format.c_str(), nullptr, false))
+            if (ImGui::MenuItem(it.format.c_str()))
             {
                 m_states.file_dialog = States::FileDialog::Export;
                 m_states.pending_exporter = &it;
@@ -108,200 +172,105 @@ void Editor::menuFile()
         }
         ImGui::EndMenu();
     }
-
-    ImGui::Separator();
-
-    // Add Net submenu (moved from Edit menu)
-    if (ImGui::BeginMenu("Add Net"))
-    {
-        if (ImGui::MenuItem("Add Petri Net"))
-        {
-            addNetToActiveDocument(TypeOfNet::PetriNet,
-                "PetriNet" + std::to_string(activeDocument().netCount() + 1));
-        }
-        if (ImGui::MenuItem("Add GRAFCET"))
-        {
-            addNetToActiveDocument(TypeOfNet::GRAFCET,
-                "GRAFCET" + std::to_string(activeDocument().netCount() + 1));
-        }
-        ImGui::Separator();
-        ImGui::TextDisabled("GEMMA Templates:");
-        if (ImGui::MenuItem("Create GEMMA Document (3 graphs)"))
-        {
-            createGEMMADocument();
-        }
-        ImGui::EndMenu();
-    }
-
-    // Multi-document management
-    if (m_documents.size() > 1)
-    {
-        ImGui::Separator();
-        ImGui::TextDisabled("Open Documents:");
-        for (size_t i = 0; i < m_documents.size(); ++i)
-        {
-            auto& doc = *m_documents[i];
-            std::string label = doc.title();
-            if (doc.isModified())
-            {
-                label += " *";
-            }
-            bool is_active = (i == m_active_document_index);
-            if (ImGui::MenuItem(label.c_str(), nullptr, is_active))
-            {
-                setActiveDocument(i);
-            }
-        }
-        ImGui::Separator();
-        if (ImGui::MenuItem("Close Document"))
-        {
-            closeDocument(&activeDocument());
-        }
-    }
-
-    ImGui::Separator();
-
-    // Exit
-    if (ImGui::MenuItem("Exit", nullptr, false))
-    {
-        this->close();
-    }
-
-    ImGui::EndMenu();
-}
-
-//------------------------------------------------------------------------------
-void Editor::menuView()
-{
-    if (!ImGui::BeginMenu("View"))
-        return;
-
-    // Theme (moved from Help menu)
-    if (ImGui::MenuItem("Theme...", nullptr, false))
-    {
-        m_states.show_theme = true;
-    }
-
-    ImGui::Separator();
-
-    // Grid options
-    if (ImGui::MenuItem("Show Grid", nullptr, m_view.grid.show))
-    {
-        m_view.grid.show ^= true;
-    }
-    if (ImGui::MenuItem("Snap to Grid", "G", m_view.grid.snap))
-    {
-        m_view.grid.snap ^= true;
-    }
-
-    ImGui::Separator();
-
-    // Caption options
-    if (ImGui::MenuItem("Show Place Captions", nullptr, m_states.show_place_captions))
-    {
-        m_states.show_place_captions ^= true;
-    }
-    if (ImGui::MenuItem("Show Transition Captions", nullptr, m_states.show_transition_captions))
-    {
-        m_states.show_transition_captions ^= true;
-    }
-
-    ImGui::Separator();
-
-    // View centering
-    if (ImGui::MenuItem("Center View", "C"))
-    {
-        activeDocument().activeNet().view_state.center_request = Document::ViewState::CENTER_FRAMES;
-    }
-
-    ImGui::Separator();
-
-    // Remote control section
-    if (ImGui::BeginMenu("Remote Control"))
-    {
-#  if TPNE_USE_ZEROMQ
-        bool is_running = m_remote && m_remote->isRunning();
-        if (ImGui::MenuItem(is_running ? "Disable" : "Enable", nullptr, is_running))
-        {
-            toggleRemoteControl();
-        }
-
-        if (is_running)
-        {
-            ImGui::Separator();
-            ImGui::TextDisabled("Endpoint: %s", m_remote->endpoint().c_str());
-            if (!m_remote->error().empty())
-            {
-                ImGui::TextColored(ImVec4(1.0f, 0.3f, 0.3f, 1.0f), "Error: %s", m_remote->error().c_str());
-            }
-        }
-#  else
-        ImGui::MenuItem("Disabled at build time", nullptr, false, false);
-        ImGui::TextDisabled("Rebuild with TPNE_ZEROMQ=1");
-#  endif
-        ImGui::EndMenu();
-    }
-
-    ImGui::Separator();
-
-    // Screenshot
-    if (ImGui::MenuItem("Take Screenshot", nullptr, false))
-    {
+    if (ImGui::MenuItem("Screenshot..."))
         m_states.file_dialog = States::FileDialog::Screenshot;
+
+    if (m_documents.size() > 1u)
+    {
+        ImGui::Separator();
+        if (ImGui::BeginMenu("Documents"))
+        {
+            for (size_t i = 0; i < m_documents.size(); ++i)
+            {
+                auto& doc = *m_documents[i];
+                std::string label = doc.title() + (doc.isModified() ? " *" : "") + "##doc" + std::to_string(i);
+                if (ImGui::MenuItem(label.c_str(), nullptr, i == m_active_document_index))
+                    setActiveDocument(i);
+            }
+            ImGui::Separator();
+            if (ImGui::MenuItem("Close this document"))
+                closeDocument(&activeDocument());
+            ImGui::EndMenu();
+        }
     }
+
+    ImGui::Separator();
+    if (ImGui::MenuItem("Quit", "Ctrl+Q"))
+        this->close();
 
     ImGui::EndMenu();
 }
 
 //------------------------------------------------------------------------------
-void Editor::menuActions()
+void Editor::menuEdit()
 {
-    if (!ImGui::BeginMenu("Actions"))
+    if (!ImGui::BeginMenu("Edit"))
         return;
 
-    // Type of net submenu
-    if (ImGui::BeginMenu("Type of Net"))
+    bool const running = simulation().isRunning();
+    ImGui::BeginDisabled(running);
+    if (ImGui::MenuItem("Undo", "Ctrl+Z"))
+        undo();
+    if (ImGui::MenuItem("Redo", "Ctrl+Y"))
+        redo();
+    ImGui::Separator();
+    ImGui::TextDisabled("Copy, cut, paste: Ctrl+C, X, V on the canvas");
+
+    ImGui::Separator();
+    if (ImGui::BeginMenu("Type of net"))
     {
-        int current_type = int(net().type());
-        if (ImGui::RadioButton("Petri net", &current_type, 0))
-            switchOfNet(TypeOfNet::PetriNet);
-        if (ImGui::RadioButton("Timed Petri net", &current_type, 1))
-            switchOfNet(TypeOfNet::TimedPetriNet);
-        if (ImGui::RadioButton("Timed event graph", &current_type, 2))
-            switchOfNet(TypeOfNet::TimedEventGraph);
-        if (ImGui::RadioButton("GRAFCET", &current_type, 3))
-            switchOfNet(TypeOfNet::GRAFCET);
+        struct Kind { char const* label; TypeOfNet type; };
+        for (Kind const& kind : { Kind{ "Petri net", TypeOfNet::PetriNet },
+                                  Kind{ "Timed Petri net", TypeOfNet::TimedPetriNet },
+                                  Kind{ "Timed event graph", TypeOfNet::TimedEventGraph },
+                                  Kind{ "GRAFCET", TypeOfNet::GRAFCET } })
+        {
+            if (ImGui::MenuItem(kind.label, nullptr, net().type() == kind.type))
+                switchOfNet(kind.type);
+        }
         ImGui::EndMenu();
     }
-
-    if (ImGui::MenuItem("To Canonical Form"))
+    if (ImGui::BeginMenu("Add a net to the document"))
+    {
+        if (ImGui::MenuItem("Petri net"))
+            addNetToActiveDocument(TypeOfNet::PetriNet, "PetriNet" + std::to_string(activeDocument().netCount() + 1));
+        if (ImGui::MenuItem("GRAFCET"))
+            addNetToActiveDocument(TypeOfNet::GRAFCET, "GRAFCET" + std::to_string(activeDocument().netCount() + 1));
+        ImGui::EndMenu();
+    }
+    if (ImGui::MenuItem("To canonical form"))
     {
         Net pn(net().type());
         toCanonicalForm(net(), pn);
         net() = pn;
+        m_view.clearAllSelections();
     }
 
     ImGui::Separator();
-
-    // Undo/Redo
-    if (ImGui::MenuItem("Undo", "Ctrl+Z", false))
+    if (ImGui::MenuItem("Arrange top-down", nullptr, false, !net().isEmpty()))
     {
-        undo();
+        auto action = std::make_unique<NetModificationAction>([this]() -> Net& { return net(); });
+        action->before(net());
+        net().generateArcsInArcsOut();
+        arrangeTopDown(net());
+        action->after(net());
+        m_history.add(std::move(action));
+        activeDocument().activeNet().view_state.center_request = Document::ViewState::CENTER_FRAMES;
     }
-    if (ImGui::MenuItem("Redo", "Ctrl+Y", false))
+    if (ImGui::IsItemHovered())
+        ImGui::SetTooltip("Place the nodes in layers from the initial steps, as a GRAFCET is drawn");
+    bool const layout = m_force_directed.isRunning();
+    if (ImGui::MenuItem(layout ? "Stop the spring layout" : "Spring layout", "L", layout))
     {
-        redo();
+        if (layout)
+            m_force_directed.reset();
+        else
+            springify();
     }
-
-    ImGui::Separator();
-
-    // Edit operations
-    if (ImGui::MenuItem("Clear Net", nullptr, false))
+    if (ImGui::MenuItem("Align to the grid"))
     {
-        clearNet();
-    }
-    if (ImGui::MenuItem("Align Nodes to Grid", nullptr, false))
-    {
+        auto action = std::make_unique<NetModificationAction>([this]() -> Net& { return net(); });
+        action->before(net());
         for (auto& place : net().places())
         {
             place.x = m_view.grid.snapValue(place.x);
@@ -312,110 +281,136 @@ void Editor::menuActions()
             trans.x = m_view.grid.snapValue(trans.x);
             trans.y = m_view.grid.snapValue(trans.y);
         }
+        action->after(net());
+        m_history.add(std::move(action));
         net().modified = true;
     }
+    ImGui::Separator();
+    if (ImGui::MenuItem("Clear the net"))
+    {
+        clearNet();
+        m_view.clearAllSelections();
+    }
+    ImGui::EndDisabled();
+    ImGui::EndMenu();
+}
 
-    // Force-directed layout
-    bool is_layout_running = m_force_directed.isRunning();
-    if (ImGui::MenuItem(is_layout_running ? "Stop Auto-Layout" : "Auto-Layout (Force-Directed)",
-                        "F", is_layout_running))
-    {
-        if (is_layout_running)
-        {
-            m_force_directed.reset();
-            m_messages.setInfo("Auto-layout stopped");
-        }
-        else
-        {
-            springify();
-            m_messages.setInfo("Auto-layout started (force-directed algorithm)");
-        }
-    }
-    if (is_layout_running)
-    {
-        ImGui::TextDisabled("  Temperature: %.1f", m_force_directed.temperature());
-    }
+//------------------------------------------------------------------------------
+void Editor::menuView()
+{
+    if (!ImGui::BeginMenu("View"))
+        return;
+
+    if (ImGui::MenuItem("Fit the net", "F"))
+        activeDocument().activeNet().view_state.center_request = Document::ViewState::CENTER_FRAMES;
+    if (ImGui::MenuItem("Zoom in", "Ctrl+=, wheel"))
+        m_view.zoomBy(1.25f);
+    if (ImGui::MenuItem("Zoom out", "Ctrl+-, wheel"))
+        m_view.zoomBy(0.8f);
 
     ImGui::Separator();
+    if (ImGui::MenuItem("Grid", nullptr, m_view.grid.show))
+        m_view.grid.show ^= true;
+    if (ImGui::MenuItem("Snap to the grid", "G", m_view.grid.snap))
+        m_view.grid.snap ^= true;
+    if (ImGui::MenuItem("Place captions", nullptr, m_states.show_place_captions))
+        m_states.show_place_captions ^= true;
+    if (ImGui::MenuItem("Transition captions", nullptr, m_states.show_transition_captions))
+        m_states.show_transition_captions ^= true;
 
-    // Simulation controls
-    if (ImGui::MenuItem(simulation().isRunning() ? "Stop Simulation" : "Start Simulation",
-                        "Space", false))
+    ImGui::Separator();
+    if (ImGui::BeginMenu("Theme"))
     {
-        toogleStartSimulation();
+        char const* names[] = { "Dark", "Light", "Classic" };
+        for (int i = 0; i < 3; ++i)
+        {
+            if (ImGui::MenuItem(names[i], nullptr, int(theme()) == i))
+            {
+                theme() = ThemeId(i);
+                applyTheme();
+            }
+        }
+        ImGui::EndMenu();
     }
+    if (ImGui::MenuItem("Reset the layout of the windows"))
+        m_states.reset_layout = true;
 
-    // Show "Start/Stop All" when document has multiple nets
+    ImGui::Separator();
+    if (ImGui::BeginMenu("Remote control"))
+    {
+#  if TPNE_USE_ZEROMQ
+        bool is_running = m_remote && m_remote->isRunning();
+        if (ImGui::MenuItem(is_running ? "Disable" : "Enable", nullptr, is_running))
+            toggleRemoteControl();
+        if (is_running)
+        {
+            ImGui::Separator();
+            ImGui::TextDisabled("Endpoint: %s", m_remote->endpoint().c_str());
+            if (!m_remote->error().empty())
+                ImGui::TextColored(ImVec4(1.0f, 0.3f, 0.3f, 1.0f), "Error: %s", m_remote->error().c_str());
+        }
+#  else
+        ImGui::MenuItem("Disabled at build time", nullptr, false, false);
+#  endif
+        ImGui::EndMenu();
+    }
+    ImGui::EndMenu();
+}
+
+//------------------------------------------------------------------------------
+void Editor::menuSimulation()
+{
+    if (!ImGui::BeginMenu("Simulation"))
+        return;
+
+    bool const running = simulation().isRunning();
+    if (ImGui::MenuItem(running ? "Stop" : "Start", "R, F5"))
+        toogleStartSimulation();
     if (activeDocument().netCount() > 1)
     {
         bool any_running = activeDocument().isAnySimulationRunning();
-        if (ImGui::MenuItem(any_running ? "Stop All Simulations" : "Start All Simulations",
-                            nullptr, false))
-        {
+        if (ImGui::MenuItem(any_running ? "Stop all the nets" : "Start all the nets"))
             toogleStartAllSimulations();
-        }
-    }
-
-    // Show nets in document (when multiple)
-    if (activeDocument().netCount() > 1)
-    {
         ImGui::Separator();
-        ImGui::TextDisabled("Nets in Document:");
+        ImGui::TextDisabled("Nets of the document");
         for (size_t i = 0; i < activeDocument().netCount(); ++i)
         {
             auto& entry = activeDocument().getNet(i);
-            bool is_active = (i == activeDocument().activeNetIndex());
-            if (ImGui::MenuItem(entry.net.name.c_str(), nullptr, is_active))
-            {
+            std::string const label = entry.net.name + "##net" + std::to_string(i);
+            if (ImGui::MenuItem(label.c_str(), nullptr, i == activeDocument().activeNetIndex()))
                 activeDocument().setActiveNetIndex(i);
-            }
         }
     }
-
     ImGui::EndMenu();
 }
 
 //------------------------------------------------------------------------------
 void Editor::menuGraphEvents()
 {
-    // Never show Graph Events menu for GRAFCET mode
-    if (net().type() == TypeOfNet::GRAFCET)
+    if (!ImGui::BeginMenu("Analysis"))
         return;
 
-    if ((net().type() != TypeOfNet::TimedEventGraph) && !isEventGraph(net()))
-        return;
-
-    if (!ImGui::BeginMenu("Graph Events"))
-        return;
-
-    if (ImGui::MenuItem("Show Critical Circuit", nullptr, false))
+    bool const teg = (net().type() == TypeOfNet::TimedEventGraph) || isEventGraph(net());
+    if (!teg)
+        ImGui::TextDisabled("Needs a timed event graph");
+    ImGui::BeginDisabled(!teg);
+    char const* tabs[] = { "Critical circuit (cycle time)", "Gantt chart (earliest dates)",
+                           "(max,+) linear system", "Dater and counter equations",
+                           "Adjacency matrices", "Firing dates of the simulation" };
+    for (int i = 0; i < 6; ++i)
     {
-        m_states.do_find_critical_circuit = true;
+        if (ImGui::MenuItem(tabs[i]))
+        {
+            openAnalysis(i);
+            if (i == 0)
+            {
+                CriticalCycleResult const cc = findCriticalCycle(net());
+                if (cc.success)
+                    m_marked_arcs = cc.arcs;
+            }
+        }
     }
-    if (ImGui::MenuItem("Show (max, +) Dynamic Linear System", nullptr, false))
-    {
-        m_states.do_syslin = true;
-    }
-    if (ImGui::MenuItem("Show Dater or Counter Equations", nullptr, false))
-    {
-        m_states.do_counter_or_dater = true;
-    }
-    if (ImGui::MenuItem("Show Adjacency Matrices", nullptr, false))
-    {
-        m_states.do_adjency = true;
-    }
-
-    ImGui::Separator();
-
-    if (ImGui::MenuItem("Real-time Output Plot", nullptr, m_states.show_simulation_plot))
-    {
-        m_states.show_simulation_plot = !m_states.show_simulation_plot;
-    }
-    if (ImGui::MenuItem("Gantt Chart (earliest dates)", nullptr, m_states.show_gantt))
-    {
-        m_states.show_gantt = !m_states.show_gantt;
-    }
-
+    ImGui::EndDisabled();
     ImGui::EndMenu();
 }
 
@@ -424,19 +419,11 @@ void Editor::menuHelp()
 {
     if (!ImGui::BeginMenu("Help"))
         return;
-
-    if (ImGui::MenuItem("Help", nullptr, false))
-    {
+    if (ImGui::MenuItem("Mouse, keys and syntax"))
         m_states.show_help = true;
-    }
-
     ImGui::Separator();
-
-    if (ImGui::MenuItem("About", nullptr, false))
-    {
+    if (ImGui::MenuItem("About"))
         m_states.show_about = true;
-    }
-
     ImGui::EndMenu();
 }
 
@@ -472,13 +459,8 @@ void Editor::handleMenuActions()
             break;
     }
 
-    // Algorithm analysis dialogs
-    if (m_states.do_adjency) { showAdjacencyMatrices(); }
-    if (m_states.do_counter_or_dater) { showCounterOrDaterEquation(); }
-    if (m_states.do_syslin) { showDynamicLinearSystem(); }
-    if (m_states.show_simulation_plot) { showSimulationPlot(); }
-    if (m_states.show_gantt) { showGanttChart(); }
-    if (m_states.do_find_critical_circuit) { showCriticalCircuit(); }
+    // Analysis window (dockable, not modal)
+    if (m_states.show_analysis) { analysisWindow(); }
 
     // Quit request handling
     if (m_states.request_quitting)

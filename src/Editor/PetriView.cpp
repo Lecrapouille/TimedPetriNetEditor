@@ -5,18 +5,28 @@
 // for users who cannot use the GPL, under a commercial license.
 // See LICENSING.md for details.
 
+// ImVec2 operators (+, -, *): also defined when the host does not.
+#ifndef IMGUI_DEFINE_MATH_OPERATORS
+#  define IMGUI_DEFINE_MATH_OPERATORS
+#endif
 #include "Editor/PetriView.hpp"
 
 #include "Editor/Editor.hpp"
 #include "Editor/Drawable.hpp"
+#include "Editor/EditorState.hpp"
 #include "Editor/KeyBindings.hpp"
 
 #include <algorithm>
-#include <limits>
-#include <map>
 #include <cmath>
+#include <cstring>
+#include <limits>
 
 namespace tpne {
+
+//! \brief Mouse travel (pixels) under which a press and release is a click.
+static constexpr float CLICK_DISTANCE = 4.0f;
+//! \brief Extra pick distance around nodes and arcs (pixels).
+static constexpr float PICK_MARGIN = 6.0f;
 
 //------------------------------------------------------------------------------
 PetriView::PetriView(Editor& editor)
@@ -24,10 +34,16 @@ PetriView::PetriView(Editor& editor)
 {}
 
 //------------------------------------------------------------------------------
+PetriView::~PetriView() = default;
+
+// ============================================================================
+// Canvas
+// ============================================================================
+
+//------------------------------------------------------------------------------
 void PetriView::Canvas::push()
 {
     draw_list = ImGui::GetWindowDrawList();
-    draw_list->ChannelsSplit(1);
     draw_list->PushClipRect(corners[0], corners[1], true);
 }
 
@@ -40,17 +56,19 @@ void PetriView::Canvas::pop()
 //------------------------------------------------------------------------------
 void PetriView::Canvas::reshape()
 {
-    // ImDrawList API uses screen coordinates
     corners[0] = ImGui::GetCursorScreenPos();
-
-    // Resize canvas to what's available
     size = ImGui::GetContentRegionAvail();
-    if (size.x < 50.0f) size.x = 50.0f;
-    if (size.y < 50.0f) size.y = 50.0f;
+    size.x = std::max(size.x, 50.0f);
+    size.y = std::max(size.y, 50.0f);
     corners[1] = corners[0] + size;
-
-    // Lock scrolled origin
     origin = corners[0] + scrolling;
+}
+
+//------------------------------------------------------------------------------
+ImVec2 PetriView::Canvas::getMousePosition() const
+{
+    ImVec2 const pos = ImGui::GetIO().MousePos - origin;
+    return ImVec2(pos.x / zoom, pos.y / zoom);
 }
 
 //------------------------------------------------------------------------------
@@ -65,9 +83,7 @@ bool PetriView::screenshotRect(int& x, int& y, int& width, int& height) const
     if (m_canvas.size.x < 1.0f || m_canvas.size.y < 1.0f)
         return false;
 
-    ImGuiIO const& io = ImGui::GetIO();
-    ImVec2 const scale = io.DisplayFramebufferScale;
-
+    ImVec2 const scale = ImGui::GetIO().DisplayFramebufferScale;
     width = std::max(1, int(m_canvas.size.x * scale.x + 0.5f));
     height = std::max(1, int(m_canvas.size.y * scale.y + 0.5f));
     x = std::max(0, int(m_canvas.corners[0].x * scale.x + 0.5f));
@@ -78,8 +94,7 @@ bool PetriView::screenshotRect(int& x, int& y, int& width, int& height) const
 //------------------------------------------------------------------------------
 void PetriView::loadViewState(Document::ViewState const& state)
 {
-    m_canvas.scrolling.x = state.scrolling_x;
-    m_canvas.scrolling.y = state.scrolling_y;
+    m_canvas.scrolling = ImVec2(state.scrolling_x, state.scrolling_y);
     m_canvas.zoom = state.zoom;
 }
 
@@ -94,172 +109,82 @@ void PetriView::saveViewState(Document::ViewState& state) const
 //------------------------------------------------------------------------------
 void PetriView::centerOnNet(Net const& net)
 {
-    // Calculate bounding box of all nodes
     if (net.places().empty() && net.transitions().empty())
+    {
+        m_canvas.zoom = 1.0f;
+        m_canvas.scrolling = m_canvas.size * 0.5f;
+        m_canvas.origin = m_canvas.corners[0] + m_canvas.scrolling;
         return;
+    }
 
+    // Bounding box of the nodes, with room for captions and GRAFCET actions.
     float min_x = std::numeric_limits<float>::max();
     float min_y = std::numeric_limits<float>::max();
     float max_x = std::numeric_limits<float>::lowest();
     float max_y = std::numeric_limits<float>::lowest();
-
+    auto extend = [&](float x0, float y0, float x1, float y1) {
+        min_x = std::min(min_x, x0); min_y = std::min(min_y, y0);
+        max_x = std::max(max_x, x1); max_y = std::max(max_y, y1);
+    };
+    bool const grafcet = (net.type() == TypeOfNet::GRAFCET);
     for (auto const& place : net.places())
     {
-        min_x = std::min(min_x, place.x);
-        min_y = std::min(min_y, place.y);
-        max_x = std::max(max_x, place.x);
-        max_y = std::max(max_y, place.y);
+        if (net.type() == TypeOfNet::TimedEventGraph)
+            continue;
+        ImVec2 const half = nodeHalfSize(place, net.type());
+        extend(place.x - half.x - (grafcet ? 90.0f : 0.0f), place.y - half.y,
+               place.x + half.x + (grafcet && !place.actions.empty() ? 160.0f : 0.0f),
+               place.y + half.y + 20.0f);
     }
-
     for (auto const& trans : net.transitions())
     {
-        min_x = std::min(min_x, trans.x);
-        min_y = std::min(min_y, trans.y);
-        max_x = std::max(max_x, trans.x);
-        max_y = std::max(max_y, trans.y);
+        ImVec2 const half = nodeHalfSize(trans, net.type());
+        extend(trans.x - half.x - GRAFCET_LOOP, trans.y - half.y,
+               trans.x + half.x + (grafcet ? 140.0f : 0.0f), trans.y + half.y + 20.0f);
     }
 
-    // Add margin
-    const float margin = 50.0f;
-    min_x -= margin;
-    min_y -= margin;
-    max_x += margin;
-    max_y += margin;
-
-    float net_width = max_x - min_x;
-    float net_height = max_y - min_y;
-
-    // Calculate zoom to fit the net in the canvas
-    float zoom_x = m_canvas.size.x / net_width;
-    float zoom_y = m_canvas.size.y / net_height;
-    float new_zoom = std::min(zoom_x, zoom_y);
-
-    // Clamp zoom to reasonable bounds
-    new_zoom = std::clamp(new_zoom, Canvas::ZOOM_MIN, Canvas::ZOOM_MAX);
-    m_canvas.zoom = new_zoom;
-
-    // Center the net in the canvas
-    float center_x = (min_x + max_x) / 2.0f;
-    float center_y = (min_y + max_y) / 2.0f;
-
-    m_canvas.scrolling.x = m_canvas.size.x / 2.0f - center_x * new_zoom;
-    m_canvas.scrolling.y = m_canvas.size.y / 2.0f - center_y * new_zoom;
+    float const margin = 30.0f;
+    float const width = std::max(1.0f, max_x - min_x);
+    float const height = std::max(1.0f, max_y - min_y);
+    float zoom = std::min((m_canvas.size.x - 2.0f * margin) / width,
+                          (m_canvas.size.y - 2.0f * margin) / height);
+    // Never bigger than 1.5: a small net stays at a readable size.
+    zoom = std::clamp(zoom, Canvas::ZOOM_MIN, 1.5f);
+    m_canvas.zoom = zoom;
+    m_canvas.scrolling.x = m_canvas.size.x * 0.5f - (min_x + max_x) * 0.5f * zoom;
+    m_canvas.scrolling.y = m_canvas.size.y * 0.5f - (min_y + max_y) * 0.5f * zoom;
     m_canvas.origin = m_canvas.corners[0] + m_canvas.scrolling;
 }
 
 //------------------------------------------------------------------------------
-ImVec2 PetriView::Canvas::getMousePosition() const
+void PetriView::zoomBy(float const factor)
 {
-    ImGuiIO const& io = ImGui::GetIO();
-    ImVec2 pos = io.MousePos - origin;
-    return ImVec2(pos.x / zoom, pos.y / zoom);
+    ImVec2 const center = m_canvas.size * 0.5f;
+    ImVec2 const at = (center - m_canvas.scrolling) / m_canvas.zoom;
+    m_canvas.zoom = std::clamp(m_canvas.zoom * factor, Canvas::ZOOM_MIN, Canvas::ZOOM_MAX);
+    m_canvas.scrolling = center - at * m_canvas.zoom;
+    m_canvas.origin = m_canvas.corners[0] + m_canvas.scrolling;
 }
 
-//------------------------------------------------------------------------------
-bool PetriView::isMouseReleased(ImGuiMouseButton& key) const
-{
-    ImGuiIO const& io = ImGui::GetIO();
-    if ((io.MousePos.x >= m_canvas.corners[0].x) &&
-        (io.MousePos.x <= m_canvas.corners[1].x) &&
-        (io.MousePos.y >= m_canvas.corners[0].y) &&
-        (io.MousePos.y <= m_canvas.corners[1].y))
-    {
-        if (ImGui::IsMouseReleased(ImGuiMouseButton_Middle))
-        {
-            key = ImGuiMouseButton_Middle;
-            return true;
-        }
-        if (ImGui::IsMouseReleased(ImGuiMouseButton_Left))
-        {
-            key = ImGuiMouseButton_Left;
-            return true;
-        }
-        if (ImGui::IsMouseReleased(ImGuiMouseButton_Right))
-        {
-            key = ImGuiMouseButton_Right;
-            return true;
-        }
-    }
-    return false;
-}
-
-//------------------------------------------------------------------------------
-bool PetriView::isMouseClicked(ImGuiMouseButton& key) const
-{
-    ImGuiIO const& io = ImGui::GetIO();
-    if ((io.MousePos.x >= m_canvas.corners[0].x) &&
-        (io.MousePos.x <= m_canvas.corners[1].x) &&
-        (io.MousePos.y >= m_canvas.corners[0].y) &&
-        (io.MousePos.y <= m_canvas.corners[1].y))
-    {
-        if (ImGui::IsMouseClicked(ImGuiMouseButton_Middle))
-        {
-            key = ImGuiMouseButton_Middle;
-            return true;
-        }
-        if (ImGui::IsMouseClicked(ImGuiMouseButton_Left))
-        {
-            key = ImGuiMouseButton_Left;
-            return true;
-        }
-        if (ImGui::IsMouseClicked(ImGuiMouseButton_Right))
-        {
-            key = ImGuiMouseButton_Right;
-            return true;
-        }
-    }
-    return false;
-}
-
-//------------------------------------------------------------------------------
-bool PetriView::isMouseDraggingView(ImGuiMouseButton const& button) const
-{
-    (void) button;
-    const float mouse_threshold_for_pan = grid.menu ? -1.0f : 0.0f;
-    return ImGui::IsMouseDragging(MOUSE_BOUTON_DRAGGING_VIEW, mouse_threshold_for_pan);
-}
-
-//------------------------------------------------------------------------------
-void PetriView::handleMoveNode()
-{
-    if (m_mouse.selection.empty())
-    {
-        Node* node = m_editor.getNode(m_mouse.position);
-        if (node != nullptr)
-        {
-            m_mouse.selection.push_back(node);
-            m_current_net->modified = true;
-        }
-    }
-    else
-    {
-        m_mouse.selection.clear();
-    }
-}
+// ============================================================================
+// Selection
+// ============================================================================
 
 //------------------------------------------------------------------------------
 bool PetriView::isNodeSelected(Node const* node) const
 {
-    if (node == nullptr) return false;
-    for (auto const* n : m_mouse.selected_nodes)
-    {
-        if (n == node) return true;
-    }
-    return false;
+    return (node != nullptr) &&
+        (std::find(m_mouse.selected_nodes.begin(), m_mouse.selected_nodes.end(), node)
+         != m_mouse.selected_nodes.end());
 }
 
 //------------------------------------------------------------------------------
 void PetriView::selectNode(Node* node, bool add_to_selection)
 {
-    if (node == nullptr) return;
     if (!add_to_selection)
-    {
-        m_mouse.selected_nodes.clear();
-    }
+        clearSelection();
     if (!isNodeSelected(node))
-    {
         m_mouse.selected_nodes.push_back(node);
-    }
 }
 
 //------------------------------------------------------------------------------
@@ -267,9 +192,7 @@ void PetriView::deselectNode(Node* node)
 {
     auto it = std::find(m_mouse.selected_nodes.begin(), m_mouse.selected_nodes.end(), node);
     if (it != m_mouse.selected_nodes.end())
-    {
         m_mouse.selected_nodes.erase(it);
-    }
 }
 
 //------------------------------------------------------------------------------
@@ -279,116 +202,89 @@ void PetriView::clearSelection()
 }
 
 //------------------------------------------------------------------------------
-void PetriView::selectNodesInRect(ImVec2 const& min, ImVec2 const& max)
+void PetriView::selectNodesInRect(ImVec2 const& a, ImVec2 const& b)
 {
-    float x_min = (min.x < max.x) ? min.x : max.x;
-    float x_max = (min.x > max.x) ? min.x : max.x;
-    float y_min = (min.y < max.y) ? min.y : max.y;
-    float y_max = (min.y > max.y) ? min.y : max.y;
-
+    float const x0 = std::min(a.x, b.x), x1 = std::max(a.x, b.x);
+    float const y0 = std::min(a.y, b.y), y1 = std::max(a.y, b.y);
+    auto inside = [&](Node const& n) { return n.x >= x0 && n.x <= x1 && n.y >= y0 && n.y <= y1; };
+    bool const teg = (m_current_net->type() == TypeOfNet::TimedEventGraph);
     for (auto& place : m_current_net->places())
     {
-        if (place.x >= x_min && place.x <= x_max &&
-            place.y >= y_min && place.y <= y_max)
-        {
-            if (!isNodeSelected(&place))
-                m_mouse.selected_nodes.push_back(&place);
-        }
+        if (!teg && inside(place) && !isNodeSelected(&place))
+            m_mouse.selected_nodes.push_back(&place);
     }
     for (auto& trans : m_current_net->transitions())
     {
-        if (trans.x >= x_min && trans.x <= x_max &&
-            trans.y >= y_min && trans.y <= y_max)
-        {
-            if (!isNodeSelected(&trans))
-                m_mouse.selected_nodes.push_back(&trans);
-        }
+        if (inside(trans) && !isNodeSelected(&trans))
+            m_mouse.selected_nodes.push_back(&trans);
     }
 }
 
 //------------------------------------------------------------------------------
-static float pointToSegmentDistance(ImVec2 const& p, ImVec2 const& a, ImVec2 const& b)
+Node* PetriView::getNode(ImVec2 const& position) const
 {
-    ImVec2 ab(b.x - a.x, b.y - a.y);
-    ImVec2 ap(p.x - a.x, p.y - a.y);
-    float ab_len_sq = ab.x * ab.x + ab.y * ab.y;
-    if (ab_len_sq < 0.0001f) return sqrtf(ap.x * ap.x + ap.y * ap.y);
-    float t = (ap.x * ab.x + ap.y * ab.y) / ab_len_sq;
-    if (t < 0.0f) t = 0.0f;
-    if (t > 1.0f) t = 1.0f;
-    ImVec2 closest(a.x + t * ab.x, a.y + t * ab.y);
-    float dx = p.x - closest.x;
-    float dy = p.y - closest.y;
-    return sqrtf(dx * dx + dy * dy);
+    if (m_current_net == nullptr)
+        return nullptr;
+    // Pick with a margin in pixels, whatever the zoom; the nearest node wins.
+    float const margin = PICK_MARGIN / m_canvas.zoom;
+    TypeOfNet const type = m_current_net->type();
+    Node* best = nullptr;
+    float best_distance = std::numeric_limits<float>::max();
+    auto test = [&](Node& node) {
+        ImVec2 const half = nodeHalfSize(node, type);
+        float const dx = std::fabs(position.x - node.x);
+        float const dy = std::fabs(position.y - node.y);
+        // GRAFCET transitions are thin: easier to pick vertically.
+        float const extra_y = (type == TypeOfNet::GRAFCET && node.type == Node::Type::Transition) ? 6.0f : 0.0f;
+        if (dx <= half.x + margin && dy <= half.y + margin + extra_y)
+        {
+            float const d = dx * dx + dy * dy;
+            if (d < best_distance) { best_distance = d; best = &node; }
+        }
+    };
+    if (type != TypeOfNet::TimedEventGraph)
+    {
+        for (auto& place : m_current_net->places())
+            test(place);
+    }
+    for (auto& trans : m_current_net->transitions())
+        test(trans);
+    return best;
 }
 
 //------------------------------------------------------------------------------
-Arc* PetriView::getArc(ImVec2 const& position)
+Arc* PetriView::getArc(ImVec2 const& position) const
 {
-    const float threshold = 10.0f;
-    Arc* closest_arc = nullptr;
-    float min_dist = threshold;
-
-    bool const is_teg = (m_current_net->type() == TypeOfNet::TimedEventGraph);
+    if (m_current_net == nullptr)
+        return nullptr;
+    float best = PICK_MARGIN / m_canvas.zoom;
+    Arc* found = nullptr;
     for (auto& arc : m_current_net->arcs())
     {
-        // In TimedEventGraph mode, places are hidden: a Transition -> Place ->
-        // Transition pair is drawn as one arc between the two transitions.
-        // Only the first half can be picked, else the hidden half, which lies
-        // on the same segment, could be picked instead.
-        if (is_teg && (arc.from.type == Node::Type::Place))
-            continue;
-
-        ImVec2 from_pos(arc.from.x, arc.from.y);
-        ImVec2 to_pos;
-
-        // In TimedEventGraph mode, arcs from Transition skip the implicit Place
-        // and are drawn directly to the next Transition
-        if (is_teg && arc.from.type == Node::Type::Transition &&
-            !arc.to.arcsOut.empty())
+        float const d = distanceToArc(arc, m_current_net->type(), position);
+        if (d < best)
         {
-            Node const& next = arc.to.arcsOut[0]->to;
-            to_pos = ImVec2(next.x, next.y);
-        }
-        else
-        {
-            to_pos = ImVec2(arc.to.x, arc.to.y);
-        }
-
-        float dist = pointToSegmentDistance(position, from_pos, to_pos);
-        if (dist < min_dist)
-        {
-            min_dist = dist;
-            closest_arc = &arc;
+            best = d;
+            found = &arc;
         }
     }
-    return closest_arc;
+    return found;
 }
 
 //------------------------------------------------------------------------------
 bool PetriView::isArcSelected(Arc const* arc) const
 {
-    if (arc == nullptr) return false;
-    for (auto const* a : m_mouse.selected_arcs)
-    {
-        if (a == arc) return true;
-    }
-    return false;
+    return std::find(m_mouse.selected_arcs.begin(), m_mouse.selected_arcs.end(), arc)
+        != m_mouse.selected_arcs.end();
 }
 
 //------------------------------------------------------------------------------
 void PetriView::selectArc(Arc* arc, bool add_to_selection)
 {
-    if (arc == nullptr) return;
     if (!add_to_selection)
-    {
         m_mouse.selected_arcs.clear();
-        m_mouse.selected_nodes.clear();
-    }
     if (!isArcSelected(arc))
-    {
         m_mouse.selected_arcs.push_back(arc);
-    }
 }
 
 //------------------------------------------------------------------------------
@@ -396,9 +292,7 @@ void PetriView::deselectArc(Arc* arc)
 {
     auto it = std::find(m_mouse.selected_arcs.begin(), m_mouse.selected_arcs.end(), arc);
     if (it != m_mouse.selected_arcs.end())
-    {
         m_mouse.selected_arcs.erase(it);
-    }
 }
 
 //------------------------------------------------------------------------------
@@ -408,16 +302,57 @@ void PetriView::clearArcSelection()
 }
 
 //------------------------------------------------------------------------------
+void PetriView::sanitize(Net& net)
+{
+    // The selection keeps pointers: forget the ones that are not nodes and
+    // arcs of this net any more (load, undo, other net, cleared net).
+    std::vector<Node const*> nodes;
+    for (auto const& place : net.places())
+        nodes.push_back(&place);
+    for (auto const& trans : net.transitions())
+        nodes.push_back(&trans);
+    std::sort(nodes.begin(), nodes.end());
+    auto const known = [&nodes](Node const* n) {
+        return std::binary_search(nodes.begin(), nodes.end(), n);
+    };
+    std::vector<Arc const*> arcs;
+    for (auto const& arc : net.arcs())
+        arcs.push_back(&arc);
+    std::sort(arcs.begin(), arcs.end());
+    auto const known_arc = [&arcs](Arc const* a) {
+        return std::binary_search(arcs.begin(), arcs.end(), a);
+    };
+
+    auto& sel = m_mouse.selected_nodes;
+    sel.erase(std::remove_if(sel.begin(), sel.end(), [&](Node* n) { return !known(n); }), sel.end());
+    auto& asel = m_mouse.selected_arcs;
+    asel.erase(std::remove_if(asel.begin(), asel.end(), [&](Arc* a) { return !known_arc(a); }), asel.end());
+    if ((m_mouse.hovered_node != nullptr) && !known(m_mouse.hovered_node)) m_mouse.hovered_node = nullptr;
+    if ((m_mouse.hovered_arc != nullptr) && !known_arc(m_mouse.hovered_arc)) m_mouse.hovered_arc = nullptr;
+    if ((m_mouse.editing_node != nullptr) && !known(m_mouse.editing_node)) m_mouse.editing_node = nullptr;
+    if ((m_mouse.editing_arc != nullptr) && !known_arc(m_mouse.editing_arc)) m_mouse.editing_arc = nullptr;
+    if ((m_mouse.context_menu_node != nullptr) && !known(m_mouse.context_menu_node)) m_mouse.context_menu_node = nullptr;
+    if ((m_mouse.context_menu_arc != nullptr) && !known_arc(m_mouse.context_menu_arc)) m_mouse.context_menu_arc = nullptr;
+    if ((m_mouse.pressed_node != nullptr) && !known(m_mouse.pressed_node))
+    {
+        m_mouse.pressed_node = nullptr;
+        m_mouse.gesture = Gesture::None;
+    }
+}
+
+//------------------------------------------------------------------------------
 void PetriView::clearAllSelections()
 {
     clearSelection();
     clearArcSelection();
-    m_mouse.editing_node = nullptr;
     m_mouse.hovered_node = nullptr;
     m_mouse.hovered_arc = nullptr;
-    m_mouse.is_rubber_band = false;
-    m_mouse.is_dragging_nodes = false;
-    m_mouse.drag_offsets.clear();
+    m_mouse.context_menu_node = nullptr;
+    m_mouse.context_menu_arc = nullptr;
+    m_mouse.editing_node = nullptr;
+    m_mouse.editing_arc = nullptr;
+    m_mouse.gesture = Gesture::None;
+    m_move_action.reset();
 }
 
 //------------------------------------------------------------------------------
@@ -427,35 +362,24 @@ void PetriView::copySelection()
         return;
 
     m_editor.clearClipboard();
-
     float sum_x = 0.0f; float sum_y = 0.0f;
     for (auto* node : m_mouse.selected_nodes)
     {
         sum_x += node->x;
         sum_y += node->y;
-
         if (node->type == Node::Type::Place)
-        {
-            m_editor.addToClipboard(*reinterpret_cast<Place*>(node));
-        }
+            m_editor.addToClipboard(*static_cast<Place*>(node));
         else
-        {
-            m_editor.addToClipboard(*reinterpret_cast<Transition*>(node));
-        }
+            m_editor.addToClipboard(*static_cast<Transition*>(node));
     }
-    m_editor.setClipboardCenter(sum_x / static_cast<float>(m_mouse.selected_nodes.size()),
-                                sum_y / static_cast<float>(m_mouse.selected_nodes.size()));
-
-    // Copy arcs between selected nodes
+    float const n = static_cast<float>(m_mouse.selected_nodes.size());
+    m_editor.setClipboardCenter(sum_x / n, sum_y / n);
     for (auto const& arc : m_current_net->arcs())
     {
-        bool from_selected = isNodeSelected(&arc.from);
-        bool to_selected = isNodeSelected(&arc.to);
-        if (from_selected && to_selected)
-        {
+        if (isNodeSelected(&arc.from) && isNodeSelected(&arc.to))
             m_editor.addArcToClipboard(arc);
-        }
     }
+    m_editor.m_messages.setInfo(std::to_string(m_mouse.selected_nodes.size()) + " node(s) copied");
 }
 
 //------------------------------------------------------------------------------
@@ -463,438 +387,372 @@ void PetriView::pasteClipboard()
 {
     if (m_editor.isClipboardEmpty())
         return;
-
-    m_editor.pasteFromClipboard(*m_current_net, m_mouse.position,
-                                m_mouse.selected_nodes);
+    m_editor.pasteFromClipboard(*m_current_net, m_mouse.position, m_mouse.selected_nodes);
     m_current_net->modified = true;
 }
 
+// ============================================================================
+// Mouse gestures
+// ============================================================================
+
 //------------------------------------------------------------------------------
-void PetriView::handleSelection(ImGuiMouseButton button)
+void PetriView::pressed(ImGuiMouseButton const button, Net& net)
 {
-    if (button != MOUSE_BOUTON_ADD_PLACE)
-        return;
+    m_mouse.button = button;
+    m_mouse.pressed_at = m_mouse.position;
+    m_mouse.pressed_screen = ImGui::GetIO().MousePos;
+    m_mouse.pressed_node = getNode(m_mouse.position);
+    m_mouse.pressed_arc = (m_mouse.pressed_node == nullptr) ? getArc(m_mouse.position) : nullptr;
+    m_mouse.pressed_ctrl = ImGui::GetIO().KeyCtrl;
+    m_mouse.editing_node = nullptr;
+    m_mouse.editing_arc = nullptr;
+    m_editor.clearMarkedArcs();
+    (void) net;
 
-    Node* node = m_editor.getNode(m_mouse.position);
-    Arc* arc = getArc(m_mouse.position);
-    bool ctrl_pressed = ImGui::GetIO().KeyCtrl;
-
-    if (node != nullptr)
-    {
-        if (!ctrl_pressed)
-        {
-            clearArcSelection();
-        }
-        if (ctrl_pressed)
-        {
-            if (isNodeSelected(node))
-                deselectNode(node);
-            else
-                selectNode(node, true);
-        }
-        else
-        {
-            if (!isNodeSelected(node))
-            {
-                selectNode(node, false);
-            }
-            m_mouse.is_dragging_nodes = true;
-            m_mouse.drag_offsets.clear();
-            for (auto const* n : m_mouse.selected_nodes)
-            {
-                m_mouse.drag_offsets.push_back(
-                    ImVec2(n->x - m_mouse.position.x, n->y - m_mouse.position.y));
-            }
-        }
-    }
-    else if (arc != nullptr)
-    {
-        if (!ctrl_pressed)
-        {
-            clearSelection();
-        }
-        if (ctrl_pressed)
-        {
-            if (isArcSelected(arc))
-                deselectArc(arc);
-            else
-                selectArc(arc, true);
-        }
-        else
-        {
-            selectArc(arc, false);
-        }
-    }
-    else
-    {
-        if (!ctrl_pressed)
-        {
-            clearSelection();
-            clearArcSelection();
-        }
-        m_mouse.is_rubber_band = true;
-        m_mouse.rubber_band_start = m_mouse.position;
-    }
+    // Middle button, or Space held: always move the view.
+    bool const space = ImGui::IsKeyDown(ImGuiKey_Space);
+    m_mouse.gesture = ((button == ImGuiMouseButton_Middle) || space) ? Gesture::Pan : Gesture::Pending;
 }
 
 //------------------------------------------------------------------------------
-void PetriView::handleAddNode(ImGuiMouseButton button)
+void PetriView::dragged(Net& net)
 {
-    // Close name edit widget if open
-    if (m_mouse.editing_node != nullptr)
+    ImGuiIO const& io = ImGui::GetIO();
+    bool const running = (m_current_simulation != nullptr) && m_current_simulation->isRunning();
+
+    if (m_mouse.gesture == Gesture::Pending)
     {
-        m_mouse.editing_node = nullptr;
-        return;
-    }
-
-    if (!m_current_simulation->isRunning())
-    {
-        Node const* node = m_editor.getNode(m_mouse.position);
-        Arc const* arc = getArc(m_mouse.position);
-
-        if (button == MOUSE_BOUTON_ADD_PLACE)
-        {
-            // Click on existing node = selection
-            if (node != nullptr)
-            {
-                handleSelection(button);
-                return;
-            }
-            // Click on arc = arc selection
-            if (arc != nullptr)
-            {
-                handleSelection(button);
-                return;
-            }
-            // Click in empty space = create node or rubber band
-            if (!ImGui::GetIO().KeyShift)
-            {
-                clearSelection();
-                clearArcSelection();
-                if (m_current_net->type() == TypeOfNet::TimedEventGraph)
-                {
-                    m_editor.addTransition(m_mouse.position.x, m_mouse.position.y);
-                }
-                else
-                {
-                    m_editor.addPlace(m_mouse.position.x, m_mouse.position.y);
-                }
-            }
-            else
-            {
-                // Shift+click = rubber band only
-                handleSelection(button);
-            }
-        }
-        else if (button == MOUSE_BOUTON_ADD_TRANSITION)
-        {
-            if (node == nullptr && arc == nullptr)
-            {
-                clearSelection();
-                clearArcSelection();
-                m_editor.addTransition(m_mouse.position.x, m_mouse.position.y);
-            }
-        }
-    }
-    else if (m_current_net->type() == TypeOfNet::PetriNet)
-    {
-        // During simulation, click on transition to toggle receptivity
-        Transition* transition = m_editor.getTransition(m_mouse.position);
-        if (transition != nullptr)
-        {
-            transition->receptivity ^= true;
-        }
-    }
-}
-
-//------------------------------------------------------------------------------
-void PetriView::handleArcOrigin()
-{
-    if (m_current_simulation->isRunning())
-        return;
-
-    m_mouse.clicked_at = m_mouse.position;
-    m_mouse.from = m_editor.getNode(m_mouse.position);
-    m_mouse.handling_arc = !ImGui::GetIO().KeyCtrl;
-    m_mouse.to = nullptr;
-}
-
-//------------------------------------------------------------------------------
-void PetriView::handleArcDestination()
-{
-    // Finish arc creation
-    m_mouse.to = m_editor.getNode(m_mouse.position);
-    m_mouse.handling_arc = false;
-
-    if (m_current_net->type() == TypeOfNet::TimedEventGraph)
-    {
-        // Timed event graph: arcs link transitions (implicit place inserted by addArc).
-        if (m_mouse.from == nullptr)
-            m_mouse.from = &m_editor.addTransition(m_mouse.clicked_at.x, m_mouse.clicked_at.y);
-        if (m_mouse.to == nullptr)
-            m_mouse.to = &m_editor.addTransition(m_mouse.position.x, m_mouse.position.y);
-    }
-    else
-    {
-        // Arc to itself (or both nodes nullptr)
-        if ((m_mouse.from == nullptr) && (m_mouse.to == nullptr))
+        ImVec2 const d = io.MousePos - m_mouse.pressed_screen;
+        if (d.x * d.x + d.y * d.y < CLICK_DISTANCE * CLICK_DISTANCE)
             return;
 
-        if (m_mouse.from == nullptr)
+        // The mouse moved: decide what the drag does.
+        if (m_mouse.button == ImGuiMouseButton_Left)
         {
-            m_mouse.from = &m_editor.addOppositeNode(m_mouse.to->type, m_mouse.clicked_at.x, m_mouse.clicked_at.y);
-        }
-        else if (m_mouse.to == nullptr)
-        {
-            m_mouse.to = &m_editor.addOppositeNode(m_mouse.from->type, m_mouse.position.x, m_mouse.position.y);
-        }
-    }
-
-    if ((m_mouse.from == nullptr) || (m_mouse.to == nullptr))
-    {
-        m_mouse.from = m_mouse.to = nullptr;
-        return;
-    }
-
-    // The case where two nodes have the same type is managed by addArc
-    float duration = 1.0f;
-    m_editor.addArc(*m_mouse.from, *m_mouse.to, duration);
-
-    // Reset states
-    m_mouse.from = m_mouse.to = nullptr;
-}
-
-//------------------------------------------------------------------------------
-void PetriView::updateHoverState()
-{
-    if (ImGui::IsItemHovered())
-    {
-        m_mouse.hovered_node = m_editor.getNode(m_mouse.position);
-        m_mouse.hovered_arc = (m_mouse.hovered_node == nullptr)
-            ? getArc(m_mouse.position) : nullptr;
-    }
-    else
-    {
-        m_mouse.hovered_node = nullptr;
-        m_mouse.hovered_arc = nullptr;
-    }
-}
-
-//------------------------------------------------------------------------------
-void PetriView::handleContextMenu()
-{
-    if (!ImGui::IsMouseClicked(ImGuiMouseButton_Right) || !ImGui::IsItemHovered())
-        return;
-
-    Node* node = m_editor.getNode(m_mouse.position);
-    Arc* arc = getArc(m_mouse.position);
-
-    if (node != nullptr)
-    {
-        m_mouse.context_menu_node = node;
-        m_mouse.context_menu_arc = nullptr;
-        ImGui::OpenPopup("NodeContextMenu");
-    }
-    else if (arc != nullptr)
-    {
-        m_mouse.context_menu_node = nullptr;
-        m_mouse.context_menu_arc = arc;
-        ImGui::OpenPopup("ArcContextMenu");
-    }
-}
-
-//------------------------------------------------------------------------------
-void PetriView::handleDoubleClickRename(Simulation& simulation)
-{
-    if (simulation.isRunning() || !ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left) ||
-        !ImGui::IsItemHovered())
-        return;
-
-    Node* node = m_editor.getNode(m_mouse.position);
-    if (node != nullptr && m_mouse.editing_node == nullptr)
-    {
-        m_mouse.editing_node = node;
-        strncpy(m_mouse.edit_buffer, node->caption.c_str(), sizeof(m_mouse.edit_buffer) - 1);
-        m_mouse.edit_buffer[sizeof(m_mouse.edit_buffer) - 1] = '\0';
-        m_mouse.edit_focus_requested = true;
-    }
-}
-
-//------------------------------------------------------------------------------
-void PetriView::handleMouseClicksAndDrags(Net& net, Simulation& /*simulation*/)
-{
-    if (!ImGui::IsItemActive() || !ImGui::IsItemHovered())
-        return;
-
-    ImGuiMouseButton button;
-    if (isMouseClicked(button))
-    {
-        m_editor.clearMarkedArcs();
-        if (button == MOUSE_BOUTON_HANDLE_ARC)
-            handleArcOrigin();
-        else
-            handleAddNode(button);
-    }
-    else if (isMouseDraggingView(button) && !m_mouse.handling_arc)
-    {
-        ImGuiIO const& io = ImGui::GetIO();
-        m_canvas.scrolling.x += io.MouseDelta.x;
-        m_canvas.scrolling.y += io.MouseDelta.y;
-    }
-    else if (m_mouse.is_dragging_nodes && !m_mouse.selected_nodes.empty())
-    {
-        for (size_t i = 0; i < m_mouse.selected_nodes.size(); ++i)
-        {
-            if (i < m_mouse.drag_offsets.size())
+            if ((m_mouse.pressed_node != nullptr) && !running)
             {
-                m_mouse.selected_nodes[i]->x = m_mouse.position.x + m_mouse.drag_offsets[i].x;
-                m_mouse.selected_nodes[i]->y = m_mouse.position.y + m_mouse.drag_offsets[i].y;
+                if (!isNodeSelected(m_mouse.pressed_node))
+                    selectNode(m_mouse.pressed_node, m_mouse.pressed_ctrl);
+                m_mouse.drag_offsets.clear();
+                for (auto const* n : m_mouse.selected_nodes)
+                    m_mouse.drag_offsets.push_back(ImVec2(n->x, n->y) - m_mouse.pressed_at);
+                m_move_action = std::make_unique<NetModificationAction>(
+                    [this]() -> Net& { return m_editor.net(); });
+                m_move_action->before(net);
+                m_mouse.gesture = Gesture::MoveNodes;
+            }
+            else
+            {
+                if (!m_mouse.pressed_ctrl)
+                {
+                    clearSelection();
+                    clearArcSelection();
+                }
+                m_mouse.gesture = Gesture::RubberBand;
             }
         }
-        net.modified = true;
-    }
-}
-
-//------------------------------------------------------------------------------
-void PetriView::handleMouseRelease(Net& /*net*/)
-{
-    ImGuiMouseButton button;
-    if (!isMouseReleased(button))
-        return;
-
-    m_mouse.is_dragging_view = false;
-    m_mouse.selection.clear();
-
-    if (m_mouse.is_rubber_band)
-    {
-        if (!ImGui::GetIO().KeyCtrl)
-            clearSelection();
-        selectNodesInRect(m_mouse.rubber_band_start, m_mouse.position);
-        m_mouse.is_rubber_band = false;
-    }
-
-    if (m_mouse.is_dragging_nodes && grid.snap)
-    {
-        for (auto* node : m_mouse.selected_nodes)
+        else if (m_mouse.button == ImGuiMouseButton_Right)
         {
-            node->x = grid.snapValue(node->x);
-            node->y = grid.snapValue(node->y);
+            m_mouse.gesture = ((m_mouse.pressed_node != nullptr) && !running)
+                ? Gesture::Arc : Gesture::Pan;
         }
     }
 
-    m_mouse.is_dragging_nodes = false;
-    m_mouse.drag_offsets.clear();
-
-    if (button == MOUSE_BOUTON_HANDLE_ARC && !ImGui::GetIO().KeyCtrl)
+    switch (m_mouse.gesture)
     {
-        handleArcDestination();
-    }
-}
-
-//------------------------------------------------------------------------------
-void PetriView::handleMouseWheelZoom()
-{
-    if (!ImGui::IsItemHovered())
-        return;
-
-    ImGuiIO const& io = ImGui::GetIO();
-    if (io.MouseWheel == 0.0f)
-        return;
-
-    float old_zoom = m_canvas.zoom;
-    float new_zoom = old_zoom + io.MouseWheel * 0.1f;
-    new_zoom = std::max(Canvas::ZOOM_MIN, std::min(Canvas::ZOOM_MAX, new_zoom));
-
-    if (new_zoom != old_zoom)
-    {
-        ImVec2 mouse_screen = io.MousePos - m_canvas.corners[0];
-        m_canvas.zoom = new_zoom;
-        m_canvas.scrolling.x = mouse_screen.x - m_mouse.position.x * new_zoom;
-        m_canvas.scrolling.y = mouse_screen.y - m_mouse.position.y * new_zoom;
+    case Gesture::Pan:
+        m_canvas.scrolling += io.MouseDelta;
         m_canvas.origin = m_canvas.corners[0] + m_canvas.scrolling;
+        break;
+    case Gesture::MoveNodes:
+        for (size_t i = 0; (i < m_mouse.selected_nodes.size()) && (i < m_mouse.drag_offsets.size()); ++i)
+        {
+            Node* node = m_mouse.selected_nodes[i];
+            node->x = grid.snapValue(m_mouse.position.x + m_mouse.drag_offsets[i].x);
+            node->y = grid.snapValue(m_mouse.position.y + m_mouse.drag_offsets[i].y);
+        }
+        break;
+    default:
+        break;
     }
 }
 
 //------------------------------------------------------------------------------
-void PetriView::handleKeyboardShortcuts(Net& net, Simulation& simulation)
+void PetriView::clicked(Net& net, Simulation& simulation)
 {
-    if (ImGui::GetIO().WantTextInput)
+    Node* node = m_mouse.pressed_node;
+    Arc* arc = m_mouse.pressed_arc;
+    bool const ctrl = m_mouse.pressed_ctrl;
+    ImVec2 const at(grid.snapValue(m_mouse.pressed_at.x), grid.snapValue(m_mouse.pressed_at.y));
+
+    // While simulating: a click on a transition of a Petri net fires it.
+    if (simulation.isRunning())
+    {
+        if ((m_mouse.button == ImGuiMouseButton_Left) && (node != nullptr) &&
+            (node->type == Node::Type::Transition) && (net.type() == TypeOfNet::PetriNet))
+        {
+            static_cast<Transition*>(node)->receptivity ^= true;
+        }
+        return;
+    }
+
+    if (m_mouse.button == ImGuiMouseButton_Left)
+    {
+        if (node != nullptr)
+        {
+            clearArcSelection();
+            if (ctrl && isNodeSelected(node))
+                deselectNode(node);
+            else
+                selectNode(node, ctrl);
+        }
+        else if (arc != nullptr)
+        {
+            clearSelection();
+            if (ctrl && isArcSelected(arc))
+                deselectArc(arc);
+            else
+                selectArc(arc, ctrl);
+        }
+        else if (!m_mouse.selected_nodes.empty() || !m_mouse.selected_arcs.empty())
+        {
+            // First click in the void: only forget the selection.
+            clearSelection();
+            clearArcSelection();
+        }
+        else if (net.type() == TypeOfNet::TimedEventGraph)
+        {
+            m_editor.addTransition(at.x, at.y);
+        }
+        else
+        {
+            m_editor.addPlace(at.x, at.y);
+        }
+    }
+    else if (m_mouse.button == ImGuiMouseButton_Right)
+    {
+        if (node != nullptr)
+        {
+            m_mouse.context_menu_node = node;
+            m_mouse.context_menu_arc = nullptr;
+            ImGui::OpenPopup("NodeContextMenu");
+        }
+        else if (arc != nullptr)
+        {
+            m_mouse.context_menu_node = nullptr;
+            m_mouse.context_menu_arc = arc;
+            ImGui::OpenPopup("ArcContextMenu");
+        }
+        else
+        {
+            clearSelection();
+            clearArcSelection();
+            m_editor.addTransition(at.x, at.y);
+        }
+    }
+}
+
+//------------------------------------------------------------------------------
+void PetriView::finishArc(Net& net)
+{
+    Node* from = m_mouse.pressed_node;
+    Node* to = getNode(m_mouse.position);
+    if ((from == nullptr) || (to == from))
         return;
 
-    if (ImGui::IsKeyPressed(KEY_RUN_SIMULATION) ||
-        ImGui::IsKeyPressed(KEY_RUN_SIMULATION_ALT))
+    ImVec2 const at(grid.snapValue(m_mouse.position.x), grid.snapValue(m_mouse.position.y));
+    if (net.type() == TypeOfNet::TimedEventGraph)
+    {
+        // Arcs link transitions; addArc() inserts the hidden place.
+        if (to == nullptr)
+            to = &m_editor.addTransition(at.x, at.y);
+    }
+    else if (to == nullptr)
+    {
+        // Released in the void: a node of the other kind is created there.
+        to = &m_editor.addOppositeNode(from->type, at.x, at.y);
+    }
+    // Two nodes of the same kind: addArc() inserts a node between them.
+    m_editor.addArc(*from, *to, 1.0f);
+}
+
+//------------------------------------------------------------------------------
+void PetriView::released(Net& net, Simulation& simulation)
+{
+    switch (m_mouse.gesture)
+    {
+    case Gesture::Pending:
+        clicked(net, simulation);
+        break;
+    case Gesture::RubberBand:
+        selectNodesInRect(m_mouse.pressed_at, m_mouse.position);
+        break;
+    case Gesture::MoveNodes:
+        if (m_move_action)
+        {
+            m_move_action->after(net);
+            m_editor.m_history.add(std::move(m_move_action));
+        }
+        net.modified = true;
+        break;
+    case Gesture::Arc:
+        finishArc(net);
+        break;
+    default:
+        break;
+    }
+    m_mouse.gesture = Gesture::None;
+    m_mouse.drag_offsets.clear();
+    m_move_action.reset();
+}
+
+//------------------------------------------------------------------------------
+void PetriView::handleWheel()
+{
+    ImGuiIO const& io = ImGui::GetIO();
+    if (io.MouseWheel == 0.0f && io.MouseWheelH == 0.0f)
+        return;
+
+    // Shift + wheel, or a horizontal wheel (touchpad): move the view.
+    if (io.KeyShift || io.MouseWheelH != 0.0f)
+    {
+        float const step = 40.0f;
+        m_canvas.scrolling.x += (io.KeyShift ? io.MouseWheel : io.MouseWheelH) * step;
+        if (!io.KeyShift)
+            m_canvas.scrolling.y += io.MouseWheel * step;
+        m_canvas.origin = m_canvas.corners[0] + m_canvas.scrolling;
+        return;
+    }
+
+    // Zoom around the mouse: the point under it does not move.
+    ImVec2 const mouse = io.MousePos - m_canvas.corners[0];
+    ImVec2 const at = (mouse - m_canvas.scrolling) / m_canvas.zoom;
+    m_canvas.zoom = std::clamp(m_canvas.zoom * std::pow(1.15f, io.MouseWheel),
+                               Canvas::ZOOM_MIN, Canvas::ZOOM_MAX);
+    m_canvas.scrolling = mouse - at * m_canvas.zoom;
+    m_canvas.origin = m_canvas.corners[0] + m_canvas.scrolling;
+}
+
+//------------------------------------------------------------------------------
+void PetriView::deleteSelection()
+{
+    // Removing a node or an arc moves the others in their containers:
+    // remember the keys first, and look each one up again before removal.
+    std::vector<std::pair<std::string, std::string>> arcs;
+    for (auto const* arc : m_mouse.selected_arcs)
+        arcs.emplace_back(arc->from.key, arc->to.key);
+    std::vector<std::string> nodes;
+    for (auto const* node : m_mouse.selected_nodes)
+        nodes.push_back(node->key);
+    if (arcs.empty() && nodes.empty())
+    {
+        if (m_mouse.hovered_node != nullptr)
+            nodes.push_back(m_mouse.hovered_node->key);
+        else if (m_mouse.hovered_arc != nullptr)
+            arcs.emplace_back(m_mouse.hovered_arc->from.key, m_mouse.hovered_arc->to.key);
+    }
+    clearAllSelections();
+
+    for (auto const& key : arcs)
+    {
+        Node* from = m_current_net->findNode(key.first);
+        Node* to = m_current_net->findNode(key.second);
+        Arc* arc = ((from != nullptr) && (to != nullptr)) ? m_current_net->findArc(*from, *to) : nullptr;
+        if (arc != nullptr)
+            m_editor.removeArc(*arc);
+    }
+    for (auto const& key : nodes)
+    {
+        Node* node = m_current_net->findNode(key);
+        if (node != nullptr)
+            m_editor.removeNode(*node);
+    }
+}
+
+//------------------------------------------------------------------------------
+void PetriView::nudgeSelection(Net& net, float dx, float dy)
+{
+    if (m_mouse.selected_nodes.empty())
+        return;
+    auto action = std::make_unique<NetModificationAction>([this]() -> Net& { return m_editor.net(); });
+    action->before(net);
+    for (auto* node : m_mouse.selected_nodes)
+    {
+        node->x += dx;
+        node->y += dy;
+    }
+    action->after(net);
+    m_editor.m_history.add(std::move(action));
+    net.modified = true;
+}
+
+//------------------------------------------------------------------------------
+void PetriView::handleKeyboard(Net& net, Simulation& simulation)
+{
+    ImGuiIO const& io = ImGui::GetIO();
+    if (io.WantTextInput || !ImGui::IsWindowFocused())
+        return;
+
+    if (ImGui::IsKeyPressed(KEY_RUN_SIMULATION_ALT, false) && !io.KeyCtrl)
     {
         m_editor.toogleStartAllSimulations();
         return;
     }
+    if (ImGui::IsKeyPressed(ImGuiKey_F, false) && !io.KeyCtrl)
+    {
+        centerOnNet(net);
+        return;
+    }
+    if (ImGui::IsKeyPressed(ImGuiKey_Escape, false))
+    {
+        if (m_mouse.gesture != Gesture::None)
+            m_mouse.gesture = Gesture::None;
+        else
+            clearAllSelections();
+        return;
+    }
 
-    if (!simulation.isRunning() && ImGui::GetIO().KeyCtrl)
+    // Tokens of the place under the mouse, also while simulating.
+    if ((m_mouse.hovered_node != nullptr) && (m_mouse.hovered_node->type == Node::Type::Place))
+    {
+        bool const more = ImGui::IsKeyPressed(KEY_INCREMENT_TOKENS) || ImGui::IsKeyPressed(ImGuiKey_Equal);
+        bool const less = ImGui::IsKeyPressed(KEY_DECREMENT_TOKENS) || ImGui::IsKeyPressed(ImGuiKey_Minus);
+        Place* place = static_cast<Place*>(m_mouse.hovered_node);
+        if (more) { place->increment(1u); net.modified = true; }
+        if (less) { place->decrement(1u); net.modified = true; }
+    }
+
+    if (simulation.isRunning())
+        return;
+
+    if (io.KeyCtrl)
     {
         if (ImGui::IsKeyPressed(KEY_UNDO, false))
-            m_editor.undo();
+            io.KeyShift ? m_editor.redo() : m_editor.undo();
         else if (ImGui::IsKeyPressed(KEY_REDO, false))
             m_editor.redo();
         else if (ImGui::IsKeyPressed(ImGuiKey_C, false))
             copySelection();
+        else if (ImGui::IsKeyPressed(ImGuiKey_X, false))
+        {
+            copySelection();
+            deleteSelection();
+        }
         else if (ImGui::IsKeyPressed(ImGuiKey_V, false))
             pasteClipboard();
         else if (ImGui::IsKeyPressed(ImGuiKey_A, false))
         {
             clearSelection();
-            for (auto& place : net.places())
-                m_mouse.selected_nodes.push_back(&place);
-            for (auto& trans : net.transitions())
-                m_mouse.selected_nodes.push_back(&trans);
+            selectNodesInRect(ImVec2(-1e9f, -1e9f), ImVec2(1e9f, 1e9f));
         }
-    }
-}
-
-//------------------------------------------------------------------------------
-void PetriView::handleTokenShortcuts(Net& net)
-{
-    if (!ImGui::IsItemHovered() || ImGui::GetIO().WantTextInput)
         return;
-
-    bool increment = ImGui::IsKeyPressed(KEY_INCREMENT_TOKENS) ||
-                     ImGui::IsKeyPressed(ImGuiKey_Equal);
-    bool decrement = ImGui::IsKeyPressed(KEY_DECREMENT_TOKENS) ||
-                     ImGui::IsKeyPressed(ImGuiKey_Minus);
-
-    if (!increment && !decrement)
-        return;
-
-    Node* node = m_editor.getNode(m_mouse.position);
-    if (node != nullptr && node->type == Node::Type::Place)
-    {
-        Place* place = reinterpret_cast<Place*>(node);
-        if (increment)
-            place->increment(1u);
-        else
-            place->decrement(1u);
-        net.modified = true;
     }
-}
 
-//------------------------------------------------------------------------------
-void PetriView::handleEditingShortcuts(Net& net, Simulation& simulation)
-{
-    if (!ImGui::IsItemHovered() || ImGui::GetIO().WantTextInput || simulation.isRunning())
-        return;
-
-    if (ImGui::IsKeyPressed(KEY_MOVE_PETRI_NODE, false) ||
-        ImGui::IsKeyPressed(ImGuiKey_M, false))
-    {
-        handleMoveNode();
-    }
+    if (ImGui::IsKeyPressed(KEY_DELETE_NODE) || ImGui::IsKeyPressed(ImGuiKey_Backspace))
+        deleteSelection();
     else if (ImGui::IsKeyPressed(ImGuiKey_G, false))
-    {
         grid.snap ^= true;
-    }
-    else if (ImGui::IsKeyPressed(ImGuiKey_C, false))
-    {
-        centerOnNet(net);
-    }
-    else if (ImGui::IsKeyPressed(KEY_SPRINGIFY_NET))
+    else if (ImGui::IsKeyPressed(ImGuiKey_L, false))
     {
         if (m_editor.m_force_directed.isRunning())
         {
@@ -904,62 +762,77 @@ void PetriView::handleEditingShortcuts(Net& net, Simulation& simulation)
         else
         {
             m_editor.springify();
-            m_editor.m_messages.setInfo("Auto-layout started");
+            m_editor.m_messages.setInfo("Auto-layout started (L to stop)");
         }
     }
-    else if (ImGui::IsKeyPressed(KEY_DELETE_NODE))
+    else
     {
-        bool deleted_something = false;
+        float const step = io.KeyShift ? 1.0f : grid.step * 0.5f;
+        if (ImGui::IsKeyPressed(ImGuiKey_LeftArrow)) nudgeSelection(net, -step, 0.0f);
+        if (ImGui::IsKeyPressed(ImGuiKey_RightArrow)) nudgeSelection(net, step, 0.0f);
+        if (ImGui::IsKeyPressed(ImGuiKey_UpArrow)) nudgeSelection(net, 0.0f, -step);
+        if (ImGui::IsKeyPressed(ImGuiKey_DownArrow)) nudgeSelection(net, 0.0f, step);
+    }
+}
 
-        // Removing a node or an arc moves the others in their containers:
-        // remember the keys first, and look each one up again before removal.
-        if (!m_mouse.selected_arcs.empty())
-        {
-            std::vector<std::pair<std::string, std::string>> keys;
-            for (auto const* arc : m_mouse.selected_arcs)
-                keys.emplace_back(arc->from.key, arc->to.key);
-            m_mouse.selected_arcs.clear();
-            for (auto const& key : keys)
-            {
-                Node* from = m_current_net->findNode(key.first);
-                Node* to = m_current_net->findNode(key.second);
-                Arc* arc = ((from != nullptr) && (to != nullptr))
-                    ? m_current_net->findArc(*from, *to) : nullptr;
-                if (arc != nullptr)
-                    m_editor.removeArc(*arc);
-            }
-            deleted_something = true;
-        }
+//------------------------------------------------------------------------------
+void PetriView::updateHint(Net const& net, Simulation const& simulation)
+{
+    bool const teg = (net.type() == TypeOfNet::TimedEventGraph);
+    switch (m_mouse.gesture)
+    {
+    case Gesture::MoveNodes:
+        m_hint = grid.snap ? "Moving (snapped to the grid: G to toggle)" : "Moving (G: snap to the grid)";
+        return;
+    case Gesture::RubberBand:
+        m_hint = "Selecting: release to select the nodes in the rectangle";
+        return;
+    case Gesture::Arc:
+        m_hint = teg ? "Release on a transition to link it, in the void to create one"
+                     : "Release on a node to link it, in the void to create a node of the other kind";
+        return;
+    case Gesture::Pan:
+        m_hint = "Moving the view";
+        return;
+    default:
+        break;
+    }
+    if (simulation.isRunning())
+    {
+        m_hint = (net.type() == TypeOfNet::PetriNet)
+            ? "Simulating: click a transition to fire it | +/-: tokens | R: stop"
+            : "Simulating | +/-: tokens under the mouse | R: stop";
+        return;
+    }
+    if (m_mouse.hovered_node != nullptr)
+    {
+        m_hint = "Drag: move | Right drag: draw an arc | Double click: rename | Right click: menu | Del: delete";
+        if (m_mouse.hovered_node->type == Node::Type::Place)
+            m_hint += " | +/-: tokens";
+    }
+    else if (m_mouse.hovered_arc != nullptr)
+    {
+        m_hint = "Click: select | Double click: duration | Right click: menu | Del: delete";
+    }
+    else
+    {
+        m_hint = teg ? "Click: add a transition" : "Click: add a place | Right click: add a transition";
+        m_hint += " | Drag: select | Right drag or middle drag: move the view | Wheel: zoom | F: fit";
+    }
+}
 
-        if (!m_mouse.selected_nodes.empty())
-        {
-            std::vector<std::string> keys;
-            for (auto const* node : m_mouse.selected_nodes)
-                keys.push_back(node->key);
-            m_mouse.selected_nodes.clear();
-            for (auto const& key : keys)
-            {
-                Node* node = m_current_net->findNode(key);
-                if (node != nullptr)
-                    m_editor.removeNode(*node);
-            }
-            deleted_something = true;
-        }
-
-        if (!deleted_something)
-        {
-            Arc const* arc = getArc(m_mouse.position);
-            if (arc != nullptr)
-            {
-                m_editor.removeArc(*arc);
-            }
-            else
-            {
-                Node* node = m_editor.getNode(m_mouse.position);
-                if (node != nullptr)
-                    m_editor.removeNode(*node);
-            }
-        }
+//------------------------------------------------------------------------------
+void PetriView::updateCursor() const
+{
+    switch (m_mouse.gesture)
+    {
+    case Gesture::MoveNodes: ImGui::SetMouseCursor(ImGuiMouseCursor_ResizeAll); break;
+    case Gesture::Pan: ImGui::SetMouseCursor(ImGuiMouseCursor_ResizeAll); break;
+    case Gesture::Arc: ImGui::SetMouseCursor(ImGuiMouseCursor_Hand); break;
+    default:
+        if ((m_mouse.hovered_node != nullptr) || (m_mouse.hovered_arc != nullptr))
+            ImGui::SetMouseCursor(ImGuiMouseCursor_Hand);
+        break;
     }
 }
 
@@ -968,62 +841,150 @@ void PetriView::onHandleInput(Net& net, Simulation& simulation)
 {
     m_current_net = &net;
     m_current_simulation = &simulation;
+    sanitize(net);
 
     ImGui::InvisibleButton("canvas", m_canvas.size,
                            ImGuiButtonFlags_MouseButtonLeft |
                            ImGuiButtonFlags_MouseButtonRight |
                            ImGuiButtonFlags_MouseButtonMiddle);
-
+    bool const hovered = ImGui::IsItemHovered();
     m_mouse.position = m_canvas.getMousePosition();
 
-    updateHoverState();
-    handleContextMenu();
-    handleDoubleClickRename(simulation);
-    handleMouseClicksAndDrags(net, simulation);
-    handleMouseRelease(net);
-    handleMouseWheelZoom();
-    handleKeyboardShortcuts(net, simulation);
-    handleTokenShortcuts(net);
-    handleEditingShortcuts(net, simulation);
+    // What is under the mouse (not while a gesture runs).
+    if (hovered && (m_mouse.gesture == Gesture::None))
+    {
+        m_mouse.hovered_node = getNode(m_mouse.position);
+        m_mouse.hovered_arc = (m_mouse.hovered_node == nullptr) ? getArc(m_mouse.position) : nullptr;
+    }
+    else if (!hovered && (m_mouse.gesture == Gesture::None))
+    {
+        m_mouse.hovered_node = nullptr;
+        m_mouse.hovered_arc = nullptr;
+    }
+
+    // Press, drag, release.
+    if (hovered && (m_mouse.gesture == Gesture::None))
+    {
+        for (ImGuiMouseButton button : { ImGuiMouseButton_Left, ImGuiMouseButton_Right, ImGuiMouseButton_Middle })
+        {
+            if (ImGui::IsMouseClicked(button))
+            {
+                ImGui::SetWindowFocus();
+                pressed(button, net);
+                break;
+            }
+        }
+    }
+    if (m_mouse.gesture != Gesture::None)
+    {
+        if (ImGui::IsMouseDown(m_mouse.button))
+            dragged(net);
+        else
+            released(net, simulation);
+    }
+
+    // Double click: rename a node, edit the duration of an arc.
+    if (hovered && ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left) && !simulation.isRunning())
+    {
+        if (Node* node = getNode(m_mouse.position))
+        {
+            m_mouse.editing_node = node;
+            std::strncpy(m_mouse.edit_buffer, node->caption.c_str(), sizeof(m_mouse.edit_buffer) - 1);
+            m_mouse.edit_buffer[sizeof(m_mouse.edit_buffer) - 1] = '\0';
+            m_mouse.edit_focus_requested = true;
+        }
+        else if (Arc* arc = getArc(m_mouse.position))
+        {
+            if ((arc->from.type == Node::Type::Transition) && (net.type() != TypeOfNet::GRAFCET) &&
+                (net.type() != TypeOfNet::PetriNet))
+            {
+                m_mouse.editing_arc = arc;
+                m_mouse.edit_duration = std::isnan(arc->duration) ? 0.0f : arc->duration;
+                m_mouse.edit_focus_requested = true;
+            }
+        }
+    }
+
+    if (hovered)
+        handleWheel();
+    handleKeyboard(net, simulation);
+    updateHint(net, simulation);
+    if (hovered)
+        updateCursor();
 
     if (m_editor.windowShouldClose())
-    {
         m_editor.close();
+}
+
+// ============================================================================
+// Drawing
+// ============================================================================
+
+//------------------------------------------------------------------------------
+void PetriView::drawGrid(ImDrawList* draw_list, bool const running, bool const has_error)
+{
+    Palette const& pal = palette();
+    draw_list->AddRectFilled(m_canvas.corners[0], m_canvas.corners[1], pal.canvas);
+
+    if (grid.show)
+    {
+        float step = grid.step * m_canvas.zoom;
+        int major_every = 5;
+        while (step < 12.0f) { step *= 5.0f; major_every = 5; } // keep lines apart when far
+        float const start_x = std::fmod(m_canvas.scrolling.x, step);
+        float const start_y = std::fmod(m_canvas.scrolling.y, step);
+        int index_x = int(std::floor(-m_canvas.scrolling.x / step + start_x / step));
+        int index_y = int(std::floor(-m_canvas.scrolling.y / step + start_y / step));
+        for (float x = start_x; x < m_canvas.size.x; x += step, ++index_x)
+        {
+            ImU32 const c = (index_x % major_every == 0) ? pal.grid_major : pal.grid;
+            draw_list->AddLine(ImVec2(m_canvas.corners[0].x + x, m_canvas.corners[0].y),
+                               ImVec2(m_canvas.corners[0].x + x, m_canvas.corners[1].y), c);
+        }
+        for (float y = start_y; y < m_canvas.size.y; y += step, ++index_y)
+        {
+            ImU32 const c = (index_y % major_every == 0) ? pal.grid_major : pal.grid;
+            draw_list->AddLine(ImVec2(m_canvas.corners[0].x, m_canvas.corners[0].y + y),
+                               ImVec2(m_canvas.corners[1].x, m_canvas.corners[0].y + y), c);
+        }
     }
+
+    // A colored frame says the state: green simulating, red syntax errors.
+    if (has_error)
+        draw_list->AddRect(m_canvas.corners[0], m_canvas.corners[1], pal.critical, 0.0f, 0, 2.0f);
+    else if (running)
+        draw_list->AddRect(m_canvas.corners[0], m_canvas.corners[1], pal.active, 0.0f, 0, 2.0f);
 }
 
 //------------------------------------------------------------------------------
-void PetriView::drawNetElements(Net& net, Simulation& simulation, float alpha, float zoom)
+void PetriView::drawNetElements(Net& net, Simulation& simulation, float zoom)
 {
     ImVec2 const& origin = m_canvas.origin;
+    ImDrawList* draw_list = m_canvas.draw_list;
 
-    // Draw arcs
     for (auto const& arc : net.arcs())
-    {
-        drawArc(m_canvas.draw_list, arc, net.type(), origin, alpha, zoom);
-    }
+        drawArc(draw_list, arc, net.type(), origin, 1.0f, zoom);
+    for (auto* arc : m_editor.markedArcs())
+        drawArc(draw_list, *arc, net.type(), origin, -1.0f, zoom);
 
-    // Draw places
     auto const& places = net.places();
     for (size_t i = 0; i < places.size(); ++i)
     {
-        bool isInitialStep = false;
+        bool initial = false;
         if (net.type() == TypeOfNet::GRAFCET)
         {
-            if (simulation.hasInitialMarking())
-                isInitialStep = simulation.isInitialStep(i);
-            else
-                isInitialStep = (places[i].tokens > 0);
+            initial = simulation.hasInitialMarking() ? simulation.isInitialStep(i)
+                                                     : (places[i].tokens > 0);
         }
-        drawPlace(m_canvas.draw_list, places[i], net.type(), origin,
-                  m_editor.showPlaceCaptions(), alpha, zoom, isInitialStep);
+        drawPlace(draw_list, places[i], net.type(), origin, m_editor.showPlaceCaptions(), 1.0f,
+                  zoom, initial);
 
         // GRAFCET actions on the right of their step, green while running.
         if (net.type() == TypeOfNet::GRAFCET)
         {
             struct Step { Simulation const* simulation; size_t place_id; };
             Step step { &simulation, places[i].id };
-            drawStepActions(m_canvas.draw_list, places[i], origin, zoom,
+            drawStepActions(draw_list, places[i], origin, zoom,
                 [](size_t const index, void* data) -> bool {
                     Step const& s = *static_cast<Step const*>(data);
                     return s.simulation->isRunning() &&
@@ -1031,90 +992,332 @@ void PetriView::drawNetElements(Net& net, Simulation& simulation, float alpha, f
                 }, &step);
         }
     }
-
-    // Draw transitions
     for (auto const& trans : net.transitions())
     {
-        drawTransition(m_canvas.draw_list, trans, net.type(), origin,
-                       m_editor.showTransitionCaptions(), alpha, zoom);
+        drawTransition(draw_list, trans, net.type(), origin, m_editor.showTransitionCaptions(),
+                       1.0f, zoom);
     }
-
-    // Draw animated tokens in transit
     for (auto const& token : simulation.animatedTokens())
     {
-        drawTimedToken(m_canvas.draw_list, token.tokens,
-                       origin.x + token.x * zoom, origin.y + token.y * zoom, zoom);
-    }
-
-    // Draw critical cycle arcs (highlighted)
-    for (auto* arc : m_editor.markedArcs())
-    {
-        drawArc(m_canvas.draw_list, *arc, net.type(), origin, -1.0f, zoom);
+        drawTimedToken(draw_list, token.tokens, origin.x + token.x * zoom,
+                       origin.y + token.y * zoom, zoom);
     }
 }
 
 //------------------------------------------------------------------------------
-void PetriView::drawInteractiveElements(float zoom)
+void PetriView::drawOverlays(Net& net, Simulation& simulation, float zoom)
 {
-    // Update node positions during legacy move
-    for (auto* node : m_mouse.selection)
+    Palette const& pal = palette();
+    ImVec2 const& origin = m_canvas.origin;
+    ImDrawList* draw_list = m_canvas.draw_list;
+    TypeOfNet const type = net.type();
+
+    // Selection, then hover.
+    for (auto const* arc : m_mouse.selected_arcs)
+        drawArcHighlight(draw_list, *arc, type, origin, zoom, pal.selection, std::max(2.0f, 3.5f * zoom));
+    for (auto const* node : m_mouse.selected_nodes)
+        drawNodeOutline(draw_list, *node, type, origin, zoom, pal.selection, 4.0f, 2.5f);
+    if ((m_mouse.gesture == Gesture::None) || (m_mouse.gesture == Gesture::Arc))
     {
-        node->x = m_mouse.position.x;
-        node->y = m_mouse.position.y;
+        if ((m_mouse.hovered_arc != nullptr) && !isArcSelected(m_mouse.hovered_arc))
+            drawArcHighlight(draw_list, *m_mouse.hovered_arc, type, origin, zoom, pal.hover,
+                             std::max(3.0f, 5.0f * zoom));
+        Node const* hovered = (m_mouse.gesture == Gesture::Arc) ? getNode(m_mouse.position)
+                                                                 : m_mouse.hovered_node;
+        if ((hovered != nullptr) && !isNodeSelected(hovered))
+            drawNodeOutline(draw_list, *hovered, type, origin, zoom, pal.hover, 4.0f, 3.0f);
     }
 
-    // Draw arc being created
-    if (m_mouse.handling_arc)
+    // Arc being drawn.
+    if (m_mouse.gesture == Gesture::Arc)
     {
-        drawArc(m_canvas.draw_list, m_mouse.from, m_mouse.to, &m_mouse.clicked_at,
-                m_canvas.origin, m_mouse.position, zoom);
+        drawArc(draw_list, m_mouse.pressed_node, nullptr, nullptr, origin, m_mouse.position, zoom);
+    }
+
+    // Rubber band.
+    if (m_mouse.gesture == Gesture::RubberBand)
+    {
+        ImVec2 const a = origin + m_mouse.pressed_at * zoom;
+        ImVec2 const b = origin + m_mouse.position * zoom;
+        ImVec2 const lo(std::min(a.x, b.x), std::min(a.y, b.y));
+        ImVec2 const hi(std::max(a.x, b.x), std::max(a.y, b.y));
+        draw_list->AddRectFilled(lo, hi, (pal.selection & 0x00FFFFFF) | 0x30000000);
+        draw_list->AddRect(lo, hi, pal.selection, 0.0f, 0, 1.5f);
+    }
+
+    // Tooltip of the node under the mouse, after a short rest.
+    if ((m_mouse.gesture == Gesture::None) && (m_mouse.hovered_node != nullptr) &&
+        ImGui::IsItemHovered(ImGuiHoveredFlags_DelayNormal | ImGuiHoveredFlags_NoSharedDelay))
+    {
+        if (m_mouse.hovered_node->type == Node::Type::Place)
+            showPlaceTooltip(*static_cast<Place const*>(m_mouse.hovered_node), type);
+        else
+            showTransitionTooltip(*static_cast<Transition const*>(m_mouse.hovered_node), type);
+    }
+    (void) simulation;
+}
+
+//------------------------------------------------------------------------------
+void PetriView::drawBadges(Net const& net, Simulation const& simulation)
+{
+    Palette const& pal = palette();
+    ImDrawList* draw_list = m_canvas.draw_list;
+    float const pad = 8.0f;
+
+    // Top left: type of net and state.
+    std::string label = to_str(net.type());
+    ImU32 color = pal.secondary;
+    if (simulation.isRunning())
+    {
+        label += "  -  simulating";
+        color = pal.active;
+    }
+    else if (simulation.hasReceptivityErrors())
+    {
+        label += "  -  receptivity errors";
+        color = pal.critical;
+    }
+    ImVec2 const p = m_canvas.corners[0] + ImVec2(pad, pad);
+    ImVec2 const dim = ImGui::CalcTextSize(label.c_str());
+    draw_list->AddRectFilled(p - ImVec2(4, 2), p + dim + ImVec2(4, 2), pal.label_bg, 4.0f);
+    draw_list->AddText(p, color, label.c_str());
+
+    // Bottom right: zoom.
+    char zoom[32];
+    std::snprintf(zoom, sizeof(zoom), "%d %%", int(std::round(m_canvas.zoom * 100.0f)));
+    ImVec2 const zdim = ImGui::CalcTextSize(zoom);
+    ImVec2 const zp = m_canvas.corners[1] - zdim - ImVec2(pad, pad);
+    draw_list->AddRectFilled(zp - ImVec2(4, 2), zp + zdim + ImVec2(4, 2), pal.label_bg, 4.0f);
+    draw_list->AddText(zp, pal.secondary, zoom);
+
+    // Empty net: say how to start.
+    if (net.isEmpty())
+    {
+        char const* help = (net.type() == TypeOfNet::TimedEventGraph)
+            ? "Click to add a transition, right drag from it to draw an arc"
+            : "Click to add a place, right click to add a transition, right drag from a node to draw an arc";
+        ImVec2 const hdim = ImGui::CalcTextSize(help);
+        ImVec2 const c = (m_canvas.corners[0] + m_canvas.corners[1]) * 0.5f - hdim * 0.5f;
+        draw_list->AddText(c, pal.secondary, help);
     }
 }
+
+//------------------------------------------------------------------------------
+void PetriView::drawEditWidgets(Net& net)
+{
+    auto const popup = [&](Node const& anchor) {
+        ImVec2 const at = m_canvas.origin + ImVec2(anchor.x, anchor.y) * m_canvas.zoom;
+        ImGui::SetNextWindowPos(ImVec2(at.x - 90.0f, at.y + 24.0f * m_canvas.zoom));
+        ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(6.0f, 6.0f));
+        bool const open = ImGui::Begin("##EditNode", nullptr,
+            ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove |
+            ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_AlwaysAutoResize);
+        ImGui::PopStyleVar();
+        return open;
+    };
+
+    if (m_mouse.editing_node != nullptr)
+    {
+        popup(*m_mouse.editing_node);
+        if (m_mouse.edit_focus_requested)
+        {
+            ImGui::SetKeyboardFocusHere();
+            m_mouse.edit_focus_requested = false;
+        }
+        ImGui::SetNextItemWidth(180.0f);
+        char const* label = ((net.type() == TypeOfNet::GRAFCET) &&
+                             (m_mouse.editing_node->type == Node::Type::Transition))
+            ? "##receptivity" : "##caption";
+        if (ImGui::InputTextWithHint(label, (label[2] == 'r') ? "receptivity: a . /b" : "caption",
+                                     m_mouse.edit_buffer, sizeof(m_mouse.edit_buffer),
+                                     ImGuiInputTextFlags_EnterReturnsTrue | ImGuiInputTextFlags_AutoSelectAll))
+        {
+            auto action = std::make_unique<NetModificationAction>([this]() -> Net& { return m_editor.net(); });
+            action->before(net);
+            m_mouse.editing_node->caption = m_mouse.edit_buffer;
+            action->after(net);
+            m_editor.m_history.add(std::move(action));
+            net.modified = true;
+            m_mouse.editing_node = nullptr;
+        }
+        if (m_mouse.editing_node != nullptr && (net.type() == TypeOfNet::GRAFCET) &&
+            (m_mouse.editing_node->type == Node::Type::Transition))
+        {
+            std::string const error = Receptivity::check(m_mouse.edit_buffer);
+            if (!error.empty())
+                ImGui::TextColored(ImGui::ColorConvertU32ToFloat4(palette().critical), "%s", error.c_str());
+        }
+        if (ImGui::IsKeyPressed(ImGuiKey_Escape) ||
+            (!ImGui::IsWindowFocused() && !m_mouse.edit_focus_requested))
+            m_mouse.editing_node = nullptr;
+        ImGui::End();
+    }
+    else if (m_mouse.editing_arc != nullptr)
+    {
+        popup(m_mouse.editing_arc->from);
+        if (m_mouse.edit_focus_requested)
+        {
+            ImGui::SetKeyboardFocusHere();
+            m_mouse.edit_focus_requested = false;
+        }
+        ImGui::SetNextItemWidth(120.0f);
+        if (ImGui::InputFloat("duration##arc", &m_mouse.edit_duration, 0.0f, 0.0f, "%.2f",
+                              ImGuiInputTextFlags_EnterReturnsTrue))
+        {
+            auto action = std::make_unique<NetModificationAction>([this]() -> Net& { return m_editor.net(); });
+            action->before(net);
+            m_mouse.editing_arc->duration = std::max(0.0f, m_mouse.edit_duration);
+            action->after(net);
+            m_editor.m_history.add(std::move(action));
+            net.modified = true;
+            m_mouse.editing_arc = nullptr;
+        }
+        if (m_mouse.editing_arc != nullptr &&
+            (ImGui::IsKeyPressed(ImGuiKey_Escape) || (!ImGui::IsWindowFocused() && !m_mouse.edit_focus_requested)))
+            m_mouse.editing_arc = nullptr;
+        ImGui::End();
+    }
+}
+
+//------------------------------------------------------------------------------
+void PetriView::drawContextMenus(Net& net)
+{
+    bool const running = (m_current_simulation != nullptr) && m_current_simulation->isRunning();
+
+    if (ImGui::BeginPopup("NodeContextMenu"))
+    {
+        Node* node = m_mouse.context_menu_node;
+        if (node != nullptr)
+        {
+            ImGui::TextDisabled("%s  %s", node->key.c_str(), node->caption.c_str());
+            ImGui::Separator();
+            if (ImGui::MenuItem("Rename", "double click", false, !running))
+            {
+                m_mouse.editing_node = node;
+                std::strncpy(m_mouse.edit_buffer, node->caption.c_str(), sizeof(m_mouse.edit_buffer) - 1);
+                m_mouse.edit_focus_requested = true;
+            }
+            if (ImGui::MenuItem("Select", nullptr, false, !running))
+                selectNode(node, false);
+            if (node->type == Node::Type::Place)
+            {
+                Place* place = static_cast<Place*>(node);
+                ImGui::Separator();
+                if (net.type() == TypeOfNet::GRAFCET)
+                {
+                    bool active = (place->tokens > 0u);
+                    if (ImGui::MenuItem(active ? "Deactivate step" : "Activate step"))
+                    {
+                        place->tokens = active ? 0u : 1u;
+                        net.modified = true;
+                    }
+                    if (ImGui::MenuItem("Add an action", nullptr, false, !running))
+                    {
+                        Action action;
+                        action.name = "Action" + std::to_string(place->actions.size() + 1u);
+                        place->actions.push_back(action);
+                        net.modified = true;
+                    }
+                }
+                else
+                {
+                    if (ImGui::MenuItem("Add a token", "+"))
+                    {
+                        place->increment(1u);
+                        net.modified = true;
+                    }
+                    if (ImGui::MenuItem("Remove a token", "-", false, place->tokens > 0u))
+                    {
+                        place->decrement(1u);
+                        net.modified = true;
+                    }
+                }
+            }
+            ImGui::Separator();
+            if (ImGui::MenuItem("Delete", "Del", false, !running))
+            {
+                m_editor.removeNode(*node);
+                clearAllSelections();
+            }
+        }
+        ImGui::EndPopup();
+    }
+
+    if (ImGui::BeginPopup("ArcContextMenu"))
+    {
+        Arc* arc = m_mouse.context_menu_arc;
+        if (arc != nullptr)
+        {
+            ImGui::TextDisabled("%s -> %s", arc->from.key.c_str(), arc->to.key.c_str());
+            ImGui::Separator();
+            if ((arc->from.type == Node::Type::Transition) && (net.type() != TypeOfNet::GRAFCET) &&
+                (net.type() != TypeOfNet::PetriNet) &&
+                ImGui::MenuItem("Duration...", "double click", false, !running))
+            {
+                m_mouse.editing_arc = arc;
+                m_mouse.edit_duration = std::isnan(arc->duration) ? 0.0f : arc->duration;
+                m_mouse.edit_focus_requested = true;
+            }
+            if (ImGui::MenuItem("Select", nullptr, false, !running))
+                selectArc(arc, false);
+            if (ImGui::MenuItem("Delete", "Del", false, !running))
+            {
+                m_editor.removeArc(*arc);
+                clearAllSelections();
+            }
+        }
+        ImGui::EndPopup();
+    }
+}
+
+//------------------------------------------------------------------------------
+void PetriView::drawPetriNet(Net& net, Simulation& simulation, bool interactive, bool show_hover)
+{
+    m_current_net = &net;
+    m_current_simulation = &simulation;
+    sanitize(net);
+    float const zoom = m_canvas.zoom;
+
+    m_canvas.push();
+    drawGrid(m_canvas.draw_list, simulation.isRunning(), simulation.hasReceptivityErrors());
+    drawNetElements(net, simulation, zoom);
+    if (show_hover)
+        drawOverlays(net, simulation, zoom);
+    drawBadges(net, simulation);
+    m_canvas.pop();
+
+    if (interactive || show_hover)
+    {
+        drawEditWidgets(net);
+        drawContextMenus(net);
+    }
+}
+
+// ============================================================================
+// Tooltips
+// ============================================================================
 
 //------------------------------------------------------------------------------
 void PetriView::showPlaceTooltip(Place const& place, TypeOfNet type)
 {
     ImGui::BeginTooltip();
-
     if (type == TypeOfNet::GRAFCET)
     {
-        ImGui::Text("%s: %s", place.key.c_str(), place.caption.c_str());
-        if (place.tokens > 0)
+        ImGui::Text("Step %zu", place.id);
+        if (!place.caption.empty())
         {
             ImGui::SameLine();
-            ImGui::TextColored(ImVec4(0.4f, 1.0f, 0.4f, 1.0f), "[ACTIVE]");
+            ImGui::TextDisabled("%s", place.caption.c_str());
         }
-        if (!place.actions.empty())
+        if (place.tokens > 0)
+            ImGui::TextColored(ImVec4(0.3f, 0.8f, 0.4f, 1.0f), "active");
+        for (auto const& action : place.actions)
         {
-            ImGui::Separator();
-            ImGui::Text("Actions:");
-            for (const auto& action : place.actions)
+            ImGui::BulletText("%s  %s", qualifierToStr(action.qualifier), action.name.c_str());
+            if (!action.condition.empty())
             {
-                const char* qual_str = qualifierToStr(action.qualifier);
-                ImVec4 badge_color = ImVec4(0.7f, 0.5f, 0.2f, 1.0f);
-                if (action.qualifier == Action::Qualifier::N)
-                    badge_color = ImVec4(0.4f, 0.4f, 0.8f, 1.0f);
-                else if (action.qualifier == Action::Qualifier::S)
-                    badge_color = ImVec4(0.2f, 0.7f, 0.2f, 1.0f);
-                else if (action.qualifier == Action::Qualifier::R)
-                    badge_color = ImVec4(0.8f, 0.2f, 0.2f, 1.0f);
-                else if ((action.qualifier == Action::Qualifier::P) ||
-                         (action.qualifier == Action::Qualifier::P0))
-                    badge_color = ImVec4(0.6f, 0.2f, 0.6f, 1.0f);
-
-                ImGui::TextColored(badge_color, "[%s]", qual_str);
                 ImGui::SameLine();
-                ImGui::Text("%s", action.name.c_str());
-                if (!action.script.empty())
-                {
-                    ImGui::SameLine();
-                    ImGui::TextColored(ImVec4(0.6f, 0.6f, 0.6f, 1.0f), "- %s", action.script.c_str());
-                }
-                if (action.duration > 0.0f)
-                {
-                    ImGui::SameLine();
-                    ImGui::TextColored(ImVec4(0.5f, 0.5f, 0.5f, 1.0f), "(%.1fs)", action.duration);
-                }
+                ImGui::TextDisabled("if %s", action.condition.c_str());
             }
         }
     }
@@ -1124,11 +1327,10 @@ void PetriView::showPlaceTooltip(Place const& place, TypeOfNet type)
         if (!place.caption.empty())
         {
             ImGui::SameLine();
-            ImGui::TextColored(ImVec4(0.7f, 0.7f, 0.7f, 1.0f), "(%s)", place.caption.c_str());
+            ImGui::TextDisabled("%s", place.caption.c_str());
         }
         ImGui::Text("Tokens: %zu", place.tokens);
     }
-
     ImGui::EndTooltip();
 }
 
@@ -1136,404 +1338,26 @@ void PetriView::showPlaceTooltip(Place const& place, TypeOfNet type)
 void PetriView::showTransitionTooltip(Transition const& trans, TypeOfNet type)
 {
     ImGui::BeginTooltip();
-
     ImGui::Text("%s", trans.key.c_str());
     if (!trans.caption.empty())
     {
         ImGui::SameLine();
-        ImGui::TextColored(ImVec4(0.7f, 0.7f, 0.7f, 1.0f), "(%s)", trans.caption.c_str());
+        ImGui::TextDisabled("%s", trans.caption.c_str());
     }
-
     if (type == TypeOfNet::GRAFCET)
     {
-        if (trans.receptivity)
-            ImGui::TextColored(ImVec4(0.4f, 1.0f, 0.4f, 1.0f), "Receptivity: TRUE");
-        else
-            ImGui::TextColored(ImVec4(1.0f, 0.4f, 0.4f, 1.0f), "Receptivity: FALSE");
-
+        ImGui::Text("Receptivity: %s", trans.receptivity ? "true" : "false");
+        std::string const error = Receptivity::check(trans.caption);
+        if (!error.empty())
+            ImGui::TextColored(ImVec4(1.0f, 0.4f, 0.4f, 1.0f), "%s", error.c_str());
         if (trans.delay > 0.0f)
-            ImGui::Text("Delay: %.1fs", trans.delay);
-    }
-    else if (type == TypeOfNet::TimedPetriNet || type == TypeOfNet::TimedEventGraph)
-    {
-        if (trans.isEnabled())
-            ImGui::TextColored(ImVec4(0.4f, 1.0f, 0.4f, 1.0f), "Enabled");
-        if (trans.canFire())
-            ImGui::TextColored(ImVec4(0.2f, 0.8f, 0.2f, 1.0f), "Can Fire");
+            ImGui::Text("Delay: %.2f s", double(trans.delay));
     }
     else
     {
-        if (trans.isEnabled())
-            ImGui::TextColored(ImVec4(0.4f, 1.0f, 0.4f, 1.0f), "Enabled (can fire)");
-        else
-            ImGui::TextColored(ImVec4(1.0f, 0.4f, 0.4f, 1.0f), "Not enabled");
+        ImGui::Text("%s", trans.canFire() ? "Can fire" : (trans.isEnabled() ? "Enabled" : "Not enabled"));
     }
-
     ImGui::EndTooltip();
-}
-
-//------------------------------------------------------------------------------
-void PetriView::drawHoverEffects(Net& net, float zoom)
-{
-    ImVec2 const& origin = m_canvas.origin;
-    const ImU32 hover_color = IM_COL32(200, 200, 255, 180);
-
-    // Draw hovered arc highlight
-    if (m_mouse.hovered_arc != nullptr && !isArcSelected(m_mouse.hovered_arc))
-    {
-        ImVec2 from_pos = origin + ImVec2(m_mouse.hovered_arc->from.x * zoom,
-                                          m_mouse.hovered_arc->from.y * zoom);
-        ImVec2 to_pos;
-
-        // In TimedEventGraph mode, arcs from Transition skip the implicit Place
-        if (net.type() == TypeOfNet::TimedEventGraph &&
-            m_mouse.hovered_arc->from.type == Node::Type::Transition &&
-            !m_mouse.hovered_arc->to.arcsOut.empty())
-        {
-            Node const& next = m_mouse.hovered_arc->to.arcsOut[0]->to;
-            to_pos = origin + ImVec2(next.x * zoom, next.y * zoom);
-        }
-        else
-        {
-            to_pos = origin + ImVec2(m_mouse.hovered_arc->to.x * zoom,
-                                     m_mouse.hovered_arc->to.y * zoom);
-        }
-        m_canvas.draw_list->AddLine(from_pos, to_pos, hover_color, 3.5f * zoom);
-    }
-
-    // Draw hovered node highlight and tooltip
-    if (m_mouse.hovered_node != nullptr && !isNodeSelected(m_mouse.hovered_node))
-    {
-        ImVec2 p = origin + ImVec2(m_mouse.hovered_node->x * zoom,
-                                   m_mouse.hovered_node->y * zoom);
-
-        if (m_mouse.hovered_node->type == Node::Type::Place)
-        {
-            if (net.type() == TypeOfNet::GRAFCET)
-            {
-                float w = TRANS_WIDTH * zoom / 2.0f + 2.0f * zoom;
-                m_canvas.draw_list->AddRect(ImVec2(p.x - w, p.y - w),
-                                            ImVec2(p.x + w, p.y + w),
-                                            hover_color, 0.0f, ImDrawFlags_None, 2.0f * zoom);
-            }
-            else
-            {
-                float radius = PLACE_RADIUS * zoom + 2.0f * zoom;
-                m_canvas.draw_list->AddCircle(p, radius, hover_color, 64, 2.0f * zoom);
-            }
-
-            Place const* place = reinterpret_cast<Place const*>(m_mouse.hovered_node);
-            showPlaceTooltip(*place, net.type());
-        }
-        else
-        {
-            float w = TRANS_WIDTH * zoom / 2.0f + 2.0f * zoom;
-            float h = TRANS_HEIGHT * zoom / 2.0f + 2.0f * zoom;
-            m_canvas.draw_list->AddRect(ImVec2(p.x - w, p.y - h),
-                                        ImVec2(p.x + w, p.y + h),
-                                        hover_color, 0.0f, ImDrawFlags_None, 2.0f * zoom);
-
-            Transition const* trans = reinterpret_cast<Transition const*>(m_mouse.hovered_node);
-            showTransitionTooltip(*trans, net.type());
-        }
-    }
-}
-
-//------------------------------------------------------------------------------
-void PetriView::drawSelectionHighlights(Net& net, float zoom)
-{
-    ImVec2 const& origin = m_canvas.origin;
-    const ImU32 selection_color = IM_COL32(50, 150, 255, 255);
-
-    // Draw selected arcs
-    const float arc_thickness = 4.0f * zoom;
-    for (auto const* arc : m_mouse.selected_arcs)
-    {
-        ImVec2 from_pos = origin + ImVec2(arc->from.x * zoom, arc->from.y * zoom);
-        ImVec2 to_pos = origin + ImVec2(arc->to.x * zoom, arc->to.y * zoom);
-        m_canvas.draw_list->AddLine(from_pos, to_pos, selection_color, arc_thickness);
-    }
-
-    // Draw selected nodes
-    const float node_thickness = 3.0f * zoom;
-    for (auto const* node : m_mouse.selected_nodes)
-    {
-        ImVec2 p = origin + ImVec2(node->x * zoom, node->y * zoom);
-
-        if (node->type == Node::Type::Place)
-        {
-            if (net.type() == TypeOfNet::GRAFCET)
-            {
-                float w = TRANS_WIDTH * zoom / 2.0f + 4.0f * zoom;
-                m_canvas.draw_list->AddRect(ImVec2(p.x - w, p.y - w),
-                                            ImVec2(p.x + w, p.y + w),
-                                            selection_color, 0.0f, ImDrawFlags_None, node_thickness);
-            }
-            else
-            {
-                float radius = PLACE_RADIUS * zoom + 4.0f * zoom;
-                m_canvas.draw_list->AddCircle(p, radius, selection_color, 64, node_thickness);
-            }
-        }
-        else
-        {
-            float w = TRANS_WIDTH * zoom / 2.0f + 4.0f * zoom;
-            float h = TRANS_HEIGHT * zoom / 2.0f + 4.0f * zoom;
-            m_canvas.draw_list->AddRect(ImVec2(p.x - w, p.y - h),
-                                        ImVec2(p.x + w, p.y + h),
-                                        selection_color, 0.0f, ImDrawFlags_None, node_thickness);
-        }
-    }
-
-    drawRubberBand(m_canvas.draw_list);
-}
-
-//------------------------------------------------------------------------------
-void PetriView::drawPetriNet(Net& net, Simulation& simulation, bool interactive,
-                             bool show_hover)
-{
-    m_current_net = &net;
-    m_current_simulation = &simulation;
-
-    const float alpha = 1.0f;
-    const float zoom = m_canvas.zoom;
-
-    m_canvas.push();
-
-    drawGrid(m_canvas.draw_list, simulation.isRunning(), simulation.hasReceptivityErrors());
-    drawNetElements(net, simulation, alpha, zoom);
-
-    if (interactive)
-    {
-        drawInteractiveElements(zoom);
-    }
-
-    if (show_hover)
-    {
-        drawHoverEffects(net, zoom);
-        drawSelectionHighlights(net, zoom);
-    }
-
-    m_canvas.pop();
-
-    // Draw node name edit widget
-    if (interactive && m_mouse.editing_node != nullptr)
-    {
-        ImVec2 node_screen_pos = m_canvas.origin +
-            ImVec2(m_mouse.editing_node->x * m_canvas.zoom, m_mouse.editing_node->y * m_canvas.zoom);
-
-        ImGui::SetNextWindowPos(ImVec2(node_screen_pos.x - 75.0f, node_screen_pos.y + 35.0f));
-        ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(8.0f, 8.0f));
-        ImGui::Begin("##EditNodeName", nullptr,
-            ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize |
-            ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoSavedSettings |
-            ImGuiWindowFlags_AlwaysAutoResize);
-
-        if (m_mouse.edit_focus_requested)
-        {
-            ImGui::SetKeyboardFocusHere();
-            m_mouse.edit_focus_requested = false;
-        }
-
-        ImGui::SetNextItemWidth(150.0f);
-        ImGuiInputTextFlags flags = ImGuiInputTextFlags_EnterReturnsTrue | ImGuiInputTextFlags_AutoSelectAll;
-        if (ImGui::InputText("##name", m_mouse.edit_buffer, sizeof(m_mouse.edit_buffer), flags))
-        {
-            m_mouse.editing_node->caption = m_mouse.edit_buffer;
-            m_current_net->modified = true;
-            m_mouse.editing_node = nullptr;
-        }
-
-        if (ImGui::IsKeyPressed(ImGuiKey_Escape))
-        {
-            m_mouse.editing_node = nullptr;
-        }
-
-        if (!ImGui::IsWindowFocused() && !m_mouse.edit_focus_requested)
-        {
-            m_mouse.editing_node = nullptr;
-        }
-
-        ImGui::End();
-        ImGui::PopStyleVar();
-    }
-
-    // Node context menu
-    if (ImGui::BeginPopup("NodeContextMenu"))
-    {
-        if (m_mouse.context_menu_node != nullptr)
-        {
-            bool sim_running = m_current_simulation && m_current_simulation->isRunning();
-            ImGui::Text("%s", m_mouse.context_menu_node->key.c_str());
-            ImGui::Separator();
-
-            if (ImGui::MenuItem("Rename", nullptr, false, !sim_running))
-            {
-                m_mouse.editing_node = m_mouse.context_menu_node;
-                strncpy(m_mouse.edit_buffer, m_mouse.context_menu_node->caption.c_str(), sizeof(m_mouse.edit_buffer) - 1);
-                m_mouse.edit_buffer[sizeof(m_mouse.edit_buffer) - 1] = '\0';
-                m_mouse.edit_focus_requested = true;
-            }
-            if (ImGui::MenuItem("Delete", nullptr, false, !sim_running))
-            {
-                m_editor.removeNode(*m_mouse.context_menu_node);
-                m_mouse.context_menu_node = nullptr;
-            }
-            if (ImGui::MenuItem("Select", nullptr, false, !sim_running))
-            {
-                selectNode(m_mouse.context_menu_node, false);
-            }
-            if (m_mouse.context_menu_node != nullptr && m_mouse.context_menu_node->type == Node::Type::Place)
-            {
-                ImGui::Separator();
-                if (ImGui::MenuItem("Add Token"))
-                {
-                    reinterpret_cast<Place*>(m_mouse.context_menu_node)->increment(1u);
-                    m_current_net->modified = true;
-                }
-                if (ImGui::MenuItem("Remove Token"))
-                {
-                    reinterpret_cast<Place*>(m_mouse.context_menu_node)->decrement(1u);
-                    m_current_net->modified = true;
-                }
-
-                // GRAFCET specific menu items
-                if (m_current_net->type() == TypeOfNet::GRAFCET)
-                {
-                    ImGui::Separator();
-                    if (ImGui::MenuItem("Edit Actions..."))
-                    {
-                        Place* place = reinterpret_cast<Place*>(m_mouse.context_menu_node);
-                        if (place->actions.empty())
-                        {
-                            Action new_action;
-                            new_action.name = "Action1";
-                            place->actions.push_back(new_action);
-                            m_current_net->modified = true;
-                        }
-                    }
-
-                    ImGui::Separator();
-                    Place* place = reinterpret_cast<Place*>(m_mouse.context_menu_node);
-                    bool is_active = (place->tokens > 0);
-
-                    if (ImGui::MenuItem("Force Active", nullptr, false, !is_active))
-                    {
-                        place->tokens = 1;
-                        m_current_net->modified = true;
-                    }
-                    if (ImGui::MenuItem("Force Inactive", nullptr, false, is_active))
-                    {
-                        place->tokens = 0;
-                        m_current_net->modified = true;
-                    }
-                    if (ImGui::MenuItem("Set Tokens..."))
-                    {
-                        place->tokens = is_active ? 0 : 1;
-                        m_current_net->modified = true;
-                    }
-                }
-            }
-        }
-        ImGui::EndPopup();
-    }
-
-    // Arc context menu
-    if (ImGui::BeginPopup("ArcContextMenu"))
-    {
-        if (m_mouse.context_menu_arc != nullptr)
-        {
-            bool sim_running = m_current_simulation && m_current_simulation->isRunning();
-            ImGui::Text("Arc: %s -> %s", m_mouse.context_menu_arc->from.key.c_str(),
-                        m_mouse.context_menu_arc->to.key.c_str());
-            ImGui::Separator();
-
-            if (ImGui::MenuItem("Delete", nullptr, false, !sim_running))
-            {
-                m_editor.removeArc(*m_mouse.context_menu_arc);
-                m_mouse.context_menu_arc = nullptr;
-            }
-            if (ImGui::MenuItem("Select", nullptr, false, !sim_running))
-            {
-                selectArc(m_mouse.context_menu_arc, false);
-            }
-        }
-        ImGui::EndPopup();
-    }
-}
-
-//------------------------------------------------------------------------------
-void PetriView::drawRubberBand(ImDrawList* draw_list)
-{
-    if (!m_mouse.is_rubber_band)
-        return;
-
-    ImVec2 const& origin = m_canvas.origin;
-    const float zoom = m_canvas.zoom;
-
-    ImVec2 p1 = origin + ImVec2(m_mouse.rubber_band_start.x * zoom, m_mouse.rubber_band_start.y * zoom);
-    ImVec2 p2 = origin + ImVec2(m_mouse.position.x * zoom, m_mouse.position.y * zoom);
-
-    const ImU32 fill_color = IM_COL32(50, 150, 255, 50);
-    const ImU32 border_color = IM_COL32(50, 150, 255, 200);
-
-    draw_list->AddRectFilled(p1, p2, fill_color);
-    draw_list->AddRect(p1, p2, border_color, 0.0f, ImDrawFlags_None, 1.5f);
-}
-
-//------------------------------------------------------------------------------
-void PetriView::drawGrid(ImDrawList* draw_list, bool const running, bool const has_error)
-{
-    ImU32 border_color;
-    ImU32 line_color;
-
-    if (has_error)
-    {
-        // Red for errors (e.g., GRAFCET receptivity parsing errors)
-        border_color = IM_COL32(255, 80, 80, 255);
-        line_color = IM_COL32(255, 80, 80, 40);
-    }
-    else if (running)
-    {
-        // Green when simulation is running
-        border_color = IM_COL32(0, 255, 0, 255);
-        line_color = IM_COL32(0, 255, 0, 40);
-    }
-    else
-    {
-        // Default white/gray
-        border_color = IM_COL32(255, 255, 255, 255);
-        line_color = IM_COL32(200, 200, 200, 40);
-    }
-
-    // Draw background
-    draw_list->ChannelsSetCurrent(0);
-    draw_list->AddRectFilled(m_canvas.corners[0], m_canvas.corners[1],
-        themePetriViewColor());
-    draw_list->AddRect(m_canvas.corners[0], m_canvas.corners[1], border_color);
-
-    if (!grid.show)
-        return;
-
-    // Draw grid lines
-    const float scaled_step = grid.step * m_canvas.zoom;
-    for (float x = fmodf(m_canvas.scrolling.x, scaled_step);
-         x < m_canvas.size.x; x += scaled_step)
-    {
-        draw_list->AddLine(
-            ImVec2(m_canvas.corners[0].x + x, m_canvas.corners[0].y),
-            ImVec2(m_canvas.corners[0].x + x, m_canvas.corners[1].y),
-            line_color);
-    }
-
-    for (float y = fmodf(m_canvas.scrolling.y, scaled_step);
-         y < m_canvas.size.y; y += scaled_step)
-    {
-        draw_list->AddLine(
-            ImVec2(m_canvas.corners[0].x, m_canvas.corners[0].y + y),
-            ImVec2(m_canvas.corners[1].x, m_canvas.corners[0].y + y),
-            line_color);
-    }
 }
 
 } // namespace tpne

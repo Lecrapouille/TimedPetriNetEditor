@@ -21,7 +21,7 @@ static void drawPlacesPanel(Net& net, Simulation& simulation, bool& modified,
     const auto readonly = simulation.isRunning() ?
         ImGuiInputTextFlags_ReadOnly : ImGuiInputTextFlags_None;
 
-    ImGui::Begin(net.type() == TypeOfNet::GRAFCET ? "Steps" : "Places");
+    ImGui::Begin(net.type() == TypeOfNet::GRAFCET ? "Steps###Places" : "Places###Places");
 
     // Caption toggle option
     ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(0, 0));
