@@ -34,6 +34,9 @@
 #include "imgui/imgui_internal.h"
 
 #include <algorithm>
+#include <cmath>
+#include <cstdlib>
+#include <filesystem>
 #include <map>
 #include <fstream>
 
@@ -65,11 +68,15 @@ Editor::Editor(size_t const width, size_t const height,
     // Create initial empty document
     createDocument();
 
-    // Set imgui.ini loading/saving location
+    // Layout of the windows and theme: in the folder of the settings of the
+    // user, not in the data folder of the application (which may be read only
+    // and is shared). A first start builds the default layout.
     ImGuiIO &io = ImGui::GetIO();
-    g_ini_filename = m_path.expand("imgui.ini").c_str();
-    g_theme_filename = m_path.expand("theme.ini").c_str();
+    std::filesystem::path const settings = settingsFolder();
+    g_ini_filename = (settings / "layout.ini").string();
+    g_theme_filename = (settings / "theme.ini").string();
     io.IniFilename = g_ini_filename.c_str();
+    m_states.reset_layout = !std::filesystem::exists(g_ini_filename);
 
     // Setup fonts. The text font has no mathematical symbols: merge the
     // ones of math.ttf (a subset of DejaVu Sans: ⨁ ⊗ ε ↑ ↓ ≤ ≥ ...) else they
@@ -101,7 +108,7 @@ Editor::~Editor()
 //------------------------------------------------------------------------------
 void Editor::loadTheme()
 {
-    std::string theme_path = m_path.expand("theme.ini");
+    std::string const& theme_path = g_theme_filename;
     std::ifstream file(theme_path);
     if (file.is_open())
     {
@@ -119,7 +126,7 @@ void Editor::loadTheme()
 //------------------------------------------------------------------------------
 void Editor::saveTheme()
 {
-    std::string theme_path = m_path.expand("theme.ini");
+    std::string const& theme_path = g_theme_filename;
     std::ofstream file(theme_path);
     if (file.is_open())
     {
@@ -142,6 +149,106 @@ void Editor::applyTheme()
         ImGui::StyleColorsClassic();
         break;
     }
+
+    // Softer shapes and more room than the Dear ImGui defaults.
+    ImGuiStyle& style = ImGui::GetStyle();
+    style.WindowRounding = 4.0f;
+    style.ChildRounding = 4.0f;
+    style.FrameRounding = 3.0f;
+    style.PopupRounding = 4.0f;
+    style.GrabRounding = 3.0f;
+    style.TabRounding = 4.0f;
+    style.ScrollbarRounding = 6.0f;
+    style.ScrollbarSize = 12.0f;
+    style.FramePadding = ImVec2(6.0f, 4.0f);
+    style.ItemSpacing = ImVec2(8.0f, 5.0f);
+    style.WindowPadding = ImVec2(8.0f, 8.0f);
+    style.WindowBorderSize = 1.0f;
+    style.FrameBorderSize = 0.0f;
+    style.TabBorderSize = 0.0f;
+    style.SeparatorTextBorderSize = 1.0f;
+}
+
+//------------------------------------------------------------------------------
+std::filesystem::path Editor::settingsFolder()
+{
+    std::filesystem::path folder;
+#if defined(_WIN32)
+    if (char const* appdata = std::getenv("APPDATA"))
+        folder = std::filesystem::path(appdata) / "TimedPetriNetEditor";
+#elif defined(__APPLE__)
+    if (char const* home = std::getenv("HOME"))
+        folder = std::filesystem::path(home) / "Library" / "Application Support" / "TimedPetriNetEditor";
+#else
+    if (char const* xdg = std::getenv("XDG_CONFIG_HOME"); (xdg != nullptr) && (*xdg != '\0'))
+        folder = std::filesystem::path(xdg) / "TimedPetriNetEditor";
+    else if (char const* home = std::getenv("HOME"))
+        folder = std::filesystem::path(home) / ".config" / "TimedPetriNetEditor";
+#endif
+    if (folder.empty())
+        folder = std::filesystem::temp_directory_path() / "TimedPetriNetEditor";
+    std::error_code error;
+    std::filesystem::create_directories(folder, error);
+    return folder;
+}
+
+//------------------------------------------------------------------------------
+void Editor::setupDefaultLayout(unsigned int const id)
+{
+    // Nets in the middle, their inspector on the right, the GRAFCET inputs
+    // and the analysis under it, the messages at the bottom.
+    ImGuiViewport const* viewport = ImGui::GetMainViewport();
+    ImGui::DockBuilderRemoveNode(id);
+    ImGui::DockBuilderAddNode(id, ImGuiDockNodeFlags_DockSpace);
+    ImGui::DockBuilderSetNodeSize(id, viewport->WorkSize);
+    ImGuiID center = id;
+    ImGuiID right = ImGui::DockBuilderSplitNode(center, ImGuiDir_Right, 0.28f, nullptr, &center);
+    ImGuiID bottom = ImGui::DockBuilderSplitNode(center, ImGuiDir_Down, 0.18f, nullptr, &center);
+    ImGuiID right_bottom = ImGui::DockBuilderSplitNode(right, ImGuiDir_Down, 0.45f, nullptr, &right);
+    for (char const* name : { "Places###Places", "Transitions", "Arcs", "Actions" })
+        ImGui::DockBuilderDockWindow(name, right);
+    for (char const* name : { "Inputs", "Outputs", "Analysis" })
+        ImGui::DockBuilderDockWindow(name, right_bottom);
+    for (char const* name : { "Console", "Message" })
+        ImGui::DockBuilderDockWindow(name, bottom);
+    for (int i = 0; i < 16; ++i)
+        ImGui::DockBuilderDockWindow(("###Net" + std::to_string(i)).c_str(), center);
+    ImGui::DockBuilderFinish(id);
+}
+
+//------------------------------------------------------------------------------
+void Editor::statusBar()
+{
+    ImGuiWindowFlags const flags = ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoSavedSettings |
+                                   ImGuiWindowFlags_MenuBar;
+    float const height = ImGui::GetFrameHeight();
+    if (ImGui::BeginViewportSideBar("##StatusBar", ImGui::GetMainViewport(), ImGuiDir_Down, height, flags))
+    {
+        if (ImGui::BeginMenuBar())
+        {
+            Net const& current = net();
+            // Left: what the mouse would do. Right: counts, position, zoom.
+            ImGui::TextUnformatted(m_view.hint().c_str());
+            char right[256];
+            size_t arcs = current.arcs().size();
+            if (current.type() == TypeOfNet::TimedEventGraph)
+                arcs /= 2u;
+            ImVec2 const mouse = m_view.mouse();
+            bool const inside = std::isfinite(mouse.x) && std::isfinite(mouse.y);
+            std::snprintf(right, sizeof(right), "%s%zu P   %zu T   %zu arcs   |   x %.0f  y %.0f   |   %d %%",
+                          (m_view.selectionSize() > 0u)
+                              ? (std::to_string(m_view.selectionSize()) + " selected   |   ").c_str() : "",
+                          (current.type() == TypeOfNet::TimedEventGraph) ? size_t(0) : current.places().size(),
+                          current.transitions().size(), arcs, inside ? double(mouse.x) : 0.0,
+                          inside ? double(mouse.y) : 0.0, int(std::round(m_view.zoom() * 100.0f)));
+            float const width = ImGui::CalcTextSize(right).x;
+            ImGui::SameLine(std::max(ImGui::GetCursorPosX() + 20.0f,
+                                     ImGui::GetWindowWidth() - width - 12.0f));
+            ImGui::TextDisabled("%s", right);
+            ImGui::EndMenuBar();
+        }
+    }
+    ImGui::End();
 }
 
 //------------------------------------------------------------------------------
@@ -329,7 +436,7 @@ void Editor::run(Net const& net_to_load, bool show_critical_cycle)
 
     if (show_critical_cycle)
     {
-        m_states.do_find_critical_circuit = true;
+        openAnalysis(0);
         CriticalCycleResult const cc = findCriticalCycle(this->net());
         if (cc.success)
             m_marked_arcs = cc.arcs;
@@ -353,6 +460,9 @@ void Editor::run(std::string const& filepath)
 //------------------------------------------------------------------------------
 void Editor::onUpdate(float const dt)
 {
+    if (m_busy_frames > 0)
+        --m_busy_frames;
+
     auto& entry = activeDocument().activeNet();
     if (entry.net.modified)
     {
@@ -390,6 +500,15 @@ void Editor::onUpdate(float const dt)
 //------------------------------------------------------------------------------
 bool Editor::isAnimating() const
 {
+    // Docking and centering need a few frames to settle after a start, a
+    // load or a new layout: draw them before sleeping.
+    if (m_busy_frames > 0)
+        return true;
+    for (auto const& entry : activeDocument().nets())
+    {
+        if (entry->view_state.center_request > 0)
+            return true;
+    }
     return activeDocument().isAnySimulationRunning() ||
            m_force_directed.isRunning() ||
            (m_remote && m_remote->isRunning()) ||
@@ -399,14 +518,38 @@ bool Editor::isAnimating() const
 //------------------------------------------------------------------------------
 void Editor::onDraw()
 {
+    // The status bar first: the dock space takes the space left.
+    statusBar();
     ImGuiID dockspace_id = ImGui::DockSpaceOverViewport();
+    // A document with another number of nets: rebuild the layout (the nets
+    // side by side), else empty panes of the previous document remain.
+    if (activeDocument().netCount() != m_layout_nets)
+    {
+        m_layout_nets = activeDocument().netCount();
+        m_states.reset_layout = true;
+        m_states.request_vertical_split = (m_layout_nets > 1u);
+    }
+    bool layout_built = false;
+    if (m_states.reset_layout)
+    {
+        for (auto const& entry : activeDocument().nets())
+            entry->view_state.center_request = Document::ViewState::CENTER_FRAMES;
+        setupDefaultLayout(dockspace_id);
+        m_states.reset_layout = false;
+        m_busy_frames = BUSY_FRAMES;
+        layout_built = true;
+    }
 
-    if (m_states.request_vertical_split && activeDocument().netCount() > 1)
+    // Split the nets side by side once the central node has its size (not in
+    // the frame of a new layout: the sizes are not computed yet).
+    ImGuiDockNode const* central = ImGui::DockBuilderGetCentralNode(dockspace_id);
+    bool const sized = !layout_built && (central != nullptr) && (central->Size.x > 200.0f);
+    if (m_states.request_vertical_split && activeDocument().netCount() > 1 && sized)
     {
         auto& doc = activeDocument();
         size_t count = doc.netCount();
 
-        ImGuiDockNode const* central_node = ImGui::DockBuilderGetCentralNode(dockspace_id);
+        ImGuiDockNode const* central_node = central;
         ImGuiID target_id;
 
         if (central_node)
@@ -444,6 +587,10 @@ void Editor::onDraw()
 
         ImGui::DockBuilderFinish(dockspace_id);
         m_states.request_vertical_split = false;
+        // The windows changed size: fit each net again.
+        for (auto const& entry : doc.nets())
+            entry->view_state.center_request = Document::ViewState::CENTER_FRAMES;
+        m_busy_frames = BUSY_FRAMES;
     }
 
     menu();
@@ -783,6 +930,7 @@ void Editor::loadDocumentFromFile(std::string const& filepath)
         for (auto const& entry : doc.nets())
         {
             entry->view_state.center_request = Document::ViewState::CENTER_FRAMES;
+        m_busy_frames = BUSY_FRAMES;
 
             // Validate GRAFCET receptivities after loading
             if (entry->net.type() == TypeOfNet::GRAFCET)
@@ -827,6 +975,7 @@ void Editor::loadDocumentFromFile(std::string const& filepath)
 
     // Center view on the loaded net
     entry.view_state.center_request = Document::ViewState::CENTER_FRAMES;
+    m_busy_frames = BUSY_FRAMES;
 
     m_messages.setInfo("Loaded '" + filepath + "'");
 }
@@ -1173,7 +1322,8 @@ void Editor::undo()
     }
     else
     {
-        m_messages.setInfo("Undo!");
+        m_messages.setInfo("Undo");
+        m_view.clearAllSelections();
         net().modified = true;
     }
 }
@@ -1190,7 +1340,8 @@ void Editor::redo()
     }
     else
     {
-        m_messages.setInfo("Redo!");
+        m_messages.setInfo("Redo");
+        m_view.clearAllSelections();
         net().modified = true;
     }
 }

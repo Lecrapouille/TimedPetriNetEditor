@@ -51,7 +51,7 @@ public:
     //! \brief Constructor.
     //! \param[in] max_levels Maximum number of undo levels to keep.
     //--------------------------------------------------------------------------
-    explicit History(size_t max_levels = 10u)
+    explicit History(size_t max_levels = 100u)
         : m_max_levels(max_levels)
     {}
 

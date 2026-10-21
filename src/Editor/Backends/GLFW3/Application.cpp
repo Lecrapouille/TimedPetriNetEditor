@@ -72,7 +72,15 @@ Application::Application(size_t const width, size_t const height, std::string co
 
     glfwSetWindowSize(m_window, width, height);
     glfwMakeContextCurrent(m_window);
-    glfwSwapInterval(1);
+    // The main loop paces the frames itself (Application::run). On Wayland a
+    // swap with vsync waits for the compositor, which does not answer while
+    // the window is hidden or being mapped: the application would freeze.
+    int interval = 1;
+#if (GLFW_VERSION_MAJOR > 3) || ((GLFW_VERSION_MAJOR == 3) && (GLFW_VERSION_MINOR >= 4))
+    if (glfwGetPlatform() == GLFW_PLATFORM_WAYLAND)
+        interval = 0;
+#endif
+    glfwSwapInterval(interval);
 
     // Add window based callbacks to the underlying app
     //glfwSetMouseButtonCallback(m_window, &Derived::MouseButtonCallback);

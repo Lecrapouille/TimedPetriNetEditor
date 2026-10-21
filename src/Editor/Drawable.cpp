@@ -4,10 +4,10 @@
 //
 // This file is part of TimedPetriNetEditor.
 //
-// TimedPetriNetEditor is free software: you can redistribute it and/or modify it
-// under the terms of the GNU General Public License as published by
-// the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version.
+// TimedPetriNetEditor is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by the Free
+// Software Foundation, either version 3 of the License, or (at your option) any
+// later version.
 //
 // This program is distributed in the hope that it will be useful, but
 // WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -24,439 +24,762 @@
 #endif
 #include "Editor/Drawable.hpp"
 
-
 #include <algorithm>
 #include <cfloat>
-#include <iomanip> // std::setprecision
-#include <sstream>
+#include <cmath>
+#include <cstdio>
+#include <string>
 
 namespace tpne {
 
-namespace {
-constexpr float kPi = 3.14159265358979323846f;
+// ============================================================================
+// Small geometry and text helpers
+// ============================================================================
 
-//------------------------------------------------------------------------------
-static ImVec2 lerpPoint(ImVec2 const& a, ImVec2 const& b, float const t)
+//! \brief Length of a vector.
+static float length(ImVec2 const& v)
 {
-    return ImVec2(a.x + (b.x - a.x) * t, a.y + (b.y - a.y) * t);
+    return std::sqrt(v.x * v.x + v.y * v.y);
+}
+
+//! \brief Unit vector, or (0, 1) for a null vector.
+static ImVec2 unit(ImVec2 const& v)
+{
+    float const l = length(v);
+    return (l < 1e-4f) ? ImVec2(0.0f, 1.0f) : ImVec2(v.x / l, v.y / l);
+}
+
+//! \brief Left normal of a direction.
+static ImVec2 normal(ImVec2 const& v)
+{
+    ImVec2 const u = unit(v);
+    return ImVec2(-u.y, u.x);
+}
+
+//! \brief Screen position of a net point.
+static ImVec2 screen(ImVec2 const& origin, float zoom, ImVec2 const& p)
+{
+    return ImVec2(origin.x + p.x * zoom, origin.y + p.y * zoom);
+}
+
+//! \brief Line thickness in pixels, never thinner than one pixel.
+static float stroke(float width, float zoom)
+{
+    return std::max(1.0f, width * zoom);
 }
 
 //------------------------------------------------------------------------------
-//! \brief Unit normal pointing to the left of the arc (screen coordinates).
-//------------------------------------------------------------------------------
-static ImVec2 arcNormal(ImVec2 const& from, ImVec2 const& to)
+float fontSizeAt(float zoom)
 {
-    float const dx = to.x - from.x;
-    float const dy = to.y - from.y;
-    float const len = std::sqrt(dx * dx + dy * dy);
-    if (len < 0.001f)
-        return ImVec2(0.0f, -1.0f);
-    return ImVec2(-dy / len, dx / len);
+    // Whole pixels: Dear ImGui bakes the glyphs of each font size once, a
+    // continuous zoom would bake hundreds of sizes.
+    float const size = std::round(ImGui::GetFontSize() * std::min(zoom, 1.25f));
+    return (size < 6.0f) ? 0.0f : size;
 }
 
-//------------------------------------------------------------------------------
-static void drawCenteredText(ImDrawList* draw_list, ImVec2 const& center,
-                             ImU32 const color, std::string const& text)
+//! \brief Text with its top left corner at p; nothing when too small.
+static void text(ImDrawList* draw_list, ImVec2 const& p, ImU32 color, char const* str,
+                 float size)
 {
-    ImVec2 const dim = ImGui::CalcTextSize(text.c_str());
-    draw_list->AddText(ImVec2(center.x - dim.x * 0.5f, center.y - dim.y * 0.5f),
-                       color, text.c_str());
+    if (size > 0.0f)
+        draw_list->AddText(ImGui::GetFont(), size, p, color, str);
 }
 
-//------------------------------------------------------------------------------
-//! \brief Token marker near arc start; duration label centered on the arc.
-//------------------------------------------------------------------------------
-static void drawTegArcLabels(ImDrawList* draw_list, ImVec2 const& from,
-                             ImVec2 const& to, size_t const tokens,
-                             float const duration, float const zoom)
+//! \brief Size of a text at the given font size.
+static ImVec2 textSize(char const* str, float size)
 {
-    ImVec2 const normal = arcNormal(from, to);
-    float const offset = 11.0f * zoom;
+    if (size <= 0.0f)
+        return ImVec2(0.0f, 0.0f);
+    return ImGui::GetFont()->CalcTextSizeA(size, FLT_MAX, 0.0f, str);
+}
 
-    if (tokens > 0u)
+//! \brief Text centered on c.
+static void textCentered(ImDrawList* draw_list, ImVec2 const& c, ImU32 color,
+                         char const* str, float size)
+{
+    ImVec2 const dim = textSize(str, size);
+    text(draw_list, ImVec2(c.x - dim.x * 0.5f, c.y - dim.y * 0.5f), color, str, size);
+}
+
+//! \brief Label in a rounded box, centered on c, so that it stays readable
+//! over arcs.
+static void pill(ImDrawList* draw_list, ImVec2 const& c, ImU32 color, char const* str,
+                 float size)
+{
+    if (size <= 0.0f)
+        return;
+    ImVec2 const dim = textSize(str, size);
+    ImVec2 const pad(3.0f, 1.0f);
+    ImVec2 const a(c.x - dim.x * 0.5f - pad.x, c.y - dim.y * 0.5f - pad.y);
+    ImVec2 const b(c.x + dim.x * 0.5f + pad.x, c.y + dim.y * 0.5f + pad.y);
+    draw_list->AddRectFilled(a, b, palette().label_bg, 3.0f);
+    text(draw_list, ImVec2(a.x + pad.x, a.y + pad.y), color, str, size);
+}
+
+//! \brief Caption under a node: centered on x, top at y, on the color of the
+//! canvas so that the arcs passing under it do not hide it.
+static void caption(ImDrawList* draw_list, float x, float y, ImU32 color, char const* str,
+                    float size)
+{
+    if ((size <= 0.0f) || (str[0] == '\0'))
+        return;
+    ImVec2 const dim = textSize(str, size);
+    ImVec2 const a(x - dim.x * 0.5f - 2.0f, y);
+    draw_list->AddRectFilled(a, a + dim + ImVec2(4.0f, 0.0f), palette().label_bg, 2.0f);
+    text(draw_list, ImVec2(x - dim.x * 0.5f, y), color, str, size);
+}
+
+//! \brief Number with at most 2 decimals and no useless zeros ("2", "1.5").
+static std::string number(float value)
+{
+    char buffer[32];
+    std::snprintf(buffer, sizeof(buffer), "%.2f", double(value));
+    std::string s(buffer);
+    while (!s.empty() && (s.back() == '0'))
+        s.pop_back();
+    if (!s.empty() && (s.back() == '.'))
+        s.pop_back();
+    return s;
+}
+
+//! \brief Mix two colors (t = 0: a, t = 1: b).
+static ImU32 mix(ImU32 a, ImU32 b, float t)
+{
+    ImVec4 const ca = ImGui::ColorConvertU32ToFloat4(a);
+    ImVec4 const cb = ImGui::ColorConvertU32ToFloat4(b);
+    return ImGui::ColorConvertFloat4ToU32(ImVec4(ca.x + (cb.x - ca.x) * t, ca.y + (cb.y - ca.y) * t,
+                                                 ca.z + (cb.z - ca.z) * t, ca.w + (cb.w - ca.w) * t));
+}
+
+// ============================================================================
+// Shapes of nodes
+// ============================================================================
+
+//------------------------------------------------------------------------------
+ImVec2 nodeHalfSize(Node const& node, TypeOfNet type)
+{
+    if (node.type == Node::Type::Place)
     {
-        ImVec2 const token_pos = lerpPoint(from, to, 0.16f);
-        drawToken(draw_list, token_pos.x, token_pos.y, zoom);
-        // if (tokens > 1u)
+        if (type == TypeOfNet::GRAFCET)
+            return ImVec2(STEP_SIZE * 0.5f, STEP_SIZE * 0.5f);
+        return ImVec2(PLACE_RADIUS, PLACE_RADIUS);
+    }
+    if (type == TypeOfNet::GRAFCET)
+        return ImVec2(GRAFCET_BAR_WIDTH * 0.5f, GRAFCET_BAR_HEIGHT * 0.5f);
+    return ImVec2(TRANS_WIDTH * 0.5f, TRANS_HEIGHT * 0.5f);
+}
+
+//! \brief Petri places are circles, the other nodes rectangles.
+static bool isCircle(Node const& node, TypeOfNet type)
+{
+    return (node.type == Node::Type::Place) && (type != TypeOfNet::GRAFCET);
+}
+
+//! \brief Point of the border of a node in the direction of a point.
+static ImVec2 border(Node const& node, TypeOfNet type, ImVec2 const& toward, float gap = 0.0f)
+{
+    ImVec2 const c(node.x, node.y);
+    ImVec2 const d = unit(toward - c);
+    ImVec2 const half = nodeHalfSize(node, type);
+    if (isCircle(node, type))
+        return c + d * (half.x + gap);
+    float const tx = (std::fabs(d.x) < 1e-4f) ? FLT_MAX : (half.x + gap) / std::fabs(d.x);
+    float const ty = (std::fabs(d.y) < 1e-4f) ? FLT_MAX : (half.y + gap) / std::fabs(d.y);
+    return c + d * std::min(tx, ty);
+}
+
+// ============================================================================
+// Arcs
+// ============================================================================
+
+//! \brief Second transition of a timed event graph arc T -> P -> T2, or null.
+static Node const* tegTarget(Arc const& arc)
+{
+    if ((arc.from.type != Node::Type::Transition) || arc.to.arcsOut.empty())
+        return nullptr;
+    return &arc.to.arcsOut[0]->to;
+}
+
+//! \brief True if an arc goes back from b to a (drawn bent, not on top).
+static bool hasReverse(Node const& a, Node const& b, TypeOfNet type)
+{
+    if (type == TypeOfNet::TimedEventGraph)
+    {
+        // a and b are transitions: look for b -> P -> a.
+        for (Arc const* out : b.arcsOut)
         {
-            drawCenteredText(draw_list, token_pos - normal * offset,
-                             themeCaptionColor(), std::to_string(tokens));
+            if (!out->to.arcsOut.empty() && (&out->to.arcsOut[0]->to == &a))
+                return true;
+        }
+        return false;
+    }
+    for (Arc const* out : b.arcsOut)
+    {
+        if (&out->to == &a)
+            return true;
+    }
+    return false;
+}
+
+//! \brief Straight or bent (when a reverse arc exists) line between two nodes.
+static void petriPath(Node const& a, Node const& b, TypeOfNet type, ArcPath& path)
+{
+    ImVec2 const pa(a.x, a.y);
+    ImVec2 const pb(b.x, b.y);
+    if (!hasReverse(a, b, type))
+    {
+        path.points = { border(a, type, pb, 1.0f), border(b, type, pa, ARROW_SPACING) };
+        return;
+    }
+    // Bent to the left of the direction a -> b: the reverse arc bends to the
+    // other side.
+    float const d = length(pb - pa);
+    ImVec2 const control = (pa + pb) * 0.5f + normal(pb - pa) * std::clamp(d * 0.2f, 14.0f, 40.0f);
+    ImVec2 const p0 = border(a, type, control, 1.0f);
+    ImVec2 const p2 = border(b, type, control, ARROW_SPACING);
+    constexpr int SEGMENTS = 16;
+    path.points.clear();
+    for (int i = 0; i <= SEGMENTS; ++i)
+    {
+        float const t = float(i) / float(SEGMENTS);
+        float const u = 1.0f - t;
+        path.points.push_back(p0 * (u * u) + control * (2.0f * u * t) + p2 * (t * t));
+    }
+}
+
+//! \brief Bottom and top anchors of GRAFCET nodes.
+static float bottomOf(Node const& n, TypeOfNet type) { return n.y + nodeHalfSize(n, type).y; }
+static float topOf(Node const& n, TypeOfNet type) { return n.y - nodeHalfSize(n, type).y; }
+
+//! \brief GRAFCET link: vertical and horizontal lines, IEC 60848.
+static void grafcetPath(Arc const& arc, ArcPath& path)
+{
+    TypeOfNet const G = TypeOfNet::GRAFCET;
+    Node const& s = arc.from;
+    Node const& t = arc.to;
+    path.arrow_end = false;
+
+    // Start and end points, with the AND (double) and OR (single) lines.
+    ImVec2 start(s.x, bottomOf(s, G));
+    ImVec2 end(t.x, topOf(t, G));
+    float bus_start = NAN; // y of a line the link starts from
+    float bus_end = NAN;   // y of a line the link ends on
+    if (s.type == Node::Type::Transition)
+    {
+        if (s.arcsOut.size() >= 2u) // AND divergence: from the double line
+        {
+            start = ImVec2(t.x, s.y + GRAFCET_GAP);
+        }
+        else if (t.arcsIn.size() >= 2u) // OR convergence: to the line above the step
+        {
+            bus_end = topOf(t, G) - GRAFCET_GAP;
+        }
+    }
+    else
+    {
+        if (t.arcsIn.size() >= 2u) // AND convergence: to the double line
+        {
+            end = ImVec2(s.x, t.y - GRAFCET_GAP);
+        }
+        else if (s.arcsOut.size() >= 2u) // OR divergence: from the line below the step
+        {
+            bus_start = bottomOf(s, G) + GRAFCET_GAP;
         }
     }
 
-    std::ostringstream stream;
-    stream << std::fixed << std::setprecision(2) << duration;
-    drawCenteredText(draw_list, lerpPoint(from, to, 0.5f) + normal * offset,
-                     themeDurationColor(), stream.str());
-}
-
-} // namespace
-
-//------------------------------------------------------------------------------
-//! \brief Rotate a 2D vector by angle (given as cos/sin).
-//------------------------------------------------------------------------------
-template<typename T>
-static T rotate(T const& v, float const cos_a, float const sin_a)
-{
-    return T(v.x * cos_a - v.y * sin_a, v.x * sin_a + v.y * cos_a);
-}
-
-//------------------------------------------------------------------------------
-//! \brief Compute the Euclidean distance between two points with .x and .y members.
-//------------------------------------------------------------------------------
-template<typename T>
-static inline float norm(T const& A, T const& B)
-{
-    return sqrtf((B.x - A.x) * (B.x - A.x) + (B.y - A.y) * (B.y - A.y));
-}
-
-//------------------------------------------------------------------------------
-static void drawArrow(ImDrawList* draw_list, ImVec2 const& A, ImVec2 const& B,
-                      const ImU32 color, float zoom = 1.0f,
-                      float thickness_scale = 1.0f)
-{
-    const float place_radius = PLACE_RADIUS * zoom;
-    const float arrow_spacing = ARROW_SPACING * zoom;
-    const float arrow_length = ARROW_WIDTH * zoom;
-    const float arrow_half_width = arrow_length * 0.35f;
-    const float line_thickness = 2.5f * zoom * thickness_scale;
-
-    // Orientation
-    const float arrowAngle = std::atan((B.y - A.y) / (B.x - A.x))
-        + ((B.x < A.x) ? kPi : ((B.y < A.y) ? (2.0f * kPi) : 0.0f));
-    const float cos_a = std::cos(arrowAngle);
-    const float sin_a = std::sin(arrowAngle);
-
-    // Tail of the arrow.
-    const float length = norm(A, B);
-    if (length < 0.001f) return;
-
-    float r = length - place_radius - arrow_spacing;
-    float dx = ((B.x - A.x) * r) / length;
-    float dy = ((B.y - A.y) * r) / length;
-    const ImVec2 from(B.x - dx, B.y - dy);
-    const ImVec2 to(A.x + dx, A.y + dy);
-
-    // Reduce the head size to avoid overlapping the line and head of the arrow.
-    r = length - place_radius - arrow_length - arrow_spacing;
-    dx = ((B.x - A.x) * r) / length;
-    dy = ((B.y - A.y) * r) / length;
-    const ImVec2 to2(A.x + dx, A.y + dy);
-    draw_list->AddLine(from, to2, color, line_thickness);
-
-    // Head of the arrow - sleeker design
-    const ImVec2 head(-arrow_length, -arrow_half_width);
-    std::vector<ImVec2> points = {
-        to + rotate(head + ImVec2(0.0f, 0.0f), cos_a, sin_a),
-        to + rotate(head + ImVec2(arrow_length, arrow_half_width), cos_a, sin_a),
-        to + rotate(head + ImVec2(0.0f, arrow_half_width * 2.0f), cos_a, sin_a)
-    };
-    draw_list->AddConvexPolyFilled(points.data(), static_cast<int>(points.size()), color);
-}
-
-//------------------------------------------------------------------------------
-void drawArc(ImDrawList* draw_list, Node const* from, Node const* to, ImVec2 const* click_position,
-             ImVec2 const& origin, ImVec2 const& cursor, float zoom)
-{
-    if (from != nullptr)
+    // Going up: around on the side of the source (right when it is on the
+    // right of its target, else left), with an arrow on the way up.
+    if (end.y < start.y - 1.0f)
     {
-        drawArrow(draw_list,
-                  origin + ImVec2(from->x * zoom, from->y * zoom),
-                  origin + ImVec2(cursor.x * zoom, cursor.y * zoom),
-                  themeOutlineColor(), zoom);
+        float const left = (start.x > end.x + 1.0f) ? (std::max(start.x, end.x) + GRAFCET_LOOP)
+                                                    : (std::min(start.x, end.x) - GRAFCET_LOOP);
+        float const below = (std::isnan(bus_start) ? start.y : bus_start) + 12.0f;
+        float const above = end.y - 12.0f;
+        if (!std::isnan(bus_start))
+            path.points.push_back(ImVec2(start.x, start.y));
+        path.points.push_back(start);
+        path.points.push_back(ImVec2(start.x, below));
+        path.points.push_back(ImVec2(left, below));
+        path.points.push_back(ImVec2(left, above));
+        path.points.push_back(ImVec2(end.x, above));
+        path.points.push_back(end);
+        path.arrow_segment = int(path.points.size()) - 4; // the vertical going up
+        return;
     }
-    else if (to != nullptr)
+
+    path.points.push_back(start);
+    if (!std::isnan(bus_start))
     {
-        drawArrow(draw_list,
-                  origin + ImVec2(cursor.x * zoom, cursor.y * zoom),
-                  origin + ImVec2(to->x * zoom, to->y * zoom),
-                  themeOutlineColor(), zoom);
+        path.points.push_back(ImVec2(start.x, bus_start));
+        path.points.push_back(ImVec2(end.x, bus_start));
     }
-    else if (click_position != nullptr)
+    else if (!std::isnan(bus_end))
     {
-        drawArrow(draw_list,
-                  origin + ImVec2(click_position->x * zoom, click_position->y * zoom),
-                  origin + ImVec2(cursor.x * zoom, cursor.y * zoom),
-                  themeOutlineColor(), zoom);
+        path.points.push_back(ImVec2(start.x, bus_end));
+        path.points.push_back(ImVec2(end.x, bus_end));
     }
+    else if (std::fabs(start.x - end.x) > 0.5f)
+    {
+        float const middle = (start.y + end.y) * 0.5f;
+        path.points.push_back(ImVec2(start.x, middle));
+        path.points.push_back(ImVec2(end.x, middle));
+    }
+    path.points.push_back(end);
+}
+
+//------------------------------------------------------------------------------
+ArcPath arcPath(Arc const& arc, TypeOfNet type)
+{
+    ArcPath path;
+    if (type == TypeOfNet::GRAFCET)
+    {
+        grafcetPath(arc, path);
+    }
+    else if (type == TypeOfNet::TimedEventGraph)
+    {
+        Node const* next = tegTarget(arc);
+        if (next != nullptr)
+            petriPath(arc.from, *next, type, path);
+    }
+    else
+    {
+        petriPath(arc.from, arc.to, type, path);
+    }
+    return path;
+}
+
+//! \brief Distance between a point and a segment.
+static float segmentDistance(ImVec2 const& p, ImVec2 const& a, ImVec2 const& b)
+{
+    ImVec2 const ab = b - a;
+    float const l2 = ab.x * ab.x + ab.y * ab.y;
+    float t = (l2 < 1e-6f) ? 0.0f : ((p.x - a.x) * ab.x + (p.y - a.y) * ab.y) / l2;
+    t = std::clamp(t, 0.0f, 1.0f);
+    return length(p - (a + ab * t));
+}
+
+//------------------------------------------------------------------------------
+float distanceToArc(Arc const& arc, TypeOfNet type, ImVec2 const& point)
+{
+    ArcPath const path = arcPath(arc, type);
+    float best = FLT_MAX;
+    for (size_t i = 1u; i < path.points.size(); ++i)
+        best = std::min(best, segmentDistance(point, path.points[i - 1u], path.points[i]));
+    return best;
+}
+
+//! \brief Filled arrow head with its tip at `tip`, pointing along `direction`.
+static void arrowHead(ImDrawList* draw_list, ImVec2 const& tip, ImVec2 const& direction,
+                      ImU32 color, float zoom)
+{
+    ImVec2 const d = unit(direction);
+    ImVec2 const n(-d.y, d.x);
+    float const l = ARROW_WIDTH * zoom;
+    float const w = l * 0.38f;
+    ImVec2 const base = tip - d * l;
+    draw_list->AddTriangleFilled(tip, base + n * w, base - n * w, color);
+}
+
+//! \brief Draw a path in screen space with its arrows.
+static void drawPath(ImDrawList* draw_list, ArcPath const& path, ImVec2 const& origin,
+                     float zoom, ImU32 color, float thickness)
+{
+    if (path.points.size() < 2u)
+        return;
+    std::vector<ImVec2> points;
+    points.reserve(path.points.size());
+    for (auto const& p : path.points)
+        points.push_back(screen(origin, zoom, p));
+
+    if (path.arrow_end)
+    {
+        // Stop the line under the head so that its tip stays sharp.
+        ImVec2 const tip = points.back();
+        ImVec2 const dir = tip - points[points.size() - 2u];
+        points.back() = tip - unit(dir) * (ARROW_WIDTH * zoom * 0.8f);
+        draw_list->AddPolyline(points.data(), int(points.size()), color, ImDrawFlags_None, thickness);
+        arrowHead(draw_list, tip, dir, color, zoom);
+    }
+    else
+    {
+        draw_list->AddPolyline(points.data(), int(points.size()), color, ImDrawFlags_None, thickness);
+    }
+    if ((path.arrow_segment >= 0) && (size_t(path.arrow_segment) + 1u < points.size()))
+    {
+        ImVec2 const a = points[size_t(path.arrow_segment)];
+        ImVec2 const b = points[size_t(path.arrow_segment) + 1u];
+        arrowHead(draw_list, (a + b) * 0.5f, b - a, color, zoom);
+    }
+}
+
+//! \brief Point at a fraction of the length of a polyline, and its direction.
+static ImVec2 alongPath(std::vector<ImVec2> const& points, float fraction, ImVec2& direction)
+{
+    float total = 0.0f;
+    for (size_t i = 1u; i < points.size(); ++i)
+        total += length(points[i] - points[i - 1u]);
+    float goal = total * fraction;
+    for (size_t i = 1u; i < points.size(); ++i)
+    {
+        float const l = length(points[i] - points[i - 1u]);
+        if ((goal <= l) || (i + 1u == points.size()))
+        {
+            direction = points[i] - points[i - 1u];
+            float const t = (l < 1e-4f) ? 0.0f : std::min(goal / l, 1.0f);
+            return points[i - 1u] + (points[i] - points[i - 1u]) * t;
+        }
+        goal -= l;
+    }
+    direction = ImVec2(1.0f, 0.0f);
+    return points.empty() ? ImVec2() : points.front();
 }
 
 //------------------------------------------------------------------------------
 void drawArc(ImDrawList* draw_list, Arc const& arc, TypeOfNet const type,
              ImVec2 const& origin, float const alpha, float zoom)
 {
-    ImU32 color;
-    float thickness = 1.0f;
+    ArcPath const path = arcPath(arc, type);
+    if (path.points.size() < 2u)
+        return;
+    Palette const& pal = palette();
+    bool const critical = (alpha < 0.0f);
+    ImU32 const color = critical ? pal.critical : pal.outline;
+    float const thickness = stroke(critical ? 3.0f : 1.6f, zoom);
+    drawPath(draw_list, path, origin, zoom, color, thickness);
 
-    if (alpha >= 0.0f)
-    {
-        color = themeOutlineColor();
-    }
-    else
-    {
-        // Critical cycle arc: highlighted color and a thicker stroke
-        // so it stays distinguishable from regular arcs whatever the
-        // theme (in the light theme red and the maroon outline are
-        // otherwise hard to tell apart).
-        color = themeCriticalColor();
-        thickness = 2.4f;
-    }
-
+    float const size = fontSizeAt(zoom * 0.9f);
     if (type == TypeOfNet::TimedEventGraph)
     {
-        if (arc.from.type == Node::Type::Place)
-            return ;
-
-        assert((arc.to.arcsOut.size() == 1u) && "malformed graph event");
-        Node const& next = arc.to.arcsOut[0]->to;
-        ImVec2 const from(origin.x + arc.from.x * zoom, origin.y + arc.from.y * zoom);
-        ImVec2 const to(origin.x + next.x * zoom, origin.y + next.y * zoom);
-        drawArrow(draw_list, from, to, color, zoom, thickness);
-
-        size_t const tokens = reinterpret_cast<Place&>(arc.to).tokens;
-        drawTegArcLabels(draw_list, from, to, tokens, arc.duration, zoom);
-    }
-    else
-    {
-        drawArrow(draw_list,
-                  origin + ImVec2(arc.from.x * zoom, arc.from.y * zoom),
-                  origin + ImVec2(arc.to.x * zoom, arc.to.y * zoom), color, zoom,
-                  thickness);
-
-        if ((arc.from.type == Node::Type::Transition) && (type == TypeOfNet::TimedPetriNet))
+        // Tokens near the start, duration in the middle.
+        size_t const tokens = static_cast<Place const&>(arc.to).tokens;
+        ImVec2 dir;
+        if (tokens > 0u)
         {
-            ImVec2 const from(origin.x + arc.from.x * zoom, origin.y + arc.from.y * zoom);
-            ImVec2 const to(origin.x + arc.to.x * zoom, origin.y + arc.to.y * zoom);
-            std::ostringstream stream;
-            stream << std::fixed << std::setprecision(1) << arc.duration;
-            drawCenteredText(draw_list,
-                             lerpPoint(from, to, 0.5f) + arcNormal(from, to) * (11.0f * zoom),
-                             themeDurationColor(), stream.str());
+            ImVec2 const p = screen(origin, zoom, alongPath(path.points, 0.22f, dir));
+            if (tokens <= 3u)
+            {
+                ImVec2 const u = unit(dir);
+                float const step = TOKEN_RADIUS * 2.6f * zoom;
+                for (size_t k = 0u; k < tokens; ++k)
+                    drawToken(draw_list, p.x + u.x * step * (float(k) - float(tokens - 1u) * 0.5f),
+                              p.y + u.y * step * (float(k) - float(tokens - 1u) * 0.5f), zoom);
+            }
+            else
+            {
+                drawToken(draw_list, p.x, p.y, zoom);
+                ImVec2 const n = normal(dir);
+                pill(draw_list, p + n * (10.0f * zoom), pal.token, std::to_string(tokens).c_str(), size);
+            }
         }
+        if (!std::isnan(arc.duration) && (arc.duration != 0.0f))
+        {
+            ImVec2 const p = screen(origin, zoom, alongPath(path.points, 0.55f, dir));
+            pill(draw_list, p + normal(dir) * (11.0f * zoom), pal.duration,
+                 number(arc.duration).c_str(), size);
+        }
+    }
+    else if ((type == TypeOfNet::TimedPetriNet) && (arc.from.type == Node::Type::Transition) &&
+             !std::isnan(arc.duration))
+    {
+        ImVec2 dir;
+        ImVec2 const p = screen(origin, zoom, alongPath(path.points, 0.5f, dir));
+        pill(draw_list, p + normal(dir) * (11.0f * zoom), pal.duration,
+             number(arc.duration).c_str(), size);
     }
 }
 
 //------------------------------------------------------------------------------
+void drawArcHighlight(ImDrawList* draw_list, Arc const& arc, TypeOfNet type,
+                      ImVec2 const& origin, float zoom, ImU32 color, float thickness)
+{
+    ArcPath path = arcPath(arc, type);
+    path.arrow_end = false;
+    path.arrow_segment = -1;
+    drawPath(draw_list, path, origin, zoom, color, thickness);
+}
+
+//------------------------------------------------------------------------------
+void drawArc(ImDrawList* draw_list, Node const* from, Node const* to, ImVec2 const* click_position,
+             ImVec2 const& origin, ImVec2 const& cursor, float zoom)
+{
+    ArcPath path;
+    if (from != nullptr)
+        path.points = { ImVec2(from->x, from->y), cursor };
+    else if (to != nullptr)
+        path.points = { cursor, ImVec2(to->x, to->y) };
+    else if (click_position != nullptr)
+        path.points = { *click_position, cursor };
+    else
+        return;
+    drawPath(draw_list, path, origin, zoom, palette().selection, stroke(2.0f, zoom));
+}
+
+// ============================================================================
+// Tokens
+// ============================================================================
+
+//------------------------------------------------------------------------------
 void drawToken(ImDrawList* draw_list, float const x, float const y, float zoom)
 {
-    draw_list->AddCircleFilled(ImVec2(x, y), TOKEN_RADIUS * zoom, themeTokenColor());
+    draw_list->AddCircleFilled(ImVec2(x, y), std::max(1.5f, TOKEN_RADIUS * zoom), palette().token);
 }
 
 //------------------------------------------------------------------------------
 void drawTimedToken(ImDrawList* draw_list, size_t tokens, float const x, float const y, float zoom)
 {
-    draw_list->AddCircleFilled(ImVec2(x, y), TOKEN_RADIUS * zoom, themeTokenColor());
-    draw_list->AddText(ImVec2(x, y), themeCaptionColor(), std::to_string(tokens).c_str());
+    float const r = std::max(4.0f, 8.0f * zoom);
+    draw_list->AddCircleFilled(ImVec2(x, y), r, palette().active);
+    char buffer[16];
+    std::snprintf(buffer, sizeof(buffer), "%zu", tokens);
+    textCentered(draw_list, ImVec2(x, y), IM_COL32(0, 0, 0, 255), buffer, fontSizeAt(zoom * 0.85f));
 }
 
-//------------------------------------------------------------------------------
+//! \brief Tokens of a Petri place: dots up to 5, else a number.
+static void drawPlaceTokens(ImDrawList* draw_list, size_t tokens, ImVec2 const& p, float zoom)
+{
+    float const d = 6.0f * zoom;
+    switch (tokens)
+    {
+    case 0u: return;
+    case 1u: drawToken(draw_list, p.x, p.y, zoom); return;
+    case 2u: drawToken(draw_list, p.x - d, p.y, zoom); drawToken(draw_list, p.x + d, p.y, zoom); return;
+    case 3u:
+        drawToken(draw_list, p.x, p.y - d, zoom);
+        drawToken(draw_list, p.x - d, p.y + d * 0.7f, zoom);
+        drawToken(draw_list, p.x + d, p.y + d * 0.7f, zoom);
+        return;
+    case 4u: case 5u:
+        drawToken(draw_list, p.x - d, p.y - d, zoom); drawToken(draw_list, p.x + d, p.y - d, zoom);
+        drawToken(draw_list, p.x - d, p.y + d, zoom); drawToken(draw_list, p.x + d, p.y + d, zoom);
+        if (tokens == 5u) drawToken(draw_list, p.x, p.y, zoom);
+        return;
+    default:
+        textCentered(draw_list, p, palette().token, std::to_string(tokens).c_str(),
+                     fontSizeAt(zoom * 1.1f));
+        return;
+    }
+}
+
+// ============================================================================
+// Places and GRAFCET steps
+// ============================================================================
+
+//! \brief Petri place: circle, tokens, caption below.
 static void drawPetriPlace(ImDrawList* draw_list, Place const& place, ImVec2 const& origin,
-                           bool const show_caption, float const alpha, float zoom)
+                           bool show_caption, float zoom)
 {
-    const ImVec2 p = origin + ImVec2(place.x * zoom, place.y * zoom);
-    const float place_radius = PLACE_RADIUS * zoom;
-    const float token_radius = TOKEN_RADIUS * zoom;
-    const float outline_thickness = 2.5f * zoom;
-    const float shadow_offset = SHADOW_OFFSET * zoom;
+    Palette const& pal = palette();
+    ImVec2 const p = screen(origin, zoom, ImVec2(place.x, place.y));
+    float const r = PLACE_RADIUS * zoom;
+    draw_list->AddCircleFilled(p + ImVec2(SHADOW_OFFSET, SHADOW_OFFSET) * zoom, r, pal.shadow, 48);
+    draw_list->AddCircleFilled(p, r, pal.fill, 48);
+    draw_list->AddCircle(p, r, pal.outline, 48, stroke(2.0f, zoom));
+    drawPlaceTokens(draw_list, place.tokens, p, zoom);
 
-    // Shadow
-    ImVec2 shadow_p(p.x + shadow_offset, p.y + shadow_offset);
-    draw_list->AddCircleFilled(shadow_p, place_radius, IM_COL32(0, 0, 0, 40), 64);
+    char const* label = show_caption ? place.caption.c_str() : place.key.c_str();
+    caption(draw_list, p.x, p.y + r + 3.0f * zoom, show_caption ? pal.caption : pal.secondary,
+            label, fontSizeAt(zoom));
+}
 
-    // Draw the place as circle
-    if (place.tokens == 0u)
-        draw_list->AddCircleFilled(p, place_radius, themeFillColor(alpha), 64);
-    else
-        draw_list->AddCircleFilled(p, place_radius, themeFillColor(255), 64);
-    draw_list->AddCircle(p, place_radius, themeOutlineColor(), 64, outline_thickness);
-
-    // Draw the caption
-    const char* text = show_caption ? place.caption.c_str() : place.key.c_str();
-    ImVec2 dim = ImGui::CalcTextSize(text);
-    ImVec2 ptext = p - ImVec2(dim.x / 2.0f, place_radius + dim.y);
-    draw_list->AddText(ptext, themeCaptionColor(), text);
-
-    // Draw the number of tokens
-    if (place.tokens == 0u)
-        return ;
-
-    float r = token_radius;
-    float d = token_radius + 1.0f * zoom;
-
-    if (place.tokens == 1u)
+//! \brief Horizontal line from x0 to x1 (net units) at y, one or two strokes.
+static void busLine(ImDrawList* draw_list, ImVec2 const& origin, float zoom,
+                    float x0, float x1, float y, bool twice)
+{
+    Palette const& pal = palette();
+    float const t = stroke(1.6f, zoom);
+    float const margin = 10.0f;
+    ImVec2 const a = screen(origin, zoom, ImVec2(std::min(x0, x1) - margin, y));
+    ImVec2 const b = screen(origin, zoom, ImVec2(std::max(x0, x1) + margin, y));
+    if (twice)
     {
-        drawToken(draw_list, p.x, p.y, zoom);
-    }
-    else if (place.tokens == 2u)
-    {
-        drawToken(draw_list, p.x - d, p.y, zoom);
-        drawToken(draw_list, p.x + d, p.y, zoom);
-    }
-    else if (place.tokens == 3u)
-    {
-        drawToken(draw_list, p.x, p.y - r, zoom);
-        drawToken(draw_list, p.x - d, p.y + d, zoom);
-        drawToken(draw_list, p.x + d, p.y + d, zoom);
-    }
-    else if ((place.tokens == 4u) || (place.tokens == 5u))
-    {
-        if (place.tokens == 5u)
-        {
-            d = r + 3.0f * zoom;
-            drawToken(draw_list, p.x, p.y, zoom);
-        }
-
-        drawToken(draw_list, p.x - d, p.y - d, zoom);
-        drawToken(draw_list, p.x + d, p.y - d, zoom);
-        drawToken(draw_list, p.x - d, p.y + d, zoom);
-        drawToken(draw_list, p.x + d, p.y + d, zoom);
+        float const gap = std::max(2.0f, 2.5f * zoom);
+        draw_list->AddLine(a - ImVec2(0.0f, gap), b - ImVec2(0.0f, gap), pal.outline, t);
+        draw_list->AddLine(a + ImVec2(0.0f, gap), b + ImVec2(0.0f, gap), pal.outline, t);
     }
     else
     {
-        drawToken(draw_list, p.x, p.y, zoom);
-        std::string tokens = std::to_string(place.tokens);
-        draw_list->AddText(ImVec2(p.x, p.y), themeCaptionColor(), tokens.c_str());
+        draw_list->AddLine(a, b, pal.outline, t);
     }
 }
 
-//------------------------------------------------------------------------------
-static void drawGrafcetPlace(ImDrawList* draw_list, Place const& place, ImVec2 const& origin,
-                              bool const show_caption, float const alpha, float zoom, bool isInitialStep)
+//! \brief GRAFCET step: square with its number (double for the initial step),
+//! a dot when active, caption on its left, OR lines of alternative sequences.
+static void drawGrafcetStep(ImDrawList* draw_list, Place const& place, ImVec2 const& origin,
+                            bool show_caption, float zoom, bool initial)
 {
-    const ImVec2 p = origin + ImVec2(place.x * zoom, place.y * zoom);
-    const float trans_width = TRANS_WIDTH * zoom;
-    const float trans_width2 = TRANS_WIDTH2 * zoom;
-    const float outline_thickness = 2.5f * zoom;
-    const float shadow_offset = SHADOW_OFFSET * zoom;
+    Palette const& pal = palette();
+    ImVec2 const p = screen(origin, zoom, ImVec2(place.x, place.y));
+    float const h = STEP_SIZE * 0.5f * zoom;
+    bool const active = (place.tokens > 0u);
+    ImU32 const fill = active ? mix(pal.fill, pal.active, 0.28f) : pal.fill;
+    float const t = stroke(2.0f, zoom);
 
-    // Draw the step (place) as square. Double square for initial steps.
-    // Initial step display is based on the initial marking (stored at simulation start),
-    // not on the current token count.
-    if (isInitialStep)
+    ImVec2 const shadow = ImVec2(SHADOW_OFFSET, SHADOW_OFFSET) * zoom;
+    draw_list->AddRectFilled(p - ImVec2(h, h) + shadow, p + ImVec2(h, h) + shadow, pal.shadow);
+    draw_list->AddRectFilled(p - ImVec2(h, h), p + ImVec2(h, h), fill);
+    draw_list->AddRect(p - ImVec2(h, h), p + ImVec2(h, h), active ? pal.active : pal.outline, 0.0f,
+                       ImDrawFlags_None, t);
+    if (initial)
     {
-        // Shadow for outer square
-        const ImVec2 shadow_min(p.x - trans_width2 / 2.0f + shadow_offset, p.y - trans_width2 / 2.0f + shadow_offset);
-        const ImVec2 shadow_max(p.x + trans_width2 / 2.0f + shadow_offset, p.y + trans_width2 / 2.0f + shadow_offset);
-        draw_list->AddRectFilled(shadow_min, shadow_max, IM_COL32(0, 0, 0, 40));
-
-        // Outer square (initial step indicator)
-        const ImVec2 pmin(p.x - trans_width2 / 2.0f, p.y - trans_width2 / 2.0f);
-        const ImVec2 pmax(p.x + trans_width2 / 2.0f, p.y + trans_width2 / 2.0f);
-        draw_list->AddRectFilled(pmin, pmax, themeFillColor(alpha));
-        draw_list->AddRect(pmin, pmax, themeOutlineColor(), 0.0f, ImDrawFlags_None, outline_thickness);
-    }
-    else
-    {
-        // Shadow for inner square (non-initial step)
-        const ImVec2 shadow_min(p.x - trans_width / 2.0f + shadow_offset, p.y - trans_width / 2.0f + shadow_offset);
-        const ImVec2 shadow_max(p.x + trans_width / 2.0f + shadow_offset, p.y + trans_width / 2.0f + shadow_offset);
-        draw_list->AddRectFilled(shadow_min, shadow_max, IM_COL32(0, 0, 0, 40));
+        float const g = 4.0f * zoom;
+        draw_list->AddRect(p - ImVec2(h - g, h - g), p + ImVec2(h - g, h - g),
+                           active ? pal.active : pal.outline, 0.0f, ImDrawFlags_None, stroke(1.2f, zoom));
     }
 
-    // Inner square
-    const ImVec2 pmin(p.x - trans_width / 2.0f, p.y - trans_width / 2.0f);
-    const ImVec2 pmax(p.x + trans_width / 2.0f, p.y + trans_width / 2.0f);
-    draw_list->AddRectFilled(pmin, pmax, themeFillColor(alpha));
-    draw_list->AddRect(pmin, pmax, themeOutlineColor(), 0.0f, ImDrawFlags_None, outline_thickness);
-
-    // Draw token if step is currently active
-    if (place.tokens != 0u)
+    // Step number inside; under it the caption, small and cut to the square
+    // (the whole caption is in the tooltip); a dot in the corner when active.
+    float const size = fontSizeAt(zoom * 1.1f);
+    float const small = fontSizeAt(zoom * 0.62f);
+    bool const caption = show_caption && !place.caption.empty() && (small > 0.0f);
+    textCentered(draw_list, p - ImVec2(0.0f, caption ? 5.0f * zoom : 0.0f), pal.caption,
+                 std::to_string(place.id).c_str(), size);
+    if (caption)
     {
-        drawToken(draw_list, p.x, p.y + trans_width * 1.0f / 3.0f, zoom);
+        std::string label = place.caption;
+        float const room = 2.0f * h - 6.0f * zoom;
+        while ((label.size() > 1u) && (textSize(label.c_str(), small).x > room))
+            label.pop_back();
+        if (label.size() < place.caption.size())
+            label.back() = '.';
+        textCentered(draw_list, p + ImVec2(0.0f, 9.0f * zoom), pal.secondary, label.c_str(), small);
     }
+    if (active)
+        drawToken(draw_list, p.x + h * 0.62f, p.y - h * 0.62f, zoom);
 
-    // Draw the caption inside the square
-    // show_caption: true = caption (e.g. "Init"), false = key/identifier (e.g. "X0")
-    // The text follows the zoom, so that it stays inside the square.
-    const char* text = show_caption ? place.caption.c_str() : place.key.c_str();
-    const float font_size = ImGui::GetFontSize() * std::min(zoom, 1.0f);
-    ImVec2 dim = ImGui::GetFont()->CalcTextSizeA(font_size, FLT_MAX, 0.0f, text) / 2.0f;
-    ImVec2 ptext = p - dim + ImVec2(0.0f, -trans_width / 3.0f + 5.0f * zoom);
-    draw_list->AddText(ImGui::GetFont(), font_size, ptext, themeCaptionColor(), text);
+    // OR divergence (below) and OR convergence (above): single lines.
+    if (place.arcsOut.size() >= 2u)
+    {
+        float x0 = place.x, x1 = place.x;
+        for (Arc const* a : place.arcsOut) { x0 = std::min(x0, a->to.x); x1 = std::max(x1, a->to.x); }
+        float const y = place.y + STEP_SIZE * 0.5f + GRAFCET_GAP;
+        busLine(draw_list, origin, zoom, x0, x1, y, false);
+        draw_list->AddLine(screen(origin, zoom, ImVec2(place.x, place.y + STEP_SIZE * 0.5f)),
+                           screen(origin, zoom, ImVec2(place.x, y)), pal.outline, stroke(1.6f, zoom));
+    }
+    if (place.arcsIn.size() >= 2u)
+    {
+        float x0 = place.x, x1 = place.x;
+        for (Arc const* a : place.arcsIn) { x0 = std::min(x0, a->from.x); x1 = std::max(x1, a->from.x); }
+        float const y = place.y - STEP_SIZE * 0.5f - GRAFCET_GAP;
+        busLine(draw_list, origin, zoom, x0, x1, y, false);
+        draw_list->AddLine(screen(origin, zoom, ImVec2(place.x, y)),
+                           screen(origin, zoom, ImVec2(place.x, place.y - STEP_SIZE * 0.5f)),
+                           pal.outline, stroke(1.6f, zoom));
+    }
 }
 
 //------------------------------------------------------------------------------
 void drawPlace(ImDrawList* draw_list, Place const& place, TypeOfNet const type,
-               ImVec2 const& origin, bool const show_caption, float const alpha,
+               ImVec2 const& origin, bool const show_caption, float const /*alpha*/,
                float zoom, bool isInitialStep)
 {
     if (type == TypeOfNet::TimedEventGraph)
-        return ;
-
+        return; // places are drawn on their arcs
     if (type == TypeOfNet::GRAFCET)
-    {
-       drawGrafcetPlace(draw_list, place, origin, show_caption, alpha, zoom, isInitialStep);
-    }
+        drawGrafcetStep(draw_list, place, origin, show_caption, zoom, isInitialStep);
     else
-    {
-       drawPetriPlace(draw_list, place, origin, show_caption, alpha, zoom);
-    }
+        drawPetriPlace(draw_list, place, origin, show_caption, zoom);
 }
+
+// ============================================================================
+// Transitions
+// ============================================================================
 
 //------------------------------------------------------------------------------
 void drawTransition(ImDrawList* draw_list, Transition const& transition,
                     TypeOfNet const type, ImVec2 const& origin,
-                    bool const show_caption, float const alpha, float zoom)
+                    bool const show_caption, float const /*alpha*/, float zoom)
 {
-    const ImVec2 p = origin + ImVec2(transition.x * zoom, transition.y * zoom);
-    const float trans_width = TRANS_WIDTH * zoom;
-    const float trans_height = TRANS_HEIGHT * zoom;
-    const float outline_thickness = 2.5f * zoom;
-    const float rounding = NODE_ROUNDING * zoom;
-    const float shadow_offset = SHADOW_OFFSET * zoom;
-
-    // Color of the transition: green if validated else yellow if enabled
-    ImU32 color = themeFillColor(alpha);
-    if (transition.receptivity)
-    {
-        if ((type != TypeOfNet::TimedPetriNet) && (type != TypeOfNet::TimedEventGraph))
-            color = COLOR_ENABLED_TRANSITION;
-    }
-    if (transition.canFire())
-    {
-        color = COLOR_FIREABLE_TRANSITION;
-    }
-    else if (transition.isEnabled())
-    {
-        color = (type == TypeOfNet::PetriNet)
-            ? COLOR_FIREABLE_TRANSITION : COLOR_ENABLED_TRANSITION;
-    }
-
-    // Draw the transition
-    const ImVec2 pmin(p.x - trans_width / 2.0f, p.y - trans_height / 2.0f);
-    const ImVec2 pmax(p.x + trans_width / 2.0f, p.y + trans_height / 2.0f);
-
-    // Shadow
-    const ImVec2 shadow_min(pmin.x + shadow_offset, pmin.y + shadow_offset);
-    const ImVec2 shadow_max(pmax.x + shadow_offset, pmax.y + shadow_offset);
-    draw_list->AddRectFilled(shadow_min, shadow_max, IM_COL32(0, 0, 0, 40), rounding);
-
-    // Main rectangle with rounding
-    draw_list->AddRectFilled(pmin, pmax, color, rounding);
-    draw_list->AddRect(pmin, pmax, themeOutlineColor(), rounding, ImDrawFlags_None, outline_thickness);
-
-    // Draw the caption
-    // show_caption: true = caption (e.g. "a b ."), false = key/identifier (e.g. "T0")
-    const float text_margin = 4.0f * zoom;
-    const char* text = show_caption ? transition.caption.c_str() : transition.key.c_str();
-    ImVec2 dim = ImGui::CalcTextSize(text);
+    Palette const& pal = palette();
+    ImVec2 const p = screen(origin, zoom, ImVec2(transition.x, transition.y));
+    ImVec2 const half = nodeHalfSize(transition, type) * zoom;
 
     if (type == TypeOfNet::GRAFCET)
     {
-        // GRAFCET: text to the right of the transition, vertically centered,
-        // following the zoom (long receptivities would cover the graph).
-        const float font_size = ImGui::GetFontSize() * std::min(zoom, 1.0f);
-        dim = ImGui::GetFont()->CalcTextSizeA(font_size, FLT_MAX, 0.0f, text);
-        ImVec2 ptext = p + ImVec2(trans_width / 2.0f + text_margin, -dim.y / 2.0f);
-        draw_list->AddText(ImGui::GetFont(), font_size, ptext, themeCaptionColor(), text);
+        // A thick line: green when it fires (enabled and true), orange when
+        // only its receptivity is true.
+        bool const enabled = transition.isEnabled();
+        ImU32 color = pal.outline;
+        if (transition.receptivity)
+            color = enabled ? pal.active : pal.enabled;
+        draw_list->AddRectFilled(p - half, p + half, color);
+
+        // AND divergence (below) and AND convergence (above): double lines.
+        if (transition.arcsOut.size() >= 2u)
+        {
+            float x0 = transition.x, x1 = transition.x;
+            for (Arc const* a : transition.arcsOut) { x0 = std::min(x0, a->to.x); x1 = std::max(x1, a->to.x); }
+            float const y = transition.y + GRAFCET_GAP;
+            busLine(draw_list, origin, zoom, x0, x1, y, true);
+            draw_list->AddLine(p, screen(origin, zoom, ImVec2(transition.x, y)), pal.outline, stroke(1.6f, zoom));
+        }
+        if (transition.arcsIn.size() >= 2u)
+        {
+            float x0 = transition.x, x1 = transition.x;
+            for (Arc const* a : transition.arcsIn) { x0 = std::min(x0, a->from.x); x1 = std::max(x1, a->from.x); }
+            float const y = transition.y - GRAFCET_GAP;
+            busLine(draw_list, origin, zoom, x0, x1, y, true);
+            draw_list->AddLine(screen(origin, zoom, ImVec2(transition.x, y)), p, pal.outline, stroke(1.6f, zoom));
+        }
+
+        // Receptivity on the right, number on the left.
+        float const size = fontSizeAt(zoom);
+        char const* label = show_caption ? transition.caption.c_str() : transition.key.c_str();
+        ImVec2 const dim = textSize(label, size);
+        text(draw_list, ImVec2(p.x + half.x + 6.0f * zoom, p.y - dim.y * 0.5f), pal.caption, label, size);
+        if (transition.delay > 0.0f)
+        {
+            std::string const delay = "  (" + number(transition.delay) + " s)";
+            text(draw_list, ImVec2(p.x + half.x + 6.0f * zoom + dim.x, p.y - dim.y * 0.5f),
+                 pal.duration, delay.c_str(), size);
+        }
+        float const small = fontSizeAt(zoom * 0.8f);
+        std::string const id = "(" + std::to_string(transition.id) + ")";
+        ImVec2 const idim = textSize(id.c_str(), small);
+        text(draw_list, ImVec2(p.x - half.x - 4.0f * zoom - idim.x, p.y - idim.y * 0.5f),
+             pal.secondary, id.c_str(), small);
+        return;
     }
-    else
-    {
-        // Other types: text below the transition, horizontally centered
-        ImVec2 ptext = p + ImVec2(-dim.x / 2.0f, trans_height / 2.0f + text_margin);
-        draw_list->AddText(ptext, themeCaptionColor(), text);
-    }
+
+    // Petri nets: a rounded bar, colored by its state.
+    ImU32 fill = pal.fill;
+    if (transition.canFire())
+        fill = pal.active;
+    else if (transition.isEnabled())
+        fill = (type == TypeOfNet::PetriNet) ? pal.active : pal.enabled;
+    else if (transition.receptivity && (type == TypeOfNet::PetriNet))
+        fill = pal.enabled;
+    float const rounding = NODE_ROUNDING * zoom;
+    ImVec2 const shadow = ImVec2(SHADOW_OFFSET, SHADOW_OFFSET) * zoom;
+    draw_list->AddRectFilled(p - half + shadow, p + half + shadow, pal.shadow, rounding);
+    draw_list->AddRectFilled(p - half, p + half, fill, rounding);
+    draw_list->AddRect(p - half, p + half, pal.outline, rounding, ImDrawFlags_None, stroke(2.0f, zoom));
+
+    char const* label = show_caption ? transition.caption.c_str() : transition.key.c_str();
+    caption(draw_list, p.x, p.y + half.y + 3.0f * zoom, show_caption ? pal.caption : pal.secondary,
+            label, fontSizeAt(zoom));
 }
+
+// ============================================================================
+// Outlines (hover, selection)
+// ============================================================================
+
+//------------------------------------------------------------------------------
+void drawNodeOutline(ImDrawList* draw_list, Node const& node, TypeOfNet type,
+                     ImVec2 const& origin, float zoom, ImU32 color, float margin,
+                     float thickness)
+{
+    ImVec2 const p = screen(origin, zoom, ImVec2(node.x, node.y));
+    ImVec2 const half = nodeHalfSize(node, type) * zoom + ImVec2(margin, margin);
+    if (isCircle(node, type))
+        draw_list->AddCircle(p, half.x, color, 48, thickness);
+    else
+        draw_list->AddRect(p - half, p + half, color, 4.0f, ImDrawFlags_None, thickness);
+}
+
+// ============================================================================
+// GRAFCET actions
+// ============================================================================
 
 //------------------------------------------------------------------------------
 void drawStepActions(ImDrawList* draw_list, Place const& place, ImVec2 const& origin,
@@ -465,56 +788,66 @@ void drawStepActions(ImDrawList* draw_list, Place const& place, ImVec2 const& or
     if (place.actions.empty())
         return;
 
-    const ImVec2 p = origin + ImVec2(place.x * zoom, place.y * zoom);
-    const float half = TRANS_WIDTH * zoom / 2.0f;
-    const float gap = 12.0f * zoom;
-    const float padding = 4.0f * zoom;
-    const float font_size = ImGui::GetFontSize() * zoom;
-    const float line_height = font_size + 2.0f * padding;
-    const float thickness = std::max(1.0f, 1.5f * zoom);
-    ImFont* font = ImGui::GetFont();
+    Palette const& pal = palette();
+    ImVec2 const p = screen(origin, zoom, ImVec2(place.x, place.y));
+    float const half = STEP_SIZE * 0.5f * zoom;
+    float const gap = 14.0f * zoom;
+    float const size = fontSizeAt(zoom * 0.9f);
+    float const padding = 5.0f * zoom;
+    float const row = std::max(STEP_SIZE * zoom / float(std::max<size_t>(place.actions.size(), 1u)),
+                               (size > 0.0f ? size : 6.0f) + 2.0f * padding * 0.6f);
+    float const t = stroke(1.4f, zoom);
 
-    // Width of the qualifier column and of the name column.
+    // Width of the qualifier column and of the text column.
     float qualifier_width = 0.0f;
     float name_width = 0.0f;
     for (auto const& action : place.actions)
     {
-        char const* qualifier = qualifierToStr(action.qualifier);
-        qualifier_width = std::max(qualifier_width,
-            font->CalcTextSizeA(font_size, FLT_MAX, 0.0f, qualifier).x);
-        name_width = std::max(name_width,
-            font->CalcTextSizeA(font_size, FLT_MAX, 0.0f, action.name.c_str()).x);
+        qualifier_width = std::max(qualifier_width, textSize(qualifierToStr(action.qualifier), size).x);
+        std::string label = action.name;
+        if (!action.condition.empty())
+            label += "  if " + action.condition;
+        if (action.duration > 0.0f)
+            label += "  " + number(action.duration) + " s";
+        name_width = std::max(name_width, textSize(label.c_str(), size).x);
     }
     qualifier_width += 2.0f * padding;
     name_width += 2.0f * padding;
 
-    // Link from the step to the first box.
-    const float x0 = p.x + half + gap;
-    const float y0 = p.y - line_height / 2.0f;
-    draw_list->AddLine(ImVec2(p.x + half, p.y), ImVec2(x0, p.y), themeOutlineColor(), thickness);
+    // The boxes are as high as the step (IEC 60848), centered on it.
+    float const total = row * float(place.actions.size());
+    float const x0 = p.x + half + gap;
+    float const y0 = p.y - total * 0.5f;
+    draw_list->AddLine(ImVec2(p.x + half, p.y), ImVec2(x0, p.y), pal.outline, t);
 
     for (size_t i = 0u; i < place.actions.size(); ++i)
     {
         Action const& action = place.actions[i];
-        const float y = y0 + float(i) * line_height;
-        const ImVec2 box_min(x0, y);
-        const ImVec2 box_max(x0 + qualifier_width + name_width, y + line_height);
-        const bool active = (is_active != nullptr) && is_active(i, data);
+        float const y = y0 + float(i) * row;
+        ImVec2 const a(x0, y);
+        ImVec2 const b(x0 + qualifier_width + name_width, y + row);
+        bool const active = (is_active != nullptr) && is_active(i, data);
+        draw_list->AddRectFilled(a, b, active ? mix(pal.fill, pal.active, 0.55f) : pal.fill);
+        draw_list->AddRect(a, b, pal.outline, 0.0f, ImDrawFlags_None, t);
+        draw_list->AddLine(ImVec2(x0 + qualifier_width, y), ImVec2(x0 + qualifier_width, y + row),
+                           pal.outline, t);
 
-        draw_list->AddRectFilled(box_min, box_max, active
-            ? COLOR_FIREABLE_TRANSITION : themeFillColor(255));
-        draw_list->AddRect(box_min, box_max, themeOutlineColor(), 0.0f,
-                           ImDrawFlags_None, thickness);
-        draw_list->AddLine(ImVec2(x0 + qualifier_width, y),
-                           ImVec2(x0 + qualifier_width, y + line_height),
-                           themeOutlineColor(), thickness);
-
-        const ImU32 text_color = active ? IM_COL32(0, 0, 0, 255) : themeCaptionColor();
-        draw_list->AddText(font, font_size, ImVec2(x0 + padding, y + padding),
-                           text_color, qualifierToStr(action.qualifier));
-        draw_list->AddText(font, font_size,
-                           ImVec2(x0 + qualifier_width + padding, y + padding),
-                           text_color, action.name.c_str());
+        float const ty = y + (row - size) * 0.5f;
+        text(draw_list, ImVec2(x0 + padding, ty), pal.secondary, qualifierToStr(action.qualifier), size);
+        std::string label = action.name;
+        text(draw_list, ImVec2(x0 + qualifier_width + padding, ty), pal.caption, label.c_str(), size);
+        float x = x0 + qualifier_width + padding + textSize(label.c_str(), size).x;
+        if (!action.condition.empty())
+        {
+            std::string const condition = "  if " + action.condition;
+            text(draw_list, ImVec2(x, ty), pal.secondary, condition.c_str(), size);
+            x += textSize(condition.c_str(), size).x;
+        }
+        if (action.duration > 0.0f)
+        {
+            std::string const duration = "  " + number(action.duration) + " s";
+            text(draw_list, ImVec2(x, ty), pal.duration, duration.c_str(), size);
+        }
     }
 }
 

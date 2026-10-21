@@ -4,10 +4,10 @@
 //
 // This file is part of TimedPetriNetEditor.
 //
-// TimedPetriNetEditor is free software: you can redistribute it and/or modify it
-// under the terms of the GNU General Public License as published by
-// the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version.
+// TimedPetriNetEditor is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by the Free
+// Software Foundation, either version 3 of the License, or (at your option) any
+// later version.
 //
 // This program is distributed in the hope that it will be useful, but
 // WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -25,112 +25,91 @@
 #  include "PetriNet/PetriNet.hpp"
 #  include "PetriNet/Simulation.hpp"
 #  include "imgui/imgui.h"
+
+#  include <memory>
+#  include <string>
 #  include <vector>
 
 namespace tpne {
 
 class Editor;
+class NetModificationAction;
 
 // ****************************************************************************
-//! \brief Graphical representation of the Petri net and user interaction.
-//! Handles canvas drawing, mouse/keyboard input, and selection management.
+//! \brief The canvas of a net: drawing and editing with the mouse only, no
+//! mode to choose. What a button does depends on what is under the mouse and
+//! on whether the mouse moves before the button is released:
+//!
+//! | Under the mouse | Click (release without moving) | Drag                |
+//! |-----------------|--------------------------------|---------------------|
+//! | nothing, left   | add a place (clears the selection first if any) | select in a rectangle |
+//! | nothing, right  | add a transition               | move the view       |
+//! | node, left      | select it (Ctrl: add/remove)   | move it (and the selection) |
+//! | node, right     | menu of the node               | draw an arc from it |
+//! | arc, left       | select it                      | select in a rectangle |
+//! | arc, right      | menu of the arc                | move the view       |
+//! | middle button   |                                | move the view       |
+//!
+//! Double click: rename a node, edit the duration of an arc. Wheel: zoom
+//! around the mouse. The status bar shows what each button would do now
+//! (hint()).
 // ****************************************************************************
 class PetriView
 {
 public:
 
     // ************************************************************************
-    //! \brief Grid layout configuration for the canvas.
+    //! \brief Grid of the canvas.
     // ************************************************************************
     struct GridLayout
     {
-        float step = 50.0f;   //!< Grid cell size in pixels
+        float step = 50.0f;   //!< Grid cell size in net units
         bool  show = true;    //!< Whether to display the grid
-        bool  menu = true;    //!< Whether menu is shown (affects pan threshold)
-        bool  snap = true;    //!< Snap nodes to grid when moving
+        bool  menu = true;    //!< Unused, kept for the saved settings
+        bool  snap = true;    //!< Snap nodes to the grid while moving them
 
-        //! \brief Snap a value to the nearest grid line.
         float snapValue(float v) const
         {
             return snap ? roundf(v / step) * step : v;
         }
     };
 
-    //--------------------------------------------------------------------------
-    //! \brief Constructor.
-    //! \param[in] editor Reference to the parent editor.
-    //--------------------------------------------------------------------------
-    PetriView(Editor& editor);
+    explicit PetriView(Editor& editor);
+    ~PetriView();
 
-    //--------------------------------------------------------------------------
-    //! \brief Reshape the canvas to fit the available window space.
-    //--------------------------------------------------------------------------
+    //! \brief Take the space left in the current window.
     void reshape();
-
-    //--------------------------------------------------------------------------
-    //! \brief Handle mouse and keyboard input for the Petri net view.
-    //! \param[in,out] net The Petri net being edited.
-    //! \param[in,out] simulation The simulation state.
-    //--------------------------------------------------------------------------
+    //! \brief Mouse and keyboard on the canvas of the active net.
     void onHandleInput(Net& net, Simulation& simulation);
-
-    //--------------------------------------------------------------------------
-    //! \brief Draw the Petri net on the canvas.
-    //! \param[in] net The Petri net to draw.
-    //! \param[in] simulation The simulation state.
-    //! \param[in] interactive Whether to allow user interaction.
-    //! \param[in] show_hover Whether to show hover effect (e.g. in simulation mode).
-    //--------------------------------------------------------------------------
+    //! \brief Draw the net and the overlays.
     void drawPetriNet(Net& net, Simulation& simulation, bool interactive = true,
                       bool show_hover = true);
 
-    //--------------------------------------------------------------------------
-    //! \brief Get the canvas origin in screen coordinates.
-    //--------------------------------------------------------------------------
     inline ImVec2 const& origin() const { return m_canvas.origin; }
-
-    //--------------------------------------------------------------------------
-    //! \brief Get the canvas size.
-    //--------------------------------------------------------------------------
     inline ImVec2 const& size() const { return m_canvas.size; }
+    inline float zoom() const { return m_canvas.zoom; }
+    //! \brief Mouse position in net units.
+    inline ImVec2 const& mouse() const { return m_mouse.position; }
 
-    //--------------------------------------------------------------------------
-    //! \brief Framebuffer rectangle of the canvas for screenshots.
-    //! Coordinates use a top-left origin (ImGui screen space, scaled to pixels).
-    //! \return false if the canvas has no valid size.
-    //--------------------------------------------------------------------------
     bool screenshotRect(int& x, int& y, int& width, int& height) const;
-
-    //--------------------------------------------------------------------------
-    //! \brief Load view state from document.
-    //! \param[in] state The view state to load.
-    //--------------------------------------------------------------------------
     void loadViewState(Document::ViewState const& state);
-
-    //--------------------------------------------------------------------------
-    //! \brief Save view state to document.
-    //! \param[out] state The view state to save to.
-    //--------------------------------------------------------------------------
     void saveViewState(Document::ViewState& state) const;
-
-    //--------------------------------------------------------------------------
-    //! \brief Clear all node and arc selections.
-    //--------------------------------------------------------------------------
     void clearAllSelections();
-
-    //--------------------------------------------------------------------------
-    //! \brief Center the view on the given net, adjusting scrolling and zoom.
-    //! \param[in] net The net to center on.
-    //--------------------------------------------------------------------------
+    //! \brief Fit the whole net in the canvas.
     void centerOnNet(Net const& net);
+    //! \brief Zoom by a factor around the center of the canvas.
+    void zoomBy(float factor);
+    //! \brief What the mouse buttons would do now (for the status bar).
+    std::string const& hint() const { return m_hint; }
+    //! \brief Number of selected nodes and arcs.
+    size_t selectionSize() const { return m_mouse.selected_nodes.size() + m_mouse.selected_arcs.size(); }
 
-    //! \brief Grid layout configuration (public for menu access)
     GridLayout grid;
 
 private:
 
     // ************************************************************************
-    //! \brief Canvas state for viewport management.
+    //! \brief Placement of the net in the canvas.
     // ************************************************************************
     struct Canvas
     {
@@ -139,8 +118,8 @@ private:
         ImVec2 origin{0.0f, 0.0f};
         ImVec2 scrolling{0.0f, 0.0f};
         float zoom = 1.0f;
-        static constexpr float ZOOM_MIN = 0.1f;
-        static constexpr float ZOOM_MAX = 5.0f;
+        static constexpr float ZOOM_MIN = 0.05f;
+        static constexpr float ZOOM_MAX = 6.0f;
         ImDrawList* draw_list = nullptr;
 
         ImVec2 getMousePosition() const;
@@ -149,89 +128,89 @@ private:
         void pop();
     };
 
+    //! \brief What the mouse is doing between press and release.
+    enum class Gesture { None, Pending, MoveNodes, RubberBand, Arc, Pan };
+
     // ************************************************************************
-    //! \brief Mouse state for tracking user interactions.
+    //! \brief State of the mouse.
     // ************************************************************************
     struct MouseState
     {
-        ImVec2 position;                     //!< Current mouse position in world coords
-        ImVec2 clicked_at;                   //!< Position where mouse was clicked
-        bool is_dragging_view = false;       //!< Is user dragging the view?
-        Node* from = nullptr;                //!< Arc origin node
-        bool handling_arc = false;           //!< Is user creating an arc?
-        Node* to = nullptr;                  //!< Arc destination node
-        std::vector<Node*> selection;        //!< Legacy node movement selection
+        ImVec2 position;                     //!< Mouse position in net units
+        Gesture gesture = Gesture::None;
+        ImGuiMouseButton button = ImGuiMouseButton_Left; //!< Button of the gesture
+        ImVec2 pressed_at;                   //!< Net position of the press
+        ImVec2 pressed_screen;               //!< Screen position of the press
+        Node* pressed_node = nullptr;        //!< Node under the press
+        Arc* pressed_arc = nullptr;          //!< Arc under the press
+        bool pressed_ctrl = false;
         std::vector<Node*> selected_nodes;   //!< Persistent node selection
         std::vector<Arc*> selected_arcs;     //!< Persistent arc selection
-        bool is_rubber_band = false;         //!< Is rubber band selection active?
-        ImVec2 rubber_band_start;            //!< Rubber band start position
-        bool is_dragging_nodes = false;      //!< Is user dragging selected nodes?
-        std::vector<ImVec2> drag_offsets;    //!< Offsets for dragging nodes
+        std::vector<ImVec2> drag_offsets;    //!< Offsets of the moved nodes
         Node* editing_node = nullptr;        //!< Node being renamed
-        char edit_buffer[256] = {0};     //!< Buffer for name editing
+        char edit_buffer[256] = {0};         //!< Buffer for name editing
         bool edit_focus_requested = false;   //!< Request focus for edit widget
+        Arc* editing_arc = nullptr;          //!< Arc whose duration is edited
+        float edit_duration = 0.0f;
         Node* hovered_node = nullptr;        //!< Node under mouse cursor
         Arc* hovered_arc = nullptr;          //!< Arc under mouse cursor
         Node* context_menu_node = nullptr;   //!< Node for context menu
         Arc* context_menu_arc = nullptr;     //!< Arc for context menu
     };
 
-    // Input handling helpers
-    bool isMouseClicked(ImGuiMouseButton& key) const;
-    bool isMouseReleased(ImGuiMouseButton& key) const;
-    bool isMouseDraggingView(ImGuiMouseButton const& key) const;
-    void handleAddNode(ImGuiMouseButton button);
-    void handleArcOrigin();
-    void handleMoveNode();
-    void handleArcDestination();
-    void handleSelection(ImGuiMouseButton button);
+    // Input
+    void pressed(ImGuiMouseButton button, Net& net);
+    void dragged(Net& net);
+    void released(Net& net, Simulation& simulation);
+    void clicked(Net& net, Simulation& simulation);
+    void finishArc(Net& net);
+    void handleWheel();
+    void handleKeyboard(Net& net, Simulation& simulation);
+    void deleteSelection();
+    void sanitize(Net& net);
+    void nudgeSelection(Net& net, float dx, float dy);
+    void updateHint(Net const& net, Simulation const& simulation);
+    void updateCursor() const;
 
-    // Input handling helpers (split from onHandleInput)
-    void updateHoverState();
-    void handleContextMenu();
-    void handleDoubleClickRename(Simulation& simulation);
-    void handleMouseClicksAndDrags(Net& net, Simulation& simulation);
-    void handleMouseRelease(Net& net);
-    void handleMouseWheelZoom();
-    void handleKeyboardShortcuts(Net& net, Simulation& simulation);
-    void handleTokenShortcuts(Net& net);
-    void handleEditingShortcuts(Net& net, Simulation& simulation);
-
-    // Drawing helpers
+    // Drawing
     void drawGrid(ImDrawList* draw_list, bool const running, bool const has_error = false);
-    void drawRubberBand(ImDrawList* draw_list);
-    void drawNetElements(Net& net, Simulation& simulation, float alpha, float zoom);
-    void drawInteractiveElements(float zoom);
-    void drawHoverEffects(Net& net, float zoom);
-    void drawSelectionHighlights(Net& net, float zoom);
+    void drawNetElements(Net& net, Simulation& simulation, float zoom);
+    void drawOverlays(Net& net, Simulation& simulation, float zoom);
+    void drawEditWidgets(Net& net);
+    void drawContextMenus(Net& net);
+    void drawBadges(Net const& net, Simulation const& simulation);
 
-    // Tooltip helpers
+    // Tooltips
     void showPlaceTooltip(Place const& place, TypeOfNet type);
     void showTransitionTooltip(Transition const& trans, TypeOfNet type);
 
-    // Selection management
+    // Selection
     bool isNodeSelected(Node const* node) const;
     void selectNode(Node* node, bool add_to_selection);
     void deselectNode(Node* node);
     void clearSelection();
     void selectNodesInRect(ImVec2 const& min, ImVec2 const& max);
-    Arc* getArc(ImVec2 const& position);
+    Node* getNode(ImVec2 const& position) const;
+    Arc* getArc(ImVec2 const& position) const;
     bool isArcSelected(Arc const* arc) const;
     void selectArc(Arc* arc, bool add_to_selection);
     void deselectArc(Arc* arc);
     void clearArcSelection();
 
-    // Clipboard operations
+    // Clipboard
     void copySelection();
     void pasteClipboard();
 
 private:
 
-    Editor& m_editor;                        //!< Reference to parent editor
-    Net* m_current_net = nullptr;            //!< Current net being edited
-    Simulation* m_current_simulation = nullptr; //!< Current simulation
-    Canvas m_canvas;                         //!< Canvas state
-    MouseState m_mouse;                      //!< Mouse state
+    Editor& m_editor;
+    Net* m_current_net = nullptr;
+    Simulation* m_current_simulation = nullptr;
+    Canvas m_canvas;
+    MouseState m_mouse;
+    std::string m_hint;
+    //! \brief Net before the nodes are moved (undo of a move).
+    std::unique_ptr<NetModificationAction> m_move_action;
 };
 
 } // namespace tpne

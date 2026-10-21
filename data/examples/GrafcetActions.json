@@ -5,19 +5,19 @@
     {
        "name": "Cylinder Control",
        "places": [
-            { "id": 0, "caption": "Init", "tokens": 1, "x": 300, "y": 50 },
-            { "id": 1, "caption": "Extending", "tokens": 0, "x": 300, "y": 250 },
-            { "id": 2, "caption": "Extended", "tokens": 0, "x": 300, "y": 450 },
-            { "id": 3, "caption": "Retracting", "tokens": 0, "x": 300, "y": 650 },
-            { "id": 4, "caption": "Alarm", "tokens": 0, "x": 450, "y": 150 }
+            { "id": 0, "caption": "Init", "tokens": 1, "x": 100, "y": 60 },
+            { "id": 1, "caption": "Extending", "tokens": 0, "x": 100, "y": 200 },
+            { "id": 2, "caption": "Extended", "tokens": 0, "x": 20, "y": 340 },
+            { "id": 3, "caption": "Retracting", "tokens": 0, "x": 20, "y": 480 },
+            { "id": 4, "caption": "Alarm", "tokens": 0, "x": 180, "y": 340 }
        ],
        "transitions": [
-            { "id": 0, "caption": "Start", "x": 300, "y": 150 },
-            { "id": 1, "caption": "s1", "x": 300, "y": 350 },
-            { "id": 2, "caption": "2s/X2", "x": 300, "y": 550 },
-            { "id": 3, "caption": "s0", "x": 50, "y": 400 },
-            { "id": 4, "caption": "Error", "x": 450, "y": 250 },
-            { "id": 5, "caption": "Reset", "x": 450, "y": 50 }
+            { "id": 0, "caption": "Start", "x": 100, "y": 130 },
+            { "id": 1, "caption": "s1", "x": 20, "y": 270 },
+            { "id": 2, "caption": "2s/X2", "x": 20, "y": 410 },
+            { "id": 3, "caption": "s0", "x": 20, "y": 550 },
+            { "id": 4, "caption": "Error", "x": 180, "y": 270 },
+            { "id": 5, "caption": "Reset", "x": 180, "y": 410 }
        ],
        "arcs": [
             { "from": "P0", "to": "T0" },
