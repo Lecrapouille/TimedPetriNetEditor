@@ -6,6 +6,7 @@
 // See LICENSING.md for details.
 
 #include "Editor/Backends/RayLib/Application.hpp"
+#include <algorithm>
 
 #include <cstdlib>
 #include <cstdio>
@@ -120,8 +121,20 @@ void Application::run()
     float timeSinceLastUpdate = 0.0f;
     const float time_per_frame = 1.0f / float(m_framerate);
 
+    // Frames drawn after the last event before waiting for the next one.
+    constexpr size_t SETTLE_FRAMES = 3u;
+    m_idle_frames = 0u;
+
     while (!m_exit_window)
     {
+        // Nothing moves: EndDrawing() waits for the next event instead of
+        // drawing the same frame again (saves CPU when the net is idle).
+        const bool animating = isAnimating();
+        if (!animating && (m_idle_frames >= SETTLE_FRAMES))
+            EnableEventWaiting();
+        else
+            DisableEventWaiting();
+
         ImGui_ImplRaylib_ProcessEvents();
 
         // Start the Dear ImGui frame
@@ -129,7 +142,9 @@ void Application::run()
         ImGui::NewFrame();
 
         // Process events at fixed time steps
-        timeSinceLastUpdate += timer.restart();
+        // After a long wait, do not replay every missed time step.
+        timeSinceLastUpdate = std::min(timeSinceLastUpdate + timer.restart(),
+                                       4.0f * time_per_frame);
         while (timeSinceLastUpdate > time_per_frame)
         {
             timeSinceLastUpdate -= time_per_frame;
@@ -147,6 +162,7 @@ void Application::run()
         ImGui_ImplRaylib_RenderDrawData(ImGui::GetDrawData());
         onFrameEnd();
         EndDrawing(); // Stop raylib content
+        m_idle_frames = animating ? 0u : m_idle_frames + 1u;
     }
 }
 
@@ -198,7 +214,10 @@ bool Application::screenshot(std::string const& path, int const region_x,
 //------------------------------------------------------------------------------
 void Application::title(std::string const& title_)
 {
-    SetWindowTitle(title_.c_str());
+    if (title_ == m_title)
+        return;
+    m_title = title_;
+    SetWindowTitle(m_title.c_str());
 }
 
 //------------------------------------------------------------------------------

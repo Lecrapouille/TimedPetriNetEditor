@@ -45,6 +45,9 @@ public:
         std::unique_ptr<Simulation> simulation;
         bool visible = true;
         ViewState view_state;
+        //! \brief Net revision (Net::modified.revision()) for which the GRAFCET
+        //! receptivities have been checked. Avoids parsing them every frame.
+        size_t checked_revision = size_t(-1);
 
         NetEntry(TypeOfNet type, std::string const& name, Messages& messages);
         ~NetEntry();

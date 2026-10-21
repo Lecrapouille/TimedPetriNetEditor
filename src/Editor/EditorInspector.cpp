@@ -646,7 +646,7 @@ static void drawArcsPanel(Net& net, Simulation& simulation, bool& modified)
 //------------------------------------------------------------------------------
 void Editor::inspector()
 {
-    static bool modified = false;
+    bool modified = false;
 
     // Places/Steps panel
     drawPlacesPanel(net(), simulation(), modified, m_states.show_place_captions);
@@ -666,8 +666,10 @@ void Editor::inspector()
     drawArcsPanel(net(), simulation(), modified);
 
     // Update net state
-    net().modified |= modified;
-    modified = false;
+    if (modified)
+    {
+        net().modified = true;
+    }
 }
 
 } // namespace tpne
