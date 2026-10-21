@@ -7,6 +7,7 @@
 
 #include "Imports.hpp"
 #include "PetriNet/PetriNet.hpp"
+#include "PetriNet/Flowshop.hpp"
 #include "PetriNet/SafeFloat.hpp"
 #include <sstream>
 #include <fstream>
@@ -17,22 +18,10 @@
 namespace tpne {
 
 //------------------------------------------------------------------------------
-struct FlowshopData
-{
-    size_t npieces = 0;
-    size_t nmachines = 0;
-    std::vector<std::string> pieceNames;
-    std::vector<std::string> machineNames;
-    std::vector<size_t> np;  // tokens per piece (vertical cycle)
-    std::vector<size_t> nm;  // tokens per machine (horizontal cycle)
-    std::vector<std::vector<float>> PT;  // PT[machine][piece], epsilon = no operation
-};
-
-//------------------------------------------------------------------------------
 //! \brief (max,+) epsilon: the neutral element of the ⊕ (max) operator, i.e.
 //! Scilab's %0 == -inf (see zero<MaxPlus>() in TropicalAlgebra.hpp). A cell
 //! holding epsilon means "no operation" (a hole) for that machine/piece.
-static inline float epsilonMaxPlus()
+float flowshopNoOperation()
 {
     return safeNegInfF();
 }
@@ -42,7 +31,7 @@ static inline float epsilonMaxPlus()
 //! hole imposed in the flowshop grid. Both -inf (%0) and any NaN (legacy file
 //! convention) are treated as epsilon. Uses the -ffast-math-safe helpers from
 //! SafeFloat.hpp (see that file for why std::isnan/std::isinf cannot be used).
-static inline bool isEpsilonMaxPlus(float value)
+bool flowshopIsNoOperation(float value)
 {
     return safeIsNegInf(value) || safeIsNaN(value);
 }
@@ -71,7 +60,7 @@ static std::vector<std::string> splitBySpace(std::string const& str)
 }
 
 //------------------------------------------------------------------------------
-static std::string parseFlowshopFile(std::ifstream& file, FlowshopData& data)
+static std::string parseFlowshopFile(std::ifstream& file, Flowshop& data)
 {
     std::string line;
     std::stringstream error;
@@ -131,7 +120,7 @@ static std::string parseFlowshopFile(std::ifstream& file, FlowshopData& data)
                 if ((t == "nan") || (t == "-inf") || (t == "%0") || (t == "eps"))
                 {
                     // (max,+) zero %0 == -inf: marks a hole (no operation).
-                    row.push_back(epsilonMaxPlus());
+                    row.push_back(flowshopNoOperation());
                 }
                 else
                 {
@@ -142,7 +131,13 @@ static std::string parseFlowshopFile(std::ifstream& file, FlowshopData& data)
         }
     }
 
-    // Validation
+    return checkFlowshop(data);
+}
+
+//------------------------------------------------------------------------------
+std::string checkFlowshop(Flowshop const& data)
+{
+    std::stringstream error;
     if (data.npieces == 0 || data.nmachines == 0)
     {
         error << "Missing npieces or nmachines" << std::endl;
@@ -191,8 +186,9 @@ static std::string parseFlowshopFile(std::ifstream& file, FlowshopData& data)
 //
 // Node numbering is 1-based (like Scilab). PT[machine][piece], %0 (-inf, or the
 // legacy "nan") = epsilon = no task.
-static void buildFlowshopPetriNet(Net& net, FlowshopData const& data)
+void buildFlowshop(Net& net, Flowshop const& data)
 {
+    net.reset(TypeOfNet::TimedEventGraph);
     const size_t nmach = data.nmachines;
     const size_t npiece = data.npieces;
 
@@ -232,7 +228,7 @@ static void buildFlowshopPetriNet(Net& net, FlowshopData const& data)
     {
         for (size_t j = 0; j < nmach; ++j)
         {
-            if (isEpsilonMaxPlus(data.PT[j][i]))
+            if (flowshopIsNoOperation(data.PT[j][i]))
             {
                 A[j][i] = 0u;
                 if (l[j] != 0u) l[j] += 1u;
@@ -326,6 +322,7 @@ static void buildFlowshopPetriNet(Net& net, FlowshopData const& data)
             continue; // defensive: skip degenerate edges
         net.addArc(*trans[e.from], *trans[e.to], e.tokens, e.duration);
     }
+    net.generateArcsInArcsOut();
 }
 
 //------------------------------------------------------------------------------
@@ -343,14 +340,14 @@ std::string importFlowshop(Net& net, std::string const& filename)
 
     net.reset(TypeOfNet::TimedEventGraph);
 
-    FlowshopData data;
+    Flowshop data;
     std::string parseError = parseFlowshopFile(file, data);
     if (!parseError.empty())
     {
         return parseError;
     }
 
-    buildFlowshopPetriNet(net, data);
+    buildFlowshop(net, data);
 
     return {};
 }

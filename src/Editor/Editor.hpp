@@ -114,6 +114,7 @@ private: // Show results from Petri algorithms
     void showCounterOrDaterEquation() const;
     void showAdjacencyMatrices() const;
     void showSimulationPlot();
+    void showGanttChart();
 
 private: // Document management
 
@@ -249,6 +250,13 @@ private:
         std::string text;
     };
 
+public:
+
+    //! \brief One bar of the Gantt chart: an operation during one cycle.
+    struct GanttBarData { int row; int color; double start; double end; std::string label; };
+
+private:
+
     // ************************************************************************
     //! \brief Since we are using immediate mode GUI we need to memorize states
     //! controling which widgets/modal windows to show.
@@ -265,6 +273,9 @@ private:
         bool do_adjency = false;
         //! \brief Real-time simulation plot (firing dates per transition).
         bool show_simulation_plot = false;
+        //! \brief Gantt chart of the earliest dates of a timed event graph.
+        bool show_gantt = false;
+        int gantt_cycles = 3;
 
         //! \brief File operation dialog state (mutually exclusive)
         FileDialog file_dialog = FileDialog::None;
@@ -307,6 +318,13 @@ private:
         TextCache adjacency[2];  // durations, tokens
         TextCache equations[2];  // counter, dater
         TextCache syslin[4];     // D, A, B, C
+        //! \brief Bars of the Gantt chart, for the net of the given revision.
+        std::vector<GanttBarData> gantt_bars;
+        std::vector<std::string> gantt_rows;
+        std::string gantt_error;
+        Net const* gantt_net = nullptr;
+        size_t gantt_revision = 0u;
+        int gantt_computed_cycles = 0;
         //! \brief Critical cycle of the net of the given revision.
         CriticalCycleResult critical_cycle;
         Net const* critical_cycle_net = nullptr;
