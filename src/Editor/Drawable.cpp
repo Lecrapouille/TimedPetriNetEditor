@@ -5,6 +5,10 @@
 // for users who cannot use the GPL, under a commercial license.
 // See LICENSING.md for details.
 
+// ImVec2 operators (+, -, *): also defined when the host does not.
+#ifndef IMGUI_DEFINE_MATH_OPERATORS
+#  define IMGUI_DEFINE_MATH_OPERATORS
+#endif
 #include "Editor/Drawable.hpp"
 
 
