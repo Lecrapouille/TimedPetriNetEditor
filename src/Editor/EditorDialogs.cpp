@@ -19,6 +19,7 @@
 //=============================================================================
 
 #include "Editor/Editor.hpp"
+#include "PetriNet/Flowshop.hpp"
 #include "Editor/Theme.hpp"
 
 #include "PetriNet/Algorithms.hpp"
@@ -609,6 +610,135 @@ void Editor::showSimulationPlot()
     }
 
     ImPlot::EndPlot();
+    ImGui::End();
+}
+
+//------------------------------------------------------------------------------
+//! \brief Fill the bars of the Gantt chart: one bar per firing of a transition
+//! followed by a duration (an operation). A caption "<machine>_<piece>" (the
+//! flowshop convention) puts the bar on the row of the machine, colored by
+//! piece; other transitions get their own row.
+static void computeGantt(Net const& net, int const cycles,
+                         std::vector<std::string>& rows,
+                         std::vector<Editor::GanttBarData>& bars, std::string& error)
+{
+    rows.clear();
+    bars.clear();
+    std::vector<std::vector<double>> dates;
+    error = earliestDates(net, size_t(cycles), dates);
+    if (!error.empty())
+        return;
+
+    std::map<std::string, int> row_of;
+    std::map<std::string, int> color_of;
+    auto const& transitions = net.transitions();
+    for (size_t t = 0u; t < transitions.size(); ++t)
+    {
+        double duration = 0.0;
+        for (Arc const* arc : transitions[t].arcsOut)
+        {
+            if (!std::isnan(arc->duration))
+                duration = std::max(duration, double(arc->duration));
+        }
+        if (duration <= 0.0)
+            continue;
+
+        std::string const name = transitions[t].caption.empty()
+            ? transitions[t].key : transitions[t].caption;
+        size_t const underscore = name.find('_');
+        bool const flowshop = (underscore != std::string::npos) && (name.rfind("out_", 0) != 0);
+        std::string const row = flowshop ? name.substr(0, underscore) : name;
+        std::string const piece = flowshop ? name.substr(underscore + 1u) : name;
+        if (row_of.find(row) == row_of.end())
+        {
+            row_of[row] = int(rows.size());
+            rows.push_back(row);
+        }
+        if (color_of.find(piece) == color_of.end())
+            color_of[piece] = int(color_of.size());
+        for (int k = 0; k < cycles; ++k)
+        {
+            bars.push_back({ row_of[row], color_of[piece], dates[t][size_t(k)],
+                             dates[t][size_t(k)] + duration,
+                             piece + " #" + std::to_string(k + 1) });
+        }
+    }
+}
+
+//------------------------------------------------------------------------------
+void Editor::showGanttChart()
+{
+    if (!ImGui::Begin("Gantt chart", &m_states.show_gantt))
+    {
+        ImGui::End();
+        return;
+    }
+
+    Net const& current = net();
+    ImGui::SetNextItemWidth(120.0f);
+    ImGui::SliderInt("Cycles", &m_states.gantt_cycles, 1, 20);
+    ImGui::SameLine();
+    ImGui::TextDisabled("Earliest dates of the (max,+) dater equation; tokens available at 0.");
+
+    if ((m_states.gantt_net != &current) ||
+        (m_states.gantt_revision != current.modified.revision()) ||
+        (m_states.gantt_computed_cycles != m_states.gantt_cycles))
+    {
+        std::vector<GanttBarData> bars;
+        computeGantt(current, m_states.gantt_cycles, m_states.gantt_rows, bars,
+                     m_states.gantt_error);
+        m_states.gantt_bars.clear();
+        for (auto const& bar : bars)
+            m_states.gantt_bars.push_back({ bar.row, bar.color, bar.start, bar.end, bar.label });
+        m_states.gantt_net = &current;
+        m_states.gantt_revision = current.modified.revision();
+        m_states.gantt_computed_cycles = m_states.gantt_cycles;
+    }
+    if (!m_states.gantt_error.empty())
+    {
+        ImGui::TextColored(ImVec4(1.0f, 0.3f, 0.3f, 1.0f), "%s", m_states.gantt_error.c_str());
+        ImGui::End();
+        return;
+    }
+
+    auto const& rows = m_states.gantt_rows;
+    double end = 1.0;
+    for (auto const& bar : m_states.gantt_bars)
+        end = std::max(end, bar.end);
+
+    if (ImPlot::BeginPlot("##gantt", ImVec2(-1, -1), ImPlotFlags_NoLegend))
+    {
+        std::vector<double> ticks(rows.size());
+        std::vector<char const*> labels(rows.size());
+        for (size_t i = 0u; i < rows.size(); ++i)
+        {
+            ticks[i] = double(i);
+            labels[i] = rows[i].c_str();
+        }
+        ImPlot::SetupAxes("time", nullptr, 0, ImPlotAxisFlags_Invert);
+        if (!rows.empty())
+            ImPlot::SetupAxisTicks(ImAxis_Y1, ticks.data(), int(rows.size()), labels.data());
+        ImPlot::SetupAxesLimits(0.0, end, -0.6, double(rows.size()) - 0.4, ImPlotCond_Always);
+
+        ImDrawList* draw = ImPlot::GetPlotDrawList();
+        ImPlot::PushPlotClipRect();
+        for (auto const& bar : m_states.gantt_bars)
+        {
+            ImVec2 const a = ImPlot::PlotToPixels(bar.start, bar.row - 0.35);
+            ImVec2 const b = ImPlot::PlotToPixels(bar.end, bar.row + 0.35);
+            ImVec4 color = ImPlot::GetColormapColor(bar.color);
+            draw->AddRectFilled(a, b, ImGui::GetColorU32(color), 3.0f);
+            draw->AddRect(a, b, IM_COL32(0, 0, 0, 160), 3.0f);
+            ImVec2 const size = ImGui::CalcTextSize(bar.label.c_str());
+            if (std::fabs(b.x - a.x) > size.x + 4.0f)
+            {
+                draw->AddText(ImVec2(std::min(a.x, b.x) + 3.0f, (a.y + b.y - size.y) / 2.0f),
+                              IM_COL32(0, 0, 0, 255), bar.label.c_str());
+            }
+        }
+        ImPlot::PopPlotClipRect();
+        ImPlot::EndPlot();
+    }
     ImGui::End();
 }
 

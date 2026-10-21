@@ -424,6 +424,10 @@ void Editor::menuGraphEvents()
     {
         m_states.show_simulation_plot = !m_states.show_simulation_plot;
     }
+    if (ImGui::MenuItem("Gantt Chart (earliest dates)", nullptr, m_states.show_gantt))
+    {
+        m_states.show_gantt = !m_states.show_gantt;
+    }
 
     ImGui::EndMenu();
 }
@@ -486,6 +490,7 @@ void Editor::handleMenuActions()
     if (m_states.do_counter_or_dater) { showCounterOrDaterEquation(); }
     if (m_states.do_syslin) { showDynamicLinearSystem(); }
     if (m_states.show_simulation_plot) { showSimulationPlot(); }
+    if (m_states.show_gantt) { showGanttChart(); }
     if (m_states.do_find_critical_circuit) { showCriticalCircuit(); }
 
     // Quit request handling

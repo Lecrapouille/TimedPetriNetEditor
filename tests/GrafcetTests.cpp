@@ -21,6 +21,8 @@
 #include "main.hpp"
 #include "PetriNet/PetriNet.hpp"
 #include "PetriNet/GrafcetEngine.hpp"
+#include "PetriNet/Flowshop.hpp"
+#include "PetriNet/Algorithms.hpp"
 #include "PetriNet/Exports/Exports.hpp"
 #include "PetriNet/Imports/Imports.hpp"
 
@@ -364,4 +366,45 @@ TEST(TestGrafcetJSON, ExamplesCompileAndRun)
         for (int i = 0; i < 10; ++i)
             engine.step(0.1f);
     }
+}
+
+//------------------------------------------------------------------------------
+TEST(TestFlowshop, BuildScheduleAndCycleTime)
+{
+    // Two machines, two pieces, one token each: M1 then M2 for both pieces.
+    Flowshop shop;
+    shop.npieces = 2; shop.nmachines = 2;
+    shop.pieceNames = { "P1", "P2" };
+    shop.machineNames = { "M1", "M2" };
+    shop.np = { 1, 1 }; shop.nm = { 1, 1 };
+    shop.PT = { { 2.0f, 3.0f }, { 1.0f, 4.0f } };
+    ASSERT_STREQ(checkFlowshop(shop).c_str(), "");
+
+    Net net;
+    buildFlowshop(net, shop);
+    EXPECT_EQ(net.type(), TypeOfNet::TimedEventGraph);
+
+    std::vector<std::vector<double>> dates;
+    ASSERT_STREQ(earliestDates(net, 3, dates).c_str(), "");
+    auto date = [&](std::string const& caption, size_t k) {
+        for (size_t t = 0u; t < net.transitions().size(); ++t)
+            if (net.transitions()[t].caption == caption)
+                return dates[t][k];
+        return -1.0;
+    };
+    // First cycle: M1_P1 at 0, M1_P2 at 2, M2_P1 at 2, M2_P2 at max(5, 3) = 5.
+    EXPECT_DOUBLE_EQ(date("M1_P1", 0), 0.0);
+    EXPECT_DOUBLE_EQ(date("M1_P2", 0), 2.0);
+    EXPECT_DOUBLE_EQ(date("M2_P1", 0), 2.0);
+    EXPECT_DOUBLE_EQ(date("M2_P2", 0), 5.0);
+
+    // Cycle time: machine M2 works 1 + 4 = 5, M1 2 + 3 = 5, piece P2 3 + 4 = 7.
+    CriticalCycleResult const cycle = findCriticalCycle(net);
+    ASSERT_TRUE(cycle.success) << cycle.message.str();
+    double lambda = 0.0;
+    for (double d : cycle.durations)
+        lambda = std::max(lambda, d);
+    EXPECT_DOUBLE_EQ(lambda, 7.0);
+    // Steady state: one P2 every 7 time units.
+    EXPECT_DOUBLE_EQ(date("M1_P2", 2) - date("M1_P2", 1), 7.0);
 }
