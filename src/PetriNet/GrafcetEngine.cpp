@@ -45,14 +45,14 @@ void GrafcetEngine::graphs(std::vector<Net*> const& nets)
     if (m_running)
         stop();
     m_nets = nets;
-    refreshInputs();
+    refreshInputs(true);
 }
 
 //------------------------------------------------------------------------------
-void GrafcetEngine::refreshInputs()
+void GrafcetEngine::refreshInputs(bool const keep_values)
 {
-    // Values given by the caller are kept; new inputs take the initial value
-    // declared by the net, else 0.
+    // With keep_values, values given by the caller are kept; else, and for new
+    // inputs, the initial value declared by the net, else 0.
     std::map<std::string, int> inputs;
     for (Net const* net : m_nets)
     {
@@ -72,11 +72,14 @@ void GrafcetEngine::refreshInputs()
             }
         }
     }
-    for (auto& it : inputs)
+    if (keep_values)
     {
-        auto const old = m_inputs.find(it.first);
-        if (old != m_inputs.end())
-            it.second = old->second;
+        for (auto& it : inputs)
+        {
+            auto const old = m_inputs.find(it.first);
+            if (old != m_inputs.end())
+                it.second = old->second;
+        }
     }
     m_inputs = std::move(inputs);
 }
@@ -126,7 +129,9 @@ bool GrafcetEngine::start()
     m_warned.clear();
     m_graphs.clear();
     m_graphs.resize(m_nets.size());
-    refreshInputs();
+    // A run starts from the initial values of the inputs: edges are seen
+    // from there (an input set to 1 by the caller after start() rises).
+    refreshInputs(false);
 
     for (size_t g = 0u; g < m_nets.size(); ++g)
     {

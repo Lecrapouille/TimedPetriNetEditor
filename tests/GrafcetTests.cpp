@@ -137,6 +137,14 @@ TEST(TestGrafcetEngine, EdgesLastOneInstant)
     engine.setInput("a", 1);
     engine.step(0.1f);
     EXPECT_TRUE(active(net, 2));
+
+    // A restart begins from the initial input values: a rises again.
+    engine.stop();
+    ASSERT_TRUE(engine.start());
+    EXPECT_EQ(engine.inputValue("a"), 0);
+    engine.setInput("a", 1);
+    engine.step(0.1f);
+    EXPECT_TRUE(active(net, 1));
 }
 
 //------------------------------------------------------------------------------

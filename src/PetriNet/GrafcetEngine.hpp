@@ -75,7 +75,8 @@ public:
 
     //--------------------------------------------------------------------------
     //! \brief Compile receptivities and action conditions, remember the
-    //! initial situation. Return false on errors (see errors()).
+    //! initial situation, give the inputs their initial values (Net::inputs,
+    //! else 0). Return false on errors (see errors()).
     //--------------------------------------------------------------------------
     bool start();
 
@@ -182,7 +183,7 @@ private:
 
     Graph const* findGraph(Net const& net) const;
     Graph* findGraph(std::string const& name);
-    void refreshInputs();
+    void refreshInputs(bool keep_values);
     void applyForcings();
     bool evolve();
     void computeActions(float dt);
