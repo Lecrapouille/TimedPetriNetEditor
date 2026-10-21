@@ -325,36 +325,36 @@ TEST(TestEventGraph, TestToDaterEquation)
     // --
     expected.str(
         "# Timed event graph represented as dater equation:\n"
-        "# T1(n) = max(1 + T0(n), 1 + T2(n - 1), 1 + T1(n - 2))\n"
-        "# T2(n) = max(1 + T1(n - 1), 2 + T0(n))\n"
-        "# T3(n) = max(T1(n), T2(n))\n");
+        "# T1(k) = max(1 + T0(k), 1 + T2(k - 1), 1 + T1(k - 2))\n"
+        "# T2(k) = max(1 + T1(k - 1), 2 + T0(k))\n"
+        "# T3(k) = max(T1(k), T2(k))\n");
     obtained = showDaterEquation(net, "# ", false, false);
     ASSERT_STREQ(obtained.str().c_str(), expected.str().c_str());
 
     // --
     expected.str(
         "# Timed event graph represented as dater equation:\n"
-        "# x1(n) = max(1 + u(n), 1 + x2(n - 1), 1 + x1(n - 2))\n"
-        "# x2(n) = max(1 + x1(n - 1), 2 + u(n))\n"
-        "# y(n) = max(x1(n), x2(n))\n");
+        "# x1(k) = max(1 + u(k), 1 + x2(k - 1), 1 + x1(k - 2))\n"
+        "# x2(k) = max(1 + x1(k - 1), 2 + u(k))\n"
+        "# y(k) = max(x1(k), x2(k))\n");
     obtained = showDaterEquation(net, "# ", true, false);
     ASSERT_STREQ(obtained.str().c_str(), expected.str().c_str());
 
     // --
     expected.str(
         "# Timed event graph represented as dater equation (max-plus algebra):\n"
-        "# T1(n) = 1 T0(n) ⨁ 1 T2(n - 1) ⨁ 1 T1(n - 2)\n"
-        "# T2(n) = 1 T1(n - 1) ⨁ 2 T0(n)\n"
-        "# T3(n) = T1(n) ⨁ T2(n)\n");
+        "# T1(k) = 1 T0(k) ⨁ 1 T2(k - 1) ⨁ 1 T1(k - 2)\n"
+        "# T2(k) = 1 T1(k - 1) ⨁ 2 T0(k)\n"
+        "# T3(k) = T1(k) ⨁ T2(k)\n");
     obtained = showDaterEquation(net, "# ", false, true);
     ASSERT_STREQ(obtained.str().c_str(), expected.str().c_str());
 
     // --
     expected.str(
         "# Timed event graph represented as dater equation (max-plus algebra):\n"
-        "# x1(n) = 1 u(n) ⨁ 1 x2(n - 1) ⨁ 1 x1(n - 2)\n"
-        "# x2(n) = 1 x1(n - 1) ⨁ 2 u(n)\n"
-        "# y(n) = x1(n) ⨁ x2(n)\n");
+        "# x1(k) = 1 u(k) ⨁ 1 x2(k - 1) ⨁ 1 x1(k - 2)\n"
+        "# x2(k) = 1 x1(k - 1) ⨁ 2 u(k)\n"
+        "# y(k) = x1(k) ⨁ x2(k)\n");
     obtained = showDaterEquation(net, "# ", true, true);
     ASSERT_STREQ(obtained.str().c_str(), expected.str().c_str());
 }

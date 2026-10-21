@@ -82,12 +82,67 @@ static void writeList(std::ofstream& file, std::vector<nlohmann::ordered_json> c
 }
 
 //------------------------------------------------------------------------------
-//! \brief GRAFCET inputs: [{ "name": ..., "initial": ... }].
-static std::vector<nlohmann::ordered_json> inputsToJSON(std::map<std::string, int> const& inputs)
+//! \brief GRAFCET inputs: [{ "name": ..., "kind": ..., "description": ...,
+//! "initial": ... }]. The described inputs first, in their order, then the
+//! other inputs read by the nets. Initial values are the ones of the nets.
+static std::vector<nlohmann::ordered_json> inputsToJSON(std::map<std::string, int> const& inputs,
+                                                        DocumentInfo const* info)
 {
     std::vector<nlohmann::ordered_json> items;
-    for (auto const& it : inputs)
+    std::map<std::string, int> others = inputs;
+    if (info != nullptr)
+    {
+        for (GrafcetInput const& input : info->inputs)
+        {
+            auto const it = others.find(input.name);
+            int const initial = (it != others.end()) ? it->second : input.initial;
+            if (it != others.end())
+                others.erase(it);
+            nlohmann::ordered_json item = { { "name", input.name },
+                                            { "kind", inputKindToStr(input.kind) } };
+            if (!input.description.empty())
+                item["description"] = input.description;
+            item["initial"] = initial;
+            if (!input.group.empty())
+                item["group"] = input.group;
+            if (!input.color.empty())
+                item["color"] = input.color;
+            if (input.kind == GrafcetInput::Kind::Value)
+            {
+                item["min"] = input.min;
+                item["max"] = input.max;
+                if (!input.unit.empty())
+                    item["unit"] = input.unit;
+                if (!input.driven_by.empty())
+                {
+                    item["driven_by"] = input.driven_by;
+                    item["rise"] = input.rise;
+                    item["fall"] = input.fall;
+                }
+            }
+            if (input.kind == GrafcetInput::Kind::Clock)
+                item["period"] = input.period;
+            items.push_back(item);
+        }
+    }
+    for (auto const& it : others)
         items.push_back({ { "name", it.first }, { "initial", it.second } });
+    return items;
+}
+
+//------------------------------------------------------------------------------
+//! \brief GRAFCET outputs: [{ "name": ..., "kind": ..., "description": ... }].
+static std::vector<nlohmann::ordered_json> outputsToJSON(DocumentInfo const& info)
+{
+    std::vector<nlohmann::ordered_json> items;
+    for (GrafcetOutput const& output : info.outputs)
+    {
+        nlohmann::ordered_json item = { { "name", output.name },
+                                        { "kind", outputKindToStr(output.kind) } };
+        if (!output.description.empty())
+            item["description"] = output.description;
+        items.push_back(item);
+    }
     return items;
 }
 
@@ -97,6 +152,8 @@ static void writeNetToJSON(std::ofstream& file, Net const& net)
 {
     file << "    {\n";
     file << "       \"name\": " << quote(net.name) << ",\n";
+    if (!net.description.empty())
+        file << "       \"description\": " << quote(net.description) << ",\n";
 
     // Places
     std::vector<nlohmann::ordered_json> items;
@@ -139,10 +196,17 @@ static void writeNetToJSON(std::ofstream& file, Net const& net)
     {
         for (auto const& action : p.actions)
         {
-            nlohmann::ordered_json item = {
-                { "place_id", p.id }, { "qualifier", qualifierToStr(action.qualifier) },
-                { "color", ledColorToStr(action.color) }, { "name", action.name },
-                { "script", action.script }, { "duration", action.duration } };
+            nlohmann::ordered_json item = { { "place_id", p.id } };
+            if (!action.name.empty() || action.forcings.empty())
+            {
+                item["qualifier"] = qualifierToStr(action.qualifier);
+                item["color"] = ledColorToStr(action.color);
+                item["name"] = action.name;
+            }
+            if (!action.script.empty())
+                item["script"] = action.script;
+            if (action.duration > 0.0f)
+                item["duration"] = action.duration;
             if (!action.condition.empty())
                 item["condition"] = action.condition;
             if (!action.forcings.empty())
@@ -164,7 +228,8 @@ static void writeNetToJSON(std::ofstream& file, Net const& net)
 
 //------------------------------------------------------------------------------
 //! \brief Write a document made of the given nets.
-static std::string writeDocument(std::vector<Net const*> const& nets, std::string const& filename)
+static std::string writeDocument(std::vector<Net const*> const& nets, std::string const& filename,
+                                 DocumentInfo const* info)
 {
     if (nets.empty())
     {
@@ -182,8 +247,10 @@ static std::string writeDocument(std::vector<Net const*> const& nets, std::strin
 
     // Use the type of the first net for the document
     file << "{\n";
-    file << "  \"revision\": 5,\n";
+    file << "  \"revision\": 1,\n";
     file << "  \"type\": " << quote(to_str(nets[0]->type())) << ",\n";
+    if ((info != nullptr) && !info->description.empty())
+        file << "  \"description\": " << quote(info->description) << ",\n";
     file << "  \"nets\": [\n";
 
     // Write all nets
@@ -198,26 +265,34 @@ static std::string writeDocument(std::vector<Net const*> const& nets, std::strin
 
     // GRAFCET inputs (shared between all nets) with their initial value
     file << "  \"inputs\": [";
-    writeList(file, inputsToJSON(inputs), "    ");
-    file << "\n  ]\n";
+    writeList(file, inputsToJSON(inputs, info), "    ");
+    file << "\n  ]";
+    if ((info != nullptr) && !info->outputs.empty())
+    {
+        file << ",\n  \"outputs\": [";
+        writeList(file, outputsToJSON(*info), "    ");
+        file << "\n  ]";
+    }
+    file << "\n";
 
     file << "}\n";
     return {};
 }
 
 //------------------------------------------------------------------------------
-std::string exportAllNetsToJSON(std::vector<Net> const& nets, std::string const& filename)
+std::string exportAllNetsToJSON(std::vector<Net> const& nets, std::string const& filename,
+                                DocumentInfo const* info)
 {
     std::vector<Net const*> pointers;
     for (auto const& net : nets)
         pointers.push_back(&net);
-    return writeDocument(pointers, filename);
+    return writeDocument(pointers, filename, info);
 }
 
 //------------------------------------------------------------------------------
 std::string exportToJSON(Net const& net, std::string const& filename)
 {
-    return writeDocument({ &net }, filename);
+    return writeDocument({ &net }, filename, nullptr);
 }
 
 } // namespace tpne

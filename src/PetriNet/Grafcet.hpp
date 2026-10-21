@@ -21,6 +21,7 @@
 #ifndef GRAFCET_HPP
 #  define GRAFCET_HPP
 
+#  include <cctype>
 #  include <memory>
 #  include <string>
 #  include <map>
@@ -75,23 +76,24 @@ inline Forcing::Type strToForcingType(std::string const& s)
     return Forcing::Type::Init;
 }
 
-//! \brief Parse a forcing string like "Production:{init}" or "G2:{2,8}"
+//! \brief Parse a forcing string like "Production:{init}" or "G2:{2,8}". The
+//! colon is optional: "Production{init}" is the same order.
 inline Forcing parseForcing(std::string const& str)
 {
     Forcing f;
-    size_t colonPos = str.find(':');
-    if (colonPos == std::string::npos)
-    {
-        f.targetNet = str;
-        f.type = Forcing::Type::Init;
-        return f;
-    }
-
-    f.targetNet = str.substr(0, colonPos);
+    size_t braceStart = str.find('{');
+    size_t braceEnd = str.find('}', (braceStart == std::string::npos) ? 0u : braceStart);
+    size_t nameEnd = (braceStart == std::string::npos) ? str.size() : braceStart;
+    size_t const colonPos = str.rfind(':', nameEnd);
+    if ((colonPos != std::string::npos) && (colonPos < nameEnd))
+        nameEnd = colonPos;
+    f.targetNet = str.substr(0, nameEnd);
+    while (!f.targetNet.empty() && std::isspace(static_cast<unsigned char>(f.targetNet.back())))
+        f.targetNet.pop_back();
+    while (!f.targetNet.empty() && std::isspace(static_cast<unsigned char>(f.targetNet.front())))
+        f.targetNet.erase(0, 1);
 
     // Find content between { }
-    size_t braceStart = str.find('{', colonPos);
-    size_t braceEnd = str.find('}', colonPos);
     if (braceStart == std::string::npos || braceEnd == std::string::npos)
     {
         f.type = Forcing::Type::Init;
@@ -160,6 +162,63 @@ inline std::string forcingToStr(Forcing const& f)
     }
     result += "}";
     return result;
+}
+
+//! \brief Rename the references to a step in a receptivity: "X3" (graph
+//! empty: the step of the graph owning the receptivity) or "Production:X3"
+//! (graph "Production") becomes "X5" or "Production:X5". Other text is kept.
+inline std::string renameStepReference(std::string const& code, std::string const& graph,
+                                       size_t const from, size_t const to)
+{
+    auto const ident = [](char c) {
+        return std::isalnum(static_cast<unsigned char>(c)) || (c == '_') ||
+               (static_cast<unsigned char>(c) >= 0x80u);
+    };
+    std::string const target = (graph.empty() ? "" : graph + ":") + "X" + std::to_string(from);
+    std::string const replacement = (graph.empty() ? "" : graph + ":") + "X" + std::to_string(to);
+    std::string out;
+    size_t i = 0u;
+    while (i < code.size())
+    {
+        bool const match = (code.compare(i, target.size(), target) == 0) &&
+            ((i == 0u) || (!ident(code[i - 1u]) && (graph.empty() ? code[i - 1u] != ':' : true))) &&
+            ((i + target.size() == code.size()) || !ident(code[i + target.size()]));
+        if (match)
+        {
+            out += replacement;
+            i += target.size();
+        }
+        else
+        {
+            out += code[i++];
+        }
+    }
+    return out;
+}
+
+//! \brief Rename a step in a forcing order of the graph: "G2:{3,8}" with
+//! the step 3 now numbered 5 becomes "G2:{5,8}".
+inline void renameForcedStep(Forcing& forcing, std::string const& graph, size_t const from,
+                             size_t const to)
+{
+    if ((forcing.targetNet != graph) || (forcing.type != Forcing::Type::Steps))
+        return;
+    for (auto& step : forcing.steps)
+    {
+        if (step == from)
+            step = to;
+    }
+}
+
+//! \brief Forcing order as drawn in the action box of its step (IEC 60848):
+//! "Production{init}", "G2{2,8}", "G2{*}", "G2{}".
+inline std::string forcingLabel(Forcing const& f)
+{
+    std::string text = forcingToStr(f);
+    size_t const colon = text.find(":{");
+    if (colon != std::string::npos)
+        text.erase(colon, 1u);
+    return text;
 }
 
 // *****************************************************************************
@@ -268,6 +327,154 @@ inline Action::LedColor strToLedColor(std::string const& s)
 }
 
 // *****************************************************************************
+//! \brief What the operator acts on: a GRAFCET input as shown on the control
+//! panel of the editor (a push button, a selector, a sensor ...). The engine
+//! only sees integer values: the kind says how the panel draws the input and
+//! how a click changes its value. Saved with the document.
+// *****************************************************************************
+struct GrafcetInput
+{
+    //! \brief How the input is drawn and acts.
+    enum class Kind
+    {
+        Switch,    //!< Toggle switch: a click changes 0 <-> 1, and it stays.
+        Button,    //!< Push button: 1 while pressed, during one cycle at least.
+        Pulse,     //!< 1 during one cycle of the GRAFCET for each click.
+        Emergency, //!< Emergency stop: pushed (1) until it is pulled back.
+        Selector,  //!< One position of a selector: exclusive within its group.
+        Value,     //!< Integer value of a sensor (temperature, counter ...).
+        Clock      //!< Square signal: 1 during half a period, then 0.
+    };
+
+    std::string name;
+    Kind kind = Kind::Switch;
+    //! \brief What the input is, for the operator (tooltip of the panel).
+    std::string description;
+    //! \brief Value when the simulation starts.
+    int initial = 0;
+    //! \brief Selector: name of the selector; its inputs are exclusive.
+    std::string group;
+    //! \brief Button, switch: color of the cap ("green", "red", "black",
+    //! "yellow", "blue", "white"). Empty: a color chosen from the kind.
+    std::string color;
+    //! \brief Value: range and unit of the sensor.
+    int min = 0;
+    int max = 100;
+    std::string unit;
+    //! \brief Value: a simple model of the machine. While the output
+    //! `driven_by` is on, the value goes up by `rise` per second, else it
+    //! goes down by `fall` per second (between min and max). Empty: the
+    //! operator sets the value.
+    std::string driven_by;
+    float rise = 0.0f;
+    float fall = 0.0f;
+    //! \brief Clock: period in seconds.
+    float period = 1.0f;
+};
+
+//! \brief Convert GrafcetInput::Kind to string
+inline const char* inputKindToStr(GrafcetInput::Kind k)
+{
+    switch (k) {
+        case GrafcetInput::Kind::Switch: return "switch";
+        case GrafcetInput::Kind::Button: return "button";
+        case GrafcetInput::Kind::Pulse: return "pulse";
+        case GrafcetInput::Kind::Emergency: return "emergency";
+        case GrafcetInput::Kind::Selector: return "selector";
+        case GrafcetInput::Kind::Value: return "value";
+        case GrafcetInput::Kind::Clock: return "clock";
+    }
+    return "switch";
+}
+
+//! \brief Convert string to GrafcetInput::Kind
+inline GrafcetInput::Kind strToInputKind(std::string const& s)
+{
+    if (s == "button") return GrafcetInput::Kind::Button;
+    if (s == "pulse") return GrafcetInput::Kind::Pulse;
+    if (s == "emergency") return GrafcetInput::Kind::Emergency;
+    if (s == "selector") return GrafcetInput::Kind::Selector;
+    if (s == "value") return GrafcetInput::Kind::Value;
+    if (s == "clock") return GrafcetInput::Kind::Clock;
+    return GrafcetInput::Kind::Switch;
+}
+
+// *****************************************************************************
+//! \brief What the GRAFCET acts on: the actuator named by actions, as shown
+//! on the control panel (a lamp, a motor that turns, a heater that glows ...).
+// *****************************************************************************
+struct GrafcetOutput
+{
+    //! \brief How the output is drawn.
+    enum class Kind
+    {
+        Light,  //!< Pilot light of the color of its actions.
+        Motor,  //!< Motor: its fan turns while on.
+        Heater, //!< Heating resistor: glows while on.
+        Valve,  //!< Valve or cylinder: open (out) while on.
+        Horn    //!< Horn or buzzer: sound waves while on.
+    };
+
+    std::string name;
+    Kind kind = Kind::Light;
+    //! \brief What the actuator is, for the operator.
+    std::string description;
+};
+
+//! \brief Convert GrafcetOutput::Kind to string
+inline const char* outputKindToStr(GrafcetOutput::Kind k)
+{
+    switch (k) {
+        case GrafcetOutput::Kind::Light: return "light";
+        case GrafcetOutput::Kind::Motor: return "motor";
+        case GrafcetOutput::Kind::Heater: return "heater";
+        case GrafcetOutput::Kind::Valve: return "valve";
+        case GrafcetOutput::Kind::Horn: return "horn";
+    }
+    return "light";
+}
+
+//! \brief Convert string to GrafcetOutput::Kind
+inline GrafcetOutput::Kind strToOutputKind(std::string const& s)
+{
+    if (s == "motor") return GrafcetOutput::Kind::Motor;
+    if (s == "heater") return GrafcetOutput::Kind::Heater;
+    if (s == "valve") return GrafcetOutput::Kind::Valve;
+    if (s == "horn") return GrafcetOutput::Kind::Horn;
+    return GrafcetOutput::Kind::Light;
+}
+
+// *****************************************************************************
+//! \brief What a file says about all its nets: a text explaining them, and
+//! for GRAFCET the inputs and outputs of the machine (for the control panel).
+// *****************************************************************************
+struct DocumentInfo
+{
+    //! \brief What the document is about (shown by the editor).
+    std::string description;
+    std::vector<GrafcetInput> inputs;
+    std::vector<GrafcetOutput> outputs;
+};
+
+//! \brief Input of the given name, or null.
+inline GrafcetInput* findInput(DocumentInfo& info, std::string const& name)
+{
+    for (auto& input : info.inputs)
+        if (input.name == name)
+            return &input;
+    return nullptr;
+}
+
+//! \brief Output of the given name, or null.
+inline GrafcetOutput* findOutput(DocumentInfo& info, std::string const& name)
+{
+    for (auto& output : info.outputs)
+        if (output.name == name)
+            return &output;
+    return nullptr;
+}
+
+// *****************************************************************************
 //! \brief Receptivity of a GRAFCET transition: the boolean condition that lets
 //! the transition fire when all its upstream steps are active.
 //!
@@ -314,6 +521,22 @@ public:
     };
 
     // *************************************************************************
+    //! \brief State of a time operator t1/a/t2 of the receptivity, to show
+    //! how long is left before it changes.
+    // *************************************************************************
+    struct Timer
+    {
+        //! \brief Time since the operand changed, up to duration.
+        float elapsed = 0.0f;
+        //! \brief t1 while waiting to become true, t2 to become false.
+        float duration = 0.0f;
+        //! \brief The timer counts (its operand changed, its output not yet).
+        bool running = false;
+        //! \brief Value of the operator.
+        bool output = false;
+    };
+
+    // *************************************************************************
     //! \brief Node of the abstract syntax tree.
     // *************************************************************************
     class Node
@@ -330,6 +553,8 @@ public:
         //! \brief End of a cycle (graphs stable): time operators see the
         //! changes made by the evolution.
         virtual void endOfCycle() {}
+        //! \brief State of the time operators (3s/X2) of the expression.
+        virtual void timers(std::vector<Timer>& /*out*/) const {}
         //! \brief Write the expression in C ("C") or Structured Text ("ST").
         //! Set `supported` to false for constructs with a memory (edges,
         //! timers) that have no direct translation.
@@ -369,6 +594,14 @@ public:
     inline std::string const& error() const { return m_error; }
     bool evaluate() const;
     void tick(float dt) { if (m_ast) m_ast->tick(dt); }
+    //! \brief State of the time operators, in the order of the expression.
+    std::vector<Timer> timers() const
+    {
+        std::vector<Timer> out;
+        if (m_ast)
+            m_ast->timers(out);
+        return out;
+    }
     void endOfInstant() { if (m_ast) m_ast->endOfInstant(); }
     void endOfCycle() { if (m_ast) m_ast->endOfCycle(); }
 

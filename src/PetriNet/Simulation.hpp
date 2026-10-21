@@ -194,6 +194,10 @@ public:
     Signal<std::string const&> onWarning;
     //! \brief Signal emitted for error messages.
     Signal<std::string const&> onError;
+    //! \brief Signal emitted for each firing of a transition (Petri nets),
+    //! written like the Gantt chart: date, transition, firing number k and
+    //! when its tokens arrive ("t = 4.00  M1 starts P1 (k = 2), until 7.00").
+    Signal<std::string const&> onTrace;
 
 private:
 
@@ -225,6 +229,8 @@ private:
     void updateTransitionDelayTimers(float const dt);
     void fireTransitions();
     void animateTokens(float const dt);
+    //! \brief Emit onTrace for a firing of the transition.
+    void trace(Transition const& transition, size_t tokens);
     std::vector<Transition*> const& shuffleTransitions(bool const reset = false);
 
     //--------------------------------------------------------------------------
@@ -271,10 +277,11 @@ private:
     //! \brief Accumulated simulation time since start().
     float m_sim_time = 0.0f;
     //! \brief Firing dates per transition (indexed by Transition::id).
-    //! Only filled when the net is a Timed Event Graph.
+    //! Filled for the nets that are not GRAFCET.
     std::vector<std::vector<float>> m_firing_dates;
     //! \brief (max,+) cycle time λ, computed once at simulation start when
-    //! the net is a Timed Event Graph. Zero otherwise.
+    //! the net is a timed event graph (or a timed Petri net that is an event
+    //! graph). Zero otherwise.
     double m_eigenvalue = 0.0;
     //! \brief True if there are receptivity parsing errors.
     bool m_has_receptivity_errors = false;

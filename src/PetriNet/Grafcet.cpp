@@ -21,6 +21,7 @@
 #include "PetriNet/Grafcet.hpp"
 #include "PetriNet/PetriNet.hpp"
 
+#include <algorithm>
 #include <cctype>
 #include <cmath>
 #include <stdexcept>
@@ -90,6 +91,7 @@ public:
     explicit NotNode(NodePtr operand) : m_operand(std::move(operand)) {}
     bool evaluate() const override { return !m_operand->evaluate(); }
     void tick(float dt) override { m_operand->tick(dt); }
+    void timers(std::vector<Receptivity::Timer>& out) const override { m_operand->timers(out); }
     void endOfInstant() override { m_operand->endOfInstant(); }
     void endOfCycle() override { m_operand->endOfCycle(); }
     std::string translate(std::string const& lang, bool& supported) const override
@@ -114,6 +116,11 @@ public:
         return m_and ? (left && right) : (left || right);
     }
     void tick(float dt) override { m_left->tick(dt); m_right->tick(dt); }
+    void timers(std::vector<Receptivity::Timer>& out) const override
+    {
+        m_left->timers(out);
+        m_right->timers(out);
+    }
     void endOfInstant() override { m_left->endOfInstant(); m_right->endOfInstant(); }
     void endOfCycle() override { m_left->endOfCycle(); m_right->endOfCycle(); }
     std::string translate(std::string const& lang, bool& supported) const override
@@ -142,6 +149,7 @@ public:
         return m_rising ? (now && !m_previous) : (!now && m_previous);
     }
     void tick(float dt) override { m_operand->tick(dt); }
+    void timers(std::vector<Receptivity::Timer>& out) const override { m_operand->timers(out); }
     void endOfInstant() override
     {
         m_operand->endOfInstant();
@@ -184,6 +192,19 @@ public:
             m_output = false;
     }
     void endOfInstant() override { m_operand->endOfInstant(); }
+    void timers(std::vector<Receptivity::Timer>& out) const override
+    {
+        m_operand->timers(out);
+        Receptivity::Timer timer;
+        timer.output = m_output;
+        if (m_input && !m_output)
+            timer = { std::min(m_elapsed, m_t1), m_t1, true, false };
+        else if (!m_input && m_output && (m_t2 > 0.0f))
+            timer = { std::min(m_elapsed, m_t2), m_t2, true, true };
+        else
+            timer.duration = m_input ? m_t1 : m_t2;
+        out.push_back(timer);
+    }
     void endOfCycle() override
     {
         // A change made by the evolution (a step activated) starts at the end

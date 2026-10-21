@@ -179,6 +179,7 @@ Net::Net(Net const& other)
     m_next_place_id = other.m_next_place_id;
     m_next_transition_id = other.m_next_transition_id;
     name = other.name;
+    description = other.description;
     inputs = other.inputs;
     modified = false;
 }
@@ -615,6 +616,13 @@ void Net::helperRemovePlace(Node const& node)
             // Swap element but keep the ID of the removed element
             Place& pi = m_places[i];
             Place& pe = m_places[m_places.size() - 1u];
+            size_t const old_id = pe.id;
+            size_t const new_id = pi.id;
+            // What read the removed step now reads a step that does not
+            // exist (an error when the GRAFCET starts), not the moved one.
+            if (m_type == TypeOfNet::GRAFCET)
+                renameStep(new_id, m_places.size());
+            std::vector<Action> actions = pe.actions;
             if (pe.caption == pe.key)
             {
                 m_places[i] = Place(pi.id, pi.key, pe.x, pe.y, pe.tokens);
@@ -623,6 +631,11 @@ void Net::helperRemovePlace(Node const& node)
             {
                 m_places[i] = Place(pi.id, pe.caption, pe.x, pe.y, pe.tokens);
             }
+            // The GRAFCET actions go with their step, and what reads the step
+            // by its number (X3) follows its new number.
+            m_places[i].actions = std::move(actions);
+            if ((m_type == TypeOfNet::GRAFCET) && (old_id != new_id))
+                renameStep(old_id, new_id);
             assert(m_next_place_id >= 1u);
             m_next_place_id -= 1u;
 
@@ -641,6 +654,44 @@ void Net::helperRemovePlace(Node const& node)
 }
 
 //------------------------------------------------------------------------------
+void Net::renameStep(size_t const from, size_t const to)
+{
+    // In this graph: "X3" and "<name>:X3".
+    for (auto& transition : m_transitions)
+    {
+        transition.caption = renameStepReference(transition.caption, "", from, to);
+        transition.caption = renameStepReference(transition.caption, name, from, to);
+    }
+    for (auto& place : m_places)
+    {
+        for (auto& action : place.actions)
+        {
+            action.condition = renameStepReference(action.condition, "", from, to);
+            action.condition = renameStepReference(action.condition, name, from, to);
+            for (auto& forcing : action.forcings)
+                renameForcedStep(forcing, name, from, to);
+        }
+    }
+}
+
+//------------------------------------------------------------------------------
+void Net::renameStepOf(std::string const& graph, size_t const from, size_t const to)
+{
+    // In another graph: only "<graph>:X3" and the forcing orders of <graph>.
+    for (auto& transition : m_transitions)
+        transition.caption = renameStepReference(transition.caption, graph, from, to);
+    for (auto& place : m_places)
+    {
+        for (auto& action : place.actions)
+        {
+            action.condition = renameStepReference(action.condition, graph, from, to);
+            for (auto& forcing : action.forcings)
+                renameForcedStep(forcing, graph, from, to);
+        }
+    }
+}
+
+//------------------------------------------------------------------------------
 void Net::helperRemoveTransition(Node const& node)
 {
     size_t i = m_transitions.size();
@@ -653,6 +704,7 @@ void Net::helperRemoveTransition(Node const& node)
         {
             Transition& ti = m_transitions[i];
             Transition& te = m_transitions[m_transitions.size() - 1u];
+            float const delay = te.delay;
             if (te.caption == te.key)
             {
                 m_transitions[i] = Transition(ti.id, ti.key, te.x, te.y,
@@ -665,6 +717,7 @@ void Net::helperRemoveTransition(Node const& node)
                                                 (m_type == TypeOfNet::TimedPetriNet)
                                                 ? true : false);
             }
+            m_transitions[i].delay = delay;
             assert(m_next_transition_id >= 1u);
             m_next_transition_id -= 1u;
 

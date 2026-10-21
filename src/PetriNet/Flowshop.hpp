@@ -69,6 +69,14 @@ std::string checkFlowshop(Flowshop const& flowshop);
 void buildFlowshop(Net& net, Flowshop const& flowshop);
 
 //------------------------------------------------------------------------------
+//! \brief Machine and piece of an operation: a transition named
+//! "<machine>_<piece>" by buildFlowshop() (the Gantt chart draws it on the row
+//! of the machine, colored by piece). Other names ("T3", "out_P1") are their
+//! own machine and piece.
+//------------------------------------------------------------------------------
+void operationOf(std::string const& name, std::string& machine, std::string& piece);
+
+//------------------------------------------------------------------------------
 //! \brief Earliest firing dates of a timed event graph during its first
 //! cycles, by the (max,+) dater equation x(k) = max(x(k - tokens) + duration)
 //! over the input places of each transition. Initial tokens are available at

@@ -21,6 +21,7 @@
 #include "main.hpp"
 #include "PetriNet/PetriNet.hpp"
 #include "PetriNet/GrafcetEngine.hpp"
+#include "PetriNet/Simulation.hpp"
 #include "PetriNet/Flowshop.hpp"
 #include "PetriNet/Algorithms.hpp"
 #include "PetriNet/Exports/Exports.hpp"
@@ -407,4 +408,188 @@ TEST(TestFlowshop, BuildScheduleAndCycleTime)
     EXPECT_DOUBLE_EQ(lambda, 7.0);
     // Steady state: one P2 every 7 time units.
     EXPECT_DOUBLE_EQ(date("M1_P2", 2) - date("M1_P2", 1), 7.0);
+}
+
+//------------------------------------------------------------------------------
+TEST(TestGrafcetJSON, ForcingWithoutColon)
+{
+    Forcing const a = parseForcing("Production{init}");
+    EXPECT_EQ(a.targetNet, "Production");
+    EXPECT_EQ(a.type, Forcing::Type::Init);
+    Forcing const b = parseForcing("G2:{2, 8}");
+    EXPECT_EQ(b.targetNet, "G2");
+    ASSERT_EQ(b.steps.size(), 2u);
+    EXPECT_EQ(b.steps[1], 8u);
+    EXPECT_EQ(forcingLabel(b), "G2{2,8}");
+    EXPECT_EQ(forcingToStr(parseForcing("Safety{*}")), "Safety:{*}");
+}
+
+//------------------------------------------------------------------------------
+TEST(TestGrafcetJSON, DescriptionsInputsAndOutputs)
+{
+    // Revision 1: descriptions of the document, of the nets, of the inputs
+    // and outputs (control panel).
+    std::vector<Net> nets;
+    DocumentInfo info;
+    ASSERT_STREQ(importAllNetsFromJSON(nets, "data/Gemma.json", &info).c_str(), "");
+    ASSERT_EQ(nets.size(), 3u);
+    EXPECT_NE(info.description.find("séchoir"), std::string::npos);
+    EXPECT_FALSE(nets[0].description.empty());
+    GrafcetInput const* auto_ = findInput(info, "Auto");
+    ASSERT_NE(auto_, nullptr);
+    EXPECT_EQ(auto_->kind, GrafcetInput::Kind::Selector);
+    EXPECT_EQ(auto_->group, "Mode");
+    GrafcetInput const* temperature = findInput(info, "Temperature");
+    ASSERT_NE(temperature, nullptr);
+    EXPECT_EQ(temperature->kind, GrafcetInput::Kind::Value);
+    EXPECT_EQ(temperature->unit, "°C");
+    EXPECT_EQ(temperature->driven_by, "Four");
+    EXPECT_EQ(nets[0].inputs.at("Temperature"), 20);
+    ASSERT_NE(findOutput(info, "Four"), nullptr);
+    EXPECT_EQ(findOutput(info, "Four")->kind, GrafcetOutput::Kind::Heater);
+    // A forcing order without a name (drawn "Production{init}").
+    tpne::Action const& forcing = nets[2].places()[0].actions[0];
+    EXPECT_TRUE(forcing.name.empty());
+    ASSERT_EQ(forcing.forcings.size(), 2u);
+    EXPECT_EQ(forcingLabel(forcing.forcings[1]), "Controle{init}");
+
+    // Saved and loaded again: the same.
+    std::string const file = "/tmp/tpne-gemma-test.json";
+    ASSERT_STREQ(exportAllNetsToJSON(nets, file, &info).c_str(), "");
+    std::vector<Net> again;
+    DocumentInfo info2;
+    ASSERT_STREQ(importAllNetsFromJSON(again, file, &info2).c_str(), "");
+    EXPECT_EQ(info2.description, info.description);
+    EXPECT_EQ(again[1].description, nets[1].description);
+    ASSERT_EQ(info2.inputs.size(), info.inputs.size());
+    EXPECT_EQ(info2.inputs[0].name, "Au");
+    EXPECT_EQ(info2.inputs[0].kind, GrafcetInput::Kind::Emergency);
+    EXPECT_EQ(findInput(info2, "Temperature")->max, 120);
+    EXPECT_FLOAT_EQ(findInput(info2, "Temperature")->rise, 6.0f);
+    ASSERT_EQ(info2.outputs.size(), 3u);
+    EXPECT_EQ(again[2].places()[0].actions[0].forcings.size(), 2u);
+    EXPECT_EQ(again[1].places()[5].actions[0].condition, "Dr");
+    std::ifstream saved(file);
+    std::string const text((std::istreambuf_iterator<char>(saved)), std::istreambuf_iterator<char>());
+    EXPECT_NE(text.find("\"revision\": 1"), std::string::npos);
+    std::remove(file.c_str());
+}
+
+//------------------------------------------------------------------------------
+TEST(TestGrafcetEngine, GemmaDryer)
+{
+    std::vector<Net> nets;
+    ASSERT_STREQ(importAllNetsFromJSON(nets, "data/Gemma.json").c_str(), "");
+    Net& production = nets[0];
+    Net& control = nets[1];
+    Net& safety = nets[2];
+    GrafcetEngine engine;
+    engine.graphs({ &production, &control, &safety });
+    ASSERT_TRUE(engine.start());
+    auto const active = [](Net& net, size_t id) { return net.findPlace(id)->tokens > 0u; };
+    auto const step = [&engine](float dt = 0.1f) { engine.step(dt); };
+
+    // Forced by the safety until rearmed.
+    step();
+    EXPECT_TRUE(active(safety, 0));
+    engine.setInput("Rearm", 1); step(); engine.setInput("Rearm", 0);
+    EXPECT_TRUE(active(safety, 1));
+
+    // Validation, then automatic mode: the oven heats.
+    engine.setInput("Val", 1); step(); engine.setInput("Val", 0); step();
+    EXPECT_TRUE(active(control, 2));
+    engine.setInput("Val", 1); step(); engine.setInput("Val", 0);
+    EXPECT_TRUE(active(control, 3));
+    EXPECT_TRUE(engine.output("Four"));
+    engine.setInput("Temperature", 85); step();
+    EXPECT_TRUE(active(control, 4));
+    EXPECT_FALSE(engine.output("Four"));
+
+    // Cycle: left motor 30 s, drying until Acy, right motor 30 s.
+    engine.setInput("Dcy", 1); step(); engine.setInput("Dcy", 0);
+    EXPECT_TRUE(active(production, 1));
+    EXPECT_TRUE(engine.output("Moteur Gauche"));
+    for (int i = 0; i < 301; ++i) step();
+    EXPECT_TRUE(active(production, 2));
+    EXPECT_FALSE(engine.output("Moteur Gauche"));
+    engine.setInput("Acy", 1); step(); engine.setInput("Acy", 0);
+    EXPECT_TRUE(active(production, 3));
+    EXPECT_TRUE(engine.output("Moteur Droit"));
+    for (int i = 0; i < 301; ++i) step();
+    EXPECT_TRUE(active(production, 0));
+
+    // Manual mode: Dr drives the right motor, the production is forced.
+    engine.setInput("Auto", 0); engine.setInput("Manu", 1);
+    engine.setInput("Val", 1); step(); engine.setInput("Val", 0);
+    EXPECT_TRUE(active(control, 5));
+    EXPECT_FALSE(engine.output("Moteur Droit"));
+    engine.setInput("Dr", 1); step();
+    EXPECT_TRUE(engine.output("Moteur Droit"));
+    EXPECT_FALSE(engine.output("Moteur Gauche"));
+
+    // Emergency stop: everything back to its initial situation.
+    engine.setInput("Au", 1); step(); step();
+    EXPECT_TRUE(active(safety, 0));
+    EXPECT_TRUE(active(control, 0));
+    EXPECT_FALSE(engine.output("Moteur Droit"));
+}
+
+//------------------------------------------------------------------------------
+TEST(TestSimulation, FiringDatesAndTraces)
+{
+    // The firing dates (plot of the analysis) and the traces (console) of a
+    // timed event graph and of a flowshop, written like the Gantt chart.
+    for (char const* file : { "../data/examples/EventGraph.json", "../data/examples/simple.flowshop" })
+    {
+        Net net;
+        std::string const error = (std::string(file).find(".flowshop") != std::string::npos)
+            ? importFlowshop(net, file) : importFromJSON(net, file);
+        ASSERT_STREQ(error.c_str(), "") << file;
+        Simulation simulation(net);
+        std::vector<std::string> traces;
+        simulation.onTrace.connect([&traces](std::string const& text) { traces.push_back(text); });
+        simulation.start();
+        for (int i = 0; i < 400; ++i)
+            simulation.step(0.05f);
+        EXPECT_GT(simulation.totalFirings(), 0u) << file;
+        ASSERT_FALSE(traces.empty()) << file;
+        EXPECT_EQ(traces.front().rfind("t = ", 0), 0u) << traces.front();
+        EXPECT_NE(traces.front().find("(k = 1"), std::string::npos) << traces.front();
+        simulation.stop();
+        simulation.step(0.05f);
+    }
+}
+
+//------------------------------------------------------------------------------
+TEST(TestGrafcetEngine, RemoveStepKeepsActionsAndReferences)
+{
+    std::vector<Net> nets;
+    ASSERT_STREQ(importAllNetsFromJSON(nets, "data/Gemma.json").c_str(), "");
+    Net& production = nets[0];
+
+    // Step 2 removed: step 3 takes the number 2 with its action, and the
+    // receptivity 30s/X3 follows it; what read X2 reads a missing step.
+    production.transitions()[2].caption = "Acy . /X2";
+    production.removeNode(*production.findPlace(2));
+    ASSERT_EQ(production.places().size(), 3u);
+    Place const& moved = *production.findPlace(2);
+    EXPECT_EQ(moved.caption, "Arrêt");
+    ASSERT_EQ(moved.actions.size(), 1u);
+    EXPECT_EQ(moved.actions[0].name, "Moteur Droit");
+    EXPECT_EQ(production.findPlace(1)->actions[0].name, "Moteur Gauche");
+    std::vector<std::string> captions;
+    for (auto const& t : production.transitions())
+        captions.push_back(t.caption);
+    EXPECT_NE(std::find(captions.begin(), captions.end(), "30s/X2"), captions.end());
+    EXPECT_NE(std::find(captions.begin(), captions.end(), "Acy . /X4"), captions.end());
+    EXPECT_NE(std::find(captions.begin(), captions.end(), "Controle:X4 . Dcy"), captions.end());
+
+    // Other graphs: "Controle:X5" follows, local "X5" of another graph not.
+    Net& control = nets[1];
+    production.transitions()[0].caption = "Controle:X5 . X5";
+    control.removeNode(*control.findPlace(1));
+    production.renameStepOf("Controle", 1, 6);
+    production.renameStepOf("Controle", 5, 1);
+    EXPECT_EQ(production.transitions()[0].caption, "Controle:X1 . X5");
+    EXPECT_EQ(renameStepReference("Safety:X3 + X3 + X31 + AX3", "", 3, 7), "Safety:X3 + X7 + X31 + AX3");
 }

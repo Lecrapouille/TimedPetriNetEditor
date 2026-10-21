@@ -27,11 +27,15 @@
 namespace tpne {
 
 class Net;
+struct DocumentInfo;
 
 //! \brief JSON is the main format used for saving Petri by this editor.
 std::string exportToJSON(Net const& net, std::string const& filename);
-//! \brief Export multiple nets to a JSON file (for multi-net documents)
-std::string exportAllNetsToJSON(std::vector<Net> const& nets, std::string const& filename);
+//! \brief Export multiple nets to a JSON file (for multi-net documents),
+//! with the description of the document and of its GRAFCET inputs and
+//! outputs when info is not null.
+std::string exportAllNetsToJSON(std::vector<Net> const& nets, std::string const& filename,
+                                DocumentInfo const* info = nullptr);
 //! \brief Import http://www.cmap.polytechnique.fr/~gaubert/HOWARD2.html
 std::string exportToTimedEventGraph(Net const& net, std::string const& filename);
 //! \brief

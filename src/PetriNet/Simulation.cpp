@@ -22,11 +22,13 @@
 #include "PetriNet/PetriNet.hpp"
 #include "PetriNet/Grafcet.hpp"
 #include "PetriNet/Algorithms.hpp"
+#include "PetriNet/Flowshop.hpp"
 
 #include <algorithm>
 #include <cstdlib>
 #include <ctime>
 #include <cmath>
+#include <cstdio>
 #include <iostream>
 #include <random>
 
@@ -140,7 +142,8 @@ void Simulation::initializeRuntimeState()
     // Pre-compute the (max,+) eigenvalue (cycle time λ) once for TEGs.
     // Used by the real-time output plot to subtract the cyclic drift λ·k.
     m_eigenvalue = 0.0;
-    if (m_net.type() == TypeOfNet::TimedEventGraph)
+    if ((m_net.type() == TypeOfNet::TimedEventGraph) ||
+        ((m_net.type() == TypeOfNet::TimedPetriNet) && isEventGraph(m_net)))
     {
         CriticalCycleResult const cc = findCriticalCycle(m_net);
         if (cc.success && !cc.durations.empty())
@@ -203,8 +206,10 @@ void Simulation::handleIdleState()
     // GRAFCET: compile receptivities and start the engine (shared with the
     // other graphs of the document, it may already run).
     m_net.resetReceptivies();
+    bool first_graph = true;
     if (m_net.type() == TypeOfNet::GRAFCET)
     {
+        first_graph = !m_engine->isRunning();
         if (m_engine == m_own_engine.get())
         {
             m_engine->graphs({ &m_net });
@@ -227,13 +232,15 @@ void Simulation::handleIdleState()
     {
         onInfo.emit(
             "Simulation has started!\n"
-            "  Click on transitions for firing!\n"
-            "  Press the key '+' on Places for adding tokens\n"
-            "  Press the key '-' on Places for removing tokens");
+            "  Left click on a transition to fire it\n"
+            "  Keys + and - on a place add or remove tokens\n"
+            "  Space stops the simulation");
     }
     else if (m_net.type() == TypeOfNet::GRAFCET)
     {
-        onInfo.emit("Simulation has started!\nGo to the inputs tab and click on inputs for firing transitions!");
+        // The graphs of a document share the engine: said once.
+        if (first_graph)
+            onInfo.emit("GRAFCET simulation has started: act on the inputs of the Control panel");
     }
     else
     {
@@ -247,7 +254,8 @@ void Simulation::handleIdleState()
 //------------------------------------------------------------------------------
 void Simulation::handleHaltingState()
 {
-    onInfo.emit("Simulation has ended!");
+    if ((m_net.type() != TypeOfNet::GRAFCET) || m_engine->isRunning())
+        onInfo.emit("Simulation has ended!");
     std::cout << current_time() << "Simulation has ended!" << std::endl << std::endl;
 
     if ((m_net.type() == TypeOfNet::GRAFCET) && m_engine->isRunning())
@@ -381,11 +389,11 @@ void Simulation::fireTransitions()
                 assert(tokens <= Net::Settings::maxTokens);
                 consuming = tokens;
 
-                if ((m_net.type() == TypeOfNet::TimedEventGraph) &&
-                    (trans->id < m_firing_dates.size()))
+                if (trans->id < m_firing_dates.size())
                 {
                     for (size_t k = 0u; k < tokens; ++k)
                         m_firing_dates[trans->id].push_back(m_sim_time);
+                    trace(*trans, tokens);
                 }
 
                 if (trans->isInput())
@@ -448,6 +456,41 @@ void Simulation::fireTransitions()
             m_arc_token_counts[arc_idx] = 0u;
         }
     }
+}
+
+//------------------------------------------------------------------------------
+void Simulation::trace(Transition const& transition, size_t const tokens)
+{
+    if (onTrace.connectionCount() == 0u)
+        return;
+
+    // Same words as the Gantt chart: an operation "<machine>_<piece>" of a
+    // flowshop starts on its machine; k counts the firings of the transition.
+    float duration = 0.0f;
+    for (Arc const* arc : transition.arcsOut)
+    {
+        if (!std::isnan(arc->duration))
+            duration = std::max(duration, arc->duration);
+    }
+    std::string const name = transition.caption.empty() ? transition.key : transition.caption;
+    std::string machine, piece;
+    operationOf(name, machine, piece);
+    size_t const k = m_firing_dates[transition.id].size();
+
+    char date[64];
+    std::snprintf(date, sizeof(date), "t = %.2f  ", double(m_sim_time));
+    std::string text = date;
+    if (machine != piece)
+        text += machine + " starts " + piece;
+    else
+        text += name + ((name != transition.key) ? " (" + transition.key + ")" : "") + " fires";
+    text += " (k = " + std::to_string(k) + (tokens > 1u ? ", " + std::to_string(tokens) + " tokens" : "") + ")";
+    if ((duration > 0.0f) && (m_net.type() != TypeOfNet::PetriNet))
+    {
+        std::snprintf(date, sizeof(date), ", until %.2f", double(m_sim_time + duration));
+        text += date;
+    }
+    onTrace.emit(text);
 }
 
 //------------------------------------------------------------------------------
