@@ -25,12 +25,8 @@
 // FIXME: The backend raylib does not support other than US keyboard meaning that
 // other keyboard mapping are fucked up.
 #  define KEY_QUIT_APPLICATION      ImGuiKey_Escape
-#  define KEY_SPRINGIFY_NET         ImGuiKey_F
+#  define KEY_SPRINGIFY_NET         ImGuiKey_L
 #  define KEY_RUN_SIMULATION        ImGuiKey_Space
-#  define KEY_RUN_SIMULATION_ALT    ImGuiKey_R
-#  define KEY_ROTATE_CW             ImGuiKey_PageUp
-#  define KEY_ROTATE_CCW            ImGuiKey_PageDown
-#  define KEY_MOVE_PETRI_NODE       ImGuiKey_Semicolon
 #  define KEY_INCREMENT_TOKENS      ImGuiKey_KeypadAdd
 #  define KEY_DECREMENT_TOKENS      ImGuiKey_KeypadSubtract
 #  define KEY_DELETE_NODE           ImGuiKey_Delete
@@ -38,12 +34,12 @@
 #  define KEY_REDO                  ImGuiKey_Y
 
 // -----------------------------------------------------------------------------
-#  define MOUSE_BOUTON_DRAGGING_VIEW   ImGuiMouseButton_Middle
+// The left button draws (places, arcs, selection rectangle), the right button
+// moves (nodes, view). See PetriView.
+#  define MOUSE_BOUTON_DRAGGING_VIEW   ImGuiMouseButton_Right
 #  define MOUSE_BOUTON_ADD_PLACE       ImGuiMouseButton_Left
 #  define MOUSE_BOUTON_ADD_TRANSITION  ImGuiMouseButton_Right
-#  define MOUSE_BOUTON_HANDLE_ARC      ImGuiMouseButton_Middle
-
-#  define MOUSE_BOUTON_MOVE_NODE       ImGuiMouseButton_Left
-
+#  define MOUSE_BOUTON_HANDLE_ARC      ImGuiMouseButton_Left
+#  define MOUSE_BOUTON_MOVE_NODE       ImGuiMouseButton_Right
 
 #endif

@@ -157,7 +157,8 @@ void NetViewer::draw(char const* id, Net const& net, Options const& options)
         Place const& place = places[i];
         bool const initial = (options.initial_marking != nullptr) &&
             (i < options.initial_marking->size()) && ((*options.initial_marking)[i] > 0u);
-        drawPlace(draw_list, place, type, origin, options.captions, 1.0f, m_zoom, initial);
+        drawPlace(draw_list, place, type, origin, options.captions, 1.0f, m_zoom, initial,
+                  type == TypeOfNet::GRAFCET);
 
         if ((type == TypeOfNet::GRAFCET) && options.actions)
         {
@@ -170,7 +171,8 @@ void NetViewer::draw(char const* id, Net const& net, Options const& options)
     }
     for (auto const& transition : net.transitions())
     {
-        drawTransition(draw_list, transition, type, origin, options.captions, 1.0f, m_zoom);
+        drawTransition(draw_list, transition, type, origin, options.captions, 1.0f, m_zoom,
+                       type == TypeOfNet::GRAFCET);
     }
 
     // Tooltip of the node under the mouse.

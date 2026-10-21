@@ -6,10 +6,12 @@
 static void usage(const char* name)
 {
     std::cout
-      << name << " [-s screenshot.png] [petri.json]" << std::endl
+      << name << " [-r] [-s|-w screenshot.png] [petri.json]" << std::endl
       << "Where:" << std::endl
       << "  [petri.json] is an optional Petri net file to load (i.e. examples/Howard1.json)" << std::endl
-      << "  -s screenshot.png saves the window as a PNG file once drawn, then quits" << std::endl
+      << "  -r starts the simulation once the file is loaded" << std::endl
+      << "  -s screenshot.png saves the net as a PNG file once drawn, then quits" << std::endl
+      << "  -w screenshot.png saves the whole window as a PNG file once drawn, then quits" << std::endl
       << std::endl;
 }
 
@@ -22,7 +24,9 @@ int main(int argc, char* argv[])
     opterr = 0;
     int opt;
 
-    while ((opt = getopt(argc, argv, "hs:")) != -1)
+    bool whole_window = false;
+    bool start = false;
+    while ((opt = getopt(argc, argv, "hrs:w:")) != -1)
     {
         switch (opt)
         {
@@ -31,6 +35,13 @@ int main(int argc, char* argv[])
                 return EXIT_FAILURE;
             case 's':
                 screenshot = optarg;
+                break;
+            case 'w':
+                screenshot = optarg;
+                whole_window = true;
+                break;
+            case 'r':
+                start = true;
                 break;
             case '?':
                 std::cerr << "Unknown option: '" << char(optopt) << "'!" << std::endl;
@@ -48,7 +59,11 @@ int main(int argc, char* argv[])
     tpne::Editor editor(1100, 768, "Petri Net Editor");
     if (!screenshot.empty())
     {
-        editor.setAutoScreenshot(screenshot, true);
+        editor.setAutoScreenshot(screenshot, true, whole_window);
+    }
+    if (start)
+    {
+        editor.startSimulationAtLaunch();
     }
     editor.run(filename);
 

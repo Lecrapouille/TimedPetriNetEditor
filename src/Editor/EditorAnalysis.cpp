@@ -188,8 +188,9 @@ void Editor::analysisSyslin()
 {
     SparseMatrix<MaxPlus> D, A, B, C;
     toSysLin(net(), D, A, B, C);
-    ImGui::TextUnformatted("X(n) = D ⊗ X(n) ⨁ A ⊗ X(n-1) ⨁ B ⊗ U(n)");
-    ImGui::TextUnformatted("Y(n) = C ⊗ X(n)");
+    ImGui::TextUnformatted("X(k) = D ⊗ X(k) ⨁ A ⊗ X(k-1) ⨁ B ⊗ U(k)");
+    ImGui::TextUnformatted("Y(k) = C ⊗ X(k)");
+    ImGui::TextDisabled("k: the k-th firing (cycle), as in the Gantt chart.");
     ImGui::TextDisabled("X: internal transitions, U: inputs, Y: outputs.");
     if (ImGui::BeginTabBar("##syslin"))
     {
@@ -327,10 +328,8 @@ static void computeGantt(Net const& net, int const cycles,
 
         std::string const name = transitions[t].caption.empty()
             ? transitions[t].key : transitions[t].caption;
-        size_t const underscore = name.find('_');
-        bool const flowshop = (underscore != std::string::npos) && (name.rfind("out_", 0) != 0);
-        std::string const row = flowshop ? name.substr(0, underscore) : name;
-        std::string const piece = flowshop ? name.substr(underscore + 1u) : name;
+        std::string row, piece;
+        operationOf(name, row, piece);
         if (row_of.find(row) == row_of.end())
         {
             row_of[row] = int(rows.size());
@@ -342,7 +341,7 @@ static void computeGantt(Net const& net, int const cycles,
         {
             bars.push_back({ row_of[row], color_of[piece], dates[t][size_t(k)],
                              dates[t][size_t(k)] + duration,
-                             piece + " #" + std::to_string(k + 1) });
+                             piece + " k=" + std::to_string(k + 1) });
         }
     }
 }
@@ -495,7 +494,6 @@ void Editor::analysisPlot()
         selected.assign(transitions.size(), true);
     }
 
-    bool const is_teg = (current.type() == TypeOfNet::TimedEventGraph);
     double const lambda = sim.eigenvalue();
 
     ImGui::TextDisabled("t = %.3f s, firings = %zu, transitions = %zu, λ = %.4f",
@@ -503,7 +501,17 @@ void Editor::analysisPlot()
                         transitions.size(), lambda);
 
     ImGui::Checkbox("Subtract drift λ·k", &subtract_drift);
-    if (is_teg)
+    if (ImGui::IsItemHovered())
+        ImGui::SetTooltip("In the periodic regime, a transition fires every λ: y(k) - λ·k\n"
+                          "becomes flat, the remaining shows the transient and the bias.");
+
+    // The flowshop names its outputs "out_<piece>": without such names the
+    // filter would hide everything.
+    bool has_outputs = false;
+    for (auto const& t : transitions)
+        has_outputs = has_outputs || ((t.caption.empty() ? t.key : t.caption).rfind("out_", 0) == 0);
+    bool const filter_outputs = only_outputs && has_outputs;
+    if (has_outputs)
     {
         ImGui::SameLine();
         ImGui::Checkbox("Outputs only (out_*)", &only_outputs);
@@ -512,6 +520,12 @@ void Editor::analysisPlot()
             ImGui::SetTooltip("Show only transitions whose caption starts "
                               "with \"out_\" (flowshop output convention).");
         }
+    }
+    if (sim.totalFirings() == 0u)
+    {
+        ImGui::TextColored(ImVec4(0.95f, 0.55f, 0.05f, 1.0f), "%s", sim.isRunning()
+            ? "Waiting for the first firings ..."
+            : "Start the simulation (Space): each firing of a transition adds a point (k, y(k)).");
     }
 
     // Transition selector: scrollable child with checkboxes.
@@ -561,7 +575,7 @@ void Editor::analysisPlot()
     {
         if (!selected[i])
             continue;
-        if (only_outputs && is_teg)
+        if (filter_outputs)
         {
             // In a flowshop TEG every transition has both incoming and
             // outgoing arcs (because of the controller feedback loops), so
@@ -595,7 +609,31 @@ void Editor::analysisGantt()
     ImGui::SetNextItemWidth(120.0f);
     ImGui::SliderInt("Cycles", &m_states.gantt_cycles, 1, 20);
     ImGui::SameLine();
-    ImGui::TextDisabled("Earliest dates of the (max,+) dater equation; tokens available at 0.");
+    ImGui::TextDisabled("(?)");
+    if (ImGui::IsItemHovered())
+    {
+        ImGui::BeginTooltip();
+        ImGui::PushTextWrapPos(420.0f);
+        ImGui::TextUnformatted(
+            "How to read it: each transition followed by a duration is an operation. "
+            "Its bar starts at the date of a firing of the transition and lasts the "
+            "duration of its output arc. A flowshop transition \"M1_P1\" (piece P1 on "
+            "machine M1) is drawn on the row M1 with the color of P1; other "
+            "transitions get their own row.");
+        ImGui::Spacing();
+        ImGui::TextUnformatted(
+            "k is the cycle: \"P1 k=2\" is the second time the operation is done. The "
+            "dates are the earliest ones given by the (max,+) dater equation "
+            "x(k) = max(x_i(k - tokens_i) + duration_i) over the input places, with the "
+            "initial tokens available at time 0: the fastest schedule of the net.");
+        ImGui::Spacing();
+        ImGui::TextUnformatted(
+            "While simulating, the red line is the time of the simulation, and the "
+            "console (Simulation messages) writes each firing with the same words: "
+            "\"t = 4.00  M1 starts P1 (k = 2), until 7.00\".");
+        ImGui::PopTextWrapPos();
+        ImGui::EndTooltip();
+    }
 
     if ((m_states.gantt_net != &current) ||
         (m_states.gantt_revision != current.modified.revision()) ||
@@ -638,8 +676,14 @@ void Editor::analysisGantt()
 
         ImDrawList* draw = ImPlot::GetPlotDrawList();
         ImPlot::PushPlotClipRect();
+        bool const hovered = ImPlot::IsPlotHovered();
+        ImPlotPoint const mouse = ImPlot::GetPlotMousePos();
+        GanttBarData const* under = nullptr;
         for (auto const& bar : m_states.gantt_bars)
         {
+            if (hovered && (mouse.x >= bar.start) && (mouse.x <= bar.end) &&
+                (std::fabs(mouse.y - double(bar.row)) <= 0.35))
+                under = &bar;
             ImVec2 const a = ImPlot::PlotToPixels(bar.start, bar.row - 0.35);
             ImVec2 const b = ImPlot::PlotToPixels(bar.end, bar.row + 0.35);
             ImVec4 color = ImPlot::GetColormapColor(bar.color);
@@ -652,7 +696,22 @@ void Editor::analysisGantt()
                               IM_COL32(0, 0, 0, 255), bar.label.c_str());
             }
         }
+        // Time of the simulation: the same dates as the console.
+        if (simulation().isRunning())
+        {
+            double const t = double(simulation().simulationTime());
+            ImVec2 const a = ImPlot::PlotToPixels(t, -0.6);
+            ImVec2 const b = ImPlot::PlotToPixels(t, double(rows.size()) - 0.4);
+            draw->AddLine(a, b, IM_COL32(230, 50, 50, 220), 2.0f);
+        }
         ImPlot::PopPlotClipRect();
+        if (under != nullptr)
+        {
+            ImGui::BeginTooltip();
+            ImGui::Text("%s: %s", rows[size_t(under->row)].c_str(), under->label.c_str());
+            ImGui::Text("from %.2f to %.2f (%.2f)", under->start, under->end, under->end - under->start);
+            ImGui::EndTooltip();
+        }
         ImPlot::EndPlot();
     }
 }
