@@ -19,8 +19,10 @@
 #  include "PetriNet/Exports/Exports.hpp"
 #  include "PetriNet/Imports/Imports.hpp"
 #  include "PetriNet/ForceDirected.hpp"
+#  include "PetriNet/Algorithms.hpp"
 
 #  include <vector>
+#  include <map>
 #  include <memory>
 
 namespace tpne { class IRemoteControl; }
@@ -164,7 +166,7 @@ private:
 private: // Error logs
 
     void setSavePath(std::string const& filepath);
-    std::string getError() const;  // FIXME: by copy
+    std::string const& getError() const;
     std::vector<Messages::TimedMessage> const& getLogs() const;
     void clearLogs();
     void showStyleSelector();
@@ -218,6 +220,36 @@ private:
     };
 
     // ************************************************************************
+    //! \brief Text computed from a net (matrices, equations), kept until the
+    //! net changes (Net::modified.revision()) or the display options change.
+    //! Avoids recomputing analysis results at every frame of a dialog.
+    // ************************************************************************
+    struct TextCache
+    {
+        template<class Compute>
+        std::string const& get(Net const& net_, unsigned const options_,
+                               Compute&& compute)
+        {
+            if ((net != &net_) || (revision != net_.modified.revision()) ||
+                (options != options_))
+            {
+                text = compute();
+                net = &net_;
+                revision = net_.modified.revision();
+                options = options_;
+            }
+            return text;
+        }
+
+        void clear() { net = nullptr; }
+
+        Net const* net = nullptr;
+        size_t revision = 0u;
+        unsigned options = 0u;
+        std::string text;
+    };
+
+    // ************************************************************************
     //! \brief Since we are using immediate mode GUI we need to memorize states
     //! controling which widgets/modal windows to show.
     // ************************************************************************
@@ -263,6 +295,22 @@ private:
 
         //! \brief Plot data for simulation visualization
         PlotData plot;
+        //! \brief Transitions shown by the firing dates plot, per net.
+        std::map<Net const*, std::vector<bool>> plot_selection;
+        bool plot_subtract_drift = true;
+        bool plot_only_outputs = true;
+
+        //! \brief Options and cached results of the analysis dialogs.
+        bool dense_matrices = false;
+        bool equations_with_captions = false;
+        bool equations_min_plus = false;
+        TextCache adjacency[2];  // durations, tokens
+        TextCache equations[2];  // counter, dater
+        TextCache syslin[4];     // D, A, B, C
+        //! \brief Critical cycle of the net of the given revision.
+        CriticalCycleResult critical_cycle;
+        Net const* critical_cycle_net = nullptr;
+        size_t critical_cycle_revision = 0u;
     };
 
 private:

@@ -61,7 +61,7 @@ public:
     //--------------------------------------------------------------------------
     //! \brief Get the most recent message.
     //--------------------------------------------------------------------------
-    TimedMessage getMessage() const
+    TimedMessage const& getMessage() const
     {
         assert(!m_messages.empty() && "No messages available");
         return m_messages.back();
@@ -86,6 +86,12 @@ private:
 
     void add(Level level, std::string const& message)
     {
+        // Keep the log bounded: drop the oldest quarter when it is full.
+        if (m_messages.size() >= MAX_MESSAGES)
+        {
+            m_messages.erase(m_messages.begin(),
+                             m_messages.begin() + MAX_MESSAGES / 4u);
+        }
         m_messages.push_back({level, currentTime(), message});
     }
 
@@ -96,6 +102,9 @@ private:
         strftime(buffer, sizeof(buffer), "[%H:%M:%S] ", localtime(&now));
         return buffer;
     }
+
+    //! \brief Maximum number of messages kept in memory.
+    static constexpr size_t MAX_MESSAGES = 2000u;
 
     std::vector<TimedMessage> m_messages;
 };
