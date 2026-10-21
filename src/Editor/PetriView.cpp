@@ -964,7 +964,16 @@ void PetriView::drawNetElements(Net& net, Simulation& simulation, float zoom)
 
     for (auto const& arc : net.arcs())
         drawArc(draw_list, arc, net.type(), origin, 1.0f, zoom);
-    for (auto* arc : m_editor.markedArcs())
+    // Marked arcs (critical circuit) are pointers set by the analysis: only
+    // the ones still in this net are drawn (another net, a loaded file...).
+    auto& marked = m_editor.markedArcs();
+    marked.erase(std::remove_if(marked.begin(), marked.end(), [&net](Arc* arc) {
+        for (auto const& a : net.arcs())
+            if (&a == arc)
+                return false;
+        return true;
+    }), marked.end());
+    for (auto* arc : marked)
         drawArc(draw_list, *arc, net.type(), origin, -1.0f, zoom);
 
     auto const& places = net.places();
