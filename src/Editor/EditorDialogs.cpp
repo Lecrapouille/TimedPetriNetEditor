@@ -179,7 +179,7 @@ void Editor::showDynamicLinearSystem() const
         SparseMatrix<MaxPlus>& A = cached_A;
         SparseMatrix<MaxPlus>& B = cached_B;
         SparseMatrix<MaxPlus>& C = cached_C;
-        ImGui::Text(u8"%s", "X(n) = D . X(n) (+) A . X(n-1) (+) B . U(n)\nY(n) = C . X(n)");
+        ImGui::Text(u8"%s", "X(n) = D ⊗ X(n) ⨁ A ⊗ X(n-1) ⨁ B ⊗ U(n)\nY(n) = C ⊗ X(n)");
 
         ImGuiTabBarFlags tab_bar_flags = ImGuiTabBarFlags_None;
         if (ImGui::BeginTabBar("syslin", tab_bar_flags))

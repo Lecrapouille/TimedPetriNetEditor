@@ -58,8 +58,17 @@ Editor::Editor(size_t const width, size_t const height,
     g_theme_filename = m_path.expand("theme.ini").c_str();
     io.IniFilename = g_ini_filename.c_str();
 
-    // Setup fonts
+    // Setup fonts. The text font has no mathematical symbols: merge the
+    // ones of math.ttf (a subset of DejaVu Sans: ⨁ ⊗ ε ↑ ↓ ≤ ≥ ...) else they
+    // are drawn as '?'.
     io.Fonts->AddFontFromFileTTF(m_path.expand("font.ttf").c_str(), FONT_SIZE);
+    std::string const math_font = m_path.expand("math.ttf");
+    if (std::ifstream(math_font).good())
+    {
+        ImFontConfig config;
+        config.MergeMode = true;
+        io.Fonts->AddFontFromFileTTF(math_font.c_str(), FONT_SIZE, &config);
+    }
     reloadFonts();
 
     // Load and apply theme
@@ -964,6 +973,8 @@ void Editor::setAutoScreenshot(std::string const& path, bool const exit_after)
     m_auto_screenshot_pending = !path.empty();
     m_exit_after_screenshot = exit_after;
     m_last_screenshot_ok = false;
+    // Let the windows and the docking layout settle before the capture.
+    m_screenshot_defer_frames = std::max(m_screenshot_defer_frames, 10);
 }
 
 //--------------------------------------------------------------------------
