@@ -120,7 +120,7 @@ public:
     //--------------------------------------------------------------------------
     std::map<std::string, int> const& inputs() const { return m_inputs; }
     void setInput(std::string const& name, int value);
-    int input(std::string const& name) const;
+    int inputValue(std::string const& name) const;
 
     //--------------------------------------------------------------------------
     //! \brief Output of each action name: true while one action of this name

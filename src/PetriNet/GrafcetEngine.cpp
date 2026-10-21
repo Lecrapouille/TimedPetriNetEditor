@@ -250,7 +250,7 @@ void GrafcetEngine::setInput(std::string const& name, int const value)
 }
 
 //------------------------------------------------------------------------------
-int GrafcetEngine::input(std::string const& name) const
+int GrafcetEngine::inputValue(std::string const& name) const
 {
     auto const it = m_inputs.find(name);
     return (it == m_inputs.end()) ? 0 : it->second;
