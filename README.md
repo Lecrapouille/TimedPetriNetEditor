@@ -82,7 +82,7 @@ You can pass a Petri net file to the command line. See this [document](doc/save.
 
 See:
 - this [document](data/examples/README.md) showing some examples offered with this repo.
-- ~~this [document](doc/gui.md) describing the mouse and key bindings for the graphical interface.~~
+- this [document](doc/gui.md) describing the mouse and key bindings for the graphical interface.
 - ~~this [document](doc/mqtt.md) describing how to control the editor through MQTT commands.~~
 - this [document](doc/export.md) Explaining how to export/import the net to/from other applications.
 
