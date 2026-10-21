@@ -480,6 +480,11 @@ void Editor::view()
         bool show_interactive = is_active_view && !entry.simulation->isRunning();
         m_view.loadViewState(entry.view_state);
         m_view.reshape();
+        if (entry.view_state.center_request > 0)
+        {
+            m_view.centerOnNet(entry.net);
+            --entry.view_state.center_request;
+        }
 
         if (is_active_view)
         {
@@ -518,27 +523,30 @@ void Editor::console()
 
     ImGui::PopStyleVar();
     ImGui::Spacing();
+
+    // Newest first. Only the visible lines are drawn (the log can be long).
+    static ImVec4 const COLORS[] = {
+        ImVec4(0.0f, 1.0f, 0.0f, 1.0f), // Info
+        ImVec4(1.0f, 0.6f, 0.0f, 1.0f), // Warning
+        ImVec4(1.0f, 0.2f, 0.2f, 1.0f), // Error
+    };
+    static char const* LABELS[] = { "info", "warn", "error" };
+
     auto const& logs = getLogs();
-    size_t i = logs.size();
-    while (i--)
+    ImGui::BeginChild("##console_logs");
+    ImGuiListClipper clipper;
+    clipper.Begin(int(logs.size()));
+    while (clipper.Step())
     {
-        ImGui::Separator();
-        if (logs[i].level == Messages::Level::Info)
+        for (int row = clipper.DisplayStart; row < clipper.DisplayEnd; ++row)
         {
-            ImGui::TextColored(ImVec4(0, 255, 0, 255), "%s[info]: %s",
-                               logs[i].time.c_str(), logs[i].message.c_str());
-        }
-        else if (logs[i].level == Messages::Level::Error)
-        {
-            ImGui::TextColored(ImVec4(255, 0, 0, 255), "%s[error]: %s",
-                               logs[i].time.c_str(), logs[i].message.c_str());
-        }
-        else
-        {
-            ImGui::TextColored(ImVec4(255, 0, 255, 255), "%s[warn]: %s",
-                               logs[i].time.c_str(), logs[i].message.c_str());
+            auto const& log = logs[logs.size() - 1u - size_t(row)];
+            size_t const level = size_t(log.level);
+            ImGui::TextColored(COLORS[level], "%s[%s]: %s", log.time.c_str(),
+                               LABELS[level], log.message.c_str());
         }
     }
+    ImGui::EndChild();
     ImGui::End();
 }
 
@@ -546,7 +554,7 @@ void Editor::console()
 void Editor::messagebox() const
 {
     ImGui::Begin("Message");
-    ImGui::Text("%s", getError().c_str());
+    ImGui::TextUnformatted(getError().c_str());
     ImGui::End();
 }
 
@@ -754,8 +762,7 @@ void Editor::loadDocumentFromFile(std::string const& filepath)
         // Center view on each loaded net and validate GRAFCET receptivities
         for (auto const& entry : doc.nets())
         {
-            m_view.centerOnNet(entry->net);
-            m_view.saveViewState(entry->view_state);
+            entry->view_state.center_request = Document::ViewState::CENTER_FRAMES;
 
             // Validate GRAFCET receptivities after loading
             if (entry->net.type() == TypeOfNet::GRAFCET)
@@ -799,8 +806,7 @@ void Editor::loadDocumentFromFile(std::string const& filepath)
         springify();
 
     // Center view on the loaded net
-    m_view.centerOnNet(entry.net);
-    m_view.saveViewState(entry.view_state);
+    entry.view_state.center_request = Document::ViewState::CENTER_FRAMES;
 
     m_messages.setInfo("Loaded '" + filepath + "'");
 }
@@ -1115,10 +1121,11 @@ void Editor::fulfillPendingDocumentRequest()
 }
 
 //--------------------------------------------------------------------------
-std::string Editor::getError() const
+std::string const& Editor::getError() const
 {
+    static std::string const NO_MESSAGE;
     if (m_messages.getMessages().empty())
-        return {};
+        return NO_MESSAGE;
     return m_messages.getMessage().message;
 }
 

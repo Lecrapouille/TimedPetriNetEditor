@@ -82,32 +82,34 @@ void Editor::showAdjacencyMatrices() const
     if (ImGui::BeginPopupModal("Show adjacency matrices",
                                NULL, ImGuiWindowFlags_AlwaysAutoResize))
     {
-        static bool display_as_dense = false;
         ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(0, 0));
-        ImGui::Checkbox("Dense matrix", &display_as_dense);
+        ImGui::Checkbox("Dense matrix", &m_states.dense_matrices);
         ImGui::PopStyleVar();
 
-        SparseMatrix<MaxPlus> tokens; SparseMatrix<MaxPlus> durations;
-        toAdjacencyMatrices(net(), tokens, durations);
+        DisplayFormat const format = m_states.dense_matrices
+            ? DisplayFormat::Dense : DisplayFormat::Sparse;
+        auto const matrix = [this, format](size_t const which)
+        {
+            SparseMatrix<MaxPlus> tokens; SparseMatrix<MaxPlus> durations;
+            toAdjacencyMatrices(net(), tokens, durations);
+            std::stringstream txt;
+            printSparseMatrix(txt, (which == 0u) ? durations : tokens,
+                              IndexingStyle::CppStyle, format);
+            return txt.str();
+        };
 
         ImGuiTabBarFlags tab_bar_flags = ImGuiTabBarFlags_None;
         if (ImGui::BeginTabBar("adjacency", tab_bar_flags))
         {
-            if (ImGui::BeginTabItem("Durations"))
+            char const* tabs[] = { "Durations", "Tokens" };
+            for (size_t i = 0u; i < 2u; ++i)
             {
-                std::stringstream txt;
-                printSparseMatrix(txt, durations, IndexingStyle::CppStyle,
-                                  display_as_dense ? DisplayFormat::Dense : DisplayFormat::Sparse);
-                ImGui::Text("%s", txt.str().c_str());
-                ImGui::EndTabItem();
-            }
-            if (ImGui::BeginTabItem("Tokens"))
-            {
-                std::stringstream txt;
-                printSparseMatrix(txt, tokens, IndexingStyle::CppStyle,
-                                  display_as_dense ? DisplayFormat::Dense : DisplayFormat::Sparse);
-                ImGui::Text("%s", txt.str().c_str());
-                ImGui::EndTabItem();
+                if (ImGui::BeginTabItem(tabs[i]))
+                {
+                    ImGui::TextUnformatted(m_states.adjacency[i].get(
+                        net(), unsigned(format), [&] { return matrix(i); }).c_str());
+                    ImGui::EndTabItem();
+                }
             }
             ImGui::EndTabBar();
         }
@@ -124,9 +126,6 @@ void Editor::showAdjacencyMatrices() const
 //------------------------------------------------------------------------------
 void Editor::showCounterOrDaterEquation() const
 {
-    static bool use_caption = false;
-    static bool tropical_notation = false;
-
     ImGui::OpenPopup("Counter or dater equations");
     ImGui::SetNextWindowPos(m_states.viewport_center, ImGuiCond_Appearing,
                             ImVec2(0.5f, 0.5f));
@@ -134,24 +133,30 @@ void Editor::showCounterOrDaterEquation() const
         ImGuiWindowFlags_AlwaysAutoResize))
     {
         ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(0, 0));
-        ImGui::Checkbox("Use (min,+) operator", &tropical_notation);
+        ImGui::Checkbox("Use (min,+) operator", &m_states.equations_min_plus);
         ImGui::SameLine();
-        ImGui::Checkbox("Use caption", &use_caption);
+        ImGui::Checkbox("Use caption", &m_states.equations_with_captions);
         ImGui::PopStyleVar();
+
+        bool const use_caption = m_states.equations_with_captions;
+        bool const tropical_notation = m_states.equations_min_plus;
+        unsigned const options = (use_caption ? 1u : 0u) | (tropical_notation ? 2u : 0u);
 
         ImGuiTabBarFlags tab_bar_flags = ImGuiTabBarFlags_None;
         if (ImGui::BeginTabBar("tab counter or dater", tab_bar_flags))
         {
             if (ImGui::BeginTabItem("Counter"))
             {
-                ImGui::Text("%s", showCounterEquation(net(), "", use_caption, tropical_notation)
-                    .str().c_str());
+                ImGui::TextUnformatted(m_states.equations[0].get(net(), options, [&] {
+                    return showCounterEquation(net(), "", use_caption, tropical_notation).str();
+                }).c_str());
                 ImGui::EndTabItem();
             }
             if (ImGui::BeginTabItem("Dater"))
             {
-                ImGui::Text("%s", showDaterEquation(net(), "", use_caption, tropical_notation)
-                    .str().c_str());
+                ImGui::TextUnformatted(m_states.equations[1].get(net(), options, [&] {
+                    return showDaterEquation(net(), "", use_caption, tropical_notation).str();
+                }).c_str());
                 ImGui::EndTabItem();
             }
             ImGui::EndTabBar();
@@ -175,59 +180,36 @@ void Editor::showDynamicLinearSystem() const
     if (ImGui::BeginPopupModal("(max, +) dynamic linear system", NULL,
                                ImGuiWindowFlags_AlwaysAutoResize))
     {
-        static bool display_as_dense = false;
         ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(0, 0));
-        ImGui::Checkbox("Dense matrix", &display_as_dense);
+        ImGui::Checkbox("Dense matrix", &m_states.dense_matrices);
         ImGui::PopStyleVar();
 
-        static SparseMatrix<MaxPlus> cached_D, cached_A, cached_B, cached_C;
-        static bool cached_valid = false;
-        if (!cached_valid)
-        {
-            toSysLin(net(), cached_D, cached_A, cached_B, cached_C);
-            cached_valid = true;
-        }
+        ImGui::TextUnformatted("X(n) = D ⊗ X(n) ⨁ A ⊗ X(n-1) ⨁ B ⊗ U(n)\nY(n) = C ⊗ X(n)");
 
-        SparseMatrix<MaxPlus>& D = cached_D;
-        SparseMatrix<MaxPlus>& A = cached_A;
-        SparseMatrix<MaxPlus>& B = cached_B;
-        SparseMatrix<MaxPlus>& C = cached_C;
-        ImGui::Text(u8"%s", "X(n) = D ⊗ X(n) ⨁ A ⊗ X(n-1) ⨁ B ⊗ U(n)\nY(n) = C ⊗ X(n)");
+        DisplayFormat const format = m_states.dense_matrices
+            ? DisplayFormat::Dense : DisplayFormat::Sparse;
+        auto const matrix = [this, format](size_t const which)
+        {
+            SparseMatrix<MaxPlus> D, A, B, C;
+            toSysLin(net(), D, A, B, C);
+            SparseMatrix<MaxPlus> const* matrices[] = { &D, &A, &B, &C };
+            std::stringstream txt;
+            printSparseMatrix(txt, *matrices[which], IndexingStyle::CppStyle, format);
+            return txt.str();
+        };
 
         ImGuiTabBarFlags tab_bar_flags = ImGuiTabBarFlags_None;
         if (ImGui::BeginTabBar("syslin", tab_bar_flags))
         {
-            if (ImGui::BeginTabItem("D"))
+            char const* tabs[] = { "D", "A", "B", "C" };
+            for (size_t i = 0u; i < 4u; ++i)
             {
-                std::stringstream txt;
-                printSparseMatrix(txt, D, IndexingStyle::CppStyle,
-                                  display_as_dense ? DisplayFormat::Dense : DisplayFormat::Sparse);
-                ImGui::Text("%s", txt.str().c_str());
-                ImGui::EndTabItem();
-            }
-            if (ImGui::BeginTabItem("A"))
-            {
-                std::stringstream txt;
-                printSparseMatrix(txt, A, IndexingStyle::CppStyle,
-                                  display_as_dense ? DisplayFormat::Dense : DisplayFormat::Sparse);
-                ImGui::Text("%s", txt.str().c_str());
-                ImGui::EndTabItem();
-            }
-            if (ImGui::BeginTabItem("B"))
-            {
-                std::stringstream txt;
-                printSparseMatrix(txt, B, IndexingStyle::CppStyle,
-                                  display_as_dense ? DisplayFormat::Dense : DisplayFormat::Sparse);
-                ImGui::Text("%s", txt.str().c_str());
-                ImGui::EndTabItem();
-            }
-            if (ImGui::BeginTabItem("C"))
-            {
-                std::stringstream txt;
-                printSparseMatrix(txt, C, IndexingStyle::CppStyle,
-                                  display_as_dense ? DisplayFormat::Dense : DisplayFormat::Sparse);
-                ImGui::Text("%s", txt.str().c_str());
-                ImGui::EndTabItem();
+                if (ImGui::BeginTabItem(tabs[i]))
+                {
+                    ImGui::TextUnformatted(m_states.syslin[i].get(
+                        net(), unsigned(format), [&] { return matrix(i); }).c_str());
+                    ImGui::EndTabItem();
+                }
             }
             ImGui::EndTabBar();
         }
@@ -237,7 +219,6 @@ void Editor::showDynamicLinearSystem() const
             ImGui::CloseCurrentPopup();
             m_states.do_syslin = false;
             m_states.plot.reset();
-            cached_valid = false;
         }
         ImGui::EndPopup();
     }
@@ -252,14 +233,14 @@ void Editor::showCriticalCircuit()
     if (ImGui::BeginPopupModal("Critical circuit analysis", NULL,
                                ImGuiWindowFlags_AlwaysAutoResize))
     {
-        static CriticalCycleResult cached;
-        static bool cached_valid = false;
-        if (!cached_valid)
+        if ((m_states.critical_cycle_net != &net()) ||
+            (m_states.critical_cycle_revision != net().modified.revision()))
         {
-            cached = findCriticalCycle(net());
-            cached_valid = true;
+            m_states.critical_cycle = findCriticalCycle(net());
+            m_states.critical_cycle_net = &net();
+            m_states.critical_cycle_revision = net().modified.revision();
         }
-        CriticalCycleResult const& res = cached;
+        CriticalCycleResult const& res = m_states.critical_cycle;
 
         if (!res.success)
         {
@@ -381,7 +362,7 @@ void Editor::showCriticalCircuit()
         {
             ImGui::CloseCurrentPopup();
             m_states.do_find_critical_circuit = false;
-            cached_valid = false;
+            m_states.critical_cycle_net = nullptr;
         }
         ImGui::EndPopup();
     }
@@ -519,17 +500,15 @@ void Editor::showSimulationPlot()
     Net const& current = net();
     auto const& transitions = current.transitions();
 
-    // Per-transition selection persisted across frames. Reset when the net
-    // topology changes (different number of transitions).
-    static std::vector<bool> selected;
-    static size_t selected_size = 0;
-    static bool subtract_drift = true;
-    static bool only_outputs = true;
+    // Per-transition selection of this net, persisted across frames. Reset
+    // when the net topology changes (different number of transitions).
+    std::vector<bool>& selected = m_states.plot_selection[&current];
+    bool& subtract_drift = m_states.plot_subtract_drift;
+    bool& only_outputs = m_states.plot_only_outputs;
 
-    if (selected_size != transitions.size())
+    if (selected.size() != transitions.size())
     {
         selected.assign(transitions.size(), true);
-        selected_size = transitions.size();
     }
 
     bool const is_teg = (current.type() == TypeOfNet::TimedEventGraph);
@@ -585,9 +564,16 @@ void Editor::showSimulationPlot()
                       ImPlotAxisFlags_AutoFit, ImPlotAxisFlags_AutoFit);
     ImPlot::SetupLegend(ImPlotLocation_NorthWest);
 
-    // Plot one line per selected transition.
-    std::vector<double> xs;
-    std::vector<double> ys;
+    // Plot one line per selected transition. The points are computed by a
+    // getter while drawing: no copy of the firing dates at each frame.
+    struct Line { std::vector<float> const* dates; double lambda; };
+    auto const getter = [](int const idx, void* data) -> ImPlotPoint
+    {
+        Line const& line = *static_cast<Line const*>(data);
+        double const k = double(idx + 1);
+        return ImPlotPoint(k, double((*line.dates)[size_t(idx)]) - line.lambda * k);
+    };
+
     for (size_t i = 0u; i < transitions.size(); ++i)
     {
         if (!selected[i])
@@ -608,23 +594,11 @@ void Editor::showSimulationPlot()
         if (dates.empty())
             continue;
 
-        xs.clear();
-        ys.clear();
-        xs.reserve(dates.size());
-        ys.reserve(dates.size());
-        for (size_t k = 0u; k < dates.size(); ++k)
-        {
-            xs.push_back(double(k + 1u));
-            double y = double(dates[k]);
-            if (subtract_drift)
-                y -= lambda * double(k + 1u);
-            ys.push_back(y);
-        }
-        std::string const label = transitions[i].caption.empty()
+        Line line { &dates, subtract_drift ? lambda : 0.0 };
+        std::string const& label = transitions[i].caption.empty()
             ? transitions[i].key
             : transitions[i].caption;
-        ImPlot::PlotLine(label.c_str(), xs.data(), ys.data(),
-                         int(xs.size()));
+        ImPlot::PlotLineG(label.c_str(), getter, &line, int(dates.size()));
     }
 
     ImPlot::EndPlot();

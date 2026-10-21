@@ -224,7 +224,7 @@ void Editor::menuView()
     // View centering
     if (ImGui::MenuItem("Center View", "C"))
     {
-        m_view.centerOnNet(net());
+        activeDocument().activeNet().view_state.center_request = Document::ViewState::CENTER_FRAMES;
     }
 
     ImGui::Separator();
@@ -275,8 +275,7 @@ void Editor::menuActions()
     // Type of net submenu
     if (ImGui::BeginMenu("Type of Net"))
     {
-        static int current_type = int(net().type());
-        current_type = int(net().type());
+        int current_type = int(net().type());
         if (ImGui::RadioButton("Petri net", &current_type, 0))
             switchOfNet(TypeOfNet::PetriNet);
         if (ImGui::RadioButton("Timed Petri net", &current_type, 1))

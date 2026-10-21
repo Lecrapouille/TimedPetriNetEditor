@@ -474,7 +474,9 @@ static void drawGrafcetActionsPanel(Net& net, Simulation& simulation, bool& modi
                 ImGui::Separator();
                 ImGui::Text("Edit action:");
 
-                static int selected_action = 0;
+                // Selected action of this step, kept by Dear ImGui per step.
+                int& selected_action = *ImGui::GetStateStorage()->GetIntRef(
+                    ImGui::GetID(("selected_action_" + place.key).c_str()), 0);
                 if (selected_action >= static_cast<int>(place.actions.size()))
                     selected_action = 0;
 

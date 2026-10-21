@@ -50,6 +50,11 @@ public:
         float scrolling_x = 0.0f;
         float scrolling_y = 0.0f;
         float zoom = 1.0f;
+        //! \brief Fit the net in its window during the next draws. Deferred
+        //! because the size of the window is only known while drawing it, and
+        //! the docking layout may still resize it during the first frames.
+        int center_request = CENTER_FRAMES;
+        static constexpr int CENTER_FRAMES = 4;
     };
 
     struct NetEntry
