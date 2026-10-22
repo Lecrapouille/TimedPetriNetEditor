@@ -1,21 +1,28 @@
-# Interface with Julia
+# 8. Julia
 
-*(The Julia API is still in gestation, API for arcs is missing).*
+What you will find here: how to edit, run and analyse nets from
+[Julia](https://julialang.org/), with the (max,+) algebra of
+[MaxPlus.jl](https://github.com/Lecrapouille/MaxPlus.jl).
 
-For [Julia](https://github.com/JuliaLang/julia) developers, I made an API, to
-allows editing Petri nets either from function or allow to launch the graphical
-editor.
+The status: the C++ side (`src/julia`, a C library) is here; the Julia
+package itself moves to
+[TimedPetriNetEditor.jl](https://github.com/Lecrapouille/TimedPetriNetEditor.jl),
+which builds this library and adds the flowshop functions of ScicosLab. The
+API for the arcs is still missing. The code below is the test of the Julia
+API (`src/julia/tests/test_petri.jl`).
 
-To achieve it, first [MaxPlus](https://github.com/Lecrapouille/MaxPlus.jl) Julia
-package (for the moment you need the `dev` branch still in gestation).
+---
+
+## 1. Install
 
 ```julia
 import Pkg; Pkg.add("MaxPlus")
 ```
 
-Then install the TimedPetriNetEditor with `make install` (need sudo rights)
-because the path of the shared library `libtimedpetrineteditor.so` has to be
-known to be used by Julia.
+Then install the editor (`sudo make install`) so that Julia finds the shared
+library.
+
+## 2. Open the editor from Julia
 
 The simplest way is to call the editor:
 
@@ -38,8 +45,9 @@ pn1 = petri_editor(pn0)
 @assert pn1.handle == 1
 ```
 
-From your Julia REPL (call Julia at the root of the TimedPetriNetEditor
-repository), you can type this kind of code (consider this code as a cheatsheet):
+## 3. Cheatsheet
+
+From the Julia REPL, started at the root of the repository:
 
 ```julia
 using Suppressor, SparseArrays, MaxPlus
@@ -240,3 +248,10 @@ S = to_syslin(pn6)
 @assert full(S.C) == reshape([MP(3) mp0], 1, 2)
 @assert full(S.x0) == reshape([mp0; mp0], 2, 1)
 ```
+
+The dater equations use `k`, the number of the firing, as in the Gantt chart
+of [chapter 3](03-Timed-Nets-and-Max-Plus.md#41-dater-form).
+
+---
+
+Next: [9. Remote control](09-Remote-Control.md).

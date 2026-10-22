@@ -1,4 +1,6 @@
-# Related lectures and projects
+# Bibliography
+
+Books, lectures and other tools about Petri nets, (max,+) algebra, GRAFCET and GEMMA. Back to the [documentation](README.md).
 
 - ![en](https://lecrapouille.github.io/icons/en.png) ![fr](https://lecrapouille.github.io/icons/fr.png) https://jpquadrat.github.io/ Some research based on timed Petri net and (max,+) algebra.
 - ![en](https://lecrapouille.github.io/icons/en.png) ![fr](https://lecrapouille.github.io/icons/fr.png) https://github.com/Lecrapouille/MaxPlus.jl My (max,+) toolbox for Julia, a portage of the http://www.scicoslab.org/ toolbox (since Scilab is no longer maintained).
