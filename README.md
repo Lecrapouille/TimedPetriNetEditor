@@ -1,50 +1,83 @@
 # Timed Petri Net Editor
 
-Draw a system that does several things at the same time, run it, and ask:
-*how fast can it go, where does it wait, and how do I control it?*
-TimedPetriNetEditor is a graphical editor and simulator of **Petri nets**,
-**timed event graphs** and **GRAFCETs**, with the **(max,+) algebra** that
-answers these questions exactly.
+**Draw it. Run it. Find out why it is slow.**
 
-[![TimedPetri](doc/pics/911.png)](https://youtu.be/hOhunzgFpcA)
+A coffee machine, a crossroads with traffic lights, three philosophers
+who share one fork and two knives, a factory, a dryer with an emergency stop: they all do
+several things at the same time, and they all wait for each other somewhere.
+TimedPetriNetEditor lets you draw them with the mouse, watch them run, press
+their buttons, and get the answer to the question everybody asks: *how fast
+can it go, and what slows it down?*
 
-*A French emergency call center as a timed Petri net: level 1 operators
-filter the calls, level 2 operators take the urgent ones (click for the
-video).*
+![A GEMMA running](doc/pics/Editor-GEMMA-running.png)
 
-An online version is in progress:
+*A dryer controlled by three GRAFCETs: press its buttons on the control
+panel, watch the motors turn and the oven heat.*
+
+## What you can do with it
+
+**Play with a system until you understand it.** Click on a transition and
+the tokens move. Three philosophers, one fork, two knives: who can eat at
+the same time, and who has to wait? Add a token, remove an arc, and see what
+changes.
+
+**Measure a factory before you build it.** Open a flowshop (pieces, machines,
+processing times) and the editor gives, without simulating, the time between
+two products, the machine that slows everything down, and the schedule of
+every machine as a Gantt chart. Then press Space and watch the simulation
+follow the same dates.
+
+**Run a machine without the machine.** Draw a GRAFCET the way automation is
+taught (IEC 60848): steps, conditions such as `Start . /EStop`, timers such
+as `3s/X2`, actions, forcing orders between graphs (GEMMA). Then drive it
+from a control panel with real push buttons, a mushroom emergency stop, a
+mode selector and a thermometer, and read its timing diagram.
+
+**Take it with you.** Export to LaTeX for your report, to Graphviz, PNML or
+Draw.io, generate the C++ code of your GRAFCET for an Arduino, drive the
+editor from Python over ZeroMQ, or use its engine in your own C++ or Julia
+program.
+
+| | | |
+|:-:|:-:|:-:|
+| ![Coffee](data/examples/pics/Coffee.png) | ![Philosophers](data/examples/pics/Philosophers.png) | ![Traffic lights](data/examples/pics/TrafficLights.png) |
+| a coffee machine | the dining philosophers | traffic lights |
+| ![Flowshop](doc/pics/Editor-Flowshop.png) | ![Critical circuit](doc/pics/Circuit01.png) | ![Emergency calls](doc/pics/911.png) |
+| a flowshop factory | its bottleneck in orange | [an emergency call center (video)](https://youtu.be/hOhunzgFpcA) |
+
+All of them are in [data/examples](data/examples/README.md). An online
+version is in progress:
 [try it in your browser](https://lecrapouille.github.io/TimedPetriNetEditor/TimedPetriNetEditor.html).
 
-## Why this editor exists
+## The story
 
-It started as the missing piece of [ScicosLab](http://www.scicoslab.org/)'s
-(max,+) toolbox, made at INRIA: the toolbox computed cycle times and
-schedules of timed event graphs, but you had to write the matrices by hand.
-ScicosLab is no longer developed; its toolbox lives on in Julia as
-[MaxPlus.jl](https://github.com/Lecrapouille/MaxPlus.jl), and this editor is
-the graphical side: draw the net, get the matrices, the cycle time, the
-bottleneck, the Gantt chart.
+At INRIA, the (max,+) algebra turned the schedules of factories and trains
+into simple linear equations, and the ScicosLab toolbox computed them: cycle
+times, critical circuits, earliest dates. But you had to type the matrices
+by hand, and ScicosLab is no longer developed. The toolbox now lives in Julia
+as [MaxPlus.jl](https://github.com/Lecrapouille/MaxPlus.jl); this editor is
+its missing half: draw the net, and the matrices come by themselves.
 
-The other Petri net editors of GitHub were not an option: most of them are
-no longer maintained, need Windows, Visual Studio, Java or C#, or have code
-too complex to extend. GRAFCET came next: teachers and students of
-automation draw GRAFCETs and GEMMAs on paper, and the ones who want to run
-them need a PLC or an expensive tool. Finally
-[RobotIK](https://github.com/Lecrapouille/Robotik) drives its simulated
-robot cells with the GRAFCET engine and the (max,+) algorithms of this
-project.
+The Petri net editors found on GitHub did not help: most of them were
+abandoned years ago, needed Windows, Java or C#, or had code nobody could
+extend. Then came the GRAFCET: students of automation draw GRAFCETs and
+GEMMAs on paper, and to see them run they need a PLC or an expensive tool.
+Today [RobotIK](https://github.com/Lecrapouille/Robotik) also drives its
+simulated robot cells with the GRAFCET engine and the (max,+) algorithms of
+this project.
 
-## What makes it different
+## Why this one
 
-| | This editor | Most Petri net editors | GRAFCET tools of automation |
-|-|-------------|------------------------|-----------------------------|
-| Timed event graphs with the (max,+) algebra: cycle time, critical circuit, Gantt chart, dater equations, linear system | yes | rarely | no |
-| GRAFCET by IEC 60848: receptivities with edges and timers, all qualifiers, forcing orders, several graphs (GEMMA) | yes | no | yes |
-| Run a GRAFCET from a control panel (push buttons, emergency stop, selector, sensors) and see its timing diagram | yes | no | with a PLC |
-| One file format (JSON) with descriptions; LaTeX, Graphviz, PNML, C++ exports | yes | partly | proprietary |
-| Usable as a C++ library, from Julia, or remotely (ZeroMQ) | yes | rarely | no |
+| | This editor | Most Petri net editors | GRAFCET tools |
+|-|:-:|:-:|:-:|
+| Cycle time, bottleneck, Gantt chart, (max,+) equations of a timed event graph | ✔ | rarely | ✘ |
+| GRAFCET by the standard: edges, timers, all action qualifiers, forcing orders, several graphs | ✔ | ✘ | ✔ |
+| A control panel with real buttons, a timing diagram, timers you can see count | ✔ | ✘ | with a PLC |
+| Draw with the mouse only: no mode, no palette, the status bar tells you what a click does | ✔ | rarely | rarely |
+| C++ library, Julia, remote control, exports, C++ code generation | ✔ | rarely | ✘ |
+| Free, open source, Linux, macOS, Windows | ✔ | varies | rarely |
 
-## Quick start
+## Try it in two minutes
 
 ```sh
 git clone https://github.com/Lecrapouille/TimedPetriNetEditor --depth=1 --recursive
@@ -52,54 +85,71 @@ cd TimedPetriNetEditor/
 make download-external-libs
 make compile-external-libs
 make -j8
+```
+
+(The remote control needs ZeroMQ: `sudo dnf install zeromq-devel`,
+`sudo apt install libzmq3-dev` or `brew install zeromq`; or build without it
+with `make TPNE_ZEROMQ=0`.)
+
+Then three things to try:
+
+```sh
+./build/TimedPetriNetEditor data/examples/Philosophers.json
+```
+
+Press **Space**, then click on the green transitions: a philosopher eats
+when the cutlery is free, and the others wait.
+
+```sh
+./build/TimedPetriNetEditor data/examples/simple.flowshop
+```
+
+*Analysis > Critical circuit*: the factory makes a set of pieces every 6
+time units, and machine M1 is the bottleneck. *Analysis > Gantt chart*: who
+works when.
+
+```sh
 ./build/TimedPetriNetEditor data/examples/GEMMA-Dryer.json
 ```
 
-The remote control needs ZeroMQ (`sudo dnf install zeromq-devel`,
-`sudo apt install libzmq3-dev`, `brew install zeromq`), or build without it:
-`make TPNE_ZEROMQ=0`. `sudo make install` installs the editor and its
-libraries.
+Press **Space**, then on the control panel: Rearm, Ack, wait 3 s, Ack again,
+wait for 80 °C, Start. Then hit the emergency stop.
 
-![GEMMA](doc/pics/Editor-GEMMA-running.png)
-
-*The GEMMA of a dryer: three GRAFCETs that run together, their control
-panel and their outputs.*
-
-In the editor, the left mouse button draws, the right one moves, and
-**Space** runs the net. The status bar always says what the mouse would do.
+To draw your own: the **left** mouse button draws (a click adds a place, a
+drag from a node draws an arc), the **right** one moves, the status bar always
+says what a click would do. `F1` is the help.
 
 ## Documentation
 
-Start with [the documentation index](doc/README.md). In order:
+[The documentation](doc/README.md) is written for beginners, in simple
+English, with tutorials made from real runs:
 
 | # | Chapter | You will learn |
 |---|---------|----------------|
 | 1 | [Introduction](doc/01-Introduction.md) | places, transitions, tokens; the four kinds of nets |
 | 2 | [Getting started](doc/02-Getting-Started.md) | draw and run your first net |
 | 3 | [Timed nets and (max,+) algebra](doc/03-Timed-Nets-and-Max-Plus.md) | cycle time, bottleneck, Gantt chart of a factory |
-| 4 | [GRAFCET and GEMMA](doc/04-GRAFCET-and-GEMMA.md) | control a machine; the dryer tutorial |
+| 4 | [GRAFCET and GEMMA](doc/04-GRAFCET-and-GEMMA.md) | control a machine: the dryer |
 | 5 | [Exports and code generation](doc/05-Exports-and-Code-Generation.md) | LaTeX, Graphviz, PNML, C++ code of a GRAFCET |
 | 6 | [File format](doc/06-File-Format.md) | the JSON file |
 | 7 | [Editor reference](doc/07-Editor-Reference.md) | every window, gesture, key and menu |
 | 8 | [Julia](doc/08-Julia.md) | the editor and the (max,+) algebra from Julia |
-| 9 | [Remote control](doc/09-Remote-Control.md) | JSON commands over ZeroMQ |
+| 9 | [Remote control](doc/09-Remote-Control.md) | drive the editor from another program |
 | 10 | [Use the library in C++](doc/10-Library.md) | run a GRAFCET or compute dates in your program |
 
-Examples are in [data/examples](data/examples/README.md); the words in the
-[glossary](doc/Glossary.md); books and other tools in the
-[bibliography](doc/Bibliography.md).
+The words are in the [glossary](doc/Glossary.md), books and other tools in
+the [bibliography](doc/Bibliography.md).
 
 ## For developers
 
-This project may be compiled with `-ffast-math` (see `PERFORMANCE_FLAGS` in
+`sudo make install` installs the editor and its libraries. The unit tests:
+`make -C tests`, then `../build/TimedPetriNetEditor-UnitTest` from `tests/`.
+In Visual Studio Code, F5 starts the editor in the debugger.
+
+The project may be compiled with `-ffast-math` (`PERFORMANCE_FLAGS` in
 `.makefile/rules/Makefile`), which implies `-ffinite-math-only`: the compiler
 then considers that `NaN` and `±Inf` never occur, so `std::isnan()` and
-`std::isinf()` become `false` and comparisons such as `x == -inf` are not
-reliable. To detect a special value (the (max,+) zero `-inf`, the `NaN` "no
-duration" of `Place -> Transition` arcs ...), use the helpers of
+`std::isinf()` become `false`. To detect the (max,+) zero `-inf` or the `NaN`
+"no duration" of the arcs, use the helpers of
 [`src/PetriNet/SafeFloat.hpp`](src/PetriNet/SafeFloat.hpp) (`safeIsNaN`,
 `safeIsNegInf`, `safeIsPosInf`, `safeIsInf`).
-
-In Visual Studio Code, F5 starts the editor in the debugger
-(`.vscode/launch.json`). The unit tests: `make -C tests`, then
-`../build/TimedPetriNetEditor-UnitTest` from `tests/`.

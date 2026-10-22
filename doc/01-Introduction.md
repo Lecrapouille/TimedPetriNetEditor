@@ -85,6 +85,13 @@ A few words on each:
   together and force each other: this is how a **GEMMA** describes the start
   and stop modes of a machine (chapter 4).
 
+One kind is missing on purpose: the **state machine**, the opposite of the
+event graph. There, each transition has exactly one place before it and one
+after it: a transition only links two places, and a single token jumps from
+state to state. The editor does not handle state machines; for them, look at
+[Harel's statecharts](https://www.itemis.com/en/products/itemis-create/documentation/user-guide/overview_what_are_state_machines)
+or [SyncCharts](http://www-sop.inria.fr/members/Charles.Andre/CA%20Publis/Cesa96/SyncCharts_Cesa96.pdf).
+
 ## 4. One question you will meet: who gets the token?
 
 In the producer-consumer net, imagine that the buffer had two arcs going out,
