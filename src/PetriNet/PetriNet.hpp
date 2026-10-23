@@ -302,6 +302,10 @@ public:
     //! The transition must remain enabled for this duration before firing.
     //! 0 means no delay (immediate firing when enabled).
     float delay = 0.0f;
+
+    //! \brief Priority when several transitions can fire at the same date
+    //! (Engine::Policy::Priority): the highest fires first.
+    int priority = 0;
 };
 
 // *****************************************************************************
