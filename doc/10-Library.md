@@ -232,6 +232,11 @@ while (rt.step(*order)) { /* ... */ }
   transition in conflict with the slow one, going to a place of error.
 - `order->log()` is the journal: each transition `Scheduled`, `Started`,
   `Completed` with its result and its date.
+- A net can be the function of a transition of another net (a macro step):
+  `parent.on("pick", SubNet(child_runtime, { { "Done", Success } }))` runs
+  an instance of the child net at each firing; its end (`Success`,
+  `Deadlocked`, `Canceled`, `Failed`) is the result of the transition, and
+  canceling the parent cancels it.
 
 ## 7. Walk the structure of a net
 

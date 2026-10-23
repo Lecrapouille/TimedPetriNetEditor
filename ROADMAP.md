@@ -303,7 +303,8 @@ while (rt.step(inst, now())) { /*...*/ }    // non bloquant, dans ta boucle
 - [x] `Callback` par effacement de type + points d'extension ADL (`fire`, `cancel`,
       `pause`, `resume`, `isSynchronous`) : `Runtime/Callback.hpp` ; exécuteurs
       `InlineExecutor`, `ThreadPoolExecutor`, `TaskflowExecutor` (option `TPNE_WITH_TASKFLOW`).
-- [ ] Un `Runtime` est lui-même un `Callback` → réseaux imbriqués (macro-étapes).
+- [x] Un `Runtime` est lui-même un `Callback` → réseaux imbriqués (macro-étapes) :
+      `SubNet(runtime, goal)` comme fonction d'une transition.
 - [x] `unregisteredTransitions()` : liste les transitions sans fonction (utile au démarrage).
 
 ### 6.3 Boucle d'exécution

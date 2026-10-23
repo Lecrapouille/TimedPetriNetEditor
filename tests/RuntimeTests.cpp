@@ -7,6 +7,7 @@
 
 #include "main.hpp"
 #include "Runtime/Runtime.hpp"
+#include "Runtime/SubNet.hpp"
 
 #include <atomic>
 #include <chrono>
@@ -232,4 +233,85 @@ TEST(TestRuntime, PrioritiesAndZeno)
     auto zeno = looping.instantiate("g");
     ASSERT_EQ(looping.run(*zeno), Failed);
     ASSERT_NE(zeno->error().find("without duration"), std::string::npos);
+}
+
+//------------------------------------------------------------------------------
+//! \brief Start -> [pick] -> Picked; Picked (Success) -> [ship] -> Shipped;
+//! Picked (Failed) -> [alarm] -> Alarm. The function of "pick" is the net of
+//! pickAndPlace().
+static Net parent()
+{
+    Net net(TypeOfNet::PetriNet);
+    Place& start = net.addPlace(0.0f, 0.0f, 1u);
+    Place& picked = net.addPlace(0.0f, 0.0f, 0u);
+    Place& shipped = net.addPlace(0.0f, 0.0f, 0u);
+    Place& alarm = net.addPlace(0.0f, 0.0f, 0u);
+    start.caption = "Start"; picked.caption = "Picked"; shipped.caption = "Shipped"; alarm.caption = "Alarm";
+    Transition& pick = net.addTransition(0.0f, 0.0f);
+    Transition& ship = net.addTransition(0.0f, 0.0f);
+    Transition& raise = net.addTransition(0.0f, 0.0f);
+    pick.caption = "pick"; ship.caption = "ship"; raise.caption = "alarm";
+    net.addArc(start, pick); net.addArc(pick, picked);
+    net.addArc(picked, ship); net.addArc(ship, shipped);
+    net.addArc(picked, raise); net.addArc(raise, alarm);
+    net.findArc(picked, ship)->color = Success;
+    net.findArc(picked, raise)->color = Failed;
+    return net;
+}
+
+//------------------------------------------------------------------------------
+TEST(TestRuntime, NestedNets)
+{
+    Net const child_net = pickAndPlace();
+    Net const parent_net = parent();
+
+    // The sub net succeeds: the parent ships.
+    auto child = std::make_shared<Runtime>(child_net);
+    child->on("grasp", []() { return true; });
+    SubNet sub(child, { { "Done", Success } });
+    Runtime runtime(parent_net);
+    runtime.on("pick", sub);
+    auto order = runtime.instantiate("order", {}, { { "Shipped", Success } });
+    ASSERT_EQ(runtime.run(*order), Success);
+    ASSERT_EQ(sub.instances().size(), 1u);
+    ASSERT_EQ(sub.instances()[0]->result(), Success);
+
+    // The sub net deadlocks (no grasp ever succeeds and no retry): its end is
+    // the result of "pick", the parent raises the alarm.
+    Net failing = pickAndPlace();
+    failing.removeNode(failing.transitions()[3]);
+    auto child2 = std::make_shared<Runtime>(failing);
+    child2->on("grasp", []() { return Deadlocked; });
+    Runtime runtime2(parent_net);
+    runtime2.on("pick", SubNet(child2, { { "Done", Success } }));
+    auto order2 = runtime2.instantiate("order2", {}, { { "Alarm", Failed } });
+    ASSERT_EQ(runtime2.run(*order2), Deadlocked);
+    ASSERT_EQ(order2->marking().count(1u, Deadlocked), 1u); // Picked holds the result
+}
+
+//------------------------------------------------------------------------------
+TEST(TestRuntime, CancelNestedNets)
+{
+    Net const child_net = pickAndPlace();
+    Net const parent_net = parent();
+    auto child = std::make_shared<Runtime>(child_net, std::make_shared<ThreadPoolExecutor>(1u));
+    auto stop = std::make_shared<std::atomic<bool>>(false);
+    child->on("detect", [stop]() {
+        while (!*stop)
+            std::this_thread::sleep_for(std::chrono::milliseconds(1));
+    });
+    SubNet sub(child, { { "Done", Success } });
+    Runtime runtime(parent_net, std::make_shared<ThreadPoolExecutor>(1u));
+    runtime.on("pick", sub);
+    auto order = runtime.instantiate("order", {}, { { "Shipped", Success } });
+    std::thread killer([&runtime, order, stop]() {
+        std::this_thread::sleep_for(std::chrono::milliseconds(20));
+        runtime.cancel(*order); // cancels the sub net too
+        std::this_thread::sleep_for(std::chrono::milliseconds(5));
+        *stop = true;
+    });
+    ASSERT_EQ(runtime.run(*order), Canceled);
+    killer.join();
+    ASSERT_EQ(sub.instances().size(), 1u);
+    ASSERT_EQ(sub.instances()[0]->result(), Canceled);
 }
