@@ -5,8 +5,8 @@
 // for users who cannot use the GPL, under a commercial license.
 // See LICENSING.md for details.
 
-#include "PetriNet/SparseMatrix.hpp"
-#include "PetriNet/TropicalAlgebra.hpp"
+#include "MaxPlus/SparseMatrix.hpp"
+#include "MaxPlus/TropicalAlgebra.hpp"
 
 #include <iostream>
 #include <sstream>

@@ -161,13 +161,6 @@ public:
     //--------------------------------------------------------------------------
     size_t totalFirings() const;
 
-    //--------------------------------------------------------------------------
-    //! \brief (max,+) eigenvalue (cycle time λ) of the Timed Event Graph,
-    //! cached once at simulation start. Returns 0 if not a TEG or if the
-    //! Howard algorithm failed.
-    //--------------------------------------------------------------------------
-    inline double eigenvalue() const { return m_eigenvalue; }
-
     //! \brief Signal emitted when simulation starts successfully.
     Signal<> onStarted;
     //! \brief Signal emitted when simulation stops.
@@ -250,10 +243,6 @@ private:
     std::vector<size_t> m_initial_tokens;
     //! \brief Simulation time since start().
     double m_sim_time = 0.0;
-    //! \brief (max,+) cycle time λ, computed once at simulation start when
-    //! the net is a timed event graph (or a timed Petri net that is an event
-    //! graph). Zero otherwise.
-    double m_eigenvalue = 0.0;
     //! \brief True if there are receptivity parsing errors.
     bool m_has_receptivity_errors = false;
 };

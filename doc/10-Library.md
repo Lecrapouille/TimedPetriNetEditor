@@ -4,10 +4,16 @@ What you will find here: how a program uses the nets without the editor:
 load a file, run a GRAFCET, compute the dates of a timed event graph,
 simulate it, draw a net in your own Dear ImGui window.
 
-The editor is made of two libraries: `libTimedPetriNet` (nets, simulation,
-GRAFCET engine, (max,+) algorithms, imports, exports; no graphics) and
-`libTimedPetriGUI` (the editor). [RobotIK](https://github.com/Lecrapouille/Robotik)
-drives its robot cells with the first one.
+The editor is made of three libraries:
+
+| Library | Sources | What |
+|---------|---------|------|
+| `libTimedPetriNet` | `src/PetriNet` | nets, firing rule, engine, simulation, GRAFCET engine, imports, exports; no graphics, no (max,+) |
+| `libTimedPetriMaxPlus` | `src/MaxPlus` | (max,+) algebra, Howard, critical circuit, linear systems, equations, the Julia export |
+| `libTimedPetriGUI` | `src/Editor` | the editor |
+
+[RobotIK](https://github.com/Lecrapouille/Robotik) drives its robot cells
+with the first one.
 
 ---
 
@@ -17,8 +23,11 @@ After `make`, the libraries are in `build/`. A program `main.cpp`:
 
 ```sh
 g++ -std=c++20 -Isrc -Iexternal/json/include -Iexternal main.cpp \
-    -Lbuild -lTimedPetriNet -Wl,-rpath,$PWD/build -o main
+    -Lbuild -lTimedPetriMaxPlus -lTimedPetriNet -Wl,-rpath,$PWD/build -o main
 ```
+
+`-lTimedPetriMaxPlus` only for §3 (cycle time, dates of the (max,+)
+equations). It needs `registerMaxPlusExporters()` to save `.jl` files.
 
 A project built with Make can compile the sources instead: define
 `TPNE_DIR` and include `TimedPetriNet.mk`, which gives `TPNE_SOURCES`,
@@ -94,7 +103,7 @@ descriptions and the kinds of the inputs and outputs.
 ## 3. Cycle time and earliest dates
 
 ```c++
-#include "PetriNet/Algorithms.hpp"
+#include "MaxPlus/Algorithms.hpp"
 #include "PetriNet/Flowshop.hpp"
 
 Net net;

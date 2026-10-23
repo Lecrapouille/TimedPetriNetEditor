@@ -67,6 +67,9 @@ LIB_FILES += $(call rwildcard,$(P)/src/PetriNet,*.cpp)
 LIB_FILES += $(call rwildcard,$(P)/src/PetriNet,*.c)
 USER_CXXFLAGS += -Wno-cast-qual -Wno-float-equal
 USER_CCFLAGS += -Wno-sign-conversion -Wno-float-equal -Wno-nan-infinity-disabled
+# The core relies on NaN and infinities: never with -ffast-math.
+USER_CXXFLAGS += -fno-fast-math
+USER_CCFLAGS += -fno-fast-math
 
 ###################################################
 # Public headers installed under

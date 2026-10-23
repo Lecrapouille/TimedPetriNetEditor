@@ -7,7 +7,6 @@
 
 #include "PetriNet/Firing.hpp"
 #include "PetriNet/PetriNet.hpp"
-#include "PetriNet/SparseMatrix.hpp"
 
 #include <algorithm>
 #include <cassert>
@@ -120,24 +119,6 @@ Marking fire(Net const& net, Marking const& marking, size_t const transition)
     consume(net, next, transition);
     produce(net, next, transition);
     return next;
-}
-
-//------------------------------------------------------------------------------
-void incidenceMatrices(Net const& net, SparseMatrix<double>& pre, SparseMatrix<double>& post)
-{
-    size_t const places = net.places().size();
-    size_t const transitions = net.transitions().size();
-    pre.clear(); pre.reshape(places, transitions);
-    post.clear(); post.reshape(places, transitions);
-    for (auto const& a: net.arcs())
-    {
-        if (a.kind != ArcKind::Normal)
-            continue;
-        if (a.from.isPlace())
-            pre.set(a.from.id, a.to.id, double(a.weight));
-        else
-            post.set(a.to.id, a.from.id, double(a.weight));
-    }
 }
 
 } // namespace tpne

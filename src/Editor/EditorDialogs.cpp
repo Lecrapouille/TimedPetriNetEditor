@@ -10,8 +10,8 @@
 #include "Editor/Theme.hpp"
 #include "Editor/GrafcetHelp.hpp"
 
-#include "PetriNet/Algorithms.hpp"
-#include "PetriNet/SparseMatrix.hpp"
+#include "MaxPlus/Algorithms.hpp"
+#include "MaxPlus/SparseMatrix.hpp"
 #include "imgui/imgui.h"
 #include "implot/implot.h"
 #include <algorithm>

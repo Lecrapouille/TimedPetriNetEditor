@@ -9,8 +9,8 @@
 #define protected public
 #define private public
 #  include "PetriNet/PetriNet.hpp"
-#  include "PetriNet/Algorithms.hpp"
-#  include "PetriNet/Howard.h"
+#  include "MaxPlus/Algorithms.hpp"
+#  include "MaxPlus/Howard.h"
 #undef protected
 #undef private
 

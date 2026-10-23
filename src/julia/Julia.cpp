@@ -8,9 +8,9 @@
 #include "Julia.hpp"
 
 #include "PetriNet/PetriNet.hpp"
-#include "PetriNet/Algorithms.hpp"
-#include "PetriNet/SparseMatrix.hpp"
-#include "PetriNet/TropicalAlgebra.hpp"
+#include "MaxPlus/Algorithms.hpp"
+#include "MaxPlus/SparseMatrix.hpp"
+#include "MaxPlus/TropicalAlgebra.hpp"
 #include "PetriNet/Imports/Imports.hpp"
 
 #include "Editor/Editor.hpp" // Selected by Makefile
@@ -25,6 +25,9 @@
 //! \brief List of Petri nets.
 //------------------------------------------------------------------------------
 static std::deque<std::unique_ptr<tpne::Net>> g_petri_nets;
+
+//! \brief The Julia export (MaxPlus.jl) is known by saveToFile().
+static bool const g_exporters = (tpne::registerMaxPlusExporters(), true);
 
 //------------------------------------------------------------------------------
 //! \brief Check the validity of the Petri net handle (pn) and return an

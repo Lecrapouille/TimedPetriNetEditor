@@ -8,7 +8,7 @@
 #ifndef TROPICAL_ALGEBRA_HPP
 #  define TROPICAL_ALGEBRA_HPP
 
-#  include "PetriNet/ZeroOne.hpp"
+#  include "MaxPlus/ZeroOne.hpp"
 #  include "PetriNet/SafeFloat.hpp"
 
 #  include <cmath>

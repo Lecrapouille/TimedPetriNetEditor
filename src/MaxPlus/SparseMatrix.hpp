@@ -8,8 +8,8 @@
 #ifndef TPNE_SPARSE_MATRIX_H
 #  define TPNE_SPARSE_MATRIX_H
 
-#  include "PetriNet/ZeroOne.hpp"
-#  include "PetriNet/TropicalAlgebra.hpp"
+#  include "MaxPlus/ZeroOne.hpp"
+#  include "MaxPlus/TropicalAlgebra.hpp"
 
 #  include <vector>
 #  include <iostream>

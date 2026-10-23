@@ -8,7 +8,8 @@
 #include "main.hpp"
 #include "PetriNet/PetriNet.hpp"
 #include "PetriNet/Firing.hpp"
-#include "PetriNet/SparseMatrix.hpp"
+#include "MaxPlus/SparseMatrix.hpp"
+#include "MaxPlus/Algorithms.hpp"
 
 using namespace ::tpne;
 

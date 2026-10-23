@@ -10,7 +10,7 @@
 #include "PetriNet/GrafcetEngine.hpp"
 #include "PetriNet/Simulation.hpp"
 #include "PetriNet/Flowshop.hpp"
-#include "PetriNet/Algorithms.hpp"
+#include "MaxPlus/Algorithms.hpp"
 #include "PetriNet/Exports/Exports.hpp"
 #include "PetriNet/Imports/Imports.hpp"
 

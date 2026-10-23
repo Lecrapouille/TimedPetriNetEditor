@@ -11,13 +11,13 @@
 namespace tpne {
 
 //------------------------------------------------------------------------------
-std::vector<Exporter> const& exporters()
+//------------------------------------------------------------------------------
+static std::vector<Exporter>& registry()
 {
-    static const std::vector<Exporter> s_exporters = {
+    static std::vector<Exporter> s_exporters = {
         { "JSON", ".json", exportToJSON },
         { "Arduino GRAFCET", ".hpp,.h,.hh,.h++", exportToGrafcetCpp },
         { "Symfony", ".yaml", exportToSymfony },
-        { "Julia", ".jl", exportToJulia },
         { "Draw.io", ".drawio.xml", exportToDrawIO },
         { "Graphviz", ".gv,.dot", exportToGraphviz },
         { "PN-Editor", ".pns,.pnl,.pnk,.pnkp", exportToPNEditor },
@@ -30,6 +30,23 @@ std::vector<Exporter> const& exporters()
     };
 
     return s_exporters;
+}
+
+//------------------------------------------------------------------------------
+std::vector<Exporter> const& exporters()
+{
+    return registry();
+}
+
+//------------------------------------------------------------------------------
+void addExporter(Exporter const& exporter)
+{
+    for (auto const& it: registry())
+    {
+        if (it.format == exporter.format)
+            return;
+    }
+    registry().push_back(exporter);
 }
 
 //------------------------------------------------------------------------------

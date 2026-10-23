@@ -23,7 +23,7 @@ include $(M)/project/Makefile
 ###################################################
 # Inform Makefile where to find *.cpp files
 #
-VPATH += $(P)/src $(P)/src/PetriNet
+VPATH += $(P)/src $(P)/src/PetriNet $(P)/src/MaxPlus
 VPATH += $(P)/src/PetriNet/Imports $(P)/src/PetriNet/Exports
 
 ###################################################
@@ -35,8 +35,9 @@ INCLUDES += $(P)/src
 # Internal libraries since we can call the GUI from Julia REPL
 # We force compilation order.
 LIB_TPNE_NET := $(call internal-lib,TimedPetriNet)
+LIB_TPNE_MAXPLUS := $(call internal-lib,TimedPetriMaxPlus)
 LIB_TPNE_EDITOR := $(call internal-lib,TimedPetriGUI)
-INTERNAL_LIBS := $(LIB_TPNE_EDITOR) $(LIB_TPNE_NET)
+INTERNAL_LIBS := $(LIB_TPNE_EDITOR) $(LIB_TPNE_MAXPLUS) $(LIB_TPNE_NET)
 #DIRS_WITH_MAKEFILE := $(P)/src/Net $(P)/src/Editor
 
 #$(LIB_TPNE_NET): $(P)/src/Net

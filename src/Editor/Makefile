@@ -20,11 +20,13 @@ TARGET_DESCRIPTION := Library Editor for Petri nets
 include $(M)/project/Makefile
 
 ###################################################
-# Depends on TimedPetriNet (required when linking the macOS dylib).
+# Depends on TimedPetriMaxPlus and TimedPetriNet (required when linking the
+# macOS dylib).
 #
 LIB_TPNE_NET := $(call internal-lib,TimedPetriNet)
-INTERNAL_LIBS := $(LIB_TPNE_NET)
-DIRS_WITH_MAKEFILE := $(P)/src/PetriNet
+LIB_TPNE_MAXPLUS := $(call internal-lib,TimedPetriMaxPlus)
+INTERNAL_LIBS := $(LIB_TPNE_MAXPLUS) $(LIB_TPNE_NET)
+DIRS_WITH_MAKEFILE := $(P)/src/MaxPlus
 
 ###################################################
 # Set json library.

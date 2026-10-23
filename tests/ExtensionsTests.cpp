@@ -7,7 +7,7 @@
 
 #include "main.hpp"
 #include "PetriNet/PetriNet.hpp"
-#include "PetriNet/Algorithms.hpp"
+#include "MaxPlus/Algorithms.hpp"
 #include "PetriNet/Simulation.hpp"
 
 using namespace ::tpne;

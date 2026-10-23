@@ -9,7 +9,7 @@
 #include "Editor/EditorState.hpp"
 #include "Editor/Theme.hpp"
 #include "Remote/IRemoteControl.hpp"
-#include "PetriNet/Algorithms.hpp"
+#include "MaxPlus/Algorithms.hpp"
 #include "Editor/TopDownLayout.hpp"
 #include "Editor/KeyBindings.hpp"
 #include "imgui/imgui.h"

@@ -8,7 +8,6 @@
 #include "PetriNet/Simulation.hpp"
 #include "PetriNet/PetriNet.hpp"
 #include "PetriNet/Grafcet.hpp"
-#include "PetriNet/Algorithms.hpp"
 #include "PetriNet/Flowshop.hpp"
 
 #include <algorithm>
@@ -145,17 +144,6 @@ void Simulation::initializeRuntimeState()
         m_petri->onWarning = [this](std::string const& msg) { onWarning.emit(msg); };
         m_petri->reset(m_initial_tokens);
         m_shown = m_initial_tokens;
-    }
-
-    // Pre-compute the (max,+) eigenvalue (cycle time λ) once for TEGs.
-    // Used by the real-time output plot to subtract the cyclic drift λ·k.
-    m_eigenvalue = 0.0;
-    if ((m_net.type() == TypeOfNet::TimedEventGraph) ||
-        ((m_net.type() == TypeOfNet::TimedPetriNet) && isEventGraph(m_net)))
-    {
-        CriticalCycleResult const cc = findCriticalCycle(m_net);
-        if (cc.success && !cc.durations.empty())
-            m_eigenvalue = cc.durations.front();
     }
 }
 

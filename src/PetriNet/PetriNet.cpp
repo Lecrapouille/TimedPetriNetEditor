@@ -7,7 +7,6 @@
 
 #include "PetriNet/PetriNet.hpp"
 
-#include "PetriNet/Algorithms.hpp"
 #include "PetriNet/Firing.hpp"
 #include "PetriNet/Imports/Imports.hpp"
 #include "PetriNet/Exports/Exports.hpp"
@@ -153,9 +152,8 @@ Net::Net(TypeOfNet const type)
 Net::Net(Net const& other)
     : name(other.name), description(other.description), inputs(other.inputs),
       m_type(other.m_type), m_places(other.m_places),
-      m_transitions(other.m_transitions), m_arcs(other.m_arcs),
+      m_transitions(other.m_transitions), m_arcs(other.m_arcs), m_layout(other.m_layout),
       m_place_arcs(other.m_place_arcs), m_transition_arcs(other.m_transition_arcs),
-      m_layout(other.m_layout),
       m_next_place_id(other.m_next_place_id),
       m_next_transition_id(other.m_next_transition_id)
 {
@@ -804,6 +802,92 @@ std::string loadFromFile(Net& net, std::string const& filepath, bool& springify)
     net.modified = false;
 
     return error;
+}
+
+//------------------------------------------------------------------------------
+bool isEventGraph(Net const& net, std::string& error, std::vector<size_t>& erroneous_arcs)
+{
+    erroneous_arcs.clear();
+    error.clear();
+    if (net.isEmpty())
+    {
+        error = "Empty Petri net is not an event graph";
+        return false;
+    }
+
+    // The (max,+) algebra needs plain arcs and places.
+    unsigned const extensions = features(net);
+    if (extensions != 0u)
+    {
+        error = "The Petri net is not an event graph because it has " +
+                featuresToStr(extensions);
+        for (size_t i = 0u; i < net.arcs().size(); ++i)
+        {
+            if (net.arcs()[i].features() != 0u)
+                erroneous_arcs.push_back(i);
+        }
+        return false;
+    }
+
+    // The Petri net shall be an event graph: all places shall have a single
+    // input arc and a single output arc. Else, we cannot generate the linear
+    // system.
+    for (auto const& p: net.places())
+    {
+        auto const arcs_in = net.arcsIn(p);
+        auto const arcs_out = net.arcsOut(p);
+        if (!((arcs_in.size() == 1u) && (arcs_out.size() == 1u)))
+        {
+            std::stringstream message;
+
+            // Help the user to debug the Petri net. // TODO: could be nice to
+            // show directly odd arcs in red but for the moment we display on
+            // the console.
+            message << "The Petri net is not an event graph. Because:"
+                    << std::endl;
+
+            if (arcs_out.size() != 1u)
+            {
+                message << "  " << p.key
+                        << ((arcs_out.size() > 1u)
+                            ? " has more than one output arc:"
+                            : " has no output arc");
+                for (size_t const a: arcs_out.indices())
+                {
+                    erroneous_arcs.push_back(a);
+                    message << " " << net.arcs()[a].to.key();
+                }
+                message << std::endl;
+            }
+
+            if (arcs_in.size() != 1u)
+            {
+                message << "  " << p.key
+                        << ((arcs_in.size() > 1u)
+                            ? " has more than one input arc:"
+                            : " has no input arc");
+                for (size_t const a: arcs_in.indices())
+                {
+                    erroneous_arcs.push_back(a);
+                    message << " " << net.arcs()[a].from.key();
+                }
+                message << std::endl;
+            }
+
+            error = message.str();
+            return false;
+        }
+    }
+
+    return true;
+}
+
+//------------------------------------------------------------------------------
+bool isEventGraph(Net const& net)
+{
+    std::string error;
+    std::vector<size_t> erroneous_arcs;
+    return isEventGraph(net, error, erroneous_arcs);
 }
 
 //------------------------------------------------------------------------------

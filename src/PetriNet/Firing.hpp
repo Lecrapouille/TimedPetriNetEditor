@@ -22,7 +22,6 @@ namespace tpne {
 
 class Net;
 class Transition;
-template<typename T> class SparseMatrix;
 
 //------------------------------------------------------------------------------
 //! \brief Number of tokens of each place, by place identifier.
@@ -69,13 +68,6 @@ void produce(Net const& net, Marking& marking, size_t const transition);
 //! durations are not considered).
 //------------------------------------------------------------------------------
 Marking fire(Net const& net, Marking const& marking, size_t const transition);
-
-//------------------------------------------------------------------------------
-//! \brief Pre and Post incidence matrices (places x transitions) of the
-//! normal arcs: Pre(p, t) tokens taken from p, Post(p, t) tokens given to p.
-//! Inhibitor and reset arcs are not linear: they are not in the matrices.
-//------------------------------------------------------------------------------
-void incidenceMatrices(Net const& net, SparseMatrix<double>& pre, SparseMatrix<double>& post);
 
 } // namespace tpne
 

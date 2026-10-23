@@ -966,6 +966,26 @@ inline bool allows(TypeOfNet const type, unsigned const features)
 }
 
 //-----------------------------------------------------------------------------
+//! \brief Chech if the Petri net is a graph event meaning that each places
+//! have exactly one input arc and one output arc.
+//! \param[inout] error human readable error message.
+//! \param[inout] erroneous_arcs store indices in Net::arcs() of detected
+//! erroneous arcs.
+//!
+//! \return true if the Petri net is a graph event and \c erroneous_arcs is
+//! empty. Return false if the Petri net is not a graph event and \c
+//! erroneous_arcs will contain defectuous arcs information and call message()
+//! to get the real reason.
+//-----------------------------------------------------------------------------
+bool isEventGraph(Net const& net, std::string& error, std::vector<size_t>& erroneous_arcs);
+
+//-----------------------------------------------------------------------------
+//! \brief Conpact form of isEventGraph(Net const&, std::string&,
+//! std::vector<size_t>&) but do not care of why the net is not an event graph.
+//-----------------------------------------------------------------------------
+bool isEventGraph(Net const& net);
+
+//-----------------------------------------------------------------------------
 //! \brief Convert to the desired type of net: GRAFCET, Petri, timed Petri,
 //! timed graph even, etc.
 //! \return false if the net cannot be changed (i.e. to graph event): the

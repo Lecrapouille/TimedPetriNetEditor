@@ -29,14 +29,17 @@ VPATH := $(P)/src
 # Compile internal libraries in the correct order
 #
 LIB_TPNE_NET := $(call internal-lib,TimedPetriNet)
+LIB_TPNE_MAXPLUS := $(call internal-lib,TimedPetriMaxPlus)
 LIB_TPNE_EDITOR := $(call internal-lib,TimedPetriGUI)
 LIB_TPNE_JULIA := $(call internal-lib,TimedPetriJulia)
-INTERNAL_LIBS := $(LIB_TPNE_EDITOR) $(LIB_TPNE_NET) $(LIB_TPNE_JULIA)
-DIRS_WITH_MAKEFILE := $(P)/src/PetriNet $(P)/src/Editor $(P)/src/julia
+INTERNAL_LIBS := $(LIB_TPNE_EDITOR) $(LIB_TPNE_MAXPLUS) $(LIB_TPNE_NET) $(LIB_TPNE_JULIA)
+DIRS_WITH_MAKEFILE := $(P)/src/PetriNet $(P)/src/MaxPlus $(P)/src/Editor $(P)/src/julia
 
 $(P)/src/julia: $(P)/src/Editor
 
-$(P)/src/Editor: $(P)/src/PetriNet
+$(P)/src/Editor: $(P)/src/MaxPlus
+
+$(P)/src/MaxPlus: $(P)/src/PetriNet
 
 ###################################################
 # GUI

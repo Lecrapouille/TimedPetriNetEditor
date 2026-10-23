@@ -6,8 +6,8 @@
 // See LICENSING.md for details.
 
 #include "PetriNet/PetriNet.hpp"
-#include "PetriNet/Algorithms.hpp"
-#include "PetriNet/SparseMatrix.hpp"
+#include "MaxPlus/Algorithms.hpp"
+#include "MaxPlus/SparseMatrix.hpp"
 #include "PetriNet/Exports/Exports.hpp"
 #include <fstream>
 #include <cstring>
@@ -160,6 +160,12 @@ std::string exportToJulia(Net const& net, std::string const& filename)
     file << "l,v = semihoward(S.D, S.A)" << std::endl;
 
     return {};
+}
+
+//------------------------------------------------------------------------------
+void registerMaxPlusExporters()
+{
+    addExporter({ "Julia", ".jl", exportToJulia });
 }
 
 } // namespace tpne

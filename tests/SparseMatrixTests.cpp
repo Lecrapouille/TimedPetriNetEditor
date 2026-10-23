@@ -8,7 +8,7 @@
 #include "main.hpp"
 #define protected public
 #define private public
-#  include "PetriNet/SparseMatrix.hpp"
+#  include "MaxPlus/SparseMatrix.hpp"
 #undef protected
 #undef private
 

@@ -27,7 +27,7 @@ endif
 
 TPNE_INCLUDES := $(TPNE_DIR)/src
 TPNE_VPATH := $(TPNE_DIR)/src
-TPNE_SOURCES := $(shell find $(TPNE_DIR)/src/PetriNet -name '*.cpp' -o -name '*.c' 2> /dev/null)
+TPNE_SOURCES := $(shell find $(TPNE_DIR)/src/PetriNet $(TPNE_DIR)/src/MaxPlus -name '*.cpp' -o -name '*.c' 2> /dev/null)
 TPNE_SOURCES += $(TPNE_DIR)/external/tinyxml2/tinyxml2.cpp
 # Third parties headers are system headers: no warnings from them.
 TPNE_CXXFLAGS := -isystem $(abspath $(TPNE_DIR)/external/json/include)

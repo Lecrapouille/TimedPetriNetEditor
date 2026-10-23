@@ -33,7 +33,6 @@ std::string exportToDrawIO(Net const& net, std::string const& filename);
 std::string exportToGraphviz(Net const& net, std::string const& filename);
 std::string exportToPetriLaTeX(Net const& net, std::string const& filename);
 std::string exportToGrafcetLaTeX(Net const& net, std::string const& filename);
-std::string exportToJulia(Net const& net, std::string const& filename);
 std::string exportToGrafcetCpp(Net const& net, std::string const& filename);
 std::string exportToPNML(Net const& net, std::string const& filename);
 
@@ -56,6 +55,10 @@ struct Exporter
 
 //! \brief Container of file formats we can export the net to (LaTeX, Symfony, Dot ...).
 std::vector<Exporter> const& exporters();
+
+//! \brief Add a file format to exporters() (formats of other libraries, as the
+//! Julia export of the (max,+) library). Ignored if the format is known.
+void addExporter(Exporter const& exporter);
 
 Exporter const* getExporter(std::string const& extension);
 

@@ -7,7 +7,7 @@
 
 #include "PetriNet/Exports/Exports.hpp"
 #include "PetriNet/PetriNet.hpp"
-#include "PetriNet/Algorithms.hpp"
+#include "MaxPlus/Algorithms.hpp"
 #include <fstream>
 #include <cstring>
 

@@ -13,6 +13,8 @@
 #  include <string>
 #  include <vector>
 
+#  include "PetriNet/PetriNet.hpp"
+
 namespace tpne {
 
 class Net;
@@ -21,24 +23,23 @@ class Arc;
 template<typename T> class SparseMatrix;
 
 //--------------------------------------------------------------------------
-//! \brief Chech if the Petri net is a graph event meaning that each places
-//! have exactly one input arc and one output arc.
-//! \param[inout] error human readable error message.
-//! \param[inout] erroneous_arcs store indices in Net::arcs() of detected
-//! erroneous arcs.
-//!
-//! \return true if the Petri net is a graph event and \c erroneous_arcs is
-//! empty. Return false if the Petri net is not a graph event and \c
-//! erroneous_arcs will contain defectuous arcs information and call message()
-//! to get the real reason.
+//! \brief Pre and Post incidence matrices (places x transitions) of the
+//! normal arcs: Pre(p, t) tokens taken from p, Post(p, t) tokens given to p.
+//! Inhibitor and reset arcs are not linear: they are not in the matrices.
 //--------------------------------------------------------------------------
-bool isEventGraph(Net const& net, std::string& error, std::vector<size_t>& erroneous_arcs);
+void incidenceMatrices(Net const& net, SparseMatrix<double>& pre, SparseMatrix<double>& post);
 
 //--------------------------------------------------------------------------
-//! \brief Conpact form of isEventGraph(Net const&, std::string&,
-//! std::vector<size_t>&) but do not care of why the net is not an event graph.
+//! \brief Make the exporters needing the (max,+) algebra (Julia) known by
+//! saveToFile() and exporters(). Called once by the programs linking this
+//! library (the editor, the Julia binding).
 //--------------------------------------------------------------------------
-bool isEventGraph(Net const& net);
+void registerMaxPlusExporters();
+
+//--------------------------------------------------------------------------
+//! \brief Export a timed event graph as Julia code for MaxPlus.jl.
+//--------------------------------------------------------------------------
+std::string exportToJulia(Net const& net, std::string const& filename);
 
 //--------------------------------------------------------------------------
 //! \brief Return the event graph as implicit dynamic linear (max, +) system.

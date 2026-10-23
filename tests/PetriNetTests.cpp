@@ -12,7 +12,7 @@
 #undef protected
 #undef private
 
-#include "PetriNet/Algorithms.hpp"
+#include "MaxPlus/Algorithms.hpp"
 #include <cmath>
 
 using namespace ::tpne;

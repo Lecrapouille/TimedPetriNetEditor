@@ -15,9 +15,9 @@
 #include "Editor/Editor.hpp"
 #include "Editor/Theme.hpp"
 
-#include "PetriNet/Algorithms.hpp"
+#include "MaxPlus/Algorithms.hpp"
 #include "PetriNet/Flowshop.hpp"
-#include "PetriNet/SparseMatrix.hpp"
+#include "MaxPlus/SparseMatrix.hpp"
 #include "imgui/imgui.h"
 #include "implot/implot.h"
 
@@ -483,7 +483,7 @@ void Editor::analysisPlot()
         selected.assign(transitions.size(), true);
     }
 
-    double const lambda = sim.eigenvalue();
+    double const lambda = m_states.plot_lambda;
 
     ImGui::TextDisabled("t = %.3f s, firings = %zu, transitions = %zu, λ = %.4f",
                         sim.simulationTime(), sim.totalFirings(),

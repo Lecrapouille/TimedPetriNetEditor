@@ -19,7 +19,7 @@
 #  include "PetriNet/Exports/Exports.hpp"
 #  include "PetriNet/Imports/Imports.hpp"
 #  include "Editor/ForceDirected.hpp"
-#  include "PetriNet/Algorithms.hpp"
+#  include "MaxPlus/Algorithms.hpp"
 
 #  include <deque>
 #  include <vector>
@@ -179,6 +179,8 @@ private: // Petri net services
     void toogleStartSimulation();
     void toogleStartAllSimulations();
     void updateSimulationFramerate();
+    //! \brief Compute the cycle time λ of the net before its simulation.
+    void computeCycleTime();
     void takeScreenshot();
     bool saveScreenshot(std::string const& path);
     void clearNet();
@@ -401,6 +403,9 @@ private:
         //! \brief Transitions shown by the firing dates plot, per net.
         std::map<Net const*, std::vector<bool>> plot_selection;
         bool plot_subtract_drift = true;
+        //! \brief (max,+) cycle time λ of the net when its simulation
+        //! started (timed event graphs), to subtract the drift λ·k.
+        double plot_lambda = 0.0;
         bool plot_only_outputs = true;
 
         //! \brief Options and cached results of the analysis dialogs.

@@ -6,8 +6,8 @@
 // See LICENSING.md for details.
 
 #include "PetriNet/PetriNet.hpp"
-#include "PetriNet/Algorithms.hpp"
-#include "PetriNet/SparseMatrix.hpp"
+#include "MaxPlus/Algorithms.hpp"
+#include "MaxPlus/SparseMatrix.hpp"
 #include "Editor/Editor.hpp"
 #include "Editor/Drawable.hpp"
 #include "Editor/FileDialogHelper.hpp"
@@ -42,6 +42,7 @@ Editor::Editor(size_t const width, size_t const height,
       m_path(GET_DATA_PATH),
       m_view(*this)
 {
+    registerMaxPlusExporters();
 #ifdef __EMSCRIPTEN__
  constexpr float FONT_SIZE = 18.0f;
 #else
@@ -1001,7 +1002,10 @@ void Editor::toogleStartSimulation()
     if (simulation().isRunning())
         simulation().stop();
     else
+    {
+        computeCycleTime();
         simulation().start();
+    }
     if (simulation().isRunning())
     {
         m_view.clearAllSelections();
@@ -1020,9 +1024,24 @@ void Editor::toogleStartAllSimulations()
     }
     else
     {
+        computeCycleTime();
         activeDocument().startAllSimulations();
     }
     updateSimulationFramerate();
+}
+
+//------------------------------------------------------------------------------
+void Editor::computeCycleTime()
+{
+    // Computed on the initial marking, for the timed event graphs only.
+    m_states.plot_lambda = 0.0;
+    if ((net().type() == TypeOfNet::TimedEventGraph) ||
+        ((net().type() == TypeOfNet::TimedPetriNet) && isEventGraph(net())))
+    {
+        CriticalCycleResult const cc = findCriticalCycle(net());
+        if (cc.success && !cc.durations.empty())
+            m_states.plot_lambda = cc.durations.front();
+    }
 }
 
 //------------------------------------------------------------------------------
