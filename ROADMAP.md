@@ -187,9 +187,11 @@ But : `src/PetriNet` compilable seul, sans ImGui ni coordonnées, consommable pa
 
 ### 3.3 Supprimer les singletons
 
-- [ ] `Sensors::instance()` → objet `Sensors` passé à la `Simulation` (ou dans un `Context`).
-- [ ] `NetRegistry::instance()` → registre possédé par le document / le runtime.
-- [ ] Test : deux réseaux simulés en parallèle dans le même processus.
+- [x] `Sensors::instance()` → objet `Sensors` passé à la `Simulation` (ou dans un `Context`)
+      (déjà fait : les entrées sont dans le `GrafcetEngine` du document).
+- [x] `NetRegistry::instance()` → registre possédé par le document / le runtime (déjà fait).
+- [x] `Net::Settings::maxTokens` / `firing` (globaux) → `Place::capacity` donnée par le réseau.
+- [x] Test : deux réseaux dans le même processus (`TestCapacityIsPerNet`).
 
 ### 3.4 Séparer le marquage du réseau
 

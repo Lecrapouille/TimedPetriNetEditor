@@ -576,6 +576,38 @@ TEST(TestPetriNet, TestIncrTokens)
 }
 
 //------------------------------------------------------------------------------
+TEST(TestPetriNet, TestCapacityIsPerNet)
+{
+    // A GRAFCET and a Petri net live in the same process: the 1-token limit
+    // of the GRAFCET does not apply to the Petri net, created before or after.
+    Net petri1(TypeOfNet::PetriNet);
+    Net grafcet(TypeOfNet::GRAFCET);
+    Net petri2(TypeOfNet::PetriNet);
+
+    Place& p1 = petri1.addPlace(0.0f, 0.0f, 5u);
+    Place& s0 = grafcet.addPlace(0.0f, 0.0f, 5u);
+    Place& p2 = petri2.addPlace(0.0f, 0.0f, 5u);
+    ASSERT_EQ(p1.tokens, 5u);
+    ASSERT_EQ(s0.tokens, 1u);
+    ASSERT_EQ(p2.tokens, 5u);
+
+    p1.increment(2u);
+    s0.increment(2u);
+    ASSERT_EQ(p1.tokens, 7u);
+    ASSERT_EQ(s0.tokens, 1u);
+
+    ASSERT_EQ(petri2.tokens({ 42u }), true);
+    ASSERT_EQ(grafcet.tokens({ 42u }), true);
+    ASSERT_EQ(p2.tokens, 42u);
+    ASSERT_EQ(s0.tokens, 1u);
+
+    // A copy keeps the capacity of its places.
+    Net copy(grafcet);
+    copy.places()[0].increment(3u);
+    ASSERT_EQ(copy.places()[0].tokens, 1u);
+}
+
+//------------------------------------------------------------------------------
 TEST(TestPetriNet, TestCaptionAfterRemove)
 {
     // Add P0 and P1

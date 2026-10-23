@@ -19,33 +19,6 @@
 namespace tpne {
 
 //------------------------------------------------------------------------------
-// Default net configuration: timed petri net. To change the type of nets, call
-// Net::changeTypeOfNet(Net::TypeOfNet const)
-size_t Net::Settings::maxTokens = std::numeric_limits<size_t>::max();
-Net::Settings::Fire Net::Settings::firing = Net::Settings::Fire::OneByOne;
-
-//------------------------------------------------------------------------------
-static void applyNewNetSettings(TypeOfNet const type)
-{
-    switch (type)
-    {
-    case TypeOfNet::GRAFCET:
-        Net::Settings::maxTokens = 1u;
-        Net::Settings::firing = Net::Settings::Fire::OneByOne;
-        break;
-    case TypeOfNet::PetriNet:
-    case TypeOfNet::TimedPetriNet:
-    case TypeOfNet::TimedEventGraph:
-        Net::Settings::maxTokens = std::numeric_limits<size_t>::max();
-        Net::Settings::firing = Net::Settings::Fire::OneByOne;
-        break;
-    default:
-        assert(false && "Undefined Petri behavior");
-        break;
-    }
-}
-
-//------------------------------------------------------------------------------
 std::string to_str(TypeOfNet const type)
 {
     switch (type)
@@ -66,16 +39,13 @@ std::string to_str(TypeOfNet const type)
 //------------------------------------------------------------------------------
 Place::Place(size_t const id_, std::string const& caption_, float const x_,
              float const y_, size_t const tokens_)
-    : Node(Node::Type::Place, id_, caption_, x_, y_)
-{
-    // Petri net: infinite number of tokens but in GRAFCET max is one.
-    tokens = std::min(Net::Settings::maxTokens, tokens_);
-}
+    : Node(Node::Type::Place, id_, caption_, x_, y_), tokens(tokens_)
+{}
 
 //------------------------------------------------------------------------------
 size_t Place::increment(size_t const count)
 {
-    tokens = std::min(Net::Settings::maxTokens, tokens + count);
+    tokens = (count > capacity - std::min(capacity, tokens)) ? capacity : tokens + count;
     return tokens;
 }
 
@@ -117,26 +87,20 @@ size_t Transition::maxTokensToConsume() const
     if (receptivity == false)
         return 0u;
 
-    // Iterate on all input places to find the minimum number of tokens available.
-    auto min_tokens = std::numeric_limits<size_t>::max();
+    // Tokens are consumed one by one: this favors dispatching tokens along
+    // arcs when a place feeds several transitions.
     for (auto const& a: arcsIn)
     {
-        const size_t tokens = a->tokensIn();
-        if (tokens == 0u)
+        if (a->tokensIn() == 0u)
             return 0u;
-
-        if (tokens < min_tokens)
-            min_tokens = tokens;
     }
-    return (Net::Settings::firing == Net::Settings::Fire::OneByOne) ? 1u : min_tokens;
+    return 1u;
 }
 
 //------------------------------------------------------------------------------
 Net::Net(TypeOfNet const type)
     : name(to_str(type)), m_type(type)
-{
-    applyNewNetSettings(type);
-}
+{}
 
 //------------------------------------------------------------------------------
 Net::Net(Net const& other)
@@ -145,7 +109,6 @@ Net::Net(Net const& other)
         return ;
 
     m_type = other.m_type;
-    applyNewNetSettings(m_type);
     m_places = other.m_places;
     m_transitions = other.m_transitions;
 
@@ -186,7 +149,6 @@ Net& Net::operator=(Net const& other)
 void Net::reset(TypeOfNet const type)
 {
     m_type = type;
-    applyNewNetSettings(type);
     clear();
     name = to_str(type);
 }
@@ -227,7 +189,7 @@ bool Net::tokens(std::vector<size_t> const& tokens_)
     size_t i = tokens_.size();
     while (i--)
     {
-        m_places[i].tokens = std::min(Net::Settings::maxTokens, tokens_[i]);
+        m_places[i].tokens = std::min(m_places[i].capacity, tokens_[i]);
     }
 
     m_error.clear();
@@ -235,11 +197,19 @@ bool Net::tokens(std::vector<size_t> const& tokens_)
 }
 
 //------------------------------------------------------------------------------
+Place& Net::applyCapacity(Place& place) const
+{
+    place.capacity = defaultCapacity(m_type);
+    place.tokens = std::min(place.capacity, place.tokens);
+    return place;
+}
+
+//------------------------------------------------------------------------------
 Place& Net::addPlace(float const x, float const y, size_t const tokens)
 {
     modified = true;
     m_places.emplace_back(m_next_place_id++, "", x, y, tokens);
-    return m_places.back();
+    return applyCapacity(m_places.back());
 }
 
 //------------------------------------------------------------------------------
@@ -250,7 +220,7 @@ Place& Net::addPlace(size_t const id, std::string const& caption, float const x,
     m_places.emplace_back(id, caption, x, y, tokens);
     if (id + 1u > m_next_place_id)
         m_next_place_id = id + 1u;
-    return m_places.back();
+    return applyCapacity(m_places.back());
 }
 
 //------------------------------------------------------------------------------
@@ -621,6 +591,7 @@ void Net::helperRemovePlace(Node const& node)
             // The GRAFCET actions go with their step, and what reads the step
             // by its number (X3) follows its new number.
             m_places[i].actions = std::move(actions);
+            m_places[i].capacity = pe.capacity;
             if ((m_type == TypeOfNet::GRAFCET) && (old_id != new_id))
                 renameStep(old_id, new_id);
             assert(m_next_place_id >= 1u);
@@ -901,20 +872,13 @@ bool convertTo(Net& net, TypeOfNet const type, std::string& error, std::vector<A
         // when the user wants to start its simulation.
     }
 
-    applyNewNetSettings(type);
-
     net.m_type = type;
     net.resetReceptivies();
 
-    if (type == TypeOfNet::GRAFCET)
+    // GRAFCET constrains the number of tokens.
+    for (auto& place: net.places())
     {
-        // Constrain the number of tokens.
-        // TBD: not constraining the number of tokens allow us to save the
-        // net (json format) without loosing number of tokens for other nets.
-        for (auto& place: net.places())
-        {
-            place.tokens = std::min(Net::Settings::maxTokens, place.tokens);
-        }
+        net.applyCapacity(place);
     }
 
     return true;

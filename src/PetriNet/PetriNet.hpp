@@ -20,6 +20,7 @@
 #  include <cassert>
 #  include <sstream>
 #  include <iosfwd>
+#  include <limits>
 
 namespace tpne {
 
@@ -184,7 +185,7 @@ public:
     }
 
     //--------------------------------------------------------------------------
-    //! \brief Increment the number of token but constrained by the type of net.
+    //! \brief Increment the number of token but constrained by the capacity.
     //--------------------------------------------------------------------------
     size_t increment(size_t const count = 1u);
 
@@ -208,6 +209,9 @@ public:
     //! \brief the number of tokens hold by the Place. Public access is fine
     //! since this will facilitate its access during the simulation.
     size_t tokens;
+    //! \brief Max number of tokens the place can hold. Set by the net: 1 for
+    //! GRAFCET steps, unbounded for other nets.
+    size_t capacity = std::numeric_limits<size_t>::max();
     //! \brief GRAFCET actions associated with this step. Only used in GRAFCET mode.
     std::vector<Action> actions;
 };
@@ -510,27 +514,6 @@ public:
     using Transitions = std::deque<Transition>;
     using Arcs = std::deque<Arc>;
 
-    // *************************************************************************
-    //! \brief Settings for defining the type of net (GRAFCET, Petri net, timed
-    //! petri net, timed graph event ...). This structure is global for the
-    //! current net and is used by the Net class.
-    // *************************************************************************
-    struct Settings
-    {
-        //! \brief Max number of tokens in places. For GRAFCET: 1. For other
-        //! nets: +infinity (aka std::numeric_limits<size_t>::max()).
-        static size_t maxTokens;
-
-        //! \brief The theory would consume the maximum possible of tokens that we
-        //! can within a single action (Fire::MaxPossible) but we can also try
-        //! to consume tokens one by one and randomize the transitions
-        //! (Fire::OneByOne). This will favor dispatching tokens along arcs.
-        enum class Fire { OneByOne, MaxPossible };
-
-        //! \brief Consume tokens one by one or as many as possible.
-        static Fire firing;
-    };
-
     //--------------------------------------------------------------------------
     //! \brief Default constructor.
     //! \param[in] mode: select the type of net: GRAFCET or timed Petri net
@@ -564,6 +547,15 @@ public:
     //! \brief Return the type of net: GRAFCET, Petri, Timed Petri ...
     //--------------------------------------------------------------------------
     inline TypeOfNet type() const { return m_type; }
+
+    //--------------------------------------------------------------------------
+    //! \brief Capacity given to the places of a net of the given type: 1 for
+    //! GRAFCET (1-S net), else unbounded.
+    //--------------------------------------------------------------------------
+    static size_t defaultCapacity(TypeOfNet const type)
+    {
+        return (type == TypeOfNet::GRAFCET) ? 1u : std::numeric_limits<size_t>::max();
+    }
 
     //--------------------------------------------------------------------------
     //! \brief Return true if the Petri nets has no nodes (no places and no
@@ -822,6 +814,12 @@ public:
     void renameStepOf(std::string const& graph, size_t from, size_t to);
 
 private:
+
+    //--------------------------------------------------------------------------
+    //! \brief Give the place the capacity of this type of net and constrain
+    //! its tokens.
+    //--------------------------------------------------------------------------
+    Place& applyCapacity(Place& place) const;
 
     //--------------------------------------------------------------------------
     //! \brief Helper method removing all arcs linked to the given node.

@@ -373,7 +373,6 @@ void Simulation::fireTransitions()
 
             if (tokens > 0u)
             {
-                assert(tokens <= Net::Settings::maxTokens);
                 consuming = tokens;
 
                 if (trans->id < m_firing_dates.size())
@@ -394,7 +393,7 @@ void Simulation::fireTransitions()
                     {
                         size_t& tks = a->tokensIn();
                         assert(tks >= tokens);
-                        tks = std::min(Net::Settings::maxTokens, tks - tokens);
+                        tks -= tokens;
 
                         if (m_net.type() == TypeOfNet::PetriNet)
                         {
@@ -420,9 +419,7 @@ void Simulation::fireTransitions()
                     {
                         arcs_to_animate.push_back({a, arc_idx});
                     }
-                    m_arc_token_counts[arc_idx] = std::min(
-                        Net::Settings::maxTokens,
-                        m_arc_token_counts[arc_idx] + tokens);
+                    m_arc_token_counts[arc_idx] += tokens;
                 }
             }
         }
@@ -506,7 +503,7 @@ void Simulation::animateTokens(float const dt)
                       << (token.tokens == 1u ? "" : "s")
                       << std::endl;
 
-            token.arc->tokensOut() += token.tokens;
+            static_cast<Place&>(token.arc->to).increment(token.tokens);
 
             if (m_net.type() != TypeOfNet::PetriNet)
             {
