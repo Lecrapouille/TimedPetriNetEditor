@@ -179,6 +179,13 @@ std::vector<size_t> Runtime::find(std::string const& transition) const
 }
 
 //------------------------------------------------------------------------------
+size_t Runtime::transitionOf(std::string const& name) const
+{
+    std::vector<size_t> const found = find(name);
+    return found.empty() ? size_t(-1) : found.front();
+}
+
+//------------------------------------------------------------------------------
 std::string const& Runtime::nameOf(size_t const transition) const
 {
     Transition const& t = m_net.transitions()[transition];
@@ -254,6 +261,55 @@ std::shared_ptr<Instance> Runtime::instantiate(std::string const& id,
 }
 
 //------------------------------------------------------------------------------
+std::shared_ptr<Instance> Runtime::restore(std::string const& id, std::vector<LogEntry> const& journal,
+                                           Recovery const recovery,
+                                           std::vector<PlaceTokens> const& initial,
+                                           std::vector<PlaceTokens> const& goal)
+{
+    std::shared_ptr<Instance> instance = instantiate(id, initial, goal);
+
+    // Replay: the tokens taken by the firings, the tokens given by the ends
+    // of the functions (their durations are over).
+    std::vector<size_t> running(m_net.transitions().size(), 0u);
+    for (auto const& entry : journal)
+    {
+        size_t const t = transitionOf(entry.transition);
+        if (t == size_t(-1))
+            continue;
+        if (entry.event == LogEntry::Event::Scheduled)
+        {
+            consume(instance->m_marking, t);
+            ++running[t];
+        }
+        else if (entry.event == LogEntry::Event::Completed)
+        {
+            for (auto const& a : m_net.arcsOut(m_net.transitions()[t]))
+                instance->m_marking.add(a.to.id, (a.color != AnyColor) ? a.color : entry.result, a.weight);
+            running[t] -= std::min(running[t], size_t(1u));
+        }
+        if (m_options.log)
+            instance->m_log.push_back(entry);
+    }
+
+    // The functions that were running.
+    for (size_t t = 0u; t < running.size(); ++t)
+    {
+        for (size_t k = 0u; k < running[t]; ++k)
+        {
+            if (recovery == Recovery::Restart)
+            {
+                instance->post([this, t](Instance& i) { start(i.shared_from_this(), t); });
+            }
+            else
+            {
+                instance->post([this, t](Instance& i) { complete(i, t, Failed); });
+            }
+        }
+    }
+    return instance;
+}
+
+//------------------------------------------------------------------------------
 void Runtime::inject(Instance& instance, std::string const& transition)
 {
     std::vector<size_t> const found = find(transition);
@@ -316,8 +372,11 @@ void Runtime::pauseNow(Instance& instance, bool const paused)
 void Runtime::log(Instance& instance, size_t const transition, LogEntry::Event const event,
                   Color const result)
 {
+    LogEntry const entry{ instance.m_id, nameOf(transition), event, result, instance.m_time };
+    if (m_options.journal)
+        m_options.journal(entry);
     if (m_options.log)
-        instance.m_log.push_back({ instance.m_id, nameOf(transition), event, result, instance.m_time });
+        instance.m_log.push_back(entry);
 }
 
 //------------------------------------------------------------------------------
@@ -419,21 +478,33 @@ size_t Runtime::pick(Instance& instance)
 }
 
 //------------------------------------------------------------------------------
-void Runtime::fire(std::shared_ptr<Instance> const& instance, size_t const transition)
+void Runtime::consume(ColoredMarking& marking, size_t const transition) const
 {
-    Instance& i = *instance;
     for (auto const& a : m_net.arcsIn(m_net.transitions()[transition]))
     {
         if (a.kind == ArcKind::Normal)
-            i.m_marking.take(a.from.id, a.color, a.weight);
+            marking.take(a.from.id, a.color, a.weight);
         else if (a.kind == ArcKind::Reset)
-            i.m_marking.clear(a.from.id, a.color);
+            marking.clear(a.from.id, a.color);
     }
+}
+
+//------------------------------------------------------------------------------
+void Runtime::fire(std::shared_ptr<Instance> const& instance, size_t const transition)
+{
+    Instance& i = *instance;
+    consume(i.m_marking, transition);
     if (m_sources[transition])
         --i.m_injected[transition];
     i.m_ready_since[transition] = NEVER;
     log(i, transition, LogEntry::Event::Scheduled);
+    start(instance, transition);
+}
 
+//------------------------------------------------------------------------------
+void Runtime::start(std::shared_ptr<Instance> const& instance, size_t const transition)
+{
+    Instance& i = *instance;
     Callback const* callback = m_callbacks[transition].get();
     if (callback == nullptr)
     {
@@ -469,6 +540,12 @@ void Runtime::complete(Instance& instance, size_t const transition, Color const 
     if (!instance.isRunning())
         return;
     log(instance, transition, LogEntry::Event::Completed, result);
+    produce(instance, transition, result);
+}
+
+//------------------------------------------------------------------------------
+void Runtime::produce(Instance& instance, size_t const transition, Color const result) const
+{
     bool const timed = (m_net.type() == TypeOfNet::TimedPetriNet) ||
                        (m_net.type() == TypeOfNet::TimedEventGraph);
     for (auto const& a : m_net.arcsOut(m_net.transitions()[transition]))

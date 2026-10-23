@@ -231,7 +231,12 @@ while (rt.step(*order)) { /* ... */ }
   `Transition::delay` waits, enabled, before firing. A timeout is a timed
   transition in conflict with the slow one, going to a place of error.
 - `order->log()` is the journal: each transition `Scheduled`, `Started`,
-  `Completed` with its result and its date.
+  `Completed` with its result and its date. `Options::journal` receives each
+  line as it is written: save it with `toJsonLine()` (`Runtime/Journal.hpp`,
+  JSON lines). After a crash, `rt.restore("order_42", journal,
+  Runtime::Recovery::Restart)` rebuilds the instance from the journal and
+  calls again the functions that were running (`Recovery::Fail` ends them
+  with `Failed`).
 - A net can be the function of a transition of another net (a macro step):
   `parent.on("pick", SubNet(child_runtime, { { "Done", Success } }))` runs
   an instance of the child net at each firing; its end (`Success`,

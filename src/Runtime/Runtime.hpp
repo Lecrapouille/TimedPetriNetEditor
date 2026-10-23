@@ -216,6 +216,9 @@ public:
         uint64_t seed = 0u;
         //! \brief Keep the journal of the instances.
         bool log = true;
+        //! \brief Called with each line of the journal as it is written (to
+        //! save it as it goes, for restore() after a crash). Can be empty.
+        std::function<void(LogEntry const&)> journal;
         //! \brief Firings at one date before the instance fails (a cycle
         //! of transitions without function and without duration).
         size_t max_firings_per_date = 10000u;
@@ -261,6 +264,29 @@ public:
                                           std::vector<PlaceTokens> const& goal = {});
 
     //--------------------------------------------------------------------------
+    //! \brief What restore() does with the transitions whose function was
+    //! running when the program stopped (Scheduled without Completed).
+    //--------------------------------------------------------------------------
+    enum class Recovery
+    {
+        //! \brief Call their function again (it shall be idempotent).
+        Restart,
+        //! \brief End them with Failed.
+        Fail,
+    };
+
+    //--------------------------------------------------------------------------
+    //! \brief Instance rebuilt from the journal of an instance that stopped
+    //! (a crash): its marking is replayed from the initial tokens and the
+    //! journal, its running functions follow the recovery policy. Its time
+    //! starts again at 0. Run it with run() or step().
+    //--------------------------------------------------------------------------
+    std::shared_ptr<Instance> restore(std::string const& id, std::vector<LogEntry> const& journal,
+                                      Recovery const recovery,
+                                      std::vector<PlaceTokens> const& initial = {},
+                                      std::vector<PlaceTokens> const& goal = {});
+
+    //--------------------------------------------------------------------------
     //! \brief Ask one firing of the transition of this name (a transition
     //! without input place: a button, a message). Any thread.
     //--------------------------------------------------------------------------
@@ -296,6 +322,11 @@ public:
     Net const& net() const { return m_net; }
     Options const& options() const { return m_options; }
 
+    //--------------------------------------------------------------------------
+    //! \brief Index of the transition of this name, or npos.
+    //--------------------------------------------------------------------------
+    size_t transitionOf(std::string const& name) const;
+
 private:
 
     //! \brief Transitions of this name.
@@ -308,6 +339,12 @@ private:
     bool canFire(Instance const& instance, size_t const transition) const;
     //! \brief Fire one transition: take the tokens, start its function.
     void fire(std::shared_ptr<Instance> const& instance, size_t const transition);
+    //! \brief Take the input tokens of the transition.
+    void consume(ColoredMarking& marking, size_t const transition) const;
+    //! \brief Call the function of the transition (its tokens are taken).
+    void start(std::shared_ptr<Instance> const& instance, size_t const transition);
+    //! \brief Give the output tokens of the transition, colored by its result.
+    void produce(Instance& instance, size_t const transition, Color const result) const;
     //! \brief End of the function: give the output tokens.
     void complete(Instance& instance, size_t const transition, Color const result);
     void deliver(Instance& instance);

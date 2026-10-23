@@ -321,9 +321,12 @@ while (rt.step(inst, now())) { /*...*/ }    // non bloquant, dans ta boucle
 
 ### 6.4 Journal et persistance
 
-- [ ] Journal `(instance, transition, état, date)` comme Symmetri.
-- [ ] Sérialisation du journal (JSON lines) ; reconstruction du marquage par replay.
-- [ ] Reprise après crash : marquage + transitions en cours → politique (relancer / Failed).
+- [x] Journal `(instance, transition, état, date)` comme Symmetri (`instance->log()`,
+      écrit au fil de l'eau par `Options::journal`).
+- [x] Sérialisation du journal (JSON lines) ; reconstruction du marquage par replay
+      (`Runtime/Journal.hpp`, `Runtime::restore()`).
+- [x] Reprise après crash : marquage + transitions en cours → politique (relancer / Failed)
+      (`Runtime::Recovery::Restart`, `Recovery::Fail`).
 
 ### 6.5 Cibles
 

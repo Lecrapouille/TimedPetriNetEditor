@@ -8,6 +8,7 @@
 #include "main.hpp"
 #include "Runtime/Runtime.hpp"
 #include "Runtime/SubNet.hpp"
+#include "Runtime/Journal.hpp"
 
 #include <atomic>
 #include <chrono>
@@ -314,4 +315,80 @@ TEST(TestRuntime, CancelNestedNets)
     killer.join();
     ASSERT_EQ(sub.instances().size(), 1u);
     ASSERT_EQ(sub.instances()[0]->result(), Canceled);
+}
+
+//------------------------------------------------------------------------------
+TEST(TestRuntime, JournalInJsonLines)
+{
+    Net const net = pickAndPlace();
+    std::vector<std::string> written;
+    Runtime::Options options;
+    options.journal = [&written, &net](LogEntry const& entry) {
+        written.push_back(toJsonLine(entry, net.colors));
+    };
+    Runtime runtime(net, std::make_shared<InlineExecutor>(), options);
+    int grasps = 0;
+    runtime.on("grasp", [&grasps]() { return ++grasps >= 2; });
+    auto instance = runtime.instantiate("order_7", {}, { { "Done", Success } });
+    ASSERT_EQ(runtime.run(*instance), Success);
+
+    // Written as it goes, the same as the journal of the instance.
+    std::string const text = toJsonLines(instance->log(), net.colors);
+    ASSERT_EQ(written.size(), instance->log().size());
+    ASSERT_NE(text.find("{\"instance\":\"order_7\",\"transition\":\"grasp\",\"event\":\"Completed\","
+                        "\"result\":\"Failed\",\"date\":0"), std::string::npos) << text;
+
+    std::vector<LogEntry> journal;
+    ASSERT_STREQ(fromJsonLines(text, net.colors, journal).c_str(), "");
+    ASSERT_EQ(journal.size(), instance->log().size());
+    for (size_t i = 0u; i < journal.size(); ++i)
+    {
+        ASSERT_EQ(journal[i].transition, instance->log()[i].transition);
+        ASSERT_EQ(journal[i].event, instance->log()[i].event);
+        ASSERT_EQ(journal[i].result, instance->log()[i].result);
+    }
+    ASSERT_STRNE(fromJsonLines("{\"event\":\"Oops\",\"transition\":\"a\"}", net.colors, journal).c_str(), "");
+}
+
+//------------------------------------------------------------------------------
+TEST(TestRuntime, RestoreAfterCrash)
+{
+    Net const net = pickAndPlace();
+
+    // The program stopped while "grasp" was running: the journal has its
+    // Scheduled and Started, not its Completed.
+    Runtime first(net, std::make_shared<ThreadPoolExecutor>(1u));
+    auto stop = std::make_shared<std::atomic<bool>>(false);
+    first.on("grasp", [stop]() {
+        while (!*stop)
+            std::this_thread::sleep_for(std::chrono::milliseconds(1));
+        return true;
+    });
+    auto crashed = first.instantiate("order_9", {}, { { "Done", Success } });
+    for (int i = 0; (i < 1000) && (count(*crashed, "grasp", LogEntry::Event::Started) == 0u); ++i)
+    {
+        first.step(*crashed, 0.0);
+        std::this_thread::sleep_for(std::chrono::milliseconds(1));
+    }
+    std::vector<LogEntry> const journal = crashed->log();
+    ASSERT_EQ(count(*crashed, "grasp", LogEntry::Event::Completed), 0u);
+    first.cancel(*crashed);
+    *stop = true;
+    first.run(*crashed);
+
+    // Restart: the function of "grasp" is called again.
+    Runtime second(net);
+    int grasps = 0;
+    second.on("grasp", [&grasps]() { ++grasps; return true; });
+    auto restarted = second.restore("order_9", journal, Runtime::Recovery::Restart, {}, { { "Done", Success } });
+    ASSERT_EQ(restarted->marking().count(0u), 0u); // Ready was consumed
+    ASSERT_EQ(second.run(*restarted), Success);
+    ASSERT_EQ(grasps, 1);
+
+    // Fail: "grasp" ends with Failed, "retry" takes the token, grasp again.
+    grasps = 0;
+    auto failed = second.restore("order_9", journal, Runtime::Recovery::Fail, {}, { { "Done", Success } });
+    ASSERT_EQ(second.run(*failed), Success);
+    ASSERT_EQ(grasps, 1);
+    ASSERT_EQ(count(*failed, "retry", LogEntry::Event::Scheduled), 1u);
 }
