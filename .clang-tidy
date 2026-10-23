@@ -1,0 +1,24 @@
+---
+# Static analysis of the code under src/ (run: clang-tidy -p . src/PetriNet/*.cpp).
+Checks: >
+  -*,
+  bugprone-*,
+  -bugprone-easily-swappable-parameters,
+  -bugprone-narrowing-conversions,
+  cert-err58-cpp,
+  clang-analyzer-*,
+  cppcoreguidelines-pro-type-reinterpret-cast,
+  cppcoreguidelines-slicing,
+  misc-redundant-expression,
+  misc-unused-using-decls,
+  modernize-use-nullptr,
+  modernize-use-override,
+  modernize-use-emplace,
+  performance-*,
+  readability-container-size-empty,
+  readability-redundant-string-cstr,
+  readability-misleading-indentation
+WarningsAsErrors: ''
+HeaderFilterRegex: 'src/(PetriNet|Editor|Runtime)/.*'
+FormatStyle: file
+...

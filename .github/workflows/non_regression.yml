@@ -48,6 +48,33 @@ jobs:
           V=1 make -j`nproc --all`
           ./build/TimedPetriNetEditor
 
+  sanitizers_linux:
+    name: Unit tests with AddressSanitizer and UndefinedBehaviorSanitizer
+    runs-on: ubuntu-latest
+    steps:
+      - name: Install system packages
+        run: |
+          sudo apt-get update
+          sudo apt-get install pkg-config
+      - name: Checkout TimedPetriNetEditor
+        uses: actions/checkout@v6
+        with:
+          submodules: true
+      - name: Download, configure and install Google test
+        run: |
+          wget https://github.com/google/googletest/archive/v1.17.0.tar.gz
+          tar xf v1.17.0.tar.gz
+          cd googletest-1.17.0
+          cmake -DBUILD_SHARED_LIBS=OFF -DCMAKE_POSITION_INDEPENDENT_CODE=ON .
+          sudo make install
+      - name: Compile and run the unit tests with sanitizers
+        run: |
+          make download-external-libs
+          cd tests
+          V=1 make -j`nproc --all` BUILD=build-sanitize USE_ASAN=1 USE_UBSAN=1
+          ASAN_OPTIONS=detect_leaks=1 UBSAN_OPTIONS=print_stacktrace=1:halt_on_error=1 \
+            ../build-sanitize/TimedPetriNetEditor-UnitTest
+
   non_regression_macos:
     name: Non regression tests on MacOS X
     runs-on: macos-latest

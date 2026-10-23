@@ -156,8 +156,9 @@ macro-étapes GRAFCET).
 - [x] Retirer `compile_commands.json` du dépôt et l'ajouter au `.gitignore`.
 - [x] Mettre à jour ou supprimer `doc/gui.md` et `doc/mqtt.md` (liens barrés dans le README).
 - [ ] Traduire le `TODO` en issues GitHub étiquetées (`bug`, `grafcet`, `editor`, `core`).
-- [ ] Ajouter `.clang-format` et `.clang-tidy` ; activer `-Wall -Wextra -Wconversion` en CI.
-- [ ] CI : ajouter un job ASan + UBSan qui lance les tests.
+- [x] Ajouter `.clang-format` et `.clang-tidy` ; activer `-Wall -Wextra -Wconversion` en CI
+      (déjà dans les drapeaux par défaut de MyMakefile).
+- [x] CI : ajouter un job ASan + UBSan qui lance les tests.
 
 ## 3. Phase 1 — Extraire un cœur propre `tpne-core`
 
