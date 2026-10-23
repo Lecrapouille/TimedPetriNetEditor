@@ -11,6 +11,7 @@ src/*/VERSION.txt
 exapkgs
 pkg_list.json
 .cache
+compile_commands.json
 .vscode/settings.json
 TimedPetriNetEditor*.tar.gz
 

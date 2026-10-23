@@ -153,8 +153,8 @@ macro-étapes GRAFCET).
 
 ## 2. Phase 0 — Hygiène
 
-- [ ] Retirer `compile_commands.json` du dépôt et l'ajouter au `.gitignore`.
-- [ ] Mettre à jour ou supprimer `doc/gui.md` et `doc/mqtt.md` (liens barrés dans le README).
+- [x] Retirer `compile_commands.json` du dépôt et l'ajouter au `.gitignore`.
+- [x] Mettre à jour ou supprimer `doc/gui.md` et `doc/mqtt.md` (liens barrés dans le README).
 - [ ] Traduire le `TODO` en issues GitHub étiquetées (`bug`, `grafcet`, `editor`, `core`).
 - [ ] Ajouter `.clang-format` et `.clang-tidy` ; activer `-Wall -Wextra -Wconversion` en CI.
 - [ ] CI : ajouter un job ASan + UBSan qui lance les tests.
