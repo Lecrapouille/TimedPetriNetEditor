@@ -1,0 +1,352 @@
+# TimedPetriNetEditor — Feuille de route
+
+Objectif : finaliser l'éditeur, corriger les défauts identifiés, et en extraire une bibliothèque C++ embarquable qui exécute un réseau de Petri en appelant des fonctions (inspirée de [Symmetri](https://github.com/thorstink/Symmetri)).
+
+---
+
+## 1. Comment fonctionne Symmetri
+
+### 1.1 L'idée en une phrase
+
+**Une transition = une fonction C++.** Quand une transition est franchissable, Symmetri
+consomme ses jetons d'entrée, appelle la fonction, puis dépose les jetons de sortie.
+La valeur de retour de la fonction (`Success`, `Failed`, ou une couleur perso) devient
+la **couleur** des jetons produits, et c'est cette couleur qui décide quelle transition
+suivante pourra les consommer.
+
+C'est donc bien une machine à états, mais :
+
+- plusieurs états peuvent être actifs en même temps (parallélisme natif) ;
+- le choix de la branche suivante est fait par le **résultat de la fonction**, pas par
+  une condition évaluée à part.
+
+### 1.2 Les quatre ingrédients
+
+| Ingrédient | Type Symmetri | Rôle |
+|---|---|---|
+| Le réseau | `Net = unordered_map<Transition, pair<inputs, outputs>>` | Pour chaque transition : liste de `(place, couleur)` en entrée et en sortie |
+| Le marquage initial | `Marking = vector<pair<Place, Token>>` | Jetons de départ |
+| Le marquage but | `Marking` | Si atteint → l'exécution termine en `Success` |
+| Les callbacks | `registerCallback("nom", fonction)` | La fonction appelée quand la transition tire |
+
+Le réseau peut aussi être chargé depuis un fichier PNML ou GRML (formats d'autres éditeurs).
+
+### 1.3 Exemple : une machine à états « prendre un objet »
+
+```
+ (Prêt) ──► [detecter] ──► (Objet vu) ──► [saisir] ──Success──► (En main) ──► [deposer] ──► (Fini)
+                                              │
+                                              └──Failed──► (Raté) ──► [reessayer] ──► (Objet vu)
+```
+
+```cpp
+using namespace symmetri;
+
+Net net = {
+  {"detecter",  {{{"Pret", Success}},      {{"ObjetVu", Success}}}},
+  {"saisir",    {{{"ObjetVu", Success}},   {{"Saisie", Success}}}},
+  // deux transitions lisent la même place, mais pas la même couleur :
+  {"deposer",   {{{"Saisie", Success}},    {{"Fini", Success}}}},
+  {"reessayer", {{{"Saisie", Failed}},     {{"ObjetVu", Success}}}},
+};
+
+Marking initial = {{"Pret", Success}};
+Marking goal    = {{"Fini", Success}};
+
+auto pool = std::make_shared<TaskSystem>(4);          // pool de threads
+PetriNet app(net, "commande_42", pool, initial, goal);
+
+app.registerCallback("detecter", [] { camera.detect(); });          // void → Success
+app.registerCallback("saisir",   [] { return gripper.grasp()        // Token
+                                          ? Success : Failed; });
+app.registerCallback("deposer",  [] { arm.place(); });
+// "reessayer" n'a pas de callback : il tire instantanément (DirectMutation)
+
+Token result = fire(app);   // bloque jusqu'au but, un deadlock ou une annulation
+auto log = getLog(app);     // journal : (case_id, transition, état, horodatage)
+```
+
+Point clé : `saisir` produit un jeton dans `Saisie` **coloré par son résultat**.
+Si c'est `Success`, seul `deposer` peut le consommer ; si c'est `Failed`, seul
+`reessayer` le peut. C'est le mécanisme de branchement.
+
+### 1.4 La boucle d'exécution (le cœur à comprendre)
+
+```
+           ┌──────────────── thread "Petri loop" (seul à toucher le marquage) ───────────────┐
+           │                                                                                 │
+ file de   │  1. dépile tous les "reducers" (lambdas Petri& → void) et les applique          │
+ reducers ─┼─►2. but atteint ?            → Success, fin                                      │
+ (lock-    │  3. calcule les transitions franchissables, triées par priorité               │
+  free)    │  4. pour chacune : retire les jetons d'entrée, puis                               │
+   ▲       │       - callback synchrone  → l'appelle tout de suite, dépose les sorties         │
+   │       │       - callback asynchrone → l'envoie au pool de threads                          │
+   │       │  5. rien de franchissable ET rien en cours ? → Deadlocked                         │
+   │       └─────────────────────────────────────────────────────────────────────────────────┘
+   │
+   └── pool de threads : exécute la fonction, puis poste un reducer
+       « dépose N jetons de couleur <résultat> dans les places de sortie »
+```
+
+- Taskflow (https://github.com/taskflow/taskflow) ne remplace pas la boucle : il
+  exécute un graphe de tâches figé, sans marquage ni jetons multiples ni choix par
+  couleur. Il peut seulement servir de pool de threads. Le runtime dépend donc d'une
+  interface `Executor { post(std::function<void()>) }` avec `InlineExecutor`
+  (Arduino, tests déterministes), `ThreadPoolExecutor` (maison) et, en option,
+  `TaskflowExecutor`.
+
+Conséquences :
+
+- **Pas de verrou sur le marquage** : un seul thread le modifie, les workers ne font
+  que poster des messages (pattern Redux / acteur).
+- **Une transition dure le temps de sa fonction** : les jetons d'entrée disparaissent
+  au début, les jetons de sortie apparaissent à la fin. La place implicite « en cours »
+  est la liste `scheduled_callbacks`.
+- **Fin d'exécution explicite** : `Success` (but atteint), `Deadlocked` (plus rien à
+  faire), `Canceled`, ou `Failed`.
+
+### 1.5 Les callbacks : effacement de type à la Sean Parent
+
+`Callback` accepte **n'importe quel type** `T` pour lequel une fonction libre
+`fire(const T&)` existe (trouvée par ADL). Les autres points d'extension sont optionnels
+et ont une version par défaut :
+
+```cpp
+Token fire(const T&);          // obligatoire (lambda, foncteur, objet…)
+void  cancel(const T&);        // défaut : ne fait rien
+void  pause(const T&);
+void  resume(const T&);
+bool  isSynchronous(const T&); // défaut : false → exécuté sur le pool
+Eventlog getLog(const T&);
+```
+
+Comme `PetriNet` implémente lui-même `fire`, `cancel`, etc., **un réseau peut être le
+callback d'une transition d'un autre réseau** : hiérarchie gratuite (sous-réseaux,
+macro-étapes GRAFCET).
+
+### 1.6 Autres détails utiles
+
+- **Priorités** : `PriorityTable` (`int8_t` par transition) pour résoudre les conflits.
+- **Transitions d'entrée** : `getInputTransitionHandle("t")` renvoie une
+  `std::function<void()>` qu'un code externe (callback réseau, ISR, message ROS…) appelle
+  pour injecter un événement.
+- **Journal** : chaque transition logge `Scheduled`, `Started` puis son résultat, avec
+  horodatage. Exploitable pour du *process mining* ou un replay.
+- Licence BSD-3 : on peut s'inspirer et réutiliser du code librement (en citant).
+
+### 1.7 Ce qu'on garde, ce qu'on fait mieux
+
+| Symmetri | Pour notre lib |
+|---|---|
+| Jetons colorés par le résultat | **On garde.** C'est l'idée centrale. |
+| Boucle mono-thread + reducers | **On garde.** |
+| Callbacks par effacement de type + ADL | **On garde.** |
+| Réseaux imbriqués | **On garde.** |
+| Places/transitions en `std::string` partout dans l'API | Noms à la construction, **indices** à l'exécution |
+| Pas de temps sur les arcs/transitions | **Ajout** : durées et graphes d'événements temporisés (notre spécialité) |
+| Pas de gardes séparées | **Ajout** : gardes optionnelles (réceptivités GRAFCET) |
+| Pas d'analyse statique | **Ajout** : (max,+), Howard, accessibilité, invariants |
+| Un marquage par objet `PetriNet` | **Séparer** `Net` (immuable, partagé) et `Instance` (marquage) |
+| `fire(app)` bloque le thread appelant | **Ajout** : mode `step()` non bloquant pour s'intégrer à une boucle existante (ImGui, ROS, Arduino) |
+
+---
+
+## 2. Phase 0 — Hygiène
+
+- [ ] Retirer `compile_commands.json` du dépôt et l'ajouter au `.gitignore`.
+- [ ] Mettre à jour ou supprimer `doc/gui.md` et `doc/mqtt.md` (liens barrés dans le README).
+- [ ] Traduire le `TODO` en issues GitHub étiquetées (`bug`, `grafcet`, `editor`, `core`).
+- [ ] Ajouter `.clang-format` et `.clang-tidy` ; activer `-Wall -Wextra -Wconversion` en CI.
+- [ ] CI : ajouter un job ASan + UBSan qui lance les tests.
+
+## 3. Phase 1 — Extraire un cœur propre `tpne-core`
+
+But : `src/PetriNet` compilable seul, sans ImGui ni coordonnées, consommable par CMake.
+
+### 3.1 Séparer le modèle et la vue
+
+- [ ] Retirer `x`, `y` de `Node` ; créer `struct Layout { std::vector<Vec2> places, transitions; }`
+      possédé par le `Document` de l'éditeur.
+- [ ] Déplacer `findPlaceAt` / `findTransitionAt` dans l'éditeur (`PetriView`).
+- [ ] Déplacer `ForceDirected` dans l'éditeur (il ne manipule que le layout).
+- [ ] Format JSON : garder la compatibilité de lecture, écrire layout et topologie dans deux objets distincts (`"net"` / `"layout"`).
+
+### 3.2 Corriger la gestion mémoire
+
+- [ ] Remplacer `Node& from/to` dans `Arc` par des indices typés :
+      `struct PlaceId { uint32_t v; }; struct TransitionId { uint32_t v; };`
+- [ ] Remplacer `arcsIn` / `arcsOut` (pointeurs bruts) par des listes d'adjacence
+      d'indices recalculées dans une seule fonction privée.
+- [ ] Supprimer les `operator=` par destruction + placement new ; retirer les membres
+      `const` qui les rendaient nécessaires (ou rendre les types non copiables).
+- [ ] Remplacer `reinterpret_cast<Place&>` par `static_cast` (ou disparaît avec les indices).
+- [ ] Suppression d'un nœud : stratégie explicite (compactage + table de renommage,
+      ou tombstones) et test dédié.
+- [ ] Passer les `FIXME` de `Net` (`generateArcsInArcsOut`, `resetReceptivies`) en privé.
+
+### 3.3 Supprimer les singletons
+
+- [ ] `Sensors::instance()` → objet `Sensors` passé à la `Simulation` (ou dans un `Context`).
+- [ ] `NetRegistry::instance()` → registre possédé par le document / le runtime.
+- [ ] Test : deux réseaux simulés en parallèle dans le même processus.
+
+### 3.4 Séparer le marquage du réseau
+
+- [ ] `Net` devient la topologie immuable pendant l'exécution.
+- [ ] `Marking` = `std::vector<uint32_t>` (ou multiset coloré, cf. phase 4).
+- [ ] Matrices `Pre` / `Post` creuses (réutiliser `SparseMatrix`) ; fonction pure
+      `Marking fire(Net const&, Marking const&, TransitionId)`.
+
+### 3.5 Build
+
+- [ ] Avec Makefile compiler les lib `tpne::core`, `tpne::maxplus`, `tpne::editor`
+- [ ] Ne **pas** compiler le cœur avec `-ffast-math` mais garder la compatibilité.
+- [ ] Remplacer le sentinel `NaN` « pas de durée » par `std::optional<double>`.
+
+## 4. Phase 2 — Sémantique et simulation
+
+### 4.1 Découper `Simulation`
+
+- [ ] `Engine` (cœur) : sémantique pure, aucun float d'animation.
+- [ ] `TokenAnimator` (éditeur) : interpolation visuelle des jetons sur les arcs,
+      abonnée aux événements de l'`Engine`.
+- [ ] `GrafcetEngine` : règles d'évolution GRAFCET (franchissement simultané,
+      actions, forçages) au-dessus de l'`Engine`.
+- [ ] Valeur propre / Howard : hors simulation, dans `tpne::maxplus`.
+
+### 4.2 Temps
+
+- [ ] Horloge injectable : `std::function<TimePoint()>` (réelle ou simulée).
+- [ ] Temps en `double` ou `std::chrono` ; plus d'accumulation de `float dt`.
+- [ ] Simulation à événements discrets (file triée par date) pour les réseaux temporisés : avance directement à la prochaine date, sans dépendre du framerate.
+
+### 4.3 Conflits et déterminisme
+
+- [ ] Remplacer `shuffleTransitions` par une politique explicite :
+      `Priority`, `FirstDeclared`, `Random(seed)`.
+- [ ] Champ `priority` sur `Transition`, éditable dans l'inspecteur.
+- [ ] Graine aléatoire enregistrée → simulations rejouables.
+
+### 4.4 Extensions du formalisme (TODO existant)
+
+- [ ] `TypeOfNet` ne décrit que la façon dont le réseau évolue (`PetriNet`,
+      `TimedPetriNet`, `TimedEventGraph`, `GRAFCET`) ; pas de `ColorPetriNet` ni
+      d'`ExtendedPetriNet`. Les extensions sont portées par les arcs et les places
+      (`ArcKind { Normal, Inhibitor, Reset }`, `weight`, `capacity`, `color`).
+      `features(net)` les calcule et `allows(type, feature)` les valide :
+      `TimedEventGraph` et `GRAFCET` n'en acceptent aucune. Les analyses se
+      désactivent selon les extensions utilisées, pas selon le type.
+- [ ] Plus tard (après §3.1) : retirer `TimedEventGraph` du cœur, devenu
+      `TimedPetriNet` + `isEventGraph()` + option d'affichage compact dans le `Layout`.
+- [ ] Arcs inhibiteurs.
+- [ ] Arcs de reset.
+- [ ] Poids sur les arcs (si pas déjà complets partout).
+- [ ] Capacité des places (ou contrôler `maxTokens` statique → par place).
+
+### 4.5 Tests
+
+- [ ] Tests unitaires `Engine` : franchissement, conflits, priorités, inhibiteurs.
+- [ ] Tests GRAFCET : chaque règle d'évolution de la norme IEC 60848.
+- [ ] Tests de non-régression : charger chaque fichier de `data/examples`, simuler
+      N pas avec une graine fixe, comparer au journal de référence (golden files).
+
+## 5. Phase 3 — GRAFCET
+
+- [ ] Extraire les méthodes GRAFCET de `Simulation` vers `Grafcet.hpp/cpp`.
+
+## 6. Phase 4 — Runtime embarquable « à la Symmetri » : `tpne-runtime`
+
+### 6.1 Jetons colorés
+
+- [ ] `Token` = couleur (`uint8_t` indexé dans une table de noms), constantes
+      `Success`, `Failed`, `Canceled`, couleurs utilisateur.
+- [ ] Arcs d'entrée : `(place, couleur attendue)` ; couleur par défaut = « n'importe
+      laquelle » pour rester compatible avec les réseaux classiques.
+- [ ] Arcs de sortie : couleur = résultat du callback, ou couleur fixée sur l'arc.
+
+### 6.2 API
+
+```cpp
+auto net = tpne::load("pick.json");         // dessiné dans l'éditeur
+
+tpne::Runtime rt(net, tpne::ThreadPool(4));
+rt.on("detecter", [] { camera.detect(); });
+rt.on("saisir",   [] { return gripper.grasp() ? tpne::Success : tpne::Failed; });
+rt.guard("deposer", [](tpne::Context const& c) { return !estop; }); // optionnel
+
+auto inst = rt.instantiate("commande_42");  // un marquage par instance
+rt.inject(inst, "bouton_start");            // transition d'entrée
+
+// au choix :
+auto res = rt.run(inst);                    // bloquant, comme fire(app)
+while (rt.step(inst, now())) { /*...*/ }    // non bloquant, dans ta boucle
+```
+
+- [ ] `Callback` par effacement de type + points d'extension ADL (`fire`, `cancel`,
+      `pause`, `resume`, `isSynchronous`).
+- [ ] Un `Runtime` est lui-même un `Callback` → réseaux imbriqués (macro-étapes).
+- [ ] `unregisteredTransitions()` : liste les transitions sans fonction (utile au démarrage).
+
+### 6.3 Boucle d'exécution
+
+- [ ] Thread propriétaire du marquage + file de reducers (lock-free, ex. `moodycamel::ConcurrentQueue`).
+- [ ] Callbacks synchrones exécutés en ligne, asynchrones sur le pool.
+- [ ] États finaux : `Success` (marquage but), `Deadlocked`, `Canceled`, `Failed`.
+- [ ] Transitions temporisées : durée fixe de l'arc/transition gérée par la file
+      d'événements (sans thread qui dort).
+- [ ] Timeout = transition concurrente temporisée vers une place d'erreur
+      (documenter le motif dans les exemples).
+
+### 6.4 Journal et persistance
+
+- [ ] Journal `(instance, transition, état, date)` comme Symmetri.
+- [ ] Sérialisation du journal (JSON lines) ; reconstruction du marquage par replay.
+- [ ] Reprise après crash : marquage + transitions en cours → politique (relancer / Failed).
+
+### 6.5 Cibles
+
+- [ ] Desktop / micro-services : pool de threads.
+- [ ] ROS 2 : exécuteur qui appelle `step()` dans un timer, callbacks = actions ROS.
+- [ ] Arduino : mode mono-thread sans allocation dynamique après l'init,
+      `step()` dans `loop()`, pas d'exceptions ni de RTTI.
+
+## 7. Phase 5 — L'éditeur comme IDE du runtime
+
+- [ ] Éditeur de couleurs de jetons et de couleur attendue sur les arcs.
+- [ ] Mode « connexion » : le runtime publie ses événements sur ZeroMQ (sens inversé
+      du remote actuel), l'éditeur affiche le marquage en direct.
+- [ ] Rejouer un journal dans l'éditeur (barre de temps, pas à pas avant/arrière).
+- [ ] Surligner les transitions sans callback (à partir d'un manifeste exporté par le runtime).
+- [ ] Import/export PNML compatible Symmetri (pour comparer sur les mêmes réseaux).
+- [ ] Remplacer l'export « code GRAFCET C++ » par un export « squelette de callbacks »
+      pour `tpne-runtime`.
+- [ ] Bugs listés : centrage du graphe, sélection d'arcs en mode graphe d'événements.
+- [ ] Tester le remote ZeroMQ (test d'intégration en CI avec un client Python).
+
+## 8. Phase 6 — Analyses (l'avantage sur Symmetri et Symfony)
+
+- [ ] Graphe d'accessibilité (borné) et de couverture (Karp-Miller).
+- [ ] Détection de deadlocks et de transitions mortes.
+- [ ] Bornitude, vivacité.
+- [ ] P-invariants et T-invariants (semi-flots).
+- [ ] Commande CLI `tpne-check net.json` utilisable en CI (code de sortie ≠ 0 si deadlock).
+- [ ] Pour les graphes d'événements temporisés : temps de cycle via Howard,
+      chemin critique affiché dans l'éditeur (déjà en partie là).
+
+## 9. Phase 7 — Publication
+
+- [ ] Doc : un guide « de l'éditeur au code » avec l'exemple pick-and-place.
+- [ ] Exemples : micro-services (HTTP fictif), robot (Robotik), Arduino (feu tricolore).
+- [ ] Packaging : paquet CMake installable, release GitHub, version web à jour.
+- [ ] Benchmark contre Symmetri sur leurs réseaux PNML d'exemple.
+
+---
+
+## Ordre conseillé
+
+1. Phase 0 → Phase 1 : sans cœur propre, rien d'autre n'est stable.
+2. Phase 4 en version minimale (synchrone seulement) pour valider l'API sur un
+   vrai cas (Robotik).
+3. Phase 2 (temps, déterminisme, tests) puis le pool asynchrone de la phase 4.
+4. Phase 5 : l'éditeur devient le débogueur du runtime.
+5. Phases 3, 6, 7 en parallèle selon l'envie.
