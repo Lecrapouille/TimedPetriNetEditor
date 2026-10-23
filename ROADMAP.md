@@ -168,8 +168,9 @@ But : `src/PetriNet` compilable seul, sans ImGui ni coordonnées, consommable pa
 
 - [ ] Retirer `x`, `y` de `Node` ; créer `struct Layout { std::vector<Vec2> places, transitions; }`
       possédé par le `Document` de l'éditeur.
-- [ ] Déplacer `findPlaceAt` / `findTransitionAt` dans l'éditeur (`PetriView`).
-- [ ] Déplacer `ForceDirected` dans l'éditeur (il ne manipule que le layout).
+- [x] Déplacer `findPlaceAt` / `findTransitionAt` dans l'éditeur (`placeAt()`, `nodeAt()` de `Drawable`).
+- [x] Déplacer `ForceDirected` dans l'éditeur (il ne manipule que le layout), ainsi que
+      `arrangeTopDown()` (`Editor/TopDownLayout`).
 - [ ] Format JSON : garder la compatibilité de lecture, écrire layout et topologie dans deux objets distincts (`"net"` / `"layout"`).
 
 ### 3.2 Corriger la gestion mémoire

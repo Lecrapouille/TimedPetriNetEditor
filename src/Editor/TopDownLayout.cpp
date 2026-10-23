@@ -5,7 +5,7 @@
 // for users who cannot use the GPL, under a commercial license.
 // See LICENSING.md for details.
 
-#include "PetriNet/Layout.hpp"
+#include "Editor/TopDownLayout.hpp"
 #include "PetriNet/PetriNet.hpp"
 
 #include <algorithm>

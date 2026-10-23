@@ -18,7 +18,7 @@
 
 #  include "PetriNet/Exports/Exports.hpp"
 #  include "PetriNet/Imports/Imports.hpp"
-#  include "PetriNet/ForceDirected.hpp"
+#  include "Editor/ForceDirected.hpp"
 #  include "PetriNet/Algorithms.hpp"
 
 #  include <deque>

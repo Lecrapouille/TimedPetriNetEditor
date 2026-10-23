@@ -5,7 +5,7 @@
 // for users who cannot use the GPL, under a commercial license.
 // See LICENSING.md for details.
 
-#include "PetriNet/ForceDirected.hpp"
+#include "Editor/ForceDirected.hpp"
 #include "PetriNet/PetriNet.hpp"
 #include <algorithm>
 

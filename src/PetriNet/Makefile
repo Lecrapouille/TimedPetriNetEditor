@@ -59,7 +59,6 @@ VPATH += $(P)/src
 # Inform Makefile where to find header files
 #
 INCLUDES += $(P)/src $(THIRD_PARTIES_DIR)
-INCLUDES += $(THIRD_PARTIES_DIR)/imgui
 
 ###################################################
 # Make the list of compiled files for the library

@@ -110,6 +110,15 @@ void drawNodeOutline(ImDrawList* draw_list, Node const& node, TypeOfNet type,
                      float thickness);
 
 //------------------------------------------------------------------------------
+//! \brief Place, transition or node whose center is closer than the radius to
+//! the given position (net units), or null. For timed event graphs, places
+//! are not drawn so nodeAt() only finds transitions.
+//------------------------------------------------------------------------------
+Place* placeAt(Net& net, ImVec2 const& position, float radius);
+Transition* transitionAt(Net& net, ImVec2 const& position, float radius);
+Node* nodeAt(Net& net, ImVec2 const& position, float place_radius, float transition_radius);
+
+//------------------------------------------------------------------------------
 //! \brief Half size of a node in net units (radius for a Petri place).
 //------------------------------------------------------------------------------
 ImVec2 nodeHalfSize(Node const& node, TypeOfNet type);

@@ -5,8 +5,8 @@
 // for users who cannot use the GPL, under a commercial license.
 // See LICENSING.md for details.
 
-#ifndef TPNE_LAYOUT_HPP
-#  define TPNE_LAYOUT_HPP
+#ifndef TPNE_TOP_DOWN_LAYOUT_HPP
+#  define TPNE_TOP_DOWN_LAYOUT_HPP
 
 namespace tpne {
 
@@ -16,7 +16,6 @@ class Net;
 //! \brief Place the nodes from top to bottom, as a GRAFCET is drawn: the layer
 //! of a node is its distance from the initial steps (links going back up are
 //! ignored), each node near its parent, nodes of a layer kept apart.
-//! Net::generateArcsInArcsOut() shall be up to date.
 //------------------------------------------------------------------------------
 void arrangeTopDown(Net& net);
 

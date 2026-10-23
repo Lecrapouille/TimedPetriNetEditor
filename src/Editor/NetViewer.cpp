@@ -171,7 +171,7 @@ void NetViewer::draw(char const* id, Net const& net, Options const& options)
     {
         float const x = (io.MousePos.x - origin.x) / m_zoom;
         float const y = (io.MousePos.y - origin.y) / m_zoom;
-        m_hovered = const_cast<Net&>(net).findNodeAt(x, y, PLACE_RADIUS, TRANS_WIDTH / 2.0f);
+        m_hovered = nodeAt(const_cast<Net&>(net), ImVec2(x, y), PLACE_RADIUS, TRANS_WIDTH / 2.0f);
         if (m_hovered != nullptr)
         {
             ImGui::BeginTooltip();

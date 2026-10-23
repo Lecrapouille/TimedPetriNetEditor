@@ -1056,19 +1056,19 @@ bool Editor::switchOfNet(TypeOfNet const type)
 //------------------------------------------------------------------------------
 Node* Editor::getNode(ImVec2 const& position)
 {
-    return net().findNodeAt(position.x, position.y, PLACE_RADIUS, TRANS_WIDTH);
+    return nodeAt(net(), position, PLACE_RADIUS, TRANS_WIDTH);
 }
 
 //------------------------------------------------------------------------------
 Place* Editor::getPlace(ImVec2 const& position)
 {
-    return net().findPlaceAt(position.x, position.y, PLACE_RADIUS);
+    return placeAt(net(), position, PLACE_RADIUS);
 }
 
 //------------------------------------------------------------------------------
 Transition* Editor::getTransition(ImVec2 const& position)
 {
-    return net().findTransitionAt(position.x, position.y, TRANS_WIDTH);
+    return transitionAt(net(), position, TRANS_WIDTH);
 }
 
 //------------------------------------------------------------------------------

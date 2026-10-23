@@ -934,4 +934,46 @@ void drawStepActions(ImDrawList* draw_list, Place const& place, ImVec2 const& or
     }
 }
 
+// ============================================================================
+// Picking
+// ============================================================================
+
+//! \brief First node of the container closer than the radius to the position.
+template<class Nodes>
+static auto closest(Nodes& nodes, ImVec2 const& position, float const radius)
+    -> decltype(&nodes[0])
+{
+    float const r2 = radius * radius;
+    for (auto& node : nodes)
+    {
+        float const dx = node.x - position.x;
+        float const dy = node.y - position.y;
+        if (dx * dx + dy * dy < r2)
+            return &node;
+    }
+    return nullptr;
+}
+
+//------------------------------------------------------------------------------
+Place* placeAt(Net& net, ImVec2 const& position, float const radius)
+{
+    return closest(net.places(), position, radius);
+}
+
+//------------------------------------------------------------------------------
+Transition* transitionAt(Net& net, ImVec2 const& position, float const radius)
+{
+    return closest(net.transitions(), position, radius);
+}
+
+//------------------------------------------------------------------------------
+Node* nodeAt(Net& net, ImVec2 const& position, float const place_radius,
+             float const transition_radius)
+{
+    Node* node = transitionAt(net, position, transition_radius);
+    if ((node != nullptr) || (net.type() == TypeOfNet::TimedEventGraph))
+        return node;
+    return placeAt(net, position, place_radius);
+}
+
 } // namespace tpne

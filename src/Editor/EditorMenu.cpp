@@ -10,7 +10,7 @@
 #include "Editor/Theme.hpp"
 #include "Remote/IRemoteControl.hpp"
 #include "PetriNet/Algorithms.hpp"
-#include "PetriNet/Layout.hpp"
+#include "Editor/TopDownLayout.hpp"
 #include "Editor/KeyBindings.hpp"
 #include "imgui/imgui.h"
 #include "imgui/imgui_internal.h"
