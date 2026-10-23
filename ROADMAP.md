@@ -259,14 +259,18 @@ But : `src/PetriNet` compilable seul, sans ImGui ni coordonnées, consommable pa
 
 ### 4.5 Tests
 
-- [ ] Tests unitaires `Engine` : franchissement, conflits, priorités, inhibiteurs.
-- [ ] Tests GRAFCET : chaque règle d'évolution de la norme IEC 60848.
-- [ ] Tests de non-régression : charger chaque fichier de `data/examples`, simuler
-      N pas avec une graine fixe, comparer au journal de référence (golden files).
+- [x] Tests unitaires `Engine` : franchissement, conflits, priorités, inhibiteurs
+      (`EngineTests`, `FiringTests`, `ExtensionsTests`, `SimulationTests`).
+- [x] Tests GRAFCET : chaque règle d'évolution de la norme IEC 60848 (`TestGrafcetRules`).
+- [x] Tests de non-régression : charger chaque fichier de `data/examples`, simuler
+      N pas avec une graine fixe, comparer au journal de référence (golden files) :
+      `tests/golden/`, politique « premier déclaré » (le tirage aléatoire de la STL
+      diffère entre Linux et macOS), `TPNE_UPDATE_GOLDEN=1` pour les réécrire.
 
 ## 5. Phase 3 — GRAFCET
 
-- [ ] Extraire les méthodes GRAFCET de `Simulation` vers `Grafcet.hpp/cpp`.
+- [x] Extraire les méthodes GRAFCET de `Simulation` vers `Grafcet.hpp/cpp` (déjà fait :
+      `GrafcetEngine`, `Simulation` ne fait que déléguer).
 
 ## 6. Phase 4 — Runtime embarquable « à la Symmetri » : `tpne-runtime`
 

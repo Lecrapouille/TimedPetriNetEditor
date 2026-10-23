@@ -122,6 +122,117 @@ TEST(TestGrafcetEngine, SequenceAndPrecedence)
 }
 
 //------------------------------------------------------------------------------
+//! \brief GRAFCET of the given steps (1: initial) and transitions
+//! { upstream steps, downstream steps, receptivity }.
+struct Link { std::vector<size_t> from; std::vector<size_t> to; std::string receptivity; };
+static Net makeGrafcet(std::vector<size_t> const& steps, std::vector<Link> const& links)
+{
+    Net net(TypeOfNet::GRAFCET);
+    net.name = "G";
+    for (size_t const initial : steps)
+        net.addPlace(0.0f, 0.0f, initial);
+    for (auto const& link : links)
+    {
+        Transition& t = net.addTransition(0.0f, 0.0f);
+        t.caption = link.receptivity;
+        for (size_t const s : link.from)
+            net.addArc(net.places()[s], net.transitions()[t.id]);
+        for (size_t const s : link.to)
+            net.addArc(net.transitions()[t.id], net.places()[s]);
+    }
+    return net;
+}
+
+//------------------------------------------------------------------------------
+//! \brief IEC 60848 rule 1: the initial steps are active at the start.
+TEST(TestGrafcetRules, Rule1InitialSituation)
+{
+    Net net = makeGrafcet({ 1u, 0u, 1u }, { { { 0u }, { 1u }, "a" } });
+    GrafcetEngine engine;
+    engine.graphs({ &net });
+    ASSERT_TRUE(engine.start());
+    engine.step(0.1f);
+    EXPECT_TRUE(active(net, 0));
+    EXPECT_FALSE(active(net, 1));
+    EXPECT_TRUE(active(net, 2));
+}
+
+//------------------------------------------------------------------------------
+//! \brief Rules 2 and 3: a transition fires when all its upstream steps are
+//! active and its receptivity is true; it deactivates all of them and
+//! activates all its downstream steps (AND divergence and convergence).
+TEST(TestGrafcetRules, Rule3ParallelSequences)
+{
+    // X0 -a-> (X1, X2); (X1, X2) -b-> X3; X1 -c-> X4 (leaves the AND).
+    Net net = makeGrafcet({ 1u, 0u, 0u, 0u, 0u },
+                          { { { 0u }, { 1u, 2u }, "a" },
+                            { { 1u, 2u }, { 3u }, "b" },
+                            { { 1u }, { 4u }, "c" } });
+    GrafcetEngine engine;
+    engine.graphs({ &net });
+    ASSERT_TRUE(engine.start());
+    engine.setInput("a", 1);
+    engine.step(0.1f);
+    EXPECT_FALSE(active(net, 0));
+    EXPECT_TRUE(active(net, 1));
+    EXPECT_TRUE(active(net, 2));
+
+    // X1 leaves: the AND convergence is no longer validated.
+    engine.setInput("a", 0);
+    engine.setInput("c", 1);
+    engine.step(0.1f);
+    EXPECT_FALSE(active(net, 1));
+    EXPECT_TRUE(active(net, 2));
+    EXPECT_TRUE(active(net, 4));
+    engine.setInput("b", 1);
+    engine.step(0.1f);
+    EXPECT_FALSE(active(net, 3)) << "X1 is not active";
+    EXPECT_TRUE(active(net, 2));
+}
+
+//------------------------------------------------------------------------------
+//! \brief Rule 4: all the transitions that can fire fire together, even the
+//! branches of an alternative (OR divergence) whose receptivities are both
+//! true.
+TEST(TestGrafcetRules, Rule4SimultaneousFiring)
+{
+    // X0 -a-> X1, X0 -a-> X2 (both true), X3 -a-> X4 (other sequence).
+    Net net = makeGrafcet({ 1u, 0u, 0u, 1u, 0u },
+                          { { { 0u }, { 1u }, "a" },
+                            { { 0u }, { 2u }, "a" },
+                            { { 3u }, { 4u }, "a" } });
+    GrafcetEngine engine;
+    engine.graphs({ &net });
+    ASSERT_TRUE(engine.start());
+    engine.setInput("a", 1);
+    engine.step(0.1f);
+    EXPECT_FALSE(active(net, 0));
+    EXPECT_TRUE(active(net, 1));
+    EXPECT_TRUE(active(net, 2));
+    EXPECT_TRUE(active(net, 4));
+    EXPECT_EQ(engine.firings().size(), 3u);
+}
+
+//------------------------------------------------------------------------------
+//! \brief Rule 5: a step activated and deactivated at the same time stays
+//! active.
+TEST(TestGrafcetRules, Rule5ActivatedAndDeactivatedStaysActive)
+{
+    // X0 -a-> X0 (loop on itself) and X0 -b-> X1.
+    Net net = makeGrafcet({ 1u, 0u }, { { { 0u }, { 0u }, "↑a" },
+                                        { { 0u }, { 1u }, "b" } });
+    GrafcetEngine engine;
+    engine.graphs({ &net });
+    ASSERT_TRUE(engine.start());
+    engine.step(0.1f);
+    engine.setInput("a", 1);
+    engine.step(0.1f);
+    ASSERT_EQ(engine.firings().size(), 1u); // the loop fired
+    EXPECT_TRUE(active(net, 0));
+    EXPECT_FALSE(active(net, 1));
+}
+
+//------------------------------------------------------------------------------
 TEST(TestGrafcetEngine, EdgesLastOneInstant)
 {
     // X0 -↑a-> X1 -↑a-> X2: one rising edge crosses only one transition.
