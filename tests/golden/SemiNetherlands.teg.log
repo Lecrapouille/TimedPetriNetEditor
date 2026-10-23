@@ -1,0 +1,18 @@
+net Timed Petri net
+initial: 2 1 1 0 2 2 1 1 1 0 1 1
+t=0 T0 k=1
+t=0 T2 k=1
+t=0 T2 k=2
+t=0 T3 k=1
+t=0 T4 k=1
+t=0 T5 k=1
+t=0 T6 k=1
+t=0 T1 k=1
+t=0 T7 k=1
+t=35 T4 k=2
+t=36 T6 k=2
+t=36 T1 k=2
+t=58 T0 k=2
+t=58 T0 k=3
+t=58 T7 k=2
+final t=60: 0 0 0 1 0 0 0 0 0 0 0 0

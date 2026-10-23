@@ -21,6 +21,8 @@ TimedPetriNetEditor*.tar.gz
 *.aux
 *.dvi
 *.log
+# Golden journals of the tests are not logs
+!tests/golden/*.log
 
 # Prerequisites
 *.d

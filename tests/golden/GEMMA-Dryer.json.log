@@ -1,0 +1,15 @@
+c=5 Ack=1
+c=15 Auto=0
+c=25 EStop=1
+c=35 Left=1
+c=45 Manual=1
+c=55 Rearm=1
+c=65 Right=1
+c=75 Start=1
+c=85 Stop=1
+c=95 Temperature=0
+c=105 Ack=0
+c=115 Auto=1
+final Production: 1 0 0
+final Control: 1 0 0 0 0 0
+final Safety: 1 0

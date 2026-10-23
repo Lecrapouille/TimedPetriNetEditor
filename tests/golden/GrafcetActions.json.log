@@ -1,0 +1,146 @@
+c=5 Error=1
+c=15 Reset=1
+c=25 Start=1
+c=25 Cylinder Control:T0 x86
+c=25 Cylinder Control:T4 x85
+c=25 Cylinder Control:T5 x85
+c=26 Cylinder Control:T0 x85
+c=26 Cylinder Control:T4 x86
+c=26 Cylinder Control:T5 x85
+c=27 Cylinder Control:T0 x85
+c=27 Cylinder Control:T4 x85
+c=27 Cylinder Control:T5 x86
+c=28 Cylinder Control:T0 x86
+c=28 Cylinder Control:T4 x85
+c=28 Cylinder Control:T5 x85
+c=29 Cylinder Control:T0 x85
+c=29 Cylinder Control:T4 x86
+c=29 Cylinder Control:T5 x85
+c=30 Cylinder Control:T0 x85
+c=30 Cylinder Control:T4 x85
+c=30 Cylinder Control:T5 x86
+c=31 Cylinder Control:T0 x86
+c=31 Cylinder Control:T4 x85
+c=31 Cylinder Control:T5 x85
+c=32 Cylinder Control:T0 x85
+c=32 Cylinder Control:T4 x86
+c=32 Cylinder Control:T5 x85
+c=33 Cylinder Control:T0 x85
+c=33 Cylinder Control:T4 x85
+c=33 Cylinder Control:T5 x86
+c=34 Cylinder Control:T0 x86
+c=34 Cylinder Control:T4 x85
+c=34 Cylinder Control:T5 x85
+c=35 s0=1
+c=35 Cylinder Control:T0 x85
+c=35 Cylinder Control:T4 x86
+c=35 Cylinder Control:T5 x85
+c=36 Cylinder Control:T0 x85
+c=36 Cylinder Control:T4 x85
+c=36 Cylinder Control:T5 x86
+c=37 Cylinder Control:T0 x86
+c=37 Cylinder Control:T4 x85
+c=37 Cylinder Control:T5 x85
+c=38 Cylinder Control:T0 x85
+c=38 Cylinder Control:T4 x86
+c=38 Cylinder Control:T5 x85
+c=39 Cylinder Control:T0 x85
+c=39 Cylinder Control:T4 x85
+c=39 Cylinder Control:T5 x86
+c=40 Cylinder Control:T0 x86
+c=40 Cylinder Control:T4 x85
+c=40 Cylinder Control:T5 x85
+c=41 Cylinder Control:T0 x85
+c=41 Cylinder Control:T4 x86
+c=41 Cylinder Control:T5 x85
+c=42 Cylinder Control:T0 x85
+c=42 Cylinder Control:T4 x85
+c=42 Cylinder Control:T5 x86
+c=43 Cylinder Control:T0 x86
+c=43 Cylinder Control:T4 x85
+c=43 Cylinder Control:T5 x85
+c=44 Cylinder Control:T0 x85
+c=44 Cylinder Control:T4 x86
+c=44 Cylinder Control:T5 x85
+c=45 s1=1
+c=45 Cylinder Control:T0 x85
+c=45 Cylinder Control:T1
+c=45 Cylinder Control:T4 x85
+c=45 Cylinder Control:T5 x86
+c=46 Cylinder Control:T0 x86
+c=46 Cylinder Control:T4 x85
+c=46 Cylinder Control:T5 x85
+c=47 Cylinder Control:T0 x85
+c=47 Cylinder Control:T4 x86
+c=47 Cylinder Control:T5 x85
+c=48 Cylinder Control:T0 x85
+c=48 Cylinder Control:T4 x85
+c=48 Cylinder Control:T5 x86
+c=49 Cylinder Control:T0 x86
+c=49 Cylinder Control:T4 x85
+c=49 Cylinder Control:T5 x85
+c=50 Cylinder Control:T0 x85
+c=50 Cylinder Control:T4 x86
+c=50 Cylinder Control:T5 x85
+c=51 Cylinder Control:T0 x85
+c=51 Cylinder Control:T4 x85
+c=51 Cylinder Control:T5 x86
+c=52 Cylinder Control:T0 x86
+c=52 Cylinder Control:T4 x85
+c=52 Cylinder Control:T5 x85
+c=53 Cylinder Control:T0 x85
+c=53 Cylinder Control:T4 x86
+c=53 Cylinder Control:T5 x85
+c=54 Cylinder Control:T0 x85
+c=54 Cylinder Control:T4 x85
+c=54 Cylinder Control:T5 x86
+c=55 Error=0
+c=55 Cylinder Control:T0
+c=65 Reset=0
+c=65 Cylinder Control:T0 x127
+c=65 Cylinder Control:T1 x128
+c=65 Cylinder Control:T2 x128
+c=65 Cylinder Control:T3 x128
+c=66 Cylinder Control:T0 x128
+c=66 Cylinder Control:T1 x128
+c=66 Cylinder Control:T2 x128
+c=66 Cylinder Control:T3 x128
+c=67 Cylinder Control:T0 x128
+c=67 Cylinder Control:T1 x128
+c=67 Cylinder Control:T2 x128
+c=67 Cylinder Control:T3 x128
+c=68 Cylinder Control:T0 x128
+c=68 Cylinder Control:T1 x128
+c=68 Cylinder Control:T2 x128
+c=68 Cylinder Control:T3 x128
+c=69 Cylinder Control:T0 x128
+c=69 Cylinder Control:T1 x128
+c=69 Cylinder Control:T2 x128
+c=69 Cylinder Control:T3 x128
+c=70 Cylinder Control:T0 x128
+c=70 Cylinder Control:T1 x128
+c=70 Cylinder Control:T2 x128
+c=70 Cylinder Control:T3 x128
+c=71 Cylinder Control:T0 x128
+c=71 Cylinder Control:T1 x128
+c=71 Cylinder Control:T2 x128
+c=71 Cylinder Control:T3 x128
+c=72 Cylinder Control:T0 x128
+c=72 Cylinder Control:T1 x128
+c=72 Cylinder Control:T2 x128
+c=72 Cylinder Control:T3 x128
+c=73 Cylinder Control:T0 x128
+c=73 Cylinder Control:T1 x128
+c=73 Cylinder Control:T2 x128
+c=73 Cylinder Control:T3 x128
+c=74 Cylinder Control:T0 x128
+c=74 Cylinder Control:T1 x128
+c=74 Cylinder Control:T2 x128
+c=74 Cylinder Control:T3 x128
+c=75 Start=0
+c=75 Cylinder Control:T2
+c=85 s0=0
+c=95 s1=0
+c=105 Error=1
+c=115 Reset=1
+final Cylinder Control: 1 0 0 1 0

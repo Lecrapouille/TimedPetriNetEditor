@@ -1,0 +1,43 @@
+net Howard2
+initial: 2 0 0 0 0
+t=0 T2 k=1
+t=0 T2 k=2
+t=1 T3 k=1
+t=1 T3 k=2
+t=3 T1 k=1
+t=3 T1 k=2
+t=8 T0 k=1
+t=8 T0 k=2
+t=13 T2 k=3
+t=13 T2 k=4
+t=14 T3 k=3
+t=14 T3 k=4
+t=16 T1 k=3
+t=16 T1 k=4
+t=21 T0 k=3
+t=21 T0 k=4
+t=26 T2 k=5
+t=26 T2 k=6
+t=27 T3 k=5
+t=27 T3 k=6
+t=29 T1 k=5
+t=29 T1 k=6
+t=34 T0 k=5
+t=34 T0 k=6
+t=39 T2 k=7
+t=39 T2 k=8
+t=40 T3 k=7
+t=40 T3 k=8
+t=42 T1 k=7
+t=42 T1 k=8
+t=47 T0 k=7
+t=47 T0 k=8
+t=52 T2 k=9
+t=52 T2 k=10
+t=53 T3 k=9
+t=53 T3 k=10
+t=55 T1 k=9
+t=55 T1 k=10
+t=60 T0 k=9
+t=60 T0 k=10
+final t=60: 0 0 0 0 0
