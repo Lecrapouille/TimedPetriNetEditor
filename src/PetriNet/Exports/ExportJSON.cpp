@@ -169,7 +169,7 @@ static void writeNetToJSON(std::ofstream& file, Net const& net)
     items.clear();
     for (auto const& a: net.arcs())
     {
-        nlohmann::ordered_json item = { { "from", a.from.key }, { "to", a.to.key } };
+        nlohmann::ordered_json item = { { "from", a.from.key() }, { "to", a.to.key() } };
         if (a.from.type == Node::Type::Transition)
             item["duration"] = std::isnan(a.duration) ? 0.0f : a.duration;
         items.push_back(item);

@@ -218,7 +218,7 @@ private:
     void animateTokens(float const dt);
     //! \brief Emit onTrace for a firing of the transition.
     void trace(Transition const& transition, size_t tokens);
-    std::vector<Transition*> const& shuffleTransitions(bool const reset = false);
+    std::vector<size_t> const& shuffleTransitions(bool const reset = false);
 
     //--------------------------------------------------------------------------
     // Marking management
@@ -255,8 +255,8 @@ private:
     // Other simulation data
     //--------------------------------------------------------------------------
 
-    //! \brief List of shuffled Transitions for random firing order.
-    std::vector<Transition*> m_shuffled_transitions;
+    //! \brief Identifiers of the transitions, shuffled for random firing order.
+    std::vector<size_t> m_shuffled_transitions;
     //! \brief Animated tokens transitioning from Transitions to Places.
     TimedTokens m_timed_tokens;
     //! \brief Initial marking stored at simulation start.

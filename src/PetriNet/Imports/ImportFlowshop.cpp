@@ -322,7 +322,6 @@ void buildFlowshop(Net& net, Flowshop const& data)
             continue; // defensive: skip degenerate edges
         net.addArc(*trans[e.from], *trans[e.to], e.tokens, e.duration);
     }
-    net.generateArcsInArcsOut();
 }
 
 //------------------------------------------------------------------------------

@@ -328,7 +328,7 @@ Arc* PetriView::getArc(ImVec2 const& position) const
     Arc* found = nullptr;
     for (auto& arc : m_current_net->arcs())
     {
-        float const d = distanceToArc(arc, m_current_net->type(), position);
+        float const d = distanceToArc(*m_current_net, arc, position);
         if (d < best)
         {
             best = d;
@@ -443,7 +443,7 @@ void PetriView::copySelection()
     m_editor.setClipboardCenter(sum_x / n, sum_y / n);
     for (auto const& arc : m_current_net->arcs())
     {
-        if (isNodeSelected(&arc.from) && isNodeSelected(&arc.to))
+        if (isNodeSelected(&m_current_net->node(arc.from)) && isNodeSelected(&m_current_net->node(arc.to)))
             m_editor.addArcToClipboard(arc);
     }
     m_editor.m_messages.setInfo(std::to_string(m_mouse.selected_nodes.size()) + " node(s) copied");
@@ -717,7 +717,7 @@ void PetriView::deleteSelection()
     // remember the keys first, and look each one up again before removal.
     std::vector<std::pair<std::string, std::string>> arcs;
     for (auto const* arc : m_mouse.selected_arcs)
-        arcs.emplace_back(arc->from.key, arc->to.key);
+        arcs.emplace_back(arc->from.key(), arc->to.key());
     std::vector<std::string> nodes;
     for (auto const* node : m_mouse.selected_nodes)
         nodes.push_back(node->key);
@@ -726,7 +726,7 @@ void PetriView::deleteSelection()
         if (m_mouse.hovered_node != nullptr)
             nodes.push_back(m_mouse.hovered_node->key);
         else if (m_mouse.hovered_arc != nullptr)
-            arcs.emplace_back(m_mouse.hovered_arc->from.key, m_mouse.hovered_arc->to.key);
+            arcs.emplace_back(m_mouse.hovered_arc->from.key(), m_mouse.hovered_arc->to.key());
     }
     clearAllSelections();
 
@@ -1049,18 +1049,10 @@ void PetriView::drawNetElements(Net& net, Simulation& simulation, float zoom)
     ImDrawList* draw_list = m_canvas.draw_list;
 
     for (auto const& arc : net.arcs())
-        drawArc(draw_list, arc, net.type(), origin, 1.0f, zoom);
-    // Marked arcs (critical circuit) are pointers set by the analysis: only
-    // the ones still in this net are drawn (another net, a loaded file...).
-    auto& marked = m_editor.markedArcs();
-    marked.erase(std::remove_if(marked.begin(), marked.end(), [&net](Arc* arc) {
-        for (auto const& a : net.arcs())
-            if (&a == arc)
-                return false;
-        return true;
-    }), marked.end());
-    for (auto* arc : marked)
-        drawArc(draw_list, *arc, net.type(), origin, -1.0f, zoom);
+        drawArc(draw_list, net, arc, origin, 1.0f, zoom);
+    // Marked arcs (critical circuit) set by the analysis of this net.
+    for (size_t const arc : m_editor.markedArcs(net))
+        drawArc(draw_list, net, net.arcs()[arc], origin, -1.0f, zoom);
 
     auto const& places = net.places();
     for (size_t i = 0; i < places.size(); ++i)
@@ -1071,7 +1063,7 @@ void PetriView::drawNetElements(Net& net, Simulation& simulation, float zoom)
             initial = simulation.hasInitialMarking() ? simulation.isInitialStep(i)
                                                      : (places[i].tokens > 0);
         }
-        drawPlace(draw_list, places[i], net.type(), origin, true, 1.0f, zoom, initial,
+        drawPlace(draw_list, net, places[i], origin, true, 1.0f, zoom, initial,
                   m_editor.showPlaceIdentifiers());
 
         // GRAFCET actions on the right of their step, green while running.
@@ -1089,7 +1081,7 @@ void PetriView::drawNetElements(Net& net, Simulation& simulation, float zoom)
     }
     for (auto const& trans : net.transitions())
     {
-        drawTransition(draw_list, trans, net.type(), origin, true, 1.0f, zoom,
+        drawTransition(draw_list, net, trans, origin, true, 1.0f, zoom,
                        m_editor.showTransitionIdentifiers());
     }
     if ((net.type() == TypeOfNet::GRAFCET) && simulation.isRunning())
@@ -1152,13 +1144,13 @@ void PetriView::drawOverlays(Net& net, Simulation& simulation, float zoom)
 
     // Selection, then hover.
     for (auto const* arc : m_mouse.selected_arcs)
-        drawArcHighlight(draw_list, *arc, type, origin, zoom, pal.selection, std::max(2.0f, 3.5f * zoom));
+        drawArcHighlight(draw_list, net, *arc, origin, zoom, pal.selection, std::max(2.0f, 3.5f * zoom));
     for (auto const* node : m_mouse.selected_nodes)
         drawNodeOutline(draw_list, *node, type, origin, zoom, pal.selection, 4.0f, 2.5f);
     if ((m_mouse.gesture == Gesture::None) || (m_mouse.gesture == Gesture::Arc))
     {
         if ((m_mouse.hovered_arc != nullptr) && !isArcSelected(m_mouse.hovered_arc))
-            drawArcHighlight(draw_list, *m_mouse.hovered_arc, type, origin, zoom, pal.hover,
+            drawArcHighlight(draw_list, net, *m_mouse.hovered_arc, origin, zoom, pal.hover,
                              std::max(3.0f, 5.0f * zoom));
         Node const* hovered = (m_mouse.gesture == Gesture::Arc) ? getNode(m_mouse.position)
                                                                  : m_mouse.hovered_node;
@@ -1190,7 +1182,7 @@ void PetriView::drawOverlays(Net& net, Simulation& simulation, float zoom)
         if (m_mouse.hovered_node->type == Node::Type::Place)
             showPlaceTooltip(*static_cast<Place const*>(m_mouse.hovered_node), type);
         else
-            showTransitionTooltip(*static_cast<Transition const*>(m_mouse.hovered_node), type);
+            showTransitionTooltip(net, *static_cast<Transition const*>(m_mouse.hovered_node));
     }
     (void) simulation;
 }
@@ -1323,7 +1315,7 @@ void PetriView::drawEditWidgets(Net& net)
     }
     else if (m_mouse.editing_arc != nullptr)
     {
-        popup(m_mouse.editing_arc->from);
+        popup(net.node(m_mouse.editing_arc->from));
         if (m_mouse.edit_focus_requested)
         {
             ImGui::SetKeyboardFocusHere();
@@ -1417,7 +1409,7 @@ void PetriView::drawContextMenus(Net& net)
         Arc* arc = m_mouse.context_menu_arc;
         if (arc != nullptr)
         {
-            ImGui::TextDisabled("%s -> %s", arc->from.key.c_str(), arc->to.key.c_str());
+            ImGui::TextDisabled("%s -> %s", arc->from.key().c_str(), arc->to.key().c_str());
             ImGui::Separator();
             if ((arc->from.type == Node::Type::Transition) && (net.type() != TypeOfNet::GRAFCET) &&
                 (net.type() != TypeOfNet::PetriNet) &&
@@ -1508,7 +1500,7 @@ void PetriView::showPlaceTooltip(Place const& place, TypeOfNet type)
 }
 
 //------------------------------------------------------------------------------
-void PetriView::showTransitionTooltip(Transition const& trans, TypeOfNet type)
+void PetriView::showTransitionTooltip(Net const& net, Transition const& trans)
 {
     ImGui::BeginTooltip();
     ImGui::Text("%s", trans.key.c_str());
@@ -1517,7 +1509,7 @@ void PetriView::showTransitionTooltip(Transition const& trans, TypeOfNet type)
         ImGui::SameLine();
         ImGui::TextDisabled("%s", trans.caption.c_str());
     }
-    if (type == TypeOfNet::GRAFCET)
+    if (net.type() == TypeOfNet::GRAFCET)
     {
         ImGui::Text("Receptivity: %s", trans.receptivity ? "true" : "false");
         std::string const error = Receptivity::check(trans.caption);
@@ -1528,7 +1520,7 @@ void PetriView::showTransitionTooltip(Transition const& trans, TypeOfNet type)
     }
     else
     {
-        ImGui::Text("%s", trans.canFire() ? "Can fire" : (trans.isEnabled() ? "Enabled" : "Not enabled"));
+        ImGui::Text("%s", net.canFire(trans) ? "Can fire" : (net.isEnabled(trans) ? "Enabled" : "Not enabled"));
     }
     ImGui::EndTooltip();
 }

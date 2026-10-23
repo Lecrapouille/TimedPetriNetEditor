@@ -60,15 +60,15 @@ std::string exportToPNEditor(Net const& net, std::string const& filename)
         write_int32(file, net.transitions().size());
         for (auto const& t: net.transitions())
         {
-            write_int32(file, t.arcsOut.size());
-            for (auto const& a: t.arcsOut)
+            write_int32(file, net.arcsOut(t).size());
+            for (auto const& a: net.arcsOut(t))
             {
-                write_int32(file, a->to.id);
+                write_int32(file, a.to.id);
             }
-            write_int32(file, t.arcsIn.size());
-            for (auto const& a: t.arcsIn)
+            write_int32(file, net.arcsIn(t).size());
+            for (auto const& a: net.arcsIn(t))
             {
-                write_int32(file, a->from.id);
+                write_int32(file, a.from.id);
             }
         }
     }

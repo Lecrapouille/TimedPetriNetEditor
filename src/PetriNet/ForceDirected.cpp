@@ -52,20 +52,10 @@ void ForceDirected::reset(float width, float height, Net& net, bool randomize)
     {
         std::unordered_set<Node*> neighbor_set;
 
-        for (auto& arc : v.node->arcsIn)
-        {
-            if (&arc->from != v.node)
-                neighbor_set.insert(&arc->from);
-            if (&arc->to != v.node)
-                neighbor_set.insert(&arc->to);
-        }
-        for (auto& arc : v.node->arcsOut)
-        {
-            if (&arc->from != v.node)
-                neighbor_set.insert(&arc->from);
-            if (&arc->to != v.node)
-                neighbor_set.insert(&arc->to);
-        }
+        for (auto const& arc : net.arcsIn(*v.node))
+            neighbor_set.insert(&net.node(arc.from));
+        for (auto const& arc : net.arcsOut(*v.node))
+            neighbor_set.insert(&net.node(arc.to));
 
         v.neighbors.assign(neighbor_set.begin(), neighbor_set.end());
     }

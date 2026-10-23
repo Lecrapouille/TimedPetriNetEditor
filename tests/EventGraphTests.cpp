@@ -21,7 +21,7 @@ using namespace ::tpne;
 TEST(TestEventGraph, TestHoward2)
 {
     std::string error;
-    std::vector<Arc*> erroneous_arcs;
+    std::vector<size_t> erroneous_arcs;
     bool stringify;
 
     Net net(TypeOfNet::TimedPetriNet);
@@ -61,7 +61,6 @@ TEST(TestEventGraph, TestToCounterEquation)
     bool stringify;
 
     ASSERT_STREQ(loadFromFile(net, "../data/examples/EventGraph.json", stringify).c_str(), "");
-    net.generateArcsInArcsOut(); // FIXME
     ASSERT_EQ(isEventGraph(net), true);
 
     std::stringstream expected, obtained;
@@ -107,7 +106,7 @@ TEST(TestEventGraph, TestToCounterEquation)
 // QQ: Ce test est bon les matrices sont affichees dans le bon ordre (comme dans JPQ et affichees comme Julia)
 TEST(TestEventGraph, TestToAdjacencyMatrices)
 {
-    std::vector<Arc*> erroneous_arcs; std::string error;
+    std::vector<size_t> erroneous_arcs; std::string error;
     Net net(TypeOfNet::TimedPetriNet);
     bool stringify;
 
@@ -166,7 +165,7 @@ TEST(TestEventGraph, TestToAdjacencyMatrices)
 // Chapter 1.1. Preliminary Remarks and Some Notation
 TEST(TestEventGraph, TestToSysLinInputOutput)
 {
-    std::vector<Arc*> erroneous_arcs;
+    std::vector<size_t> erroneous_arcs;
     Net net(TypeOfNet::TimedPetriNet);
     bool stringify;
 
@@ -214,7 +213,7 @@ TEST(TestEventGraph, TestToSysLinInputOutput)
 //------------------------------------------------------------------------------
 TEST(TestEventGraph, TestToSysLinNoInputNoOutput)
 {
-    std::vector<Arc*> erroneous_arcs; std::string error;
+    std::vector<size_t> erroneous_arcs; std::string error;
     Net net(TypeOfNet::TimedPetriNet);
     bool stringify;
 
@@ -304,7 +303,6 @@ TEST(TestEventGraph, TestToDaterEquation)
     bool stringify;
 
     ASSERT_STREQ(loadFromFile(net, "../data/examples/EventGraph.json", stringify).c_str(), "");
-    net.generateArcsInArcsOut(); // FIXME
     ASSERT_EQ(isEventGraph(net), true);
 
     std::stringstream expected, obtained;

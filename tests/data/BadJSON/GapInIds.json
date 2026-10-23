@@ -1,0 +1,15 @@
+{
+  "revision": 3,
+  "type": "Timed Petri net",
+  "nets": [
+    {
+       "name": "GapInIds",
+       "places": [
+            { "id": 0, "caption": "A", "tokens": 1, "x": 100, "y": 100 },
+            { "id": 2, "caption": "C", "tokens": 1, "x": 200, "y": 100 }
+       ],
+       "transitions": [],
+       "arcs": []
+    }
+  ]
+}

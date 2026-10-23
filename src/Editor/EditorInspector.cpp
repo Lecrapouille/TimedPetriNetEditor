@@ -465,9 +465,10 @@ static void drawArcsPanel(Net& net, Simulation& simulation, bool& modified)
     {
         if (arc.from.type != Node::Type::Transition)
             continue;
-        std::string const text = (net.type() == TypeOfNet::TimedEventGraph) && !arc.to.arcsOut.empty()
-            ? arc.from.key + " -> " + arc.to.arcsOut[0]->to.key
-            : arc.from.key + " -> " + arc.to.key;
+        auto const next = net.arcsOut(net.node(arc.to));
+        std::string const text = (net.type() == TypeOfNet::TimedEventGraph) && !next.empty()
+            ? arc.from.key() + " -> " + next.front().to.key()
+            : arc.from.key() + " -> " + arc.to.key();
         if (std::isnan(arc.duration))
             arc.duration = 0.0f;
         float const prev_value = arc.duration;

@@ -1,0 +1,20 @@
+{
+  "revision": 3,
+  "type": "Timed Petri net",
+  "nets": [
+    {
+       "name": "UnorderedIds",
+       "places": [
+            { "id": 1, "caption": "B", "tokens": 1, "x": 200, "y": 100 },
+            { "id": 0, "caption": "A", "tokens": 2, "x": 100, "y": 100 }
+       ],
+       "transitions": [
+            { "id": 0, "caption": "T0", "x": 150, "y": 100 }
+       ],
+       "arcs": [
+            { "from": "P0", "to": "T0" },
+            { "from": "T0", "to": "P1", "duration": 2 }
+       ]
+    }
+  ]
+}

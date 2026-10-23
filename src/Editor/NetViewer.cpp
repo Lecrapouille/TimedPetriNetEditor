@@ -130,12 +130,15 @@ void NetViewer::draw(char const* id, Net const& net, Options const& options)
     TypeOfNet const type = net.type();
     for (auto const& arc : net.arcs())
     {
-        drawArc(draw_list, arc, type, origin, 1.0f, m_zoom);
+        drawArc(draw_list, net, arc, origin, 1.0f, m_zoom);
     }
     if (options.highlighted_arcs != nullptr)
     {
-        for (Arc const* arc : *options.highlighted_arcs)
-            drawArc(draw_list, *arc, type, origin, -1.0f, m_zoom);
+        for (size_t const arc : *options.highlighted_arcs)
+        {
+            if (arc < net.arcs().size())
+                drawArc(draw_list, net, net.arcs()[arc], origin, -1.0f, m_zoom);
+        }
     }
 
     auto const& places = net.places();
@@ -144,7 +147,7 @@ void NetViewer::draw(char const* id, Net const& net, Options const& options)
         Place const& place = places[i];
         bool const initial = (options.initial_marking != nullptr) &&
             (i < options.initial_marking->size()) && ((*options.initial_marking)[i] > 0u);
-        drawPlace(draw_list, place, type, origin, options.captions, 1.0f, m_zoom, initial,
+        drawPlace(draw_list, net, place, origin, options.captions, 1.0f, m_zoom, initial,
                   type == TypeOfNet::GRAFCET);
 
         if ((type == TypeOfNet::GRAFCET) && options.actions)
@@ -158,7 +161,7 @@ void NetViewer::draw(char const* id, Net const& net, Options const& options)
     }
     for (auto const& transition : net.transitions())
     {
-        drawTransition(draw_list, transition, type, origin, options.captions, 1.0f, m_zoom,
+        drawTransition(draw_list, net, transition, origin, options.captions, 1.0f, m_zoom,
                        type == TypeOfNet::GRAFCET);
     }
 

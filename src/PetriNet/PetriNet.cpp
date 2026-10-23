@@ -14,6 +14,7 @@
 #include <algorithm>
 #include <iostream>
 #include <cstring>
+#include <functional>
 #include <limits>
 
 namespace tpne {
@@ -57,44 +58,32 @@ size_t Place::decrement(size_t const count)
 }
 
 //------------------------------------------------------------------------------
-bool Transition::isEnabled() const
+bool Net::isEnabled(Transition const& transition) const
 {
-    // Input transition (source) is always enabled.
-    if (arcsIn.empty())
-        return true;
-
-    // To enable this transition, all its input places shall have at least one token.
-    for (auto const& a: arcsIn)
+    // To enable this transition, all its input places shall have at least one
+    // token. Input transition (source) is always enabled.
+    for (auto const& a: arcsIn(transition))
     {
-        if (a->tokensIn() == 0u)
+        if (placeOf(a).tokens == 0u)
             return false;
     }
-
     return true;
 }
 
 //------------------------------------------------------------------------------
-size_t Transition::maxTokensToConsume() const
+size_t Net::maxTokensToConsume(Transition const& transition) const
 {
     // Input transition (source) will fire one token iff the animated token
     // transitioning along the arcs has reached the Place (then receptivity
     // becomes true).
     // FIXME this will conflict if we add code to the receptivity: && animation_done
-    if (arcsIn.empty())
-        return size_t(receptivity != false);
+    if (arcsIn(transition).empty())
+        return size_t(transition.receptivity != false);
 
-    // The guard is false => cannot consume tokens.
-    if (receptivity == false)
-        return 0u;
-
-    // Tokens are consumed one by one: this favors dispatching tokens along
-    // arcs when a place feeds several transitions.
-    for (auto const& a: arcsIn)
-    {
-        if (a->tokensIn() == 0u)
-            return 0u;
-    }
-    return 1u;
+    // The guard is false => cannot consume tokens. Tokens are consumed one by
+    // one: this favors dispatching tokens along arcs when a place feeds
+    // several transitions.
+    return canFire(transition) ? 1u : 0u;
 }
 
 //------------------------------------------------------------------------------
@@ -104,44 +93,24 @@ Net::Net(TypeOfNet const type)
 
 //------------------------------------------------------------------------------
 Net::Net(Net const& other)
+    : name(other.name), description(other.description), inputs(other.inputs),
+      m_type(other.m_type), m_places(other.m_places),
+      m_transitions(other.m_transitions), m_arcs(other.m_arcs),
+      m_place_arcs(other.m_place_arcs), m_transition_arcs(other.m_transition_arcs),
+      m_next_place_id(other.m_next_place_id),
+      m_next_transition_id(other.m_next_transition_id)
 {
-    if (this == &other)
-        return ;
-
-    m_type = other.m_type;
-    m_places = other.m_places;
-    m_transitions = other.m_transitions;
-
-    // For arcs: we have to redo references to nodes
-    m_arcs.clear();
-    for (auto const& it: other.m_arcs)
-    {
-        Node& from = (it.from.type == Node::Type::Place)
-                     ? reinterpret_cast<Node&>(m_places[it.from.id])
-                     : reinterpret_cast<Node&>(m_transitions[it.from.id]);
-        Node& to = (it.to.type == Node::Type::Place)
-                   ? reinterpret_cast<Node&>(m_places[it.to.id])
-                   : reinterpret_cast<Node&>(m_transitions[it.to.id]);
-        m_arcs.emplace_back(from, to, it.duration);
-    }
-    generateArcsInArcsOut();
-
-    m_next_place_id = other.m_next_place_id;
-    m_next_transition_id = other.m_next_transition_id;
-    name = other.name;
-    description = other.description;
-    inputs = other.inputs;
     modified = false;
 }
 
 //------------------------------------------------------------------------------
 Net& Net::operator=(Net const& other)
 {
-    if (this == &other)
-        return *this;
-
-    this->~Net(); // destroy
-    new (this) Net(other); // copy construct in place
+    if (this != &other)
+    {
+        Net copy(other);
+        *this = std::move(copy);
+    }
     return *this;
 }
 
@@ -159,6 +128,8 @@ void Net::clear()
     m_places.clear();
     m_transitions.clear();
     m_arcs.clear();
+    m_place_arcs.clear();
+    m_transition_arcs.clear();
     m_next_place_id = 0u;
     m_next_transition_id = 0u;
     m_error.clear();
@@ -209,6 +180,7 @@ Place& Net::addPlace(float const x, float const y, size_t const tokens)
 {
     modified = true;
     m_places.emplace_back(m_next_place_id++, "", x, y, tokens);
+    generateArcsInArcsOut();
     return applyCapacity(m_places.back());
 }
 
@@ -216,10 +188,12 @@ Place& Net::addPlace(float const x, float const y, size_t const tokens)
 Place& Net::addPlace(size_t const id, std::string const& caption, float const x,
                      float const y, size_t const tokens)
 {
+    assert((id == m_places.size()) && "Identifiers of places shall be their indices");
     modified = true;
     m_places.emplace_back(id, caption, x, y, tokens);
     if (id + 1u > m_next_place_id)
         m_next_place_id = id + 1u;
+    generateArcsInArcsOut();
     return applyCapacity(m_places.back());
 }
 
@@ -229,6 +203,7 @@ Transition& Net::addTransition(float const x, float const y)
     modified = true;
     m_transitions.push_back(Transition(m_next_transition_id++, "", x, y,
                    (m_type == TypeOfNet::TimedPetriNet) ? true : false));
+    generateArcsInArcsOut();
     return m_transitions.back();
 }
 
@@ -236,11 +211,13 @@ Transition& Net::addTransition(float const x, float const y)
 Transition& Net::addTransition(size_t const id, std::string const& caption,
                                float const x, float const y)
 {
+    assert((id == m_transitions.size()) && "Identifiers of transitions shall be their indices");
     modified = true;
     m_transitions.emplace_back(id, caption, x, y,
                    (m_type == TypeOfNet::TimedPetriNet) ? true : false);
     if (id + 1u > m_next_transition_id)
         m_next_transition_id = id + 1u;
+    generateArcsInArcsOut();
     return m_transitions.back();
 }
 
@@ -297,7 +274,6 @@ bool Net::sanityArc(Node const& from, Node const& to, bool const strict, std::st
 }
 
 //------------------------------------------------------------------------------
-// FIXME: faire l'equivalent de generateArcsInArcsOut
 bool Net::addArc(Transition& from, Transition& to, size_t const tokens, float const duration)
 {
     // Create the intermediate node
@@ -305,23 +281,15 @@ bool Net::addArc(Transition& from, Transition& to, size_t const tokens, float co
     float y = from.y + (to.y - from.y) / 2.0f;
     Place& n = addPlace(x, y, tokens);
 
-    // Frist arc
     m_arcs.emplace_back(from, n, duration);
-    from.arcsOut.push_back(&m_arcs.back());
-    n.arcsIn.push_back(&m_arcs.back());
-
-    // Second arc
     m_arcs.emplace_back(n, to, duration);
-    n.arcsOut.push_back(&m_arcs.back());
-    to.arcsIn.push_back(&m_arcs.back());
 
-    generateArcsInArcsOut(); // FIXME a optimiser !!!
+    generateArcsInArcsOut();
     modified = true;
     return true;
 }
 
 //------------------------------------------------------------------------------
-// FIXME: faire l'equivalent de generateArcsInArcsOut
 std::string Net::addArc(Node& from, Node& to, float const duration)
 {
     std::stringstream message;
@@ -334,37 +302,31 @@ std::string Net::addArc(Node& from, Node& to, float const duration)
     if (from.type != to.type)
     {
         m_arcs.emplace_back(from, to, duration);
-        from.arcsOut.push_back(&m_arcs.back());
-        to.arcsIn.push_back(&m_arcs.back());
     }
     else // Manage the case "Place -> Place" or "Transition -> Transition"
     {
-        // Create the intermediate node
+        // Create the intermediate node. Note: from and to stay valid since
+        // nodes are stored in a std::deque.
         float x = from.x + (to.x - from.x) / 2.0f;
         float y = from.y + (to.y - from.y) / 2.0f;
         Node& n = addOppositeNode(to.type, x, y);
 
-        // Frist arc
         m_arcs.emplace_back(from, n, duration);
-        from.arcsOut.push_back(&m_arcs.back());
-        n.arcsIn.push_back(&m_arcs.back());
-
-        // Second arc
         m_arcs.emplace_back(n, to, duration);
-        n.arcsOut.push_back(&m_arcs.back());
-        to.arcsIn.push_back(&m_arcs.back());
     }
 
-    generateArcsInArcsOut(); // FIXME a optimiser !!!
+    generateArcsInArcsOut();
     return message.str();
 }
 
 //------------------------------------------------------------------------------
 Arc* Net::findArc(Node const& from, Node const& to)
 {
+    NodeId const f = from.nodeId();
+    NodeId const t = to.nodeId();
     for (auto& it: m_arcs)
     {
-        if ((it.from.key == from.key) && (it.to.key == to.key))
+        if ((it.from == f) && (it.to == t))
             return &it;
     }
     return nullptr;
@@ -373,44 +335,63 @@ Arc* Net::findArc(Node const& from, Node const& to)
 //------------------------------------------------------------------------------
 Arc const* Net::findArc(Node const& from, Node const& to) const
 {
-    for (auto& it: m_arcs)
+    return const_cast<Net*>(this)->findArc(from, to);
+}
+
+//------------------------------------------------------------------------------
+size_t Net::indexOf(Arc const& arc) const
+{
+    for (size_t i = 0u; i < m_arcs.size(); ++i)
     {
-        if ((it.from.key == from.key) && (it.to.key == to.key))
-            return &it;
+        if (&m_arcs[i] == &arc)
+            return i;
     }
-    return nullptr;
+    assert(false && "Arc not owned by this net");
+    return m_arcs.size();
+}
+
+//------------------------------------------------------------------------------
+Node& Net::node(NodeId const id)
+{
+    if (id.isPlace())
+    {
+        assert(id.id < m_places.size());
+        return m_places[id.id];
+    }
+    assert(id.id < m_transitions.size());
+    return m_transitions[id.id];
+}
+
+//------------------------------------------------------------------------------
+Node const& Net::node(NodeId const id) const
+{
+    return const_cast<Net*>(this)->node(id);
+}
+
+//------------------------------------------------------------------------------
+Net::Adjacency const& Net::adjacency(Node const& node) const
+{
+    static Adjacency const none;
+    std::vector<Adjacency> const& adjacencies =
+        (node.type == Node::Type::Place) ? m_place_arcs : m_transition_arcs;
+    return (node.id < adjacencies.size()) ? adjacencies[node.id] : none;
 }
 
 //------------------------------------------------------------------------------
 void Net::generateArcsInArcsOut()
 {
-    for (auto& trans: m_transitions)
+    m_place_arcs.assign(m_places.size(), Adjacency{});
+    m_transition_arcs.assign(m_transitions.size(), Adjacency{});
+
+    for (size_t i = 0u; i < m_arcs.size(); ++i)
     {
-        trans.arcsIn.clear();
-        trans.arcsOut.clear();
-
-        for (auto& a: m_arcs)
-        {
-            if ((a.from.type == Node::Type::Place) && (a.to.id == trans.id))
-                trans.arcsIn.push_back(&a);
-            else if ((a.to.type == Node::Type::Place) && (a.from.id == trans.id))
-                trans.arcsOut.push_back(&a);
-        }
-    }
-
-    // if (true)
-    for (auto& p: m_places)
-    {
-        p.arcsIn.clear();
-        p.arcsOut.clear();
-
-        for (auto& a: m_arcs)
-        {
-            if ((a.from.type == Node::Type::Transition) && (a.to.id == p.id))
-                p.arcsIn.push_back(&a);
-            else if ((a.to.type == Node::Type::Transition) && (a.from.id == p.id))
-                p.arcsOut.push_back(&a);
-        }
+        Arc const& a = m_arcs[i];
+        std::vector<Adjacency>& from = a.from.isPlace() ? m_place_arcs : m_transition_arcs;
+        std::vector<Adjacency>& to = a.to.isPlace() ? m_place_arcs : m_transition_arcs;
+        assert(a.from.id < from.size());
+        assert(a.to.id < to.size());
+        from[a.from.id].out.push_back(i);
+        to[a.to.id].in.push_back(i);
     }
 }
 
@@ -534,18 +515,21 @@ Node* Net::findNodeAt(float x, float y, float place_radius, float trans_radius)
 //------------------------------------------------------------------------------
 bool Net::removeArc(Arc const& a)
 {
-    return removeArc(a.from, a.to);
+    // Copy: a may be an element of m_arcs.
+    NodeId const from = a.from;
+    NodeId const to = a.to;
+    return removeArc(node(from), node(to));
 }
 
 //------------------------------------------------------------------------------
 bool Net::removeArc(Node const& from, Node const& to)
 {
-// Supprimer les arcs qui touchent la place supprimee
-
+    NodeId const f = from.nodeId();
+    NodeId const t = to.nodeId();
     size_t i = m_arcs.size();
     while (i--)
     {
-        if ((m_arcs[i].from.key == from.key) && (m_arcs[i].to.key == to.key))
+        if ((m_arcs[i].from == f) && (m_arcs[i].to == t))
         {
             // Found the undesired arc: make the latest element take its
             // location in the container.
@@ -557,58 +541,6 @@ bool Net::removeArc(Node const& from, Node const& to)
         }
     }
     return false;
-}
-
-//------------------------------------------------------------------------------
-void Net::helperRemovePlace(Node const& node)
-{
-    size_t i = m_places.size();
-    while (i--)
-    {
-        // Found the undesired node: make the latest element take its
-        // location in the container. But before doing this we have to
-        // restore references on impacted arcs.
-        if (m_places[i].id == node.id)
-        {
-            // Swap element but keep the ID of the removed element
-            Place& pi = m_places[i];
-            Place& pe = m_places[m_places.size() - 1u];
-            size_t const old_id = pe.id;
-            size_t const new_id = pi.id;
-            // What read the removed step now reads a step that does not
-            // exist (an error when the GRAFCET starts), not the moved one.
-            if (m_type == TypeOfNet::GRAFCET)
-                renameStep(new_id, m_places.size());
-            std::vector<Action> actions = pe.actions;
-            if (pe.caption == pe.key)
-            {
-                m_places[i] = Place(pi.id, pi.key, pe.x, pe.y, pe.tokens);
-            }
-            else
-            {
-                m_places[i] = Place(pi.id, pe.caption, pe.x, pe.y, pe.tokens);
-            }
-            // The GRAFCET actions go with their step, and what reads the step
-            // by its number (X3) follows its new number.
-            m_places[i].actions = std::move(actions);
-            m_places[i].capacity = pe.capacity;
-            if ((m_type == TypeOfNet::GRAFCET) && (old_id != new_id))
-                renameStep(old_id, new_id);
-            assert(m_next_place_id >= 1u);
-            m_next_place_id -= 1u;
-
-            // Update the references to nodes of the arc
-            for (auto& a: m_arcs) // TODO optim: use in/out arcs but they may not be generated
-            {
-                if (a.to.key == pe.key)
-                    a = Arc(a.from, m_places[i], a.duration);
-                if (a.from.key == pe.key)
-                    a = Arc(m_places[i], a.to, a.duration);
-            }
-
-            m_places.pop_back();
-        }
-    }
 }
 
 //------------------------------------------------------------------------------
@@ -650,112 +582,111 @@ void Net::renameStepOf(std::string const& graph, size_t const from, size_t const
 }
 
 //------------------------------------------------------------------------------
-void Net::helperRemoveTransition(Node const& node)
+void Net::renameArcEnds(NodeId const from, NodeId const to)
 {
-    size_t i = m_transitions.size();
-    while (i--)
+    for (auto& a: m_arcs)
     {
-        // Found the undesired node: make the latest element take its
-        // location in the container. But before doing this we have to
-        // restore references on impacted arcs.
-        if (m_transitions[i].id == node.id)
-        {
-            Transition& ti = m_transitions[i];
-            Transition& te = m_transitions[m_transitions.size() - 1u];
-            float const delay = te.delay;
-            if (te.caption == te.key)
-            {
-                m_transitions[i] = Transition(ti.id, ti.key, te.x, te.y,
-                                                (m_type == TypeOfNet::TimedPetriNet)
-                                                ? true : false);
-            }
-            else
-            {
-                m_transitions[i] = Transition(ti.id, te.caption, te.x, te.y,
-                                                (m_type == TypeOfNet::TimedPetriNet)
-                                                ? true : false);
-            }
-            m_transitions[i].delay = delay;
-            assert(m_next_transition_id >= 1u);
-            m_next_transition_id -= 1u;
-
-            // Update the references to nodes of the arc
-            for (auto& a: m_arcs) // TODO optim: use in/out arcs but they may not be generated
-            {
-                if (a.to.key == te.key)
-                    a = Arc(a.from, m_transitions[i], a.duration);
-                if (a.from.key == te.key)
-                    a = Arc(m_transitions[i], a.to, a.duration);
-            }
-
-            m_transitions.pop_back();
-        }
+        if (a.from == from)
+            a.from = to;
+        if (a.to == from)
+            a.to = to;
     }
 }
 
 //------------------------------------------------------------------------------
-void Net::helperRemoveArcFromNode(Node const& node)
+template<class N>
+static void moveNode(std::deque<N>& nodes, size_t const last, size_t const id,
+                     std::string const& key)
 {
-    size_t s = m_arcs.size();
-    size_t i = s;
-    while (i--)
+    // A caption left to its default value follows the key.
+    N& moved = nodes[last];
+    if (moved.caption == moved.key)
+        moved.caption = key;
+    moved.id = id;
+    moved.key = key;
+    nodes[id] = std::move(moved);
+}
+
+//------------------------------------------------------------------------------
+void Net::removePlaceAt(size_t const id)
+{
+    assert(id < m_places.size());
+    size_t const last = m_places.size() - 1u;
+
+    // What read the removed step now reads a step that does not exist (an
+    // error when the GRAFCET starts), not the moved one.
+    if (m_type == TypeOfNet::GRAFCET)
+        renameStep(id, m_places.size());
+
+    if (id != last)
     {
-        if ((m_arcs[i].to.key == node.key) || (m_arcs[i].from.key == node.key))
-        {
-            m_arcs[i] = m_arcs[m_arcs.size() - 1u];
-            m_arcs.pop_back();
-        }
+        moveNode(m_places, last, id, Place::to_str(id));
+        renameArcEnds(NodeId{ Node::Type::Place, last }, NodeId{ Node::Type::Place, id });
+        // What reads the step by its number (X3) follows its new number.
+        if (m_type == TypeOfNet::GRAFCET)
+            renameStep(last, id);
     }
+    m_places.pop_back();
+    m_next_place_id = m_places.size();
+}
+
+//------------------------------------------------------------------------------
+void Net::removeTransitionAt(size_t const id)
+{
+    assert(id < m_transitions.size());
+    size_t const last = m_transitions.size() - 1u;
+    if (id != last)
+    {
+        moveNode(m_transitions, last, id, Transition::to_str(id));
+        renameArcEnds(NodeId{ Node::Type::Transition, last },
+                      NodeId{ Node::Type::Transition, id });
+    }
+    m_transitions.pop_back();
+    m_next_transition_id = m_transitions.size();
 }
 
 //------------------------------------------------------------------------------
 void Net::removeNode(Node& node)
 {
-    std::vector<Node*> nodes_to_remove;
-    if (m_type != TypeOfNet::TimedEventGraph)
-    {
-        helperRemoveArcFromNode(node);
-    }
-    else
-    {
-        for (auto& a: m_transitions[node.id].arcsIn)
-        {
-            nodes_to_remove.push_back(&a->from);
-        }
-        for (auto& a: m_transitions[node.id].arcsOut)
-        {
-            nodes_to_remove.push_back(&a->to);
-        }
-
-        // Since we swap nodes inside the array before removing
-        // then, we have to start from greater id to lowest id.
-        std::sort(nodes_to_remove.begin(), nodes_to_remove.end(),
-            [](Node const* a, Node const* b) { return a->id > b-> id; });
-
-        for (auto it: nodes_to_remove)
-        {
-            helperRemoveArcFromNode(*it);
-        }
-    }
-
-    // Search and remove the node.
-    // Note: For fastest deletion, we simply swap the undesired node with the
-    // latest node in the container. To do that, we have to iterate from the end
-    // of the container.
+    // Nodes to remove: the node and, for timed event graphs, the implicit
+    // places of the arcs of the transition.
+    std::vector<size_t> places;
+    std::vector<size_t> transitions;
     if (node.type == Node::Type::Place)
     {
-        helperRemovePlace(node);
+        places.push_back(node.id);
     }
     else
     {
-        helperRemoveTransition(node);
-        for (auto it: nodes_to_remove)
+        transitions.push_back(node.id);
+        if (m_type == TypeOfNet::TimedEventGraph)
         {
-            helperRemovePlace(*it);
+            for (auto const& a: arcsIn(node))
+                places.push_back(a.from.id);
+            for (auto const& a: arcsOut(node))
+                places.push_back(a.to.id);
         }
     }
 
-    // Restore in arcs and out arcs for each node
+    // Remove the arcs touching these nodes.
+    auto const removed = [&](NodeId const n) {
+        std::vector<size_t> const& ids = n.isPlace() ? places : transitions;
+        return std::find(ids.begin(), ids.end(), n.id) != ids.end();
+    };
+    m_arcs.erase(std::remove_if(m_arcs.begin(), m_arcs.end(), [&](Arc const& a) {
+        return removed(a.from) || removed(a.to);
+    }), m_arcs.end());
+
+    // Remove the nodes: the last node of the container takes the place of the
+    // removed one, so identifiers stay 0 .. n-1 (and are indices). Removing
+    // from the greatest identifier keeps the identifiers still to remove valid.
+    std::sort(places.begin(), places.end(), std::greater<size_t>());
+    places.erase(std::unique(places.begin(), places.end()), places.end());
+    for (size_t const id: places)
+        removePlaceAt(id);
+    for (size_t const id: transitions)
+        removeTransitionAt(id);
+
     generateArcsInArcsOut();
     modified = true;
 }
@@ -854,7 +785,7 @@ std::string loadFromFile(Net& net, std::string const& filepath, bool& springify)
 }
 
 //------------------------------------------------------------------------------
-bool convertTo(Net& net, TypeOfNet const type, std::string& error, std::vector<Arc*>& erroneous_arcs)
+bool convertTo(Net& net, TypeOfNet const type, std::string& error, std::vector<size_t>& erroneous_arcs)
 {
     if (net.type() == type)
         return true;

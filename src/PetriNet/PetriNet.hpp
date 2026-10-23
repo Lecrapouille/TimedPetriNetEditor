@@ -25,6 +25,7 @@
 namespace tpne {
 
 class Arc;
+struct NodeId;
 
 //------------------------------------------------------------------------------
 //! \brief Enum determining the type of net (GRAFCET, timed Petri net ...) and
@@ -87,53 +88,23 @@ public:
     {}
 
     //--------------------------------------------------------------------------
-    //! \brief Copy operator needed because this class has constant member
-    //! variables.
+    //! \brief Reference to this node, as stored by arcs.
     //--------------------------------------------------------------------------
-    Node& operator=(Node const& other)
-    {
-        this->~Node(); // destroy
-        new (this) Node(other); // copy construct in place
-        return *this;
-    }
-
-    //--------------------------------------------------------------------------
-    //! \brief Needed because this class has constant member variables.
-    //--------------------------------------------------------------------------
-    Node(Node const& other)
-        : Node(other.type, other.id, other.caption, other.x, other.y)
-    {}
-
-    //--------------------------------------------------------------------------
-    //! \brief Needed because this class has constant member variables.
-    //--------------------------------------------------------------------------
-    Node(Node&& other)
-        : Node(other.type, other.id, other.caption, other.x, other.y)
-    {}
-
-    //--------------------------------------------------------------------------
-    //! \brief Needed because this class has constant member variables.
-    //--------------------------------------------------------------------------
-    Node& operator=(Node&& other)
-    {
-        this->~Node(); // destroy
-        new (this) Node(other); // copy construct in place
-        return *this;
-    }
+    NodeId nodeId() const;
 
 public:
 
     //! \brief Type of nodes: Petri Place or Petri Transition. Once created, it
     //! is not supposed to be changed.
-    Type const type;
+    Type type;
     //! \brief Unique identifier (auto-incremented from 0 by the derived class).
-    //! Once created, it is not supposed to be changed.
-    size_t const id;
+    //! It is also the index of the node in Net::places() or Net::transitions().
+    //! Only the net changes it (when a node is removed).
+    size_t id;
     //! \brief Unique node identifier as string. It is formed by the 'P' char
     //! for place or by the 'T' char for transition followed by the unique
-    //! identifier (i.e. "P0", "P1", "T0", "T1", ...). Once created, it is not
-    //! supposed to be changed.
-    std::string const key;
+    //! identifier (i.e. "P0", "P1", "T0", "T1", ...). Follows the id.
+    std::string key;
     //! \brief Position inside the window needed for the display.
     float x;
     //! \brief Position in the window needed for the display.
@@ -141,15 +112,36 @@ public:
     //! \brief Text displayed near a node the user can modify. Default value is
     //! the tring unique \c key.
     std::string caption;
-    //! \brief Hold the incoming arcs to access to previous nodes.
-    //! \note this vector is not updated by this class but shall be made by
-    //! the caller.
-    std::vector<Arc*> arcsIn;
-    //! \brief Hold the outcoming arcs to access to successor nodes.
-    //! \note this vector is not updated by this class but shall be made by
-    //! the caller.
-    std::vector<Arc*> arcsOut;
 };
+
+// *****************************************************************************
+//! \brief Reference to a place or a transition: its type and its identifier,
+//! which is its index in Net::places() or Net::transitions(). Arcs store their
+//! ends this way: a copied net does not point to the nodes of the original.
+// *****************************************************************************
+struct NodeId
+{
+    Node::Type type;
+    size_t id;
+
+    bool isPlace() const { return type == Node::Type::Place; }
+    bool isTransition() const { return type == Node::Type::Transition; }
+
+    //! \brief "P42" or "T42", as Node::key.
+    std::string key() const
+    {
+        return (isPlace() ? 'P' : 'T') + std::to_string(id);
+    }
+
+    bool operator==(NodeId const& other) const
+    {
+        return (type == other.type) && (id == other.id);
+    }
+
+    bool operator!=(NodeId const& other) const { return !(*this == other); }
+};
+
+inline NodeId Node::nodeId() const { return NodeId{ type, id }; }
 
 // *****************************************************************************
 //! \brief Petri Place node. Places represent system states. Places hold tokens
@@ -258,72 +250,6 @@ public:
     }
 
     //--------------------------------------------------------------------------
-    //! \brief Check if all immediately incoming places have at least one token
-    //! on each of them. A transition is "enabled" when all its input places
-    //! have enough tokens.
-    //--------------------------------------------------------------------------
-    bool isEnabled() const;
-
-    //--------------------------------------------------------------------------
-    //! \brief Check if the transition can fire: it must be enabled (all input
-    //! places have tokens) and its guard condition (receptivity) must be true.
-    //! \note The consumption of tokens is made by the PetriEditor class during
-    //! the animation.
-    //! \return true if can fire else return false.
-    //--------------------------------------------------------------------------
-    bool canFire() const { return receptivity && isEnabled(); }
-
-    //--------------------------------------------------------------------------
-    //! \brief Return the maximum number of tokens that can be consumed from
-    //! immediately incoming places if and only if canFire() is true.
-    //! \note This method does not modify the number of tokens in previous
-    //! places.
-    //! \return the max number of tokens that can be consumed, or 0 if cannot fire.
-    //--------------------------------------------------------------------------
-    size_t maxTokensToConsume() const;
-
-    //--------------------------------------------------------------------------
-    //! \brief Return true if the transition comes from an input place.
-    //! This method is useful for converting event graph to (max,+) dynamic linear
-    //! systems:
-    //! X(n) = D X(n) ⨁ A X(n-1) ⨁ B U(n)
-    //! Y(n) = C X(n)
-    //! System inputs: B U(n) with U the column vector of system inputs.
-    //--------------------------------------------------------------------------
-    inline bool isInput() const
-    {
-        return arcsIn.empty() && (!arcsOut.empty());
-    }
-
-    //--------------------------------------------------------------------------
-    //! \brief Return true if the transition goes to an output place.
-    //! This method is useful for converting event graph to (max,+) dynamic linear
-    //! systems:
-    //! X(n) = D X(n) ⨁ A X(n-1) ⨁ B U(n)
-    //! Y(n) = C X(n)
-    //! System outputs: Y(n) = C X(n)
-    //--------------------------------------------------------------------------
-    inline bool isOutput() const
-    {
-        return (!arcsIn.empty()) && arcsOut.empty();
-    }
-
-    //--------------------------------------------------------------------------
-    //! \brief Return true is the transition is not an input or an output for
-    //! the system.
-    //! This method is useful for converting event graph to (max,+) dynamic linear
-    //! systems:
-    //! X(n) = D X(n) ⨁ A X(n-1) ⨁ B U(n)
-    //! Y(n) = C X(n)
-    //! Systems states: X(n) = D X(n) (+) A X(n-1) with A the state matrix and
-    //! D the implicit matrix.
-    //--------------------------------------------------------------------------
-    inline bool isState() const
-    {
-        return (!arcsIn.empty()) && (!arcsOut.empty());
-    }
-
-    //--------------------------------------------------------------------------
     //! \brief For debug purpose only.
     //--------------------------------------------------------------------------
     friend std::ostream& operator<<(std::ostream& os, Transition const& t)
@@ -352,7 +278,8 @@ public:
 // *****************************************************************************
 //! \brief Two Petri nodes are directed by arcs. Origin and destination nodes
 //! shall be of different types. Therefore arcs only make the link between Place
-//! to Transition or Transition to Place.
+//! to Transition or Transition to Place. Ends are stored as NodeId: use
+//! Net::node(), Net::placeOf() or Net::transitionOf() to reach the nodes.
 //! \note With timed event graph, we "compress graphically" the net by not
 //! drawing places and merging the incoming arc with the outcoming arc).
 // *****************************************************************************
@@ -369,87 +296,98 @@ public:
     //! is a Place (else the duration is forced to NaN).
     //! \note Nodes shall have different types. Assertion is made here.
     //--------------------------------------------------------------------------
-    Arc(Node& from_, Node& to_, float duration_ = 0.0f)
+    Arc(NodeId const from_, NodeId const to_, float duration_ = 0.0f)
         : from(from_), to(to_),
-          duration(from_.type == Node::Type::Transition ? duration_ : safeNaNF())
+          duration(from_.isTransition() ? duration_ : safeNaNF())
     {
         assert(from.type != to.type);
     }
 
     //--------------------------------------------------------------------------
-    //! \brief Needed because of usage of references.
+    //! \brief Constructor from the nodes.
     //--------------------------------------------------------------------------
-    Arc& operator=(Arc const& other)
-    {
-        this->~Arc(); // destroy
-        new (this) Arc(other); // copy construct in place
-        return *this;
-    }
-
-    //--------------------------------------------------------------------------
-    //! \brief Needed because of usage of references.
-    //--------------------------------------------------------------------------
-    Arc(Arc const& other)
-        : Arc(other.from, other.to, other.duration)
+    Arc(Node const& from_, Node const& to_, float duration_ = 0.0f)
+        : Arc(from_.nodeId(), to_.nodeId(), duration_)
     {}
 
     //--------------------------------------------------------------------------
-    //! \brief Needed because of usage of references.
+    //! \brief The end of the arc that is a place.
     //--------------------------------------------------------------------------
-    Arc(Arc&& other) noexcept
-        : Arc(other.from, other.to, other.duration)
-    {}
+    NodeId place() const { return from.isPlace() ? from : to; }
 
     //--------------------------------------------------------------------------
-    //! \brief Needed because of usage of references.
+    //! \brief The end of the arc that is a transition.
     //--------------------------------------------------------------------------
-    Arc& operator=(Arc&& other) noexcept
-    {
-        this->~Arc(); // destroy
-        new (this) Arc(other); // copy construct in place
-        return *this;
-    }
-
-    //--------------------------------------------------------------------------
-    //! \brief Return the reference to the number of tokens from the origin
-    //! Place.
-    //--------------------------------------------------------------------------
-    inline size_t& tokensIn()
-    {
-        assert(from.type == Node::Type::Place);
-        return reinterpret_cast<Place&>(from).tokens;
-    }
-
-    //--------------------------------------------------------------------------
-    //! \brief Return the reference to the number of tokens from the destination
-    //! Place.
-    //--------------------------------------------------------------------------
-    inline size_t& tokensOut()
-    {
-        assert(to.type == Node::Type::Place);
-        return reinterpret_cast<Place&>(to).tokens;
-    }
+    NodeId transition() const { return from.isTransition() ? from : to; }
 
     //--------------------------------------------------------------------------
     //! \brief
     //--------------------------------------------------------------------------
     friend std::ostream& operator<<(std::ostream& os, Arc const& a)
     {
-        os << a.from.key << " \"" << a.from.caption << "\" -> "
-           << a.to.key << " \"" << a.to.caption << "\"";
+        os << a.from.key() << " -> " << a.to.key();
         return os;
     }
 
     //! \brief Origin node (Place or Transition). Its type shall be different to
     //! the destination node.
-    Node& from;
+    NodeId from;
     //! \brief Destination node (Place or Transition). Its type shall be
     //! different to the origin node.
-    Node& to;
+    NodeId to;
     //! \brief Timed Petri. The time unit is context dependent.
     //! \note for the animation of tokens during the simulation, seconds are
     //! used.
     float duration;
+};
+
+// *****************************************************************************
+//! \brief The arcs entering or leaving a node, seen as a container of Arc&.
+//! Given by Net::arcsIn() and Net::arcsOut(); valid until the structure of
+//! the net changes.
+// *****************************************************************************
+template<class ArcT, class Container>
+class ArcRange
+{
+public:
+
+    class iterator
+    {
+    public:
+
+        iterator(Container& arcs, std::vector<size_t>::const_iterator it)
+            : m_arcs(&arcs), m_it(it)
+        {}
+
+        ArcT& operator*() const { return (*m_arcs)[*m_it]; }
+        ArcT* operator->() const { return &(*m_arcs)[*m_it]; }
+        iterator& operator++() { ++m_it; return *this; }
+        bool operator==(iterator const& other) const { return m_it == other.m_it; }
+        bool operator!=(iterator const& other) const { return m_it != other.m_it; }
+
+    private:
+
+        Container* m_arcs;
+        std::vector<size_t>::const_iterator m_it;
+    };
+
+    ArcRange(Container& arcs, std::vector<size_t> const& indices)
+        : m_arcs(arcs), m_indices(indices)
+    {}
+
+    iterator begin() const { return iterator(m_arcs, m_indices.begin()); }
+    iterator end() const { return iterator(m_arcs, m_indices.end()); }
+    size_t size() const { return m_indices.size(); }
+    bool empty() const { return m_indices.empty(); }
+    ArcT& operator[](size_t const i) const { return m_arcs[m_indices[i]]; }
+    ArcT& front() const { return m_arcs[m_indices.front()]; }
+    //! \brief Indices of the arcs in Net::arcs().
+    std::vector<size_t> const& indices() const { return m_indices; }
+
+private:
+
+    Container& m_arcs;
+    std::vector<size_t> const& m_indices;
 };
 
 // *****************************************************************************
@@ -506,13 +444,15 @@ private:
 class Net
 {
     friend bool convertTo(Net& net, TypeOfNet const type, std::string& error,
-                          std::vector<Arc*>& erroneous_arcs);
+                          std::vector<size_t>& erroneous_arcs);
 
 public:
 
     using Places = std::deque<Place>;
     using Transitions = std::deque<Transition>;
     using Arcs = std::deque<Arc>;
+    using ArcsOf = ArcRange<Arc, Arcs>;
+    using ConstArcsOf = ArcRange<Arc const, Arcs const>;
 
     //--------------------------------------------------------------------------
     //! \brief Default constructor.
@@ -522,14 +462,13 @@ public:
     explicit Net(TypeOfNet const type = TypeOfNet::TimedPetriNet);
 
     //--------------------------------------------------------------------------
-    //! \brief Copy constructor. Needed to remove compilation warnings.
+    //! \brief Copy. Arcs refer to nodes by identifiers, so the copy refers to
+    //! its own nodes. The copy is not modified.
     //--------------------------------------------------------------------------
     Net(Net const& other);
-
-    //--------------------------------------------------------------------------
-    //! \brief Copy operator. Needed to remove compilation warnings.
-    //--------------------------------------------------------------------------
     Net& operator=(Net const& other);
+    Net(Net&&) = default;
+    Net& operator=(Net&&) = default;
 
     //--------------------------------------------------------------------------
     //! \brief Remove all nodes and arcs. Reset counters for unique identifiers.
@@ -590,7 +529,8 @@ public:
     //--------------------------------------------------------------------------
     //! \brief Add a new Petri Place. To be used when loading a Petri net from
     //! a file.
-    //! \param[in] id: unique node identifier.
+    //! \param[in] id: unique node identifier. Identifiers are indices in
+    //! places(): it shall be the number of places (importers sort nodes).
     //! \param[in] x: X-axis coordinate in the window needed for the display.
     //! \param[in] y: Y-axis coordinate in the window needed for the display.
     //! \param[in] tokens: Initial number of tokens in the place.
@@ -633,7 +573,8 @@ public:
     //--------------------------------------------------------------------------
     //! \brief Add a new Petri Transition. To be used when loading a Petri net
     //! from a file.
-    //! \param[in] id: unique node identifier.
+    //! \param[in] id: unique node identifier. Identifiers are indices in
+    //! transitions(): it shall be the number of transitions.
     //! \param[in] caption: node description.
     //! \param[in] x: X-axis coordinate in the window needed for the display.
     //! \param[in] y: Y-axis coordinate in the window needed for the display.
@@ -648,6 +589,89 @@ public:
     inline Transitions const& transitions() const { return m_transitions; }
     // FIXME because of inspector
     inline Transitions& transitions() { return m_transitions; }
+
+    //--------------------------------------------------------------------------
+    //! \brief The node referred by an arc end. The node shall exist.
+    //--------------------------------------------------------------------------
+    Node& node(NodeId const id);
+    Node const& node(NodeId const id) const;
+
+    //--------------------------------------------------------------------------
+    //! \brief The place, or the transition, an arc links.
+    //--------------------------------------------------------------------------
+    Place& placeOf(Arc const& arc) { return m_places[arc.place().id]; }
+    Place const& placeOf(Arc const& arc) const { return m_places[arc.place().id]; }
+    Transition& transitionOf(Arc const& arc) { return m_transitions[arc.transition().id]; }
+    Transition const& transitionOf(Arc const& arc) const { return m_transitions[arc.transition().id]; }
+
+    //--------------------------------------------------------------------------
+    //! \brief Arcs entering or leaving the node.
+    //--------------------------------------------------------------------------
+    ArcsOf arcsIn(Node const& node) { return ArcsOf(m_arcs, adjacency(node).in); }
+    ConstArcsOf arcsIn(Node const& node) const { return ConstArcsOf(m_arcs, adjacency(node).in); }
+    ArcsOf arcsOut(Node const& node) { return ArcsOf(m_arcs, adjacency(node).out); }
+    ConstArcsOf arcsOut(Node const& node) const { return ConstArcsOf(m_arcs, adjacency(node).out); }
+
+    //--------------------------------------------------------------------------
+    //! \brief Index of the arc in arcs().
+    //--------------------------------------------------------------------------
+    size_t indexOf(Arc const& arc) const;
+
+    //--------------------------------------------------------------------------
+    //! \brief Check if all immediately incoming places have at least one token
+    //! on each of them. A transition is "enabled" when all its input places
+    //! have enough tokens. A transition without input place is enabled.
+    //--------------------------------------------------------------------------
+    bool isEnabled(Transition const& transition) const;
+
+    //--------------------------------------------------------------------------
+    //! \brief Check if the transition can fire: it must be enabled (all input
+    //! places have tokens) and its guard condition (receptivity) must be true.
+    //--------------------------------------------------------------------------
+    bool canFire(Transition const& transition) const
+    {
+        return transition.receptivity && isEnabled(transition);
+    }
+
+    //--------------------------------------------------------------------------
+    //! \brief Return the number of tokens the transition consumes from each
+    //! input place when it fires: tokens are consumed one by one, so 1 if it
+    //! can fire else 0. A transition without input place fires when its
+    //! receptivity is true.
+    //--------------------------------------------------------------------------
+    size_t maxTokensToConsume(Transition const& transition) const;
+
+    //--------------------------------------------------------------------------
+    //! \brief Return true if the transition has no input arc but output arcs.
+    //! This method is useful for converting event graph to (max,+) dynamic
+    //! linear systems:
+    //! X(n) = D X(n) ⨁ A X(n-1) ⨁ B U(n)
+    //! Y(n) = C X(n)
+    //! System inputs: B U(n) with U the column vector of system inputs.
+    //--------------------------------------------------------------------------
+    bool isInput(Transition const& transition) const
+    {
+        return arcsIn(transition).empty() && !arcsOut(transition).empty();
+    }
+
+    //--------------------------------------------------------------------------
+    //! \brief Return true if the transition has input arcs but no output arc.
+    //! System outputs: Y(n) = C X(n)
+    //--------------------------------------------------------------------------
+    bool isOutput(Transition const& transition) const
+    {
+        return !arcsIn(transition).empty() && arcsOut(transition).empty();
+    }
+
+    //--------------------------------------------------------------------------
+    //! \brief Return true is the transition is not an input or an output for
+    //! the system. Systems states: X(n) = D X(n) (+) A X(n-1) with A the state
+    //! matrix and D the implicit matrix.
+    //--------------------------------------------------------------------------
+    bool isState(Transition const& transition) const
+    {
+        return !arcsIn(transition).empty() && !arcsOut(transition).empty();
+    }
 
     //--------------------------------------------------------------------------
     //! \brief Search and return a place or a transition by its unique
@@ -743,7 +767,11 @@ public:
 
     //--------------------------------------------------------------------------
     //! \brief Remove an existing Place or a Transition (usually referred by the
-    //! mouse cursor).
+    //! mouse cursor) and its arcs. For timed event graphs, removing a
+    //! transition also removes the implicit places of its arcs.
+    //! Identifiers stay 0 .. n-1: the last node of the same type takes the
+    //! identifier of the removed one (with its key, and its caption when it
+    //! was the default one). References to nodes and arcs are invalidated.
     //--------------------------------------------------------------------------
     void removeNode(Node& node);
 
@@ -758,15 +786,11 @@ public:
     bool removeArc(Node const& from, Node const& to);
 
     //--------------------------------------------------------------------------
-    //! \brief Populate or update Node::arcsIn and Node::arcsOut for all
-    //! transitions and places in the Petri net.
+    //! \brief Give transitions the receptivity they have when no simulation
+    //! runs: false for Petri nets (the user clicks to fire) and GRAFCET (the
+    //! engine computes them), true for timed nets.
     //--------------------------------------------------------------------------
-    void generateArcsInArcsOut(); // FIXME a placer dana protected
-
-    //--------------------------------------------------------------------------
-    //! \brief Set to false the receptivity for all transitions.
-    //--------------------------------------------------------------------------
-    void resetReceptivies(); // FIXME a placer dans protected
+    void resetReceptivies();
 
 protected:
 
@@ -781,22 +805,17 @@ protected:
             std::stringstream& message) const;
 
     //--------------------------------------------------------------------------
-    //! \brief Helper method removing a transition. This function does not care
-    //! of upstream/downstream arcs: they shall be removed.
-    //! For fastest deletion, we simply swap the undesired node with the
-    //! latest node in the container. To do that, we have to iterate from the end
-    //! of the container.
+    //! \brief Remove the place, or the transition, of the given identifier.
+    //! Its arcs shall have been removed. The last node takes its place (and
+    //! its identifier) so identifiers stay 0 .. n-1. Adjacency is not updated.
     //--------------------------------------------------------------------------
-    void helperRemoveTransition(Node const& node);
+    void removePlaceAt(size_t const id);
+    void removeTransitionAt(size_t const id);
 
     //--------------------------------------------------------------------------
-    //! \brief Helper method removing a place. This function does not care
-    //! of upstream/downstream arcs: they shall be removed.
-    //! For fastest deletion, we simply swap the undesired node with the
-    //! latest node in the container. To do that, we have to iterate from the end
-    //! of the container.
+    //! \brief Arcs whose end is \c from now have \c to as end.
     //--------------------------------------------------------------------------
-    void helperRemovePlace(Node const& node);
+    void renameArcEnds(NodeId const from, NodeId const to);
 
 public:
 
@@ -815,19 +834,29 @@ public:
 
 private:
 
+    //! \brief Arcs entering and leaving a node, by index in m_arcs.
+    struct Adjacency
+    {
+        std::vector<size_t> in;
+        std::vector<size_t> out;
+    };
+
+    //--------------------------------------------------------------------------
+    //! \brief Adjacency of the node (empty for an unknown node).
+    //--------------------------------------------------------------------------
+    Adjacency const& adjacency(Node const& node) const;
+
+    //--------------------------------------------------------------------------
+    //! \brief Rebuild the arcs entering and leaving each node. Called by each
+    //! method changing the structure of the net, and only by them.
+    //--------------------------------------------------------------------------
+    void generateArcsInArcsOut();
+
     //--------------------------------------------------------------------------
     //! \brief Give the place the capacity of this type of net and constrain
     //! its tokens.
     //--------------------------------------------------------------------------
     Place& applyCapacity(Place& place) const;
-
-    //--------------------------------------------------------------------------
-    //! \brief Helper method removing all arcs linked to the given node.
-    //! Note: For fastest deletion, we simply swap the undesired arc with the
-    //! latest arc in the container. To do that, we have to iterate from the end
-    //! of the container.
-    //--------------------------------------------------------------------------
-    void helperRemoveArcFromNode(Node const& node);
 
 public:
 
@@ -861,6 +890,9 @@ private:
     Transitions m_transitions;
     //! \brief List of Arcs.
     Arcs m_arcs;
+    //! \brief Arcs of each place and of each transition, by node identifier.
+    std::vector<Adjacency> m_place_arcs;
+    std::vector<Adjacency> m_transition_arcs;
     //! \brief Auto increment unique identifier. Start from 0 (code placed in
     //! the cpp file).
     size_t m_next_place_id = 0u;
@@ -877,9 +909,10 @@ std::string to_str(TypeOfNet const type);
 //-----------------------------------------------------------------------------
 //! \brief Convert to the desired type of net: GRAFCET, Petri, timed Petri,
 //! timed graph even, etc.
-//! \return false if the net cannot be changed (i.e. to graph event).
+//! \return false if the net cannot be changed (i.e. to graph event): the
+//! indices of the arcs preventing the conversion are given.
 //-----------------------------------------------------------------------------
-bool convertTo(Net& net, TypeOfNet const type, std::string& error, std::vector<Arc*>& erroneous_arcs);
+bool convertTo(Net& net, TypeOfNet const type, std::string& error, std::vector<size_t>& erroneous_arcs);
 
 //-----------------------------------------------------------------------------
 //! \brief Load the Petri net from a a file. The current net is cleared

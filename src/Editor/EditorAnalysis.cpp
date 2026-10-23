@@ -305,10 +305,10 @@ static void computeGantt(Net const& net, int const cycles,
     for (size_t t = 0u; t < transitions.size(); ++t)
     {
         double duration = 0.0;
-        for (Arc const* arc : transitions[t].arcsOut)
+        for (Arc const& arc : net.arcsOut(transitions[t]))
         {
-            if (!std::isnan(arc->duration))
-                duration = std::max(duration, double(arc->duration));
+            if (!std::isnan(arc.duration))
+                duration = std::max(duration, double(arc.duration));
         }
         if (duration <= 0.0)
             continue;
@@ -376,7 +376,7 @@ void Editor::analysisCritical()
             }
         }
 
-        m_marked_arcs = res.arcs;
+        markArcs(net(), res.arcs);
         ImGuiTabBarFlags tab_bar_flags = ImGuiTabBarFlags_None;
         if (ImGui::BeginTabBar("CriticalCycleResult", tab_bar_flags))
         {
@@ -395,11 +395,13 @@ void Editor::analysisCritical()
                     {
                         ImGui::TableNextRow();
                         ImGui::TableNextColumn();
-                        ImGui::TextUnformatted(res.arcs[it]->from.key.c_str());
+                        Arc const& first = net().arcs()[res.arcs[it]];
+                        Arc const& second = net().arcs()[res.arcs[it + 1u]];
+                        ImGui::TextUnformatted(first.from.key().c_str());
                         ImGui::TableNextColumn();
-                        ImGui::TextUnformatted(res.arcs[it]->to.key.c_str());
+                        ImGui::TextUnformatted(first.to.key().c_str());
                         ImGui::TableNextColumn();
-                        ImGui::TextUnformatted(res.arcs[it + 1u]->to.key.c_str());
+                        ImGui::TextUnformatted(second.to.key().c_str());
                     }
                     ImGui::EndTable();
                 }

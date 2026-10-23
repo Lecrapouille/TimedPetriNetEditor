@@ -24,21 +24,19 @@ template<typename T> class SparseMatrix;
 //! \brief Chech if the Petri net is a graph event meaning that each places
 //! have exactly one input arc and one output arc.
 //! \param[inout] error human readable error message.
-//! \param[inout] erroneous_arcs store detected erroneous arcs.
+//! \param[inout] erroneous_arcs store indices in Net::arcs() of detected
+//! erroneous arcs.
 //!
 //! \return true if the Petri net is a graph event and \c erroneous_arcs is
 //! empty. Return false if the Petri net is not a graph event and \c
 //! erroneous_arcs will contain defectuous arcs information and call message()
 //! to get the real reason.
-//!
-//! \note call generateArcsInArcsOut(/*arcs: true*/); before calling this
-//! method.
 //--------------------------------------------------------------------------
-bool isEventGraph(Net const& net, std::string& error, std::vector<Arc*>& erroneous_arcs);
+bool isEventGraph(Net const& net, std::string& error, std::vector<size_t>& erroneous_arcs);
 
 //--------------------------------------------------------------------------
 //! \brief Conpact form of isEventGraph(Net const&, std::string&,
-//! std::vector<Arc*>&) but do not care of why the net is not an event graph.
+//! std::vector<size_t>&) but do not care of why the net is not an event graph.
 //--------------------------------------------------------------------------
 bool isEventGraph(Net const& net);
 
@@ -96,8 +94,8 @@ struct CriticalCycleResult
     std::stringstream message;
     //! \brief Number of connected components of the optimal policy.
     size_t cycles = 0u;
-    //! \brief List of arcs defining the optimal policy.
-    std::vector<Arc*> arcs; // TODO std::vector<std::vector<Arc*>> where size of vector == cycles
+    //! \brief Indices in Net::arcs() of the arcs defining the optimal policy.
+    std::vector<size_t> arcs; // TODO std::vector<std::vector<size_t>> where size of vector == cycles
     //! \brief Eigenvector: Bias vectors.
     std::vector<double> eigenvector;
     //! \brief Eigenvalues: Durations of the cycle starting for each transitions.

@@ -29,6 +29,28 @@ TEST(TestJSONLoader, DummyTransitions)
 }
 
 //------------------------------------------------------------------------------
+// Identifiers of nodes are their indices: any order in the file, no gap.
+TEST(TestJSONLoader, NodeIdentifiers)
+{
+    Net net(TypeOfNet::TimedPetriNet);
+    bool stringify;
+
+    ASSERT_STREQ(loadFromFile(net, "data/UnorderedIds.json", stringify).c_str(), "");
+    ASSERT_EQ(net.m_places.size(), 2u);
+    ASSERT_EQ(net.m_places[0].id, 0u);
+    ASSERT_STREQ(net.m_places[0].caption.c_str(), "A");
+    ASSERT_EQ(net.m_places[0].tokens, 2u);
+    ASSERT_EQ(net.m_places[1].id, 1u);
+    ASSERT_STREQ(net.m_places[1].caption.c_str(), "B");
+    ASSERT_EQ(net.arcsOut(net.m_places[0]).size(), 1u);
+    ASSERT_EQ(net.arcsIn(net.m_places[1]).size(), 1u);
+
+    std::string const error = loadFromFile(net, "data/BadJSON/GapInIds.json", stringify);
+    ASSERT_NE(error.find("identifiers of places shall be 0 .. 1"), std::string::npos) << error;
+    ASSERT_EQ(net.isEmpty(), true);
+}
+
+//------------------------------------------------------------------------------
 TEST(TestJSONLoader, TestLoadedInvalidNetTimedPetri)
 {
     Net net(TypeOfNet::TimedPetriNet);
@@ -133,7 +155,7 @@ TEST(TestJSONLoader, CheckMarks)
 TEST(TestJSONLoader, SaveAndLoadFile)
 {
     std::string error;
-    std::vector<Arc*> erroneous_arcs;
+    std::vector<size_t> erroneous_arcs;
     Net net(TypeOfNet::TimedPetriNet);
     bool stringify;
 

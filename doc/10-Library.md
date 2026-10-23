@@ -142,6 +142,29 @@ tpne::NetViewer::Options options;       // captions, actions, highlighted arcs .
 viewer.draw("##grafcet", net, options); // inside ImGui::Begin() ... End()
 ```
 
+## 6. Walk the structure of a net
+
+Identifiers are indices: `net.places()[3].id == 3`, keys are `"P3"`, `"T0"`.
+An arc stores its two ends as `NodeId` (type and identifier), so a copied
+net never refers to the nodes of the original. The net gives the nodes and
+the arcs around a node:
+
+```c++
+for (Transition const& t : net.transitions())
+{
+    for (Arc const& arc : net.arcsIn(t))          // input places of t
+        std::cout << net.placeOf(arc).key << " -> " << t.key << "\n";
+    bool fireable = net.canFire(t);               // enabled and receptivity
+}
+Node const& from = net.node(arc.from);            // place or transition
+```
+
+Removing a node keeps identifiers `0 .. n-1`: the last node of the same
+type takes the identifier (and the key) of the removed one, and its arcs
+follow it. References to nodes and arcs are invalid after a removal.
+Algorithms give arcs by index in `net.arcs()` (`CriticalCycleResult::arcs`,
+the erroneous arcs of `isEventGraph()`, `NetViewer::Options::highlighted_arcs`).
+
 ---
 
 That is the end of the reference. The words are in the

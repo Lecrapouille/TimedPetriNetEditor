@@ -225,8 +225,22 @@ protected: // Methods for PetriView access
     bool showTransitionIdentifiers() const { return m_states.show_transition_identifiers; }
     //! \brief GRAFCET: draw the boxes of the actions, else a small tag.
     bool showActionBoxes() const { return m_states.show_action_boxes; }
-    //! \brief Get marked arcs (critical cycle, errors).
-    std::vector<Arc*>& markedArcs() { return m_marked_arcs; }
+    //! \brief Mark arcs of the net (critical cycle, errors), by index in
+    //! Net::arcs().
+    void markArcs(Net const& net, std::vector<size_t> const& arcs)
+    {
+        m_marked_net = &net;
+        m_marked_arcs_count = net.arcs().size();
+        m_marked_arcs = arcs;
+    }
+    //! \brief Marked arcs of the net: none when they were marked on another
+    //! net or when arcs have been added or removed since.
+    std::vector<size_t> const& markedArcs(Net const& net) const
+    {
+        static std::vector<size_t> const none;
+        return ((&net == m_marked_net) && (net.arcs().size() == m_marked_arcs_count))
+            ? m_marked_arcs : none;
+    }
     //! \brief Clear marked arcs.
     void clearMarkedArcs() { m_marked_arcs.clear(); }
 
@@ -425,7 +439,10 @@ private:
     std::unique_ptr<IRemoteControl> m_remote;
     //! \brief Critical cycle found by Howard algorithm. Also used to show
     //! where are erroneous arcs making the Petri net not be a graph event.
-    std::vector<Arc*> m_marked_arcs;
+    std::vector<size_t> m_marked_arcs;
+    //! \brief Net of the marked arcs and its number of arcs when marked.
+    Net const* m_marked_net = nullptr;
+    size_t m_marked_arcs_count = 0u;
     //! \brief Clipboard for copy-paste
     Clipboard m_clipboard;
     //! \brief Visualize the net and do the interaction with the user.

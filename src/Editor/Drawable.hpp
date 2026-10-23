@@ -46,13 +46,13 @@ struct ArcPath
 //! \brief Line of the arc. Empty for arcs that are not drawn (the hidden
 //! Place -> Transition half of a timed event graph arc).
 //------------------------------------------------------------------------------
-ArcPath arcPath(Arc const& arc, TypeOfNet type);
+ArcPath arcPath(Net const& net, Arc const& arc);
 
 //------------------------------------------------------------------------------
 //! \brief Distance (net units) between a point and the line of the arc, as
 //! drawn. A large value for arcs that are not drawn.
 //------------------------------------------------------------------------------
-float distanceToArc(Arc const& arc, TypeOfNet type, ImVec2 const& point);
+float distanceToArc(Net const& net, Arc const& arc, ImVec2 const& point);
 
 //------------------------------------------------------------------------------
 //! \brief Font size for a zoom; 0 when the text is too small to be read.
@@ -62,13 +62,13 @@ float fontSizeAt(float zoom);
 //------------------------------------------------------------------------------
 //! \brief Draw an arc. A negative alpha draws it as a critical circuit arc.
 //------------------------------------------------------------------------------
-void drawArc(ImDrawList* draw_list, Arc const& arc, TypeOfNet const type,
+void drawArc(ImDrawList* draw_list, Net const& net, Arc const& arc,
              ImVec2 const& origin, float const alpha, float zoom = 1.0f);
 
 //------------------------------------------------------------------------------
 //! \brief Draw the line of an arc over it (hover, selection).
 //------------------------------------------------------------------------------
-void drawArcHighlight(ImDrawList* draw_list, Arc const& arc, TypeOfNet type,
+void drawArcHighlight(ImDrawList* draw_list, Net const& net, Arc const& arc,
                       ImVec2 const& origin, float zoom, ImU32 color, float thickness);
 
 //------------------------------------------------------------------------------
@@ -88,7 +88,7 @@ void drawTimedToken(ImDrawList* draw_list, size_t tokens, float const x, float c
 //! whose caption is not its identifier; the number of a GRAFCET step (else
 //! only its caption).
 //------------------------------------------------------------------------------
-void drawPlace(ImDrawList* draw_list, Place const& place, TypeOfNet const type,
+void drawPlace(ImDrawList* draw_list, Net const& net, Place const& place,
                ImVec2 const& origin, bool const show_caption, float const alpha,
                float zoom = 1.0f, bool isInitialStep = false, bool show_identifier = true);
 
@@ -98,7 +98,7 @@ void drawPlace(ImDrawList* draw_list, Place const& place, TypeOfNet const type,
 //! transition whose caption is not its identifier; "(3)" on the left of a
 //! GRAFCET transition.
 //------------------------------------------------------------------------------
-void drawTransition(ImDrawList* draw_list, Transition const& transition, TypeOfNet const type,
+void drawTransition(ImDrawList* draw_list, Net const& net, Transition const& transition,
                     ImVec2 const& origin, bool const show_caption, float const alpha, float zoom = 1.0f,
                     bool show_identifier = true);
 

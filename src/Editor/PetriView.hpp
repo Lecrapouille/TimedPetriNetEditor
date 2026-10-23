@@ -180,7 +180,7 @@ private:
 
     // Tooltips
     void showPlaceTooltip(Place const& place, TypeOfNet type);
-    void showTransitionTooltip(Transition const& trans, TypeOfNet type);
+    void showTransitionTooltip(Net const& net, Transition const& trans);
 
     // Selection
     bool isNodeSelected(Node const* node) const;

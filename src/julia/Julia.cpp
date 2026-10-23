@@ -414,7 +414,7 @@ bool petri_is_event_graph(int64_t const pn, bool* res)
         return false;
     }
 
-    std::vector<tpne::Arc*> erroneous_arcs;
+    std::vector<size_t> erroneous_arcs;
     std::string error;
     *res = isEventGraph(*g_petri_nets[size_t(pn)], error, erroneous_arcs);
     if (!error.empty())

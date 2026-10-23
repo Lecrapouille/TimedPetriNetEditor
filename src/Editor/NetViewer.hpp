@@ -34,8 +34,9 @@ public:
         bool captions = true;
         //! \brief Show the actions of GRAFCET steps.
         bool actions = true;
-        //! \brief Arcs drawn highlighted (critical circuit ...). Can be null.
-        std::vector<Arc const*> const* highlighted_arcs = nullptr;
+        //! \brief Arcs drawn highlighted (critical circuit ...), by index in
+        //! Net::arcs(). Can be null.
+        std::vector<size_t> const* highlighted_arcs = nullptr;
         //! \brief Initial marking (one count per place) to draw GRAFCET initial
         //! steps with a double square. Can be null: then none is drawn so.
         std::vector<size_t> const* initial_marking = nullptr;

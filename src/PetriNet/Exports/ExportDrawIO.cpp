@@ -55,7 +55,7 @@ std::string exportToDrawIO(Net const& net, std::string const& filename)
     // Transitions
     for (auto const& t: net.transitions())
     {
-        std::string color = (t.canFire() ? "green" : "red");
+        std::string color = (net.canFire(t) ? "green" : "red");
 
         file << "        <mxCell id=\"" << t.key << "\" value=\"" << t.caption
              << "\" style=\"whiteSpace=wrap;html=1;aspect=fixed;\" vertex=\"1\" parent=\"1\">\n"
@@ -67,12 +67,12 @@ std::string exportToDrawIO(Net const& net, std::string const& filename)
     // Arcs
     for (auto const& a: net.arcs())
     {
-        file << "        <mxCell id=\"" << a.from.key << a.to.key << "\" value=\"\" "
+        file << "        <mxCell id=\"" << a.from.key() << a.to.key() << "\" value=\"\" "
              << "style=\"endArrow=classic;html=1;rounded=0;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;\" "
-             << "edge=\"1\" parent=\"1\" source=\"" << a.from.key << "\" target=\"" << a.to.key << "\">\n"
+             << "edge=\"1\" parent=\"1\" source=\"" << a.from.key() << "\" target=\"" << a.to.key() << "\">\n"
              << "          <mxGeometry width=\"50\" height=\"50\" relative=\"1\" as=\"geometry\">\n"
-             << "            <mxPoint x=\"" << a.from.x << "\" y=\"" << a.from.y << "\" as=\"sourcePoint\" />\n"
-             << "            <mxPoint x=\"" << a.to.x << "\" y=\"" << a.to.y << "\" as=\"targetPoint\" />\n"
+             << "            <mxPoint x=\"" << net.node(a.from).x << "\" y=\"" << net.node(a.from).y << "\" as=\"sourcePoint\" />\n"
+             << "            <mxPoint x=\"" << net.node(a.to).x << "\" y=\"" << net.node(a.to).y << "\" as=\"targetPoint\" />\n"
              << "          </mxGeometry>\n        </mxCell>" << std::endl;
     }
 

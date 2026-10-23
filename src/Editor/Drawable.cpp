@@ -180,40 +180,45 @@ static ImVec2 border(Node const& node, TypeOfNet type, ImVec2 const& toward, flo
 // ============================================================================
 
 //! \brief Second transition of a timed event graph arc T -> P -> T2, or null.
-static Node const* tegTarget(Arc const& arc)
+static Node const* tegTarget(Net const& net, Arc const& arc)
 {
-    if ((arc.from.type != Node::Type::Transition) || arc.to.arcsOut.empty())
+    if (arc.from.type != Node::Type::Transition)
         return nullptr;
-    return &arc.to.arcsOut[0]->to;
+    auto const next = net.arcsOut(net.node(arc.to));
+    if (next.empty())
+        return nullptr;
+    return &net.node(next.front().to);
 }
 
 //! \brief True if an arc goes back from b to a (drawn bent, not on top).
-static bool hasReverse(Node const& a, Node const& b, TypeOfNet type)
+static bool hasReverse(Net const& net, Node const& a, Node const& b)
 {
-    if (type == TypeOfNet::TimedEventGraph)
+    if (net.type() == TypeOfNet::TimedEventGraph)
     {
         // a and b are transitions: look for b -> P -> a.
-        for (Arc const* out : b.arcsOut)
+        for (Arc const& out : net.arcsOut(b))
         {
-            if (!out->to.arcsOut.empty() && (&out->to.arcsOut[0]->to == &a))
+            auto const next = net.arcsOut(net.node(out.to));
+            if (!next.empty() && (next.front().to == a.nodeId()))
                 return true;
         }
         return false;
     }
-    for (Arc const* out : b.arcsOut)
+    for (Arc const& out : net.arcsOut(b))
     {
-        if (&out->to == &a)
+        if (out.to == a.nodeId())
             return true;
     }
     return false;
 }
 
 //! \brief Straight or bent (when a reverse arc exists) line between two nodes.
-static void petriPath(Node const& a, Node const& b, TypeOfNet type, ArcPath& path)
+static void petriPath(Net const& net, Node const& a, Node const& b, ArcPath& path)
 {
+    TypeOfNet const type = net.type();
     ImVec2 const pa(a.x, a.y);
     ImVec2 const pb(b.x, b.y);
-    if (!hasReverse(a, b, type))
+    if (!hasReverse(net, a, b))
     {
         path.points = { border(a, type, pb, 1.0f), border(b, type, pa, ARROW_SPACING) };
         return;
@@ -239,11 +244,11 @@ static float bottomOf(Node const& n, TypeOfNet type) { return n.y + nodeHalfSize
 static float topOf(Node const& n, TypeOfNet type) { return n.y - nodeHalfSize(n, type).y; }
 
 //! \brief GRAFCET link: vertical and horizontal lines, IEC 60848.
-static void grafcetPath(Arc const& arc, ArcPath& path)
+static void grafcetPath(Net const& net, Arc const& arc, ArcPath& path)
 {
     TypeOfNet const G = TypeOfNet::GRAFCET;
-    Node const& s = arc.from;
-    Node const& t = arc.to;
+    Node const& s = net.node(arc.from);
+    Node const& t = net.node(arc.to);
     path.arrow_end = false;
 
     // Start and end points, with the AND (double) and OR (single) lines.
@@ -253,22 +258,22 @@ static void grafcetPath(Arc const& arc, ArcPath& path)
     float bus_end = NAN;   // y of a line the link ends on
     if (s.type == Node::Type::Transition)
     {
-        if (s.arcsOut.size() >= 2u) // AND divergence: from the double line
+        if (net.arcsOut(s).size() >= 2u) // AND divergence: from the double line
         {
             start = ImVec2(t.x, s.y + GRAFCET_GAP);
         }
-        else if (t.arcsIn.size() >= 2u) // OR convergence: to the line above the step
+        else if (net.arcsIn(t).size() >= 2u) // OR convergence: to the line above the step
         {
             bus_end = topOf(t, G) - GRAFCET_GAP;
         }
     }
     else
     {
-        if (t.arcsIn.size() >= 2u) // AND convergence: to the double line
+        if (net.arcsIn(t).size() >= 2u) // AND convergence: to the double line
         {
             end = ImVec2(s.x, t.y - GRAFCET_GAP);
         }
-        else if (s.arcsOut.size() >= 2u) // OR divergence: from the line below the step
+        else if (net.arcsOut(s).size() >= 2u) // OR divergence: from the line below the step
         {
             bus_start = bottomOf(s, G) + GRAFCET_GAP;
         }
@@ -315,22 +320,22 @@ static void grafcetPath(Arc const& arc, ArcPath& path)
 }
 
 //------------------------------------------------------------------------------
-ArcPath arcPath(Arc const& arc, TypeOfNet type)
+ArcPath arcPath(Net const& net, Arc const& arc)
 {
     ArcPath path;
-    if (type == TypeOfNet::GRAFCET)
+    if (net.type() == TypeOfNet::GRAFCET)
     {
-        grafcetPath(arc, path);
+        grafcetPath(net, arc, path);
     }
-    else if (type == TypeOfNet::TimedEventGraph)
+    else if (net.type() == TypeOfNet::TimedEventGraph)
     {
-        Node const* next = tegTarget(arc);
+        Node const* next = tegTarget(net, arc);
         if (next != nullptr)
-            petriPath(arc.from, *next, type, path);
+            petriPath(net, net.node(arc.from), *next, path);
     }
     else
     {
-        petriPath(arc.from, arc.to, type, path);
+        petriPath(net, net.node(arc.from), net.node(arc.to), path);
     }
     return path;
 }
@@ -346,9 +351,9 @@ static float segmentDistance(ImVec2 const& p, ImVec2 const& a, ImVec2 const& b)
 }
 
 //------------------------------------------------------------------------------
-float distanceToArc(Arc const& arc, TypeOfNet type, ImVec2 const& point)
+float distanceToArc(Net const& net, Arc const& arc, ImVec2 const& point)
 {
-    ArcPath const path = arcPath(arc, type);
+    ArcPath const path = arcPath(net, arc);
     float best = FLT_MAX;
     for (size_t i = 1u; i < path.points.size(); ++i)
         best = std::min(best, segmentDistance(point, path.points[i - 1u], path.points[i]));
@@ -422,10 +427,11 @@ static ImVec2 alongPath(std::vector<ImVec2> const& points, float fraction, ImVec
 }
 
 //------------------------------------------------------------------------------
-void drawArc(ImDrawList* draw_list, Arc const& arc, TypeOfNet const type,
+void drawArc(ImDrawList* draw_list, Net const& net, Arc const& arc,
              ImVec2 const& origin, float const alpha, float zoom)
 {
-    ArcPath const path = arcPath(arc, type);
+    TypeOfNet const type = net.type();
+    ArcPath const path = arcPath(net, arc);
     if (path.points.size() < 2u)
         return;
     Palette const& pal = palette();
@@ -438,7 +444,7 @@ void drawArc(ImDrawList* draw_list, Arc const& arc, TypeOfNet const type,
     if (type == TypeOfNet::TimedEventGraph)
     {
         // Tokens near the start, duration in the middle.
-        size_t const tokens = static_cast<Place const&>(arc.to).tokens;
+        size_t const tokens = net.placeOf(arc).tokens;
         ImVec2 dir;
         if (tokens > 0u)
         {
@@ -476,10 +482,10 @@ void drawArc(ImDrawList* draw_list, Arc const& arc, TypeOfNet const type,
 }
 
 //------------------------------------------------------------------------------
-void drawArcHighlight(ImDrawList* draw_list, Arc const& arc, TypeOfNet type,
+void drawArcHighlight(ImDrawList* draw_list, Net const& net, Arc const& arc,
                       ImVec2 const& origin, float zoom, ImU32 color, float thickness)
 {
-    ArcPath path = arcPath(arc, type);
+    ArcPath path = arcPath(net, arc);
     path.arrow_end = false;
     path.arrow_segment = -1;
     drawPath(draw_list, path, origin, zoom, color, thickness);
@@ -604,7 +610,7 @@ static void busLine(ImDrawList* draw_list, ImVec2 const& origin, float zoom,
 
 //! \brief GRAFCET step: square with its number (double for the initial step),
 //! a dot when active, caption on its left, OR lines of alternative sequences.
-static void drawGrafcetStep(ImDrawList* draw_list, Place const& place, ImVec2 const& origin,
+static void drawGrafcetStep(ImDrawList* draw_list, Net const& net, Place const& place, ImVec2 const& origin,
                             bool show_caption, float zoom, bool initial, bool show_identifier)
 {
     Palette const& pal = palette();
@@ -665,19 +671,19 @@ static void drawGrafcetStep(ImDrawList* draw_list, Place const& place, ImVec2 co
         drawToken(draw_list, p.x + h * 0.62f, p.y - h * 0.62f, zoom);
 
     // OR divergence (below) and OR convergence (above): single lines.
-    if (place.arcsOut.size() >= 2u)
+    if (net.arcsOut(place).size() >= 2u)
     {
         float x0 = place.x, x1 = place.x;
-        for (Arc const* a : place.arcsOut) { x0 = std::min(x0, a->to.x); x1 = std::max(x1, a->to.x); }
+        for (Arc const& a : net.arcsOut(place)) { x0 = std::min(x0, net.node(a.to).x); x1 = std::max(x1, net.node(a.to).x); }
         float const y = place.y + STEP_SIZE * 0.5f + GRAFCET_GAP;
         busLine(draw_list, origin, zoom, x0, x1, y, false);
         draw_list->AddLine(screen(origin, zoom, ImVec2(place.x, place.y + STEP_SIZE * 0.5f)),
                            screen(origin, zoom, ImVec2(place.x, y)), pal.outline, stroke(1.6f, zoom));
     }
-    if (place.arcsIn.size() >= 2u)
+    if (net.arcsIn(place).size() >= 2u)
     {
         float x0 = place.x, x1 = place.x;
-        for (Arc const* a : place.arcsIn) { x0 = std::min(x0, a->from.x); x1 = std::max(x1, a->from.x); }
+        for (Arc const& a : net.arcsIn(place)) { x0 = std::min(x0, net.node(a.from).x); x1 = std::max(x1, net.node(a.from).x); }
         float const y = place.y - STEP_SIZE * 0.5f - GRAFCET_GAP;
         busLine(draw_list, origin, zoom, x0, x1, y, false);
         draw_list->AddLine(screen(origin, zoom, ImVec2(place.x, y)),
@@ -687,14 +693,15 @@ static void drawGrafcetStep(ImDrawList* draw_list, Place const& place, ImVec2 co
 }
 
 //------------------------------------------------------------------------------
-void drawPlace(ImDrawList* draw_list, Place const& place, TypeOfNet const type,
+void drawPlace(ImDrawList* draw_list, Net const& net, Place const& place,
                ImVec2 const& origin, bool const show_caption, float const /*alpha*/,
                float zoom, bool isInitialStep, bool show_identifier)
 {
+    TypeOfNet const type = net.type();
     if (type == TypeOfNet::TimedEventGraph)
         return; // places are drawn on their arcs
     if (type == TypeOfNet::GRAFCET)
-        drawGrafcetStep(draw_list, place, origin, show_caption, zoom, isInitialStep, show_identifier);
+        drawGrafcetStep(draw_list, net, place, origin, show_caption, zoom, isInitialStep, show_identifier);
     else
         drawPetriPlace(draw_list, place, origin, show_caption, zoom, show_identifier);
 }
@@ -704,11 +711,11 @@ void drawPlace(ImDrawList* draw_list, Place const& place, TypeOfNet const type,
 // ============================================================================
 
 //------------------------------------------------------------------------------
-void drawTransition(ImDrawList* draw_list, Transition const& transition,
-                    TypeOfNet const type, ImVec2 const& origin,
-                    bool const show_caption, float const /*alpha*/, float zoom,
-                    bool const show_identifier)
+void drawTransition(ImDrawList* draw_list, Net const& net, Transition const& transition,
+                    ImVec2 const& origin, bool const show_caption, float const /*alpha*/,
+                    float zoom, bool const show_identifier)
 {
+    TypeOfNet const type = net.type();
     Palette const& pal = palette();
     ImVec2 const p = screen(origin, zoom, ImVec2(transition.x, transition.y));
     ImVec2 const half = nodeHalfSize(transition, type) * zoom;
@@ -717,25 +724,25 @@ void drawTransition(ImDrawList* draw_list, Transition const& transition,
     {
         // A thick line: green when it fires (enabled and true), orange when
         // only its receptivity is true.
-        bool const enabled = transition.isEnabled();
+        bool const enabled = net.isEnabled(transition);
         ImU32 color = pal.outline;
         if (transition.receptivity)
             color = enabled ? pal.active : pal.enabled;
         draw_list->AddRectFilled(p - half, p + half, color);
 
         // AND divergence (below) and AND convergence (above): double lines.
-        if (transition.arcsOut.size() >= 2u)
+        if (net.arcsOut(transition).size() >= 2u)
         {
             float x0 = transition.x, x1 = transition.x;
-            for (Arc const* a : transition.arcsOut) { x0 = std::min(x0, a->to.x); x1 = std::max(x1, a->to.x); }
+            for (Arc const& a : net.arcsOut(transition)) { x0 = std::min(x0, net.node(a.to).x); x1 = std::max(x1, net.node(a.to).x); }
             float const y = transition.y + GRAFCET_GAP;
             busLine(draw_list, origin, zoom, x0, x1, y, true);
             draw_list->AddLine(p, screen(origin, zoom, ImVec2(transition.x, y)), pal.outline, stroke(1.6f, zoom));
         }
-        if (transition.arcsIn.size() >= 2u)
+        if (net.arcsIn(transition).size() >= 2u)
         {
             float x0 = transition.x, x1 = transition.x;
-            for (Arc const* a : transition.arcsIn) { x0 = std::min(x0, a->from.x); x1 = std::max(x1, a->from.x); }
+            for (Arc const& a : net.arcsIn(transition)) { x0 = std::min(x0, net.node(a.from).x); x1 = std::max(x1, net.node(a.from).x); }
             float const y = transition.y - GRAFCET_GAP;
             busLine(draw_list, origin, zoom, x0, x1, y, true);
             draw_list->AddLine(screen(origin, zoom, ImVec2(transition.x, y)), p, pal.outline, stroke(1.6f, zoom));
@@ -765,9 +772,9 @@ void drawTransition(ImDrawList* draw_list, Transition const& transition,
 
     // Petri nets: a rounded bar, colored by its state.
     ImU32 fill = pal.fill;
-    if (transition.canFire())
+    if (net.canFire(transition))
         fill = pal.active;
-    else if (transition.isEnabled())
+    else if (net.isEnabled(transition))
         fill = (type == TypeOfNet::PetriNet) ? pal.active : pal.enabled;
     else if (transition.receptivity && (type == TypeOfNet::PetriNet))
         fill = pal.enabled;

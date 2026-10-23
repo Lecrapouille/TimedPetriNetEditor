@@ -54,7 +54,7 @@ std::string exportToPetriLaTeX(Net const& net, std::string const& filename)
     file << std::endl << "% Transitions" << std::endl;
     for (auto const& t: net.transitions())
     {
-        std::string color = (t.canFire() ? "green" : "red");
+        std::string color = (net.canFire(t) ? "green" : "red");
 
         file << "\\node[transition, "
              << "label=above:$" << t.caption << "$, "
@@ -74,16 +74,16 @@ std::string exportToPetriLaTeX(Net const& net, std::string const& filename)
             std::stringstream duration;
             duration << std::fixed << std::setprecision(2) << a.duration;
             file << "\\draw[-latex, thick] "
-                 << "(" << a.from.key << ") -- "
+                 << "(" << a.from.key() << ") -- "
                  << "node[midway, above right] "
                  << "{" << duration.str() << "} "
-                 << "(" << a.to.key << ");"
+                 << "(" << a.to.key() << ");"
                  << std::endl;
         }
         else
         {
             file << "\\draw[-latex, thick] "
-                 << "(" << a.from.key << ") -- " << "(" << a.to.key << ");"
+                 << "(" << a.from.key() << ") -- " << "(" << a.to.key() << ");"
                  << std::endl;
         }
     }

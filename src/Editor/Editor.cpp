@@ -429,7 +429,7 @@ void Editor::run(Net const& net_to_load, bool show_critical_cycle)
         openAnalysis(0);
         CriticalCycleResult const cc = findCriticalCycle(this->net());
         if (cc.success)
-            m_marked_arcs = cc.arcs;
+            markArcs(this->net(), cc.arcs);
     }
 
     // Start the infinite loop
@@ -1040,7 +1040,7 @@ bool Editor::switchOfNet(TypeOfNet const type)
     if (simulation().isRunning())
         return false;
 
-    std::vector<Arc*> arcs;
+    std::vector<size_t> arcs;
     std::string error_msg;
     if (convertTo(net(), type, error_msg, arcs))
     {
@@ -1128,7 +1128,7 @@ void Editor::removeArc(Arc const& arc)
     if ((net().type() == TypeOfNet::TimedEventGraph) &&
         (arc.to.type == Node::Type::Place))
     {
-        removeNode(arc.to);
+        removeNode(net().node(arc.to));
         return;
     }
 

@@ -65,7 +65,7 @@ std::string exportToJulia(Net const& net, std::string const& filename)
     // Show and count system inputs
     for (auto& t: canonic.transitions())
     {
-        if (t.isInput())
+        if (canonic.isInput(t))
         {
             indices[t.id] = nb_inputs++;
             file << "# " << t.key << ": input (U"
@@ -76,7 +76,7 @@ std::string exportToJulia(Net const& net, std::string const& filename)
     // Show and count system states
     for (auto& t: canonic.transitions())
     {
-        if (t.isState())
+        if (canonic.isState(t))
         {
             indices[t.id] = nb_states++;
             file << "# " << t.key << ": state (X"
@@ -87,7 +87,7 @@ std::string exportToJulia(Net const& net, std::string const& filename)
     // Show and count system outputs
     for (auto& t: canonic.transitions())
     {
-        if (t.isOutput())
+        if (canonic.isOutput(t))
         {
             indices[t.id] = nb_outputs++;
             file << "# " << t.key << ": output (Y" << nb_outputs
@@ -110,11 +110,12 @@ std::string exportToJulia(Net const& net, std::string const& filename)
     assert(res == true); (void) res;
     for (auto& p: canonic.places())
     {
-        Transition& from = *reinterpret_cast<Transition*>(&(p.arcsIn[0]->from));
-        Transition& to = *reinterpret_cast<Transition*>(&(p.arcsOut[0]->to));
+        Arc const& in = canonic.arcsIn(p)[0];
+        Transition const& from = canonic.transitionOf(in);
+        Transition const& to = canonic.transitionOf(canonic.arcsOut(p)[0]);
 
         file << "# Arc " << p.key << ": " << from.key << " -> " << to.key
-             << " (Duration: " << p.arcsIn[0]->duration
+             << " (Duration: " << in.duration
              << ", Tokens: " << p.tokens << ")" << std::endl;
     }
     size_t const nnodes = canonic.transitions().size();

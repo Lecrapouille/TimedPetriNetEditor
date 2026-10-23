@@ -15,7 +15,7 @@ namespace tpne {
 
 
 //------------------------------------------------------------------------------
-bool isEventGraph(Net const& net, std::string& error, std::vector<Arc*>& erroneous_arcs)
+bool isEventGraph(Net const& net, std::string& error, std::vector<size_t>& erroneous_arcs)
 {
     erroneous_arcs.clear();
     error.clear();
@@ -30,7 +30,9 @@ bool isEventGraph(Net const& net, std::string& error, std::vector<Arc*>& erroneo
     // system.
     for (auto const& p: net.places())
     {
-        if (!((p.arcsIn.size() == 1u) && (p.arcsOut.size() == 1u)))
+        auto const arcs_in = net.arcsIn(p);
+        auto const arcs_out = net.arcsOut(p);
+        if (!((arcs_in.size() == 1u) && (arcs_out.size() == 1u)))
         {
             std::stringstream message;
 
@@ -40,30 +42,30 @@ bool isEventGraph(Net const& net, std::string& error, std::vector<Arc*>& erroneo
             message << "The Petri net is not an event graph. Because:"
                     << std::endl;
 
-            if (p.arcsOut.size() != 1u)
+            if (arcs_out.size() != 1u)
             {
                 message << "  " << p.key
-                        << ((p.arcsOut.size() > 1u)
+                        << ((arcs_out.size() > 1u)
                             ? " has more than one output arc:"
                             : " has no output arc");
-                for (auto const& a: p.arcsOut)
+                for (size_t const a: arcs_out.indices())
                 {
                     erroneous_arcs.push_back(a);
-                    message << " " << a->to.key;
+                    message << " " << net.arcs()[a].to.key();
                 }
                 message << std::endl;
             }
 
-            if (p.arcsIn.size() != 1u)
+            if (arcs_in.size() != 1u)
             {
                 message << "  " << p.key
-                        << ((p.arcsIn.size() > 1u)
+                        << ((arcs_in.size() > 1u)
                             ? " has more than one input arc:"
                             : " has no input arc");
-                for (auto const& a: p.arcsIn)
+                for (size_t const a: arcs_in.indices())
                 {
                     erroneous_arcs.push_back(a);
-                    message << " " << a->from.key;
+                    message << " " << net.arcs()[a].from.key();
                 }
                 message << std::endl;
             }
@@ -80,7 +82,7 @@ bool isEventGraph(Net const& net, std::string& error, std::vector<Arc*>& erroneo
 bool isEventGraph(Net const& net)
 {
     std::string error;
-    std::vector<Arc*> erroneous_arcs;
+    std::vector<size_t> erroneous_arcs;
     return isEventGraph(net, error, erroneous_arcs);
 }
 
@@ -101,8 +103,9 @@ void toCanonicalForm(Net const& net, Net& canonic)
             if (p.tokens > 1u)
             {
                 // from: Transition
-                Node* from = &(p.arcsIn[0]->from);
-                float duration = p.arcsIn[0]->duration;
+                Arc const& in = canonic.arcsIn(p).front();
+                Node* from = &canonic.node(in.from);
+                float duration = in.duration;
                 size_t tokens = p.tokens - 1u;
                 canonic.removeArc(*from, p);
                 while (tokens--)
@@ -125,7 +128,6 @@ void toCanonicalForm(Net const& net, Net& canonic)
 
     // Manage Places with one token that inputs or outputs
     {
-        canonic.generateArcsInArcsOut();
         Net::Places& places = canonic.places();
         size_t i = places.size();
         while (i--)
@@ -134,10 +136,11 @@ void toCanonicalForm(Net const& net, Net& canonic)
             if (p.tokens == 1u)
             {
                 // Inputs
-                Node* from = &(p.arcsIn[0]->from);
-                if (reinterpret_cast<Transition*>(from)->isInput())
+                Arc const& in = canonic.arcsIn(p).front();
+                Transition* from = &canonic.transitionOf(in);
+                if (canonic.isInput(*from))
                 {
-                    float duration = p.arcsIn[0]->duration;
+                    float duration = in.duration;
                     canonic.removeArc(*from, p);
 
                     Node& tmp1 = canonic.addPlace(50.0f, 50.0f, 0u);
@@ -148,8 +151,8 @@ void toCanonicalForm(Net const& net, Net& canonic)
                 }
 
                 // Outputs
-                Node* to = &(p.arcsOut[0]->to);
-                if (reinterpret_cast<Transition*>(to)->isOutput())
+                Transition* to = &canonic.transitionOf(canonic.arcsOut(p).front());
+                if (canonic.isOutput(*to))
                 {
                     canonic.removeArc(p, *to);
 
@@ -184,25 +187,24 @@ void toSysLin(Net const& net,
         if (arc.from.type == Node::Type::Place)
             continue;
 
-        Transition& from = *reinterpret_cast<Transition*>(&(arc.from));
-        if (from.isInput())
+        Transition const& from = net.transitionOf(arc);
+        Place const& p = net.placeOf(arc);
+        if (net.isInput(from))
         {
-            Place& p = *reinterpret_cast<Place*>(&(arc.to));
-            for (auto& a: p.arcsOut)
+            for (auto const& a: net.arcsOut(p))
             {
                 // System inputs: B U(k)
-                Transition& to = *reinterpret_cast<Transition*>(&(a->to));
+                Transition const& to = net.transitionOf(a);
                 B.set(indices[to.id], indices[from.id],
                       static_cast<double>(arc.duration));
             }
         }
         else // States or outputs
         {
-            Place& p = *reinterpret_cast<Place*>(&(arc.to));
-            for (auto& a: p.arcsOut)
+            for (auto const& a: net.arcsOut(p))
             {
-                Transition& to = *reinterpret_cast<Transition*>(&(a->to));
-                if (to.isState())
+                Transition const& to = net.transitionOf(a);
+                if (net.isState(to))
                 {
                     // Systems states: X(k) = D X(k) (+) A X(k-1)
                     if (p.tokens == 1u)
@@ -216,7 +218,7 @@ void toSysLin(Net const& net,
                               static_cast<double>(arc.duration));
                     }
                 }
-                else if (to.isOutput())
+                else if (net.isOutput(to))
                 {
                     // System outputs: Y(k) = C X(k)
                     C.set(indices[to.id], indices[from.id],
@@ -231,7 +233,7 @@ void toSysLin(Net const& net,
 bool toSysLin(Net const& net, SparseMatrix<MaxPlus>& D, SparseMatrix<MaxPlus>& A,
               SparseMatrix<MaxPlus>& B, SparseMatrix<MaxPlus>& C)
 {
-    std::vector<Arc*> arcs;
+    std::vector<size_t> arcs;
     std::string error;
 
     // Only Petri net with places having a single input and output arcs are
@@ -256,15 +258,15 @@ bool toSysLin(Net const& net, SparseMatrix<MaxPlus>& D, SparseMatrix<MaxPlus>& A
 
     for (auto& t: canonical.transitions())
     {
-        if (t.isInput())
+        if (canonical.isInput(t))
         {
             indices[t.id] = nb_inputs++;
         }
-        if (t.isState())
+        if (canonical.isState(t))
         {
             indices[t.id] = nb_states++;
         }
-        if (t.isOutput())
+        if (canonical.isOutput(t))
         {
             indices[t.id] = nb_outputs++;
         }
@@ -287,22 +289,18 @@ bool toAdjacencyMatrices(Net const& net, SparseMatrix<MaxPlus>& tokens, SparseMa
         // Since we are sure this Petri net is an event graph: places have a
         // single input arc and a single output arc. We can merge the place and
         // its arcs into a single arc.
-        if (p.arcsIn.size() != 1u)
-            return false;
-        if (p.arcsIn[0]->from.type != Node::Type::Transition)
-            return false;
-        if (p.arcsOut.size() != 1u)
-            return false;
-        if (p.arcsOut[0]->to.type != Node::Type::Transition)
+        auto const arcs_in = net.arcsIn(p);
+        auto const arcs_out = net.arcsOut(p);
+        if ((arcs_in.size() != 1u) || (arcs_out.size() != 1u))
             return false;
 
-        Transition& from = *reinterpret_cast<Transition*>(&(p.arcsIn[0]->from));
-        Transition& to = *reinterpret_cast<Transition*>(&(p.arcsOut[0]->to));
+        Transition const& from = net.transitionOf(arcs_in[0]);
+        Transition const& to = net.transitionOf(arcs_out[0]);
 
         // Note origin and destination are inverted because we use the following
         // matrix product convension: M * x where x is a column vector.
         durations.set(from.id, to.id,
-                      static_cast<double>(p.arcsIn[0]->duration));
+                      static_cast<double>(arcs_in[0].duration));
         tokens.set(from.id, to.id, static_cast<double>(p.tokens));
     }
 
@@ -320,27 +318,29 @@ std::stringstream showCounterEquation(Net const& net, std::string const& comment
        << (minplus_notation ? " (min-plus algebra):" : ":") << std::endl;
     for (auto const& t: net.transitions())
     {
-        if (t.arcsIn.size() == 0u)
+        if (net.arcsIn(t).empty())
             continue;
 
         ss << comment << (use_caption ? t.caption : t.key) << "(t) = ";
         ss << (minplus_notation ? "" : "min(");
         std::string separator1;
-        for (auto const& ai: t.arcsIn)
+        for (auto const& ai: net.arcsIn(t))
         {
             ss << separator1;
-            if (ai->tokensIn() != 0u)
+            size_t const tokens = net.placeOf(ai).tokens;
+            if (tokens != 0u)
             {
-                ss << ai->tokensIn() << (minplus_notation ? " " : " + ");
+                ss << tokens << (minplus_notation ? " " : " + ");
             }
             std::string separator2;
-            for (auto const& ao: ai->from.arcsIn)
+            for (auto const& ao: net.arcsIn(net.placeOf(ai)))
             {
+                Transition const& from = net.transitionOf(ao);
                 ss << separator2;
-                ss << (use_caption ? ao->from.caption : ao->from.key);
-                if (ao->duration != 0.0f)
+                ss << (use_caption ? from.caption : from.key);
+                if (ao.duration != 0.0f)
                 {
-                    ss << "(t - " << ao->duration << ")";
+                    ss << "(t - " << ao.duration << ")";
                 }
                 else
                 {
@@ -367,27 +367,29 @@ std::stringstream showDaterEquation(Net const& net, std::string const& comment,
        << (maxplus_notation ? " (max-plus algebra):" : ":") << std::endl;
     for (auto const& t: net.transitions())
     {
-        if (t.arcsIn.size() == 0u)
+        if (net.arcsIn(t).empty())
             continue;
 
         ss << comment << (use_caption ? t.caption : t.key) << "(k) = ";
         ss << (maxplus_notation ? "" : "max(");
         std::string separator1;
-        for (auto const& ai: t.arcsIn)
+        for (auto const& ai: net.arcsIn(t))
         {
             ss << separator1;
             std::string separator2;
-            for (auto const& ao: ai->from.arcsIn)
+            size_t const tokens = net.placeOf(ai).tokens;
+            for (auto const& ao: net.arcsIn(net.placeOf(ai)))
             {
+                Transition const& from = net.transitionOf(ao);
                 ss << separator2;
-                if (ao->duration != 0.0f)
+                if (ao.duration != 0.0f)
                 {
-                    ss << ao->duration << (maxplus_notation ? " " : " + ");
+                    ss << ao.duration << (maxplus_notation ? " " : " + ");
                 }
-                ss << (use_caption ? ao->from.caption : ao->from.key) << "(k";
-                if (ai->tokensIn() != 0u)
+                ss << (use_caption ? from.caption : from.key) << "(k";
+                if (tokens != 0u)
                 {
-                    ss << " - " << ai->tokensIn();
+                    ss << " - " << tokens;
                 }
                 ss << ")";
 
@@ -430,17 +432,15 @@ CriticalCycleResult findCriticalCycle(Net const& net)
     {
         // Since we are sure we are an event graph: places have a single input
         // arc and a aingle output arc.
-        assert(p.arcsIn.size() == 1u);
-        assert(p.arcsIn[0]->from.type == Node::Type::Transition);
-        assert(p.arcsOut.size() == 1u);
-        assert(p.arcsOut[0]->to.type == Node::Type::Transition);
-
-        Transition& from = *reinterpret_cast<Transition*>(&(p.arcsIn[0]->from));
-        Transition& to = *reinterpret_cast<Transition*>(&(p.arcsOut[0]->to));
+        assert(net.arcsIn(p).size() == 1u);
+        assert(net.arcsOut(p).size() == 1u);
+        Arc const& in = net.arcsIn(p)[0];
+        Transition const& from = net.transitionOf(in);
+        Transition const& to = net.transitionOf(net.arcsOut(p)[0]);
 
         IJ.push_back(int(from.id)); // Transposed is needed
         IJ.push_back(int(to.id));
-        T.push_back(static_cast<double>(p.arcsIn[0]->duration));
+        T.push_back(static_cast<double>(in.duration));
         N.push_back(double(p.tokens));
     }
 
@@ -523,16 +523,14 @@ CriticalCycleResult findCriticalCycle(Net const& net)
         // Search for all places that link our transitions.
         for (auto const& p: net.places())
         {
-            assert(p.arcsIn.size() == 1u);
-            assert(p.arcsOut.size() == 1u);
-            Node* t0 = &p.arcsIn[0]->from;
-            Node* t1 = &p.arcsOut[0]->to;
-            assert(t0->type == Node::Type::Transition);
-            assert(t1->type == Node::Type::Transition);
-            if ((t1->id == from) && (t0->id == to))
+            auto const arcs_in = net.arcsIn(p);
+            auto const arcs_out = net.arcsOut(p);
+            assert(arcs_in.size() == 1u);
+            assert(arcs_out.size() == 1u);
+            if ((arcs_out[0].to.id == from) && (arcs_in[0].from.id == to))
             {
-                result.arcs.push_back(p.arcsIn[0]);
-                result.arcs.push_back(p.arcsOut[0]);
+                result.arcs.push_back(arcs_in.indices()[0]);
+                result.arcs.push_back(arcs_out.indices()[0]);
                 break;
             }
         }

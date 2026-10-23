@@ -20,16 +20,9 @@ static std::vector<size_t> const NO_MARKING;
 
 //------------------------------------------------------------------------------
 //! \brief True if all the steps upstream of the transition are active.
-static bool isEnabled(Transition const& transition)
+static bool isEnabled(Net const& net, Transition const& transition)
 {
-    if (transition.arcsIn.empty())
-        return false;
-    for (Arc const* arc : transition.arcsIn)
-    {
-        if (static_cast<Place const&>(arc->from).tokens == 0u)
-            return false;
-    }
-    return true;
+    return !net.arcsIn(transition).empty() && net.isEnabled(transition);
 }
 
 //------------------------------------------------------------------------------
@@ -138,7 +131,6 @@ bool GrafcetEngine::start()
         Net& net = *m_nets[g];
         Graph& graph = m_graphs[g];
         graph.net = &net;
-        net.generateArcsInArcsOut();
         m_compiling = &net;
 
         auto& transitions = net.transitions();
@@ -151,7 +143,7 @@ bool GrafcetEngine::start()
                 m_errors.push_back(graph.receptivities[t].error());
             for (size_t e = errors; e < m_errors.size(); ++e)
                 m_errors[e] = net.name + ": " + transitions[t].key + ": " + m_errors[e];
-            if (transitions[t].arcsIn.empty())
+            if (net.arcsIn(transitions[t]).empty())
             {
                 m_errors.push_back(net.name + ": " + transitions[t].key +
                                    " has no upstream step");
@@ -274,7 +266,7 @@ void GrafcetEngine::step(float const dt)
             graph.receptivities[t].tick(dt);
             if (transitions[t].delay > 0.0f)
             {
-                bool const ready = isEnabled(transitions[t]) && graph.receptivities[t].evaluate();
+                bool const ready = isEnabled(*graph.net, transitions[t]) && graph.receptivities[t].evaluate();
                 graph.transition_timers[t] = ready ? graph.transition_timers[t] + dt : 0.0f;
             }
         }
@@ -379,7 +371,7 @@ bool GrafcetEngine::evolve()
             {
                 Transition& transition = transitions[t];
                 transition.receptivity = graph.receptivities[t].evaluate();
-                if (graph.forced || !transition.receptivity || !isEnabled(transition))
+                if (graph.forced || !transition.receptivity || !isEnabled(*graph.net, transition))
                     continue;
                 if ((transition.delay > 0.0f) &&
                     (graph.transition_timers[t] < transition.delay))
@@ -402,16 +394,16 @@ bool GrafcetEngine::evolve()
         // downstream steps (a step deactivated and activated stays active).
         for (Fire const& f : fire)
         {
-            Transition& transition = m_graphs[f.graph].net->transitions()[f.transition];
-            for (Arc* arc : transition.arcsIn)
-                static_cast<Place&>(arc->from).tokens = 0u;
+            Net& net = *m_graphs[f.graph].net;
+            for (Arc const& arc : net.arcsIn(net.transitions()[f.transition]))
+                net.placeOf(arc).tokens = 0u;
         }
         for (Fire const& f : fire)
         {
             Graph& graph = m_graphs[f.graph];
             Transition& transition = graph.net->transitions()[f.transition];
-            for (Arc* arc : transition.arcsOut)
-                static_cast<Place&>(arc->to).tokens = 1u;
+            for (Arc const& arc : graph.net->arcsOut(transition))
+                graph.net->placeOf(arc).tokens = 1u;
             graph.transition_timers[f.transition] = 0.0f;
             m_firings.push_back({ f.graph, transition.id });
             ++m_firing_count;

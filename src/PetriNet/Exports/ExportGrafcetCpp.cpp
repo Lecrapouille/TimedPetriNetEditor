@@ -298,9 +298,9 @@ std::string exportToGrafcetCpp(Net const& net, std::string const& filename)
                 file << "        {\n";
                 file << "            bool enabled = ";
                 std::string del;
-                for (auto const& a : t.arcsIn)
+                for (auto const& a : net.arcsIn(t))
                 {
-                    file << del << "X[" << a->from.id << "]";
+                    file << del << "X[" << a.from.id << "]";
                     del = " && ";
                 }
                 file << ";\n";
@@ -320,9 +320,9 @@ std::string exportToGrafcetCpp(Net const& net, std::string const& filename)
     {
         file << "        T[" << t.id << "] = ";
         std::string del;
-        for (auto const& a : t.arcsIn)
+        for (auto const& a : net.arcsIn(t))
         {
-            file << del << "X[" << a->from.id << "]";
+            file << del << "X[" << a.from.id << "]";
             del = " && ";
         }
         file << del << "R" << t.id << "()";
@@ -340,15 +340,15 @@ std::string exportToGrafcetCpp(Net const& net, std::string const& filename)
     {
         file << "        X[" << p.id << "] = ";
         std::string del;
-        for (auto const& a : p.arcsIn)
+        for (auto const& a : net.arcsIn(p))
         {
-            file << del << "T[" << a->from.id << "]";
+            file << del << "T[" << a.from.id << "]";
             del = " || ";
         }
-        if (p.arcsIn.size() > 0u)
+        if (!net.arcsIn(p).empty())
             file << " || ";
 
-        if (p.arcsOut.size() == 0u)
+        if (net.arcsOut(p).empty())
         {
             file << "X[" << p.id << "]";
         }
@@ -356,9 +356,9 @@ std::string exportToGrafcetCpp(Net const& net, std::string const& filename)
         {
             file << "(X[" << p.id << "] && ";
             del = "";
-            for (auto const& a : p.arcsOut)
+            for (auto const& a : net.arcsOut(p))
             {
-                file << del << "!T[" << a->to.id << "]";
+                file << del << "!T[" << a.to.id << "]";
                 del = " && ";
             }
             file << ")";

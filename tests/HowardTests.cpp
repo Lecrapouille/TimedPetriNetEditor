@@ -169,18 +169,18 @@ TEST(TestHoward, TestPetriNetSemiSimple)
     ASSERT_EQ(res.durations[2], 6.5);
     ASSERT_EQ(res.durations[3], 6.5);
     ASSERT_EQ(res.arcs.size(), 6u);
-    ASSERT_STREQ(res.arcs[0]->from.key.c_str(), "T0");
-    ASSERT_STREQ(res.arcs[0]->to.key.c_str(), "P0");
-    ASSERT_STREQ(res.arcs[1]->from.key.c_str(), "P0");
-    ASSERT_STREQ(res.arcs[1]->to.key.c_str(), "T2");
-    ASSERT_STREQ(res.arcs[2]->from.key.c_str(), "T1");
-    ASSERT_STREQ(res.arcs[2]->to.key.c_str(), "P1");
-    ASSERT_STREQ(res.arcs[3]->from.key.c_str(), "P1");
-    ASSERT_STREQ(res.arcs[3]->to.key.c_str(), "T0");
-    ASSERT_STREQ(res.arcs[4]->from.key.c_str(), "T2");
-    ASSERT_STREQ(res.arcs[4]->to.key.c_str(), "P2");
-    ASSERT_STREQ(res.arcs[5]->from.key.c_str(), "P2");
-    ASSERT_STREQ(res.arcs[5]->to.key.c_str(), "T1");
+    ASSERT_STREQ(net.arcs()[res.arcs[0]].from.key().c_str(), "T0");
+    ASSERT_STREQ(net.arcs()[res.arcs[0]].to.key().c_str(), "P0");
+    ASSERT_STREQ(net.arcs()[res.arcs[1]].from.key().c_str(), "P0");
+    ASSERT_STREQ(net.arcs()[res.arcs[1]].to.key().c_str(), "T2");
+    ASSERT_STREQ(net.arcs()[res.arcs[2]].from.key().c_str(), "T1");
+    ASSERT_STREQ(net.arcs()[res.arcs[2]].to.key().c_str(), "P1");
+    ASSERT_STREQ(net.arcs()[res.arcs[3]].from.key().c_str(), "P1");
+    ASSERT_STREQ(net.arcs()[res.arcs[3]].to.key().c_str(), "T0");
+    ASSERT_STREQ(net.arcs()[res.arcs[4]].from.key().c_str(), "T2");
+    ASSERT_STREQ(net.arcs()[res.arcs[4]].to.key().c_str(), "P2");
+    ASSERT_STREQ(net.arcs()[res.arcs[5]].from.key().c_str(), "P2");
+    ASSERT_STREQ(net.arcs()[res.arcs[5]].to.key().c_str(), "T1");
 
     std::stringstream expected;
     expected << "Found 1 connected components of the optimal policy:\n"
@@ -219,18 +219,18 @@ TEST(TestHoward, TestSemiHowardExample)
     ASSERT_EQ(res.durations[1], 1.0);
     ASSERT_EQ(res.durations[2], 2.0);
     ASSERT_EQ(res.arcs.size(), 6u);
-    ASSERT_STREQ(res.arcs[0]->from.key.c_str(), "T0");
-    ASSERT_STREQ(res.arcs[0]->to.key.c_str(), "P0");
-    ASSERT_STREQ(res.arcs[1]->from.key.c_str(), "P0");
-    ASSERT_STREQ(res.arcs[1]->to.key.c_str(), "T1");
-    ASSERT_STREQ(res.arcs[2]->from.key.c_str(), "T1");
-    ASSERT_STREQ(res.arcs[2]->to.key.c_str(), "P1");
-    ASSERT_STREQ(res.arcs[3]->from.key.c_str(), "P1");
-    ASSERT_STREQ(res.arcs[3]->to.key.c_str(), "T0");
-    ASSERT_STREQ(res.arcs[4]->from.key.c_str(), "T2");
-    ASSERT_STREQ(res.arcs[4]->to.key.c_str(), "P4");
-    ASSERT_STREQ(res.arcs[5]->from.key.c_str(), "P4");
-    ASSERT_STREQ(res.arcs[5]->to.key.c_str(), "T2");
+    ASSERT_STREQ(net.arcs()[res.arcs[0]].from.key().c_str(), "T0");
+    ASSERT_STREQ(net.arcs()[res.arcs[0]].to.key().c_str(), "P0");
+    ASSERT_STREQ(net.arcs()[res.arcs[1]].from.key().c_str(), "P0");
+    ASSERT_STREQ(net.arcs()[res.arcs[1]].to.key().c_str(), "T1");
+    ASSERT_STREQ(net.arcs()[res.arcs[2]].from.key().c_str(), "T1");
+    ASSERT_STREQ(net.arcs()[res.arcs[2]].to.key().c_str(), "P1");
+    ASSERT_STREQ(net.arcs()[res.arcs[3]].from.key().c_str(), "P1");
+    ASSERT_STREQ(net.arcs()[res.arcs[3]].to.key().c_str(), "T0");
+    ASSERT_STREQ(net.arcs()[res.arcs[4]].from.key().c_str(), "T2");
+    ASSERT_STREQ(net.arcs()[res.arcs[4]].to.key().c_str(), "P4");
+    ASSERT_STREQ(net.arcs()[res.arcs[5]].from.key().c_str(), "P4");
+    ASSERT_STREQ(net.arcs()[res.arcs[5]].to.key().c_str(), "T2");
 
     std::stringstream expected;
     expected << "Found 2 connected components of the optimal policy:\n"
@@ -279,22 +279,22 @@ TEST(TestHoward, TestSemiNetherlandsExample)
     // Only the arcs lying on the critical cycle (T0 -> T1 -> T3 -> T2 -> T0)
     // are reported; the transient arcs towards T4..T7 are excluded.
     ASSERT_EQ(res.arcs.size(), 8u);
-    ASSERT_STREQ(res.arcs[0]->from.key.c_str(), "T0");
-    ASSERT_STREQ(res.arcs[0]->to.key.c_str(), "P0");
-    ASSERT_STREQ(res.arcs[1]->from.key.c_str(), "P0");
-    ASSERT_STREQ(res.arcs[1]->to.key.c_str(), "T1");
-    ASSERT_STREQ(res.arcs[2]->from.key.c_str(), "T1");
-    ASSERT_STREQ(res.arcs[2]->to.key.c_str(), "P1");
-    ASSERT_STREQ(res.arcs[3]->from.key.c_str(), "P1");
-    ASSERT_STREQ(res.arcs[3]->to.key.c_str(), "T3");
-    ASSERT_STREQ(res.arcs[4]->from.key.c_str(), "T2");
-    ASSERT_STREQ(res.arcs[4]->to.key.c_str(), "P2");
-    ASSERT_STREQ(res.arcs[5]->from.key.c_str(), "P2");
-    ASSERT_STREQ(res.arcs[5]->to.key.c_str(), "T0");
-    ASSERT_STREQ(res.arcs[6]->from.key.c_str(), "T3");
-    ASSERT_STREQ(res.arcs[6]->to.key.c_str(), "P4");
-    ASSERT_STREQ(res.arcs[7]->from.key.c_str(), "P4");
-    ASSERT_STREQ(res.arcs[7]->to.key.c_str(), "T2");
+    ASSERT_STREQ(net.arcs()[res.arcs[0]].from.key().c_str(), "T0");
+    ASSERT_STREQ(net.arcs()[res.arcs[0]].to.key().c_str(), "P0");
+    ASSERT_STREQ(net.arcs()[res.arcs[1]].from.key().c_str(), "P0");
+    ASSERT_STREQ(net.arcs()[res.arcs[1]].to.key().c_str(), "T1");
+    ASSERT_STREQ(net.arcs()[res.arcs[2]].from.key().c_str(), "T1");
+    ASSERT_STREQ(net.arcs()[res.arcs[2]].to.key().c_str(), "P1");
+    ASSERT_STREQ(net.arcs()[res.arcs[3]].from.key().c_str(), "P1");
+    ASSERT_STREQ(net.arcs()[res.arcs[3]].to.key().c_str(), "T3");
+    ASSERT_STREQ(net.arcs()[res.arcs[4]].from.key().c_str(), "T2");
+    ASSERT_STREQ(net.arcs()[res.arcs[4]].to.key().c_str(), "P2");
+    ASSERT_STREQ(net.arcs()[res.arcs[5]].from.key().c_str(), "P2");
+    ASSERT_STREQ(net.arcs()[res.arcs[5]].to.key().c_str(), "T0");
+    ASSERT_STREQ(net.arcs()[res.arcs[6]].from.key().c_str(), "T3");
+    ASSERT_STREQ(net.arcs()[res.arcs[6]].to.key().c_str(), "P4");
+    ASSERT_STREQ(net.arcs()[res.arcs[7]].from.key().c_str(), "P4");
+    ASSERT_STREQ(net.arcs()[res.arcs[7]].to.key().c_str(), "T2");
 
     std::stringstream expected;
     expected << "Found 1 connected components of the optimal policy:\n"

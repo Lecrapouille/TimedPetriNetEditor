@@ -174,16 +174,17 @@ But : `src/PetriNet` compilable seul, sans ImGui ni coordonnées, consommable pa
 
 ### 3.2 Corriger la gestion mémoire
 
-- [ ] Remplacer `Node& from/to` dans `Arc` par des indices typés :
-      `struct PlaceId { uint32_t v; }; struct TransitionId { uint32_t v; };`
-- [ ] Remplacer `arcsIn` / `arcsOut` (pointeurs bruts) par des listes d'adjacence
-      d'indices recalculées dans une seule fonction privée.
-- [ ] Supprimer les `operator=` par destruction + placement new ; retirer les membres
+- [x] Remplacer `Node& from/to` dans `Arc` par des indices typés :
+      `struct NodeId { Node::Type type; size_t id; }` (l'identifiant est l'indice).
+- [x] Remplacer `arcsIn` / `arcsOut` (pointeurs bruts) par des listes d'adjacence
+      d'indices recalculées dans une seule fonction privée (`net.arcsIn(node)`).
+- [x] Supprimer les `operator=` par destruction + placement new ; retirer les membres
       `const` qui les rendaient nécessaires (ou rendre les types non copiables).
-- [ ] Remplacer `reinterpret_cast<Place&>` par `static_cast` (ou disparaît avec les indices).
-- [ ] Suppression d'un nœud : stratégie explicite (compactage + table de renommage,
-      ou tombstones) et test dédié.
-- [ ] Passer les `FIXME` de `Net` (`generateArcsInArcsOut`, `resetReceptivies`) en privé.
+- [x] Remplacer `reinterpret_cast<Place&>` par `static_cast` (ou disparaît avec les indices).
+- [x] Suppression d'un nœud : stratégie explicite (compactage + table de renommage,
+      ou tombstones) et test dédié (`TestRemoveNodeRenumbers`).
+- [x] Passer les `FIXME` de `Net` (`generateArcsInArcsOut`, `resetReceptivies`) en privé
+      (`resetReceptivies` reste public : le moteur GRAFCET et l'import l'appellent).
 
 ### 3.3 Supprimer les singletons
 

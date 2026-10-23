@@ -12,8 +12,7 @@
 
 namespace tpne {
 
-class Arc;
-class Place;
+class Net;
 enum class TypeOfNet;
 
 // *****************************************************************************
@@ -28,48 +27,16 @@ enum class TypeOfNet;
 struct TimedToken
 {
     //--------------------------------------------------------------------------
-    //! \brief Constructor.
-    //! \param[in] arc_: to which arc token are moving along. Shall be an arc
-    //! Transition -> Place. No check is performed here.
+    //! \brief Constructor. The positions of the ends of the arc are read now.
+    //! \param[in] net: the net owning the arc.
+    //! \param[in] arc_: index in Net::arcs() of the arc the tokens are moving
+    //! along. Shall be an arc Transition -> Place.
     //! \param[in] tokens_: the number of tokens it shall carry.
     //! \param[in] type_: Type of the net (Petri, timed Petri, GRAFCET ...)
     //--------------------------------------------------------------------------
-    TimedToken(Arc& arc_, size_t const tokens_, TypeOfNet const type_);
-#if 0
-    //--------------------------------------------------------------------------
-    //! \brief Hack needed because of references
-    //--------------------------------------------------------------------------
-    TimedToken& operator=(TimedToken const& other)
-    {
-        this->~TimedToken(); // destroy
-        new (this) TimedToken(other); // copy construct in place
-        return *this;
-    }
+    TimedToken(Net const& net, size_t const arc_, size_t const tokens_,
+               TypeOfNet const type_);
 
-    //--------------------------------------------------------------------------
-    //! \brief Needed to remove compilation warnings
-    //--------------------------------------------------------------------------
-    TimedToken(TimedToken const& other)
-        : TimedToken(other.arc, other.tokens, other.type)
-    {}
-
-    //--------------------------------------------------------------------------
-    //! \brief Needed to remove compilation warnings
-    //--------------------------------------------------------------------------
-    TimedToken(TimedToken&& other)
-        : TimedToken(other.arc, other.tokens, other.type)
-    {}
-
-    //--------------------------------------------------------------------------
-    //! \brief Needed to remove compilation warnings
-    //--------------------------------------------------------------------------
-    TimedToken& operator=(TimedToken&& other)
-    {
-        this->~TimedToken(); // destroy
-        new (this) TimedToken(other); // copy construct in place
-        return *this;
-    }
-#endif
     //--------------------------------------------------------------------------
     //! \brief Update position on the screen.
     //! \param[in] dt: the delta time (in seconds) from the previous call.
@@ -77,15 +44,10 @@ struct TimedToken
     //--------------------------------------------------------------------------
     bool update(float const dt);
 
-    //--------------------------------------------------------------------------
-    //! \brief Return the reference of the destination node casted as a Place.
-    //! \note Since Tokens are animated from Transition to Places there is no
-    //! confusion possible in the type of destination node.
-    //--------------------------------------------------------------------------
-    Place& toPlace();
-
-    //! \brief In which arc the token is moving along.
-    Arc* arc;
+    //! \brief Index in Net::arcs() of the arc the token is moving along.
+    size_t arc;
+    //! \brief Identifier of the destination place.
+    size_t place;
     //! \brief X-axis coordinate in the window used for the display.
     float x;
     //! \brief Y-axis coordinate in the window used for the display.
@@ -94,8 +56,13 @@ struct TimedToken
     size_t tokens;
     //! \brief
     TypeOfNet type;
+    //! \brief Origin and destination positions of the animation (for timed
+    //! event graphs, the destination is the transition after the place).
+    float x0, y0, x1, y1;
     //! \brief The length of the arc.
     float magnitude;
+    //! \brief Time to travel the arc (seconds).
+    float travel_time = 1.0f;
     //! \brief The speed of the token moving along the arc.
     float speed;
     //! \brief What ratio the token has transitioned over the arc (0%: origin

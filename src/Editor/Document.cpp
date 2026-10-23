@@ -429,10 +429,10 @@ void Document::traceGrafcet()
 
         // "t = 1.20  Production: T1 [30s/X1]  X1 -> X2"
         std::string from, to;
-        for (Arc const* arc : transition->arcsIn)
-            from += (from.empty() ? "X" : ", X") + std::to_string(arc->from.id);
-        for (Arc const* arc : transition->arcsOut)
-            to += (to.empty() ? "X" : ", X") + std::to_string(arc->to.id);
+        for (Arc const& arc : net.arcsIn(*transition))
+            from += (from.empty() ? "X" : ", X") + std::to_string(arc.from.id);
+        for (Arc const& arc : net.arcsOut(*transition))
+            to += (to.empty() ? "X" : ", X") + std::to_string(arc.to.id);
         char date[32];
         std::snprintf(date, sizeof(date), "t = %.2f  ", double(m_grafcet.time()));
         m_messages.setTrace(std::string(date) + net.name + ": " + transition->key + " [" +

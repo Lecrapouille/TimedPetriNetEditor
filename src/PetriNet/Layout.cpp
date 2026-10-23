@@ -30,7 +30,7 @@ void arrangeTopDown(Net& net)
     // Roots: initial steps, else places without input, else the first place.
     for (auto& place : net.places())
     {
-        if ((place.tokens > 0u) || place.arcsIn.empty())
+        if ((place.tokens > 0u) || net.arcsIn(place).empty())
         {
             layer[&place] = 0;
             xpos[&place] = x0;
@@ -48,10 +48,11 @@ void arrangeTopDown(Net& net)
     {
         Node* node = queue[i];
         size_t index = 0u;
-        size_t const count = node->arcsOut.size();
-        for (Arc* arc : node->arcsOut)
+        auto const arcs = net.arcsOut(*node);
+        size_t const count = arcs.size();
+        for (Arc const& arc : arcs)
         {
-            Node* next = &arc->to;
+            Node* next = &net.node(arc.to);
             if (layer.count(next) != 0u)
                 continue;
             layer[next] = layer[node] + 1;

@@ -62,17 +62,17 @@ std::string exportToSymfony(Net const& net, std::string const& filename)
         file << "                " << t.caption << ":" << std::endl;
         file << "                    from:" << std::endl;
 
-        for (auto const& it: t.arcsIn)
+        for (auto const& it: net.arcsIn(t))
         {
-            file << "                        - " << it->from.caption << std::endl;
+            file << "                        - " << net.node(it.from).caption << std::endl;
         }
 
 
         // To
         file << "                    to:" << std::endl;
-        for (auto const& it: t.arcsOut)
+        for (auto const& it: net.arcsOut(t))
         {
-            file << "                        - " << it->to.caption << std::endl;
+            file << "                        - " << net.node(it.to).caption << std::endl;
         }
     }
     return {};

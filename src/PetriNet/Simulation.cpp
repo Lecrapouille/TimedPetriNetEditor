@@ -103,9 +103,6 @@ bool Simulation::hasInitialMarking() const
 //------------------------------------------------------------------------------
 void Simulation::initializeRuntimeState()
 {
-    // Generate arcsIn and arcsOut for each transition
-    m_net.generateArcsInArcsOut();
-
     // Memorize initial marking for restoring after the simulation
     storeInitialMarking();
 
@@ -139,7 +136,7 @@ void Simulation::initializeRuntimeState()
 }
 
 //------------------------------------------------------------------------------
-std::vector<Transition*> const& Simulation::shuffleTransitions(bool const reset)
+std::vector<size_t> const& Simulation::shuffleTransitions(bool const reset)
 {
     static std::random_device rd;
     static std::mt19937 g(rd());
@@ -150,7 +147,7 @@ std::vector<Transition*> const& Simulation::shuffleTransitions(bool const reset)
         m_shuffled_transitions.reserve(m_net.transitions().size());
         for (auto& trans : m_net.transitions())
         {
-            m_shuffled_transitions.push_back(&trans);
+            m_shuffled_transitions.push_back(trans.id);
         }
     }
     std::shuffle(m_shuffled_transitions.begin(), m_shuffled_transitions.end(), g);
@@ -334,7 +331,7 @@ void Simulation::updateTransitionDelayTimers(float const dt)
     {
         if (t.delay > 0.0f)
         {
-            if (t.isEnabled() && t.receptivity)
+            if (m_net.canFire(t))
             {
                 m_transition_delay_timers[t.id] += dt;
             }
@@ -354,8 +351,8 @@ void Simulation::fireTransitions()
     // Reset arc token counts
     std::fill(m_arc_token_counts.begin(), m_arc_token_counts.end(), 0u);
 
-    // Collect arcs that will carry animated tokens
-    std::vector<std::pair<Arc*, size_t>> arcs_to_animate; // arc, arc_index
+    // Collect arcs that will carry animated tokens (indices in Net::arcs())
+    std::vector<size_t> arcs_to_animate;
     arcs_to_animate.reserve(32u);
 
     do
@@ -363,13 +360,14 @@ void Simulation::fireTransitions()
         auto& transitions = shuffleTransitions();
         consuming = 0u;
 
-        for (auto* trans : transitions)
+        for (size_t const id : transitions)
         {
+            Transition* trans = &m_net.transitions()[id];
             // Check delay timer for GRAFCET temporization
             if (trans->delay > 0.0f && m_transition_delay_timers[trans->id] < trans->delay)
                 continue;
 
-            const size_t tokens = trans->maxTokensToConsume();
+            const size_t tokens = m_net.maxTokensToConsume(*trans);
 
             if (tokens > 0u)
             {
@@ -382,42 +380,31 @@ void Simulation::fireTransitions()
                     trace(*trans, tokens);
                 }
 
-                if (trans->isInput())
+                if (m_net.isInput(*trans))
                 {
                     consuming = 0u;
                     trans->receptivity = false;
                 }
                 else
                 {
-                    for (auto* a : trans->arcsIn)
+                    for (auto const& a : m_net.arcsIn(*trans))
                     {
-                        size_t& tks = a->tokensIn();
+                        size_t& tks = m_net.placeOf(a).tokens;
                         assert(tks >= tokens);
                         tks -= tokens;
-
-                        if (m_net.type() == TypeOfNet::PetriNet)
-                        {
-                            Transition& tr = reinterpret_cast<Transition&>(a->to);
-                            tr.receptivity = false;
-                        }
+                    }
+                    if (m_net.type() == TypeOfNet::PetriNet)
+                    {
+                        trans->receptivity = false;
                     }
                 }
 
                 // Count tokens for animation using arc indices
-                for (auto* a : trans->arcsOut)
+                for (size_t const arc_idx : m_net.arcsOut(*trans).indices())
                 {
-                    // Find arc index
-                    size_t arc_idx = 0;
-                    for (auto& arc : m_net.arcs())
-                    {
-                        if (&arc == a)
-                            break;
-                        ++arc_idx;
-                    }
-
                     if (m_arc_token_counts[arc_idx] == 0u)
                     {
-                        arcs_to_animate.push_back({a, arc_idx});
+                        arcs_to_animate.push_back(arc_idx);
                     }
                     m_arc_token_counts[arc_idx] += tokens;
                 }
@@ -426,17 +413,17 @@ void Simulation::fireTransitions()
     } while (consuming != 0u);
 
     // Create animated tokens
-    for (auto& [arc, arc_idx] : arcs_to_animate)
+    for (size_t const arc_idx : arcs_to_animate)
     {
         size_t count = m_arc_token_counts[arc_idx];
         if (count > 0u)
         {
             std::cout << current_time()
-                      << "Transition " << arc->from.caption << " consumed "
-                      << count << " token" << (count == 1u ? "" : "s")
+                      << "Transition " << m_net.transitionOf(m_net.arcs()[arc_idx]).caption
+                      << " consumed " << count << " token" << (count == 1u ? "" : "s")
                       << std::endl;
 
-            m_timed_tokens.emplace_back(*arc, count, m_net.type());
+            m_timed_tokens.emplace_back(m_net, arc_idx, count, m_net.type());
             m_arc_token_counts[arc_idx] = 0u;
         }
     }
@@ -451,10 +438,10 @@ void Simulation::trace(Transition const& transition, size_t const tokens)
     // Same words as the Gantt chart: an operation "<machine>_<piece>" of a
     // flowshop starts on its machine; k counts the firings of the transition.
     float duration = 0.0f;
-    for (Arc const* arc : transition.arcsOut)
+    for (Arc const& arc : m_net.arcsOut(transition))
     {
-        if (!std::isnan(arc->duration))
-            duration = std::max(duration, arc->duration);
+        if (!std::isnan(arc.duration))
+            duration = std::max(duration, arc.duration);
     }
     std::string const name = transition.caption.empty() ? transition.key : transition.caption;
     std::string machine, piece;
@@ -497,18 +484,20 @@ void Simulation::animateTokens(float const dt)
         TimedToken& token = m_timed_tokens[i];
         if (token.update(dt))
         {
+            Arc const& arc = m_net.arcs()[token.arc];
+            Place& place = m_net.placeOf(arc);
             std::cout << current_time()
-                      << "Place " << token.arc->to.caption
+                      << "Place " << place.caption
                       << " got " << token.tokens << " token"
                       << (token.tokens == 1u ? "" : "s")
                       << std::endl;
 
-            static_cast<Place&>(token.arc->to).increment(token.tokens);
+            place.increment(token.tokens);
 
             if (m_net.type() != TypeOfNet::PetriNet)
             {
-                Transition& t = reinterpret_cast<Transition&>(token.arc->from);
-                if (t.isInput())
+                Transition& t = m_net.transitionOf(arc);
+                if (m_net.isInput(t))
                 {
                     t.receptivity = true;
                 }

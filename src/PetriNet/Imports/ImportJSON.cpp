@@ -146,8 +146,34 @@ static std::string parseNetFromJSON(Net& net, nlohmann::json const& jnet)
     net.name = std::string(jnet["name"]);
     net.description = jnet.value("description", "");
 
+    // Identifiers of nodes are their indices in the net: they shall be
+    // 0 .. n-1, in any order in the file.
+    auto const sorted = [&error](nlohmann::json const& nodes, char const* what)
+    {
+        std::vector<nlohmann::json const*> result(nodes.size(), nullptr);
+        for (nlohmann::json const& n : nodes)
+        {
+            size_t const id = n["id"];
+            if ((id >= result.size()) || (result[id] != nullptr))
+            {
+                error << "The identifiers of " << what << " shall be 0 .. "
+                      << (result.size() - 1u) << " without duplicate (" << id << ")";
+                return std::vector<nlohmann::json const*>{};
+            }
+            result[id] = &n;
+        }
+        return result;
+    };
+    auto const places = sorted(jnet["places"], "places");
+    if (!error.str().empty())
+        return error.str();
+    auto const transitions = sorted(jnet["transitions"], "transitions");
+    if (!error.str().empty())
+        return error.str();
+
     // Places
-    for (nlohmann::json const& p : jnet["places"]) {
+    for (nlohmann::json const* jp : places) {
+        nlohmann::json const& p = *jp;
         Place& place = net.addPlace(p["id"], p["caption"], p["x"], p["y"], p["tokens"]);
 
         // GRAFCET actions embedded in place
@@ -163,7 +189,8 @@ static std::string parseNetFromJSON(Net& net, nlohmann::json const& jnet)
     // Transitions. Old files wrote GRAFCET receptivities in reverse polish
     // notation: converted when they are not a valid infix expression.
     bool const grafcet = (net.type() == TypeOfNet::GRAFCET);
-    for (nlohmann::json const& t : jnet["transitions"]) {
+    for (nlohmann::json const* jt : transitions) {
+        nlohmann::json const& t = *jt;
         std::string caption = t["caption"];
         if (grafcet && !Receptivity::check(caption).empty())
             caption = rpnToInfix(caption);

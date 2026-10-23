@@ -42,7 +42,7 @@ std::string exportToGraphviz(Net const& net, std::string const& filename)
     file << "node [shape=box, color=red]" << std::endl;
     for (auto const& t: net.transitions())
     {
-        if (t.canFire())
+        if (net.canFire(t))
         {
             file << "  " << t.key << " [label=\""
                  << t.caption << "\", color=green];"
@@ -60,7 +60,7 @@ std::string exportToGraphviz(Net const& net, std::string const& filename)
     file << "edge [style=\"\"]" << std::endl;
     for (auto const& a: net.arcs())
     {
-        file << "  " << a.from.key << " -> " << a.to.key;
+        file << "  " << a.from.key() << " -> " << a.to.key();
         if (a.from.type == Node::Type::Transition)
         {
             file << " [label=\"" << a.duration << "\"]";

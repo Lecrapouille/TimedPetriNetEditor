@@ -101,6 +101,7 @@ static std::string getStepNumber(Place const& p)
 // DFS pre-pass to detect all back edges (arcs to an ancestor in the DFS tree)
 //------------------------------------------------------------------------------
 static void detectBackEdgesDFS(
+    Net const& net,
     Node const& node,
     std::set<std::string>& visited,
     std::set<std::string>& inStack,
@@ -110,16 +111,16 @@ static void detectBackEdgesDFS(
     visited.insert(node.key);
     inStack.insert(node.key);
 
-    for (auto const* arc : node.arcsOut)
+    for (auto const& arc : net.arcsOut(node))
     {
-        if (inStack.count(arc->to.key) > 0)
+        if (inStack.count(arc.to.key()) > 0)
         {
-            backEdges.push_back({node.key, arc->to.key});
-            loopTargets.insert(arc->to.key);
+            backEdges.push_back({node.key, arc.to.key()});
+            loopTargets.insert(arc.to.key());
         }
-        else if (visited.count(arc->to.key) == 0)
+        else if (visited.count(arc.to.key()) == 0)
         {
-            detectBackEdgesDFS(arc->to, visited, inStack, backEdges, loopTargets);
+            detectBackEdgesDFS(net, net.node(arc.to), visited, inStack, backEdges, loopTargets);
         }
     }
 
@@ -130,20 +131,22 @@ static void detectBackEdgesDFS(
 // BFS to find the common convergence point for a Fork's branches
 //------------------------------------------------------------------------------
 static std::string findForkConvergence(
+    Net const& net,
     Transition const& forkTrans,
     std::set<std::string> const& convergenceTransitions)
 {
-    if (forkTrans.arcsOut.size() < 2)
+    auto const branches = net.arcsOut(forkTrans);
+    if (branches.size() < 2)
         return "";
 
-    std::vector<std::set<std::string>> reachable(forkTrans.arcsOut.size());
+    std::vector<std::set<std::string>> reachable(branches.size());
 
-    for (size_t i = 0; i < forkTrans.arcsOut.size(); ++i)
+    for (size_t i = 0; i < branches.size(); ++i)
     {
         std::queue<Node const*> q;
         std::set<std::string> seen;
-        q.push(&forkTrans.arcsOut[i]->to);
-        seen.insert(forkTrans.arcsOut[i]->to.key);
+        q.push(&net.node(branches[i].to));
+        seen.insert(branches[i].to.key());
 
         while (!q.empty())
         {
@@ -156,10 +159,10 @@ static std::string findForkConvergence(
                 continue;
             }
 
-            for (auto const* a : cur->arcsOut)
+            for (auto const& a : net.arcsOut(*cur))
             {
-                if (seen.insert(a->to.key).second)
-                    q.push(&a->to);
+                if (seen.insert(a.to.key()).second)
+                    q.push(&net.node(a.to));
             }
         }
     }
@@ -185,6 +188,7 @@ static std::string findForkConvergence(
 // without following any back edges (to avoid traversing unrelated loops)
 //------------------------------------------------------------------------------
 static bool branchHasBackEdgeTo(
+    Net const& net,
     Node const& node,
     std::string const& targetKey,
     std::vector<BackEdge> const& backEdges,
@@ -200,12 +204,12 @@ static bool branchHasBackEdgeTo(
             return true;
     }
 
-    for (auto const* arc : node.arcsOut)
+    for (auto const& arc : net.arcsOut(node))
     {
         bool isAnyBackEdge = false;
         for (auto const& be : backEdges)
         {
-            if (be.fromKey == node.key && be.toKey == arc->to.key)
+            if (be.fromKey == node.key && be.toKey == arc.to.key())
             {
                 isAnyBackEdge = true;
                 break;
@@ -214,7 +218,7 @@ static bool branchHasBackEdgeTo(
         if (isAnyBackEdge)
             continue;
 
-        if (branchHasBackEdgeTo(arc->to, targetKey, backEdges, visited))
+        if (branchHasBackEdgeTo(net, net.node(arc.to), targetKey, backEdges, visited))
             return true;
     }
     return false;
@@ -238,20 +242,21 @@ static void generateFromTransition(Transition const& trans, GrafcetContext& ctx,
     ctx.generated.insert(trans.key);
     ctx.output << ctx.indent() << "\\Transition{" << escapeLaTeX(trans.caption) << "}\n";
 
-    if (trans.arcsOut.size() == 1)
+    auto const outputs = ctx.net.arcsOut(trans);
+    if (outputs.size() == 1)
     {
-        auto const& next = trans.arcsOut[0]->to;
+        auto const& next = ctx.net.node(outputs[0].to);
         if (!ctx.isBackEdgeArc(trans.key, next.key))
         {
             generateFromPlace(
                 static_cast<Place const&>(next), ctx, stopAtKey);
         }
     }
-    else if (trans.arcsOut.size() > 1)
+    else if (outputs.size() > 1)
     {
-        // Fork (ET divergence): transition with multiple arcsOut
+        // Fork (ET divergence): transition with multiple output arcs
         std::string convKey = findForkConvergence(
-            trans, ctx.convergenceTransitions);
+            ctx.net, trans, ctx.convergenceTransitions);
         std::string branchStop = convKey.empty() ? stopAtKey : convKey;
 
         ctx.output << ctx.indent() << "\\Fork{\n";
@@ -259,7 +264,7 @@ static void generateFromTransition(Transition const& trans, GrafcetContext& ctx,
 
         std::set<std::string> allGenerated;
         bool first = true;
-        for (auto const* arc : trans.arcsOut)
+        for (auto const& arc : outputs)
         {
             if (!first)
             {
@@ -270,8 +275,7 @@ static void generateFromTransition(Transition const& trans, GrafcetContext& ctx,
             first = false;
 
             std::set<std::string> saved = ctx.generated;
-            generateFromPlace(
-                static_cast<Place const&>(arc->to), ctx, branchStop);
+            generateFromPlace(ctx.net.placeOf(arc), ctx, branchStop);
             for (auto const& key : ctx.generated)
                 allGenerated.insert(key);
             ctx.generated = saved;
@@ -306,7 +310,8 @@ static void generateFromPlace(Place const& place, GrafcetContext& ctx,
     ctx.generated.insert(place.key);
 
     bool isLoopTarget = (ctx.loopTargets.count(place.key) > 0);
-    bool hasDivergence = (place.arcsOut.size() > 1);
+    auto const outputs = ctx.net.arcsOut(place);
+    bool hasDivergence = (outputs.size() > 1);
 
     // For a loop target with divergence, check which branches loop back
     std::vector<bool> branchLoops;
@@ -314,12 +319,12 @@ static void generateFromPlace(Place const& place, GrafcetContext& ctx,
 
     if (isLoopTarget && hasDivergence)
     {
-        branchLoops.resize(place.arcsOut.size(), false);
-        for (size_t i = 0; i < place.arcsOut.size(); ++i)
+        branchLoops.resize(outputs.size(), false);
+        for (size_t i = 0; i < outputs.size(); ++i)
         {
             std::set<std::string> v;
             if (branchHasBackEdgeTo(
-                    place.arcsOut[i]->to, place.key,
+                    ctx.net, ctx.net.node(outputs[i].to), place.key,
                     ctx.backEdges, v))
             {
                 branchLoops[i] = true;
@@ -333,7 +338,7 @@ static void generateFromPlace(Place const& place, GrafcetContext& ctx,
     //  - loop target with divergence where ALL branches loop back
     bool wrapAll = isLoopTarget &&
         (!hasDivergence ||
-         loopingCount == static_cast<int>(place.arcsOut.size()));
+         loopingCount == static_cast<int>(outputs.size()));
 
     if (wrapAll)
     {
@@ -348,9 +353,9 @@ static void generateFromPlace(Place const& place, GrafcetContext& ctx,
         ctx.output << ctx.indent() << "\\Step["
                    << getStepNumber(place) << "]{}\n";
 
-    if (place.arcsOut.size() == 1)
+    if (outputs.size() == 1)
     {
-        auto const& next = place.arcsOut[0]->to;
+        auto const& next = ctx.net.node(outputs[0].to);
         if (next.key != stopAtKey)
         {
             generateFromTransition(
@@ -364,7 +369,7 @@ static void generateFromPlace(Place const& place, GrafcetContext& ctx,
 
         std::set<std::string> allGenerated;
         bool first = true;
-        for (size_t i = 0; i < place.arcsOut.size(); ++i)
+        for (size_t i = 0; i < outputs.size(); ++i)
         {
             if (!first)
             {
@@ -386,9 +391,7 @@ static void generateFromPlace(Place const& place, GrafcetContext& ctx,
             }
 
             std::set<std::string> saved = ctx.generated;
-            generateFromTransition(
-                static_cast<Transition const&>(place.arcsOut[i]->to),
-                ctx, stopAtKey);
+            generateFromTransition(ctx.net.transitionOf(outputs[i]), ctx, stopAtKey);
             for (auto const& key : ctx.generated)
                 allGenerated.insert(key);
             ctx.generated = saved;
@@ -438,13 +441,13 @@ std::string exportToGrafcetLaTeX(Net const& net, std::string const& filename)
 
     {
         std::set<std::string> visited, inStack;
-        detectBackEdgesDFS(*init, visited, inStack,
+        detectBackEdgesDFS(net, *init, visited, inStack,
                            ctx.backEdges, ctx.loopTargets);
     }
 
     for (auto const& t : net.transitions())
     {
-        if (t.arcsIn.size() > 1)
+        if (net.arcsIn(t).size() > 1)
             ctx.convergenceTransitions.insert(t.key);
     }
 

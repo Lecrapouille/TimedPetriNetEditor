@@ -294,7 +294,6 @@ void Editor::menuEdit()
     {
         auto action = std::make_unique<NetModificationAction>([this]() -> Net& { return net(); });
         action->before(net());
-        net().generateArcsInArcsOut();
         arrangeTopDown(net());
         action->after(net());
         m_history.add(std::move(action));
@@ -466,7 +465,7 @@ void Editor::menuGraphEvents()
             {
                 CriticalCycleResult const cc = findCriticalCycle(net());
                 if (cc.success)
-                    m_marked_arcs = cc.arcs;
+                    markArcs(net(), cc.arcs);
             }
         }
     }
