@@ -1,0 +1,36 @@
+{
+  "revision": 2,
+  "type": "Petri net",
+  "description": "Runtime example: each transition is a function of the robot. The result of grasp (Success or Failed) colors the token of Held, and the colors asked by the arcs choose place or retry.",
+  "nets": [
+    {
+       "name": "Pick and place",
+       "places": [
+            { "id": 0, "caption": "Ready", "tokens": 1 },
+            { "id": 1, "caption": "Seen", "tokens": 0 },
+            { "id": 2, "caption": "Held", "tokens": 0 },
+            { "id": 3, "caption": "Done", "tokens": 0 }
+       ],
+       "transitions": [
+            { "id": 0, "caption": "detect" },
+            { "id": 1, "caption": "grasp" },
+            { "id": 2, "caption": "place" },
+            { "id": 3, "caption": "retry" }
+       ],
+       "arcs": [
+            { "from": "P0", "to": "T0" },
+            { "from": "T0", "to": "P1", "duration": 0 },
+            { "from": "P1", "to": "T1" },
+            { "from": "T1", "to": "P2", "duration": 0 },
+            { "from": "P2", "to": "T2", "color": "Success" },
+            { "from": "T2", "to": "P3", "duration": 0 },
+            { "from": "P2", "to": "T3", "color": "Failed" },
+            { "from": "T3", "to": "P1", "duration": 0 }
+       ],
+       "layout": {
+          "places": [ [100, 150], [300, 150], [500, 150], [700, 150] ],
+          "transitions": [ [200, 150], [400, 150], [600, 150], [400, 260] ]
+       }
+    }
+  ]
+}

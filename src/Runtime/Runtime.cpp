@@ -669,7 +669,8 @@ bool Runtime::step(Instance& instance, double const now)
     }
     double const date = now - instance.m_origin;
 
-    fireAll(self);
+    // The events of the time up to now, in their order, then the requests
+    // posted since the last step (ends of functions ...), dated now.
     for (double next = nextEventDate(instance);
          instance.isRunning() && !instance.m_paused && (next <= date);
          next = nextEventDate(instance))

@@ -10,6 +10,7 @@
 
 #  include <cctype>
 #  include <memory>
+#  include <cstdlib>
 #  include <string>
 #  include <map>
 #  include <set>
@@ -115,11 +116,13 @@ inline Forcing parseForcing(std::string const& str)
         {
             while (!token.empty() && std::isspace(token.front())) token.erase(0, 1);
             while (!token.empty() && std::isspace(token.back())) token.pop_back();
-            if (!token.empty())
+            // Numbers only, read without exception (micro-controllers).
+            char* end = nullptr;
+            unsigned long const step = std::strtoul(token.c_str(), &end, 10);
+            if (!token.empty() && std::isdigit(static_cast<unsigned char>(token.front())) &&
+                (end != nullptr) && (*end == '\0'))
             {
-                try {
-                    f.steps.push_back(std::stoul(token));
-                } catch (...) {}
+                f.steps.push_back(step);
             }
         }
     }

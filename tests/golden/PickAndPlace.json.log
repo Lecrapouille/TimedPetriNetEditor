@@ -1,0 +1,6 @@
+net Pick and place
+initial: 1 0 0 0
+t=0 T0 k=1
+t=1 T1 k=1
+t=2 T2 k=1
+final t=3: 0 0 0 1 (deadlock)

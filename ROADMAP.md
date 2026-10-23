@@ -316,8 +316,8 @@ while (rt.step(inst, now())) { /*...*/ }    // non bloquant, dans ta boucle
       comme chez Symmetri : un sous-réseau rend son état comme résultat).
 - [x] Transitions temporisées : durée fixe de l'arc/transition gérée par la file
       d'événements (sans thread qui dort).
-- [ ] Timeout = transition concurrente temporisée vers une place d'erreur
-      (documenter le motif dans les exemples).
+- [x] Timeout = transition concurrente temporisée vers une place d'erreur
+      (documenter le motif dans les exemples) : `examples/runtime/MicroServices.cpp`.
 
 ### 6.4 Journal et persistance
 
@@ -330,10 +330,13 @@ while (rt.step(inst, now())) { /*...*/ }    // non bloquant, dans ta boucle
 
 ### 6.5 Cibles
 
-- [ ] Desktop / micro-services : pool de threads.
-- [ ] ROS 2 : exécuteur qui appelle `step()` dans un timer, callbacks = actions ROS.
-- [ ] Arduino : mode mono-thread sans allocation dynamique après l'init,
-      `step()` dans `loop()`, pas d'exceptions ni de RTTI.
+- [x] Desktop / micro-services : pool de threads (`PickAndPlace.cpp`, `MicroServices.cpp`).
+- [x] ROS 2 : exécuteur qui appelle `step()` dans un timer, callbacks = actions ROS
+      (`Ros2Node.cpp`, non compilé ici : il faut `rclcpp`).
+- [x] Arduino : mode mono-thread sans allocation dynamique après l'init,
+      `step()` dans `loop()`, pas d'exceptions ni de RTTI (`TrafficLight.cpp`, compilé avec
+      `-fno-exceptions -fno-rtti` ; restent des allocations pour `inject()` et les jetons
+      en route : un vrai AVR sans STL demandera une génération de code).
 
 ## 7. Phase 5 — L'éditeur comme IDE du runtime
 

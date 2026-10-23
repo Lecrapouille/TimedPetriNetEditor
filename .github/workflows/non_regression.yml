@@ -40,6 +40,9 @@ jobs:
           cd tests
           V=1 make -j`nproc --all`
           ../build/TimedPetriNetEditor-UnitTest
+      - name: Compile and run the examples of the runtime
+        run: |
+          make -C examples/runtime run
       - name: Check if the library can be linked against a project
         run: |
           export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/lib/
