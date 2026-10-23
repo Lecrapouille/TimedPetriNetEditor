@@ -171,10 +171,21 @@ static std::string parseNetFromJSON(Net& net, nlohmann::json const& jnet)
     if (!error.str().empty())
         return error.str();
 
+    // Positions: in "layout" (revision 5), else in the nodes ("x", "y").
+    nlohmann::json const no_layout = nlohmann::json::object();
+    nlohmann::json const& layout = jnet.contains("layout") ? jnet["layout"] : no_layout;
+    auto const position = [&layout](nlohmann::json const& node, char const* kind, size_t const id)
+    {
+        if (layout.contains(kind) && (id < layout[kind].size()))
+            return Point{ layout[kind][id][0].get<float>(), layout[kind][id][1].get<float>() };
+        return Point{ node.value("x", 0.0f), node.value("y", 0.0f) };
+    };
+
     // Places
     for (nlohmann::json const* jp : places) {
         nlohmann::json const& p = *jp;
-        Place& place = net.addPlace(p["id"], p["caption"], p["x"], p["y"], p["tokens"]);
+        Point const at = position(p, "places", p["id"]);
+        Place& place = net.addPlace(p["id"], p["caption"], at.x, at.y, p["tokens"]);
         if (p.contains("capacity"))
         {
             size_t const capacity = p["capacity"];
@@ -205,7 +216,8 @@ static std::string parseNetFromJSON(Net& net, nlohmann::json const& jnet)
         std::string caption = t["caption"];
         if (grafcet && !Receptivity::check(caption).empty())
             caption = rpnToInfix(caption);
-        Transition& transition = net.addTransition(t["id"], caption, t["x"], t["y"]);
+        Point const at = position(t, "transitions", t["id"]);
+        Transition& transition = net.addTransition(t["id"], caption, at.x, at.y);
         transition.delay = t.value("delay", 0.0f);
         transition.priority = t.value("priority", 0);
     }

@@ -6,6 +6,8 @@
 // See LICENSING.md for details.
 
 #include "main.hpp"
+#include <fstream>
+#include <iterator>
 #define protected public
 #define private public
 #  include "PetriNet/PetriNet.hpp"
@@ -48,6 +50,33 @@ TEST(TestJSONLoader, NodeIdentifiers)
     std::string const error = loadFromFile(net, "data/BadJSON/GapInIds.json", stringify);
     ASSERT_NE(error.find("identifiers of places shall be 0 .. 1"), std::string::npos) << error;
     ASSERT_EQ(net.isEmpty(), true);
+}
+
+//------------------------------------------------------------------------------
+// Positions: written apart from the structure ("layout"), read from the old
+// files with "x" and "y" in the nodes.
+TEST(TestJSONLoader, Layout)
+{
+    Net net(TypeOfNet::TimedPetriNet);
+    bool stringify;
+
+    ASSERT_STREQ(loadFromFile(net, "data/UnorderedIds.json", stringify).c_str(), "");
+    ASSERT_EQ(net.position(net.m_places[0]).x, 100.0f);
+    ASSERT_EQ(net.position(net.m_places[1]).x, 200.0f);
+    ASSERT_EQ(net.position(net.m_transitions[0]).x, 150.0f);
+    ASSERT_EQ(net.position(net.m_transitions[0]).y, 100.0f);
+
+    ASSERT_STREQ(saveToFile(net, "/tmp/tpne-layout.json").c_str(), "");
+    std::ifstream saved("/tmp/tpne-layout.json");
+    std::string const text((std::istreambuf_iterator<char>(saved)), std::istreambuf_iterator<char>());
+    ASSERT_EQ(text.find("\"x\""), std::string::npos);
+    ASSERT_NE(text.find("\"layout\""), std::string::npos);
+
+    Net loaded(TypeOfNet::TimedPetriNet);
+    ASSERT_STREQ(loadFromFile(loaded, "/tmp/tpne-layout.json", stringify).c_str(), "");
+    ASSERT_EQ(loaded.position(loaded.m_places[1]).x, 200.0f);
+    ASSERT_EQ(loaded.position(loaded.m_places[1]).y, 100.0f);
+    ASSERT_EQ(loaded.position(loaded.m_transitions[0]).x, 150.0f);
 }
 
 //------------------------------------------------------------------------------

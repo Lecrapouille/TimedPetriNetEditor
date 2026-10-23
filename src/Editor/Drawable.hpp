@@ -78,7 +78,7 @@ void drawArcHighlight(ImDrawList* draw_list, Net const& net, Arc const& arc,
 //------------------------------------------------------------------------------
 //! \brief Draw the arc being created from a node (or a point) to the cursor.
 //------------------------------------------------------------------------------
-void drawArc(ImDrawList* draw_list, Node const* from, Node const* to, ImVec2 const* click_position,
+void drawArc(ImDrawList* draw_list, ImVec2 const* from, ImVec2 const* to, ImVec2 const* click_position,
              ImVec2 const& origin, ImVec2 const& cursor, float zoom = 1.0f);
 
 void drawToken(ImDrawList* draw_list, float const x, float const y, float zoom = 1.0f);
@@ -109,7 +109,7 @@ void drawTransition(ImDrawList* draw_list, Net const& net, Transition const& tra
 //------------------------------------------------------------------------------
 //! \brief Draw the outline of a node grown by margin pixels (hover, selection).
 //------------------------------------------------------------------------------
-void drawNodeOutline(ImDrawList* draw_list, Node const& node, TypeOfNet type,
+void drawNodeOutline(ImDrawList* draw_list, Net const& net, Node const& node,
                      ImVec2 const& origin, float zoom, ImU32 color, float margin,
                      float thickness);
 
@@ -136,7 +136,7 @@ ImVec2 nodeHalfSize(Node const& node, TypeOfNet type);
 //! \param[in] compact only a small tag with the number of actions (green
 //! when one runs), to keep the net compact.
 //------------------------------------------------------------------------------
-void drawStepActions(ImDrawList* draw_list, Place const& place, ImVec2 const& origin,
+void drawStepActions(ImDrawList* draw_list, Net const& net, Place const& place, ImVec2 const& origin,
                      float zoom, bool (*is_active)(size_t index, void* data) = nullptr,
                      void* data = nullptr, bool compact = false);
 

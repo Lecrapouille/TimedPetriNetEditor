@@ -9,6 +9,7 @@
 #  define PETRI_NET_HPP
 
 #  include "PetriNet/Grafcet.hpp"
+#  include "PetriNet/Layout.hpp"
 #  include "PetriNet/SafeFloat.hpp"
 
 #  include <cmath>
@@ -105,14 +106,12 @@ public:
     //! \param[in] type_: Type of Petri node: Place or Transition.
     //! \param[in] id_: unique identifier (0u, 1u, ...).
     //! \param[in] caption_: Text to displaying identifying the node.
-    //! \param[in] x_: X-axis coordinate in the window needed for the display.
-    //! \param[in] y_: Y-axis coordinate in the window needed for the display.
+    //! \note The position of the node is in the Layout of its net.
     //--------------------------------------------------------------------------
-    Node(Type const type_, size_t const id_, std::string const& caption_,
-         float const x_, float const y_)
+    Node(Type const type_, size_t const id_, std::string const& caption_)
         : type(type_), id(id_),
           key((type == Node::Type::Place ? 'P' : 'T') + std::to_string(id)),
-          x(x_), y(y_), caption(caption_.empty() ? key : caption_)
+          caption(caption_.empty() ? key : caption_)
     {}
 
     //--------------------------------------------------------------------------
@@ -133,10 +132,6 @@ public:
     //! for place or by the 'T' char for transition followed by the unique
     //! identifier (i.e. "P0", "P1", "T0", "T1", ...). Follows the id.
     std::string key;
-    //! \brief Position inside the window needed for the display.
-    float x;
-    //! \brief Position in the window needed for the display.
-    float y;
     //! \brief Text displayed near a node the user can modify. Default value is
     //! the tring unique \c key.
     std::string caption;
@@ -188,12 +183,9 @@ public:
     //! \param[in] id_: unique node identifier. Shall be unique (responsibility
     //! given to the caller class).
     //! \param[in] caption_: Displayed text under the node.
-    //! \param[in] x_: X-axis coordinate in the window needed for the display.
-    //! \param[in] y_: Y-axis coordinate in the window needed for the display.
     //! \param[in] tokens_: Initial number of tokens in the place >= 0.
     //--------------------------------------------------------------------------
-    Place(size_t const id_, std::string const& caption_, float const x_,
-          float const y_, size_t const tokens_);
+    Place(size_t const id_, std::string const& caption_, size_t const tokens_);
 
     //--------------------------------------------------------------------------
     //! \brief Static method stringify a place given an identifier.
@@ -220,7 +212,7 @@ public:
     inline friend std::ostream& operator<<(std::ostream& os, Place const& p)
     {
         os << p.key << " (\"" << p.caption << "\", " << p.tokens
-           << ", (" << p.x << ", " << p.y << "))";
+           << ")";
         return os;
     }
 
@@ -260,13 +252,10 @@ public:
     //! \param[in] id_: unique node identifier. Shall be unique (responsibility
     //! given to the caller class).
     //! \param[in] caption_: Displayed text under the node.
-    //! \param[in] x_: X-axis coordinate in the window needed for the display.
-    //! \param[in] y_: Y-axis coordinate in the window needed for the display.
     //! \param[in] recep_: initial receptivity value.
     //--------------------------------------------------------------------------
-    Transition(size_t const id_, std::string const& caption_, float const x_,
-               float const y_, bool const recep_)
-        : Node(Node::Type::Transition, id_, caption_, x_, y_), receptivity(recep_)
+    Transition(size_t const id_, std::string const& caption_, bool const recep_)
+        : Node(Node::Type::Transition, id_, caption_), receptivity(recep_)
     {}
 
     //--------------------------------------------------------------------------
@@ -284,7 +273,7 @@ public:
     friend std::ostream& operator<<(std::ostream& os, Transition const& t)
     {
         os << t.key << " (\"" << t.caption << "\", " << t.receptivity
-           << ", (" << t.x << ", " << t.y << "))";
+           << ")";
         return os;
     }
 
@@ -549,6 +538,26 @@ public:
     static size_t defaultCapacity(TypeOfNet const type)
     {
         return (type == TypeOfNet::GRAFCET) ? 1u : std::numeric_limits<size_t>::max();
+    }
+
+    //--------------------------------------------------------------------------
+    //! \brief Positions of the nodes, kept in line with them.
+    //--------------------------------------------------------------------------
+    Layout& layout() { return m_layout; }
+    Layout const& layout() const { return m_layout; }
+
+    //--------------------------------------------------------------------------
+    //! \brief Position of the node.
+    //--------------------------------------------------------------------------
+    Point& position(Node const& node) { return position(node.nodeId()); }
+    Point const& position(Node const& node) const { return position(node.nodeId()); }
+    Point& position(NodeId const id)
+    {
+        return id.isPlace() ? m_layout.place(id.id) : m_layout.transition(id.id);
+    }
+    Point const& position(NodeId const id) const
+    {
+        return id.isPlace() ? m_layout.place(id.id) : m_layout.transition(id.id);
     }
 
     //--------------------------------------------------------------------------
@@ -917,6 +926,8 @@ private:
     Transitions m_transitions;
     //! \brief List of Arcs.
     Arcs m_arcs;
+    //! \brief Positions of the nodes.
+    Layout m_layout;
     //! \brief Arcs of each place and of each transition, by node identifier.
     std::vector<Adjacency> m_place_arcs;
     std::vector<Adjacency> m_transition_arcs;

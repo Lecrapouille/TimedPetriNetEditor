@@ -458,7 +458,8 @@ TEST(TestGrafcetJSON, DescriptionsInputsAndOutputs)
     EXPECT_EQ(again[1].places()[5].actions[0].condition, "Dr");
     std::ifstream saved(file);
     std::string const text((std::istreambuf_iterator<char>(saved)), std::istreambuf_iterator<char>());
-    EXPECT_NE(text.find("\"revision\": 1"), std::string::npos);
+    EXPECT_NE(text.find("\"revision\": 2"), std::string::npos);
+    EXPECT_NE(text.find("\"layout\""), std::string::npos);
     std::remove(file.c_str());
 }
 

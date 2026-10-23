@@ -148,7 +148,7 @@ static void writeNetToJSON(std::ofstream& file, Net const& net)
     for (auto const& p: net.places())
     {
         nlohmann::ordered_json item = { { "id", p.id }, { "caption", p.caption },
-                                        { "tokens", p.tokens }, { "x", p.x }, { "y", p.y } };
+                                        { "tokens", p.tokens } };
         if (p.capacity != capacity)
             item["capacity"] = p.capacity;
         items.push_back(item);
@@ -160,8 +160,7 @@ static void writeNetToJSON(std::ofstream& file, Net const& net)
     items.clear();
     for (auto const& t: net.transitions())
     {
-        nlohmann::ordered_json item = { { "id", t.id }, { "caption", t.caption },
-                                        { "x", t.x }, { "y", t.y } };
+        nlohmann::ordered_json item = { { "id", t.id }, { "caption", t.caption } };
         if (t.delay > 0.0f)
             item["delay"] = t.delay;
         if (t.priority != 0)
@@ -218,7 +217,20 @@ static void writeNetToJSON(std::ofstream& file, Net const& net)
     }
     file << "\n       ],\n       \"actions\": [";
     writeList(file, items, "            ");
-    file << "\n       ]\n";
+    file << "\n       ],\n";
+
+    // Drawing, apart from the structure: [x, y] of each node by identifier.
+    file << "       \"layout\": {\n          \"places\": [";
+    items.clear();
+    for (auto const& p: net.places())
+        items.push_back({ net.position(p).x, net.position(p).y });
+    writeList(file, items, "             ");
+    file << "\n          ],\n          \"transitions\": [";
+    items.clear();
+    for (auto const& t: net.transitions())
+        items.push_back({ net.position(t).x, net.position(t).y });
+    writeList(file, items, "             ");
+    file << "\n          ]\n       }\n";
 
     file << "    }";
 }
@@ -244,7 +256,7 @@ static std::string writeDocument(std::vector<Net const*> const& nets, std::strin
 
     // Use the type of the first net for the document
     file << "{\n";
-    file << "  \"revision\": 1,\n";
+    file << "  \"revision\": 2,\n";
     file << "  \"type\": " << quote(to_str(nets[0]->type())) << ",\n";
     if ((info != nullptr) && !info->description.empty())
         file << "  \"description\": " << quote(info->description) << ",\n";

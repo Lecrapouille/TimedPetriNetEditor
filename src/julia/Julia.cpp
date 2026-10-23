@@ -152,12 +152,13 @@ bool petri_get_places(int64_t const pn, CPlace_t* places)
 {
     CHECK_VALID_PETRI_HANDLE(pn, false);
 
-    tpne::Net::Places const& p = g_petri_nets[size_t(pn)]->places();
+    tpne::Net const& net = *g_petri_nets[size_t(pn)];
+    tpne::Net::Places const& p = net.places();
     size_t i = 0;
     for (auto const& it: p)
     {
-        places[i].x = it.x;
-        places[i].y = it.y;
+        places[i].x = net.position(it).x;
+        places[i].y = net.position(it).y;
         places[i].tokens = int64_t(it.tokens);
         i += 1;
     }
@@ -177,8 +178,8 @@ bool petri_get_place(int64_t const pn, int64_t const i, CPlace_t* place)
         return false;
     }
 
-    place->x = p[i].x;
-    place->y = p[i].y;
+    place->x = g_petri_nets[size_t(pn)]->position(p[size_t(i)]).x;
+    place->y = g_petri_nets[size_t(pn)]->position(p[size_t(i)]).y;
     place->tokens = int64_t(p[i].tokens);
 
     return true;
@@ -248,12 +249,13 @@ bool petri_get_transitions(int64_t const pn, CTransition_t* transitions)
 {
     CHECK_VALID_PETRI_HANDLE(pn, false);
 
-    tpne::Net::Transitions const& t = g_petri_nets[size_t(pn)]->transitions();
+    tpne::Net const& net = *g_petri_nets[size_t(pn)];
+    tpne::Net::Transitions const& t = net.transitions();
     size_t i = 0;
     for (auto const& it: t)
     {
-        transitions[i].x = it.x;
-        transitions[i].y = it.y;
+        transitions[i].x = net.position(it).x;
+        transitions[i].y = net.position(it).y;
         i += 1;
     }
 
@@ -272,8 +274,8 @@ bool petri_get_transition(int64_t const pn, int64_t const i, CTransition_t* tran
         return false;
     }
 
-    transition->x = t[i].x;
-    transition->y = t[i].y;
+    transition->x = g_petri_nets[size_t(pn)]->position(t[size_t(i)]).x;
+    transition->y = g_petri_nets[size_t(pn)]->position(t[size_t(i)]).y;
 
     return true;
 }

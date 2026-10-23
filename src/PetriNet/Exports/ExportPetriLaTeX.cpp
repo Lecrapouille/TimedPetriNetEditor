@@ -45,8 +45,8 @@ std::string exportToPetriLaTeX(Net const& net, std::string const& filename)
              << "fill=blue!25, "
              << "draw=blue!75, "
              << "tokens=" << p.tokens << "] "
-             << "(" << p.key << ") at (" << int(p.x * scale_x)
-             << ", " << int(-p.y * scale_y) << ") {};"
+             << "(" << p.key << ") at (" << int(net.position(p).x * scale_x)
+             << ", " << int(-net.position(p).y * scale_y) << ") {};"
              << std::endl;
     }
 
@@ -60,8 +60,8 @@ std::string exportToPetriLaTeX(Net const& net, std::string const& filename)
              << "label=above:$" << t.caption << "$, "
              << "fill=" << color << "!25, "
              << "draw=" << color << "!75] "
-             << "(" << t.key << ") at (" << int(t.x * scale_x)
-             << ", " << int(-t.y * scale_y) << ") {};"
+             << "(" << t.key << ") at (" << int(net.position(t).x * scale_x)
+             << ", " << int(-net.position(t).y * scale_y) << ") {};"
              << std::endl;
     }
 

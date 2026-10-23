@@ -250,8 +250,8 @@ protected: // Methods for PetriView access
     void clearClipboard() { m_clipboard.clear(); }
     bool isClipboardEmpty() const { return m_clipboard.empty(); }
     void setClipboardCenter(float x, float y) { m_clipboard.setCenter(x, y); }
-    void addToClipboard(Place const& p) { m_clipboard.addPlace(p); }
-    void addToClipboard(Transition const& t) { m_clipboard.addTransition(t); }
+    void addToClipboard(Place const& p) { m_clipboard.addPlace(p, net().position(p)); }
+    void addToClipboard(Transition const& t) { m_clipboard.addTransition(t, net().position(t)); }
     void addArcToClipboard(Arc const& arc) { m_clipboard.addArc(arc); }
     void pasteFromClipboard(Net& net, ImVec2 const& position,
                             std::vector<Node*>& selected_nodes);

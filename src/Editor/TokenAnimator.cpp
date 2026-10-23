@@ -34,13 +34,13 @@ std::vector<AnimatedToken> animateTokens(Net const& net, std::vector<Engine::Fli
         if (flight.arc >= net.arcs().size())
             continue;
         Arc const& arc = net.arcs()[flight.arc];
-        Node const& from = net.node(arc.from);
-        Node const* to = &net.node(arc.to);
+        Point const& from = net.position(arc.from);
+        Point const* to = &net.position(arc.to);
         if (net.type() == TypeOfNet::TimedEventGraph)
         {
-            auto const next = net.arcsOut(*to);
+            auto const next = net.arcsOut(net.node(arc.to));
             if (!next.empty())
-                to = &net.node(next.front().to);
+                to = &net.position(next.front().to);
         }
 
         double const length = flight.end - flight.start;

@@ -36,7 +36,7 @@ std::string exportToPNML(Net const& net, std::string const& filename)
         file << "       <place id=\"" << p.key << "\">" << std::endl;
         file << "           <name><text>" << p.caption << "</text>" << std::endl;
         file << "           <graphics><offset x=\"0\" y=\"0\"/></graphics></name>" << std::endl;
-        file << "           <graphics><position x=\"" << p.x << "\" y=\"" << p.y << "\"/></graphics>" << std::endl;
+        file << "           <graphics><position x=\"" << net.position(p).x << "\" y=\"" << net.position(p).y << "\"/></graphics>" << std::endl;
         file << "           <initialMarking><text>" << p.tokens << "</text></initialMarking>" << std::endl;
         file << "       </place>" << std::endl;
     }
@@ -46,7 +46,7 @@ std::string exportToPNML(Net const& net, std::string const& filename)
     {
         file << "       <transition id=\"" << t.key << "\">" << std::endl;
         file << "           <name><text>" << t.caption << "</text><graphics><offset x=\"0\" y=\"0\"/></graphics></name>" << std::endl;
-        file << "           <graphics><position x=\"" << t.x << "\" y=\"" << t.y << "\"/></graphics>" << std::endl;
+        file << "           <graphics><position x=\"" << net.position(t).x << "\" y=\"" << net.position(t).y << "\"/></graphics>" << std::endl;
         file << "       </transition>" << std::endl;
     }
 

@@ -10,16 +10,16 @@
 namespace tpne {
 
 //------------------------------------------------------------------------------
-void Clipboard::addPlace(Place const& place)
+void Clipboard::addPlace(Place const& place, Point const& position)
 {
-    m_places.push_back({place.id, place.caption, place.x, place.y, place.tokens});
+    m_places.push_back({place.id, place.caption, position.x, position.y, place.tokens});
 }
 
 //------------------------------------------------------------------------------
-void Clipboard::addTransition(Transition const& transition)
+void Clipboard::addTransition(Transition const& transition, Point const& position)
 {
     m_transitions.push_back({transition.id, transition.caption,
-                             transition.x, transition.y});
+                             position.x, position.y});
 }
 
 //------------------------------------------------------------------------------

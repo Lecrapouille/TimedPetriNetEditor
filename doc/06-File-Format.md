@@ -9,7 +9,7 @@ field. You can write it by hand, or generate it from another program.
 
 ```json
 {
-  "revision": 1,
+  "revision": 2,
   "type": "Timed Petri net",
   "description": "What the document is about (optional)",
   "nets": [
@@ -17,17 +17,21 @@ field. You can write it by hand, or generate it from another program.
        "name": "Hello World",
        "description": "What this net does (optional)",
        "places": [
-            { "id": 0, "caption": "P0", "tokens": 1, "x": 184, "y": 295 },
-            { "id": 1, "caption": "P1", "tokens": 0, "x": 513, "y": 295 }
+            { "id": 0, "caption": "P0", "tokens": 1 },
+            { "id": 1, "caption": "P1", "tokens": 0 }
        ],
        "transitions": [
-            { "id": 0, "caption": "T0", "x": 351, "y": 295 }
+            { "id": 0, "caption": "T0" }
        ],
        "arcs": [
             { "from": "P0", "to": "T0" },
             { "from": "T0", "to": "P1", "duration": 3 },
             { "from": "T0", "to": "P0", "duration": 1 }
-       ]
+       ],
+       "layout": {
+          "places": [ [184, 295], [513, 295] ],
+          "transitions": [ [351, 295] ]
+       }
     }
   ]
 }
@@ -43,7 +47,7 @@ field. You can write it by hand, or generate it from another program.
 
 | Field | Meaning |
 |-------|---------|
-| `revision` | version of the syntax: 1. Older files (with a `revision` up to 5 of the old numbering) are still read; their GRAFCET receptivities in reverse polish notation (`a b .`) are converted. |
+| `revision` | version of the syntax: 2 (the drawing in `layout`). Files of revision 1 (positions `x`, `y` in the nodes) and older files (with a `revision` up to 5 of the old numbering) are still read; their GRAFCET receptivities in reverse polish notation (`a b .`) are converted. |
 | `type` | `"Petri net"`, `"Timed Petri net"`, `"Timed event graph"` or `"GRAFCET"`: all the nets of the file have this type |
 | `description` | optional: what the document is about, shown in the *Document* window |
 | `nets` | one or several nets (a GEMMA has three) |
@@ -55,10 +59,11 @@ field. You can write it by hand, or generate it from another program.
 |-------|---------|
 | `name` | name of the net, also used by the other graphs (`Production:X3`, `Production{init}`) |
 | `description` | optional: what the net does, written in its top left corner |
-| `places` | `id` (0, 1, 2 ... consecutive, no hole, in any order), `caption` (any text), `tokens`, `x`, `y`, `capacity` (optional: max number of tokens, unbounded when absent) |
-| `transitions` | `id`, `caption` (the receptivity for a GRAFCET), `x`, `y`, `delay` (GRAFCET, seconds, optional) |
+| `places` | `id` (0, 1, 2 ... consecutive, no hole, in any order), `caption` (any text), `tokens`, `capacity` (optional: max number of tokens, unbounded when absent) |
+| `transitions` | `id`, `caption` (the receptivity for a GRAFCET), `delay` (seconds the transition stays enabled before firing, optional), `priority` (optional, see *Simulation > Conflicts*) |
 | `arcs` | `from`, `to`: `P<id>` or `T<id>`, a place to a transition or a transition to a place; `duration` on the arcs going out of a transition; `weight` (optional, 1 when absent); `kind` (optional: `"inhibitor"` or `"reset"`, only from a place) |
 | `actions` | GRAFCET only (§4) |
+| `layout` | the drawing, apart from the structure: `places` and `transitions` give the `[x, y]` of each node, by identifier. Absent: `x` and `y` are read in the nodes (revision 1). |
 
 An arc never links two places or two transitions, and has no identifier
 (the pair `from`, `to` is unique).

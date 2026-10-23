@@ -25,14 +25,16 @@ public:
     //--------------------------------------------------------------------------
     //! \brief Copy a Place to the clipboard.
     //! \param[in] place The place to copy.
+    //! \param[in] position Its position.
     //--------------------------------------------------------------------------
-    void addPlace(Place const& place);
+    void addPlace(Place const& place, Point const& position);
 
     //--------------------------------------------------------------------------
     //! \brief Copy a Transition to the clipboard.
     //! \param[in] transition The transition to copy.
+    //! \param[in] position Its position.
     //--------------------------------------------------------------------------
-    void addTransition(Transition const& transition);
+    void addTransition(Transition const& transition, Point const& position);
 
     //--------------------------------------------------------------------------
     //! \brief Copy an Arc to the clipboard.

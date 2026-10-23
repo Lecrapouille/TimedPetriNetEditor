@@ -87,14 +87,14 @@ std::string exportToPNEditor(Net const& net, std::string const& filename)
 
         for (auto const& t: net.transitions())
         {
-            write_float32(file, t.x);
-            write_float32(file, t.y);
+            write_float32(file, net.position(t).x);
+            write_float32(file, net.position(t).y);
         }
 
         for (auto const& p: net.places())
         {
-            write_float32(file, p.x);
-            write_float32(file, p.y);
+            write_float32(file, net.position(p).x);
+            write_float32(file, net.position(p).y);
         }
     }
 

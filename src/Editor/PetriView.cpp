@@ -26,6 +26,14 @@
 
 namespace tpne {
 
+//------------------------------------------------------------------------------
+//! \brief Position of the node, from the layout of its net.
+static ImVec2 at(Net const& net, Node const& node)
+{
+    Point const& p = net.position(node);
+    return ImVec2(p.x, p.y);
+}
+
 //! \brief Mouse travel (pixels) under which a press and release is a click.
 static constexpr float CLICK_DISTANCE = 4.0f;
 //! \brief Extra pick distance around nodes and arcs (pixels).
@@ -185,8 +193,9 @@ void PetriView::centerOnNet(Net const& net)
                 actions = std::max(actions, width);
             }
         }
-        extend(place.x - half.x - (grafcet ? 40.0f : 0.0f), place.y - half.y,
-               place.x + half.x + actions, place.y + half.y + (grafcet ? 0.0f : 20.0f));
+        ImVec2 const p = at(net, place);
+        extend(p.x - half.x - (grafcet ? 40.0f : 0.0f), p.y - half.y,
+               p.x + half.x + actions, p.y + half.y + (grafcet ? 0.0f : 20.0f));
     }
     for (auto const& trans : net.transitions())
     {
@@ -194,8 +203,9 @@ void PetriView::centerOnNet(Net const& net)
         // GRAFCET: the receptivity on the right, the identifier and the links
         // going up on the left.
         float const right = grafcet ? ImGui::CalcTextSize(trans.caption.c_str()).x + 16.0f : 0.0f;
-        extend(trans.x - half.x - (grafcet ? GRAFCET_LOOP + 10.0f : 0.0f), trans.y - half.y,
-               trans.x + half.x + right, trans.y + half.y + (grafcet ? 0.0f : 20.0f));
+        ImVec2 const p = at(net, trans);
+        extend(p.x - half.x - (grafcet ? GRAFCET_LOOP + 10.0f : 0.0f), p.y - half.y,
+               p.x + half.x + right, p.y + half.y + (grafcet ? 0.0f : 20.0f));
     }
 
     // Room at the top for the type of the net and its description.
@@ -274,7 +284,10 @@ void PetriView::selectNodesInRect(ImVec2 const& a, ImVec2 const& b)
 {
     float const x0 = std::min(a.x, b.x), x1 = std::max(a.x, b.x);
     float const y0 = std::min(a.y, b.y), y1 = std::max(a.y, b.y);
-    auto inside = [&](Node const& n) { return n.x >= x0 && n.x <= x1 && n.y >= y0 && n.y <= y1; };
+    auto inside = [&](Node const& n) {
+        ImVec2 const p = at(*m_current_net, n);
+        return p.x >= x0 && p.x <= x1 && p.y >= y0 && p.y <= y1;
+    };
     bool const teg = (m_current_net->type() == TypeOfNet::TimedEventGraph);
     for (auto& place : m_current_net->places())
     {
@@ -300,8 +313,9 @@ Node* PetriView::getNode(ImVec2 const& position) const
     float best_distance = std::numeric_limits<float>::max();
     auto test = [&](Node& node) {
         ImVec2 const half = nodeHalfSize(node, type);
-        float const dx = std::fabs(position.x - node.x);
-        float const dy = std::fabs(position.y - node.y);
+        ImVec2 const p = at(*m_current_net, node);
+        float const dx = std::fabs(position.x - p.x);
+        float const dy = std::fabs(position.y - p.y);
         // GRAFCET transitions are thin: easier to pick vertically.
         float const extra_y = (type == TypeOfNet::GRAFCET && node.type == Node::Type::Transition) ? 6.0f : 0.0f;
         if (dx <= half.x + margin && dy <= half.y + margin + extra_y)
@@ -433,8 +447,8 @@ void PetriView::copySelection()
     float sum_x = 0.0f; float sum_y = 0.0f;
     for (auto* node : m_mouse.selected_nodes)
     {
-        sum_x += node->x;
-        sum_y += node->y;
+        sum_x += at(*m_current_net, *node).x;
+        sum_y += at(*m_current_net, *node).y;
         if (node->type == Node::Type::Place)
             m_editor.addToClipboard(*static_cast<Place*>(node));
         else
@@ -520,7 +534,7 @@ void PetriView::dragged(Net& net)
                     selectNode(m_mouse.pressed_node, m_mouse.pressed_ctrl);
                 m_mouse.drag_offsets.clear();
                 for (auto const* n : m_mouse.selected_nodes)
-                    m_mouse.drag_offsets.push_back(ImVec2(n->x, n->y) - m_mouse.pressed_at);
+                    m_mouse.drag_offsets.push_back(at(*m_current_net, *n) - m_mouse.pressed_at);
                 m_move_action = std::make_unique<NetModificationAction>(
                     [this]() -> Net& { return m_editor.net(); });
                 m_move_action->before(net);
@@ -543,9 +557,9 @@ void PetriView::dragged(Net& net)
     case Gesture::MoveNodes:
         for (size_t i = 0; (i < m_mouse.selected_nodes.size()) && (i < m_mouse.drag_offsets.size()); ++i)
         {
-            Node* node = m_mouse.selected_nodes[i];
-            node->x = grid.snapValue(m_mouse.position.x + m_mouse.drag_offsets[i].x);
-            node->y = grid.snapValue(m_mouse.position.y + m_mouse.drag_offsets[i].y);
+            Point& p = m_current_net->position(*m_mouse.selected_nodes[i]);
+            p.x = grid.snapValue(m_mouse.position.x + m_mouse.drag_offsets[i].x);
+            p.y = grid.snapValue(m_mouse.position.y + m_mouse.drag_offsets[i].y);
         }
         break;
     default:
@@ -763,8 +777,9 @@ void PetriView::nudgeSelection(Net& net, float dx, float dy)
     action->before(net);
     for (auto* node : m_mouse.selected_nodes)
     {
-        node->x += dx;
-        node->y += dy;
+        Point& p = net.position(*node);
+        p.x += dx;
+        p.y += dy;
     }
     action->after(net);
     m_editor.m_history.add(std::move(action));
@@ -1072,7 +1087,7 @@ void PetriView::drawNetElements(Net& net, Simulation& simulation, float zoom)
         {
             struct Step { Simulation const* simulation; size_t place_id; };
             Step step { &simulation, places[i].id };
-            drawStepActions(draw_list, places[i], origin, zoom,
+            drawStepActions(draw_list, net, places[i], origin, zoom,
                 [](size_t const index, void* data) -> bool {
                     Step const& s = *static_cast<Step const*>(data);
                     return s.simulation->isRunning() &&
@@ -1114,7 +1129,7 @@ void PetriView::drawTimers(Net const& net, Simulation const& simulation, float z
                                elapsed >= trans.delay });
         }
         ImVec2 const half = nodeHalfSize(trans, net.type()) * zoom;
-        ImVec2 p = m_canvas.origin + ImVec2(trans.x, trans.y) * zoom +
+        ImVec2 p = m_canvas.origin + at(net, trans) * zoom +
                    ImVec2(half.x + 6.0f * zoom, half.y + 4.0f * zoom + size * 0.4f);
         for (Receptivity::Timer const& timer : timers)
         {
@@ -1147,7 +1162,7 @@ void PetriView::drawOverlays(Net& net, Simulation& simulation, float zoom)
     for (auto const* arc : m_mouse.selected_arcs)
         drawArcHighlight(draw_list, net, *arc, origin, zoom, pal.selection, std::max(2.0f, 3.5f * zoom));
     for (auto const* node : m_mouse.selected_nodes)
-        drawNodeOutline(draw_list, *node, type, origin, zoom, pal.selection, 4.0f, 2.5f);
+        drawNodeOutline(draw_list, net, *node, origin, zoom, pal.selection, 4.0f, 2.5f);
     if ((m_mouse.gesture == Gesture::None) || (m_mouse.gesture == Gesture::Arc))
     {
         if ((m_mouse.hovered_arc != nullptr) && !isArcSelected(m_mouse.hovered_arc))
@@ -1156,13 +1171,14 @@ void PetriView::drawOverlays(Net& net, Simulation& simulation, float zoom)
         Node const* hovered = (m_mouse.gesture == Gesture::Arc) ? getNode(m_mouse.position)
                                                                  : m_mouse.hovered_node;
         if ((hovered != nullptr) && !isNodeSelected(hovered))
-            drawNodeOutline(draw_list, *hovered, type, origin, zoom, pal.hover, 4.0f, 3.0f);
+            drawNodeOutline(draw_list, net, *hovered, origin, zoom, pal.hover, 4.0f, 3.0f);
     }
 
     // Arc being drawn.
     if (m_mouse.gesture == Gesture::Arc)
     {
-        drawArc(draw_list, m_mouse.pressed_node, nullptr, nullptr, origin, m_mouse.position, zoom);
+        ImVec2 const from = at(net, *m_mouse.pressed_node);
+        drawArc(draw_list, &from, nullptr, nullptr, origin, m_mouse.position, zoom);
     }
 
     // Rubber band.
@@ -1268,8 +1284,8 @@ void PetriView::drawBadges(Net const& net, Simulation const& simulation)
 void PetriView::drawEditWidgets(Net& net)
 {
     auto const popup = [&](Node const& anchor) {
-        ImVec2 const at = m_canvas.origin + ImVec2(anchor.x, anchor.y) * m_canvas.zoom;
-        ImGui::SetNextWindowPos(ImVec2(at.x - 90.0f, at.y + 24.0f * m_canvas.zoom));
+        ImVec2 const where = m_canvas.origin + at(net, anchor) * m_canvas.zoom;
+        ImGui::SetNextWindowPos(ImVec2(where.x - 90.0f, where.y + 24.0f * m_canvas.zoom));
         ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(6.0f, 6.0f));
         bool const open = ImGui::Begin("##EditNode", nullptr,
             ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove |

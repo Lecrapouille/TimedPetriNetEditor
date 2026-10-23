@@ -315,13 +315,15 @@ void Editor::menuEdit()
         action->before(net());
         for (auto& place : net().places())
         {
-            place.x = m_view.grid.snapValue(place.x);
-            place.y = m_view.grid.snapValue(place.y);
+            Point& p = net().position(place);
+            p.x = m_view.grid.snapValue(p.x);
+            p.y = m_view.grid.snapValue(p.y);
         }
         for (auto& trans : net().transitions())
         {
-            trans.x = m_view.grid.snapValue(trans.x);
-            trans.y = m_view.grid.snapValue(trans.y);
+            Point& p = net().position(trans);
+            p.x = m_view.grid.snapValue(p.x);
+            p.y = m_view.grid.snapValue(p.y);
         }
         action->after(net());
         m_history.add(std::move(action));

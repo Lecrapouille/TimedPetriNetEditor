@@ -22,25 +22,21 @@ using std::isnan;
 TEST(TestPetriNet, TestNodeCreation)
 {
     // Create a Place from the mother class Node
-    Node n1(Node::Type::Place, 2u, "", 3.5f, 4.0f);
+    Node n1(Node::Type::Place, 2u, "");
     ASSERT_EQ(n1.id, 2u);
     ASSERT_EQ(n1.type, Node::Type::Place);
-    ASSERT_EQ(n1.x, 3.5f);
-    ASSERT_EQ(n1.y, 4.0f);
     ASSERT_STREQ(n1.key.c_str(), "P2");
     ASSERT_STREQ(n1.caption.c_str(), "P2");
 
     // Create a Transition from the mother class Node
-    Node n2(Node::Type::Transition, 42u, "hello", 4.0f, 3.5f);
+    Node n2(Node::Type::Transition, 42u, "hello");
     ASSERT_EQ(n2.id, 42u);
     ASSERT_EQ(n2.type, Node::Type::Transition);
-    ASSERT_EQ(n2.x, 4.0f);
-    ASSERT_EQ(n2.y, 3.5f);
     ASSERT_STREQ(n2.key.c_str(), "T42");
     ASSERT_STREQ(n2.caption.c_str(), "hello");
 
     // Check the operator!=()
-    //Node n3(Node::Type::Place, 42u, "", 4.0f, 3.5f);
+    //Node n3(Node::Type::Place, 42u, "");
     //No more in the API
     //ASSERT_EQ(n1 != n2, true); // Transition vs Place + different id
     //ASSERT_EQ(n3 != n2, true); // Transition vs Place + same id
@@ -50,8 +46,6 @@ TEST(TestPetriNet, TestNodeCreation)
     n1 = n2;
     ASSERT_EQ(n1.id, 42u);
     ASSERT_EQ(n1.type, Node::Type::Transition);
-    ASSERT_EQ(n1.x, 4.0f);
-    ASSERT_EQ(n1.y, 3.5f);
     ASSERT_STREQ(n1.key.c_str(), "T42");
     ASSERT_STREQ(n1.caption.c_str(), "hello");
 
@@ -59,8 +53,6 @@ TEST(TestPetriNet, TestNodeCreation)
     Node n4(n1);
     ASSERT_EQ(n4.id, 42u);
     ASSERT_EQ(n4.type, Node::Type::Transition);
-    ASSERT_EQ(n4.x, 4.0f);
-    ASSERT_EQ(n4.y, 3.5f);
     ASSERT_STREQ(n4.key.c_str(), "T42");
     ASSERT_STREQ(n4.caption.c_str(), "hello");
 
@@ -74,12 +66,10 @@ TEST(TestPetriNet, TestNodeCreation)
 TEST(TestPetriNet, TestPlaceCreation)
 {
     // Check the default constructor
-    Place p1(42u, "Hello", 3.5f, 4.0f, 12u);
+    Place p1(42u, "Hello", 12u);
     ASSERT_EQ(p1.id, 42u);
     ASSERT_EQ(p1.type, Node::Type::Place);
     ASSERT_EQ(p1.tokens, 12u);
-    ASSERT_EQ(p1.x, 3.5f);
-    ASSERT_EQ(p1.y, 4.0f);
     ASSERT_STREQ(p1.key.c_str(), "P42");
     ASSERT_STREQ(p1.caption.c_str(), "Hello");
 
@@ -88,8 +78,6 @@ TEST(TestPetriNet, TestPlaceCreation)
     ASSERT_EQ(p2.id, 42u);
     ASSERT_EQ(p2.type, Node::Type::Place);
     ASSERT_EQ(p2.tokens, 12u);
-    ASSERT_EQ(p2.x, 3.5f);
-    ASSERT_EQ(p2.y, 4.0f);
     ASSERT_STREQ(p2.key.c_str(), "P42");
     ASSERT_STREQ(p2.caption.c_str(), "Hello");
 
@@ -98,7 +86,7 @@ TEST(TestPetriNet, TestPlaceCreation)
     //ASSERT_EQ(p1 != p2, false);
 
     // Check the copy operator
-    Place p3(0u, "world", 0.0f, 0.0f, 0u);
+    Place p3(0u, "world", 0u);
     //ASSERT_EQ(p1 == p3, false);
     //ASSERT_EQ(p1 != p3, true);
 
@@ -106,8 +94,6 @@ TEST(TestPetriNet, TestPlaceCreation)
     ASSERT_EQ(p3.id, 42u);
     ASSERT_EQ(p3.type, Node::Type::Place);
     ASSERT_EQ(p3.tokens, 12u);
-    ASSERT_EQ(p3.x, 3.5f);
-    ASSERT_EQ(p3.y, 4.0f);
     ASSERT_STREQ(p3.key.c_str(), "P42");
     ASSERT_STREQ(p3.caption.c_str(), "Hello");
 
@@ -120,11 +106,9 @@ TEST(TestPetriNet, TestPlaceCreation)
 TEST(TestPetriNet, TestTransitionCreation)
 {
     // Check the default constructor
-    Transition t1(42u, "Hello", 3.5f, 4.0f, false);
+    Transition t1(42u, "Hello", false);
     ASSERT_EQ(t1.id, 42u);
     ASSERT_EQ(t1.type, Node::Type::Transition);
-    ASSERT_EQ(t1.x, 3.5f);
-    ASSERT_EQ(t1.y, 4.0f);
     ASSERT_EQ(t1.receptivity, false);
     ASSERT_STREQ(t1.key.c_str(), "T42");
     ASSERT_STREQ(t1.caption.c_str(), "Hello");
@@ -133,8 +117,6 @@ TEST(TestPetriNet, TestTransitionCreation)
     Transition t2(t1);
     ASSERT_EQ(t2.id, 42u);
     ASSERT_EQ(t2.type, Node::Type::Transition);
-    ASSERT_EQ(t2.x, 3.5f);
-    ASSERT_EQ(t2.y, 4.0f);
     ASSERT_EQ(t2.receptivity, false);
     ASSERT_STREQ(t2.key.c_str(), "T42");
     ASSERT_STREQ(t2.caption.c_str(), "Hello");
@@ -144,14 +126,12 @@ TEST(TestPetriNet, TestTransitionCreation)
     //ASSERT_EQ(t1 != t2, false);
 
     // Check the copy operator
-    Transition t3(0u, "world", 0.0f, 0.0f, false);
+    Transition t3(0u, "world", false);
     //ASSERT_EQ(t1 == t3, false);
     //ASSERT_EQ(t1 != t3, true);
     t3 = t1;
     ASSERT_EQ(t3.id, 42u);
     ASSERT_EQ(t3.type, Node::Type::Transition);
-    ASSERT_EQ(t3.x, 3.5f);
-    ASSERT_EQ(t3.y, 4.0f);
     ASSERT_EQ(t3.receptivity, false);
     ASSERT_STREQ(t3.key.c_str(), "T42");
     ASSERT_STREQ(t3.caption.c_str(), "Hello");
@@ -164,8 +144,8 @@ TEST(TestPetriNet, TestTransitionCreation)
 //------------------------------------------------------------------------------
 TEST(TestPetriNet, TestArcCreation)
 {
-    Transition t1(42u, "", 3.5f, 4.0f, true);
-    Place p1(43u, "", 4.6f, 5.1f, 13u);
+    Transition t1(42u, "", true);
+    Place p1(43u, "", 13u);
 
     // Check the default constructor: Transition --> Place. Arcs only store
     // the references of their nodes.
@@ -586,8 +566,8 @@ TEST(TestPetriNet, TestCaptionAfterRemove)
     ASSERT_EQ(net.m_places.size(), 1u);
     ASSERT_STREQ(net.m_places[0].key.c_str(), "P0");
     ASSERT_STREQ(net.m_places[0].caption.c_str(), "World");
-    ASSERT_EQ(net.m_places[0].x, 1.0f); // Attributes from P1
-    ASSERT_EQ(net.m_places[0].y, 1.5f);
+    ASSERT_EQ(net.position(net.m_places[0]).x, 1.0f); // Attributes from P1
+    ASSERT_EQ(net.position(net.m_places[0]).y, 1.5f);
     ASSERT_EQ(net.m_places[0].tokens, 42u);
 
     // Add P1. Check we have P0 P1
@@ -603,8 +583,8 @@ TEST(TestPetriNet, TestCaptionAfterRemove)
     ASSERT_EQ(net.m_places.size(), 1u);
     ASSERT_STREQ(net.m_places[0].key.c_str(), "P0");
     ASSERT_STREQ(net.m_places[0].caption.c_str(), "P0");
-    ASSERT_EQ(net.m_places[0].x, 2.0f); // Attributes from P1
-    ASSERT_EQ(net.m_places[0].y, 2.5f);
+    ASSERT_EQ(net.position(net.m_places[0]).x, 2.0f); // Attributes from P1
+    ASSERT_EQ(net.position(net.m_places[0]).y, 2.5f);
     ASSERT_EQ(net.m_places[0].tokens, 24u);
 }
 
@@ -639,10 +619,10 @@ TEST(TestPetriNet, TestInvalidAddArc)
 {
     Net net(TypeOfNet::TimedPetriNet);
 
-    Transition t1(42u, "", 3.5f, 4.0f, true);
-    Transition t2(43u, "", 3.5f, 4.0f, false);
-    Place p1(44u, "", 4.6f, 5.1f, 13u);
-    Place p2(45u, "", 4.6f, 5.1f, 13u);
+    Transition t1(42u, "", true);
+    Transition t2(43u, "", false);
+    Place p1(44u, "", 13u);
+    Place p2(45u, "", 13u);
 
     // Bad arc: Transition --> transition
     ASSERT_FALSE(net.addArc(t1, t2).empty());

@@ -91,8 +91,9 @@ void arrangeTopDown(Net& net)
             xpos[nodes[i]] = std::max(xpos[nodes[i]], xpos[nodes[i - 1u]] + 150.0f);
         for (Node* n : nodes)
         {
-            n->x = std::round(xpos[n] / 10.0f) * 10.0f;
-            n->y = 60.0f + float(it.first) * 70.0f;
+            Point& p = net.position(*n);
+            p.x = std::round(xpos[n] / 10.0f) * 10.0f;
+            p.y = 60.0f + float(it.first) * 70.0f;
         }
     }
     net.modified = true;

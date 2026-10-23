@@ -58,12 +58,13 @@ void NetViewer::fitNow(Net const& net, ImVec2 const& size)
     bool const grafcet = (net.type() == TypeOfNet::GRAFCET);
     for (auto const& place : net.places())
     {
-        extend(place.x, place.y);
+        Point const& p = net.position(place);
+        extend(p.x, p.y);
         if (grafcet && !place.actions.empty())
-            extend(place.x + ACTIONS_WIDTH, place.y);
+            extend(p.x + ACTIONS_WIDTH, p.y);
     }
     for (auto const& transition : net.transitions())
-        extend(transition.x, transition.y);
+        extend(net.position(transition).x, net.position(transition).y);
 
     float const margin = 50.0f;
     min_x -= margin; min_y -= margin;
@@ -154,9 +155,9 @@ void NetViewer::draw(char const* id, Net const& net, Options const& options)
         {
             StepActions step { &options, place.id };
             if (options.is_action_active != nullptr)
-                drawStepActions(draw_list, place, origin, m_zoom, isStepActionActive, &step);
+                drawStepActions(draw_list, net, place, origin, m_zoom, isStepActionActive, &step);
             else
-                drawStepActions(draw_list, place, origin, m_zoom);
+                drawStepActions(draw_list, net, place, origin, m_zoom);
         }
     }
     for (auto const& transition : net.transitions())

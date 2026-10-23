@@ -77,7 +77,7 @@ void ForceDirected::initializePositions(bool randomize)
     // Detect nodes that are at origin or overlapping
     for (auto& v : m_vertices)
     {
-        bool needs_init = (v.node->x == 0.0f && v.node->y == 0.0f);
+        bool needs_init = (m_net->position(*v.node).x == 0.0f && m_net->position(*v.node).y == 0.0f);
 
         // Also check for nodes too close to each other
         if (!needs_init)
@@ -86,8 +86,8 @@ void ForceDirected::initializePositions(bool randomize)
             {
                 if (u.node == v.node)
                     continue;
-                float dx = v.node->x - u.node->x;
-                float dy = v.node->y - u.node->y;
+                float dx = m_net->position(*v.node).x - m_net->position(*u.node).x;
+                float dy = m_net->position(*v.node).y - m_net->position(*u.node).y;
                 if (dx * dx + dy * dy < 1.0f)
                 {
                     needs_init = true;
@@ -98,8 +98,8 @@ void ForceDirected::initializePositions(bool randomize)
 
         if (needs_init)
         {
-            v.node->x = c.x + dist(m_rng);
-            v.node->y = c.y + dist(m_rng);
+            m_net->position(*v.node).x = c.x + dist(m_rng);
+            m_net->position(*v.node).y = c.y + dist(m_rng);
         }
     }
 }
@@ -132,7 +132,7 @@ void ForceDirected::step()
     for (size_t i = 0; i < N; ++i)
     {
         Vertex& v = m_vertices[i];
-        const Vec2 v_pos(v.node->x, v.node->y);
+        const Vec2 v_pos(m_net->position(*v.node).x, m_net->position(*v.node).y);
 
         // Repulsive forces: all nodes repel each other (O(N²))
         for (size_t j = 0; j < N; ++j)
@@ -141,7 +141,7 @@ void ForceDirected::step()
                 continue;
 
             Vertex& u = m_vertices[j];
-            const Vec2 u_pos(u.node->x, u.node->y);
+            const Vec2 u_pos(m_net->position(*u.node).x, m_net->position(*u.node).y);
             const Vec2 delta = v_pos - u_pos;
             const float dist = length(delta);
             const float force = repulsive_force(dist);
@@ -151,7 +151,7 @@ void ForceDirected::step()
         // Attractive forces: connected nodes attract
         for (Node* neighbor : v.neighbors)
         {
-            const Vec2 n_pos(neighbor->x, neighbor->y);
+            const Vec2 n_pos(m_net->position(*neighbor).x, m_net->position(*neighbor).y);
             const Vec2 delta = v_pos - n_pos;
             const float dist = length(delta);
             const float force = attractive_force(dist);
@@ -171,7 +171,7 @@ void ForceDirected::step()
     for (auto& v : m_vertices)
     {
         const float disp_len = length(v.displacement);
-        Vec2 pos(v.node->x, v.node->y);
+        Vec2 pos(m_net->position(*v.node).x, m_net->position(*v.node).y);
 
         // Limit displacement by temperature (simulated annealing)
         if (disp_len > m_temperature)
@@ -184,8 +184,8 @@ void ForceDirected::step()
         }
 
         // Constrain to canvas bounds
-        v.node->x = std::clamp(pos.x, BORDER, m_width - BORDER);
-        v.node->y = std::clamp(pos.y, BORDER, m_height - BORDER);
+        m_net->position(*v.node).x = std::clamp(pos.x, BORDER, m_width - BORDER);
+        m_net->position(*v.node).y = std::clamp(pos.y, BORDER, m_height - BORDER);
 
         // Reset displacement for next iteration
         v.displacement = Vec2();
