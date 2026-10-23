@@ -8,6 +8,7 @@
 #include "PetriNet/PetriNet.hpp"
 
 #include "PetriNet/Algorithms.hpp"
+#include "PetriNet/Firing.hpp"
 #include "PetriNet/Imports/Imports.hpp"
 #include "PetriNet/Exports/Exports.hpp"
 
@@ -125,36 +126,7 @@ size_t Place::decrement(size_t const count)
 //------------------------------------------------------------------------------
 bool Net::isEnabled(Transition const& transition) const
 {
-    // Normal arcs: the input place shall have enough tokens. Inhibitor arcs:
-    // fewer tokens than the weight. Reset arcs: no condition. Input
-    // transition (source) is always enabled.
-    for (auto const& a: arcsIn(transition))
-    {
-        size_t const tokens = placeOf(a).tokens;
-        if ((a.kind == ArcKind::Normal) && (tokens < a.weight))
-            return false;
-        if ((a.kind == ArcKind::Inhibitor) && (tokens >= a.weight))
-            return false;
-    }
-
-    // Output places shall not exceed their capacity after the firing.
-    for (auto const& a: arcsOut(transition))
-    {
-        Place const& place = placeOf(a);
-        if (place.capacity == std::numeric_limits<size_t>::max())
-            continue;
-        size_t tokens = place.tokens;
-        if (Arc const* in = findArc(place, transition))
-        {
-            if (in->kind == ArcKind::Normal)
-                tokens -= in->weight;
-            else if (in->kind == ArcKind::Reset)
-                tokens = 0u;
-        }
-        if (a.weight > place.capacity - std::min(place.capacity, tokens))
-            return false;
-    }
-    return true;
+    return tpne::isEnabled(*this, transition);
 }
 
 //------------------------------------------------------------------------------

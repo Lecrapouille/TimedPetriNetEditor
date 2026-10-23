@@ -198,9 +198,11 @@ But : `src/PetriNet` compilable seul, sans ImGui ni coordonnées, consommable pa
 ### 3.4 Séparer le marquage du réseau
 
 - [ ] `Net` devient la topologie immuable pendant l'exécution.
-- [ ] `Marking` = `std::vector<uint32_t>` (ou multiset coloré, cf. phase 4).
-- [ ] Matrices `Pre` / `Post` creuses (réutiliser `SparseMatrix`) ; fonction pure
-      `Marking fire(Net const&, Marking const&, TransitionId)`.
+- [x] `Marking` = `std::vector<size_t>` (ou multiset coloré, cf. phase 4) : `PetriNet/Firing.hpp`.
+- [x] Matrices `Pre` / `Post` creuses (réutiliser `SparseMatrix`) ; fonction pure
+      `Marking fire(Net const&, Marking const&, TransitionId)` (+ `consume` / `produce`
+      pour les réseaux temporisés ; les listes d'adjacence servent de Pre/Post creuses,
+      `incidenceMatrices()` les donne en `SparseMatrix` pour les analyses).
 
 ### 3.5 Build
 

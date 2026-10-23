@@ -669,9 +669,10 @@ public:
     size_t indexOf(Arc const& arc) const;
 
     //--------------------------------------------------------------------------
-    //! \brief Check if all immediately incoming places have at least one token
-    //! on each of them. A transition is "enabled" when all its input places
-    //! have enough tokens. A transition without input place is enabled.
+    //! \brief Check if the transition is enabled by the tokens of the places:
+    //! see tpne::isEnabled() in Firing.hpp for the rule (weights, inhibitor
+    //! and reset arcs, capacities). A transition without input place is
+    //! enabled.
     //--------------------------------------------------------------------------
     bool isEnabled(Transition const& transition) const;
 
