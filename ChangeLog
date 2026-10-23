@@ -1,3 +1,18 @@
+October 2026: version 0.6.0
+        * Editor redesign: mouse gestures, drawing, menus, analysis window, screenshots of the Petri view.
+        * Editor sleeps in the main loop when nothing animates; analysis results are cached.
+        * GRAFCET: IEC 60848 engine with infix receptivities, drawn actions, start from initial input values.
+        * GRAFCET editor: control panel, timing diagram, simulation speed, captions scaled with zoom.
+        * GEMMA example rewritten as a dryer.
+        * Timed event graphs: tokens and durations displayed apart, critical circuit menu.
+        * Flowshop: public API and Gantt chart.
+        * Embeddable net viewer and TimedPetriNet.mk to build the library inside another project.
+        * Max-plus symbols drawn with a merged math font.
+        * Fixes: arc picking/deletion, dummy arc segfault, critical circuit crash after opening another net,
+          Center View command, grid staying red.
+        * Documentation rewritten as numbered chapters for beginners (editor, GRAFCET syntax and engine).
+        * Dual licensing: GPL v3 or commercial.
+
 May 2026: version 0.5.0
         * Major editor refresh: menus, multi-graph documents, magnetic grid, force directed graph.
         * GRAFCET: adding (WIP) actions, forcage, display, multi GRAFCET (GEMMA).
