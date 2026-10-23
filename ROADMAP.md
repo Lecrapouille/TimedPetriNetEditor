@@ -300,8 +300,9 @@ auto res = rt.run(inst);                    // bloquant, comme fire(app)
 while (rt.step(inst, now())) { /*...*/ }    // non bloquant, dans ta boucle
 ```
 
-- [ ] `Callback` par effacement de type + points d'extension ADL (`fire`, `cancel`,
-      `pause`, `resume`, `isSynchronous`).
+- [x] `Callback` par effacement de type + points d'extension ADL (`fire`, `cancel`,
+      `pause`, `resume`, `isSynchronous`) : `Runtime/Callback.hpp` ; exécuteurs
+      `InlineExecutor`, `ThreadPoolExecutor`, `TaskflowExecutor` (option `TPNE_WITH_TASKFLOW`).
 - [ ] Un `Runtime` est lui-même un `Callback` → réseaux imbriqués (macro-étapes).
 - [ ] `unregisteredTransitions()` : liste les transitions sans fonction (utile au démarrage).
 
