@@ -425,6 +425,35 @@ void Editor::menuSimulation()
         }
         ImGui::EndMenu();
     }
+
+    // Conflicts between transitions (Petri nets and timed nets): the policy
+    // and the seed of the random choices, to replay a simulation.
+    if (ImGui::BeginMenu("Conflicts", net().type() != TypeOfNet::GRAFCET))
+    {
+        Engine::Options options = simulation().options();
+        static std::pair<Engine::Policy, char const*> const POLICIES[] = {
+            { Engine::Policy::Random, "Random" },
+            { Engine::Policy::Priority, "Highest priority" },
+            { Engine::Policy::FirstDeclared, "First declared" } };
+        for (auto const& it : POLICIES)
+        {
+            if (ImGui::MenuItem(it.second, nullptr, options.policy == it.first, !running))
+                options.policy = it.first;
+        }
+        ImGui::Separator();
+        ImGui::BeginDisabled(running || (options.policy != Engine::Policy::Random));
+        ImGui::SetNextItemWidth(180.0f);
+        ImGui::InputScalar("Seed", ImGuiDataType_U64, &options.seed);
+        if (ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled))
+            ImGui::SetTooltip("0: a new seed at each simulation (written in the console)");
+        if ((simulation().seed() != 0u) && ImGui::MenuItem("Replay the last simulation"))
+            options.seed = simulation().seed();
+        ImGui::EndDisabled();
+        for (auto& entry : activeDocument().nets())
+            entry->simulation->options(options);
+        ImGui::EndMenu();
+    }
+
     if (activeDocument().netCount() > 1)
     {
         bool any_running = activeDocument().isAnySimulationRunning();

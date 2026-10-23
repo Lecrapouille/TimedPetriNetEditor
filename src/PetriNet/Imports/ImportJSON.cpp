@@ -207,6 +207,7 @@ static std::string parseNetFromJSON(Net& net, nlohmann::json const& jnet)
             caption = rpnToInfix(caption);
         Transition& transition = net.addTransition(t["id"], caption, t["x"], t["y"]);
         transition.delay = t.value("delay", 0.0f);
+        transition.priority = t.value("priority", 0);
     }
 
     // Arcs

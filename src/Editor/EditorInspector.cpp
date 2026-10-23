@@ -140,9 +140,21 @@ static void drawTransitionsPanel(Net& net, Simulation& simulation, bool& modifie
         ImGui::PushID(static_cast<int>(t.id));
 
         ImGui::SetNextItemWidth(std::max(80.0f, ImGui::GetContentRegionAvail().x -
-                                         (grafcet ? 110.0f : 40.0f)));
+                                         (grafcet ? 110.0f : 90.0f)));
         if (ImGui::InputText(t.key.c_str(), &t.caption, readonly))
             modified = true;
+
+        // Priority when transitions are in conflict (Simulation > Conflicts).
+        if (!grafcet)
+        {
+            ImGui::SameLine();
+            ImGui::SetNextItemWidth(40.0f);
+            if (ImGui::InputInt("##priority", &t.priority, 0, 0, readonly))
+                modified = true;
+            if (ImGui::IsItemHovered())
+                ImGui::SetTooltip("Priority: with the policy \"Highest priority\" (menu Simulation >\n"
+                                  "Conflicts), the highest one fires first.");
+        }
 
         // GRAFCET transition delay (temporization)
         if (grafcet)

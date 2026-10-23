@@ -164,6 +164,8 @@ static void writeNetToJSON(std::ofstream& file, Net const& net)
                                         { "x", t.x }, { "y", t.y } };
         if (t.delay > 0.0f)
             item["delay"] = t.delay;
+        if (t.priority != 0)
+            item["priority"] = t.priority;
         items.push_back(item);
     }
     file << "\n       ],\n       \"transitions\": [";

@@ -197,7 +197,8 @@ But : `src/PetriNet` compilable seul, sans ImGui ni coordonnées, consommable pa
 
 ### 3.4 Séparer le marquage du réseau
 
-- [ ] `Net` devient la topologie immuable pendant l'exécution.
+- [x] `Net` devient la topologie immuable pendant l'exécution (l'`Engine` possède le
+      marquage ; `Simulation` le recopie dans les places pour l'affichage).
 - [x] `Marking` = `std::vector<size_t>` (ou multiset coloré, cf. phase 4) : `PetriNet/Firing.hpp`.
 - [x] Matrices `Pre` / `Post` creuses (réutiliser `SparseMatrix`) ; fonction pure
       `Marking fire(Net const&, Marking const&, TransitionId)` (+ `consume` / `produce`
@@ -214,25 +215,26 @@ But : `src/PetriNet` compilable seul, sans ImGui ni coordonnées, consommable pa
 
 ### 4.1 Découper `Simulation`
 
-- [ ] `Engine` (cœur) : sémantique pure, aucun float d'animation.
-- [ ] `TokenAnimator` (éditeur) : interpolation visuelle des jetons sur les arcs,
-      abonnée aux événements de l'`Engine`.
-- [ ] `GrafcetEngine` : règles d'évolution GRAFCET (franchissement simultané,
-      actions, forçages) au-dessus de l'`Engine`.
-- [ ] Valeur propre / Howard : hors simulation, dans `tpne::maxplus`.
+- [x] `Engine` (cœur) : sémantique pure, aucun float d'animation (`PetriNet/Engine.hpp`).
+- [x] `TokenAnimator` (éditeur) : interpolation visuelle des jetons sur les arcs,
+      à partir des vols (`Engine::Flight`) de l'`Engine`.
+- [x] `GrafcetEngine` : règles d'évolution GRAFCET (franchissement simultané,
+      actions, forçages), à part de l'`Engine` (règles IEC 60848 différentes).
+- [x] Valeur propre / Howard : hors simulation, dans `tpne::maxplus` (`Algorithms` ;
+      `Simulation` garde seulement λ calculé au démarrage pour la courbe).
 
 ### 4.2 Temps
 
-- [ ] Horloge injectable : `std::function<TimePoint()>` (réelle ou simulée).
-- [ ] Temps en `double` ou `std::chrono` ; plus d'accumulation de `float dt`.
-- [ ] Simulation à événements discrets (file triée par date) pour les réseaux temporisés : avance directement à la prochaine date, sans dépendre du framerate.
+- [x] Horloge injectable : `TimeSource = std::function<double()>` (`realTimeSource()` ou simulée).
+- [x] Temps en `double` ou `std::chrono` ; plus d'accumulation de `float dt`.
+- [x] Simulation à événements discrets (file triée par date) pour les réseaux temporisés : avance directement à la prochaine date, sans dépendre du framerate.
 
 ### 4.3 Conflits et déterminisme
 
-- [ ] Remplacer `shuffleTransitions` par une politique explicite :
-      `Priority`, `FirstDeclared`, `Random(seed)`.
-- [ ] Champ `priority` sur `Transition`, éditable dans l'inspecteur.
-- [ ] Graine aléatoire enregistrée → simulations rejouables.
+- [x] Remplacer `shuffleTransitions` par une politique explicite :
+      `Priority`, `FirstDeclared`, `Random(seed)` (menu Simulation > Conflicts).
+- [x] Champ `priority` sur `Transition`, éditable dans l'inspecteur.
+- [x] Graine aléatoire enregistrée → simulations rejouables.
 
 ### 4.4 Extensions du formalisme (TODO existant)
 
