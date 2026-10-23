@@ -55,13 +55,22 @@ field. You can write it by hand, or generate it from another program.
 |-------|---------|
 | `name` | name of the net, also used by the other graphs (`Production:X3`, `Production{init}`) |
 | `description` | optional: what the net does, written in its top left corner |
-| `places` | `id` (0, 1, 2 ... consecutive, no hole), `caption` (any text), `tokens`, `x`, `y` |
+| `places` | `id` (0, 1, 2 ... consecutive, no hole, in any order), `caption` (any text), `tokens`, `x`, `y`, `capacity` (optional: max number of tokens, unbounded when absent) |
 | `transitions` | `id`, `caption` (the receptivity for a GRAFCET), `x`, `y`, `delay` (GRAFCET, seconds, optional) |
-| `arcs` | `from`, `to`: `P<id>` or `T<id>`, a place to a transition or a transition to a place; `duration` on the arcs going out of a transition |
+| `arcs` | `from`, `to`: `P<id>` or `T<id>`, a place to a transition or a transition to a place; `duration` on the arcs going out of a transition; `weight` (optional, 1 when absent); `kind` (optional: `"inhibitor"` or `"reset"`, only from a place) |
 | `actions` | GRAFCET only (§4) |
 
 An arc never links two places or two transitions, and has no identifier
 (the pair `from`, `to` is unique).
+
+Weights, inhibitor and reset arcs and capacities extend the Petri nets and
+the timed Petri nets only: a timed event graph or a GRAFCET using them is
+refused. A normal arc of weight `w` takes (or gives) `w` tokens; an
+inhibitor arc of weight `w` lets the transition fire only while its place
+holds fewer than `w` tokens; a reset arc empties its place when the
+transition fires. A transition is not enabled when its firing would put
+more tokens in a place than its capacity. See
+[`BoundedBuffer.json`](../data/examples/BoundedBuffer.json).
 
 ## 4. GRAFCET: inputs and outputs
 

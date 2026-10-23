@@ -25,6 +25,20 @@ bool isEventGraph(Net const& net, std::string& error, std::vector<size_t>& erron
         return false;
     }
 
+    // The (max,+) algebra needs plain arcs and places.
+    unsigned const extensions = features(net);
+    if (extensions != 0u)
+    {
+        error = "The Petri net is not an event graph because it has " +
+                featuresToStr(extensions);
+        for (size_t i = 0u; i < net.arcs().size(); ++i)
+        {
+            if (net.arcs()[i].features() != 0u)
+                erroneous_arcs.push_back(i);
+        }
+        return false;
+    }
+
     // The Petri net shall be an event graph: all places shall have a single
     // input arc and a single output arc. Else, we cannot generate the linear
     // system.

@@ -37,6 +37,10 @@ struct ArcPath
     std::vector<ImVec2> points;
     //! \brief Arrow head at the last point.
     bool arrow_end = true;
+    //! \brief Shape of the head: an arrow, a small circle (inhibitor arc) or
+    //! two arrows (reset arc).
+    enum class Head { Arrow, Circle, Double };
+    Head head = Head::Arrow;
     //! \brief Arrow in the middle of this segment (GRAFCET link going up),
     //! or -1.
     int arrow_segment = -1;

@@ -175,6 +175,17 @@ static std::string parseNetFromJSON(Net& net, nlohmann::json const& jnet)
     for (nlohmann::json const* jp : places) {
         nlohmann::json const& p = *jp;
         Place& place = net.addPlace(p["id"], p["caption"], p["x"], p["y"], p["tokens"]);
+        if (p.contains("capacity"))
+        {
+            size_t const capacity = p["capacity"];
+            if ((capacity == 0u) || (place.tokens > capacity))
+            {
+                error << "Place " << place.key << " has a capacity of " << capacity
+                      << " and " << place.tokens << " tokens";
+                return error.str();
+            }
+            place.capacity = capacity;
+        }
 
         // GRAFCET actions embedded in place
         if (p.contains("actions"))
@@ -226,6 +237,25 @@ static std::string parseNetFromJSON(Net& net, nlohmann::json const& jnet)
             error << "Arc " << from->key << " -> " << to->key << " is badly formed";
             return error.str();
         }
+
+        // Weight and kind (inhibitor or reset arcs go from a place).
+        Arc& arc = *net.findArc(*from, *to);
+        arc.weight = a.value("weight", size_t(1u));
+        std::string const kind = a.value("kind", std::string("normal"));
+        if (kind == "inhibitor")
+            arc.kind = ArcKind::Inhibitor;
+        else if (kind == "reset")
+            arc.kind = ArcKind::Reset;
+        else if (kind != "normal")
+        {
+            error << "Arc " << from->key << " -> " << to->key << " has unknown kind '" << kind << "'";
+            return error.str();
+        }
+        if ((arc.weight == 0u) || ((arc.kind != ArcKind::Normal) && (from->type != Node::Type::Place)))
+        {
+            error << "Arc " << from->key << " -> " << to->key << " is badly formed";
+            return error.str();
+        }
     }
 
     // GRAFCET step actions (separate array format)
@@ -247,6 +277,15 @@ static std::string parseNetFromJSON(Net& net, nlohmann::json const& jnet)
         parseInputs(jnet["inputs"], net.inputs, nullptr);
     else if (jnet.contains("sensors"))
         parseInputs(jnet["sensors"], net.inputs, nullptr);
+
+    // The type of net shall accept the extensions used by the net.
+    unsigned const used = features(net);
+    if (!allows(net.type(), used))
+    {
+        error << "A " << to_str(net.type()) << " cannot have "
+              << featuresToStr(used & ~allowedFeatures(net.type()));
+        return error.str();
+    }
 
     net.resetReceptivies();
     return {};

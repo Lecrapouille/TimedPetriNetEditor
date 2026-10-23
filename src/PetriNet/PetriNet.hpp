@@ -57,6 +57,34 @@ enum class TypeOfNet
     GRAFCET
 };
 
+//------------------------------------------------------------------------------
+//! \brief Kind of an arc. Inhibitor and reset arcs go from a place to a
+//! transition:
+//!   - Normal: the transition needs \c weight tokens in the place and takes
+//!     them (from a transition to a place: gives \c weight tokens);
+//!   - Inhibitor: the transition is enabled only while the place holds less
+//!     than \c weight tokens (1: the place is empty); it takes none;
+//!   - Reset: the transition empties the place; it does not need tokens.
+//------------------------------------------------------------------------------
+enum class ArcKind { Normal, Inhibitor, Reset };
+
+//------------------------------------------------------------------------------
+//! \brief Extensions of the formalism that a net uses, as bits: see
+//! features() and allows(). TypeOfNet says how the net evolves; these say what
+//! its arcs and places contain.
+//------------------------------------------------------------------------------
+enum Feature : unsigned
+{
+    //! \brief Arcs with a weight other than 1.
+    Weights = 1u << 0,
+    //! \brief Inhibitor arcs.
+    Inhibitors = 1u << 1,
+    //! \brief Reset arcs.
+    Resets = 1u << 2,
+    //! \brief Places with a capacity (other than the one of the type of net).
+    Capacities = 1u << 3,
+};
+
 // *****************************************************************************
 //! \brief Since Petri nets are bipartite graph there are two kind of nodes:
 //! place and transition. This class shall not be used directly as instance, it
@@ -201,8 +229,9 @@ public:
     //! \brief the number of tokens hold by the Place. Public access is fine
     //! since this will facilitate its access during the simulation.
     size_t tokens;
-    //! \brief Max number of tokens the place can hold. Set by the net: 1 for
-    //! GRAFCET steps, unbounded for other nets.
+    //! \brief Max number of tokens the place can hold: 1 for GRAFCET steps,
+    //! unbounded by default for other nets. A transition whose firing would
+    //! exceed it is not enabled.
     size_t capacity = std::numeric_limits<size_t>::max();
     //! \brief GRAFCET actions associated with this step. Only used in GRAFCET mode.
     std::vector<Action> actions;
@@ -296,19 +325,36 @@ public:
     //! is a Place (else the duration is forced to NaN).
     //! \note Nodes shall have different types. Assertion is made here.
     //--------------------------------------------------------------------------
-    Arc(NodeId const from_, NodeId const to_, float duration_ = 0.0f)
+    Arc(NodeId const from_, NodeId const to_, float duration_ = 0.0f,
+        ArcKind const kind_ = ArcKind::Normal, size_t const weight_ = 1u)
         : from(from_), to(to_),
-          duration(from_.isTransition() ? duration_ : safeNaNF())
+          duration(from_.isTransition() ? duration_ : safeNaNF()),
+          kind(kind_), weight(weight_)
     {
         assert(from.type != to.type);
+        assert((kind == ArcKind::Normal) || from.isPlace());
     }
 
     //--------------------------------------------------------------------------
     //! \brief Constructor from the nodes.
     //--------------------------------------------------------------------------
-    Arc(Node const& from_, Node const& to_, float duration_ = 0.0f)
-        : Arc(from_.nodeId(), to_.nodeId(), duration_)
+    Arc(Node const& from_, Node const& to_, float duration_ = 0.0f,
+        ArcKind const kind_ = ArcKind::Normal, size_t const weight_ = 1u)
+        : Arc(from_.nodeId(), to_.nodeId(), duration_, kind_, weight_)
     {}
+
+    //--------------------------------------------------------------------------
+    //! \brief Features of the formalism this arc uses (weight, inhibitor ...).
+    //--------------------------------------------------------------------------
+    unsigned features() const
+    {
+        unsigned f = (weight != 1u) ? Feature::Weights : 0u;
+        if (kind == ArcKind::Inhibitor)
+            f |= Feature::Inhibitors;
+        else if (kind == ArcKind::Reset)
+            f |= Feature::Resets;
+        return f;
+    }
 
     //--------------------------------------------------------------------------
     //! \brief The end of the arc that is a place.
@@ -339,6 +385,11 @@ public:
     //! \note for the animation of tokens during the simulation, seconds are
     //! used.
     float duration;
+    //! \brief Normal, inhibitor or reset arc.
+    ArcKind kind = ArcKind::Normal;
+    //! \brief Tokens taken or given (normal arc), threshold (inhibitor arc).
+    //! At least 1.
+    size_t weight = 1u;
 };
 
 // *****************************************************************************
@@ -876,6 +927,27 @@ private:
 //! \brief Return the string of the type of Petri net.
 //-----------------------------------------------------------------------------
 std::string to_str(TypeOfNet const type);
+
+//-----------------------------------------------------------------------------
+//! \brief Names of the features ("weights, inhibitor arcs").
+//-----------------------------------------------------------------------------
+std::string to_str(ArcKind const kind);
+std::string featuresToStr(unsigned const features);
+
+//-----------------------------------------------------------------------------
+//! \brief Features of the formalism the net uses (Feature bits).
+//-----------------------------------------------------------------------------
+unsigned features(Net const& net);
+
+//-----------------------------------------------------------------------------
+//! \brief Features a type of net accepts: all for Petri nets and timed Petri
+//! nets, none for timed event graphs ((max,+) algebra) and GRAFCET.
+//-----------------------------------------------------------------------------
+unsigned allowedFeatures(TypeOfNet const type);
+inline bool allows(TypeOfNet const type, unsigned const features)
+{
+    return (features & ~allowedFeatures(type)) == 0u;
+}
 
 //-----------------------------------------------------------------------------
 //! \brief Convert to the desired type of net: GRAFCET, Petri, timed Petri,

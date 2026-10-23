@@ -1,0 +1,18 @@
+{
+  "revision": 4,
+  "type": "GRAFCET",
+  "nets": [
+    {
+       "name": "GrafcetWeights",
+       "places": [
+            { "id": 0, "caption": "", "tokens": 1, "x": 100, "y": 100 }
+       ],
+       "transitions": [
+            { "id": 0, "caption": "a", "x": 100, "y": 200 }
+       ],
+       "arcs": [
+            { "from": "P0", "to": "T0", "weight": 2 }
+       ]
+    }
+  ]
+}

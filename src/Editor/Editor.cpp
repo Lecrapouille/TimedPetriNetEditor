@@ -1121,6 +1121,18 @@ void Editor::removeNode(Node& node)
 }
 
 //------------------------------------------------------------------------------
+void Editor::setArc(Arc& arc, ArcKind const kind, size_t const weight)
+{
+    auto action = std::make_unique<NetModificationAction>([this]() -> Net& { return net(); });
+    action->before(net());
+    arc.kind = (arc.from.type == Node::Type::Place) ? kind : ArcKind::Normal;
+    arc.weight = std::max(size_t(1u), weight);
+    net().modified = true;
+    action->after(net());
+    m_history.add(std::move(action));
+}
+
+//------------------------------------------------------------------------------
 void Editor::removeArc(Arc const& arc)
 {
     // In a timed event graph an arc between two transitions is made of a

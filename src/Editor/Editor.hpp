@@ -200,6 +200,8 @@ private:
     void addPlace(float const x, float const y);
     void removeNode(Node& node);
     void removeArc(Arc const& arc);
+    //! \brief Change the kind and the weight of an arc (undoable).
+    void setArc(Arc& arc, ArcKind kind, size_t weight);
     Node& addOppositeNode(Node::Type const type, float const x, float const y,
         size_t const tokens = 0u);
     void addArc(Node& from, Node& to, float const duration = 0.0f);

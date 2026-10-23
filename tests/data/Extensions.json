@@ -1,0 +1,24 @@
+{
+  "revision": 4,
+  "type": "Petri net",
+  "nets": [
+    {
+       "name": "Extensions",
+       "places": [
+            { "id": 0, "caption": "Stock", "tokens": 3, "x": 100, "y": 100 },
+            { "id": 1, "caption": "Alarm", "tokens": 0, "x": 100, "y": 200 },
+            { "id": 2, "caption": "Buffer", "tokens": 0, "x": 300, "y": 100, "capacity": 4 },
+            { "id": 3, "caption": "Trash", "tokens": 5, "x": 300, "y": 200 }
+       ],
+       "transitions": [
+            { "id": 0, "caption": "Move", "x": 200, "y": 100 }
+       ],
+       "arcs": [
+            { "from": "P0", "to": "T0", "weight": 2 },
+            { "from": "P1", "to": "T0", "kind": "inhibitor" },
+            { "from": "P3", "to": "T0", "kind": "reset" },
+            { "from": "T0", "to": "P2", "duration": 0, "weight": 3 }
+       ]
+    }
+  ]
+}

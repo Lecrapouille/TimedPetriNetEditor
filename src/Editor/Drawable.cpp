@@ -14,6 +14,7 @@
 #include <algorithm>
 #include <cfloat>
 #include <cmath>
+#include <limits>
 #include <cstdio>
 #include <string>
 
@@ -336,6 +337,10 @@ ArcPath arcPath(Net const& net, Arc const& arc)
     else
     {
         petriPath(net, net.node(arc.from), net.node(arc.to), path);
+        if (arc.kind == ArcKind::Inhibitor)
+            path.head = ArcPath::Head::Circle;
+        else if (arc.kind == ArcKind::Reset)
+            path.head = ArcPath::Head::Double;
     }
     return path;
 }
@@ -383,14 +388,27 @@ static void drawPath(ImDrawList* draw_list, ArcPath const& path, ImVec2 const& o
     for (auto const& p : path.points)
         points.push_back(screen(origin, zoom, p));
 
-    if (path.arrow_end)
+    if (path.arrow_end && (path.head == ArcPath::Head::Circle))
     {
-        // Stop the line under the head so that its tip stays sharp.
+        // Inhibitor arc: the line ends on a small circle touching the node.
+        ImVec2 const tip = points.back();
+        ImVec2 const dir = unit(tip - points[points.size() - 2u]);
+        float const r = ARROW_WIDTH * zoom * 0.4f;
+        points.back() = tip - dir * (2.0f * r);
+        draw_list->AddPolyline(points.data(), int(points.size()), color, ImDrawFlags_None, thickness);
+        draw_list->AddCircle(tip - dir * r, r, color, 16, thickness);
+    }
+    else if (path.arrow_end)
+    {
+        // Stop the line under the head so that its tip stays sharp. A reset
+        // arc has a second head behind the first one.
         ImVec2 const tip = points.back();
         ImVec2 const dir = tip - points[points.size() - 2u];
         points.back() = tip - unit(dir) * (ARROW_WIDTH * zoom * 0.8f);
         draw_list->AddPolyline(points.data(), int(points.size()), color, ImDrawFlags_None, thickness);
         arrowHead(draw_list, tip, dir, color, zoom);
+        if (path.head == ArcPath::Head::Double)
+            arrowHead(draw_list, tip - unit(dir) * (ARROW_WIDTH * zoom * 0.7f), dir, color, zoom);
     }
     else
     {
@@ -478,6 +496,15 @@ void drawArc(ImDrawList* draw_list, Net const& net, Arc const& arc,
         ImVec2 const p = screen(origin, zoom, alongPath(path.points, 0.5f, dir));
         pill(draw_list, p + normal(dir) * (11.0f * zoom), pal.duration,
              number(arc.duration).c_str(), size);
+    }
+
+    // Weight, on the other side of the line than the duration.
+    if (arc.weight != 1u)
+    {
+        ImVec2 dir;
+        ImVec2 const p = screen(origin, zoom, alongPath(path.points, 0.5f, dir));
+        pill(draw_list, p - normal(dir) * (11.0f * zoom), pal.outline,
+             std::to_string(arc.weight).c_str(), size);
     }
 }
 
@@ -585,6 +612,16 @@ static void drawPetriPlace(ImDrawList* draw_list, Place const& place, ImVec2 con
             label, fontSizeAt(zoom));
     if (show_identifier && show_caption)
         identifier(draw_list, place, p + ImVec2(r * 0.7f, -r * 0.7f), zoom);
+
+    // Capacity above the left corner: "≤ 4".
+    if (place.capacity != std::numeric_limits<size_t>::max())
+    {
+        float const size = fontSizeAt(zoom * 0.75f);
+        std::string const text = "\xe2\x89\xa4 " + std::to_string(place.capacity);
+        ImVec2 const dim = textSize(text.c_str(), size);
+        tpne::text(draw_list, ImVec2(p.x - r * 0.7f - dim.x, p.y - r * 0.7f - dim.y), pal.secondary,
+                   text.c_str(), size);
+    }
 }
 
 //! \brief Horizontal line from x0 to x1 (net units) at y, one or two strokes.

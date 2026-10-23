@@ -234,7 +234,7 @@ But : `src/PetriNet` compilable seul, sans ImGui ni coordonnées, consommable pa
 
 ### 4.4 Extensions du formalisme (TODO existant)
 
-- [ ] `TypeOfNet` ne décrit que la façon dont le réseau évolue (`PetriNet`,
+- [x] `TypeOfNet` ne décrit que la façon dont le réseau évolue (`PetriNet`,
       `TimedPetriNet`, `TimedEventGraph`, `GRAFCET`) ; pas de `ColorPetriNet` ni
       d'`ExtendedPetriNet`. Les extensions sont portées par les arcs et les places
       (`ArcKind { Normal, Inhibitor, Reset }`, `weight`, `capacity`, `color`).
@@ -243,10 +243,10 @@ But : `src/PetriNet` compilable seul, sans ImGui ni coordonnées, consommable pa
       désactivent selon les extensions utilisées, pas selon le type.
 - [ ] Plus tard (après §3.1) : retirer `TimedEventGraph` du cœur, devenu
       `TimedPetriNet` + `isEventGraph()` + option d'affichage compact dans le `Layout`.
-- [ ] Arcs inhibiteurs.
-- [ ] Arcs de reset.
-- [ ] Poids sur les arcs (si pas déjà complets partout).
-- [ ] Capacité des places (ou contrôler `maxTokens` statique → par place).
+- [x] Arcs inhibiteurs.
+- [x] Arcs de reset.
+- [x] Poids sur les arcs (si pas déjà complets partout).
+- [x] Capacité des places (ou contrôler `maxTokens` statique → par place).
 
 ### 4.5 Tests
 

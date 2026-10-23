@@ -1419,6 +1419,19 @@ void PetriView::drawContextMenus(Net& net)
                 m_mouse.edit_duration = std::isnan(arc->duration) ? 0.0f : arc->duration;
                 m_mouse.edit_focus_requested = true;
             }
+            // Inhibitor and reset arcs go from a place to a transition.
+            if ((arc->from.type == Node::Type::Place) &&
+                allows(net.type(), Feature::Inhibitors | Feature::Resets) &&
+                ImGui::BeginMenu("Kind", !running))
+            {
+                for (ArcKind const kind : { ArcKind::Normal, ArcKind::Inhibitor, ArcKind::Reset })
+                {
+                    std::string const label = to_str(kind);
+                    if (ImGui::MenuItem(label.c_str(), nullptr, arc->kind == kind) && (arc->kind != kind))
+                        m_editor.setArc(*arc, kind, arc->weight);
+                }
+                ImGui::EndMenu();
+            }
             if (ImGui::MenuItem("Select", nullptr, false, !running))
                 selectArc(arc, false);
             if (ImGui::MenuItem("Delete", "Del", false, !running))

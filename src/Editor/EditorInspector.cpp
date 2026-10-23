@@ -13,6 +13,7 @@
 #include <algorithm>
 #include <cmath>
 #include <cstdio>
+#include <limits>
 #include <map>
 
 namespace tpne {
@@ -74,6 +75,23 @@ static void drawPlacesPanel(Net& net, Simulation& simulation, bool& modified,
 
         ImGui::SameLine();
         ImGui::Text("%zu", place.tokens);
+
+        // Capacity: 0 for unbounded.
+        if (allows(net.type(), Feature::Capacities))
+        {
+            ImGui::SameLine();
+            ImGui::SetNextItemWidth(40.0f);
+            bool const unbounded = (place.capacity == std::numeric_limits<size_t>::max());
+            int capacity = unbounded ? 0 : int(std::min(place.capacity, size_t(1000000u)));
+            if (ImGui::InputInt("##capacity", &capacity, 0, 0, readonly))
+            {
+                place.capacity = (capacity <= 0) ? std::numeric_limits<size_t>::max()
+                                                 : std::max(size_t(capacity), place.tokens);
+                modified = true;
+            }
+            if (ImGui::IsItemHovered())
+                ImGui::SetTooltip("Capacity: max number of tokens (0: unbounded)");
+        }
 
         // GRAFCET: how long the step is active.
         if (grafcet && simulation.isRunning() && (place.tokens > 0u))
@@ -448,6 +466,74 @@ static void drawGrafcetActionsPanel(Net& net, Simulation& simulation, bool& modi
 }
 
 //------------------------------------------------------------------------------
+//! \brief Arcs of Petri nets: kind (from a place), weight and duration (from a
+//! transition, timed nets).
+//------------------------------------------------------------------------------
+static void drawArcsTable(Net& net, Simulation& simulation, bool& modified)
+{
+    bool const timed = (net.type() == TypeOfNet::TimedPetriNet);
+    ImGui::Begin("Arcs");
+    ImGui::BeginDisabled(simulation.isRunning());
+    ImGuiTableFlags const flags = ImGuiTableFlags_RowBg | ImGuiTableFlags_SizingFixedFit;
+    if (ImGui::BeginTable("ArcsTable", timed ? 4 : 3, flags))
+    {
+        ImGui::TableSetupColumn("Arc");
+        ImGui::TableSetupColumn("Kind");
+        ImGui::TableSetupColumn("Weight");
+        if (timed)
+            ImGui::TableSetupColumn("Duration");
+        ImGui::TableHeadersRow();
+        static char const* KINDS[] = { "normal", "inhibitor", "reset" };
+        for (size_t i = 0u; i < net.arcs().size(); ++i)
+        {
+            Arc& arc = net.arcs()[i];
+            ImGui::PushID(static_cast<int>(i));
+            ImGui::TableNextRow();
+            ImGui::TableNextColumn();
+            ImGui::Text("%s -> %s", arc.from.key().c_str(), arc.to.key().c_str());
+            ImGui::TableNextColumn();
+            if (arc.from.type == Node::Type::Place)
+            {
+                int kind = static_cast<int>(arc.kind);
+                ImGui::SetNextItemWidth(90.0f);
+                if (ImGui::Combo("##kind", &kind, KINDS, IM_ARRAYSIZE(KINDS)))
+                {
+                    arc.kind = static_cast<ArcKind>(kind);
+                    modified = true;
+                }
+            }
+            ImGui::TableNextColumn();
+            int weight = int(std::min(arc.weight, size_t(1000000u)));
+            ImGui::SetNextItemWidth(70.0f);
+            if (ImGui::InputInt("##weight", &weight))
+            {
+                arc.weight = size_t(std::max(1, weight));
+                modified = true;
+            }
+            if (timed)
+            {
+                ImGui::TableNextColumn();
+                if (arc.from.type == Node::Type::Transition)
+                {
+                    if (std::isnan(arc.duration))
+                        arc.duration = 0.0f;
+                    ImGui::SetNextItemWidth(90.0f);
+                    if (ImGui::InputFloat("##duration", &arc.duration, 0.0f, 0.0f, "%.3f"))
+                    {
+                        arc.duration = std::max(0.0f, arc.duration);
+                        modified = true;
+                    }
+                }
+            }
+            ImGui::PopID();
+        }
+        ImGui::EndTable();
+    }
+    ImGui::EndDisabled();
+    ImGui::End();
+}
+
+//------------------------------------------------------------------------------
 //! \brief Helper to display arc durations panel. Only the arcs going out of a
 //! transition have a duration (the time of the tokens on their way).
 //------------------------------------------------------------------------------
@@ -456,7 +542,12 @@ static void drawArcsPanel(Net& net, Simulation& simulation, bool& modified)
     const auto readonly = simulation.isRunning() ?
         ImGuiInputTextFlags_ReadOnly : ImGuiInputTextFlags_None;
 
-    if ((net.type() != TypeOfNet::TimedEventGraph) && (net.type() != TypeOfNet::TimedPetriNet))
+    if ((net.type() == TypeOfNet::PetriNet) || (net.type() == TypeOfNet::TimedPetriNet))
+    {
+        drawArcsTable(net, simulation, modified);
+        return;
+    }
+    if (net.type() != TypeOfNet::TimedEventGraph)
         return;
 
     ImGui::Begin("Arcs");

@@ -390,8 +390,15 @@ void Simulation::fireTransitions()
                     for (auto const& a : m_net.arcsIn(*trans))
                     {
                         size_t& tks = m_net.placeOf(a).tokens;
-                        assert(tks >= tokens);
-                        tks -= tokens;
+                        if (a.kind == ArcKind::Normal)
+                        {
+                            assert(tks >= tokens * a.weight);
+                            tks -= tokens * a.weight;
+                        }
+                        else if (a.kind == ArcKind::Reset)
+                        {
+                            tks = 0u;
+                        }
                     }
                     if (m_net.type() == TypeOfNet::PetriNet)
                     {
@@ -406,7 +413,7 @@ void Simulation::fireTransitions()
                     {
                         arcs_to_animate.push_back(arc_idx);
                     }
-                    m_arc_token_counts[arc_idx] += tokens;
+                    m_arc_token_counts[arc_idx] += tokens * m_net.arcs()[arc_idx].weight;
                 }
             }
         }

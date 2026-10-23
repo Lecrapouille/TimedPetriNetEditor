@@ -144,10 +144,14 @@ static void writeNetToJSON(std::ofstream& file, Net const& net)
 
     // Places
     std::vector<nlohmann::ordered_json> items;
+    size_t const capacity = Net::defaultCapacity(net.type());
     for (auto const& p: net.places())
     {
-        items.push_back({ { "id", p.id }, { "caption", p.caption }, { "tokens", p.tokens },
-                          { "x", p.x }, { "y", p.y } });
+        nlohmann::ordered_json item = { { "id", p.id }, { "caption", p.caption },
+                                        { "tokens", p.tokens }, { "x", p.x }, { "y", p.y } };
+        if (p.capacity != capacity)
+            item["capacity"] = p.capacity;
+        items.push_back(item);
     }
     file << "       \"places\": [";
     writeList(file, items, "            ");
@@ -172,6 +176,10 @@ static void writeNetToJSON(std::ofstream& file, Net const& net)
         nlohmann::ordered_json item = { { "from", a.from.key() }, { "to", a.to.key() } };
         if (a.from.type == Node::Type::Transition)
             item["duration"] = std::isnan(a.duration) ? 0.0f : a.duration;
+        if (a.kind != ArcKind::Normal)
+            item["kind"] = to_str(a.kind);
+        if (a.weight != 1u)
+            item["weight"] = a.weight;
         items.push_back(item);
     }
     file << "\n       ],\n       \"arcs\": [";

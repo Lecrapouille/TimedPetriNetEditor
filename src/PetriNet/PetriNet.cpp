@@ -38,6 +38,71 @@ std::string to_str(TypeOfNet const type)
 }
 
 //------------------------------------------------------------------------------
+std::string to_str(ArcKind const kind)
+{
+    switch (kind)
+    {
+    case ArcKind::Normal:
+        return "normal";
+    case ArcKind::Inhibitor:
+        return "inhibitor";
+    case ArcKind::Reset:
+        return "reset";
+    default:
+        return "unknown";
+    }
+}
+
+//------------------------------------------------------------------------------
+std::string featuresToStr(unsigned const features)
+{
+    static std::pair<Feature, char const*> const NAMES[] = {
+        { Feature::Weights, "weights" },
+        { Feature::Inhibitors, "inhibitor arcs" },
+        { Feature::Resets, "reset arcs" },
+        { Feature::Capacities, "place capacities" },
+    };
+    std::string text;
+    for (auto const& it: NAMES)
+    {
+        if ((features & it.first) != 0u)
+            text += (text.empty() ? "" : ", ") + std::string(it.second);
+    }
+    return text;
+}
+
+//------------------------------------------------------------------------------
+unsigned features(Net const& net)
+{
+    unsigned f = 0u;
+    for (auto const& arc: net.arcs())
+        f |= arc.features();
+    size_t const capacity = Net::defaultCapacity(net.type());
+    for (auto const& place: net.places())
+    {
+        if (place.capacity != capacity)
+            f |= Feature::Capacities;
+    }
+    return f;
+}
+
+//------------------------------------------------------------------------------
+unsigned allowedFeatures(TypeOfNet const type)
+{
+    switch (type)
+    {
+    case TypeOfNet::PetriNet:
+    case TypeOfNet::TimedPetriNet:
+        return Feature::Weights | Feature::Inhibitors | Feature::Resets |
+               Feature::Capacities;
+    case TypeOfNet::TimedEventGraph:
+    case TypeOfNet::GRAFCET:
+    default:
+        return 0u;
+    }
+}
+
+//------------------------------------------------------------------------------
 Place::Place(size_t const id_, std::string const& caption_, float const x_,
              float const y_, size_t const tokens_)
     : Node(Node::Type::Place, id_, caption_, x_, y_), tokens(tokens_)
@@ -60,11 +125,33 @@ size_t Place::decrement(size_t const count)
 //------------------------------------------------------------------------------
 bool Net::isEnabled(Transition const& transition) const
 {
-    // To enable this transition, all its input places shall have at least one
-    // token. Input transition (source) is always enabled.
+    // Normal arcs: the input place shall have enough tokens. Inhibitor arcs:
+    // fewer tokens than the weight. Reset arcs: no condition. Input
+    // transition (source) is always enabled.
     for (auto const& a: arcsIn(transition))
     {
-        if (placeOf(a).tokens == 0u)
+        size_t const tokens = placeOf(a).tokens;
+        if ((a.kind == ArcKind::Normal) && (tokens < a.weight))
+            return false;
+        if ((a.kind == ArcKind::Inhibitor) && (tokens >= a.weight))
+            return false;
+    }
+
+    // Output places shall not exceed their capacity after the firing.
+    for (auto const& a: arcsOut(transition))
+    {
+        Place const& place = placeOf(a);
+        if (place.capacity == std::numeric_limits<size_t>::max())
+            continue;
+        size_t tokens = place.tokens;
+        if (Arc const* in = findArc(place, transition))
+        {
+            if (in->kind == ArcKind::Normal)
+                tokens -= in->weight;
+            else if (in->kind == ArcKind::Reset)
+                tokens = 0u;
+        }
+        if (a.weight > place.capacity - std::min(place.capacity, tokens))
             return false;
     }
     return true;
@@ -746,6 +833,22 @@ bool convertTo(Net& net, TypeOfNet const type, std::string& error, std::vector<s
     if (net.type() == type)
         return true;
 
+    // The new type shall accept the extensions (weights, inhibitor arcs ...)
+    // the net uses.
+    unsigned const used = features(net);
+    if (!allows(type, used))
+    {
+        unsigned const refused = used & ~allowedFeatures(type);
+        error = "A " + to_str(type) + " cannot have " + featuresToStr(refused);
+        erroneous_arcs.clear();
+        for (size_t i = 0u; i < net.arcs().size(); ++i)
+        {
+            if ((net.arcs()[i].features() & refused) != 0u)
+                erroneous_arcs.push_back(i);
+        }
+        return false;
+    }
+
     // Check conditions of a well formed event graph
     if (type == TypeOfNet::TimedEventGraph)
     {
@@ -759,13 +862,18 @@ bool convertTo(Net& net, TypeOfNet const type, std::string& error, std::vector<s
         // when the user wants to start its simulation.
     }
 
+    bool const grafcet = (type == TypeOfNet::GRAFCET) || (net.type() == TypeOfNet::GRAFCET);
     net.m_type = type;
     net.resetReceptivies();
 
-    // GRAFCET constrains the number of tokens.
-    for (auto& place: net.places())
+    // GRAFCET constrains the number of tokens. Other nets keep the capacities
+    // given by the user.
+    if (grafcet)
     {
-        net.applyCapacity(place);
+        for (auto& place: net.places())
+        {
+            net.applyCapacity(place);
+        }
     }
 
     return true;
