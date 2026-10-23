@@ -1001,7 +1001,7 @@ void PetriView::onHandleInput(Net& net, Simulation& simulation)
                 (net.type() != TypeOfNet::PetriNet))
             {
                 m_mouse.editing_arc = arc;
-                m_mouse.edit_duration = std::isnan(arc->duration) ? 0.0f : arc->duration;
+                m_mouse.edit_duration = arc->durationOrZero();
                 m_mouse.edit_focus_requested = true;
             }
         }
@@ -1433,7 +1433,7 @@ void PetriView::drawContextMenus(Net& net)
                 ImGui::MenuItem("Duration...", "double click", false, !running))
             {
                 m_mouse.editing_arc = arc;
-                m_mouse.edit_duration = std::isnan(arc->duration) ? 0.0f : arc->duration;
+                m_mouse.edit_duration = arc->durationOrZero();
                 m_mouse.edit_focus_requested = true;
             }
             // Inhibitor and reset arcs go from a place to a transition.

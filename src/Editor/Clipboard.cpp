@@ -30,7 +30,7 @@ void Clipboard::addArc(Arc const& arc)
         arc.from.type == Node::Type::Place,
         arc.to.id,
         arc.to.type == Node::Type::Place,
-        arc.duration
+        arc.durationOrZero()
     });
 }
 

@@ -189,7 +189,7 @@ void Engine::fire(size_t const transition)
         Arc const& a = m_net.arcs()[arc];
         double duration = m_options.untimed_duration;
         if (m_options.timed)
-            duration = std::isnan(a.duration) ? 0.0 : double(a.duration);
+            duration = double(a.durationOrZero());
         m_flights.push_back({ arc, a.weight, m_time, m_time + duration });
         m_incoming[a.to.id] += a.weight;
         ++m_flying[transition];

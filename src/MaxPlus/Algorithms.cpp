@@ -33,7 +33,7 @@ void toCanonicalForm(Net const& net, Net& canonic)
                 // from: Transition
                 Arc const& in = canonic.arcsIn(p).front();
                 Node* from = &canonic.node(in.from);
-                float duration = in.duration;
+                float duration = in.durationOrZero();
                 size_t tokens = p.tokens - 1u;
                 canonic.removeArc(*from, p);
                 while (tokens--)
@@ -68,7 +68,7 @@ void toCanonicalForm(Net const& net, Net& canonic)
                 Transition* from = &canonic.transitionOf(in);
                 if (canonic.isInput(*from))
                 {
-                    float duration = in.duration;
+                    float duration = in.durationOrZero();
                     canonic.removeArc(*from, p);
 
                     Node& tmp1 = canonic.addPlace(50.0f, 50.0f, 0u);
@@ -124,7 +124,7 @@ void toSysLin(Net const& net,
                 // System inputs: B U(k)
                 Transition const& to = net.transitionOf(a);
                 B.set(indices[to.id], indices[from.id],
-                      static_cast<double>(arc.duration));
+                      static_cast<double>(arc.durationOrZero()));
             }
         }
         else // States or outputs
@@ -138,19 +138,19 @@ void toSysLin(Net const& net,
                     if (p.tokens == 1u)
                     {
                         A.set(indices[to.id], indices[from.id],
-                              static_cast<double>(arc.duration));
+                              static_cast<double>(arc.durationOrZero()));
                     }
                     else
                     {
                         D.set(indices[to.id], indices[from.id],
-                              static_cast<double>(arc.duration));
+                              static_cast<double>(arc.durationOrZero()));
                     }
                 }
                 else if (net.isOutput(to))
                 {
                     // System outputs: Y(k) = C X(k)
                     C.set(indices[to.id], indices[from.id],
-                          static_cast<double>(arc.duration));
+                          static_cast<double>(arc.durationOrZero()));
                 }
             }
         }
@@ -228,7 +228,7 @@ bool toAdjacencyMatrices(Net const& net, SparseMatrix<MaxPlus>& tokens, SparseMa
         // Note origin and destination are inverted because we use the following
         // matrix product convension: M * x where x is a column vector.
         durations.set(from.id, to.id,
-                      static_cast<double>(arcs_in[0].duration));
+                      static_cast<double>(arcs_in[0].durationOrZero()));
         tokens.set(from.id, to.id, static_cast<double>(p.tokens));
     }
 
@@ -266,9 +266,9 @@ std::stringstream showCounterEquation(Net const& net, std::string const& comment
                 Transition const& from = net.transitionOf(ao);
                 ss << separator2;
                 ss << (use_caption ? from.caption : from.key);
-                if (ao.duration != 0.0f)
+                if (ao.durationOrZero() != 0.0f)
                 {
-                    ss << "(t - " << ao.duration << ")";
+                    ss << "(t - " << ao.durationOrZero() << ")";
                 }
                 else
                 {
@@ -310,9 +310,9 @@ std::stringstream showDaterEquation(Net const& net, std::string const& comment,
             {
                 Transition const& from = net.transitionOf(ao);
                 ss << separator2;
-                if (ao.duration != 0.0f)
+                if (ao.durationOrZero() != 0.0f)
                 {
-                    ss << ao.duration << (maxplus_notation ? " " : " + ");
+                    ss << ao.durationOrZero() << (maxplus_notation ? " " : " + ");
                 }
                 ss << (use_caption ? from.caption : from.key) << "(k";
                 if (tokens != 0u)
@@ -368,7 +368,7 @@ CriticalCycleResult findCriticalCycle(Net const& net)
 
         IJ.push_back(int(from.id)); // Transposed is needed
         IJ.push_back(int(to.id));
-        T.push_back(static_cast<double>(in.duration));
+        T.push_back(static_cast<double>(in.durationOrZero()));
         N.push_back(double(p.tokens));
     }
 

@@ -22,6 +22,7 @@
 #  include <sstream>
 #  include <iosfwd>
 #  include <limits>
+#  include <optional>
 
 namespace tpne {
 
@@ -315,13 +316,14 @@ public:
     //! \param[in] from_: Origin node (Place or Transition).
     //! \param[in] to_: Destination node (Place or Transition).
     //! \param[in] duration_: Duration of the process (in unit of time) if \c to_
-    //! is a Place (else the duration is forced to NaN).
+    //! is a Place (else there is no duration). NaN: no duration.
     //! \note Nodes shall have different types. Assertion is made here.
     //--------------------------------------------------------------------------
     Arc(NodeId const from_, NodeId const to_, float duration_ = 0.0f,
         ArcKind const kind_ = ArcKind::Normal, size_t const weight_ = 1u)
         : from(from_), to(to_),
-          duration(from_.isTransition() ? duration_ : safeNaNF()),
+          duration((from_.isTransition() && !safeIsNaN(duration_)) ? std::optional<float>(duration_)
+                                                                    : std::nullopt),
           kind(kind_), weight(weight_)
     {
         assert(from.type != to.type);
@@ -374,10 +376,14 @@ public:
     //! \brief Destination node (Place or Transition). Its type shall be
     //! different to the origin node.
     NodeId to;
-    //! \brief Timed Petri. The time unit is context dependent.
-    //! \note for the animation of tokens during the simulation, seconds are
-    //! used.
-    float duration;
+    //! \brief Timed Petri: time the tokens take along the arc (from a
+    //! transition to a place). No value: no duration given (arcs from a place,
+    //! arcs of files without duration), taken as 0. The time unit is context
+    //! dependent; the editor animates tokens in seconds.
+    std::optional<float> duration;
+
+    //! \brief The duration, 0 when there is none.
+    float durationOrZero() const { return duration.value_or(0.0f); }
     //! \brief Normal, inhibitor or reset arc.
     ArcKind kind = ArcKind::Normal;
     //! \brief Tokens taken or given (normal arc), threshold (inhibitor arc).

@@ -72,7 +72,7 @@ std::string exportToPetriLaTeX(Net const& net, std::string const& filename)
         if (a.from.type == Node::Type::Transition)
         {
             std::stringstream duration;
-            duration << std::fixed << std::setprecision(2) << a.duration;
+            duration << std::fixed << std::setprecision(2) << a.durationOrZero();
             file << "\\draw[-latex, thick] "
                  << "(" << a.from.key() << ") -- "
                  << "node[midway, above right] "

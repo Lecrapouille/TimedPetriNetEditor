@@ -307,8 +307,7 @@ static void computeGantt(Net const& net, int const cycles,
         double duration = 0.0;
         for (Arc const& arc : net.arcsOut(transitions[t]))
         {
-            if (!std::isnan(arc.duration))
-                duration = std::max(duration, double(arc.duration));
+            duration = std::max(duration, double(arc.durationOrZero()));
         }
         if (duration <= 0.0)
             continue;

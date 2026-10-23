@@ -63,7 +63,7 @@ std::string exportToGraphviz(Net const& net, std::string const& filename)
         file << "  " << a.from.key() << " -> " << a.to.key();
         if (a.from.type == Node::Type::Transition)
         {
-            file << " [label=\"" << a.duration << "\"]";
+            file << " [label=\"" << a.durationOrZero() << "\"]";
         }
         file << ";" << std::endl;
     }

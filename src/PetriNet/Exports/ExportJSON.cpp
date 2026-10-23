@@ -176,7 +176,7 @@ static void writeNetToJSON(std::ofstream& file, Net const& net)
     {
         nlohmann::ordered_json item = { { "from", a.from.key() }, { "to", a.to.key() } };
         if (a.from.type == Node::Type::Transition)
-            item["duration"] = std::isnan(a.duration) ? 0.0f : a.duration;
+            item["duration"] = a.durationOrZero();
         if (a.kind != ArcKind::Normal)
             item["kind"] = to_str(a.kind);
         if (a.weight != 1u)

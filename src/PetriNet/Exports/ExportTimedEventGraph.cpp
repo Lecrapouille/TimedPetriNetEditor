@@ -41,7 +41,7 @@ std::string exportToTimedEventGraph(Net const& net, std::string const& filename)
     {
         Arc const& in = net.arcsIn(p)[0];
         file << in.from.id << " " << net.arcsOut(p)[0].to.id
-             << ":   " << in.duration << "    " << p.tokens
+             << ":   " << in.durationOrZero() << "    " << p.tokens
              << std::endl;
     }
 

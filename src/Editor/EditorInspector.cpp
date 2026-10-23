@@ -527,12 +527,11 @@ static void drawArcsTable(Net& net, Simulation& simulation, bool& modified)
                 ImGui::TableNextColumn();
                 if (arc.from.type == Node::Type::Transition)
                 {
-                    if (std::isnan(arc.duration))
-                        arc.duration = 0.0f;
+                    float duration = arc.durationOrZero();
                     ImGui::SetNextItemWidth(90.0f);
-                    if (ImGui::InputFloat("##duration", &arc.duration, 0.0f, 0.0f, "%.3f"))
+                    if (ImGui::InputFloat("##duration", &duration, 0.0f, 0.0f, "%.3f"))
                     {
-                        arc.duration = std::max(0.0f, arc.duration);
+                        arc.duration = std::max(0.0f, duration);
                         modified = true;
                     }
                 }
@@ -572,12 +571,12 @@ static void drawArcsPanel(Net& net, Simulation& simulation, bool& modified)
         std::string const text = (net.type() == TypeOfNet::TimedEventGraph) && !next.empty()
             ? arc.from.key() + " -> " + next.front().to.key()
             : arc.from.key() + " -> " + arc.to.key();
-        if (std::isnan(arc.duration))
-            arc.duration = 0.0f;
-        float const prev_value = arc.duration;
-        ImGui::InputFloat(text.c_str(), &arc.duration, 0.01f, 1.0f, "%.3f", readonly);
-        arc.duration = std::max(0.0f, arc.duration);
-        modified |= (prev_value != arc.duration);
+        float duration = arc.durationOrZero();
+        if (ImGui::InputFloat(text.c_str(), &duration, 0.01f, 1.0f, "%.3f", readonly))
+        {
+            arc.duration = std::max(0.0f, duration);
+            modified = true;
+        }
     }
     ImGui::End();
 }

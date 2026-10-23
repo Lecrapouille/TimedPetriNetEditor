@@ -45,7 +45,7 @@ std::string earliestDates(Net const& net, size_t const cycles,
         if (upstreams.empty())
             return "Place " + place.key + " has no input: not an event graph";
         Arc const& upstream = upstreams.front();
-        double const duration = safeIsNaN(upstream.duration) ? 0.0 : double(upstream.duration);
+        double const duration = double(upstream.durationOrZero());
         inputs[arc.to.id].push_back({ upstream.from.id, place.tokens, duration });
     }
 

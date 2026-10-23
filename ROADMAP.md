@@ -213,7 +213,8 @@ But : `src/PetriNet` compilable seul, sans ImGui ni coordonnées, consommable pa
 - [x] Avec Makefile compiler les lib `tpne::core`, `tpne::maxplus`, `tpne::editor`
       (`libTimedPetriNet`, `libTimedPetriMaxPlus` dans `src/MaxPlus`, `libTimedPetriGUI`).
 - [x] Ne **pas** compiler le cœur avec `-ffast-math` mais garder la compatibilité (`-fno-fast-math`).
-- [ ] Remplacer le sentinel `NaN` « pas de durée » par `std::optional<double>`.
+- [x] Remplacer le sentinel `NaN` « pas de durée » par `std::optional<double>`
+      (`std::optional<float>`, comme le reste des durées du format de fichier ; `durationOrZero()`).
 
 ## 4. Phase 2 — Sémantique et simulation
 

@@ -490,20 +490,20 @@ void drawArc(ImDrawList* draw_list, Net const& net, Arc const& arc,
                 pill(draw_list, p + n * (10.0f * zoom), pal.token, std::to_string(tokens).c_str(), size);
             }
         }
-        if (!std::isnan(arc.duration) && (arc.duration != 0.0f))
+        if (arc.durationOrZero() != 0.0f)
         {
             ImVec2 const p = screen(origin, zoom, alongPath(path.points, 0.55f, dir));
             pill(draw_list, p + normal(dir) * (11.0f * zoom), pal.duration,
-                 number(arc.duration).c_str(), size);
+                 number(arc.durationOrZero()).c_str(), size);
         }
     }
     else if ((type == TypeOfNet::TimedPetriNet) && (arc.from.type == Node::Type::Transition) &&
-             !std::isnan(arc.duration))
+             arc.duration.has_value())
     {
         ImVec2 dir;
         ImVec2 const p = screen(origin, zoom, alongPath(path.points, 0.5f, dir));
         pill(draw_list, p + normal(dir) * (11.0f * zoom), pal.duration,
-             number(arc.duration).c_str(), size);
+             number(*arc.duration).c_str(), size);
     }
 
     // Weight, on the other side of the line than the duration.

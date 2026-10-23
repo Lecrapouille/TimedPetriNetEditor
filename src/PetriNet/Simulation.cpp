@@ -380,8 +380,7 @@ void Simulation::trace(Transition const& transition, double const date, size_t c
     float duration = 0.0f;
     for (Arc const& arc : m_net.arcsOut(transition))
     {
-        if (!std::isnan(arc.duration))
-            duration = std::max(duration, arc.duration);
+        duration = std::max(duration, arc.durationOrZero());
     }
     std::string const name = transition.caption.empty() ? transition.key : transition.caption;
     std::string machine, piece;

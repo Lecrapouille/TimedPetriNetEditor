@@ -115,7 +115,7 @@ std::string exportToJulia(Net const& net, std::string const& filename)
         Transition const& to = canonic.transitionOf(canonic.arcsOut(p)[0]);
 
         file << "# Arc " << p.key << ": " << from.key << " -> " << to.key
-             << " (Duration: " << in.duration
+             << " (Duration: " << in.durationOrZero()
              << ", Tokens: " << p.tokens << ")" << std::endl;
     }
     size_t const nnodes = canonic.transitions().size();

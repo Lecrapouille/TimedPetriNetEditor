@@ -54,7 +54,7 @@ std::string exportToPNML(Net const& net, std::string const& filename)
     for (auto const& a: net.arcs())
     {
         file << "       <arc id=\"" << a.from.key() << a.to.key() << "\" source=\"" << a.from.key() << "\" target=\"" << a.to.key() << "\">" << std::endl;
-        file << "           <inscription><text>" << a.duration << "</text></inscription>" << std::endl;
+        file << "           <inscription><text>" << a.durationOrZero() << "</text></inscription>" << std::endl;
         file << "           <graphics/>" << std::endl;
         file << "       </arc>" << std::endl;
     }

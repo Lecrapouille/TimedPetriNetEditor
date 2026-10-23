@@ -16,7 +16,6 @@
 #include <cmath>
 
 using namespace ::tpne;
-using std::isnan;
 
 //------------------------------------------------------------------------------
 TEST(TestPetriNet, TestNodeCreation)
@@ -162,7 +161,7 @@ TEST(TestPetriNet, TestArcCreation)
 
     // Check the default constructor: Place --> Transition
     Arc a2(p1, t1, 15.0f);
-    ASSERT_EQ(std::isnan(a2.duration), true);
+    ASSERT_FALSE(a2.duration.has_value());
     ASSERT_EQ(a2.to.id, 42u);
     ASSERT_EQ(a2.to.type, Node::Type::Transition);
     ASSERT_STREQ(a2.to.key().c_str(), "T42");
@@ -795,7 +794,7 @@ TEST(TestPetriNet, TestLoadedNetTimedPetri)
     ASSERT_EQ(net.m_arcs[0].to.id, 0u);
     ASSERT_EQ(net.m_arcs[0].to.type, Node::Type::Transition);
     ASSERT_STREQ(net.m_arcs[0].to.key().c_str(), "T0");
-    ASSERT_EQ(std::isnan(net.m_arcs[0].duration), true); // FIXME forcer json a NAN ?
+    ASSERT_FALSE(net.m_arcs[0].duration.has_value());
 
     ASSERT_EQ(net.m_arcs[1].from.id, 1u);
     ASSERT_EQ(net.m_arcs[1].from.type, Node::Type::Place);
@@ -803,7 +802,7 @@ TEST(TestPetriNet, TestLoadedNetTimedPetri)
     ASSERT_EQ(net.m_arcs[1].to.id, 0u);
     ASSERT_EQ(net.m_arcs[1].to.type, Node::Type::Transition);
     ASSERT_STREQ(net.m_arcs[1].to.key().c_str(), "T0");
-    ASSERT_EQ(std::isnan(net.m_arcs[1].duration), true);
+    ASSERT_FALSE(net.m_arcs[1].duration.has_value());
 
     ASSERT_EQ(net.m_arcs[2].from.id, 0u);
     ASSERT_EQ(net.m_arcs[2].from.type, Node::Type::Transition);
@@ -819,7 +818,7 @@ TEST(TestPetriNet, TestLoadedNetTimedPetri)
     ASSERT_EQ(net.m_arcs[3].to.id, 2u);
     ASSERT_EQ(net.m_arcs[3].to.type, Node::Type::Transition);
     ASSERT_STREQ(net.m_arcs[3].to.key().c_str(), "T2");
-    ASSERT_EQ(std::isnan(net.m_arcs[3].duration), true);
+    ASSERT_FALSE(net.m_arcs[3].duration.has_value());
 
     ASSERT_EQ(net.m_arcs[4].from.id, 2u);
     ASSERT_EQ(net.m_arcs[4].from.type, Node::Type::Transition);
@@ -835,7 +834,7 @@ TEST(TestPetriNet, TestLoadedNetTimedPetri)
     ASSERT_EQ(net.m_arcs[5].to.id, 1u);
     ASSERT_EQ(net.m_arcs[5].to.type, Node::Type::Transition);
     ASSERT_STREQ(net.m_arcs[5].to.key().c_str(), "T1");
-    ASSERT_EQ(std::isnan(net.m_arcs[5].duration), true);
+    ASSERT_FALSE(net.m_arcs[5].duration.has_value());
 
     ASSERT_EQ(net.m_arcs[6].from.id, 1u);
     ASSERT_EQ(net.m_arcs[6].from.type, Node::Type::Transition);
@@ -859,7 +858,7 @@ TEST(TestPetriNet, TestLoadedNetTimedPetri)
     ASSERT_EQ(net.m_arcs[8].to.id, 3u);
     ASSERT_EQ(net.m_arcs[8].to.type, Node::Type::Transition);
     ASSERT_STREQ(net.m_arcs[8].to.key().c_str(), "T3");
-    ASSERT_EQ(std::isnan(net.m_arcs[8].duration), true);
+    ASSERT_FALSE(net.m_arcs[8].duration.has_value());
 
     ASSERT_EQ(net.m_arcs[9].from.id, 3u);
     ASSERT_EQ(net.m_arcs[9].from.type, Node::Type::Transition);
@@ -904,13 +903,13 @@ TEST(TestPetriNet, TestLoadedNetTimedPetri)
     ASSERT_NE(arc, nullptr);
     ASSERT_STREQ(arc->from.key().c_str(), "P3");
     ASSERT_STREQ(arc->to.key().c_str(), "T0");
-    ASSERT_EQ(isnan(arc->duration), true);
+    ASSERT_FALSE(arc->duration.has_value());
 
     arc = net.findArc(*net.findNode("P1"), *net.findNode("T0"));
     ASSERT_NE(arc, nullptr);
     ASSERT_STREQ(arc->from.key().c_str(), "P1");
     ASSERT_STREQ(arc->to.key().c_str(), "T0");
-    ASSERT_EQ(isnan(arc->duration), true);
+    ASSERT_FALSE(arc->duration.has_value());
 
     arc = net.findArc(*net.findNode("T0"), *net.findNode("P0"));
     ASSERT_NE(arc, nullptr);
@@ -922,7 +921,7 @@ TEST(TestPetriNet, TestLoadedNetTimedPetri)
     ASSERT_NE(arc, nullptr);
     ASSERT_STREQ(arc->from.key().c_str(), "P0");
     ASSERT_STREQ(arc->to.key().c_str(), "T2");
-    ASSERT_EQ(isnan(arc->duration), true);
+    ASSERT_FALSE(arc->duration.has_value());
 
     arc = net.findArc(*net.findNode("T2"), *net.findNode("P2"));
     ASSERT_NE(arc, nullptr);
@@ -934,7 +933,7 @@ TEST(TestPetriNet, TestLoadedNetTimedPetri)
     ASSERT_NE(arc, nullptr);
     ASSERT_STREQ(arc->from.key().c_str(), "P2");
     ASSERT_STREQ(arc->to.key().c_str(), "T1");
-    ASSERT_EQ(isnan(arc->duration), true);
+    ASSERT_FALSE(arc->duration.has_value());
 
     arc = net.findArc(*net.findNode("T1"), *net.findNode("P1"));
     ASSERT_NE(arc, nullptr);
@@ -952,7 +951,7 @@ TEST(TestPetriNet, TestLoadedNetTimedPetri)
     ASSERT_NE(arc, nullptr);
     ASSERT_STREQ(arc->from.key().c_str(), "P4");
     ASSERT_STREQ(arc->to.key().c_str(), "T3");
-    ASSERT_EQ(isnan(arc->duration), true);
+    ASSERT_FALSE(arc->duration.has_value());
 
     arc = net.findArc(*net.findNode("T3"), *net.findNode("P3"));
     ASSERT_NE(arc, nullptr);
@@ -1114,7 +1113,7 @@ TEST(TestPetriNet, TestLoadedNetGraphEvent)
     ASSERT_EQ(net.m_arcs[0].to.id, 0u);
     ASSERT_EQ(net.m_arcs[0].to.type, Node::Type::Transition);
     ASSERT_STREQ(net.m_arcs[0].to.key().c_str(), "T0");
-    ASSERT_EQ(std::isnan(net.m_arcs[0].duration), true); // FIXME forcer json a NAN ?
+    ASSERT_FALSE(net.m_arcs[0].duration.has_value());
 
     ASSERT_EQ(net.m_arcs[1].from.id, 0u);
     ASSERT_EQ(net.m_arcs[1].from.type, Node::Type::Transition);
@@ -1130,7 +1129,7 @@ TEST(TestPetriNet, TestLoadedNetGraphEvent)
     ASSERT_EQ(net.m_arcs[2].to.id, 1u);
     ASSERT_EQ(net.m_arcs[2].to.type, Node::Type::Transition);
     ASSERT_STREQ(net.m_arcs[2].to.key().c_str(), "T1");
-    ASSERT_EQ(std::isnan(net.m_arcs[2].duration), true);
+    ASSERT_FALSE(net.m_arcs[2].duration.has_value());
 
     ASSERT_EQ(net.m_arcs[3].from.id, 1u);
     ASSERT_EQ(net.m_arcs[3].from.type, Node::Type::Transition);
@@ -1146,7 +1145,7 @@ TEST(TestPetriNet, TestLoadedNetGraphEvent)
     ASSERT_EQ(net.m_arcs[4].to.id, 2u);
     ASSERT_EQ(net.m_arcs[4].to.type, Node::Type::Transition);
     ASSERT_STREQ(net.m_arcs[4].to.key().c_str(), "T2");
-    ASSERT_EQ(std::isnan(net.m_arcs[4].duration), true); // FIXME forcer json a NAN ?
+    ASSERT_FALSE(net.m_arcs[4].duration.has_value());
 
     ASSERT_EQ(net.m_arcs[5].from.id, 2u);
     ASSERT_EQ(net.m_arcs[5].from.type, Node::Type::Transition);
@@ -1170,7 +1169,7 @@ TEST(TestPetriNet, TestLoadedNetGraphEvent)
     ASSERT_EQ(net.m_arcs[7].to.id, 3u);
     ASSERT_EQ(net.m_arcs[7].to.type, Node::Type::Transition);
     ASSERT_STREQ(net.m_arcs[7].to.key().c_str(), "T3");
-    ASSERT_EQ(std::isnan(net.m_arcs[7].duration), true); // FIXME forcer json a NAN ?
+    ASSERT_FALSE(net.m_arcs[7].duration.has_value());
 
     ASSERT_EQ(net.m_arcs[8].from.id, 3u);
     ASSERT_EQ(net.m_arcs[8].from.type, Node::Type::Transition);
@@ -1186,7 +1185,7 @@ TEST(TestPetriNet, TestLoadedNetGraphEvent)
     ASSERT_EQ(net.m_arcs[9].to.id, 2u);
     ASSERT_EQ(net.m_arcs[9].to.type, Node::Type::Transition);
     ASSERT_STREQ(net.m_arcs[9].to.key().c_str(), "T2");
-    ASSERT_EQ(std::isnan(net.m_arcs[9].duration), true); // FIXME forcer json a NAN ?
+    ASSERT_FALSE(net.m_arcs[9].duration.has_value());
 
     // Can we access to nodes ?
     ASSERT_EQ(net.isEmpty(), false);
