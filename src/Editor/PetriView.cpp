@@ -10,6 +10,7 @@
 #  define IMGUI_DEFINE_MATH_OPERATORS
 #endif
 #include "Editor/PetriView.hpp"
+#include "Editor/TokenAnimator.hpp"
 
 #include "Editor/Editor.hpp"
 #include "Editor/Drawable.hpp"
@@ -1086,7 +1087,7 @@ void PetriView::drawNetElements(Net& net, Simulation& simulation, float zoom)
     }
     if ((net.type() == TypeOfNet::GRAFCET) && simulation.isRunning())
         drawTimers(net, simulation, zoom);
-    for (auto const& token : simulation.animatedTokens())
+    for (auto const& token : animateTokens(net, simulation.flights(), simulation.simulationTime()))
     {
         drawTimedToken(draw_list, token.tokens, origin.x + token.x * zoom,
                        origin.y + token.y * zoom, zoom);
@@ -1200,11 +1201,11 @@ void PetriView::drawBadges(Net const& net, Simulation const& simulation)
     if (simulation.isRunning())
     {
         // Simulated time, speed, pause.
-        float const time = (net.type() == TypeOfNet::GRAFCET) ? simulation.grafcet().time()
-                                                               : simulation.simulationTime();
+        double const time = (net.type() == TypeOfNet::GRAFCET) ? double(simulation.grafcet().time())
+                                                                : simulation.simulationTime();
         char state[96];
         std::snprintf(state, sizeof(state), "  -  %s  t = %.1f s", m_editor.m_states.paused ? "paused" : "simulating",
-                      double(time));
+                      time);
         label += state;
         if (m_editor.m_states.time_scale != 1.0f)
         {

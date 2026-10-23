@@ -17,7 +17,6 @@
 #include <cmath>
 #include <cstdio>
 #include <iostream>
-#include <random>
 
 namespace tpne {
 
@@ -35,7 +34,6 @@ Simulation::Simulation(Net& net)
     : m_net(net), m_own_engine(std::make_unique<GrafcetEngine>())
 {
     m_engine = m_own_engine.get();
-    m_timed_tokens.reserve(128u);
 }
 
 //------------------------------------------------------------------------------
@@ -60,6 +58,28 @@ void Simulation::stop()
 }
 
 //------------------------------------------------------------------------------
+uint64_t Simulation::seed() const
+{
+    return (m_petri != nullptr) ? m_petri->seed() : 0u;
+}
+
+//------------------------------------------------------------------------------
+std::vector<Engine::Flight> const& Simulation::flights() const
+{
+    static std::vector<Engine::Flight> const none;
+    return (m_running && (m_petri != nullptr)) ? m_petri->flights() : none;
+}
+
+//------------------------------------------------------------------------------
+std::vector<double> const& Simulation::firingDates(size_t transition_id) const
+{
+    static std::vector<double> const empty;
+    if ((m_petri == nullptr) || (transition_id >= m_petri->firingDates().size()))
+        return empty;
+    return m_petri->firingDates()[transition_id];
+}
+
+//------------------------------------------------------------------------------
 Simulation::ActionState const& Simulation::actionState(size_t place_id, size_t action_index) const
 {
     return m_engine->actionState(m_net, place_id, action_index);
@@ -76,8 +96,9 @@ float Simulation::transitionDelayTimer(size_t transition_id) const
 {
     if (m_net.type() == TypeOfNet::GRAFCET)
         return m_engine->transitionTimer(m_net, transition_id);
-    return transition_id < m_transition_delay_timers.size()
-        ? m_transition_delay_timers[transition_id] : 0.0f;
+    if ((m_petri == nullptr) || (transition_id >= m_net.transitions().size()))
+        return 0.0f;
+    return float(m_petri->enabledFor(transition_id));
 }
 
 //------------------------------------------------------------------------------
@@ -105,23 +126,26 @@ void Simulation::initializeRuntimeState()
 {
     // Memorize initial marking for restoring after the simulation
     storeInitialMarking();
+    m_sim_time = 0.0;
 
-    // Shuffle transitions for random firing order
-    shuffleTransitions(true);
-
-    // Clear animated tokens
-    m_timed_tokens.clear();
-
-    // Initialize transition delay timers
-    m_transition_delay_timers.clear();
-    m_transition_delay_timers.resize(m_net.transitions().size(), 0.0f);
-
-    // Initialize arc token counts
-    m_arc_token_counts.clear();
-    m_arc_token_counts.resize(m_net.arcs().size(), 0u);
-
-    m_sim_time = 0.0f;
-    m_firing_dates.assign(m_net.transitions().size(), {});
+    // Petri nets: the user fires transitions by clicks, tokens move during a
+    // short visual time. Timed nets: transitions fire by themselves, tokens
+    // move during the duration of their arc.
+    m_petri.reset();
+    if (m_net.type() != TypeOfNet::GRAFCET)
+    {
+        Engine::Options options = m_options;
+        options.manual = (m_net.type() == TypeOfNet::PetriNet);
+        options.timed = (m_net.type() != TypeOfNet::PetriNet);
+        options.untimed_duration = untimed_duration;
+        m_petri = std::make_unique<Engine>(m_net, options);
+        m_petri->onFire = [this](size_t const t, double const date, size_t const k) {
+            trace(m_net.transitions()[t], date, k);
+        };
+        m_petri->onWarning = [this](std::string const& msg) { onWarning.emit(msg); };
+        m_petri->reset(m_initial_tokens);
+        m_shown = m_initial_tokens;
+    }
 
     // Pre-compute the (max,+) eigenvalue (cycle time λ) once for TEGs.
     // Used by the real-time output plot to subtract the cyclic drift λ·k.
@@ -133,25 +157,6 @@ void Simulation::initializeRuntimeState()
         if (cc.success && !cc.durations.empty())
             m_eigenvalue = cc.durations.front();
     }
-}
-
-//------------------------------------------------------------------------------
-std::vector<size_t> const& Simulation::shuffleTransitions(bool const reset)
-{
-    static std::random_device rd;
-    static std::mt19937 g(rd());
-
-    if (reset)
-    {
-        m_shuffled_transitions.clear();
-        m_shuffled_transitions.reserve(m_net.transitions().size());
-        for (auto& trans : m_net.transitions())
-        {
-            m_shuffled_transitions.push_back(trans.id);
-        }
-    }
-    std::shuffle(m_shuffled_transitions.begin(), m_shuffled_transitions.end(), g);
-    return m_shuffled_transitions;
 }
 
 //------------------------------------------------------------------------------
@@ -184,12 +189,13 @@ void Simulation::handleIdleState()
         return;
     }
 
-    // Initialize simulation state
-    initializeRuntimeState();
-
     // GRAFCET: compile receptivities and start the engine (shared with the
     // other graphs of the document, it may already run).
     m_net.resetReceptivies();
+
+    // Initialize simulation state
+    initializeRuntimeState();
+
     bool first_graph = true;
     if (m_net.type() == TypeOfNet::GRAFCET)
     {
@@ -212,10 +218,13 @@ void Simulation::handleIdleState()
 
     std::cout << current_time() << "Simulation has started!" << std::endl;
 
-    if ((m_net.type() == TypeOfNet::PetriNet) || (m_net.type() == TypeOfNet::TimedPetriNet))
+    // The seed replays the same choices between conflicting transitions.
+    std::string const seed = ((m_petri != nullptr) && (m_options.policy == Engine::Policy::Random))
+        ? " (seed " + std::to_string(m_petri->seed()) + ")" : "";
+    if (m_net.type() == TypeOfNet::PetriNet)
     {
         onInfo.emit(
-            "Simulation has started!\n"
+            "Simulation has started" + seed + "!\n"
             "  Left click on a transition to fire it\n"
             "  Keys + and - on a place add or remove tokens\n"
             "  Space stops the simulation");
@@ -228,7 +237,10 @@ void Simulation::handleIdleState()
     }
     else
     {
-        onInfo.emit("Simulation has started!");
+        onInfo.emit(
+            "Simulation has started" + seed + "!\n"
+            "  Keys + and - on a place add or remove tokens\n"
+            "  Space stops the simulation");
     }
 
     m_state = State::Simulating;
@@ -248,7 +260,6 @@ void Simulation::handleHaltingState()
     }
     restoreInitialMarking();
     m_net.resetReceptivies();
-    m_timed_tokens.clear();
 
     m_state = State::Idle;
     onStopped.emit();
@@ -258,8 +269,11 @@ void Simulation::handleHaltingState()
 size_t Simulation::totalFirings() const
 {
     size_t n = 0u;
-    for (auto const& dates : m_firing_dates)
-        n += dates.size();
+    if (m_petri != nullptr)
+    {
+        for (auto const& dates : m_petri->firingDates())
+            n += dates.size();
+    }
     return n;
 }
 
@@ -272,7 +286,7 @@ void Simulation::handleSimulatingState(float const dt)
         return;
     }
 
-    m_sim_time += dt;
+    m_sim_time += double(dt);
 
     // GRAFCET: the engine evolves the graphs (instantaneous firing, no token
     // animation). A shared engine is stepped once per cycle by its owner.
@@ -289,9 +303,51 @@ void Simulation::handleSimulatingState(float const dt)
         return;
     }
 
-    updateTransitionDelayTimers(dt);
-    fireTransitions();
-    animateTokens(dt);
+    readUserChanges();
+    m_petri->advanceTo(m_sim_time);
+    showMarking();
+
+    // Timed nets stop when nothing can happen any more. Petri nets wait for
+    // the clicks of the user.
+    if ((m_net.type() != TypeOfNet::PetriNet) && m_petri->isDeadlocked())
+    {
+        std::cout << current_time() << "The simulation cannot consume tokens." << std::endl;
+        m_running = false;
+        m_state = State::Halting;
+    }
+}
+
+//------------------------------------------------------------------------------
+void Simulation::readUserChanges()
+{
+    // Tokens added or removed by the user (keys, remote control).
+    auto const& places = m_net.places();
+    for (size_t p = 0u; (p < places.size()) && (p < m_shown.size()); ++p)
+    {
+        if (places[p].tokens != m_shown[p])
+            m_petri->setTokens(p, places[p].tokens);
+    }
+
+    // Petri nets: transitions armed by a click (the receptivity).
+    if (m_net.type() == TypeOfNet::PetriNet)
+    {
+        auto const& transitions = m_net.transitions();
+        for (size_t t = 0u; t < transitions.size(); ++t)
+        {
+            if (transitions[t].receptivity != m_petri->isArmed(t))
+                m_petri->arm(t, transitions[t].receptivity);
+        }
+    }
+}
+
+//------------------------------------------------------------------------------
+void Simulation::showMarking()
+{
+    m_shown = m_petri->marking();
+    m_net.tokens(m_shown);
+    auto& transitions = m_net.transitions();
+    for (size_t t = 0u; t < transitions.size(); ++t)
+        transitions[t].receptivity = m_petri->isArmed(t);
 }
 
 //------------------------------------------------------------------------------
@@ -325,120 +381,9 @@ bool Simulation::hasReceptivityErrors() const
 }
 
 //------------------------------------------------------------------------------
-void Simulation::updateTransitionDelayTimers(float const dt)
+void Simulation::trace(Transition const& transition, double const date, size_t const k)
 {
-    for (auto& t : m_net.transitions())
-    {
-        if (t.delay > 0.0f)
-        {
-            if (m_net.canFire(t))
-            {
-                m_transition_delay_timers[t.id] += dt;
-            }
-            else
-            {
-                m_transition_delay_timers[t.id] = 0.0f;
-            }
-        }
-    }
-}
-
-//------------------------------------------------------------------------------
-void Simulation::fireTransitions()
-{
-    size_t consuming = 0u;
-
-    // Reset arc token counts
-    std::fill(m_arc_token_counts.begin(), m_arc_token_counts.end(), 0u);
-
-    // Collect arcs that will carry animated tokens (indices in Net::arcs())
-    std::vector<size_t> arcs_to_animate;
-    arcs_to_animate.reserve(32u);
-
-    do
-    {
-        auto& transitions = shuffleTransitions();
-        consuming = 0u;
-
-        for (size_t const id : transitions)
-        {
-            Transition* trans = &m_net.transitions()[id];
-            // Check delay timer for GRAFCET temporization
-            if (trans->delay > 0.0f && m_transition_delay_timers[trans->id] < trans->delay)
-                continue;
-
-            const size_t tokens = m_net.maxTokensToConsume(*trans);
-
-            if (tokens > 0u)
-            {
-                consuming = tokens;
-
-                if (trans->id < m_firing_dates.size())
-                {
-                    for (size_t k = 0u; k < tokens; ++k)
-                        m_firing_dates[trans->id].push_back(m_sim_time);
-                    trace(*trans, tokens);
-                }
-
-                if (m_net.isInput(*trans))
-                {
-                    consuming = 0u;
-                    trans->receptivity = false;
-                }
-                else
-                {
-                    for (auto const& a : m_net.arcsIn(*trans))
-                    {
-                        size_t& tks = m_net.placeOf(a).tokens;
-                        if (a.kind == ArcKind::Normal)
-                        {
-                            assert(tks >= tokens * a.weight);
-                            tks -= tokens * a.weight;
-                        }
-                        else if (a.kind == ArcKind::Reset)
-                        {
-                            tks = 0u;
-                        }
-                    }
-                    if (m_net.type() == TypeOfNet::PetriNet)
-                    {
-                        trans->receptivity = false;
-                    }
-                }
-
-                // Count tokens for animation using arc indices
-                for (size_t const arc_idx : m_net.arcsOut(*trans).indices())
-                {
-                    if (m_arc_token_counts[arc_idx] == 0u)
-                    {
-                        arcs_to_animate.push_back(arc_idx);
-                    }
-                    m_arc_token_counts[arc_idx] += tokens * m_net.arcs()[arc_idx].weight;
-                }
-            }
-        }
-    } while (consuming != 0u);
-
-    // Create animated tokens
-    for (size_t const arc_idx : arcs_to_animate)
-    {
-        size_t count = m_arc_token_counts[arc_idx];
-        if (count > 0u)
-        {
-            std::cout << current_time()
-                      << "Transition " << m_net.transitionOf(m_net.arcs()[arc_idx]).caption
-                      << " consumed " << count << " token" << (count == 1u ? "" : "s")
-                      << std::endl;
-
-            m_timed_tokens.emplace_back(m_net, arc_idx, count, m_net.type());
-            m_arc_token_counts[arc_idx] = 0u;
-        }
-    }
-}
-
-//------------------------------------------------------------------------------
-void Simulation::trace(Transition const& transition, size_t const tokens)
-{
+    std::cout << current_time() << "Transition " << transition.caption << " fired" << std::endl;
     if (onTrace.connectionCount() == 0u)
         return;
 
@@ -453,68 +398,21 @@ void Simulation::trace(Transition const& transition, size_t const tokens)
     std::string const name = transition.caption.empty() ? transition.key : transition.caption;
     std::string machine, piece;
     operationOf(name, machine, piece);
-    size_t const k = m_firing_dates[transition.id].size();
 
-    char date[64];
-    std::snprintf(date, sizeof(date), "t = %.2f  ", double(m_sim_time));
-    std::string text = date;
+    char text_date[64];
+    std::snprintf(text_date, sizeof(text_date), "t = %.2f  ", date);
+    std::string text = text_date;
     if (machine != piece)
         text += machine + " starts " + piece;
     else
         text += name + ((name != transition.key) ? " (" + transition.key + ")" : "") + " fires";
-    text += " (k = " + std::to_string(k) + (tokens > 1u ? ", " + std::to_string(tokens) + " tokens" : "") + ")";
+    text += " (k = " + std::to_string(k) + ")";
     if ((duration > 0.0f) && (m_net.type() != TypeOfNet::PetriNet))
     {
-        std::snprintf(date, sizeof(date), ", until %.2f", double(m_sim_time + duration));
-        text += date;
+        std::snprintf(text_date, sizeof(text_date), ", until %.2f", date + double(duration));
+        text += text_date;
     }
     onTrace.emit(text);
-}
-
-//------------------------------------------------------------------------------
-void Simulation::animateTokens(float const dt)
-{
-    if (m_timed_tokens.empty())
-    {
-        if ((m_net.type() != TypeOfNet::PetriNet) && (m_net.type() != TypeOfNet::GRAFCET))
-        {
-            std::cout << current_time() << "The simulation cannot consume tokens." << std::endl;
-            m_running = false;
-            m_state = State::Halting;
-        }
-        return;
-    }
-
-    size_t i = m_timed_tokens.size();
-    while (i--)
-    {
-        TimedToken& token = m_timed_tokens[i];
-        if (token.update(dt))
-        {
-            Arc const& arc = m_net.arcs()[token.arc];
-            Place& place = m_net.placeOf(arc);
-            std::cout << current_time()
-                      << "Place " << place.caption
-                      << " got " << token.tokens << " token"
-                      << (token.tokens == 1u ? "" : "s")
-                      << std::endl;
-
-            place.increment(token.tokens);
-
-            if (m_net.type() != TypeOfNet::PetriNet)
-            {
-                Transition& t = m_net.transitionOf(arc);
-                if (m_net.isInput(t))
-                {
-                    t.receptivity = true;
-                }
-            }
-
-            // Remove by swapping with last
-            m_timed_tokens[i] = m_timed_tokens.back();
-            m_timed_tokens.pop_back();
-        }
-    }
 }
 
 //------------------------------------------------------------------------------

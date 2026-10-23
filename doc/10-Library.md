@@ -112,6 +112,35 @@ splits `M1_P2` into its machine and its piece.
 
 ## 4. Simulate a timed net
 
+`Engine` (`PetriNet/Engine.hpp`) runs a Petri net or a timed Petri net as a
+discrete event simulation: it owns the marking and does not modify the net.
+Time goes from event to event, so the dates are exact whatever the steps
+given to `advance()`; they are the earliest dates of the (max,+) dater
+equation for a timed event graph.
+
+```c++
+#include "PetriNet/Engine.hpp"
+
+Engine::Options options;
+options.policy = Engine::Policy::Random;   // or Priority, FirstDeclared
+options.seed = 42;                         // 0: drawn, engine.seed() gives it
+Engine engine(net, options);
+engine.onFire = [](size_t t, double date, size_t k) { /* ... */ };
+engine.reset();                            // marking of the net, date 0
+engine.advanceTo(30.0);                    // or advance(dt), update(clock)
+// engine.marking(), engine.flights() (tokens on their way),
+// engine.firingDates()[t], engine.isDeadlocked()
+```
+
+`options.manual = true` fires a transition only when it is armed
+(`engine.arm(t)`), once, like the clicks of the editor on a Petri net.
+`Transition::delay` makes a transition wait, enabled, before firing;
+`Transition::priority` orders conflicts with `Policy::Priority`.
+
+`Simulation` is the simulation of the editor on top of it: started and
+stopped, stepped at each frame, the marking shown in the places of the net
+and restored at the end, GRAFCET included.
+
 ```c++
 #include "PetriNet/Simulation.hpp"
 
@@ -124,9 +153,9 @@ for (int i = 0; i < 300; ++i)
 ```
 
 ```text
-t = 0.05  M1 starts P1 (k = 1), until 2.05
-t = 2.10  M1 starts P2 (k = 1), until 5.10
-t = 2.10  M2 starts P1 (k = 1), until 3.10
+t = 0.00  M1 starts P1 (k = 1), until 2.00
+t = 2.00  M2 starts P1 (k = 1), until 3.00
+t = 2.00  M1 starts P2 (k = 1), until 5.00
 ```
 
 ## 5. Draw a net in your window

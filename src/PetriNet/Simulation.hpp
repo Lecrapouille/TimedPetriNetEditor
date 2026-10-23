@@ -9,7 +9,7 @@
 #  define SIMULATION_NET_HPP
 
 #  include "PetriNet/Signal.hpp"
-#  include "PetriNet/TimedTokens.hpp"
+#  include "PetriNet/Engine.hpp"
 #  include "PetriNet/GrafcetEngine.hpp"
 
 #  include <atomic>
@@ -21,21 +21,21 @@
 namespace tpne {
 
 class Net;
-class Arc;
-class Node;
-class Place;
 class Transition;
 class Receptivity;
 
 // *****************************************************************************
-//! \brief Petri net simulation engine.
-//! Handles token animation, GRAFCET actions, temporizations and forcings.
+//! \brief Simulation of a net as the editor runs it: started and stopped by the
+//! user, stepped at each frame, its marking shown in the places of the net and
+//! restored at the end. Petri nets and timed nets run on an Engine (discrete
+//! events), GRAFCET on a GrafcetEngine. While it runs, the user can arm the
+//! transitions of a Petri net (Transition::receptivity) and change the tokens
+//! of the places.
 // *****************************************************************************
 class Simulation
 {
 public:
 
-    using TimedTokens = std::vector<TimedToken>;
     using ActionState = GrafcetEngine::ActionState;
 
     explicit Simulation(Net& net);
@@ -76,32 +76,33 @@ public:
     void step(float const dt);
 
     //--------------------------------------------------------------------------
-    //! \brief Get the animated tokens for rendering.
+    //! \brief How the next simulations solve conflicts (policy, seed). The
+    //! mode (manual, timed) comes from the type of net.
     //--------------------------------------------------------------------------
-    inline TimedTokens const& animatedTokens() const { return m_timed_tokens; }
+    void options(Engine::Options const& options) { m_options = options; }
+    Engine::Options const& options() const { return m_options; }
+
+    //--------------------------------------------------------------------------
+    //! \brief Seed used by the last simulation, to replay it (0: none yet).
+    //--------------------------------------------------------------------------
+    uint64_t seed() const;
+
+    //--------------------------------------------------------------------------
+    //! \brief Time the tokens of an untimed Petri net spend on arcs, so that
+    //! they are seen moving (seconds). 0: they arrive at once.
+    //--------------------------------------------------------------------------
+    double untimed_duration = 0.2;
+
+    //--------------------------------------------------------------------------
+    //! \brief Tokens on their way along arcs (Petri nets and timed nets).
+    //--------------------------------------------------------------------------
+    std::vector<Engine::Flight> const& flights() const;
 
     //--------------------------------------------------------------------------
     //! \brief GRAFCET: compiled receptivity of a transition while running, or
     //! null.
     //--------------------------------------------------------------------------
     Receptivity const* receptivity(size_t transition_id) const;
-
-    //--------------------------------------------------------------------------
-    //! \brief Get the arc token count for animation (indexed by arc position).
-    //--------------------------------------------------------------------------
-    inline size_t arcTokenCount(size_t arc_index) const
-    {
-        return arc_index < m_arc_token_counts.size() ? m_arc_token_counts[arc_index] : 0;
-    }
-
-    //--------------------------------------------------------------------------
-    //! \brief Set the arc token count (used during firing).
-    //--------------------------------------------------------------------------
-    inline void setArcTokenCount(size_t arc_index, size_t count)
-    {
-        if (arc_index < m_arc_token_counts.size())
-            m_arc_token_counts[arc_index] = count;
-    }
 
     //--------------------------------------------------------------------------
     //! \brief Get action state for a specific action.
@@ -111,7 +112,7 @@ public:
     ActionState const& actionState(size_t place_id, size_t action_index) const;
 
     //--------------------------------------------------------------------------
-    //! \brief Get the delay timer for a transition (GRAFCET).
+    //! \brief Time since the transition can fire, compared to its delay.
     //--------------------------------------------------------------------------
     float transitionDelayTimer(size_t transition_id) const;
 
@@ -143,21 +144,17 @@ public:
     bool validateReceptivities();
 
     //--------------------------------------------------------------------------
-    //! \brief Current simulation time, accumulated since start().
+    //! \brief Current simulation time since start().
     //--------------------------------------------------------------------------
-    inline float simulationTime() const { return m_sim_time; }
+    inline double simulationTime() const { return m_sim_time; }
 
     //--------------------------------------------------------------------------
     //! \brief Firing dates of a transition since start(). y[k] is the time at
     //! which the transition fired for the (k+1)-th time, analogous to the
-    //! flowshop_simu outputs y(k) of ScicosLab/MaxPlus.jl.
+    //! flowshop_simu outputs y(k) of ScicosLab/MaxPlus.jl. Kept after the end
+    //! of the simulation.
     //--------------------------------------------------------------------------
-    inline std::vector<float> const& firingDates(size_t transition_id) const
-    {
-        static std::vector<float> const empty;
-        return transition_id < m_firing_dates.size()
-            ? m_firing_dates[transition_id] : empty;
-    }
+    std::vector<double> const& firingDates(size_t transition_id) const;
 
     //--------------------------------------------------------------------------
     //! \brief Total number of recorded firings across all transitions.
@@ -213,12 +210,14 @@ private:
     //--------------------------------------------------------------------------
     // Simulation logic
     //--------------------------------------------------------------------------
-    void updateTransitionDelayTimers(float const dt);
-    void fireTransitions();
-    void animateTokens(float const dt);
+    //! \brief Give the engine what the user changed in the net (tokens,
+    //! armed transitions).
+    void readUserChanges();
+    //! \brief Show the marking and the armed transitions of the engine in the
+    //! net.
+    void showMarking();
     //! \brief Emit onTrace for a firing of the transition.
-    void trace(Transition const& transition, size_t tokens);
-    std::vector<size_t> const& shuffleTransitions(bool const reset = false);
+    void trace(Transition const& transition, double date, size_t k);
 
     //--------------------------------------------------------------------------
     // Marking management
@@ -239,33 +238,18 @@ private:
     GrafcetEngine* m_engine;
     //! \brief Engine used when no engine is shared.
     std::unique_ptr<GrafcetEngine> m_own_engine;
-
-    //--------------------------------------------------------------------------
-    // Runtime state vectors (indexed by node IDs which are consecutive from 0)
-    //--------------------------------------------------------------------------
-
-    //! \brief Delay timers for transitions with temporization.
-    //! Indexed by Transition::id.
-    std::vector<float> m_transition_delay_timers;
-    //! \brief Token counts for arcs during animation.
-    //! Indexed by arc position in Net::arcs().
-    std::vector<size_t> m_arc_token_counts;
-
-    //--------------------------------------------------------------------------
-    // Other simulation data
-    //--------------------------------------------------------------------------
-
-    //! \brief Identifiers of the transitions, shuffled for random firing order.
-    std::vector<size_t> m_shuffled_transitions;
-    //! \brief Animated tokens transitioning from Transitions to Places.
-    TimedTokens m_timed_tokens;
+    //! \brief Engine running Petri nets and timed nets. Kept after the end of
+    //! the simulation for its firing dates.
+    std::unique_ptr<Engine> m_petri;
+    //! \brief Settings of the next engine.
+    Engine::Options m_options;
+    //! \brief Marking shown in the places at the last step: a difference is a
+    //! change made by the user.
+    Marking m_shown;
     //! \brief Initial marking stored at simulation start.
     std::vector<size_t> m_initial_tokens;
-    //! \brief Accumulated simulation time since start().
-    float m_sim_time = 0.0f;
-    //! \brief Firing dates per transition (indexed by Transition::id).
-    //! Filled for the nets that are not GRAFCET.
-    std::vector<std::vector<float>> m_firing_dates;
+    //! \brief Simulation time since start().
+    double m_sim_time = 0.0;
     //! \brief (max,+) cycle time λ, computed once at simulation start when
     //! the net is a timed event graph (or a timed Petri net that is an event
     //! graph). Zero otherwise.

@@ -486,7 +486,7 @@ void Editor::analysisPlot()
     double const lambda = sim.eigenvalue();
 
     ImGui::TextDisabled("t = %.3f s, firings = %zu, transitions = %zu, λ = %.4f",
-                        double(sim.simulationTime()), sim.totalFirings(),
+                        sim.simulationTime(), sim.totalFirings(),
                         transitions.size(), lambda);
 
     ImGui::Checkbox("Subtract drift λ·k", &subtract_drift);
@@ -552,12 +552,12 @@ void Editor::analysisPlot()
 
     // Plot one line per selected transition. The points are computed by a
     // getter while drawing: no copy of the firing dates at each frame.
-    struct Line { std::vector<float> const* dates; double lambda; };
+    struct Line { std::vector<double> const* dates; double lambda; };
     auto const getter = [](int const idx, void* data) -> ImPlotPoint
     {
         Line const& line = *static_cast<Line const*>(data);
         double const k = double(idx + 1);
-        return ImPlotPoint(k, double((*line.dates)[size_t(idx)]) - line.lambda * k);
+        return ImPlotPoint(k, (*line.dates)[size_t(idx)] - line.lambda * k);
     };
 
     for (size_t i = 0u; i < transitions.size(); ++i)
