@@ -165,8 +165,8 @@ TEST(TestExtensions, Colors)
 {
     ColorTable table;
     ASSERT_EQ(table.add("Success"), Success);
-    ASSERT_EQ(table.add("Red"), Color(4u));
-    ASSERT_EQ(table.add("Red"), Color(4u));
+    ASSERT_EQ(table.add("Red"), Color(5u));
+    ASSERT_EQ(table.add("Red"), Color(5u));
     ASSERT_EQ(table.find("Blue"), std::nullopt);
     ASSERT_STREQ(table.name(Failed).c_str(), "Failed");
     ASSERT_EQ(table.user(), std::vector<std::string>({ "Red" }));

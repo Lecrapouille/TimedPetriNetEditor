@@ -48,7 +48,7 @@ INCLUDES += $(P)/src $(THIRD_PARTIES_DIR)
 #
 LIB_FILES += $(call rwildcard,$(P)/src/MaxPlus,*.cpp)
 LIB_FILES += $(call rwildcard,$(P)/src/MaxPlus,*.c)
-USER_CXXFLAGS := -Wno-old-style-cast -Wno-cast-qual -Wno-float-equal -Wno-nan-infinity-disabled
+USER_CXXFLAGS := -Wno-old-style-cast -Wno-sign-conversion -Wno-cast-qual -Wno-float-equal -Wno-nan-infinity-disabled
 USER_CCFLAGS += -Wno-sign-conversion -Wno-float-equal -Wno-nan-infinity-disabled
 # The (max,+) algebra uses -infinity: never with -ffast-math.
 USER_CXXFLAGS += -fno-fast-math

@@ -26,20 +26,22 @@ using Color = uint8_t;
 //! \brief On an arc from a place: a token of any color. On an arc to a place:
 //! the color given by the transition (its result).
 constexpr Color AnyColor = 0u;
-//! \brief Results of a transition: done, failed, canceled.
+//! \brief Results of a transition: done, failed, canceled. Also the results of
+//! an instance of a runtime, with Deadlocked (nothing can happen any more).
 constexpr Color Success = 1u;
 constexpr Color Failed = 2u;
 constexpr Color Canceled = 3u;
+constexpr Color Deadlocked = 4u;
 
 // *****************************************************************************
 //! \brief Names of the colors of a net: the built-in ones ("any", "Success",
-//! "Failed", "Canceled") then the ones of the user.
+//! "Failed", "Canceled", "Deadlocked") then the ones of the user.
 // *****************************************************************************
 class ColorTable
 {
 public:
 
-    ColorTable() : m_names({ "any", "Success", "Failed", "Canceled" }) {}
+    ColorTable() : m_names({ "any", "Success", "Failed", "Canceled", "Deadlocked" }) {}
 
     //--------------------------------------------------------------------------
     //! \brief The color of this name, added if unknown. AnyColor when the
@@ -88,7 +90,7 @@ public:
     }
 
     //! \brief Number of built-in colors.
-    static constexpr std::ptrdiff_t BUILT_IN = 4;
+    static constexpr std::ptrdiff_t BUILT_IN = 5;
 
 private:
 

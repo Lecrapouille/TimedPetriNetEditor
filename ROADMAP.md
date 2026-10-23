@@ -280,7 +280,7 @@ But : `src/PetriNet` compilable seul, sans ImGui ni coordonnées, consommable pa
       `Success`, `Failed`, `Canceled`, couleurs utilisateur (`PetriNet/Color.hpp`, `net.colors`).
 - [x] Arcs d'entrée : `(place, couleur attendue)` ; couleur par défaut = « n'importe
       laquelle » pour rester compatible avec les réseaux classiques (`Arc::color`).
-- [ ] Arcs de sortie : couleur = résultat du callback, ou couleur fixée sur l'arc.
+- [x] Arcs de sortie : couleur = résultat du callback, ou couleur fixée sur l'arc.
 
 ### 6.2 API
 
@@ -304,14 +304,16 @@ while (rt.step(inst, now())) { /*...*/ }    // non bloquant, dans ta boucle
       `pause`, `resume`, `isSynchronous`) : `Runtime/Callback.hpp` ; exécuteurs
       `InlineExecutor`, `ThreadPoolExecutor`, `TaskflowExecutor` (option `TPNE_WITH_TASKFLOW`).
 - [ ] Un `Runtime` est lui-même un `Callback` → réseaux imbriqués (macro-étapes).
-- [ ] `unregisteredTransitions()` : liste les transitions sans fonction (utile au démarrage).
+- [x] `unregisteredTransitions()` : liste les transitions sans fonction (utile au démarrage).
 
 ### 6.3 Boucle d'exécution
 
-- [ ] Thread propriétaire du marquage + file de reducers (lock-free, ex. `moodycamel::ConcurrentQueue`).
-- [ ] Callbacks synchrones exécutés en ligne, asynchrones sur le pool.
-- [ ] États finaux : `Success` (marquage but), `Deadlocked`, `Canceled`, `Failed`.
-- [ ] Transitions temporisées : durée fixe de l'arc/transition gérée par la file
+- [x] Thread propriétaire du marquage + file de reducers (lock-free, ex. `moodycamel::ConcurrentQueue`)
+      (file protégée par un mutex, sans dépendance ; une file lock-free reste possible).
+- [x] Callbacks synchrones exécutés en ligne, asynchrones sur le pool.
+- [x] États finaux : `Success` (marquage but), `Deadlocked`, `Canceled`, `Failed` (des couleurs,
+      comme chez Symmetri : un sous-réseau rend son état comme résultat).
+- [x] Transitions temporisées : durée fixe de l'arc/transition gérée par la file
       d'événements (sans thread qui dort).
 - [ ] Timeout = transition concurrente temporisée vers une place d'erreur
       (documenter le motif dans les exemples).

@@ -13,6 +13,7 @@ pkg_list.json
 .cache
 compile_commands.json
 build-sanitize/
+build-tsan/
 .vscode/settings.json
 TimedPetriNetEditor*.tar.gz
 

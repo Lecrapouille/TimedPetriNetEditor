@@ -75,6 +75,33 @@ jobs:
           ASAN_OPTIONS=detect_leaks=1 UBSAN_OPTIONS=print_stacktrace=1:halt_on_error=1 \
             ../build-sanitize/TimedPetriNetEditor-UnitTest
 
+  thread_sanitizer_linux:
+    name: Runtime tests with ThreadSanitizer
+    runs-on: ubuntu-latest
+    steps:
+      - name: Install system packages
+        run: |
+          sudo apt-get update
+          sudo apt-get install pkg-config
+      - name: Checkout TimedPetriNetEditor
+        uses: actions/checkout@v6
+        with:
+          submodules: true
+      - name: Download, configure and install Google test
+        run: |
+          wget https://github.com/google/googletest/archive/v1.17.0.tar.gz
+          tar xf v1.17.0.tar.gz
+          cd googletest-1.17.0
+          cmake -DBUILD_SHARED_LIBS=OFF -DCMAKE_POSITION_INDEPENDENT_CODE=ON .
+          sudo make install
+      - name: Compile and run the runtime tests with ThreadSanitizer
+        run: |
+          make download-external-libs
+          cd tests
+          V=1 make -j`nproc --all` BUILD=build-tsan USE_TSAN=1
+          TSAN_OPTIONS=halt_on_error=1 ../build-tsan/TimedPetriNetEditor-UnitTest \
+            --gtest_filter='TestRuntime*:TestExecutor*:TestCallback*' --gtest_repeat=20
+
   non_regression_macos:
     name: Non regression tests on MacOS X
     runs-on: macos-latest

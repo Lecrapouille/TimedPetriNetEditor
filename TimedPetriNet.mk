@@ -16,6 +16,8 @@
 #
 #   TPNE_SOURCES  the library: nets, simulation, GRAFCET engine, (max,+)
 #                 algorithms, imports and exports. No GUI.
+#   TPNE_RUNTIME_SOURCES  the runtime calling functions when transitions
+#                 fire (needs TPNE_SOURCES).
 #   TPNE_VIEWER_SOURCES  NetViewer, a read-only view of a net drawn inside
 #                 the Dear ImGui windows of the host. The host compiles
 #                 Dear ImGui and gives its include folder so that
@@ -36,6 +38,7 @@ TPNE_CXXFLAGS += -Wno-noexcept
 # Howard.c
 TPNE_CFLAGS := -Wno-sign-conversion -Wno-float-equal
 
+TPNE_RUNTIME_SOURCES := $(shell find $(TPNE_DIR)/src/Runtime -name '*.cpp' 2> /dev/null)
 TPNE_VIEWER_SOURCES := $(TPNE_DIR)/src/Editor/NetViewer.cpp
 TPNE_VIEWER_SOURCES += $(TPNE_DIR)/src/Editor/Drawable.cpp
 TPNE_VIEWER_SOURCES += $(TPNE_DIR)/src/Editor/Theme.cpp

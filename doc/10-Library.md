@@ -10,6 +10,7 @@ The editor is made of three libraries:
 |---------|---------|------|
 | `libTimedPetriNet` | `src/PetriNet` | nets, firing rule, engine, simulation, GRAFCET engine, imports, exports; no graphics, no (max,+) |
 | `libTimedPetriMaxPlus` | `src/MaxPlus` | (max,+) algebra, Howard, critical circuit, linear systems, equations, the Julia export |
+| `libTimedPetriRuntime` | `src/Runtime` | the runtime: a transition is a function of your program (§6) |
 | `libTimedPetriGUI` | `src/Editor` | the editor |
 
 [RobotIK](https://github.com/Lecrapouille/Robotik) drives its robot cells
@@ -180,7 +181,59 @@ tpne::NetViewer::Options options;       // captions, actions, highlighted arcs .
 viewer.draw("##grafcet", net, options); // inside ImGui::Begin() ... End()
 ```
 
-## 6. Walk the structure of a net
+## 6. Run your functions: the runtime
+
+The runtime (`Runtime/Runtime.hpp`, `-lTimedPetriRuntime`) runs a net drawn
+in the editor by calling your functions: **a transition is a function**.
+When a transition can fire, the runtime takes its input tokens, calls its
+function, and when the function ends gives the output tokens, **colored by
+its result** (`Success`, `Failed` or a color of yours) unless the arc gives
+its own color. An arc from a place asks for a color: this is how the result
+of a function chooses what comes next.
+
+```text
+ (Ready) -> [detect] -> (Seen) -> [grasp] --Success--> (Held) -> [place] -> (Done)
+                           ^                 \
+                           +---- [retry] <----Failed
+```
+
+```c++
+#include "Runtime/Runtime.hpp"
+
+Net net;                                         // drawn in the editor
+loadFromFile(net, "pick.json", springify);       // arcs from Held: Success / Failed
+
+Runtime rt(net, std::make_shared<ThreadPoolExecutor>(4));
+rt.on("detect", [] { camera.detect(); });               // nothing: Success
+rt.on("grasp",  [] { return gripper.grasp(); });        // bool: Success / Failed
+rt.on("place",  [] { arm.place(); });
+// "retry" has no function: it fires at once (rt.unregisteredTransitions())
+rt.guard("place", [](Context const& c) { return !estop; });
+
+auto order = rt.instantiate("order_42", {}, { { "Done", Success } });  // goal
+Color result = rt.run(*order);       // blocking: Success, Deadlocked, Canceled, Failed
+// or, without blocking, from the loop of your program (ImGui, ROS, Arduino):
+while (rt.step(*order)) { /* ... */ }
+```
+
+- A function returns nothing (Success), a `bool` (Success or Failed) or a
+  `Color`. Any type works with a free function `Color fire(T const&)`, and
+  optionally `cancel()`, `pause()`, `resume()`, `isSynchronous()` (found by
+  ADL).
+- `InlineExecutor` (default) calls the functions in the thread of `run()` or
+  `step()`; `ThreadPoolExecutor` on threads; `TaskflowExecutor` on
+  [Taskflow](https://github.com/taskflow/taskflow) with `TPNE_WITH_TASKFLOW`.
+- Only the thread of `run()` or `step()` touches the marking: the other
+  threads post requests (end of a function, `inject()`, `cancel()`).
+- A transition without input place fires when `rt.inject(*order, "button")`
+  asks (a button, a message).
+- Timed Petri nets: arcs with a duration give their tokens later;
+  `Transition::delay` waits, enabled, before firing. A timeout is a timed
+  transition in conflict with the slow one, going to a place of error.
+- `order->log()` is the journal: each transition `Scheduled`, `Started`,
+  `Completed` with its result and its date.
+
+## 7. Walk the structure of a net
 
 Identifiers are indices: `net.places()[3].id == 3`, keys are `"P3"`, `"T0"`.
 An arc stores its two ends as `NodeId` (type and identifier), so a copied
