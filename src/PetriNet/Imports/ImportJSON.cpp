@@ -145,6 +145,11 @@ static std::string parseNetFromJSON(Net& net, nlohmann::json const& jnet)
     }
     net.name = std::string(jnet["name"]);
     net.description = jnet.value("description", "");
+    if (jnet.contains("colors"))
+    {
+        for (nlohmann::json const& c : jnet["colors"])
+            net.colors.add(c.get<std::string>());
+    }
 
     // Identifiers of nodes are their indices in the net: they shall be
     // 0 .. n-1, in any order in the file.
@@ -264,6 +269,8 @@ static std::string parseNetFromJSON(Net& net, nlohmann::json const& jnet)
             error << "Arc " << from->key << " -> " << to->key << " has unknown kind '" << kind << "'";
             return error.str();
         }
+        if (a.contains("color"))
+            arc.color = net.colors.add(a["color"].get<std::string>());
         if ((arc.weight == 0u) || ((arc.kind != ArcKind::Normal) && (from->type != Node::Type::Place)))
         {
             error << "Arc " << from->key << " -> " << to->key << " is badly formed";

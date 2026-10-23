@@ -276,10 +276,10 @@ But : `src/PetriNet` compilable seul, sans ImGui ni coordonnées, consommable pa
 
 ### 6.1 Jetons colorés
 
-- [ ] `Token` = couleur (`uint8_t` indexé dans une table de noms), constantes
-      `Success`, `Failed`, `Canceled`, couleurs utilisateur.
-- [ ] Arcs d'entrée : `(place, couleur attendue)` ; couleur par défaut = « n'importe
-      laquelle » pour rester compatible avec les réseaux classiques.
+- [x] `Token` = couleur (`uint8_t` indexé dans une table de noms), constantes
+      `Success`, `Failed`, `Canceled`, couleurs utilisateur (`PetriNet/Color.hpp`, `net.colors`).
+- [x] Arcs d'entrée : `(place, couleur attendue)` ; couleur par défaut = « n'importe
+      laquelle » pour rester compatible avec les réseaux classiques (`Arc::color`).
 - [ ] Arcs de sortie : couleur = résultat du callback, ou couleur fixée sur l'arc.
 
 ### 6.2 API

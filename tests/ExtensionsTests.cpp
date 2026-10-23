@@ -159,3 +159,37 @@ TEST(TestExtensions, ImportRefusesExtensionsOfGrafcet)
     std::string const error = loadFromFile(net, "data/BadJSON/GrafcetWeights.json", springify);
     ASSERT_NE(error.find("A GRAFCET cannot have weights"), std::string::npos) << error;
 }
+
+//------------------------------------------------------------------------------
+TEST(TestExtensions, Colors)
+{
+    ColorTable table;
+    ASSERT_EQ(table.add("Success"), Success);
+    ASSERT_EQ(table.add("Red"), Color(4u));
+    ASSERT_EQ(table.add("Red"), Color(4u));
+    ASSERT_EQ(table.find("Blue"), std::nullopt);
+    ASSERT_STREQ(table.name(Failed).c_str(), "Failed");
+    ASSERT_EQ(table.user(), std::vector<std::string>({ "Red" }));
+
+    // Grasp -> Held; Held -(Success)-> Place; Held -(Failed)-> Retry
+    Net net(TypeOfNet::PetriNet);
+    Place& held = net.addPlace(0.0f, 0.0f, 0u);
+    Transition& place = net.addTransition(0.0f, 0.0f);
+    Transition& retry = net.addTransition(0.0f, 0.0f);
+    net.addArc(held, place);
+    net.addArc(held, retry);
+    net.findArc(held, place)->color = Success;
+    net.findArc(held, retry)->color = net.colors.add("Dropped");
+    ASSERT_EQ(features(net), unsigned(Feature::Colors));
+    ASSERT_TRUE(allows(TypeOfNet::PetriNet, Feature::Colors));
+    ASSERT_FALSE(allows(TypeOfNet::GRAFCET, Feature::Colors));
+
+    ASSERT_STREQ(saveToFile(net, "/tmp/tpne-colors.json").c_str(), "");
+    Net loaded(TypeOfNet::PetriNet);
+    bool springify;
+    ASSERT_STREQ(loadFromFile(loaded, "/tmp/tpne-colors.json", springify).c_str(), "");
+    ASSERT_EQ(loaded.colors.user(), std::vector<std::string>({ "Dropped" }));
+    ASSERT_EQ(loaded.findArc(loaded.places()[0], loaded.transitions()[0])->color, Success);
+    ASSERT_STREQ(loaded.colors.name(loaded.findArc(loaded.places()[0], loaded.transitions()[1])->color).c_str(),
+                 "Dropped");
+}

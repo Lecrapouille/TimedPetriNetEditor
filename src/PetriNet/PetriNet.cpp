@@ -61,6 +61,7 @@ std::string featuresToStr(unsigned const features)
         { Feature::Inhibitors, "inhibitor arcs" },
         { Feature::Resets, "reset arcs" },
         { Feature::Capacities, "place capacities" },
+        { Feature::Colors, "colored arcs" },
     };
     std::string text;
     for (auto const& it: NAMES)
@@ -94,7 +95,7 @@ unsigned allowedFeatures(TypeOfNet const type)
     case TypeOfNet::PetriNet:
     case TypeOfNet::TimedPetriNet:
         return Feature::Weights | Feature::Inhibitors | Feature::Resets |
-               Feature::Capacities;
+               Feature::Capacities | Feature::Colors;
     case TypeOfNet::TimedEventGraph:
     case TypeOfNet::GRAFCET:
     default:
@@ -150,7 +151,7 @@ Net::Net(TypeOfNet const type)
 
 //------------------------------------------------------------------------------
 Net::Net(Net const& other)
-    : name(other.name), description(other.description), inputs(other.inputs),
+    : name(other.name), description(other.description), colors(other.colors), inputs(other.inputs),
       m_type(other.m_type), m_places(other.m_places),
       m_transitions(other.m_transitions), m_arcs(other.m_arcs), m_layout(other.m_layout),
       m_place_arcs(other.m_place_arcs), m_transition_arcs(other.m_transition_arcs),
@@ -186,6 +187,7 @@ void Net::clear()
     m_transitions.clear();
     m_arcs.clear();
     m_layout.clear();
+    colors = ColorTable();
     m_place_arcs.clear();
     m_transition_arcs.clear();
     m_next_place_id = 0u;

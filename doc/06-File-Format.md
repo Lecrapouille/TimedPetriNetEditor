@@ -61,7 +61,8 @@ field. You can write it by hand, or generate it from another program.
 | `description` | optional: what the net does, written in its top left corner |
 | `places` | `id` (0, 1, 2 ... consecutive, no hole, in any order), `caption` (any text), `tokens`, `capacity` (optional: max number of tokens, unbounded when absent) |
 | `transitions` | `id`, `caption` (the receptivity for a GRAFCET), `delay` (seconds the transition stays enabled before firing, optional), `priority` (optional, see *Simulation > Conflicts*) |
-| `arcs` | `from`, `to`: `P<id>` or `T<id>`, a place to a transition or a transition to a place; `duration` on the arcs going out of a transition; `weight` (optional, 1 when absent); `kind` (optional: `"inhibitor"` or `"reset"`, only from a place) |
+| `arcs` | `from`, `to`: `P<id>` or `T<id>`, a place to a transition or a transition to a place; `duration` on the arcs going out of a transition; `weight` (optional, 1 when absent); `kind` (optional: `"inhibitor"` or `"reset"`, only from a place); `color` (optional, see below) |
+| `colors` | optional: names of the colors of tokens of the user (`["Red", "Dropped"]`) |
 | `actions` | GRAFCET only (§4) |
 | `layout` | the drawing, apart from the structure: `places` and `transitions` give the `[x, y]` of each node, by identifier. Absent: `x` and `y` are read in the nodes (revision 1). |
 
@@ -74,7 +75,13 @@ refused. A normal arc of weight `w` takes (or gives) `w` tokens; an
 inhibitor arc of weight `w` lets the transition fire only while its place
 holds fewer than `w` tokens; a reset arc empties its place when the
 transition fires. A transition is not enabled when its firing would put
-more tokens in a place than its capacity. See
+more tokens in a place than its capacity.
+
+Colors are for the runtime (chapter 10): an arc from a place takes only
+tokens of its `color` (`"Success"`, `"Failed"`, `"Canceled"` or a color of
+`colors`; any color when absent); an arc to a place gives tokens of its
+`color`, else of the result of the function of the transition. The
+simulation of the editor ignores them. See
 [`BoundedBuffer.json`](../data/examples/BoundedBuffer.json).
 
 ## 4. GRAFCET: inputs and outputs

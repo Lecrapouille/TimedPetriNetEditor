@@ -8,6 +8,7 @@
 #ifndef PETRI_NET_HPP
 #  define PETRI_NET_HPP
 
+#  include "PetriNet/Color.hpp"
 #  include "PetriNet/Grafcet.hpp"
 #  include "PetriNet/Layout.hpp"
 #  include "PetriNet/SafeFloat.hpp"
@@ -85,6 +86,8 @@ enum Feature : unsigned
     Resets = 1u << 2,
     //! \brief Places with a capacity (other than the one of the type of net).
     Capacities = 1u << 3,
+    //! \brief Arcs asking for, or giving, a color of tokens (runtime).
+    Colors = 1u << 4,
 };
 
 // *****************************************************************************
@@ -348,6 +351,8 @@ public:
             f |= Feature::Inhibitors;
         else if (kind == ArcKind::Reset)
             f |= Feature::Resets;
+        if (color != AnyColor)
+            f |= Feature::Colors;
         return f;
     }
 
@@ -389,6 +394,11 @@ public:
     //! \brief Tokens taken or given (normal arc), threshold (inhibitor arc).
     //! At least 1.
     size_t weight = 1u;
+    //! \brief From a place: color of the tokens the transition takes (any by
+    //! default). To a place: color of the tokens given (by default the result
+    //! of the function of the transition, see the runtime). The Engine and
+    //! the editor simulation ignore colors.
+    Color color = AnyColor;
 };
 
 // *****************************************************************************
@@ -906,6 +916,8 @@ public:
     std::string name;
     //! \brief What the net does, for the reader (shown by the editor).
     std::string description;
+    //! \brief Names of the colors of tokens used by the arcs (runtime).
+    ColorTable colors;
     //! \brief GRAFCET only: inputs (sensors, buttons ...) declared with their
     //! initial value. Inputs read by receptivities but not declared here
     //! start at 0.

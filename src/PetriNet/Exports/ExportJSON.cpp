@@ -141,6 +141,8 @@ static void writeNetToJSON(std::ofstream& file, Net const& net)
     file << "       \"name\": " << quote(net.name) << ",\n";
     if (!net.description.empty())
         file << "       \"description\": " << quote(net.description) << ",\n";
+    if (!net.colors.user().empty())
+        file << "       \"colors\": " << format(nlohmann::ordered_json(net.colors.user())) << ",\n";
 
     // Places
     std::vector<nlohmann::ordered_json> items;
@@ -181,6 +183,8 @@ static void writeNetToJSON(std::ofstream& file, Net const& net)
             item["kind"] = to_str(a.kind);
         if (a.weight != 1u)
             item["weight"] = a.weight;
+        if (a.color != AnyColor)
+            item["color"] = net.colors.name(a.color);
         items.push_back(item);
     }
     file << "\n       ],\n       \"arcs\": [";
