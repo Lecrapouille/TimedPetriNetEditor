@@ -38,7 +38,8 @@ LIB_TPNE_NET := $(call internal-lib,TimedPetriNet)
 LIB_TPNE_MAXPLUS := $(call internal-lib,TimedPetriMaxPlus)
 LIB_TPNE_EDITOR := $(call internal-lib,TimedPetriGUI)
 LIB_TPNE_IO := $(call internal-lib,TimedPetriIO)
-INTERNAL_LIBS := $(LIB_TPNE_EDITOR) $(LIB_TPNE_MAXPLUS) $(LIB_TPNE_IO) $(LIB_TPNE_NET)
+LIB_TPNE_RUNTIME := $(call internal-lib,TimedPetriRuntime)
+INTERNAL_LIBS := $(LIB_TPNE_EDITOR) $(LIB_TPNE_RUNTIME) $(LIB_TPNE_MAXPLUS) $(LIB_TPNE_IO) $(LIB_TPNE_NET)
 #DIRS_WITH_MAKEFILE := $(P)/src/Net $(P)/src/Editor
 
 #$(LIB_TPNE_NET): $(P)/src/Net

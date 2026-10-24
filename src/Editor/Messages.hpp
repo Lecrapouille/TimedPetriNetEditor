@@ -12,10 +12,13 @@
 #  include <cassert>
 #  include <chrono>
 #  include <ctime>
+#  include <functional>
 #  include <string>
 #  include <vector>
 
 namespace tpne {
+
+class Net;
 
 // *****************************************************************************
 //! \brief Events of the editor: what the user should know (info, warnings,
@@ -63,6 +66,19 @@ public:
     //! \brief Log an event of the simulation.
     //--------------------------------------------------------------------------
     void setTrace(std::string const& message) { add(Level::Trace, message); }
+
+    //--------------------------------------------------------------------------
+    //! \brief A transition of the net fired at the date (simulation time):
+    //! given to the journal of the editor.
+    //--------------------------------------------------------------------------
+    void fired(Net const& net, size_t const transition, double const date) const
+    {
+        if (onFired)
+            onFired(net, transition, date);
+    }
+
+    //! \brief Receives fired() (the journal of the editor).
+    std::function<void(Net const&, size_t, double)> onFired;
 
     //--------------------------------------------------------------------------
     //! \brief Append text to the last message.

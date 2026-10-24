@@ -14,18 +14,8 @@
 #include <ctime>
 #include <cmath>
 #include <cstdio>
-#include <iostream>
 
 namespace tpne {
-
-//------------------------------------------------------------------------------
-static const char* current_time()
-{
-    static char buffer[32];
-    time_t t = ::time(nullptr);
-    strftime(buffer, sizeof(buffer), "[%H:%M:%S] ", localtime(&t));
-    return buffer;
-}
 
 //------------------------------------------------------------------------------
 Simulation::Simulation(Net& net)
@@ -138,7 +128,7 @@ void Simulation::initializeRuntimeState()
         options.untimed_duration = untimed_duration;
         m_petri = std::make_unique<Engine>(m_net, options);
         m_petri->onFire = [this](size_t const t, double const date, size_t const k) {
-            trace(m_net.transitions()[t], date, k);
+            onFired.emit(t, date, k);
         };
         m_petri->onWarning = [this](std::string const& msg) { onWarning.emit(msg); };
         m_petri->reset(m_initial_tokens);
@@ -203,7 +193,6 @@ void Simulation::handleIdleState()
         m_has_receptivity_errors = false;
     }
 
-    std::cout << current_time() << "Simulation has started!" << std::endl;
 
     // The seed replays the same choices between conflicting transitions.
     std::string const seed = ((m_petri != nullptr) && (m_options.policy == Engine::Policy::Random))
@@ -239,7 +228,6 @@ void Simulation::handleHaltingState()
 {
     if ((m_net.type() != TypeOfNet::GRAFCET) || m_engine->isRunning())
         onInfo.emit("Simulation has ended!");
-    std::cout << current_time() << "Simulation has ended!" << std::endl << std::endl;
 
     if ((m_net.type() == TypeOfNet::GRAFCET) && m_engine->isRunning())
     {
@@ -298,7 +286,7 @@ void Simulation::handleSimulatingState(float const dt)
     // the clicks of the user.
     if ((m_net.type() != TypeOfNet::PetriNet) && m_petri->isDeadlocked())
     {
-        std::cout << current_time() << "The simulation cannot consume tokens." << std::endl;
+        onInfo.emit("Deadlock: no transition can fire any more.");
         m_running = false;
         m_state = State::Halting;
     }
@@ -365,34 +353,6 @@ bool Simulation::validateReceptivities()
 bool Simulation::hasReceptivityErrors() const
 {
     return m_net.type() == TypeOfNet::GRAFCET && m_has_receptivity_errors;
-}
-
-//------------------------------------------------------------------------------
-void Simulation::trace(Transition const& transition, double const date, size_t const k)
-{
-    std::cout << current_time() << "Transition " << transition.caption << " fired" << std::endl;
-    if (onTrace.connectionCount() == 0u)
-        return;
-
-    // k counts the firings of the transition.
-    float duration = 0.0f;
-    for (Arc const& arc : m_net.arcsOut(transition))
-    {
-        duration = std::max(duration, arc.durationOrZero());
-    }
-    std::string const name = transition.caption.empty() ? transition.key : transition.caption;
-
-    char text_date[64];
-    std::snprintf(text_date, sizeof(text_date), "t = %.2f  ", date);
-    std::string text = text_date;
-    text += name + ((name != transition.key) ? " (" + transition.key + ")" : "") + " fires";
-    text += " (k = " + std::to_string(k) + ")";
-    if ((duration > 0.0f) && (m_net.type() != TypeOfNet::PetriNet))
-    {
-        std::snprintf(text_date, sizeof(text_date), ", until %.2f", date + double(duration));
-        text += text_date;
-    }
-    onTrace.emit(text);
 }
 
 //------------------------------------------------------------------------------

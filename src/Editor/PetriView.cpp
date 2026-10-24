@@ -1100,6 +1100,27 @@ void PetriView::drawNetElements(Net& net, Simulation& simulation, float zoom)
         drawTransition(draw_list, net, trans, origin, true, 1.0f, zoom,
                        m_editor.showTransitionIdentifiers());
     }
+    // Halos of the marked nodes (journal, runtime, analysis) and their label.
+    m_editor.m_marks.forEach(net, [&](NodeMark const& mark) {
+        if (mark.node.isPlace() && net.layout().compact)
+            return;
+        Node const& node = net.node(mark.node);
+        ImVec2 const half = nodeHalfSize(node, net.type()) * zoom + ImVec2(5.0f, 5.0f) * zoom;
+        ImVec2 const c = origin + at(net, node) * zoom;
+        float const thickness = std::max(2.0f, 3.0f * zoom);
+        if (node.type == Node::Type::Place)
+            draw_list->AddCircle(c, half.x, mark.color, 0, thickness);
+        else
+            draw_list->AddRect(c - half, c + half, mark.color, 3.0f * zoom, 0, thickness);
+        if (!mark.label.empty())
+        {
+            float const size = std::max(fontSizeAt(zoom * 0.8f), 9.0f);
+            ImVec2 const dim = ImGui::GetFont()->CalcTextSizeA(size, FLT_MAX, 0.0f, mark.label.c_str());
+            ImVec2 const p(c.x - dim.x * 0.5f, c.y - half.y - dim.y - 2.0f);
+            draw_list->AddRectFilled(p - ImVec2(3.0f, 1.0f), p + dim + ImVec2(3.0f, 1.0f), palette().label_bg, 3.0f);
+            draw_list->AddText(ImGui::GetFont(), size, p, mark.color, mark.label.c_str());
+        }
+    });
     if ((net.type() == TypeOfNet::GRAFCET) && simulation.isRunning())
         drawTimers(net, simulation, zoom);
     for (auto const& token : animateTokens(net, simulation.flights(), simulation.simulationTime()))

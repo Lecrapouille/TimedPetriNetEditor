@@ -18,6 +18,8 @@
 
 #  include "IO/IO.hpp"
 #  include "Editor/ForceDirected.hpp"
+#  include "Editor/JournalView.hpp"
+#  include "Editor/NodeMarks.hpp"
 #  include "MaxPlus/Algorithms.hpp"
 
 #  include <deque>
@@ -458,6 +460,10 @@ private:
     PetriView m_view;
     //! \brief Messages to be displayed on the GUI.
     Messages m_messages;
+    //! \brief Journal of the firings (simulations, files, runtimes).
+    JournalView m_journal;
+    //! \brief Nodes drawn with a halo (journal, runtime, analysis).
+    NodeMarks m_marks;
     //! \brief States controlling the GUI
     mutable States m_states;
     //! \brief Cache the path to save the loaded Petri file.

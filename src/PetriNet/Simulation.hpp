@@ -171,10 +171,11 @@ public:
     Signal<std::string const&> onWarning;
     //! \brief Signal emitted for error messages.
     Signal<std::string const&> onError;
-    //! \brief Signal emitted for each firing of a transition (Petri nets),
-    //! written like the Gantt chart: date, transition, firing number k and
-    //! when its tokens arrive ("t = 4.00  M1 starts P1 (k = 2), until 7.00").
-    Signal<std::string const&> onTrace;
+    //! \brief Signal emitted for each firing of a transition of a Petri net
+    //! or a timed net: its identifier, the date (simulation time) and the
+    //! firing number k (1 for the first). The journal of the editor shows
+    //! them (GRAFCET: see GrafcetEngine::firings()).
+    Signal<size_t, double, size_t> onFired;
 
 private:
 
@@ -209,8 +210,6 @@ private:
     //! \brief Show the marking and the armed transitions of the engine in the
     //! net.
     void showMarking();
-    //! \brief Emit onTrace for a firing of the transition.
-    void trace(Transition const& transition, double date, size_t k);
 
     //--------------------------------------------------------------------------
     // Marking management

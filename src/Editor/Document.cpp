@@ -33,8 +33,8 @@ Document::NetEntry::NetEntry(TypeOfNet type, std::string const& name, Messages& 
     simulation->onError.connect([&messages](std::string const& msg) {
         messages.setError(msg);
     });
-    simulation->onTrace.connect([&messages](std::string const& msg) {
-        messages.setTrace(msg);
+    simulation->onFired.connect([this, &messages](size_t const transition, double const date, size_t) {
+        messages.fired(net, transition, date);
     });
 }
 
@@ -427,16 +427,7 @@ void Document::traceGrafcet()
         if (transition == nullptr)
             continue;
 
-        // "t = 1.20  Production: T1 [30s/X1]  X1 -> X2"
-        std::string from, to;
-        for (Arc const& arc : net.arcsIn(*transition))
-            from += (from.empty() ? "X" : ", X") + std::to_string(arc.from.id);
-        for (Arc const& arc : net.arcsOut(*transition))
-            to += (to.empty() ? "X" : ", X") + std::to_string(arc.to.id);
-        char date[32];
-        std::snprintf(date, sizeof(date), "t = %.2f  ", double(m_grafcet.time()));
-        m_messages.setTrace(std::string(date) + net.name + ": " + transition->key + " [" +
-                            transition->caption + "]  " + from + " -> " + to);
+        m_messages.fired(net, transition->id, double(m_grafcet.time()));
     }
 }
 

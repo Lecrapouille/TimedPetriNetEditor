@@ -655,8 +655,8 @@ TEST(TestGrafcetEngine, GemmaDryer)
 //------------------------------------------------------------------------------
 TEST(TestSimulation, FiringDatesAndTraces)
 {
-    // The firing dates (plot of the analysis) and the traces (console) of a
-    // timed event graph and of a flowshop, written like the Gantt chart.
+    // The firing dates (plot of the analysis) and the firings given to the
+    // journal of the editor, for a timed event graph and a flowshop.
     for (char const* file : { "../data/examples/EventGraph.json", "../data/examples/simple.flowshop" })
     {
         Net net;
@@ -664,15 +664,18 @@ TEST(TestSimulation, FiringDatesAndTraces)
             ? importFlowshop(net, file) : importFromJSON(net, file);
         ASSERT_STREQ(error.c_str(), "") << file;
         Simulation simulation(net);
-        std::vector<std::string> traces;
-        simulation.onTrace.connect([&traces](std::string const& text) { traces.push_back(text); });
+        struct Fired { size_t transition; double date; size_t k; };
+        std::vector<Fired> fired;
+        simulation.onFired.connect([&fired](size_t t, double date, size_t k) { fired.push_back({ t, date, k }); });
         simulation.start();
         for (int i = 0; i < 400; ++i)
             simulation.step(0.05f);
         EXPECT_GT(simulation.totalFirings(), 0u) << file;
-        ASSERT_FALSE(traces.empty()) << file;
-        EXPECT_EQ(traces.front().rfind("t = ", 0), 0u) << traces.front();
-        EXPECT_NE(traces.front().find("(k = 1"), std::string::npos) << traces.front();
+        ASSERT_FALSE(fired.empty()) << file;
+        EXPECT_EQ(fired.front().k, 1u);
+        EXPECT_EQ(fired.size(), simulation.totalFirings()) << file;
+        for (size_t i = 1u; i < fired.size(); ++i)
+            EXPECT_LE(fired[i - 1u].date, fired[i].date) << file;
         simulation.stop();
         simulation.step(0.05f);
     }

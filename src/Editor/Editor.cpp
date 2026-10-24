@@ -43,6 +43,9 @@ Editor::Editor(size_t const width, size_t const height,
       m_view(*this)
 {
     registerMaxPlusFormats();
+    m_messages.onFired = [this](Net const& fired, size_t const transition, double const date) {
+        m_journal.record(fired, transition, date);
+    };
 #ifdef __EMSCRIPTEN__
  constexpr float FONT_SIZE = 18.0f;
 #else
@@ -200,6 +203,7 @@ void Editor::setupDefaultLayout(unsigned int const id)
     for (char const* name : { "Control panel", "Analysis" })
         ImGui::DockBuilderDockWindow(name, right_bottom);
     ImGui::DockBuilderDockWindow("Console", bottom);
+    ImGui::DockBuilderDockWindow("Journal", bottom);
     ImGui::DockBuilderDockWindow("Timing diagram", bottom);
     ImGui::DockBuilderDockWindow("Outputs", bottom_right);
     for (int i = 0; i < 16; ++i)
@@ -306,6 +310,7 @@ void Editor::closeDocument(Document const* doc)
 {
     if (doc == nullptr)
         return;
+    m_journal.stopReplay();
 
     for (size_t i = 0; i < m_documents.size(); ++i)
     {
@@ -506,7 +511,7 @@ bool Editor::isAnimating() const
         if (entry->view_state.center_request > 0)
             return true;
     }
-    return activeDocument().isAnySimulationRunning() ||
+    return activeDocument().isAnySimulationRunning() || m_journal.isReplaying() ||
            m_force_directed.isRunning() ||
            (m_remote && m_remote->isRunning()) ||
            m_auto_screenshot_pending || (m_screenshot_defer_frames > 0);
@@ -593,6 +598,7 @@ void Editor::onDraw()
     keepNetProportions();
     menu();
     console();
+    m_journal.draw(net(), activeDocument().isAnySimulationRunning(), m_marks);
     inspector();
     view();
     notifications();
@@ -1003,6 +1009,8 @@ void Editor::toogleStartSimulation()
         simulation().stop();
     else
     {
+        // The replayed tokens are not the initial marking.
+        m_journal.stopReplay();
         computeCycleTime();
         simulation().start();
     }
@@ -1024,6 +1032,7 @@ void Editor::toogleStartAllSimulations()
     }
     else
     {
+        m_journal.stopReplay();
         computeCycleTime();
         activeDocument().startAllSimulations();
     }
@@ -1235,6 +1244,7 @@ void Editor::loadNetFile()
 //------------------------------------------------------------------------------
 void Editor::loadDocumentFromFile(std::string const& filepath)
 {
+    m_journal.stopReplay();
     std::string ext = Path::extension(filepath);
     Importer const* importer = getImporter(ext);
 
@@ -1388,6 +1398,7 @@ void Editor::saveNetAs()
 //------------------------------------------------------------------------------
 std::string Editor::writeDocument(std::string const& path)
 {
+    m_journal.stopReplay();
     std::vector<Net> nets;
     auto& doc = activeDocument();
     doc.pruneInfo();
