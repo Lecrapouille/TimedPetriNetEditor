@@ -25,6 +25,121 @@ static std::string read(std::string const& path)
 }
 
 //------------------------------------------------------------------------------
+//! \brief The file formats are chosen by the longest extension the file ends
+//! with.
+TEST(TestExports, FindByExtension)
+{
+    ASSERT_NE(findExporter("net.json"), nullptr);
+    ASSERT_STREQ(findExporter("a/b/net.drawio.xml")->format.c_str(), "Draw.io");
+    ASSERT_STREQ(findExporter("net.symmetri.pnml")->format.c_str(), "PNML for Symmetri");
+    ASSERT_STREQ(findExporter("NET.PNML")->format.c_str(), "Petri Net Markup Language");
+    ASSERT_STREQ(findExporter("net.json~")->format.c_str(), "JSON");
+    ASSERT_EQ(findExporter("net.unknown"), nullptr);
+    ASSERT_NE(findImporter("net.pnml"), nullptr);
+    ASSERT_EQ(findImporter("net"), nullptr);
+}
+
+//------------------------------------------------------------------------------
+//! \brief PNML keeps the weights (inscriptions), the kinds of arcs, the
+//! capacities, the durations and the type of net (toolspecific).
+TEST(TestExports, PNMLRoundTrip)
+{
+    Net net(TypeOfNet::TimedPetriNet);
+    ASSERT_STREQ(loadFromFile(net, "data/Extensions.json").c_str(), "");
+    net.arcs()[3].duration = 2.5f;
+    net.transitions()[0].priority = 3;
+    ASSERT_STREQ(saveToFile(net, "/tmp/tpne-extensions.pnml").c_str(), "");
+
+    Net back;
+    ASSERT_STREQ(loadFromFile(back, "/tmp/tpne-extensions.pnml").c_str(), "");
+    ASSERT_EQ(back.type(), net.type());
+    ASSERT_EQ(back.places().size(), 4u);
+    ASSERT_EQ(back.transitions().size(), 1u);
+    ASSERT_EQ(back.arcs().size(), 4u);
+    ASSERT_EQ(back.tokens(), net.tokens());
+    ASSERT_EQ(back.places()[2].capacity, 4u);
+    ASSERT_EQ(back.transitions()[0].priority, 3);
+    for (size_t i = 0u; i < net.arcs().size(); ++i)
+    {
+        Arc const& a = net.arcs()[i];
+        Arc const* b = back.findArc(back.node(a.from), back.node(a.to));
+        ASSERT_NE(b, nullptr);
+        ASSERT_EQ(b->weight, a.weight);
+        ASSERT_EQ(b->kind, a.kind);
+        ASSERT_EQ(b->durationOrZero(), a.durationOrZero());
+    }
+    ASSERT_EQ(features(back), features(net));
+}
+
+//------------------------------------------------------------------------------
+//! \brief Files of Symmetri: one initialMarking per token, colors on arcs.
+TEST(TestExports, SymmetriPNML)
+{
+    Net net;
+    ASSERT_STREQ(loadFromFile(net, "data/Symmetri.pnml").c_str(), "");
+    ASSERT_EQ(net.places().size(), 3u);
+    ASSERT_EQ(net.transitions().size(), 3u);
+    ASSERT_EQ(net.places()[0].tokens, 2u);
+    ASSERT_STREQ(net.transitions()[1].caption.c_str(), "place");
+    Arc const* failed = net.findArc(net.places()[1], net.transitions()[2]);
+    ASSERT_NE(failed, nullptr);
+    ASSERT_EQ(failed->color, Failed);
+    Arc const* done = net.findArc(net.transitions()[1], net.places()[2]);
+    ASSERT_NE(done, nullptr);
+    ASSERT_EQ(done->weight, 2u);
+
+    // Written back for Symmetri: ids are the names, a token per marking.
+    ASSERT_STREQ(saveToFile(net, "/tmp/tpne.symmetri.pnml").c_str(), "");
+    std::string const text = read("/tmp/tpne.symmetri.pnml");
+    ASSERT_THAT(text, HasSubstr("<transition id=\"grasp\">"));
+    ASSERT_THAT(text, HasSubstr("source=\"Held\" target=\"retry\" color=\"Failed\""));
+    size_t markings = 0u;
+    for (size_t pos = text.find("<initialMarking>"); pos != std::string::npos;
+         pos = text.find("<initialMarking>", pos + 1u))
+        ++markings;
+    ASSERT_EQ(markings, 2u);
+}
+
+//------------------------------------------------------------------------------
+//! \brief The files of the old versions of the editor wrote the duration in
+//! the inscription of the arcs.
+TEST(TestExports, LegacyPNML)
+{
+    {
+        std::ofstream file("/tmp/tpne-legacy.pnml");
+        file << "<?xml version=\"1.0\"?><pnml><net id=\"Timed Petri net\" type=\"x\"><page id=\"1\">"
+             << "<place id=\"P0\"><name><text>A</text></name><initialMarking><text>1</text></initialMarking></place>"
+             << "<transition id=\"T0\"><name><text>T</text></name></transition>"
+             << "<arc id=\"P0T0\" source=\"P0\" target=\"T0\"><inscription><text>0</text></inscription></arc>"
+             << "<arc id=\"T0P0\" source=\"T0\" target=\"P0\"><inscription><text>3.5</text></inscription></arc>"
+             << "</page></net></pnml>";
+    }
+    Net net;
+    ASSERT_STREQ(loadFromFile(net, "/tmp/tpne-legacy.pnml").c_str(), "");
+    ASSERT_EQ(net.type(), TypeOfNet::TimedPetriNet);
+    ASSERT_EQ(net.arcs()[0].weight, 1u);
+    ASSERT_EQ(net.arcs()[1].weight, 1u);
+    ASSERT_EQ(net.arcs()[1].durationOrZero(), 3.5f);
+}
+
+//------------------------------------------------------------------------------
+//! \brief A broken file gives an error instead of a crash.
+TEST(TestExports, BadPNML)
+{
+    {
+        std::ofstream file("/tmp/tpne-bad.pnml");
+        file << "<pnml><net id=\"n\"><page><arc source=\"X\" target=\"Y\"/></page></net></pnml>";
+    }
+    Net net;
+    ASSERT_THAT(loadFromFile(net, "/tmp/tpne-bad.pnml"), HasSubstr("unknown nodes"));
+    {
+        std::ofstream file("/tmp/tpne-bad.pnml");
+        file << "<pnml><net";
+    }
+    ASSERT_THAT(loadFromFile(net, "/tmp/tpne-bad.pnml"), HasSubstr("Failed parsing"));
+}
+
+//------------------------------------------------------------------------------
 //! \brief The program for the runtime: the net built in the code, a function
 //! per transition, the results asked by the next arcs.
 TEST(TestExports, RuntimeCpp)

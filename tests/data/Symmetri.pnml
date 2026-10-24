@@ -1,0 +1,20 @@
+<?xml version="1.0"?>
+<!-- A net in the flavor of Symmetri: ids are names, one initialMarking per token, colors on arcs. -->
+<pnml xmlns="http://www.pnml.org/version-2009/grammar/pnml">
+  <net id="pick" type="http://www.pnml.org/version-2009/grammar/ptnet">
+    <page id="page0">
+      <place id="Ready"><initialMarking/><initialMarking color="Success"/></place>
+      <place id="Held"/>
+      <place id="Done"/>
+      <transition id="grasp"/>
+      <transition id="place"/>
+      <transition id="retry"/>
+      <arc id="a0" source="Ready" target="grasp"/>
+      <arc id="a1" source="grasp" target="Held"/>
+      <arc id="a2" source="Held" target="place" color="Success"/>
+      <arc id="a3" source="Held" target="retry" color="Failed"/>
+      <arc id="a4" source="retry" target="Ready"/>
+      <arc id="a5" source="place" target="Done"><inscription><text>2</text></inscription></arc>
+    </page>
+  </net>
+</pnml>

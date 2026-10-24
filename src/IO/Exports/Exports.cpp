@@ -58,6 +58,7 @@ static std::vector<Exporter>& registry()
         { "Petri LaTeX", ".tex", exportToPetriLaTeX },
         { "Grafcet LaTeX", ".tex", exportToGrafcetLaTeX },
         { "Petri Net Markup Language", ".pnml", exportToPNML },
+        { "PNML for Symmetri", ".symmetri.pnml", exportToSymmetriPNML },
         { "Timed Event Graph", ".teg", exportToTimedEventGraph },
         //{ "Codesys", ".codesys.xml", exportToCodesys },
         //{ "Grafcet-LaTeX", ".tex", exportToGrafcetLaTeX },
