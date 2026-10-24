@@ -93,7 +93,13 @@ void drawArc(ImDrawList* draw_list, ImVec2 const* from, ImVec2 const* to, ImVec2
              ImVec2 const& origin, ImVec2 const& cursor, float zoom = 1.0f);
 
 void drawToken(ImDrawList* draw_list, float const x, float const y, float zoom = 1.0f);
+//------------------------------------------------------------------------------
+//! \brief Tokens as one disk with their number: green on their way along an
+//! arc (timed nets), of the color of the tokens when they wait in the hidden
+//! place of a timed event graph.
+//------------------------------------------------------------------------------
 void drawTimedToken(ImDrawList* draw_list, size_t tokens, float const x, float const y, float zoom = 1.0f);
+void drawWaitingTokens(ImDrawList* draw_list, size_t tokens, float const x, float const y, float zoom = 1.0f);
 
 //------------------------------------------------------------------------------
 //! \brief Draw a place (a step for GRAFCET) and its caption.

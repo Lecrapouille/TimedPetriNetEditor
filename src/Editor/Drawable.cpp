@@ -494,20 +494,7 @@ void drawArc(ImDrawList* draw_list, Net const& net, Arc const& arc,
         if (tokens > 0u)
         {
             ImVec2 const p = screen(origin, zoom, alongPath(path.points, TEG_TOKENS_AT, dir));
-            if (tokens <= 3u)
-            {
-                ImVec2 const u = unit(dir);
-                float const step = TOKEN_RADIUS * 2.6f * zoom;
-                for (size_t k = 0u; k < tokens; ++k)
-                    drawToken(draw_list, p.x + u.x * step * (float(k) - float(tokens - 1u) * 0.5f),
-                              p.y + u.y * step * (float(k) - float(tokens - 1u) * 0.5f), zoom);
-            }
-            else
-            {
-                drawToken(draw_list, p.x, p.y, zoom);
-                ImVec2 const n = normal(dir);
-                pill(draw_list, p + n * (10.0f * zoom), pal.token, std::to_string(tokens).c_str(), size);
-            }
+            drawWaitingTokens(draw_list, tokens, p.x, p.y, zoom);
         }
         if (arc.durationOrZero() != 0.0f)
         {
@@ -584,13 +571,28 @@ void drawToken(ImDrawList* draw_list, float const x, float const y, float zoom)
 }
 
 //------------------------------------------------------------------------------
-void drawTimedToken(ImDrawList* draw_list, size_t tokens, float const x, float const y, float zoom)
+//! \brief A disk with a number: tokens on an arc.
+static void tokenDisk(ImDrawList* draw_list, size_t tokens, ImVec2 const& p, ImU32 fill, ImU32 text,
+                      float zoom)
 {
     float const r = std::max(4.0f, 8.0f * zoom);
-    draw_list->AddCircleFilled(ImVec2(x, y), r, palette().active);
+    draw_list->AddCircleFilled(p, r, fill);
     char buffer[16];
     std::snprintf(buffer, sizeof(buffer), "%zu", tokens);
-    textCentered(draw_list, ImVec2(x, y), IM_COL32(0, 0, 0, 255), buffer, fontSizeAt(zoom * 0.85f));
+    textCentered(draw_list, p, text, buffer, fontSizeAt(zoom * 0.85f));
+}
+
+//------------------------------------------------------------------------------
+void drawTimedToken(ImDrawList* draw_list, size_t tokens, float const x, float const y, float zoom)
+{
+    tokenDisk(draw_list, tokens, ImVec2(x, y), palette().active, IM_COL32(0, 0, 0, 255), zoom);
+}
+
+//------------------------------------------------------------------------------
+void drawWaitingTokens(ImDrawList* draw_list, size_t tokens, float const x, float const y, float zoom)
+{
+    // The color of the tokens, the number in the color of the nodes.
+    tokenDisk(draw_list, tokens, ImVec2(x, y), palette().token, palette().fill, zoom);
 }
 
 //! \brief Tokens of a Petri place: dots up to 5, else a number.

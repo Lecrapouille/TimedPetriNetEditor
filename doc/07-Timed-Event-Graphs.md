@@ -65,7 +65,7 @@ event graph never fires`.
 
 Since a place of an event graph has one transition before it and one after
 it, it can be drawn as an **arc between two transitions**, which carries the
-tokens (as dots near its end) and the duration of the hidden place. This is
+tokens (a disk with their number, near its end) and the duration of the hidden place. This is
 the way of the (max,+) books, and the way the editor draws a **timed event
 graph**.
 
@@ -75,15 +75,16 @@ Petri net:
 ![JPQ as a Petri net](pics/07-JPQ-Petri.png)
 
 and [Howard2](../examples/Timed-Event-Graphs/Howard2/README.md) drawn
-compactly: the arc `T0 → T2` is the place `P0`, its two dots are the two
+compactly: the arc `T0 → T2` is the place `P0`, its disk `2` is the two
 tokens of `P0`, and `5` is its duration:
 
 ![Howard2, compact](pics/07-Howard2-Compact.png)
 
-The dots near the end of an arc are the tokens waiting in the hidden place
-for the next transition. While the simulation runs, a token on its way is a
-green disk (with the number of tokens) that moves along the arc during its
-duration, then becomes a dot there.
+The disk near the end of an arc holds the number of tokens waiting in the
+hidden place for the next transition: one disk whatever their number, so
+that the arcs stay readable. While the simulation runs, the tokens on their
+way are a green disk with their number that moves along the arc during its
+duration, then joins the disk of the waiting tokens.
 
 In the editor, the type *Timed event graph* (toolbar or *Edit > Type of net*)
 is a timed Petri net drawn compactly: a click in the void adds a transition,
