@@ -1,44 +1,78 @@
 # 📚 TimedPetriNetEditor documentation
 
-Read the chapters in order: each one uses the words of the previous ones.
-Chapters 1 to 4 are for everybody, even if you never saw a Petri net.
-Chapters 5 to 11 are references: open them when you need them.
+This documentation teaches the theory of each family of nets, then shows
+what the editor offers to solve its problems, with many examples. It goes
+step by step: each chapter uses the words of the chapters before it. If you
+never saw a Petri net, start at chapter 1 and read in order; if you know the
+theory, jump to the part you need.
 
-## 🎓 Learn
+Every number, equation, output and picture of these pages was produced by
+the editor, by `tpne-check` or by a program of [`examples/`](../examples/README.md),
+not written by hand.
 
-| # | Chapter | You will learn | Time |
-|---|---------|----------------|------|
-| 1 | 🧩 [Introduction](01-Introduction.md) | What places, transitions, tokens are; the four kinds of nets of the editor | 10 min |
-| 2 | 🖱️ [Getting started](02-Getting-Started.md) | Build, open an example, draw your first net with the mouse, run it | 15 min |
-| 3 | ⏱️ [Timed nets and (max,+) algebra](03-Timed-Nets-and-Max-Plus.md) | Durations, timed event graphs, cycle time, Gantt chart, dater equations | 30 min |
-| 4 | 🔘 [GRAFCET and GEMMA](04-GRAFCET-and-GEMMA.md) | Steps, receptivities, actions, the control panel, the timing diagram; a dryer with three graphs | 30 min |
+## 🧭 Part I — Discover
 
-## 📖 Reference
+| # | Chapter | You will learn |
+|---|---------|----------------|
+| 1 | 🧩 [Introduction](01-Introduction.md) | What discrete event systems are, why Petri nets, the families of nets of the editor, the story of the project |
+| 2 | 🚀 [Getting started](02-Getting-Started.md) | Build the editor, open an example, draw and run your first net |
+
+## 🔵 Part II — Petri nets
+
+| # | Chapter | You will learn |
+|---|---------|----------------|
+| 3 | 🔵 [Petri nets](03-Petri-Nets.md) | The formal definition, the firing rule, the marking, the patterns of modeling (sequence, parallelism, synchronization, choice, mutual exclusion, resources) |
+| 4 | 🔍 [Analysis of Petri nets](04-Analysis.md) | Reachability, boundedness, liveness, deadlocks, the incidence matrix and the state equation, P- and T-invariants, and how the editor and `tpne-check` find them |
+| 5 | 🧪 [Extended Petri nets](05-Extended-Petri-Nets.md) | Weights, capacities, inhibitor arcs, reset arcs, priorities, colored tokens: what each one adds, what it costs to the analysis |
+
+## ⏱️ Part III — Time
+
+| # | Chapter | You will learn |
+|---|---------|----------------|
+| 6 | ⏱️ [Timed Petri nets](06-Timed-Petri-Nets.md) | Durations and delays, how a timed net runs, timeouts, sources and sinks, conflicts in time |
+| 7 | 🔁 [Timed event graphs](07-Timed-Event-Graphs.md) | Event graphs, the compact drawing, dater and counter equations, a factory (flowshop) and its Gantt chart |
+| 8 | ➕ [The (max,+) algebra](08-Max-Plus-Algebra.md) | The algebra, its matrices, the linear systems of timed event graphs, the cycle time as an eigenvalue, Howard's algorithm and the critical circuit |
+
+## 🏭 Part IV — Automation
+
+| # | Chapter | You will learn |
+|---|---------|----------------|
+| 9 | 🔘 [GRAFCET](09-GRAFCET.md) | The standard IEC 60848: steps, receptivities, the rules of evolution, actions and their qualifiers, time, forcing; the control panel and the timing diagram |
+| 10 | 🛑 [GEMMA](10-GEMMA.md) | The start and stop modes of a machine, and a dryer driven by three GRAFCETs |
+
+## ⚙️ Part V — From the model to the program
+
+| # | Chapter | You will learn |
+|---|---------|----------------|
+| 11 | ⚙️ [The runtime](11-Runtime.md) | A transition is a function of your program (the idea of Symmetri): colors of results, instances, guards, injected events, executors, journals; from the drawing to a running robot |
+| 12 | 🏗️ [Code generation](12-Code-Generation.md) | The skeleton of a program for the runtime, and the C++ code of GRAFCETs for an Arduino |
+| 13 | 🐞 [Debugging](13-Debugging.md) | The editor as the visual debugger of a running program, the journal, its replay, process mining |
+
+## 📖 Part VI — Reference
 
 | # | Chapter | Contents |
 |---|---------|----------|
-| 5 | 📦 [Exports and code generation](05-Exports-and-Code-Generation.md) | SVG, LaTeX, Graphviz, PNML, GRML, journals; C++ for the runtime and for GRAFCETs; the editor as a debugger |
-| 6 | 📄 [File format](06-File-Format.md) | The JSON file: nets, GRAFCET actions, inputs and outputs, descriptions |
-| 7 | 📖 [Editor reference](07-Editor-Reference.md) | Every window, mouse gesture, key, menu and command line option |
-| 8 | 🔢 [Julia](08-Julia.md) | Drive the editor and the (max,+) algorithms from Julia |
-| 9 | 📡 [Remote control](09-Remote-Control.md) | JSON commands over ZeroMQ: load, start, fire, read the state; follow a running program |
-| 10 | 🧰 [Use the library in C++](10-Library.md) | Load a file, simulate, run a GRAFCET, compute dates, run your functions, check the properties, without the editor |
-| 11 | 🤖 [From the editor to the code](11-From-Editor-To-Code.md) | A robot from the drawing to a running program, watched in the editor |
-| — | 🔤 [Glossary](Glossary.md) | The words of the editor in simple English |
-| — | 📚 [Bibliography](Bibliography.md) | Books, lectures and other editors |
+| 14 | 🖱️ [Editor reference](14-Editor-Reference.md) | Every window, mouse gesture, key, menu and command line option |
+| 15 | 📄 [File formats](15-File-Formats.md) | The JSON file, and every format the editor reads and writes |
+| 16 | 🧰 [C++ library](16-Library.md) | The libraries of the project and their API |
+| 17 | 🔢 [Julia](17-Julia.md) | The editor and the (max,+) algebra from Julia |
+| 18 | 📡 [Remote control](18-Remote-Control.md) | Drive the editor from another program with JSON commands over ZeroMQ |
+| — | 🔤 [Glossary](Glossary.md) | Every word in bold of these pages |
+| — | 📚 [Bibliography](Bibliography.md) | Books, lectures and other tools |
 
-## 🧭 Quick paths
+## 🗺️ Paths through the documentation
 
-- *"I want to see a net run now."* → [2. Getting started](02-Getting-Started.md)
-- *"How fast can my factory produce?"* → [3. Timed nets](03-Timed-Nets-and-Max-Plus.md)
-- *"I teach or learn automation (GRAFCET, GEMMA)."* → [4. GRAFCET and GEMMA](04-GRAFCET-and-GEMMA.md)
-- *"Which key does what?"* → [7. Editor reference](07-Editor-Reference.md)
-- *"I want my program to use the nets."* → [11. From the editor to the code](11-From-Editor-To-Code.md), [10. Use the library](10-Library.md), [9. Remote control](09-Remote-Control.md)
-- *"Can my net deadlock?"* → [7. Editor reference](07-Editor-Reference.md#7-journal-and-analysis)
-
-## 💬 A note on the language
-
-This documentation is written in simple English, with short sentences and
-common words, so that readers whose first language is not English (French
-readers in particular) can follow it easily. Every output shown was produced
-by the editor or by the library, not invented.
+- **"I want to see a net run, now."** → [2](02-Getting-Started.md), then the
+  [examples](../examples/README.md).
+- **"I learn Petri nets."** → [1](01-Introduction.md), [3](03-Petri-Nets.md),
+  [4](04-Analysis.md), [5](05-Extended-Petri-Nets.md).
+- **"How fast can my factory, my trains, my process go? What slows it?"** →
+  [6](06-Timed-Petri-Nets.md), [7](07-Timed-Event-Graphs.md),
+  [8](08-Max-Plus-Algebra.md).
+- **"I teach or learn automation."** → [9](09-GRAFCET.md),
+  [10](10-GEMMA.md), [12](12-Code-Generation.md) for an Arduino.
+- **"I want my program to be driven by a net."** → [3](03-Petri-Nets.md),
+  [5](05-Extended-Petri-Nets.md), [11](11-Runtime.md),
+  [12](12-Code-Generation.md), [13](13-Debugging.md).
+- **"Can my net deadlock?"** → [4](04-Analysis.md).
+- **"Which key does what?"** → [14](14-Editor-Reference.md).

@@ -1,0 +1,34 @@
+{
+  "revision": 2,
+  "type": "Petri net",
+  "nets": [
+    {
+       "name": "First net",
+       "description": "The smallest Petri net. Press Space to simulate, then click on the green transition Fire: it takes the token of Ready and puts one in Done. Fire is then no longer enabled: nothing can happen any more. Press Space again to come back to the first marking.",
+       "places": [
+            { "id": 0, "caption": "Ready", "tokens": 1 },
+            { "id": 1, "caption": "Done", "tokens": 0 }
+       ],
+       "transitions": [
+            { "id": 0, "caption": "Fire" }
+       ],
+       "arcs": [
+            { "from": "P0", "to": "T0" },
+            { "from": "T0", "to": "P1", "duration": 0 }
+       ],
+       "actions": [
+       ],
+       "layout": {
+          "places": [
+             [150, 200],
+             [450, 200]
+          ],
+          "transitions": [
+             [300, 200]
+          ]
+       }
+    }
+  ],
+  "inputs": [
+  ]
+}

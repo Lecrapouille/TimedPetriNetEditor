@@ -114,7 +114,7 @@ ifeq ($(ARCHI),Emscripten)
 	@$(call print-to,"Copying assets","$(TARGET)","$(BUILD)","")
 	@mkdir -p $(BUILD)/data
 	@mkdir -p $(BUILD)/examples
-	@cp $(P)/data/examples/*.json $(BUILD)/examples
+	@cp $(shell find $(P)/examples -name '*.json') $(BUILD)/examples
 	@cp $(P)/data/font.ttf $(P)/data/math.ttf $(BUILD)/data
 	@cp $(P)/data/imgui.ini $(BUILD)/data
 endif

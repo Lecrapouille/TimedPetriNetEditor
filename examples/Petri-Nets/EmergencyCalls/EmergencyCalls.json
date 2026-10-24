@@ -1,0 +1,104 @@
+{
+  "revision": 2,
+  "type": "Petri net",
+  "nets": [
+    {
+       "name": "Emergency calls",
+       "description": "An emergency call center (the French 15/112). Level 1 operators screen the calls: advice they give themselves, urgent calls they transfer to level 2 and hang up, critical calls they keep until a level 2 operator joins (three-way call). Press Space and fire the transitions: who waits, and where? The colors are the kinds of calls for the runtime (EmergencyCalls.cpp).",
+       "colors": ["Advice", "Urgent", "Critical"],
+       "places": [
+            { "id": 0, "caption": "Call screening", "tokens": 0 },
+            { "id": 1, "caption": "Waiting for a three-way call", "tokens": 0 },
+            { "id": 2, "caption": "Three-way call", "tokens": 0 },
+            { "id": 3, "caption": "Level 2 gives instructions", "tokens": 0 },
+            { "id": 4, "caption": "Level 2 operators", "tokens": 4 },
+            { "id": 5, "caption": "Level 1 gives instructions", "tokens": 0 },
+            { "id": 6, "caption": "Hold music", "tokens": 0 },
+            { "id": 7, "caption": "Level 2 gives instructions", "tokens": 0 },
+            { "id": 8, "caption": "Level 1 gives advice", "tokens": 0 },
+            { "id": 9, "caption": "Level 1 operators", "tokens": 4 },
+            { "id": 10, "caption": "Victims calling", "tokens": 7 },
+            { "id": 11, "caption": "Urgent actions", "tokens": 0 },
+            { "id": 12, "caption": "Critical actions", "tokens": 0 }
+       ],
+       "transitions": [
+            { "id": 0, "caption": "Critical" },
+            { "id": 1, "caption": "Level 2 answers" },
+            { "id": 2, "caption": "Level 1 leaves" },
+            { "id": 3, "caption": "End of call" },
+            { "id": 4, "caption": "Urgent" },
+            { "id": 5, "caption": "Level 1 answers" },
+            { "id": 6, "caption": "Transfer to level 2" },
+            { "id": 7, "caption": "Level 2 answers" },
+            { "id": 8, "caption": "Advice" },
+            { "id": 9, "caption": "End of call" },
+            { "id": 10, "caption": "End of call" }
+       ],
+       "arcs": [
+            { "from": "P0", "to": "T0", "color": "Critical" },
+            { "from": "T0", "to": "P1", "duration": 3 },
+            { "from": "P1", "to": "T1" },
+            { "from": "T1", "to": "P2", "duration": 5 },
+            { "from": "P2", "to": "T2" },
+            { "from": "T2", "to": "P3", "duration": 3 },
+            { "from": "P3", "to": "T3" },
+            { "from": "P0", "to": "T4", "color": "Urgent" },
+            { "from": "T3", "to": "P4", "duration": 3 },
+            { "from": "T5", "to": "P0", "duration": 2 },
+            { "from": "P4", "to": "T1" },
+            { "from": "T4", "to": "P5", "duration": 2 },
+            { "from": "P5", "to": "T6" },
+            { "from": "T6", "to": "P6", "duration": 3 },
+            { "from": "P6", "to": "T7" },
+            { "from": "T7", "to": "P7", "duration": 2 },
+            { "from": "P0", "to": "T8", "color": "Advice" },
+            { "from": "T8", "to": "P8", "duration": 4 },
+            { "from": "P8", "to": "T9" },
+            { "from": "T9", "to": "P9", "duration": 4 },
+            { "from": "P9", "to": "T5" },
+            { "from": "T6", "to": "P9", "duration": 4 },
+            { "from": "T2", "to": "P9", "duration": 1 },
+            { "from": "P7", "to": "T10" },
+            { "from": "T10", "to": "P4", "duration": 1 },
+            { "from": "P10", "to": "T5" },
+            { "from": "T10", "to": "P11", "duration": 4 },
+            { "from": "T3", "to": "P12", "duration": 5 },
+            { "from": "P4", "to": "T7" }
+       ],
+       "actions": [
+       ],
+       "layout": {
+          "places": [
+             [580, 210],
+             [700, 400],
+             [260, 580],
+             [135, 645],
+             [520, 690],
+             [470, 430],
+             [330, 500],
+             [800, 590],
+             [300, 280],
+             [140, 120],
+             [580, 30],
+             [560, 790],
+             [375, 790]
+          ],
+          "transitions": [
+             [700, 250],
+             [420, 580],
+             [135, 500],
+             [135, 740],
+             [580, 320],
+             [580, 120],
+             [210, 385],
+             [700, 500],
+             [460, 280],
+             [220, 190],
+             [700, 690]
+          ]
+       }
+    }
+  ],
+  "inputs": [
+  ]
+}

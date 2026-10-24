@@ -454,7 +454,10 @@ void JournalView::table(Net& net, NodeMarks& marks)
     ImGui::TableSetupScrollFreeze(0, 1);
     ImGui::TableSetupColumn("Date", ImGuiTableColumnFlags_WidthFixed, 5.0f * em);
     ImGui::TableSetupColumn("Instance", ImGuiTableColumnFlags_WidthFixed, 9.0f * em);
-    ImGui::TableSetupColumn("Transition", ImGuiTableColumnFlags_WidthStretch);
+    // Fixed, not stretched: a stretched column of a resizable table keeps a
+    // weight in the layout file, and a NaN weight once saved there makes
+    // Dear ImGui assert on the next resize or auto-fit (click in the table).
+    ImGui::TableSetupColumn("Transition", ImGuiTableColumnFlags_WidthFixed, 12.0f * em);
     ImGui::TableSetupColumn("k", ImGuiTableColumnFlags_WidthFixed, 2.5f * em);
     ImGui::TableSetupColumn("Event", ImGuiTableColumnFlags_WidthFixed, 6.0f * em);
     ImGui::TableSetupColumn("Result", ImGuiTableColumnFlags_WidthFixed, 6.0f * em);

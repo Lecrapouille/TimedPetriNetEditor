@@ -11,7 +11,7 @@ mkdir -p $OUT
 g++ -std=c++20 -Isrc -Iexternal -Iexternal/json/include tests/codegen/GrafcetCodegen.cpp \
     -L$BUILD -lTimedPetriIO -lTimedPetriNet -Wl,-rpath,$PWD/$BUILD -o $OUT/GrafcetCodegen || exit 1
 status=0
-for json in $(grep -l '"type": "GRAFCET"' data/examples/*.json); do
+for json in $(grep -rl --include='*.json' '"type": "GRAFCET"' examples); do
     name=$(basename $json .json)
     if ! $OUT/GrafcetCodegen $json $PWD/$OUT/$name.hpp $OUT/$name.engine $OUT/$name.driver.cpp; then
         echo "FAIL $name: generation"; status=1; continue

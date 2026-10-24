@@ -145,7 +145,7 @@ TEST(TestExports, BadPNML)
 TEST(TestExports, RuntimeCpp)
 {
     Net net;
-    ASSERT_STREQ(loadFromFile(net, "../data/examples/PickAndPlace.json").c_str(), "");
+    ASSERT_STREQ(loadFromFile(net, "../examples/Runtime/PickAndPlace/PickAndPlace.json").c_str(), "");
     ASSERT_STREQ(saveToFile(net, "/tmp/tpne-pick.cpp").c_str(), "");
     std::string const text = read("/tmp/tpne-pick.cpp");
     ASSERT_THAT(text, HasSubstr("namespace pick_and_place {"));

@@ -1,0 +1,56 @@
+{
+  "revision": 2,
+  "type": "Timed Petri net",
+  "nets": [
+    {
+       "name": "Priorities",
+       "description": "Two vehicles wait for the same crossing (a conflict). Choose Simulation > Conflicts > Highest priority, then press Space: the ambulance (priority 1) always passes before the car (priority 0). With Random, the car passes first half of the time.",
+       "places": [
+            { "id": 0, "caption": "Car waits", "tokens": 1 },
+            { "id": 1, "caption": "Ambulance waits", "tokens": 1 },
+            { "id": 2, "caption": "Crossing free", "tokens": 1 },
+            { "id": 3, "caption": "Car passed", "tokens": 0 },
+            { "id": 4, "caption": "Ambulance passed", "tokens": 0 }
+       ],
+       "transitions": [
+            { "id": 0, "caption": "Car crosses" },
+            { "id": 1, "caption": "Ambulance crosses", "priority": 1 },
+            { "id": 2, "caption": "Car back" },
+            { "id": 3, "caption": "Ambulance back" }
+       ],
+       "arcs": [
+            { "from": "P0", "to": "T0" },
+            { "from": "P2", "to": "T0" },
+            { "from": "T0", "to": "P3", "duration": 2 },
+            { "from": "T0", "to": "P2", "duration": 2 },
+            { "from": "P1", "to": "T1" },
+            { "from": "P2", "to": "T1" },
+            { "from": "T1", "to": "P4", "duration": 2 },
+            { "from": "T1", "to": "P2", "duration": 2 },
+            { "from": "P3", "to": "T2" },
+            { "from": "T2", "to": "P0", "duration": 3 },
+            { "from": "P4", "to": "T3" },
+            { "from": "T3", "to": "P1", "duration": 5 }
+       ],
+       "actions": [
+       ],
+       "layout": {
+          "places": [
+             [150, 100],
+             [150, 300],
+             [400, 200],
+             [650, 100],
+             [650, 300]
+          ],
+          "transitions": [
+             [400, 100],
+             [400, 300],
+             [400, 20],
+             [400, 380]
+          ]
+       }
+    }
+  ],
+  "inputs": [
+  ]
+}

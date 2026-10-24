@@ -1,4 +1,4 @@
-net EventGraph
+net Event graph
 initial: 0 0 2 1 1 0 0
 t=0 T0 k=1
 t=1 T1 k=1

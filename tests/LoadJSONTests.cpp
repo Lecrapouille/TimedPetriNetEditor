@@ -122,7 +122,7 @@ TEST(TestJSONLoader, LoadAsGrafcet)
     Net net(TypeOfNet::GRAFCET);
     bool stringify;
 
-    ASSERT_STREQ(loadFromFile(net, "../data/examples/TrafficLights.json", stringify).c_str(), "");
+    ASSERT_STREQ(loadFromFile(net, "../examples/Petri-Nets/TrafficLights/TrafficLights.json", stringify).c_str(), "");
     ASSERT_EQ(net.type(), TypeOfNet::PetriNet);
     ASSERT_EQ(net.m_places.size(), 6u);
     ASSERT_EQ(net.m_transitions.size(), 6u);
@@ -142,7 +142,7 @@ TEST(TestJSONLoader, CheckMarks)
     Net net(TypeOfNet::GRAFCET);
     bool stringify;
 
-    ASSERT_STREQ(loadFromFile(net, "../data/examples/TrafficLights.json", stringify).c_str(), "");
+    ASSERT_STREQ(loadFromFile(net, "../examples/Petri-Nets/TrafficLights/TrafficLights.json", stringify).c_str(), "");
     ASSERT_EQ(net.type(), TypeOfNet::PetriNet);
 
     std::vector<size_t> tokens;
@@ -189,7 +189,7 @@ TEST(TestJSONLoader, SaveAndLoadFile)
     Net net(TypeOfNet::TimedPetriNet);
     bool stringify;
 
-    ASSERT_STREQ(loadFromFile(net, "../data/examples/EmergencyCalls.json", stringify).c_str(), "");
+    ASSERT_STREQ(loadFromFile(net, "../examples/Petri-Nets/EmergencyCalls/EmergencyCalls.json", stringify).c_str(), "");
     convertTo(net, TypeOfNet::PetriNet, error, erroneous_arcs);
     ASSERT_STREQ(error.c_str(), "");
     ASSERT_EQ(erroneous_arcs.size(), 0u);

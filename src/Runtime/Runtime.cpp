@@ -479,6 +479,18 @@ bool Runtime::canFire(Instance const& instance, size_t const transition) const
 }
 
 //------------------------------------------------------------------------------
+bool Runtime::waitsForGuard(Instance const& instance) const
+{
+    // Instance::m_enabled is up to date (refresh()).
+    for (size_t t = 0u; t < m_guards.size(); ++t)
+    {
+        if (m_guards[t] && instance.m_enabled[t])
+            return true;
+    }
+    return false;
+}
+
+//------------------------------------------------------------------------------
 void Runtime::updateEnabling(Instance& instance)
 {
     refresh(instance);
@@ -713,6 +725,8 @@ void Runtime::checkEnd(Instance& instance)
         if (canFire(instance, t))
             return;
     }
+    if (waitsForGuard(instance))
+        return;
 
     // A failure nobody took care of, or a dead end.
     bool failed = false;
@@ -757,7 +771,12 @@ Color Runtime::run(Instance& instance)
         double const next = instance.m_paused ? NEVER : nextEventDate(instance);
         std::unique_lock<std::mutex> lock(instance.m_mutex);
         auto const requested = [&instance]() { return !instance.m_reducers.empty(); };
-        if (next == NEVER)
+        if ((next == NEVER) && waitsForGuard(instance))
+        {
+            // Nothing tells when a guard opens: look again soon.
+            instance.m_condition.wait_for(lock, std::chrono::milliseconds(10), requested);
+        }
+        else if (next == NEVER)
         {
             instance.m_condition.wait(lock, requested);
         }

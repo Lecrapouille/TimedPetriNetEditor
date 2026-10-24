@@ -1,0 +1,4 @@
+# Chapter 2: the first net, before and while simulating.
+doc/pics/02-FirstNet.png -w examples/Petri-Nets/FirstNet/FirstNet.json
+doc/pics/02-FirstNet-Running.png -w -r -d 1 examples/Petri-Nets/FirstNet/FirstNet.json
+doc/pics/02-Philosophers-Running.png -w -r -d 1 examples/Petri-Nets/Philosophers/Philosophers.json

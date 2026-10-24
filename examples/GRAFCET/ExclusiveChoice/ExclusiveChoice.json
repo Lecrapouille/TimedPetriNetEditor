@@ -1,0 +1,50 @@
+{
+  "revision": 2,
+  "type": "GRAFCET",
+  "nets": [
+    {
+       "name": "Exclusive choice",
+       "description": "A choice between two sequences (OR divergence). The receptivities A . B and A . /B are exclusive: never true together, so one branch only is taken. Press Space, then press A, with or without B, on the control panel; release A to come back to step 0.",
+       "places": [
+            { "id": 0, "caption": "Wait", "tokens": 1 },
+            { "id": 1, "caption": "A and B", "tokens": 0 },
+            { "id": 2, "caption": "A only", "tokens": 0 }
+       ],
+       "transitions": [
+            { "id": 0, "caption": "A . /B" },
+            { "id": 1, "caption": "A . B" },
+            { "id": 2, "caption": "/A" },
+            { "id": 3, "caption": "/A" }
+       ],
+       "arcs": [
+            { "from": "P0", "to": "T0" },
+            { "from": "P0", "to": "T1" },
+            { "from": "T1", "to": "P1", "duration": 5 },
+            { "from": "T0", "to": "P2", "duration": 5 },
+            { "from": "P2", "to": "T2" },
+            { "from": "T2", "to": "P0", "duration": 2 },
+            { "from": "P1", "to": "T3" },
+            { "from": "T3", "to": "P0", "duration": 3 }
+       ],
+       "actions": [
+            { "place_id": 1, "qualifier": "N", "color": "green", "name": "Lamp AB" },
+            { "place_id": 2, "qualifier": "N", "color": "orange", "name": "Lamp A" }
+       ],
+       "layout": {
+          "places": [
+             [332, 87],
+             [250, 200],
+             [400, 200]
+          ],
+          "transitions": [
+             [400, 150],
+             [250, 150],
+             [400, 250],
+             [250, 250]
+          ]
+       }
+    }
+  ],
+  "inputs": [
+  ]
+}

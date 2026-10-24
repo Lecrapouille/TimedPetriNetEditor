@@ -1,0 +1,62 @@
+{
+  "revision": 2,
+  "type": "Timed event graph",
+  "nets": [
+    {
+       "name": "Event graph",
+       "description": "The timed event graph of the book Synchronization and Linearity (Baccelli, Cohen, Olsder, Quadrat), drawn compactly: an arc between two transitions is a place, its dots are its tokens. Analysis shows its (max,+) equations and its cycle time.",
+       "places": [
+            { "id": 0, "caption": "P0", "tokens": 0 },
+            { "id": 1, "caption": "P1", "tokens": 0 },
+            { "id": 2, "caption": "P2", "tokens": 2 },
+            { "id": 3, "caption": "P3", "tokens": 1 },
+            { "id": 4, "caption": "P4", "tokens": 1 },
+            { "id": 5, "caption": "P5", "tokens": 0 },
+            { "id": 6, "caption": "P6", "tokens": 0 }
+       ],
+       "transitions": [
+            { "id": 0, "caption": "u" },
+            { "id": 1, "caption": "x1" },
+            { "id": 2, "caption": "x2" },
+            { "id": 3, "caption": "y" }
+       ],
+       "arcs": [
+            { "from": "T0", "to": "P0", "duration": 1 },
+            { "from": "T0", "to": "P1", "duration": 2 },
+            { "from": "P0", "to": "T1" },
+            { "from": "T1", "to": "P2", "duration": 1 },
+            { "from": "P3", "to": "T2" },
+            { "from": "P1", "to": "T2" },
+            { "from": "T1", "to": "P3", "duration": 1 },
+            { "from": "T1", "to": "P5", "duration": 0 },
+            { "from": "P5", "to": "T3" },
+            { "from": "T2", "to": "P6", "duration": 0 },
+            { "from": "P6", "to": "T3" },
+            { "from": "T2", "to": "P4", "duration": 1 },
+            { "from": "P4", "to": "T1" },
+            { "from": "P2", "to": "T1" }
+       ],
+       "actions": [
+       ],
+       "layout": {
+          "places": [
+             [200, 150],
+             [500, 100],
+             [50, 250],
+             [350, 200],
+             [350, 300],
+             [250, 350],
+             [450, 350]
+          ],
+          "transitions": [
+             [350, 100],
+             [150, 250],
+             [550, 250],
+             [350, 400]
+          ]
+       }
+    }
+  ],
+  "inputs": [
+  ]
+}

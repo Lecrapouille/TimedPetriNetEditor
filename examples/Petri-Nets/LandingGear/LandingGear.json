@@ -1,0 +1,68 @@
+{
+  "revision": 2,
+  "type": "Petri net",
+  "nets": [
+    {
+       "name": "Landing Gear",
+       "description": "Protect the landing gear of a plane. The gear can be extended only at low speed (Extend reads Low speed). Flying fast with the gear down starts a warning that the pilot acknowledges.",
+       "places": [
+            { "id": 0, "caption": "High speed", "tokens": 0 },
+            { "id": 1, "caption": "Low speed", "tokens": 1 },
+            { "id": 2, "caption": "Gear up", "tokens": 0 },
+            { "id": 3, "caption": "Gear down", "tokens": 1 },
+            { "id": 4, "caption": "Warning on", "tokens": 0 },
+            { "id": 5, "caption": "Warning off", "tokens": 1 }
+       ],
+       "transitions": [
+            { "id": 0, "caption": "Slower" },
+            { "id": 1, "caption": "Faster" },
+            { "id": 2, "caption": "Retract" },
+            { "id": 3, "caption": "Extend" },
+            { "id": 4, "caption": "Start warning" },
+            { "id": 5, "caption": "Ack" }
+       ],
+       "arcs": [
+            { "from": "P0", "to": "T0" },
+            { "from": "T0", "to": "P1", "duration": 3 },
+            { "from": "P1", "to": "T1" },
+            { "from": "T1", "to": "P0", "duration": 3 },
+            { "from": "P3", "to": "T2" },
+            { "from": "T2", "to": "P2", "duration": 1 },
+            { "from": "P1", "to": "T3" },
+            { "from": "T3", "to": "P1", "duration": 1 },
+            { "from": "P2", "to": "T3" },
+            { "from": "T3", "to": "P3", "duration": 2 },
+            { "from": "P0", "to": "T4" },
+            { "from": "T4", "to": "P3", "duration": 4 },
+            { "from": "T4", "to": "P0", "duration": 1 },
+            { "from": "P3", "to": "T4" },
+            { "from": "T4", "to": "P4", "duration": 1 },
+            { "from": "P4", "to": "T5" },
+            { "from": "T5", "to": "P5", "duration": 2 },
+            { "from": "P5", "to": "T4" }
+       ],
+       "actions": [
+       ],
+       "layout": {
+          "places": [
+             [165, 155],
+             [469, 142],
+             [388, 290],
+             [383, 436],
+             [102, 503],
+             [250, 508]
+          ],
+          "transitions": [
+             [316, 86],
+             [317, 211],
+             [311, 361],
+             [470, 359],
+             [167, 437],
+             [171, 589]
+          ]
+       }
+    }
+  ],
+  "inputs": [
+  ]
+}

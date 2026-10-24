@@ -1,0 +1,7 @@
+# Chapter 7: timed event graphs.
+doc/pics/07-JPQ-Petri.png -s examples/Timed-Event-Graphs/JPQ/JPQ.json
+doc/pics/07-Howard2-Compact.png -s examples/Timed-Event-Graphs/Howard2/Howard2.json
+doc/pics/07-Howard2-Equations.png -w -f Equations examples/Timed-Event-Graphs/Howard2/Howard2.json
+doc/pics/07-Flowshop.png -s examples/Timed-Event-Graphs/Flowshop/simple.flowshop
+doc/pics/07-Flowshop-Gantt.png -w -f Gantt examples/Timed-Event-Graphs/Flowshop/simple.flowshop
+doc/pics/07-Flowshop-Journal.png -w -r -d 7 -f Journal examples/Timed-Event-Graphs/Flowshop/simple.flowshop

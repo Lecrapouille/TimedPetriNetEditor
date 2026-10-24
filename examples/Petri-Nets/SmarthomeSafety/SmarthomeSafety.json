@@ -1,0 +1,84 @@
+{
+  "revision": 2,
+  "type": "Petri net",
+  "nets": [
+    {
+       "name": "Smart Home Safety",
+       "description": "Four roller shutters, but at most three of them can be down: the fourth one keeps a way out in case of fire. Remaining holds the shutters that can still go down. Analysis > Properties: shutters down + Remaining = 3.",
+       "places": [
+            { "id": 0, "caption": "Shutter up", "tokens": 1 },
+            { "id": 1, "caption": "Shutter down", "tokens": 0 },
+            { "id": 2, "caption": "Shutter up", "tokens": 1 },
+            { "id": 3, "caption": "Shutter down", "tokens": 0 },
+            { "id": 4, "caption": "Shutter up", "tokens": 1 },
+            { "id": 5, "caption": "Shutter down", "tokens": 0 },
+            { "id": 6, "caption": "Shutter up", "tokens": 1 },
+            { "id": 7, "caption": "Shutter down", "tokens": 0 },
+            { "id": 8, "caption": "Remaining", "tokens": 3 }
+       ],
+       "transitions": [
+            { "id": 0, "caption": "Down" },
+            { "id": 1, "caption": "Up" },
+            { "id": 2, "caption": "Down" },
+            { "id": 3, "caption": "Up" },
+            { "id": 4, "caption": "Down" },
+            { "id": 5, "caption": "Up" },
+            { "id": 6, "caption": "Down" },
+            { "id": 7, "caption": "Up" }
+       ],
+       "arcs": [
+            { "from": "P0", "to": "T0" },
+            { "from": "T0", "to": "P1", "duration": 1 },
+            { "from": "P1", "to": "T1" },
+            { "from": "T1", "to": "P0", "duration": 5 },
+            { "from": "P2", "to": "T2" },
+            { "from": "T2", "to": "P3", "duration": 1 },
+            { "from": "P3", "to": "T3" },
+            { "from": "T3", "to": "P2", "duration": 3 },
+            { "from": "P4", "to": "T4" },
+            { "from": "T4", "to": "P5", "duration": 3 },
+            { "from": "P5", "to": "T5" },
+            { "from": "T5", "to": "P4", "duration": 1 },
+            { "from": "P6", "to": "T6" },
+            { "from": "T6", "to": "P7", "duration": 4 },
+            { "from": "P7", "to": "T7" },
+            { "from": "T7", "to": "P6", "duration": 1 },
+            { "from": "T1", "to": "P8", "duration": 1 },
+            { "from": "P8", "to": "T2" },
+            { "from": "T3", "to": "P8", "duration": 2 },
+            { "from": "P8", "to": "T0" },
+            { "from": "P8", "to": "T4" },
+            { "from": "T5", "to": "P8", "duration": 2 },
+            { "from": "P8", "to": "T6" },
+            { "from": "T7", "to": "P8", "duration": 3 }
+       ],
+       "actions": [
+       ],
+       "layout": {
+          "places": [
+             [231.93099975585938, 75.17780303955078],
+             [141.9669952392578, 182.1580047607422],
+             [523.8519897460938, 50],
+             [630.8209838867188, 139.93699645996094],
+             [167.17999267578125, 474.06201171875],
+             [274.14801025390625, 564],
+             [656.031982421875, 431.8450012207031],
+             [566.0659790039062, 538.822998046875],
+             [399, 307]
+          ],
+          "transitions": [
+             [238.86199951171875, 229.21400451660156],
+             [294.9119873046875, 162.56399536132812],
+             [476.7820129394531, 146.8719940185547],
+             [543.43798828125, 202.927001953125],
+             [254.56300354003906, 411.072998046875],
+             [321.218994140625, 467.12799072265625],
+             [503.0880126953125, 451.43499755859375],
+             [559.1389770507812, 384.7860107421875]
+          ]
+       }
+    }
+  ],
+  "inputs": [
+  ]
+}

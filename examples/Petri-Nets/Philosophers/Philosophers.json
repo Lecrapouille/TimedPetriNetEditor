@@ -1,0 +1,80 @@
+{
+  "revision": 2,
+  "type": "Petri net",
+  "nets": [
+    {
+       "name": "Philosophers",
+       "description": "Three philosophers share one fork and two knives. Phi0 eats with the fork and the first knife, Phi1 with the fork and the second knife, Phi2 with both knives. Who can eat at the same time? Each resource is a P-invariant: Analysis > Properties.",
+       "places": [
+            { "id": 0, "caption": "Phi0 Not Eating", "tokens": 1 },
+            { "id": 1, "caption": "Phi1 Eating", "tokens": 0 },
+            { "id": 2, "caption": "Phi1 Not Eating", "tokens": 1 },
+            { "id": 3, "caption": "Phi0 Eating", "tokens": 0 },
+            { "id": 4, "caption": "Phi2 Not Eating", "tokens": 1 },
+            { "id": 5, "caption": "Phi2 Eating", "tokens": 0 },
+            { "id": 6, "caption": "Fork", "tokens": 1 },
+            { "id": 7, "caption": "Knife", "tokens": 1 },
+            { "id": 8, "caption": "Knife", "tokens": 1 }
+       ],
+       "transitions": [
+            { "id": 0, "caption": "Phi0 eats" },
+            { "id": 1, "caption": "Phi0 thinks" },
+            { "id": 2, "caption": "Phi1 eats" },
+            { "id": 3, "caption": "Phi1 thinks" },
+            { "id": 4, "caption": "Phi2 eats" },
+            { "id": 5, "caption": "Phi2 thinks" }
+       ],
+       "arcs": [
+            { "from": "P0", "to": "T0" },
+            { "from": "P1", "to": "T3" },
+            { "from": "T3", "to": "P2", "duration": 1 },
+            { "from": "T1", "to": "P0", "duration": 1 },
+            { "from": "P2", "to": "T2" },
+            { "from": "T2", "to": "P1", "duration": 1 },
+            { "from": "T0", "to": "P3", "duration": 1 },
+            { "from": "P3", "to": "T1" },
+            { "from": "P4", "to": "T4" },
+            { "from": "T4", "to": "P5", "duration": 1 },
+            { "from": "P5", "to": "T5" },
+            { "from": "T5", "to": "P4", "duration": 1 },
+            { "from": "P6", "to": "T0" },
+            { "from": "P6", "to": "T2" },
+            { "from": "T1", "to": "P6", "duration": 1 },
+            { "from": "T3", "to": "P6", "duration": 1 },
+            { "from": "T3", "to": "P7", "duration": 1 },
+            { "from": "P7", "to": "T4" },
+            { "from": "T5", "to": "P7", "duration": 1 },
+            { "from": "P7", "to": "T2" },
+            { "from": "P8", "to": "T0" },
+            { "from": "T1", "to": "P8", "duration": 1 },
+            { "from": "T5", "to": "P8", "duration": 1 },
+            { "from": "P8", "to": "T4" }
+       ],
+       "actions": [
+       ],
+       "layout": {
+          "places": [
+             [466.1889953613281, 50],
+             [570.031005859375, 848],
+             [998.6389770507812, 848],
+             [299.9119873046875, 300.5419921875],
+             [1330.3499755859375, 357.6300048828125],
+             [1190.56005859375, 80.86599731445312],
+             [602.35498046875, 546.697998046875],
+             [996.8250122070312, 564.7210083007812],
+             [820.8670043945312, 229.61199951171875]
+          ],
+          "transitions": [
+             [575.3880004882812, 220.4499969482422],
+             [503.0260009765625, 326.0419921875],
+             [787.52001953125, 820.5809936523438],
+             [787.8790283203125, 692.6079711914062],
+             [1125.75, 357.03900146484375],
+             [1066.5400390625, 244.177001953125]
+          ]
+       }
+    }
+  ],
+  "inputs": [
+  ]
+}

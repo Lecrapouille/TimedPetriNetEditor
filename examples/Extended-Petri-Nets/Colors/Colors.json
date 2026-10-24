@@ -1,0 +1,47 @@
+{
+  "revision": 2,
+  "type": "Petri net",
+  "nets": [
+    {
+       "name": "Colored tokens",
+       "description": "Colored tokens: the result of Inspect colors the token it puts in Inspected, Good or Bad. Ship takes only Good tokens, Scrap only Bad ones: the color chooses the branch. The editor draws the colors; the runtime runs them (Colors.cpp).",
+       "colors": ["Good", "Bad"],
+       "places": [
+            { "id": 0, "caption": "Parts", "tokens": 3 },
+            { "id": 1, "caption": "Inspected", "tokens": 0 },
+            { "id": 2, "caption": "Shipped", "tokens": 0 },
+            { "id": 3, "caption": "Scrapped", "tokens": 0 }
+       ],
+       "transitions": [
+            { "id": 0, "caption": "Inspect" },
+            { "id": 1, "caption": "Ship" },
+            { "id": 2, "caption": "Scrap" }
+       ],
+       "arcs": [
+            { "from": "P0", "to": "T0" },
+            { "from": "T0", "to": "P1", "duration": 0 },
+            { "from": "P1", "to": "T1", "color": "Good" },
+            { "from": "T1", "to": "P2", "duration": 0 },
+            { "from": "P1", "to": "T2", "color": "Bad" },
+            { "from": "T2", "to": "P3", "duration": 0 }
+       ],
+       "actions": [
+       ],
+       "layout": {
+          "places": [
+             [100, 200],
+             [400, 200],
+             [700, 100],
+             [700, 300]
+          ],
+          "transitions": [
+             [250, 200],
+             [550, 100],
+             [550, 300]
+          ]
+       }
+    }
+  ],
+  "inputs": [
+  ]
+}

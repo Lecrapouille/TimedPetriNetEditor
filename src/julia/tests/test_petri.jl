@@ -8,7 +8,7 @@ pn = petri_net()
 @assert pn.handle == 0
 
 # Or create new Petri net by loading it.
-pn1 = petri_net("../../data/examples/TrafficLights.json")
+pn1 = petri_net("../../examples/Petri-Nets/TrafficLights/TrafficLights.json")
 @assert pn1.handle == 1
 
 # Duplicate the net
@@ -117,7 +117,7 @@ is_empty(pn3)
 @assert ans == true
 
 # Or create one
-pn4 = load_petri("../../data/examples/Howard2.json")
+pn4 = load_petri("../../examples/Timed-Event-Graphs/Howard2/Howard2.json")
 @assert pn4.handle == 5 # FIXME should be ideally 4
 
 # Number of nodes and arcs
@@ -184,7 +184,7 @@ tokens!(pn4, [0; 1; 2; 3; 4])
 tokens(pn4)
 @assert ans == [0; 1; 2; 3; 4]
 
-pn6 = load_petri("../../data/examples/JPQ.json")
+pn6 = load_petri("../../examples/Timed-Event-Graphs/JPQ/JPQ.json")
 @assert pn6.handle == 7
 is_event_graph(pn6)
 @assert ans == true

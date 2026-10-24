@@ -1,0 +1,37 @@
+{
+  "revision": 2,
+  "type": "Petri net",
+  "nets": [
+    {
+       "name": "Capacity",
+       "description": "Place capacity: the car park holds 3 cars at most (<= 3 above the place). Arrive has no input place, so it is always enabled... until the car park is full: a transition is disabled when its firing would exceed a capacity. Fire Leave to free a space.",
+       "places": [
+            { "id": 0, "caption": "Car park", "tokens": 0, "capacity": 3 },
+            { "id": 1, "caption": "Gone", "tokens": 0 }
+       ],
+       "transitions": [
+            { "id": 0, "caption": "Arrive" },
+            { "id": 1, "caption": "Leave" }
+       ],
+       "arcs": [
+            { "from": "T0", "to": "P0", "duration": 0 },
+            { "from": "P0", "to": "T1" },
+            { "from": "T1", "to": "P1", "duration": 0 }
+       ],
+       "actions": [
+       ],
+       "layout": {
+          "places": [
+             [350, 200],
+             [650, 200]
+          ],
+          "transitions": [
+             [200, 200],
+             [500, 200]
+          ]
+       }
+    }
+  ],
+  "inputs": [
+  ]
+}

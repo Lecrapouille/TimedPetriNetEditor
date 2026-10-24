@@ -1,0 +1,9 @@
+net Colored tokens
+initial: 3 0 0 0
+t=0 T0 k=1
+t=0 T0 k=2
+t=0 T0 k=3
+t=1 T1 k=1
+t=1 T1 k=2
+t=1 T1 k=3
+final t=2: 0 0 3 0 (deadlock)

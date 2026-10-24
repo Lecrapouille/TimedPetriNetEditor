@@ -263,6 +263,10 @@ void Editor::analysisWindow()
                 ? ImGuiTabItemFlags_SetSelected : ImGuiTabItemFlags_None;
             if (!ImGui::BeginTabItem(tabs[i], nullptr, flags))
                 continue;
+            // The tab asked is shown: the request is done (a new tab bar may
+            // need more than one frame to select it).
+            if (m_states.analysis_tab == i)
+                m_states.analysis_tab = -1;
             switch (i)
             {
             case 0: analysisCritical(); break;
@@ -275,7 +279,9 @@ void Editor::analysisWindow()
             }
             ImGui::EndTabItem();
         }
-        m_states.analysis_tab = -1;
+        // A (max,+) tab asked for a net that is not an event graph.
+        if (!teg && (m_states.analysis_tab < 6))
+            m_states.analysis_tab = -1;
         ImGui::EndTabBar();
     }
     if (!teg)

@@ -6,7 +6,7 @@
             "type": "cppdbg",
             "request": "launch",
             "program": "${workspaceFolder}/build/TimedPetriNetEditor",
-            "args": [ "${workspaceFolder}/data/examples/GRAFCET.json" ],
+            "args": [ "${workspaceFolder}/examples/GRAFCET/ExclusiveChoice/ExclusiveChoice.json" ],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}",
             "environment": [],

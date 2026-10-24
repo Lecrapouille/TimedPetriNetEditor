@@ -211,7 +211,7 @@ TEST(TestAnalysis, Examples)
 {
     Net net;
     bool springify;
-    ASSERT_STREQ(loadFromFile(net, "../data/examples/Philosophers.json", springify).c_str(), "");
+    ASSERT_STREQ(loadFromFile(net, "../examples/Petri-Nets/Philosophers/Philosophers.json", springify).c_str(), "");
     Properties const prop = properties(net);
     ASSERT_TRUE(prop.complete);
     ASSERT_FALSE(prop.deadlock);

@@ -1,0 +1,4 @@
+# Chapter 4: analysis of Petri nets
+doc/pics/04-Properties-MutualExclusion.png -w -f Properties examples/Petri-Nets/MutualExclusion/MutualExclusion.json
+doc/pics/04-Properties-Deadlock.png -w -f Properties examples/Petri-Nets/Deadlock/Deadlock.json
+doc/pics/04-Properties-ProducerConsumer.png -w -f Properties examples/Petri-Nets/ProducerConsumer/ProducerConsumer.json

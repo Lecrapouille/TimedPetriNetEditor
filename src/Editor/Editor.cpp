@@ -229,8 +229,9 @@ void Editor::statusBar()
             size_t arcs = current.arcs().size();
             if (current.layout().compact)
                 arcs /= 2u;
+            // ImGui gives -FLT_MAX (finite) when the mouse is out of the window.
             ImVec2 const mouse = m_view.mouse();
-            bool const inside = std::isfinite(mouse.x) && std::isfinite(mouse.y);
+            bool const inside = ImGui::IsMousePosValid();
             std::snprintf(right, sizeof(right), "%s%zu P   %zu T   %zu arcs   |   x %.0f  y %.0f   |   %d %%",
                           (m_view.selectionSize() > 0u)
                               ? (std::to_string(m_view.selectionSize()) + " selected   |   ").c_str() : "",
@@ -625,6 +626,7 @@ void Editor::onDraw()
                     markArcs(net(), cc.arcs);
             }
             m_focus_window = "Analysis";
+            break;
         }
         ImGui::SetWindowFocus(m_focus_window.c_str());
         m_focus_window.clear();

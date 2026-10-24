@@ -1,0 +1,50 @@
+{
+  "revision": 2,
+  "type": "Timed Petri net",
+  "nets": [
+    {
+       "name": "Timeout",
+       "description": "A timeout is a transition with a delay, in conflict with the answer. The reply comes 5 time units after Send, but Timeout fires once Waiting has been marked for 3 (its delay): the request goes to Error. Set the duration of Send -> Reply to 2: Receive wins.",
+       "places": [
+            { "id": 0, "caption": "Request", "tokens": 1 },
+            { "id": 1, "caption": "Waiting", "tokens": 0 },
+            { "id": 2, "caption": "Reply", "tokens": 0 },
+            { "id": 3, "caption": "Done", "tokens": 0 },
+            { "id": 4, "caption": "Error", "tokens": 0 }
+       ],
+       "transitions": [
+            { "id": 0, "caption": "Send" },
+            { "id": 1, "caption": "Receive" },
+            { "id": 2, "caption": "Timeout", "delay": 3 }
+       ],
+       "arcs": [
+            { "from": "P0", "to": "T0" },
+            { "from": "T0", "to": "P1", "duration": 0 },
+            { "from": "T0", "to": "P2", "duration": 5 },
+            { "from": "P1", "to": "T1" },
+            { "from": "P2", "to": "T1" },
+            { "from": "T1", "to": "P3", "duration": 0 },
+            { "from": "P1", "to": "T2" },
+            { "from": "T2", "to": "P4", "duration": 0 }
+       ],
+       "actions": [
+       ],
+       "layout": {
+          "places": [
+             [100, 200],
+             [350, 200],
+             [350, 60],
+             [700, 130],
+             [700, 300]
+          ],
+          "transitions": [
+             [200, 200],
+             [550, 130],
+             [550, 300]
+          ]
+       }
+    }
+  ],
+  "inputs": [
+  ]
+}

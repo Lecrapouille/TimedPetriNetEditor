@@ -1,0 +1,42 @@
+{
+  "revision": 2,
+  "type": "Petri net",
+  "nets": [
+    {
+       "name": "Reset arc",
+       "description": "Reset arc (it ends with a double arrow): when Empty fires, it takes all the tokens of Bin, however many there are, and it does not need any to fire. Throw a few things in the bin, then fire Empty.",
+       "places": [
+            { "id": 0, "caption": "Hand", "tokens": 1 },
+            { "id": 1, "caption": "Bin", "tokens": 0 },
+            { "id": 2, "caption": "Truck", "tokens": 1 }
+       ],
+       "transitions": [
+            { "id": 0, "caption": "Throw" },
+            { "id": 1, "caption": "Empty" }
+       ],
+       "arcs": [
+            { "from": "P0", "to": "T0" },
+            { "from": "T0", "to": "P0", "duration": 0 },
+            { "from": "T0", "to": "P1", "duration": 0 },
+            { "from": "P1", "to": "T1", "kind": "reset" },
+            { "from": "P2", "to": "T1" },
+            { "from": "T1", "to": "P2", "duration": 0 }
+       ],
+       "actions": [
+       ],
+       "layout": {
+          "places": [
+             [150, 150],
+             [400, 150],
+             [400, 350]
+          ],
+          "transitions": [
+             [270, 150],
+             [550, 250]
+          ]
+       }
+    }
+  ],
+  "inputs": [
+  ]
+}

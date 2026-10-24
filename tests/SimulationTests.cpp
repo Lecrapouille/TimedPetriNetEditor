@@ -36,7 +36,7 @@ TEST(TestSimulation, TimedEventGraphGivesExactDates)
     {
         Net net(TypeOfNet::TimedPetriNet);
         bool springify;
-        ASSERT_STREQ(loadFromFile(net, "../data/examples/Howard2.json", springify).c_str(), "");
+        ASSERT_STREQ(loadFromFile(net, "../examples/Timed-Event-Graphs/Howard2/Howard2.json", springify).c_str(), "");
         Simulation simulation(net);
         run(simulation, 30.0, steps[i]);
         for (size_t t = 0u; t < net.transitions().size(); ++t)
@@ -56,7 +56,7 @@ TEST(TestSimulation, RestoresTheInitialMarking)
 {
     Net net(TypeOfNet::TimedPetriNet);
     bool springify;
-    ASSERT_STREQ(loadFromFile(net, "../data/examples/InputsOutputs.json", springify).c_str(), "");
+    ASSERT_STREQ(loadFromFile(net, "../examples/Timed-Petri-Nets/InputsOutputs/InputsOutputs.json", springify).c_str(), "");
     Marking const initial = net.tokens();
     Simulation simulation(net);
     run(simulation, 7.3);

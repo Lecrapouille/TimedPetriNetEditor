@@ -1,0 +1,59 @@
+{
+  "revision": 2,
+  "type": "Petri net",
+  "nets": [
+    {
+       "name": "Bounded buffer",
+       "description": "All the extensions together. Buffer holds 4 parts at most (capacity); Pack takes 2 parts at once (weight 2); Produce is blocked while Stopped has a token (inhibitor arc); Flush empties the buffer (reset arc). Fire Stop, Restart and Ask flush to see them.",
+       "places": [
+            { "id": 0, "caption": "Ready", "tokens": 1 },
+            { "id": 1, "caption": "Buffer", "tokens": 1, "capacity": 4 },
+            { "id": 2, "caption": "Packed", "tokens": 0 },
+            { "id": 3, "caption": "Stopped", "tokens": 0 },
+            { "id": 4, "caption": "Flush request", "tokens": 0 }
+       ],
+       "transitions": [
+            { "id": 0, "caption": "Produce" },
+            { "id": 1, "caption": "Pack" },
+            { "id": 2, "caption": "Flush" },
+            { "id": 3, "caption": "Stop" },
+            { "id": 4, "caption": "Restart" },
+            { "id": 5, "caption": "Ask flush" }
+       ],
+       "arcs": [
+            { "from": "P0", "to": "T0" },
+            { "from": "T0", "to": "P0", "duration": 0 },
+            { "from": "T0", "to": "P1", "duration": 0 },
+            { "from": "P3", "to": "T0", "kind": "inhibitor" },
+            { "from": "P1", "to": "T1", "weight": 2 },
+            { "from": "T1", "to": "P2", "duration": 0 },
+            { "from": "P4", "to": "T2" },
+            { "from": "P1", "to": "T2", "kind": "reset" },
+            { "from": "T3", "to": "P3", "duration": 0 },
+            { "from": "P3", "to": "T4" },
+            { "from": "T5", "to": "P4", "duration": 0 }
+       ],
+       "actions": [
+       ],
+       "layout": {
+          "places": [
+             [100, 150],
+             [300, 150],
+             [500, 150],
+             [200, 50],
+             [300, 300]
+          ],
+          "transitions": [
+             [200, 150],
+             [400, 150],
+             [400, 300],
+             [100, 50],
+             [300, 50],
+             [150, 300]
+          ]
+       }
+    }
+  ],
+  "inputs": [
+  ]
+}

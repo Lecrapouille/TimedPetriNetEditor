@@ -1,0 +1,74 @@
+{
+  "revision": 2,
+  "type": "Petri net",
+  "nets": [
+    {
+       "name": "Deadlock",
+       "description": "Two robots need both tools. Robot A takes tool 1 first, robot B takes tool 2 first. Fire 'A takes 1' then 'B takes 2': nobody can go on, this is a deadlock. Analysis > Properties finds it, and the shortest path to it.",
+       "places": [
+            { "id": 0, "caption": "A idle", "tokens": 1 },
+            { "id": 1, "caption": "A has 1", "tokens": 0 },
+            { "id": 2, "caption": "A works", "tokens": 0 },
+            { "id": 3, "caption": "Tool 1", "tokens": 1 },
+            { "id": 4, "caption": "Tool 2", "tokens": 1 },
+            { "id": 5, "caption": "B idle", "tokens": 1 },
+            { "id": 6, "caption": "B has 2", "tokens": 0 },
+            { "id": 7, "caption": "B works", "tokens": 0 }
+       ],
+       "transitions": [
+            { "id": 0, "caption": "A takes 1" },
+            { "id": 1, "caption": "A takes 2" },
+            { "id": 2, "caption": "A releases" },
+            { "id": 3, "caption": "B takes 2" },
+            { "id": 4, "caption": "B takes 1" },
+            { "id": 5, "caption": "B releases" }
+       ],
+       "arcs": [
+            { "from": "P0", "to": "T0" },
+            { "from": "P3", "to": "T0" },
+            { "from": "T0", "to": "P1", "duration": 0 },
+            { "from": "P1", "to": "T1" },
+            { "from": "P4", "to": "T1" },
+            { "from": "T1", "to": "P2", "duration": 0 },
+            { "from": "P2", "to": "T2" },
+            { "from": "T2", "to": "P0", "duration": 0 },
+            { "from": "T2", "to": "P3", "duration": 0 },
+            { "from": "T2", "to": "P4", "duration": 0 },
+            { "from": "P5", "to": "T3" },
+            { "from": "P4", "to": "T3" },
+            { "from": "T3", "to": "P6", "duration": 0 },
+            { "from": "P6", "to": "T4" },
+            { "from": "P3", "to": "T4" },
+            { "from": "T4", "to": "P7", "duration": 0 },
+            { "from": "P7", "to": "T5" },
+            { "from": "T5", "to": "P5", "duration": 0 },
+            { "from": "T5", "to": "P3", "duration": 0 },
+            { "from": "T5", "to": "P4", "duration": 0 }
+       ],
+       "actions": [
+       ],
+       "layout": {
+          "places": [
+             [100, 100],
+             [300, 100],
+             [500, 100],
+             [300, 230],
+             [500, 230],
+             [100, 360],
+             [300, 360],
+             [500, 360]
+          ],
+          "transitions": [
+             [200, 100],
+             [400, 100],
+             [600, 100],
+             [200, 360],
+             [400, 360],
+             [600, 360]
+          ]
+       }
+    }
+  ],
+  "inputs": [
+  ]
+}

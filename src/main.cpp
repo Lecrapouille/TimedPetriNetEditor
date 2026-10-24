@@ -6,6 +6,7 @@
 // See LICENSING.md for details.
 
 #include "Editor/Editor.hpp" // Selected by Makefile
+#include <cstdio>
 #include <cstdlib>
 #include <iostream>
 #include <unistd.h> // getopt
@@ -14,15 +15,16 @@
 static void usage(const char* name)
 {
     std::cout
-      << name << " [-r] [-s|-w screenshot.png] [-d seconds] [-f window] [-c endpoint] [petri.json]" << std::endl
+      << name << " [-r] [-s|-w screenshot.png] [-d seconds] [-f window] [-c endpoint] [-g WxH] [petri.json]" << std::endl
       << "Where:" << std::endl
-      << "  [petri.json] is an optional Petri net file to load (i.e. examples/Howard1.json)" << std::endl
+      << "  [petri.json] is an optional Petri net file to load (i.e. examples/Petri-Nets/Philosophers/Philosophers.json)" << std::endl
       << "  -r starts the simulation once the file is loaded" << std::endl
       << "  -s screenshot.png saves the net as a PNG file once drawn, then quits" << std::endl
       << "  -w screenshot.png saves the whole window as a PNG file once drawn, then quits" << std::endl
       << "  -d seconds waits before the screenshot (the simulation runs meanwhile)" << std::endl
       << "  -f window brings this window in front (Journal, Console, Analysis or one of its tabs: Critical circuit, Gantt ...)" << std::endl
       << "  -c endpoint follows the program publishing its journal there (tcp://localhost:5556)" << std::endl
+      << "  -g WxH size of the window in pixels (default 1100x768)" << std::endl
       << std::endl;
 }
 
@@ -40,7 +42,9 @@ int main(int argc, char* argv[])
     double delay = 0.0;
     std::string focus;
     std::string endpoint;
-    while ((opt = getopt(argc, argv, "hrs:w:d:f:c:")) != -1)
+    int width = 1100;
+    int height = 768;
+    while ((opt = getopt(argc, argv, "hrs:w:d:f:c:g:")) != -1)
     {
         switch (opt)
         {
@@ -66,6 +70,13 @@ int main(int argc, char* argv[])
             case 'c':
                 endpoint = optarg;
                 break;
+            case 'g':
+                if ((std::sscanf(optarg, "%dx%d", &width, &height) != 2) || (width <= 0) || (height <= 0))
+                {
+                    std::cerr << "Bad window size: '" << optarg << "' (expected WxH)" << std::endl;
+                    return EXIT_FAILURE;
+                }
+                break;
             case '?':
                 std::cerr << "Unknown option: '" << char(optopt) << "'!" << std::endl;
                 usage(argv[0]);
@@ -79,7 +90,7 @@ int main(int argc, char* argv[])
         filename = argv[optind];
     }
 
-    tpne::Editor editor(1100, 768, "Petri Net Editor");
+    tpne::Editor editor(size_t(width), size_t(height), "Petri Net Editor");
     if (!screenshot.empty())
     {
         editor.setAutoScreenshot(screenshot, true, whole_window);

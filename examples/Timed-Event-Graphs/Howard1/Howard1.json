@@ -1,0 +1,46 @@
+{
+  "revision": 2,
+  "type": "Timed event graph",
+  "nets": [
+    {
+       "name": "Howard1",
+       "description": "Two transitions and four places, each with two tokens. Analysis > Critical circuit: Howard's algorithm finds the cycle time (the largest durations / tokens ratio of the circuits) and draws the critical circuit.",
+       "places": [
+            { "id": 0, "caption": "P0", "tokens": 2 },
+            { "id": 1, "caption": "P1", "tokens": 2 },
+            { "id": 2, "caption": "P2", "tokens": 2 },
+            { "id": 3, "caption": "P3", "tokens": 2 }
+       ],
+       "transitions": [
+            { "id": 0, "caption": "T0" },
+            { "id": 1, "caption": "T1" }
+       ],
+       "arcs": [
+            { "from": "T0", "to": "P0", "duration": 1 },
+            { "from": "P0", "to": "T0" },
+            { "from": "T0", "to": "P1", "duration": 3 },
+            { "from": "P1", "to": "T1" },
+            { "from": "T1", "to": "P2", "duration": 2 },
+            { "from": "P2", "to": "T0" },
+            { "from": "T1", "to": "P3", "duration": 4 },
+            { "from": "P3", "to": "T1" }
+       ],
+       "actions": [
+       ],
+       "layout": {
+          "places": [
+             [668, 272],
+             [360, 180],
+             [374, 402],
+             [54, 282]
+          ],
+          "transitions": [
+             [526, 272],
+             [212, 282]
+          ]
+       }
+    }
+  ],
+  "inputs": [
+  ]
+}

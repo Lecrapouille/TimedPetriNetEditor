@@ -223,7 +223,7 @@ Throw an exception if the handle is invalid or the screenshot failed.
 
 # Examples
 ```julia-repl
-julia> pn = petri_net("../../data/examples/Simple.json")
+julia> pn = petri_net("../../examples/Timed-Petri-Nets/TimedConflict/TimedConflict.json")
 
 julia> petri_screenshot(pn, "/tmp/simple.png")
 true

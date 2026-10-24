@@ -1,0 +1,2 @@
+# Chapter 11: the runtime.
+doc/pics/11-PickAndPlace-Properties.png -w -f Analysis examples/Runtime/PickAndPlace/PickAndPlace.json

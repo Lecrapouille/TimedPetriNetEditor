@@ -1,0 +1,19 @@
+c=5 A=1
+c=5 Exclusive choice:T0
+c=15 B=1
+c=25 A=0
+c=25 Exclusive choice:T2
+c=35 B=0
+c=45 A=1
+c=45 Exclusive choice:T0
+c=55 B=1
+c=65 A=0
+c=65 Exclusive choice:T2
+c=75 B=0
+c=85 A=1
+c=85 Exclusive choice:T0
+c=95 B=1
+c=105 A=0
+c=105 Exclusive choice:T2
+c=115 B=0
+final Exclusive choice: 1 0 0

@@ -21,7 +21,7 @@
 #include <sstream>
 
 // *****************************************************************************
-//! \file Non regression of the examples: each net of data/examples is run
+//! \file Non regression of the examples: each net of examples/ is run
 //! the same way each time (no random choice) and its journal is compared to
 //! the one of tests/golden/. Set TPNE_UPDATE_GOLDEN=1 to write the journals
 //! again after a wanted change of behavior (then check their diff).
@@ -148,7 +148,7 @@ TEST(TestGolden, Examples)
 {
     bool const update = (std::getenv("TPNE_UPDATE_GOLDEN") != nullptr);
     std::vector<fs::path> files;
-    for (auto const& entry : fs::directory_iterator("../data/examples"))
+    for (auto const& entry : fs::recursive_directory_iterator("../examples"))
     {
         auto const ext = entry.path().extension();
         if ((ext == ".json") || (ext == ".teg") || (ext == ".flowshop"))

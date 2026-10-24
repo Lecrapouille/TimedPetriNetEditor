@@ -1,0 +1,5 @@
+# Chapter 14: the windows of the editor.
+doc/pics/14-Window-Petri.png -w examples/Petri-Nets/Philosophers/Philosophers.json
+doc/pics/14-Window-GRAFCET.png -w -r -d 3 examples/GRAFCET/GEMMA-Dryer/GEMMA-Dryer.json
+doc/pics/14-Window-Analysis.png -w -f Properties examples/Petri-Nets/MutualExclusion/MutualExclusion.json
+doc/pics/14-Window-Journal.png -w -r -d 4 -f Journal examples/Timed-Petri-Nets/Durations/Durations.json

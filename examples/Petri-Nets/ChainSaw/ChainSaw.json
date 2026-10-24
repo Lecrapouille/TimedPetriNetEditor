@@ -1,0 +1,80 @@
+{
+  "revision": 2,
+  "type": "Petri net",
+  "nets": [
+    {
+       "name": "Chain Saw",
+       "description": "Safety of a chain saw: the chain starts only when the chain brake is released, the dead man switch is held and the throttle is pressed (Start chain reads these three places). Try to start the chain with the brake on.",
+       "places": [
+            { "id": 0, "caption": "Chain brake on", "tokens": 1 },
+            { "id": 1, "caption": "Brake released", "tokens": 0 },
+            { "id": 2, "caption": "Chain running", "tokens": 0 },
+            { "id": 3, "caption": "Stopped", "tokens": 1 },
+            { "id": 4, "caption": "Dead man switch held", "tokens": 0 },
+            { "id": 5, "caption": "Throttle pressed", "tokens": 1 },
+            { "id": 6, "caption": "Throttle released", "tokens": 0 },
+            { "id": 7, "caption": "Dead man switch released", "tokens": 1 }
+       ],
+       "transitions": [
+            { "id": 0, "caption": "Release brake" },
+            { "id": 1, "caption": "Apply brake" },
+            { "id": 2, "caption": "Start chain" },
+            { "id": 3, "caption": "Stop chain" },
+            { "id": 4, "caption": "Release throttle" },
+            { "id": 5, "caption": "Press throttle" },
+            { "id": 6, "caption": "Release switch" },
+            { "id": 7, "caption": "Hold switch" }
+       ],
+       "arcs": [
+            { "from": "P0", "to": "T0" },
+            { "from": "T0", "to": "P1", "duration": 1 },
+            { "from": "P1", "to": "T1" },
+            { "from": "T1", "to": "P0", "duration": 2 },
+            { "from": "P1", "to": "T2" },
+            { "from": "T2", "to": "P1", "duration": 1 },
+            { "from": "T2", "to": "P2", "duration": 1 },
+            { "from": "P2", "to": "T3" },
+            { "from": "T3", "to": "P3", "duration": 1 },
+            { "from": "P3", "to": "T2" },
+            { "from": "T2", "to": "P4", "duration": 3 },
+            { "from": "P4", "to": "T2" },
+            { "from": "T2", "to": "P5", "duration": 5 },
+            { "from": "P5", "to": "T4" },
+            { "from": "T4", "to": "P6", "duration": 2 },
+            { "from": "P6", "to": "T5" },
+            { "from": "T5", "to": "P5", "duration": 2 },
+            { "from": "P4", "to": "T6" },
+            { "from": "T6", "to": "P7", "duration": 3 },
+            { "from": "P7", "to": "T7" },
+            { "from": "T7", "to": "P4", "duration": 1 },
+            { "from": "P5", "to": "T2" }
+       ],
+       "actions": [
+       ],
+       "layout": {
+          "places": [
+             [250, 200],
+             [350, 300],
+             [750, 50],
+             [650, 300],
+             [350, 400],
+             [450, 500],
+             [300, 600],
+             [200, 500]
+          ],
+          "transitions": [
+             [250, 300],
+             [300, 250],
+             [500, 300],
+             [750, 200],
+             [350, 500],
+             [400, 550],
+             [250, 400],
+             [300, 500]
+          ]
+       }
+    }
+  ],
+  "inputs": [
+  ]
+}

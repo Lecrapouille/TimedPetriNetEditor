@@ -1,0 +1,6 @@
+# Chapter 9: GRAFCET.
+doc/pics/09-GermanTrafficLights-running.png -w -r -d 5 examples/GRAFCET/GermanTrafficLights/GermanTrafficLights.json
+doc/pics/09-GrafcetActions.png -w -f Actions examples/GRAFCET/GrafcetActions/GrafcetActions.json
+doc/pics/09-ExclusiveChoice-running.png -w -r -d 1 examples/GRAFCET/ExclusiveChoice/ExclusiveChoice.json
+doc/pics/09-ParallelSequences.png -s examples/GRAFCET/ParallelSequences/ParallelSequences.json
+doc/pics/09-GermanTrafficLights-timing.png -w -r -d 9 -f "Timing diagram" examples/GRAFCET/GermanTrafficLights/GermanTrafficLights.json

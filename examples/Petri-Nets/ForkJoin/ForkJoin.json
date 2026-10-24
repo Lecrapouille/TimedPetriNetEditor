@@ -1,0 +1,60 @@
+{
+  "revision": 2,
+  "type": "Petri net",
+  "nets": [
+    {
+       "name": "Fork and join",
+       "description": "Fork puts a token in each branch: the tasks A and B are concurrent, fire them in the order you like. Join waits for both branches (a synchronization, a rendezvous). Restart closes the loop.",
+       "places": [
+            { "id": 0, "caption": "Start", "tokens": 1 },
+            { "id": 1, "caption": "A to do", "tokens": 0 },
+            { "id": 2, "caption": "B to do", "tokens": 0 },
+            { "id": 3, "caption": "A done", "tokens": 0 },
+            { "id": 4, "caption": "B done", "tokens": 0 },
+            { "id": 5, "caption": "End", "tokens": 0 }
+       ],
+       "transitions": [
+            { "id": 0, "caption": "Fork" },
+            { "id": 1, "caption": "Task A" },
+            { "id": 2, "caption": "Task B" },
+            { "id": 3, "caption": "Join" },
+            { "id": 4, "caption": "Restart" }
+       ],
+       "arcs": [
+            { "from": "P0", "to": "T0" },
+            { "from": "T0", "to": "P1", "duration": 0 },
+            { "from": "T0", "to": "P2", "duration": 0 },
+            { "from": "P1", "to": "T1" },
+            { "from": "T1", "to": "P3", "duration": 0 },
+            { "from": "P2", "to": "T2" },
+            { "from": "T2", "to": "P4", "duration": 0 },
+            { "from": "P3", "to": "T3" },
+            { "from": "P4", "to": "T3" },
+            { "from": "T3", "to": "P5", "duration": 0 },
+            { "from": "P5", "to": "T4" },
+            { "from": "T4", "to": "P0", "duration": 0 }
+       ],
+       "actions": [
+       ],
+       "layout": {
+          "places": [
+             [100, 200],
+             [300, 100],
+             [300, 300],
+             [500, 100],
+             [500, 300],
+             [700, 200]
+          ],
+          "transitions": [
+             [200, 200],
+             [400, 100],
+             [400, 300],
+             [600, 200],
+             [400, 420]
+          ]
+       }
+    }
+  ],
+  "inputs": [
+  ]
+}

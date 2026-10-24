@@ -154,6 +154,39 @@ TEST(TestRuntime, GuardsAndInjectedInputs)
 }
 
 //------------------------------------------------------------------------------
+TEST(TestRuntime, ClosedGuardIsNotADeadlock)
+{
+    // Ready -> detect -> Seen, without source: a closed guard may open later
+    // (an emergency stop released), the instance waits for it.
+    Net net(TypeOfNet::PetriNet);
+    Place& ready = net.addPlace(1u, "Ready");
+    Place& seen = net.addPlace(0u, "Seen");
+    Transition& detect = net.addTransition("detect");
+    net.addArc(ready, detect); net.addArc(detect, seen);
+
+    Runtime runtime(net);
+    std::atomic<bool> estop{true};
+    runtime.guard("detect", [&estop](Context const&) noexcept { return !estop.load(); });
+    auto instance = runtime.instantiate("c", {}, { { "Seen", Success } });
+    ASSERT_TRUE(runtime.step(*instance, 0.0));
+    ASSERT_TRUE(runtime.step(*instance, 1.0));
+    ASSERT_EQ(instance->marking().count(0u), 1u);
+    estop = false;
+    ASSERT_FALSE(runtime.step(*instance, 2.0));
+    ASSERT_EQ(instance->result(), Success);
+
+    // run() looks again at the guard until it opens.
+    estop = true;
+    auto other = runtime.instantiate("d", {}, { { "Seen", Success } });
+    std::thread release([&estop]() {
+        std::this_thread::sleep_for(std::chrono::milliseconds(50));
+        estop = false;
+    });
+    ASSERT_EQ(runtime.run(*other), Success);
+    release.join();
+}
+
+//------------------------------------------------------------------------------
 TEST(TestRuntime, CancelRunningFunctions)
 {
     // A long function on a pool, canceled from another thread.

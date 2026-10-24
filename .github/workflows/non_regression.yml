@@ -43,7 +43,7 @@ jobs:
           ../build/TimedPetriNetEditor-UnitTest
       - name: Compile and run the examples of the runtime
         run: |
-          make -C examples/runtime run
+          make -C examples run
       - name: Check the generated GRAFCET code against the engine
         run: |
           tests/codegen/run.sh
@@ -52,8 +52,8 @@ jobs:
           xvfb-run -a python3 tests/remote/test_remote.py build/TimedPetriNetEditor build/examples/Debugger
       - name: Check the properties of the examples
         run: |
-          build/tpne-check data/examples/Philosophers.json data/examples/ProducerConsumer.json
-          build/tpne-check --allow-deadlock data/examples/PickAndPlace.json
+          build/tpne-check examples/Petri-Nets/Philosophers/Philosophers.json examples/Petri-Nets/ProducerConsumer/ProducerConsumer.json
+          build/tpne-check --allow-deadlock examples/Runtime/PickAndPlace/PickAndPlace.json
       - name: Check if the library can be linked against a project
         run: |
           export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/lib/

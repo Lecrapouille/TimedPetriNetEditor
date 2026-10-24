@@ -1,0 +1,55 @@
+{
+  "revision": 2,
+  "type": "Timed Petri net",
+  "nets": [
+    {
+       "name": "Timed conflict",
+       "description": "A timed Petri net with a conflict: P1 has two tokens and two output transitions, T1 and T2. Press Space: each token goes to one of them, chosen by Simulation > Conflicts. The durations on the arcs are the times the places need to do their job.",
+       "places": [
+            { "id": 0, "caption": "P0", "tokens": 1 },
+            { "id": 1, "caption": "P1", "tokens": 2 },
+            { "id": 2, "caption": "P2", "tokens": 0 },
+            { "id": 3, "caption": "P3", "tokens": 1 }
+       ],
+       "transitions": [
+            { "id": 0, "caption": "T0" },
+            { "id": 1, "caption": "T1" },
+            { "id": 2, "caption": "T2" },
+            { "id": 3, "caption": "T3" },
+            { "id": 4, "caption": "T4" }
+       ],
+       "arcs": [
+            { "from": "P0", "to": "T0" },
+            { "from": "T0", "to": "P1", "duration": 3 },
+            { "from": "P1", "to": "T1" },
+            { "from": "T1", "to": "P2", "duration": 5 },
+            { "from": "P1", "to": "T2" },
+            { "from": "T2", "to": "P2", "duration": 4 },
+            { "from": "P2", "to": "T3" },
+            { "from": "T3", "to": "P0", "duration": 5 },
+            { "from": "T3", "to": "P3", "duration": 5 },
+            { "from": "P3", "to": "T4" },
+            { "from": "T4", "to": "P0", "duration": 4 }
+       ],
+       "actions": [
+       ],
+       "layout": {
+          "places": [
+             [105, 130],
+             [485, 131],
+             [488, 344],
+             [69, 342]
+          ],
+          "transitions": [
+             [280, 130],
+             [353, 227],
+             [602, 239],
+             [237, 342],
+             [13, 233]
+          ]
+       }
+    }
+  ],
+  "inputs": [
+  ]
+}

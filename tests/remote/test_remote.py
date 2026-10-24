@@ -3,8 +3,8 @@
 #   - the remote control of the editor (REQ/REP, doc/09-Remote-Control.md):
 #     load, start, fire, state, set_tokens, stop on ProducerConsumer.json;
 #   - the journal published by a program (PUB/SUB, Runtime/JournalPublisher.hpp):
-#     the manifest and the lines of the journal of examples/runtime/Debugger.
-# Run from the root of the project, after make and make -C examples/runtime:
+#     the manifest and the lines of the journal of examples/Runtime/PickAndPlace/Debugger.
+# Run from the root of the project, after make and make -C examples:
 #   python3 tests/remote/test_remote.py [build/TimedPetriNetEditor] [build/examples/Debugger]
 # On a machine without display, run it under xvfb-run.
 
@@ -40,7 +40,7 @@ def request(socket, command, params=None):
 def test_remote_control():
     print("Remote control of the editor (REQ/REP tcp://localhost:5555)")
     env = dict(os.environ, XDG_CONFIG_HOME="/tmp/tpne-remote-test")
-    editor = subprocess.Popen([EDITOR, "data/examples/ProducerConsumer.json"], env=env,
+    editor = subprocess.Popen([EDITOR, "examples/Petri-Nets/ProducerConsumer/ProducerConsumer.json"], env=env,
                               stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
     context = zmq.Context()
     try:

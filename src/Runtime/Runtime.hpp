@@ -378,6 +378,9 @@ private:
     //! \brief Bring Instance::m_enabled up to date with the marking.
     void refresh(Instance& instance) const;
     bool canFire(Instance const& instance, size_t const transition) const;
+    //! \brief A transition enabled by the marking waits for its guard: the
+    //! guard may open later (a sensor, the time), so the instance goes on.
+    bool waitsForGuard(Instance const& instance) const;
     //! \brief Fire one transition: take the tokens, start its function.
     void fire(std::shared_ptr<Instance> const& instance, size_t const transition);
     //! \brief Take the input tokens of the transition.

@@ -4,196 +4,102 @@
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](LICENSE)
 ![C++20](https://img.shields.io/badge/C%2B%2B-20-blue.svg)
 
-**Draw it. Run it. Find out why it is slow. Then run your code with it.**
+[TimedPetriNetEditor](https://github.com/Lecrapouille/TimedPetriNetEditor) is a C++20 library and a graphical editor and simulator of **Petri nets** and of the nets derived from them:
 
-A coffee machine, a crossroads with traffic lights, three philosophers
-who share one fork and two knives, a factory, a dryer with an emergency stop,
-a robot that picks objects: they all do several things at the same time, and
-they all wait for each other somewhere. TimedPetriNetEditor lets you draw
-them with the mouse, watch them run, press their buttons, and get the answer
-to the question everybody asks: *how fast can it go, and what slows it
-down?* Then it runs your own functions with the same net, and shows you your
-program running.
+- 🔵 **Petri nets** and **extended Petri nets** (weights, capacities, inhibitor and reset arcs, priorities, colored tokens), with the analysis of their properties: deadlocks, bounds, liveness, invariants;
+- ⏱️ **timed Petri nets** and **timed event graphs**, with the **(max,+) algebra**: cycle time, critical circuit (the bottleneck), Gantt chart, dater equations and linear systems;
+- 🔘 **GRAFCET** (IEC 60848) and **GEMMA**, to describe and test the control of a machine with a control panel, and to generate its C++ code (usable for an Arduino);
+- ⚙️ a **runtime** in the spirit of [Symmetri](https://github.com/thorstink/Symmetri): a net drawn in the editor drives your C++ program, each transition calling one of your functions, and the editor follows the program while it runs.
+- It can import the folowing files: JSON (its own format), PNML (standard and Symmetri), GRML(GreatSPN), flowshops, `.teg`; and export to SVG, LaTeX (TikZ), Graphviz,draw.io, PN-Editor, Symfony workflows, Julia, C++.
+- It allows a remote control by JSON commands over ZeroMQ (real time debugger).
 
-![A GEMMA running](doc/pics/Editor-GEMMA-running.png)
+It is also a set of C++ libraries (the nets, the file formats, the (max,+) algebra, the analysis, the runtime) usable without the editor, from C++ or Julia.
 
-*A dryer controlled by three GRAFCETs: press its buttons on the control
-panel, watch the motors turn and the oven heat.*
+![An emergency call center running in the editor](doc/pics/01-Editor-EmergencyCalls.png)
 
-## ✨ What you can do with it
+*An emergency call center modeled by a Petri net: callers, level 1 and level 2 operators are tokens; the kinds of calls are colors.*
 
-🎲 **Play with a system until you understand it.** Click on a transition and
-the tokens move. Three philosophers, one fork, two knives: who can eat at
-the same time, and who has to wait? Add a token, remove an arc, and see what
-changes.
+## ✨ What it offers
 
-🏭 **Measure a factory before you build it.** Open a flowshop (pieces,
-machines, processing times) and the editor gives, without simulating, the
-time between two products, the machine that slows everything down, and the
-schedule of every machine as a Gantt chart. Then press Space and watch the
-simulation follow the same dates.
-
-🔘 **Run a machine without the machine.** Draw a GRAFCET the way automation
-is taught (IEC 60848): steps, conditions such as `Start . /EStop`, timers
-such as `3s/X2`, actions, forcing orders between graphs (GEMMA). Then drive
-it from a control panel with real push buttons, a mushroom emergency stop, a
-mode selector and a thermometer, and read its timing diagram.
-
-🔍 **Know before it breaks.** The editor finds the deadlocks of any net (and
-the shortest path to them, replayed step by step), the transitions that can
-never fire, the places that grow without bound, the invariants;
-`tpne-check` does the same in your CI.
-
-⚙️ **Run your code with it.** In your program, a transition is a function:
-the runtime calls it when the transition fires and its result (success,
-failure, a color of yours) chooses what comes next, on a board or on a pool
-of threads. The editor writes the skeleton of this program.
-
-🐞 **Watch your program run.** Connect the editor to your program, or to the
-GRAFCET code generated for your Arduino: the tokens move in the editor as
-your program runs, and its journal can be replayed at any date.
-
-📦 **Take it with you.** Export to SVG or LaTeX for your report, to
-Graphviz, PNML, GreatSPN or Draw.io; read the nets of Symmetri and GreatSPN;
-generate the C++ code of your GRAFCETs for an Arduino; save journals for
-process mining (CSV, XES); drive the editor from Python over ZeroMQ, or use
-its engine in your own C++ or Julia program.
+| Family | Theory | What the editor does | Learn |
+|--------|--------|----------------------|-------|
+| 🔵 Petri nets | places, transitions, tokens, the firing rule; reachability, incidence matrix, invariants | draw with the mouse, fire transitions by hand, find deadlocks (and the path to them), dead transitions, bounds, liveness, P- and T-invariants; `tpne-check` does it in a CI | [3](doc/03-Petri-Nets.md), [4](doc/04-Analysis.md) |
+| 🧪 Extended Petri nets | weights, capacities, inhibitor and reset arcs, priorities, colors | right click on an arc or a place; the simulation and the analysis follow them | [5](doc/05-Extended-Petri-Nets.md) |
+| ⏱️ Timed Petri nets | durations on arcs, delays on transitions | a discrete event simulation, conflicts by priority or at random, a journal of the firings, timeouts | [6](doc/06-Timed-Petri-Nets.md) |
+| 🔁 Timed event graphs | dater and counter equations, (max,+) algebra, eigenvalue, Howard's algorithm | the compact drawing, the cycle time and the critical circuit, the Gantt chart of the earliest dates, the (max,+) matrices and equations, export to Julia; factories described as flowshops | [7](doc/07-Timed-Event-Graphs.md), [8](doc/08-Max-Plus-Algebra.md) |
+| 🔘 GRAFCET, GEMMA | IEC 60848: steps, receptivities, edges, timers, action qualifiers, forcing orders | several graphs running together, a control panel (push buttons, emergency stop, selectors, sensors), the outputs, a timing diagram, C++ code for a micro-controller checked against the editor | [9](doc/09-GRAFCET.md), [10](doc/10-GEMMA.md) |
+| ⚙️ Runtime | a transition is a function, the result of a function colors its tokens and chooses the next transition | the skeleton of the program generated from the net, the program followed live in the editor, its journal replayed, saved for process mining (XES) | [11](doc/11-Runtime.md), [12](doc/12-Code-Generation.md), [13](doc/13-Debugging.md) |
 
 | | | |
 |:-:|:-:|:-:|
-| ![Coffee](data/examples/pics/Coffee.png) | ![Philosophers](data/examples/pics/Philosophers.png) | ![Traffic lights](data/examples/pics/TrafficLights.png) |
-| ☕ a coffee machine | 🍝 the dining philosophers | 🚦 traffic lights |
-| ![Flowshop](doc/pics/Editor-Flowshop.png) | ![Critical circuit](doc/pics/Circuit01.png) | ![Emergency calls](doc/pics/911.png) |
-| 🏭 a flowshop factory | 🐢 its bottleneck in red | 🚑 [an emergency call center (video)](https://youtu.be/hOhunzgFpcA) |
-| ![Properties](doc/pics/Editor-Properties.png) | ![Debugger](doc/pics/Editor-Debugger.png) | ![GRAFCET](doc/pics/Editor-GEMMA.png) |
-| 🔍 deadlocks, bounds, invariants | 🐞 a robot program followed live | 🔘 three GRAFCETs of a GEMMA |
+| ![Philosophers](examples/Petri-Nets/Philosophers/Philosophers.png) | ![Inhibitor arc](examples/Extended-Petri-Nets/Inhibitor/Inhibitor.png) | ![Flowshop](doc/pics/01-Editor-Flowshop.png) |
+| 🍝 [the dining philosophers](examples/Petri-Nets/Philosophers/README.md) | 💡 [an inhibitor arc](examples/Extended-Petri-Nets/Inhibitor/README.md) | 🏭 [a factory, its bottleneck and its schedule](examples/Timed-Event-Graphs/Flowshop/README.md) |
+| ![German traffic lights](examples/GRAFCET/GermanTrafficLights/GermanTrafficLights.png) | ![GEMMA](doc/pics/01-Editor-GEMMA.png) | ![Pick and place](examples/Runtime/PickAndPlace/PickAndPlace.png) |
+| 🚦 [a GRAFCET with timers](examples/GRAFCET/GermanTrafficLights/README.md) | 🛑 [a dryer driven by a GEMMA](examples/GRAFCET/GEMMA-Dryer/README.md) | 🤖 [a robot program driven by a net](examples/Runtime/PickAndPlace/README.md) |
 
-All of them are in [data/examples](data/examples/README.md). An online
-version is in progress:
-🌐 [try it in your browser](https://lecrapouille.github.io/TimedPetriNetEditor/TimedPetriNetEditor.html).
+More than 40 examples, from one-notion textbook nets to real systems, are in the [gallery](examples/README.md).
 
-## 🤔 Why this one
+## 🚀 Quick start
 
-| | This editor | Most Petri net editors | GRAFCET tools |
-|-|:-:|:-:|:-:|
-| Cycle time, bottleneck, Gantt chart, (max,+) equations of a timed event graph | ✅ | rarely | ❌ |
-| GRAFCET by the standard: edges, timers, all action qualifiers, forcing orders, several graphs | ✅ | ❌ | ✅ |
-| A control panel with real buttons, a timing diagram, timers you can see count | ✅ | ❌ | with a PLC |
-| Draw with the mouse only: no mode, no palette, the status bar tells you what a click does | ✅ | rarely | rarely |
-| Deadlocks, bounds, liveness, invariants, in the editor and in a CI | ✅ | some | ❌ |
-| Your functions run by the net (runtime), the editor as a visual debugger | ✅ | ❌ | with a PLC |
-| C++ library, Julia, remote control, exports, C++ code generation | ✅ | rarely | ❌ |
-| Free, open source, Linux, macOS, Windows | ✅ | varies | rarely |
-
-The runtime does the job of [Symmetri](https://github.com/thorstink/Symmetri)
-and was measured against it on the same machine: Symmetri is faster on tiny
-nets (0.6 µs against 1.0 µs for 6 firings), this runtime 4 to 6 times faster
-on a net of 1921 transitions, and it stops a cycle that would fire for ever
-([the numbers](examples/runtime/README.md#benchmark-against-symmetri)).
-
-## 🚀 Try it in two minutes
+On Debian or Ubuntu (other systems: [chapter 2](doc/02-Getting-Started.md)):
 
 ```sh
+sudo apt-get install build-essential pkg-config libdw-dev libzmq3-dev libglfw3-dev \
+    libx11-dev libxinerama-dev libxrandr-dev libxi-dev libxcursor-dev libgl1-mesa-dev
+
 git clone https://github.com/Lecrapouille/TimedPetriNetEditor --depth=1 --recursive
 cd TimedPetriNetEditor/
+
 make download-external-libs
 make compile-external-libs
-make -j8
+make -j"$(nproc --all)"
+
+# Optional: only for developers
+make test -j"$(nproc --all)"
 ```
 
-(The remote control and the debugger need ZeroMQ:
-`sudo dnf install zeromq-devel`, `sudo apt install libzmq3-dev` or
-`brew install zeromq`; or build without them with `make TPNE_ZEROMQ=0`.)
-
-Then four things to try:
+You can run your first Petri net:
 
 ```sh
-./build/TimedPetriNetEditor data/examples/Philosophers.json
+./build/TimedPetriNetEditor examples/Petri-Nets/FirstNet/FirstNet.json
 ```
 
-🍝 Press **Space**, then click on the green transitions: a philosopher eats
-when the cutlery is free, and the others wait.
+- In the editor, press **Space** to simulate, click on the green transition to fire it. To draw: the **left** mouse button draws (a click adds a place, a drag from a node draws an arc), the **right** one moves (a click adds a transition); the status bar always says what a click would do; **F1** is the help.
 
-```sh
-./build/TimedPetriNetEditor data/examples/simple.flowshop
-```
-
-🏭 *Analysis > Critical circuit*: the factory makes a set of pieces every 6
-time units, and machine M1 is the bottleneck. *Analysis > Gantt chart*: who
-works when.
-
-```sh
-./build/TimedPetriNetEditor data/examples/GEMMA-Dryer.json
-```
-
-🔘 Press **Space**, then on the control panel: Rearm, Ack, wait 3 s, Ack
-again, wait for 80 °C, Start. Then hit the emergency stop.
-
-```sh
-make -C examples/runtime
-./build/examples/Debugger &
-./build/TimedPetriNetEditor -c tcp://localhost:5556 data/examples/PickAndPlace.json
-```
-
-🐞 A robot program picks and places objects; the editor follows it: the
-*Journal* lists what its functions do, the net shows its tokens.
-
-To draw your own: the **left** mouse button draws (a click adds a place, a
-drag from a node draws an arc), the **right** one moves, the status bar
-always says what a click would do. `F1` is the help.
+Optional you can `sudo make install` to install the editor and its libraries. A web version is
+in progress: 🌐 [try it in your browser](https://lecrapouille.github.io/TimedPetriNetEditor/TimedPetriNetEditor.html).
 
 ## 📚 Documentation
 
-[The documentation](doc/README.md) is written for beginners, in simple
-English, with tutorials made from real runs:
+[The documentation](doc/README.md) goes from the theory of each family of nets to what the editor offers to solve its problems, step by step, with examples made from real runs.
 
-| # | Chapter | You will learn |
-|---|---------|----------------|
-| 1 | 🧩 [Introduction](doc/01-Introduction.md) | places, transitions, tokens; the four kinds of nets |
-| 2 | 🖱️ [Getting started](doc/02-Getting-Started.md) | draw and run your first net |
-| 3 | ⏱️ [Timed nets and (max,+) algebra](doc/03-Timed-Nets-and-Max-Plus.md) | cycle time, bottleneck, Gantt chart of a factory |
-| 4 | 🔘 [GRAFCET and GEMMA](doc/04-GRAFCET-and-GEMMA.md) | control a machine: the dryer |
-| 5 | 📦 [Exports and code generation](doc/05-Exports-and-Code-Generation.md) | SVG, LaTeX, Graphviz, PNML, GRML, journals; C++ for the runtime and for GRAFCETs; the editor as a debugger |
-| 6 | 📄 [File format](doc/06-File-Format.md) | the JSON file |
-| 7 | 📖 [Editor reference](doc/07-Editor-Reference.md) | every window, gesture, key and menu |
-| 8 | 🔢 [Julia](doc/08-Julia.md) | the editor and the (max,+) algebra from Julia |
-| 9 | 📡 [Remote control](doc/09-Remote-Control.md) | drive the editor from another program; follow a running program |
-| 10 | 🧰 [Use the library in C++](doc/10-Library.md) | run a GRAFCET, compute dates, run your functions, check the properties in your program |
-| 11 | 🤖 [From the editor to the code](doc/11-From-Editor-To-Code.md) | a robot from the drawing to a running program, watched in the editor |
+| Part | Chapters |
+|------|----------|
+| 🧭 Discover | [1. Introduction](doc/01-Introduction.md) · [2. Getting started](doc/02-Getting-Started.md) |
+| 🔵 Petri nets | [3. Petri nets](doc/03-Petri-Nets.md) · [4. Analysis](doc/04-Analysis.md) · [5. Extended Petri nets](doc/05-Extended-Petri-Nets.md) |
+| ⏱️ Time | [6. Timed Petri nets](doc/06-Timed-Petri-Nets.md) · [7. Timed event graphs](doc/07-Timed-Event-Graphs.md) · [8. (max,+) algebra](doc/08-Max-Plus-Algebra.md) |
+| 🏭 Automation | [9. GRAFCET](doc/09-GRAFCET.md) · [10. GEMMA](doc/10-GEMMA.md) |
+| ⚙️ From the model to the program | [11. Runtime](doc/11-Runtime.md) · [12. Code generation](doc/12-Code-Generation.md) · [13. Debugging](doc/13-Debugging.md) |
+| 📖 Reference | [14. Editor](doc/14-Editor-Reference.md) · [15. File formats](doc/15-File-Formats.md) · [16. C++ library](doc/16-Library.md) · [17. Julia](doc/17-Julia.md) · [18. Remote control](doc/18-Remote-Control.md) · [Glossary](doc/Glossary.md) · [Bibliography](doc/Bibliography.md) |
 
-The words are in the [glossary](doc/Glossary.md), books and other tools in
-the [bibliography](doc/Bibliography.md).
+## 📜 Story
 
-## 📜 The story
+In the 1980s, researchers of INRIA (Cohen, Dubois, Quadrat, Viot) showed that the dates of the events of a timed event graph follow linear equations in the **(max,+) algebra**, where `max` plays the role of the addition and `+` the one of the multiplication: the speed of a factory or a railway network becomes an eigenvalue. A (max,+) toolbox for Scilab, then ScicosLab, computed it.
 
-At INRIA, the (max,+) algebra turned the schedules of factories and trains
-into simple linear equations, and the ScicosLab toolbox computed them: cycle
-times, critical circuits, earliest dates. But you had to type the matrices
-by hand, and ScicosLab is no longer developed. The toolbox now lives in Julia
-as [MaxPlus.jl](https://github.com/Lecrapouille/MaxPlus.jl); this editor is
-its missing half: draw the net, and the matrices come by themselves.
+This current project started with the port of the Scilab (max,+) toolbox to Julia ([MaxPlus.jl](https://github.com/Lecrapouille/MaxPlus.jl)), and started this editor as its missing graphical half: draw the net, get the matrices, the cycle time and the critical circuit.
 
-The Petri net editors found on GitHub did not help: most of them were
-abandoned years ago, needed Windows, Java or C#, or had code nobody could
-extend. Then came the GRAFCET: students of automation draw GRAFCETs and
-GEMMAs on paper, and to see them run they need a PLC or an expensive tool.
-Today [RobotIK](https://github.com/Lecrapouille/Robotik) also drives its
-simulated robot cells with the GRAFCET engine and the (max,+) algorithms of
-this project.
+As engineer, GRAFCET was needed for a job, then as a complete engine of the standard IEC 60848 with GEMMA, control panel and timing diagram. C++ code can be generated for an Arduino (work in progress for CoDeSys).
+
+In 2026 came the extended Petri nets and their analysis, then a runtime taking the idea of Symmetri, with the editor as its IDE and debugger.
+
+This repo is currently used inside [Robotik](https://github.com/Lecrapouille/Robotik), a general and consistent C++ robot simulation-oriented library with its graphical editor.
 
 ## 🛠️ For developers
 
-`sudo make install` installs the editor and its libraries:
-`TimedPetriNet` (the nets, the simulation, GRAFCET), `TimedPetriIO` (the
-file formats), `TimedPetriMaxPlus`, `TimedPetriAnalysis` and
-`TimedPetriRuntime`. The unit tests: `make -C tests`, then
-`../build/TimedPetriNetEditor-UnitTest` from `tests/`. In Visual Studio
-Code, F5 starts the editor in the debugger.
+The libraries: `libTimedPetriNet` (nets, simulation, GRAFCET), `libTimedPetriIO` (file formats), `libTimedPetriMaxPlus`, `libTimedPetriAnalysis`, `libTimedPetriRuntime` ([chapter 16](doc/16-Library.md)).
 
-The project may be compiled with `-ffast-math` (`PERFORMANCE_FLAGS` in
-`.makefile/rules/Makefile`), which implies `-ffinite-math-only`: the compiler
-then considers that `NaN` and `±Inf` never occur, so `std::isnan()` and
-`std::isinf()` become `false`. To detect the (max,+) zero `-inf` or the `NaN`
-"no duration" of the arcs, use the helpers of
-[`src/PetriNet/SafeFloat.hpp`](src/PetriNet/SafeFloat.hpp) (`safeIsNaN`,
-`safeIsNegInf`, `safeIsPosInf`, `safeIsInf`).
+The unit tests: `make -C tests`, then `../build/TimedPetriNetEditor-UnitTest` from `tests/`; the examples of the runtime: `make -C examples run`. In Visual Studio Code, **F5** starts the editor in the debugger.
+
+## 📄 License
+
+TimedPetriNetEditor is dual-licensed: GNU GPL v3 or later, or a commercial license for those who cannot use the GPL. See [LICENSING.md](LICENSING.md)..

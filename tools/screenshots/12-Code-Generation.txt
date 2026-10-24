@@ -1,0 +1,2 @@
+# Chapter 12: code generation.
+doc/pics/12-GermanTrafficLights.png -w -r -d 4 examples/GRAFCET/GermanTrafficLights/GermanTrafficLights.json

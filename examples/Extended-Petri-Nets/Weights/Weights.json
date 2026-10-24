@@ -1,0 +1,42 @@
+{
+  "revision": 2,
+  "type": "Petri net",
+  "nets": [
+    {
+       "name": "Weights",
+       "description": "Arc weights: Burn takes 2 tokens of H2 and 1 of O2, and gives 2 tokens of H2O (2 H2 + O2 -> 2 H2O). A transition is enabled when each input place holds at least the weight of its arc. Fire Burn twice: H2 is empty. Electrolysis does the opposite.",
+       "places": [
+            { "id": 0, "caption": "H2", "tokens": 4 },
+            { "id": 1, "caption": "O2", "tokens": 2 },
+            { "id": 2, "caption": "H2O", "tokens": 0 }
+       ],
+       "transitions": [
+            { "id": 0, "caption": "Burn" },
+            { "id": 1, "caption": "Electrolysis" }
+       ],
+       "arcs": [
+            { "from": "P0", "to": "T0", "weight": 2 },
+            { "from": "P1", "to": "T0" },
+            { "from": "T0", "to": "P2", "duration": 0, "weight": 2 },
+            { "from": "P2", "to": "T1", "weight": 2 },
+            { "from": "T1", "to": "P0", "duration": 0, "weight": 2 },
+            { "from": "T1", "to": "P1", "duration": 0 }
+       ],
+       "actions": [
+       ],
+       "layout": {
+          "places": [
+             [150, 120],
+             [150, 320],
+             [550, 220]
+          ],
+          "transitions": [
+             [350, 120],
+             [350, 320]
+          ]
+       }
+    }
+  ],
+  "inputs": [
+  ]
+}

@@ -1,0 +1,35 @@
+{
+  "revision": 2,
+  "type": "Timed Petri net",
+  "nets": [
+    {
+       "name": "Unbounded",
+       "description": "T0 gives back its token to P0 and adds one to P1 at each firing: P1 grows for ever. Press Space and watch. Analysis > Properties: the net is not bounded (P1 is unbounded).",
+       "places": [
+            { "id": 0, "caption": "P0", "tokens": 1 },
+            { "id": 1, "caption": "P1", "tokens": 0 }
+       ],
+       "transitions": [
+            { "id": 0, "caption": "T0" }
+       ],
+       "arcs": [
+            { "from": "P0", "to": "T0" },
+            { "from": "T0", "to": "P1", "duration": 1 },
+            { "from": "T0", "to": "P0", "duration": 1 }
+       ],
+       "actions": [
+       ],
+       "layout": {
+          "places": [
+             [200, 300],
+             [500, 300]
+          ],
+          "transitions": [
+             [350, 300]
+          ]
+       }
+    }
+  ],
+  "inputs": [
+  ]
+}

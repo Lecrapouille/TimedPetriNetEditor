@@ -1,0 +1,40 @@
+{
+  "revision": 2,
+  "type": "Petri net",
+  "nets": [
+    {
+       "name": "Conflict",
+       "description": "One token, two enabled transitions: a conflict (a choice). Firing Tea disables Coffee, and the opposite. The net does not say which one fires: here you choose by clicking. In a timed net, the editor chooses with Simulation > Conflicts.",
+       "places": [
+            { "id": 0, "caption": "Coin", "tokens": 1 },
+            { "id": 1, "caption": "Tea served", "tokens": 0 },
+            { "id": 2, "caption": "Coffee served", "tokens": 0 }
+       ],
+       "transitions": [
+            { "id": 0, "caption": "Tea" },
+            { "id": 1, "caption": "Coffee" }
+       ],
+       "arcs": [
+            { "from": "P0", "to": "T0" },
+            { "from": "P0", "to": "T1" },
+            { "from": "T0", "to": "P1", "duration": 0 },
+            { "from": "T1", "to": "P2", "duration": 0 }
+       ],
+       "actions": [
+       ],
+       "layout": {
+          "places": [
+             [150, 200],
+             [450, 100],
+             [450, 300]
+          ],
+          "transitions": [
+             [300, 100],
+             [300, 300]
+          ]
+       }
+    }
+  ],
+  "inputs": [
+  ]
+}

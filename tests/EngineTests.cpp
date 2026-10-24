@@ -76,7 +76,7 @@ TEST(TestEngine, FlightsAndMarking)
 TEST(TestEngine, SameDatesAsMaxPlus)
 {
     Net net(TypeOfNet::TimedPetriNet);
-    ASSERT_STREQ(importFlowshop(net, "../data/examples/simple.flowshop").c_str(), "");
+    ASSERT_STREQ(importFlowshop(net, "../examples/Timed-Event-Graphs/Flowshop/simple.flowshop").c_str(), "");
     std::vector<std::vector<double>> expected;
     ASSERT_STREQ(earliestDates(net, 3u, expected).c_str(), "");
 

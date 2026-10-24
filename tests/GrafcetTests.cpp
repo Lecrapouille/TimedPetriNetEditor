@@ -468,9 +468,9 @@ TEST(TestGrafcetJSON, SaveLoadAndOldRevision)
 //------------------------------------------------------------------------------
 TEST(TestGrafcetJSON, ExamplesCompileAndRun)
 {
-    for (char const* file : { "../data/examples/GRAFCET.json", "../data/examples/GRAFCET2.json",
-                              "../data/examples/GermanTrafficLights.json",
-                              "../data/examples/GrafcetActions.json", "../data/examples/GEMMA-Dryer.json" })
+    for (char const* file : { "../examples/GRAFCET/ExclusiveChoice/ExclusiveChoice.json", "../examples/GRAFCET/ParallelSequences/ParallelSequences.json",
+                              "../examples/GRAFCET/GermanTrafficLights/GermanTrafficLights.json",
+                              "../examples/GRAFCET/GrafcetActions/GrafcetActions.json", "../examples/GRAFCET/GEMMA-Dryer/GEMMA-Dryer.json" })
     {
         std::vector<Net> nets;
         ASSERT_STREQ(importAllNetsFromJSON(nets, file).c_str(), "") << file;
@@ -657,7 +657,7 @@ TEST(TestSimulation, FiringDatesAndTraces)
 {
     // The firing dates (plot of the analysis) and the firings given to the
     // journal of the editor, for a timed event graph and a flowshop.
-    for (char const* file : { "../data/examples/EventGraph.json", "../data/examples/simple.flowshop" })
+    for (char const* file : { "../examples/Timed-Event-Graphs/EventGraph/EventGraph.json", "../examples/Timed-Event-Graphs/Flowshop/simple.flowshop" })
     {
         Net net;
         std::string const error = (std::string(file).find(".flowshop") != std::string::npos)

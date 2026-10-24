@@ -1,0 +1,6 @@
+# Chapter 6: timed Petri nets.
+doc/pics/06-Durations-Running.png -s -r -d 1.5 examples/Timed-Petri-Nets/Durations/Durations.json
+doc/pics/06-Timeout-Error.png -s -r -d 4 examples/Timed-Petri-Nets/Timeout/Timeout.json
+doc/pics/06-InputsOutputs-Running.png -s -r -d 7 examples/Timed-Petri-Nets/InputsOutputs/InputsOutputs.json
+doc/pics/06-Journal.png -w -r -d 8 -f Journal examples/Timed-Petri-Nets/Durations/Durations.json
+doc/pics/06-Firing-Dates.png -w -r -d 40 -f "Firing dates" examples/Timed-Event-Graphs/Howard2/Howard2.json

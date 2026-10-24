@@ -1,0 +1,53 @@
+{
+  "revision": 2,
+  "type": "Petri net",
+  "nets": [
+    {
+       "name": "Inhibitor arc",
+       "description": "Inhibitor arc (it ends with a small circle): Switch off fires only while Inside has no token (fewer than the weight 1 of the arc). This zero test is impossible with normal arcs. Let people in: the light cannot be switched off until the room is empty.",
+       "places": [
+            { "id": 0, "caption": "Outside", "tokens": 3 },
+            { "id": 1, "caption": "Inside", "tokens": 0 },
+            { "id": 2, "caption": "Light on", "tokens": 1 },
+            { "id": 3, "caption": "Light off", "tokens": 0 }
+       ],
+       "transitions": [
+            { "id": 0, "caption": "Enter" },
+            { "id": 1, "caption": "Exit" },
+            { "id": 2, "caption": "Switch off" },
+            { "id": 3, "caption": "Switch on" }
+       ],
+       "arcs": [
+            { "from": "P0", "to": "T0" },
+            { "from": "T0", "to": "P1", "duration": 0 },
+            { "from": "P1", "to": "T1" },
+            { "from": "T1", "to": "P0", "duration": 0 },
+            { "from": "P2", "to": "T0" },
+            { "from": "T0", "to": "P2", "duration": 0 },
+            { "from": "P2", "to": "T2" },
+            { "from": "P1", "to": "T2", "kind": "inhibitor" },
+            { "from": "T2", "to": "P3", "duration": 0 },
+            { "from": "P3", "to": "T3" },
+            { "from": "T3", "to": "P2", "duration": 0 }
+       ],
+       "actions": [
+       ],
+       "layout": {
+          "places": [
+             [100, 320],
+             [400, 320],
+             [250, 100],
+             [720, 100]
+          ],
+          "transitions": [
+             [250, 250],
+             [250, 390],
+             [580, 300],
+             [480, 30]
+          ]
+       }
+    }
+  ],
+  "inputs": [
+  ]
+}

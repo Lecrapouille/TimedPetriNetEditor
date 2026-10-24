@@ -1,0 +1,158 @@
+{
+  "revision": 2,
+  "type": "GRAFCET",
+  "description": "GRAFCET of a dryer, split by the GEMMA into three graphs: Safety (emergency stop and rearm), Control (operating modes: acknowledgement after a failure, heating of the oven, normal production in automatic mode or manual run) and Production (normal cycle: the belt brings the boxes in, they dry in the heated oven, the belt takes them out). To start: Rearm, Ack, selector on Auto then Ack, wait for the temperature, then Start.",
+  "nets": [
+    {
+       "name": "Production",
+       "description": "Normal production: the belt runs and the oven heats until the end of the cycle (Stop), then the belt takes the boxes out during 3 s.",
+       "places": [
+            { "id": 0, "caption": "Wait for start", "tokens": 1 },
+            { "id": 1, "caption": "Motors start", "tokens": 0 },
+            { "id": 2, "caption": "Stop", "tokens": 0 }
+       ],
+       "transitions": [
+            { "id": 0, "caption": "Control:X4 . Start" },
+            { "id": 1, "caption": "3s/X2" },
+            { "id": 2, "caption": "Stop" }
+       ],
+       "arcs": [
+            { "from": "P0", "to": "T0" },
+            { "from": "T0", "to": "P1", "duration": 0 },
+            { "from": "T2", "to": "P2", "duration": 0 },
+            { "from": "P2", "to": "T1" },
+            { "from": "T1", "to": "P0", "duration": 0 },
+            { "from": "P1", "to": "T2" }
+       ],
+       "actions": [
+            { "place_id": 1, "qualifier": "N", "color": "green", "name": "Right Motor", "script": "Moves the belt to the right" },
+            { "place_id": 1, "qualifier": "N", "color": "green", "name": "Heat Oven", "script": "Runs the heating resistor of the dryer" },
+            { "place_id": 2, "qualifier": "N", "color": "green", "name": "Right Motor", "script": "Moves the belt to the right" },
+            { "place_id": 2, "qualifier": "N", "color": "green", "name": "Heat Oven", "script": "Runs the heating resistor of the dryer" }
+       ],
+       "layout": {
+          "places": [
+             [100, 50],
+             [100, 150],
+             [100, 250]
+          ],
+          "transitions": [
+             [100, 100],
+             [100, 300],
+             [100, 200]
+          ]
+       }
+    },
+    {
+       "name": "Control",
+       "description": "Operating modes: after a failure, acknowledgement (Ack) and clearing of the boxes, then choice of the mode with the selector. In automatic mode, the oven heats up to the temperature before the normal production. In manual mode, the buttons Left and Right drive the motors and the production is kept in its initial state.",
+       "places": [
+            { "id": 0, "caption": "Wait for failure acknowledgement", "tokens": 1 },
+            { "id": 1, "caption": "Clear the boxes", "tokens": 0 },
+            { "id": 2, "caption": "Wait for manual or auto", "tokens": 0 },
+            { "id": 3, "caption": "Heating", "tokens": 0 },
+            { "id": 4, "caption": "Normal production", "tokens": 0 },
+            { "id": 5, "caption": "Manual run", "tokens": 0 }
+       ],
+       "transitions": [
+            { "id": 0, "caption": "↑Ack" },
+            { "id": 1, "caption": "3s/X1" },
+            { "id": 2, "caption": "Auto . ↑Ack" },
+            { "id": 3, "caption": "Manual . ↑Ack" },
+            { "id": 4, "caption": "[Temperature >= 80]" },
+            { "id": 5, "caption": "Manual . ↑Ack" },
+            { "id": 6, "caption": "Auto . ↑Ack" }
+       ],
+       "arcs": [
+            { "from": "P0", "to": "T0" },
+            { "from": "T0", "to": "P1", "duration": 0 },
+            { "from": "P1", "to": "T1" },
+            { "from": "T1", "to": "P2", "duration": 0 },
+            { "from": "P2", "to": "T2" },
+            { "from": "P2", "to": "T3" },
+            { "from": "T2", "to": "P3", "duration": 0 },
+            { "from": "P3", "to": "T4" },
+            { "from": "T4", "to": "P4", "duration": 0 },
+            { "from": "P4", "to": "T5" },
+            { "from": "T5", "to": "P5", "duration": 0 },
+            { "from": "T3", "to": "P5", "duration": 0 },
+            { "from": "P5", "to": "T6" },
+            { "from": "T6", "to": "P1", "duration": 1 }
+       ],
+       "actions": [
+            { "place_id": 1, "qualifier": "N", "color": "green", "name": "Left Motor" },
+            { "place_id": 3, "qualifier": "N", "color": "orange", "name": "Heat Oven", "script": "Runs the heating resistor of the dryer" },
+            { "place_id": 5, "qualifier": "N", "color": "green", "name": "Right Motor", "script": "Manual run of the right motor", "condition": "Right" },
+            { "place_id": 5, "qualifier": "N", "color": "green", "name": "Left Motor", "script": "Manual run of the left motor", "condition": "Left" },
+            { "place_id": 5, "script": "Production kept in its initial state", "forcing": ["Production:{init}"] }
+       ],
+       "layout": {
+          "places": [
+             [100, 50],
+             [100, 150],
+             [100, 250],
+             [0, 350],
+             [0, 450],
+             [200, 550]
+          ],
+          "transitions": [
+             [100, 100],
+             [100, 200],
+             [0, 300],
+             [200, 300],
+             [0, 400],
+             [0, 500],
+             [200, 600]
+          ]
+       }
+    },
+    {
+       "name": "Safety",
+       "description": "Safety: while the emergency stop is pushed, then until the rearm (Rearm), the production and the operating modes are forced to their initial state.",
+       "places": [
+            { "id": 0, "caption": "Force GPN and GC", "tokens": 1 },
+            { "id": 1, "caption": "Watch", "tokens": 0 }
+       ],
+       "transitions": [
+            { "id": 0, "caption": "/EStop . Rearm" },
+            { "id": 1, "caption": "EStop" }
+       ],
+       "arcs": [
+            { "from": "P0", "to": "T0" },
+            { "from": "T0", "to": "P1", "duration": 0 },
+            { "from": "P1", "to": "T1" },
+            { "from": "T1", "to": "P0", "duration": 0 }
+       ],
+       "actions": [
+            { "place_id": 0, "script": "Production and Control in their initial state", "forcing": ["Production:{init}", "Control:{init}"] }
+       ],
+       "layout": {
+          "places": [
+             [100, 50],
+             [100, 150]
+          ],
+          "transitions": [
+             [100, 100],
+             [100, 200]
+          ]
+       }
+    }
+  ],
+  "inputs": [
+    { "name": "EStop", "kind": "emergency", "description": "Emergency stop (mushroom button)", "initial": 0 },
+    { "name": "Rearm", "kind": "button", "description": "Rearm after an emergency stop", "initial": 0, "color": "blue" },
+    { "name": "Ack", "kind": "button", "description": "Acknowledge (after a failure, the chosen mode)", "initial": 0, "color": "white" },
+    { "name": "Start", "kind": "button", "description": "Start of the cycle", "initial": 0, "color": "green" },
+    { "name": "Stop", "kind": "button", "description": "End of the cycle: end of the drying", "initial": 0, "color": "red" },
+    { "name": "Left", "kind": "button", "description": "Manual run of the left motor", "initial": 0, "color": "black" },
+    { "name": "Right", "kind": "button", "description": "Manual run of the right motor", "initial": 0, "color": "black" },
+    { "name": "Manual", "kind": "selector", "description": "Manual mode", "initial": 0, "group": "Mode" },
+    { "name": "Auto", "kind": "selector", "description": "Automatic mode", "initial": 1, "group": "Mode" },
+    { "name": "Temperature", "kind": "value", "description": "Temperature sensor of the dryer", "initial": 20, "min": 20, "max": 120, "unit": "°C", "driven_by": "Heat Oven", "rise": 6, "fall": 1 }
+  ],
+  "outputs": [
+    { "name": "Left Motor", "kind": "motor", "description": "Moves the belt to the left" },
+    { "name": "Right Motor", "kind": "motor", "description": "Moves the belt to the right" },
+    { "name": "Heat Oven", "kind": "heater", "description": "Heating resistor of the dryer" }
+  ]
+}

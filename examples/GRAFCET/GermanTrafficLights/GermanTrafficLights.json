@@ -1,0 +1,60 @@
+{
+  "revision": 2,
+  "type": "GRAFCET",
+  "nets": [
+    {
+       "name": "German traffic lights",
+       "description": "A German traffic light: green, yellow, red, then red and yellow together before green. Each step lasts a time given by the receptivity of its transition (3s/X0: 3 s after step 0 became active). Press Space and watch the Outputs and the Timing diagram.",
+       "places": [
+            { "id": 0, "caption": "Green", "tokens": 1 },
+            { "id": 1, "caption": "Yellow", "tokens": 0 },
+            { "id": 2, "caption": "Red", "tokens": 0 },
+            { "id": 3, "caption": "Red and yellow", "tokens": 0 }
+       ],
+       "transitions": [
+            { "id": 0, "caption": "3s/X0" },
+            { "id": 1, "caption": "1s/X1" },
+            { "id": 2, "caption": "3s/X2" },
+            { "id": 3, "caption": "1s/X3" }
+       ],
+       "arcs": [
+            { "from": "P0", "to": "T0" },
+            { "from": "T0", "to": "P1", "duration": 0 },
+            { "from": "P1", "to": "T1" },
+            { "from": "T1", "to": "P2", "duration": 0 },
+            { "from": "P2", "to": "T2" },
+            { "from": "T2", "to": "P3", "duration": 0 },
+            { "from": "P3", "to": "T3" },
+            { "from": "T3", "to": "P0", "duration": 0 }
+       ],
+       "actions": [
+            { "place_id": 0, "qualifier": "N", "color": "green", "name": "Green LED" },
+            { "place_id": 1, "qualifier": "N", "color": "yellow", "name": "Yellow LED" },
+            { "place_id": 2, "qualifier": "N", "color": "red", "name": "Red LED" },
+            { "place_id": 3, "qualifier": "N", "color": "red", "name": "Red LED" },
+            { "place_id": 3, "qualifier": "N", "color": "yellow", "name": "Yellow LED" }
+       ],
+       "layout": {
+          "places": [
+             [200, 80],
+             [200, 200],
+             [200, 320],
+             [200, 440]
+          ],
+          "transitions": [
+             [200, 140],
+             [200, 260],
+             [200, 380],
+             [200, 500]
+          ]
+       }
+    }
+  ],
+  "inputs": [
+  ],
+  "outputs": [
+    { "name": "Green LED", "kind": "light" },
+    { "name": "Yellow LED", "kind": "light" },
+    { "name": "Red LED", "kind": "light" }
+  ]
+}

@@ -1,4 +1,4 @@
-net Example6
+net Inputs and outputs
 initial: 1 0 0 1 2 0
 t=0 T0 k=1
 t=0 T1 k=1

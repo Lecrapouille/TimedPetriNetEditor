@@ -1,0 +1,44 @@
+{
+  "revision": 2,
+  "type": "Timed Petri net",
+  "nets": [
+    {
+       "name": "Durations",
+       "description": "A duration on an arc going out of a transition: the token travels along the arc during this time. Press Space: the toast takes 3 time units to be ready, eating it 2. Change the speed in the toolbar. A timed net runs by itself, no click needed.",
+       "places": [
+            { "id": 0, "caption": "Bread", "tokens": 1 },
+            { "id": 1, "caption": "Toasted", "tokens": 0 },
+            { "id": 2, "caption": "Eaten", "tokens": 0 }
+       ],
+       "transitions": [
+            { "id": 0, "caption": "Toast" },
+            { "id": 1, "caption": "Eat" },
+            { "id": 2, "caption": "Buy bread" }
+       ],
+       "arcs": [
+            { "from": "P0", "to": "T0" },
+            { "from": "T0", "to": "P1", "duration": 3 },
+            { "from": "P1", "to": "T1" },
+            { "from": "T1", "to": "P2", "duration": 2 },
+            { "from": "P2", "to": "T2" },
+            { "from": "T2", "to": "P0", "duration": 1 }
+       ],
+       "actions": [
+       ],
+       "layout": {
+          "places": [
+             [100, 200],
+             [400, 200],
+             [700, 200]
+          ],
+          "transitions": [
+             [250, 200],
+             [550, 200],
+             [400, 350]
+          ]
+       }
+    }
+  ],
+  "inputs": [
+  ]
+}

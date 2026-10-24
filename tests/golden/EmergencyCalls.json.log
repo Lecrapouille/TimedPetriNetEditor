@@ -1,4 +1,4 @@
-net Emergency Calls
+net Emergency calls
 initial: 0 0 0 0 4 0 0 0 0 4 7 0 0
 t=0 T5 k=1
 t=0 T5 k=2

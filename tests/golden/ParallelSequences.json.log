@@ -1,0 +1,119 @@
+c=5 a0=1
+c=15 a1=1
+c=25 b0=1
+c=35 b1=1
+c=45 c0=1
+c=55 c1=1
+c=65 m=1
+c=65 Parallel sequences:T0
+c=65 Parallel sequences:T1
+c=65 Parallel sequences:T2
+c=65 Parallel sequences:T3
+c=65 Parallel sequences:T4
+c=65 Parallel sequences:T6 x127
+c=65 Parallel sequences:T7 x126
+c=66 Parallel sequences:T6 x128
+c=66 Parallel sequences:T7 x128
+c=67 Parallel sequences:T6 x128
+c=67 Parallel sequences:T7 x128
+c=68 Parallel sequences:T6 x128
+c=68 Parallel sequences:T7 x128
+c=69 Parallel sequences:T6 x128
+c=69 Parallel sequences:T7 x128
+c=70 Parallel sequences:T6 x128
+c=70 Parallel sequences:T7 x128
+c=71 Parallel sequences:T6 x128
+c=71 Parallel sequences:T7 x128
+c=72 Parallel sequences:T6 x128
+c=72 Parallel sequences:T7 x128
+c=73 Parallel sequences:T6 x128
+c=73 Parallel sequences:T7 x128
+c=74 Parallel sequences:T6 x128
+c=74 Parallel sequences:T7 x128
+c=75 a0=0
+c=75 Parallel sequences:T6 x128
+c=75 Parallel sequences:T7 x128
+c=76 Parallel sequences:T6 x128
+c=76 Parallel sequences:T7 x128
+c=77 Parallel sequences:T6 x128
+c=77 Parallel sequences:T7 x128
+c=78 Parallel sequences:T6 x128
+c=78 Parallel sequences:T7 x128
+c=79 Parallel sequences:T6 x128
+c=79 Parallel sequences:T7 x128
+c=80 Parallel sequences:T6 x128
+c=80 Parallel sequences:T7 x128
+c=81 Parallel sequences:T6 x128
+c=81 Parallel sequences:T7 x128
+c=82 Parallel sequences:T6 x128
+c=82 Parallel sequences:T7 x128
+c=83 Parallel sequences:T6 x128
+c=83 Parallel sequences:T7 x128
+c=84 Parallel sequences:T6 x128
+c=84 Parallel sequences:T7 x128
+c=85 a1=0
+c=85 Parallel sequences:T6 x128
+c=85 Parallel sequences:T7 x128
+c=86 Parallel sequences:T6 x128
+c=86 Parallel sequences:T7 x128
+c=87 Parallel sequences:T6 x128
+c=87 Parallel sequences:T7 x128
+c=88 Parallel sequences:T6 x128
+c=88 Parallel sequences:T7 x128
+c=89 Parallel sequences:T6 x128
+c=89 Parallel sequences:T7 x128
+c=90 Parallel sequences:T6 x128
+c=90 Parallel sequences:T7 x128
+c=91 Parallel sequences:T6 x128
+c=91 Parallel sequences:T7 x128
+c=92 Parallel sequences:T6 x128
+c=92 Parallel sequences:T7 x128
+c=93 Parallel sequences:T6 x128
+c=93 Parallel sequences:T7 x128
+c=94 Parallel sequences:T6 x128
+c=94 Parallel sequences:T7 x128
+c=95 b0=0
+c=95 Parallel sequences:T6 x128
+c=95 Parallel sequences:T7 x128
+c=96 Parallel sequences:T6 x128
+c=96 Parallel sequences:T7 x128
+c=97 Parallel sequences:T6 x128
+c=97 Parallel sequences:T7 x128
+c=98 Parallel sequences:T6 x128
+c=98 Parallel sequences:T7 x128
+c=99 Parallel sequences:T6 x128
+c=99 Parallel sequences:T7 x128
+c=100 Parallel sequences:T6 x128
+c=100 Parallel sequences:T7 x128
+c=101 Parallel sequences:T6 x128
+c=101 Parallel sequences:T7 x128
+c=102 Parallel sequences:T6 x128
+c=102 Parallel sequences:T7 x128
+c=103 Parallel sequences:T6 x128
+c=103 Parallel sequences:T7 x128
+c=104 Parallel sequences:T6 x128
+c=104 Parallel sequences:T7 x128
+c=105 b1=0
+c=105 Parallel sequences:T6 x128
+c=105 Parallel sequences:T7 x128
+c=106 Parallel sequences:T6 x128
+c=106 Parallel sequences:T7 x128
+c=107 Parallel sequences:T6 x128
+c=107 Parallel sequences:T7 x128
+c=108 Parallel sequences:T6 x128
+c=108 Parallel sequences:T7 x128
+c=109 Parallel sequences:T6 x128
+c=109 Parallel sequences:T7 x128
+c=110 Parallel sequences:T6 x128
+c=110 Parallel sequences:T7 x128
+c=111 Parallel sequences:T6 x128
+c=111 Parallel sequences:T7 x128
+c=112 Parallel sequences:T6 x128
+c=112 Parallel sequences:T7 x128
+c=113 Parallel sequences:T6 x128
+c=113 Parallel sequences:T7 x128
+c=114 Parallel sequences:T6 x128
+c=114 Parallel sequences:T7 x128
+c=115 c0=0
+c=115 Parallel sequences:T7
+final Parallel sequences: 0 0 0 1 0 0 1 0 0

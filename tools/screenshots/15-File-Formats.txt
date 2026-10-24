@@ -1,0 +1,5 @@
+# Chapter 15: the pictures are made from exports, not by the editor:
+#   export examples/Extended-Petri-Nets/BoundedBuffer/BoundedBuffer.json to
+#   BoundedBuffer.dot and BoundedBuffer.svg (File > Export), then
+#   dot -Tpng -Gdpi=110 BoundedBuffer.dot -o doc/pics/15-Graphviz.png
+#   magick -density 130 BoundedBuffer.svg doc/pics/15-SVG.png
