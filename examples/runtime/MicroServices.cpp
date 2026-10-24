@@ -19,6 +19,8 @@
 //=============================================================================
 
 #include "PetriNet/PetriNet.hpp"
+#include "IO/IO.hpp"
+#include "Runtime/Journal.hpp"
 #include "Runtime/Runtime.hpp"
 
 #include <chrono>
@@ -51,11 +53,11 @@ static Net makeOrder()
 }
 
 //------------------------------------------------------------------------------
-static Color order(double const service_delay)
+static Color order(std::string const& id, double const service_delay, std::vector<LogEntry>& journal)
 {
     Net const net = makeOrder();
     Runtime runtime(net, std::make_shared<ThreadPoolExecutor>(2u));
-    std::shared_ptr<Instance> instance = runtime.instantiate("order", {}, { { "Paid", Success } });
+    std::shared_ptr<Instance> instance = runtime.instantiate(id, {}, { { "Paid", Success } });
 
     // The fake HTTP service answers after its delay, on its own thread.
     std::thread service;
@@ -75,15 +77,33 @@ static Color order(double const service_delay)
         runtime.run(*instance);
     }
     service.join(); // a late answer is ignored
+    journal.insert(journal.end(), instance->log().begin(), instance->log().end());
     return (instance->marking().count(2u) > 0u) ? Success : Failed;
 }
 
 //------------------------------------------------------------------------------
 int main()
 {
-    Color const fast = order(0.1);
+    std::vector<LogEntry> journal;
+    Color const fast = order("fast", 0.1, journal);
     std::cout << "fast service: " << ((fast == Success) ? "paid" : "timeout") << std::endl;
-    Color const slow = order(1.0);
+    Color const slow = order("slow", 1.0, journal);
     std::cout << "slow service: " << ((slow == Success) ? "paid" : "timeout") << std::endl;
+
+    // The net and the journal in the formats of other tools. The net: by the
+    // library of the file formats (libTimedPetriIO, optional for a program
+    // running a net); the journal: by the runtime (JSON lines, CSV, XES for
+    // the process mining tools).
+    Net const net = makeOrder();
+    for (char const* file : { "build/examples/Order.json", "build/examples/Order.pnml", "build/examples/Order.dot" })
+    {
+        std::string const error = saveToFile(net, file);
+        std::cout << (error.empty() ? std::string("saved ") + file : error) << std::endl;
+    }
+    for (char const* file : { "build/examples/orders.csv", "build/examples/orders.xes" })
+    {
+        std::string const error = saveJournal(journal, net.colors, file);
+        std::cout << (error.empty() ? std::string("saved ") + file : error) << std::endl;
+    }
     return ((fast == Success) && (slow == Failed)) ? EXIT_SUCCESS : EXIT_FAILURE;
 }
