@@ -53,6 +53,17 @@ struct ArcPath
 ArcPath arcPath(Net const& net, Arc const& arc);
 
 //------------------------------------------------------------------------------
+//! \brief Point at a fraction (0: start, 1: end) of the length of a polyline,
+//! and the direction of the line there.
+//------------------------------------------------------------------------------
+ImVec2 alongPath(std::vector<ImVec2> const& points, float fraction, ImVec2& direction);
+
+//! \brief Timed event graph drawn compactly: where the tokens of the hidden
+//! place wait on the arc, as a fraction of its length (near the transition
+//! that takes them: the tokens on their way go there).
+constexpr float TEG_TOKENS_AT = 0.78f;
+
+//------------------------------------------------------------------------------
 //! \brief Distance (net units) between a point and the line of the arc, as
 //! drawn. A large value for arcs that are not drawn.
 //------------------------------------------------------------------------------

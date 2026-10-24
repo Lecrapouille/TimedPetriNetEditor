@@ -28,9 +28,10 @@ struct AnimatedToken
 };
 
 //------------------------------------------------------------------------------
-//! \brief Positions of the tokens on their way at the given date. For timed
-//! event graphs, they go from the transition to the next transition (the
-//! place is hidden).
+//! \brief Positions of the tokens on their way at the given date, along the
+//! line of their arc as drawn (bent or not). For timed event graphs, they go
+//! from the transition to where the tokens of the hidden place wait, near
+//! the next transition.
 //------------------------------------------------------------------------------
 std::vector<AnimatedToken> animateTokens(Net const& net, std::vector<Engine::Flight> const& flights,
                                          double date);

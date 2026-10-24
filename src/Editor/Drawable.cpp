@@ -448,8 +448,8 @@ static void drawPath(ImDrawList* draw_list, ArcPath const& path, ImVec2 const& o
     }
 }
 
-//! \brief Point at a fraction of the length of a polyline, and its direction.
-static ImVec2 alongPath(std::vector<ImVec2> const& points, float fraction, ImVec2& direction)
+//------------------------------------------------------------------------------
+ImVec2 alongPath(std::vector<ImVec2> const& points, float fraction, ImVec2& direction)
 {
     float total = 0.0f;
     for (size_t i = 1u; i < points.size(); ++i)
@@ -487,12 +487,13 @@ void drawArc(ImDrawList* draw_list, Net const& net, Arc const& arc,
     float const size = fontSizeAt(zoom * 0.9f);
     if (net.layout().compact)
     {
-        // Tokens near the start, duration in the middle.
+        // Tokens near the end (where they wait for the next transition),
+        // duration in the middle.
         size_t const tokens = net.placeOf(arc).tokens;
         ImVec2 dir;
         if (tokens > 0u)
         {
-            ImVec2 const p = screen(origin, zoom, alongPath(path.points, 0.22f, dir));
+            ImVec2 const p = screen(origin, zoom, alongPath(path.points, TEG_TOKENS_AT, dir));
             if (tokens <= 3u)
             {
                 ImVec2 const u = unit(dir);

@@ -6,6 +6,7 @@
 // See LICENSING.md for details.
 
 #include "Editor/TokenAnimator.hpp"
+#include "Editor/Drawable.hpp"
 #include "PetriNet/PetriNet.hpp"
 
 #include <algorithm>
@@ -33,21 +34,20 @@ std::vector<AnimatedToken> animateTokens(Net const& net, std::vector<Engine::Fli
         Engine::Flight const& flight = it.second.first;
         if (flight.arc >= net.arcs().size())
             continue;
-        Arc const& arc = net.arcs()[flight.arc];
-        Point const& from = net.position(arc.from);
-        Point const* to = &net.position(arc.to);
-        if (net.layout().compact)
-        {
-            auto const next = net.arcsOut(net.node(arc.to));
-            if (!next.empty())
-                to = &net.position(next.front().to);
-        }
-
+        // Along the line of the arc as drawn (bent when a reverse arc
+        // exists). Timed event graph: up to where the tokens of the hidden
+        // place wait.
+        ArcPath const path = arcPath(net, net.arcs()[flight.arc]);
+        if (path.points.empty())
+            continue;
         double const length = flight.end - flight.start;
-        float const ratio = (length > 0.0) ? float(std::clamp((date - flight.start) / length, 0.0, 1.0))
-                                           : 1.0f;
-        tokens.push_back({ from.x + (to->x - from.x) * ratio, from.y + (to->y - from.y) * ratio,
-                           it.second.second });
+        float ratio = (length > 0.0) ? float(std::clamp((date - flight.start) / length, 0.0, 1.0))
+                                     : 1.0f;
+        if (net.layout().compact)
+            ratio *= TEG_TOKENS_AT;
+        ImVec2 direction;
+        ImVec2 const at = alongPath(path.points, ratio, direction);
+        tokens.push_back({ at.x, at.y, it.second.second });
     }
     return tokens;
 }
