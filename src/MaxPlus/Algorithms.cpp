@@ -20,75 +20,89 @@ void toCanonicalForm(Net const& net, Net& canonic)
     // Copy the whole net
     canonic = net;
 
+    // The nodes added between a and b are drawn on the segment [a, b]: the
+    // k-th of n at k / (n + 1).
+    auto between = [](Point const& a, Point const& b, size_t const k, size_t const n) -> Point {
+        float const f = float(k) / float(n + 1u);
+        return { a.x + (b.x - a.x) * f, a.y + (b.y - a.y) * f };
+    };
+
     // Explode Places with more than one tokens and create as many as Places
-    // holding a single token. Redo arcs.
+    // holding a single token. Redo arcs. Adding places moves them in memory:
+    // the place is found again by its index.
     {
-        Net::Places& places = canonic.places();
-        size_t i = places.size();
+        size_t i = canonic.places().size();
         while (i--)
         {
-            Place& p = places[i];
-            if (p.tokens > 1u)
+            if (canonic.places()[i].tokens > 1u)
             {
                 // from: Transition
-                Arc const& in = canonic.arcsIn(p).front();
-                Node* from = &canonic.node(in.from);
+                Arc const& in = canonic.arcsIn(canonic.places()[i]).front();
+                NodeId from = in.from;
                 float duration = in.durationOrZero();
-                size_t tokens = p.tokens - 1u;
-                canonic.removeArc(*from, p);
-                while (tokens--)
+                size_t const pairs = canonic.places()[i].tokens - 1u;
+                Point const a = canonic.position(from);
+                Point const b = canonic.position(canonic.places()[i]);
+                canonic.removeArc(canonic.node(from), canonic.places()[i]);
+                for (size_t k = 0u; k < pairs; ++k)
                 {
-                    Node& tmp1 = canonic.addPlace(1u);
-                    canonic.addArc(*from, tmp1);
-                    Node& tmp2 = canonic.addTransition();
-                    canonic.addArc(tmp1, tmp2);
-
-                    from = &tmp2;
-                    p.tokens--;
-                    if (p.tokens == 1u)
-                    {
-                        canonic.addArc(tmp2, p, duration);
-                    }
+                    NodeId const tmp1 = canonic.addPlace(1u).nodeId();
+                    canonic.position(tmp1) = between(a, b, 2u * k + 1u, 2u * pairs);
+                    canonic.addArc(canonic.node(from), canonic.node(tmp1));
+                    NodeId const tmp2 = canonic.addTransition().nodeId();
+                    canonic.position(tmp2) = between(a, b, 2u * k + 2u, 2u * pairs);
+                    canonic.addArc(canonic.node(tmp1), canonic.node(tmp2));
+                    from = tmp2;
                 }
+                canonic.places()[i].tokens = 1u;
+                canonic.addArc(canonic.node(from), canonic.places()[i], duration);
             }
         }
     }
 
     // Manage Places with one token that inputs or outputs
     {
-        Net::Places& places = canonic.places();
-        size_t i = places.size();
+        size_t i = canonic.places().size();
         while (i--)
         {
-            Place& p = places[i];
-            if (p.tokens == 1u)
+            if (canonic.places()[i].tokens == 1u)
             {
                 // Inputs
-                Arc const& in = canonic.arcsIn(p).front();
-                Transition* from = &canonic.transitionOf(in);
-                if (canonic.isInput(*from))
+                Arc const& in = canonic.arcsIn(canonic.places()[i]).front();
+                Transition const& from = canonic.transitionOf(in);
+                if (canonic.isInput(from))
                 {
+                    NodeId const f = from.nodeId();
                     float duration = in.durationOrZero();
-                    canonic.removeArc(*from, p);
+                    Point const a = canonic.position(f);
+                    Point const b = canonic.position(canonic.places()[i]);
+                    canonic.removeArc(canonic.node(f), canonic.places()[i]);
 
-                    Node& tmp1 = canonic.addPlace();
-                    Node& tmp2 = canonic.addTransition();
-                    canonic.addArc(*from, tmp1);
-                    canonic.addArc(tmp1, tmp2, duration);
-                    canonic.addArc(tmp2, p);
+                    NodeId const tmp1 = canonic.addPlace().nodeId();
+                    NodeId const tmp2 = canonic.addTransition().nodeId();
+                    canonic.position(tmp1) = between(a, b, 1u, 2u);
+                    canonic.position(tmp2) = between(a, b, 2u, 2u);
+                    canonic.addArc(canonic.node(f), canonic.node(tmp1));
+                    canonic.addArc(canonic.node(tmp1), canonic.node(tmp2), duration);
+                    canonic.addArc(canonic.node(tmp2), canonic.places()[i]);
                 }
 
                 // Outputs
-                Transition* to = &canonic.transitionOf(canonic.arcsOut(p).front());
-                if (canonic.isOutput(*to))
+                Transition const& to = canonic.transitionOf(canonic.arcsOut(canonic.places()[i]).front());
+                if (canonic.isOutput(to))
                 {
-                    canonic.removeArc(p, *to);
+                    NodeId const t = to.nodeId();
+                    Point const a = canonic.position(canonic.places()[i]);
+                    Point const b = canonic.position(t);
+                    canonic.removeArc(canonic.places()[i], canonic.node(t));
 
-                    Node& tmp1 = canonic.addTransition();
-                    Node& tmp2 = canonic.addPlace();
-                    canonic.addArc(p, tmp1);
-                    canonic.addArc(tmp1, tmp2);
-                    canonic.addArc(tmp2, *to);
+                    NodeId const tmp1 = canonic.addTransition().nodeId();
+                    NodeId const tmp2 = canonic.addPlace().nodeId();
+                    canonic.position(tmp1) = between(a, b, 1u, 2u);
+                    canonic.position(tmp2) = between(a, b, 2u, 2u);
+                    canonic.addArc(canonic.places()[i], canonic.node(tmp1));
+                    canonic.addArc(canonic.node(tmp1), canonic.node(tmp2));
+                    canonic.addArc(canonic.node(tmp2), canonic.node(t));
                 }
             }
         }
