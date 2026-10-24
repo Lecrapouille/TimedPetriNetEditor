@@ -128,6 +128,13 @@ public:
     bool isInitialStep(size_t place_id) const;
 
     //--------------------------------------------------------------------------
+    //! \brief Tokens of the places before the simulation: while it runs, the
+    //! places of the net hold the tokens of the moment (they are given back
+    //! when it stops).
+    //--------------------------------------------------------------------------
+    std::vector<size_t> initialMarking() const;
+
+    //--------------------------------------------------------------------------
     //! \brief Check if initial marking has been stored.
     //--------------------------------------------------------------------------
     bool hasInitialMarking() const;

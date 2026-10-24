@@ -104,6 +104,12 @@ bool Simulation::isInitialStep(size_t place_id) const
 }
 
 //------------------------------------------------------------------------------
+std::vector<size_t> Simulation::initialMarking() const
+{
+    return (m_state == State::Idle) ? m_net.tokens() : m_initial_tokens;
+}
+
+//------------------------------------------------------------------------------
 bool Simulation::hasInitialMarking() const
 {
     return !m_initial_tokens.empty() || !m_engine->initialMarking(m_net).empty();

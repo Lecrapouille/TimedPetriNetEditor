@@ -149,10 +149,35 @@ static std::vector<std::string> names(char const* prefix, size_t n)
 }
 
 //------------------------------------------------------------------------------
+Editor::AnalysisKey Editor::analysisKey()
+{
+    Net const& current = net();
+    std::vector<size_t> tokens = m_journal.isReplaying()
+        ? m_journal.initialMarking(current) : simulation().initialMarking();
+    return { &current, current.modified.revision(), std::move(tokens) };
+}
+
+//------------------------------------------------------------------------------
+Net const& Editor::analyzedNet()
+{
+    Net const& current = net();
+    AnalysisKey key = analysisKey();
+    if (key.tokens == current.tokens())
+        return current;
+    if ((m_states.analyzed == nullptr) || (m_states.analyzed_key != key))
+    {
+        m_states.analyzed = std::make_unique<Net>(current);
+        m_states.analyzed->tokens(key.tokens);
+        m_states.analyzed_key = std::move(key);
+    }
+    return *m_states.analyzed;
+}
+
+//------------------------------------------------------------------------------
 void Editor::analysisAdjacency()
 {
     SparseMatrix<MaxPlus> tokens; SparseMatrix<MaxPlus> durations;
-    toAdjacencyMatrices(net(), tokens, durations);
+    toAdjacencyMatrices(analyzedNet(), tokens, durations);
     std::vector<std::string> labels;
     for (auto const& t : net().transitions())
         labels.push_back(labelOf(t));
@@ -178,7 +203,7 @@ void Editor::analysisAdjacency()
 void Editor::analysisSyslin()
 {
     SparseMatrix<MaxPlus> D, A, B, C;
-    toSysLin(net(), D, A, B, C);
+    toSysLin(analyzedNet(), D, A, B, C);
     ImGui::TextUnformatted("X(k) = D ⊗ X(k) ⨁ A ⊗ X(k-1) ⨁ B ⊗ U(k)");
     ImGui::TextUnformatted("Y(k) = C ⊗ X(k)");
     ImGui::TextDisabled("k: the k-th firing (cycle), as in the Gantt chart.");
@@ -226,10 +251,11 @@ void Editor::analysisEquations()
         {
             if (!ImGui::BeginTabItem(tabs[i]))
                 continue;
-            std::string const& text = m_states.equations[i].get(net(), options, [&] {
+            std::string const& text = m_states.equations[i].get(analysisKey(), options, [&] {
+                Net const& analyzed = analyzedNet();
                 return (i == 0u)
-                    ? showDaterEquation(net(), "", use_caption, tropical).str()
-                    : showCounterEquation(net(), "", use_caption, tropical).str();
+                    ? showDaterEquation(analyzed, "", use_caption, tropical).str()
+                    : showCounterEquation(analyzed, "", use_caption, tropical).str();
             });
             if (ImGui::SmallButton("Copy"))
                 ImGui::SetClipboardText(text.c_str());
@@ -330,34 +356,34 @@ void Editor::analysisProperties()
 {
     // Properties of the net (time not considered): computed on demand, the
     // reachability graph can be big; again at each change of a small net.
+    // From the tokens before the simulation: a running one moves them.
     auto& cache = m_states.petri;
     Net& current = net();
+    Net const& analyzed = analyzedNet();
+    AnalysisKey key = analysisKey();
     m_states.properties_shown = true;
-    bool const stale = (cache.net != &current) || (cache.revision != current.modified.revision());
+    bool const stale = (cache.key != key);
     bool compute = ImGui::Button(stale ? "Compute" : "Compute again");
     ImGui::SameLine();
     ImGui::SetNextItemWidth(110.0f);
     if (ImGui::InputInt("max markings", &m_states.max_markings, 1000, 10000))
         m_states.max_markings = std::clamp(m_states.max_markings, 10, 10000000);
-    if (stale && (cache.net == &current) && (current.places().size() + current.transitions().size() <= 60u))
+    if (stale && (current.places().size() + current.transitions().size() <= 60u))
         compute = true; // small net: follow the edition
-    if (stale && (cache.net != &current))
-        compute = (current.places().size() + current.transitions().size() <= 60u);
     if (compute)
     {
         cache = States::PetriProperties{};
-        cache.net = &current;
-        cache.revision = current.modified.revision();
+        cache.key = std::move(key);
         size_t const max = size_t(m_states.max_markings);
-        cache.properties = properties(current, max);
+        cache.properties = properties(analyzed, max);
         std::string note;
-        cache.p_invariants = pInvariants(current, note);
-        cache.t_invariants = tInvariants(current, cache.invariants_note);
+        cache.p_invariants = pInvariants(analyzed, note);
+        cache.t_invariants = tInvariants(analyzed, cache.invariants_note);
         if (cache.invariants_note.empty())
             cache.invariants_note = note;
-        cache.report = report(current, max);
+        cache.report = report(analyzed, max);
     }
-    if ((cache.net != &current) || cache.report.empty())
+    if ((cache.key.net != &current) || cache.report.empty())
     {
         ImGui::TextWrapped("Deadlocks, dead transitions, bounds, liveness and invariants of the net "
                            "(durations and GRAFCET rules not considered): press Compute.");
@@ -372,13 +398,13 @@ void Editor::analysisProperties()
     ImGui::SameLine();
     if (ImGui::SmallButton("Graph of the markings..."))
         FileDialogHelper::openSave("MarkingsDlgKey", "Save the graph of the markings", ".dot,.gv");
-    FileDialogHelper::display("MarkingsDlgKey", [this, &current](std::string const& path) {
+    FileDialogHelper::display("MarkingsDlgKey", [this, &analyzed](std::string const& path) {
         size_t const max = size_t(m_states.max_markings);
-        CoverabilityGraph const cover = coverabilityGraph(current, max);
-        ReachabilityGraph const reach = reachabilityGraph(current, max);
+        CoverabilityGraph const cover = coverabilityGraph(analyzed, max);
+        ReachabilityGraph const reach = reachabilityGraph(analyzed, max);
         // The coverability graph when the reachable markings are too many.
-        std::string const dot = (!reach.complete && cover.complete) ? toDot(current, cover.states, cover.edges)
-                                                                    : toDot(current, reach.states, reach.edges);
+        std::string const dot = (!reach.complete && cover.complete) ? toDot(analyzed, cover.states, cover.edges)
+                                                                    : toDot(analyzed, reach.states, reach.edges);
         std::ofstream file(path);
         if (file << dot)
             m_messages.setInfo("Graph of the markings saved in '" + path + "' (dot -Tsvg to draw it)");
@@ -502,7 +528,7 @@ void Editor::analysisProperties()
             ImGui::TextWrapped("%s", cache.invariants_note.c_str());
             ImGui::PopStyleColor();
         }
-        Marking const m0 = current.tokens();
+        Marking const m0 = analyzed.tokens();
         ImGui::TextDisabled("P-invariants: the weighted tokens of these places never change");
         if (cache.p_invariants.empty())
             ImGui::BulletText("none");
@@ -617,12 +643,11 @@ static void computeGantt(Net const& net, int const cycles,
 //------------------------------------------------------------------------------
 void Editor::analysisCritical()
 {
-    if ((m_states.critical_cycle_net != &net()) ||
-        (m_states.critical_cycle_revision != net().modified.revision()))
+    AnalysisKey key = analysisKey();
+    if (m_states.critical_cycle_key != key)
     {
-        m_states.critical_cycle = findCriticalCycle(net());
-        m_states.critical_cycle_net = &net();
-        m_states.critical_cycle_revision = net().modified.revision();
+        m_states.critical_cycle = findCriticalCycle(analyzedNet());
+        m_states.critical_cycle_key = std::move(key);
     }
     CriticalCycleResult const& res = m_states.critical_cycle;
 
@@ -874,8 +899,6 @@ void Editor::analysisPlot()
 //------------------------------------------------------------------------------
 void Editor::analysisGantt()
 {
-
-    Net const& current = net();
     ImGui::SetNextItemWidth(120.0f);
     ImGui::SliderInt("Cycles", &m_states.gantt_cycles, 1, 20);
     ImGui::SameLine();
@@ -905,18 +928,14 @@ void Editor::analysisGantt()
         ImGui::EndTooltip();
     }
 
-    if ((m_states.gantt_net != &current) ||
-        (m_states.gantt_revision != current.modified.revision()) ||
+    // The earliest dates from the tokens before the simulation.
+    AnalysisKey key = analysisKey();
+    if ((m_states.gantt_key != key) ||
         (m_states.gantt_computed_cycles != m_states.gantt_cycles))
     {
-        std::vector<GanttBarData> bars;
-        computeGantt(current, m_states.gantt_cycles, m_states.gantt_rows, bars,
-                     m_states.gantt_error);
-        m_states.gantt_bars.clear();
-        for (auto const& bar : bars)
-            m_states.gantt_bars.push_back({ bar.row, bar.color, bar.start, bar.end, bar.label });
-        m_states.gantt_net = &current;
-        m_states.gantt_revision = current.modified.revision();
+        computeGantt(analyzedNet(), m_states.gantt_cycles, m_states.gantt_rows,
+                     m_states.gantt_bars, m_states.gantt_error);
+        m_states.gantt_key = std::move(key);
         m_states.gantt_computed_cycles = m_states.gantt_cycles;
     }
     if (!m_states.gantt_error.empty())

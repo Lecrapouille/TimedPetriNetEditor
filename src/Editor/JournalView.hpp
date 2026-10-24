@@ -85,6 +85,12 @@ public:
     void stopReplay();
 
     bool isReplaying() const { return m_replay; }
+    //! \brief Tokens of the places of the net before the replay: while it
+    //! runs, the places hold the tokens of the date of the cursor.
+    std::vector<size_t> initialMarking(Net const& net) const
+    {
+        return (m_replay && (m_replay_net == &net)) ? m_saved_tokens : net.tokens();
+    }
     bool isLive() const { return !m_live.empty(); }
     std::vector<LogEntry> const& entries() const { return m_entries; }
 

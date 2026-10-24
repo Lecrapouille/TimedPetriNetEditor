@@ -315,34 +315,53 @@ private:
     };
 
     // ************************************************************************
+    //! \brief What a result of the analysis is computed for: a net at a
+    //! revision (Net::modified.revision()) and its initial tokens. The tokens
+    //! are part of it: a simulation changes them, not the revision.
+    // ************************************************************************
+    struct AnalysisKey
+    {
+        bool operator==(AnalysisKey const&) const = default;
+
+        Net const* net = nullptr;
+        size_t revision = 0u;
+        std::vector<size_t> tokens;
+    };
+
+    // ************************************************************************
     //! \brief Text computed from a net (matrices, equations), kept until the
-    //! net changes (Net::modified.revision()) or the display options change.
-    //! Avoids recomputing analysis results at every frame of a dialog.
+    //! net changes (AnalysisKey) or the display options change. Avoids
+    //! recomputing analysis results at every frame of a dialog.
     // ************************************************************************
     struct TextCache
     {
         template<class Compute>
-        std::string const& get(Net const& net_, unsigned const options_,
+        std::string const& get(AnalysisKey&& key_, unsigned const options_,
                                Compute&& compute)
         {
-            if ((net != &net_) || (revision != net_.modified.revision()) ||
-                (options != options_))
+            if ((key != key_) || (options != options_))
             {
                 text = compute();
-                net = &net_;
-                revision = net_.modified.revision();
+                key = std::move(key_);
                 options = options_;
             }
             return text;
         }
 
-        void clear() { net = nullptr; }
+        void clear() { key = AnalysisKey(); }
 
-        Net const* net = nullptr;
-        size_t revision = 0u;
+        AnalysisKey key;
         unsigned options = 0u;
         std::string text;
     };
+
+    //! \brief The net to analyze: the active net with the tokens it had before
+    //! its simulation or the replay of the journal (its places hold the tokens
+    //! of the moment, its revision does not change). A copy when they differ.
+    Net const& analyzedNet();
+    //! \brief The active net, its revision and its tokens before its
+    //! simulation or the replay of the journal: what the analysis is for.
+    AnalysisKey analysisKey();
 
 public:
 
@@ -453,8 +472,7 @@ private:
         //! \brief Properties of a net (Petri analysis) at a revision.
         struct PetriProperties
         {
-            Net const* net = nullptr;
-            size_t revision = 0u;
+            AnalysisKey key;
             Properties properties;
             std::vector<std::vector<int64_t>> p_invariants;
             std::vector<std::vector<int64_t>> t_invariants;
@@ -473,13 +491,15 @@ private:
         std::vector<GanttBarData> gantt_bars;
         std::vector<std::string> gantt_rows;
         std::string gantt_error;
-        Net const* gantt_net = nullptr;
-        size_t gantt_revision = 0u;
+        AnalysisKey gantt_key;
         int gantt_computed_cycles = 0;
         //! \brief Critical cycle of the net of the given revision.
         CriticalCycleResult critical_cycle;
-        Net const* critical_cycle_net = nullptr;
-        size_t critical_cycle_revision = 0u;
+        AnalysisKey critical_cycle_key;
+        //! \brief The active net with its initial tokens (analyzedNet()),
+        //! made for this net, revision and tokens.
+        std::unique_ptr<Net> analyzed;
+        AnalysisKey analyzed_key;
     };
 
 private:
