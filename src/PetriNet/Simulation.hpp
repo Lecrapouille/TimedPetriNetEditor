@@ -135,6 +135,15 @@ public:
     std::vector<size_t> initialMarking() const;
 
     //--------------------------------------------------------------------------
+    //! \brief Why the last simulation ended ("stopped by the user", "deadlock:
+    //! ..."), at which simulated date, and the revision of the net then.
+    //! Empty while it runs and before the first one.
+    //--------------------------------------------------------------------------
+    std::string const& endReason() const { return m_end_reason; }
+    double endTime() const { return m_end_time; }
+    size_t endRevision() const { return m_end_revision; }
+
+    //--------------------------------------------------------------------------
     //! \brief Check if initial marking has been stored.
     //--------------------------------------------------------------------------
     bool hasInitialMarking() const;
@@ -245,6 +254,10 @@ private:
     //! \brief Marking shown in the places at the last step: a difference is a
     //! change made by the user.
     Marking m_shown;
+    //! \brief Why and when the last simulation ended (see endReason()).
+    std::string m_end_reason;
+    double m_end_time = 0.0;
+    size_t m_end_revision = 0u;
     //! \brief Initial marking stored at simulation start.
     std::vector<size_t> m_initial_tokens;
     //! \brief Simulation time since start().

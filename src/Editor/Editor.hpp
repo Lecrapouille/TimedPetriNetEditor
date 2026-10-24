@@ -533,6 +533,9 @@ private:
     PetriView m_view;
     //! \brief Messages to be displayed on the GUI.
     Messages m_messages;
+    //! \brief Messages shown as notifications: their stamp, and when their
+    //! life started (the mouse over one starts it again).
+    std::map<double, double> m_toasts;
     //! \brief Journal of the firings (simulations, files, runtimes).
     JournalView m_journal;
     //! \brief Nodes drawn with a halo (journal, runtime, analysis).

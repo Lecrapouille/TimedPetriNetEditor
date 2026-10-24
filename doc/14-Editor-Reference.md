@@ -23,7 +23,7 @@ From top to bottom and left to right:
 |------|------------|
 | Menu bar | *File, Edit, View, Simulation, Analysis, Debug, Help* (§9) |
 | Toolbar (end of the menu bar) | **▶ Run** / **■ Stop**, *Pause*, the speed `x1`, the type of the active net, *Fit*, *Grid*, *Snap*, *Analysis window* |
-| Net window (middle, tab *Philosophers*) | the drawing of a net. In its top left corner: its type, while simulating `simulating t = 3.0 s` (and *paused*), then its description. In its bottom right corner: the zoom |
+| Net window (middle, tab *Philosophers*) | the drawing of a net. In its top left corner: its type, while simulating `simulating t = 3.0 s` (and *paused*), after it `ended at t = 12.0 s:` and why, then its description. In its bottom right corner: the zoom |
 | Inspector (right) | tabs *Places* (*Steps* for a GRAFCET), *Transitions*, *Arcs* (*Actions* for a GRAFCET), *Colors* (Petri and timed nets), *Document* |
 | Under the inspector | *Control panel* (GRAFCET), *Analysis*, *Program* (when connected to a program) |
 | Bottom | *Console*, *Journal*, *Timing diagram* (GRAFCET); *Outputs* (GRAFCET) on the right |
@@ -173,9 +173,16 @@ One button per kind of message, with its count: *Info*, *Warnings*,
 are in the *Journal*). A click hides or shows them. The *Filter* keeps the
 messages containing a text; *Copy* puts the shown messages in the
 clipboard; *Clear* empties the console. The same message given several
-times in a row is written once with its count `(x3)`. The last messages
-also appear a few seconds in the bottom right corner of the nets (never in
-the pictures taken by `-s` and `-w`).
+times in a row is written once with its count `(x3)`. The last three
+messages also appear in the bottom right corner of the nets, framed by the
+color of their kind (blue info, orange warning, red error): 6 seconds for an
+info, 12 for a warning or an error. The mouse over one keeps it, a click
+closes it. They never appear in the pictures taken by `-s` and `-w`.
+
+The end of a simulation says why it ended, with its date: *stopped by the
+user*, or for a timed net *deadlock, no transition can fire any more* (a
+warning). The top left corner of the net keeps it (`ended at t = 12.0 s:
+deadlock ...`) until the net changes.
 
 ## 7. Journal and Analysis
 

@@ -1302,6 +1302,14 @@ void PetriView::drawBadges(Net const& net, Simulation const& simulation)
         label += "  -  receptivity errors";
         color = pal.critical;
     }
+    else if (!simulation.endReason().empty() && (simulation.endRevision() == net.modified.revision()))
+    {
+        // Why the last simulation ended, until the net changes.
+        char date[32];
+        std::snprintf(date, sizeof(date), "%.1f", simulation.endTime());
+        label += "  -  ended at t = " + std::string(date) + " s: " + simulation.endReason();
+        color = (simulation.endReason().rfind("deadlock", 0) == 0) ? pal.enabled : pal.secondary;
+    }
     ImVec2 const p = m_canvas.corners[0] + ImVec2(pad, pad);
     ImVec2 const dim = ImGui::CalcTextSize(label.c_str());
     draw_list->AddRectFilled(p - ImVec2(4, 2), p + dim + ImVec2(4, 2), pal.label_bg, 4.0f);

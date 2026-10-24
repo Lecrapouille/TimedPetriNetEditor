@@ -971,12 +971,22 @@ void Editor::notifications()
 {
     // The last messages (not the traces of the simulation) for a few seconds
     // in the bottom right corner, newest at the bottom; all are in the
-    // console.
-    static constexpr double LIFE_INFO = 3.0;
-    static constexpr double LIFE_ALERT = 6.0;
+    // console. The mouse over a message keeps it, a click closes it.
+    static constexpr double LIFE_INFO = 6.0;
+    static constexpr double LIFE_ALERT = 12.0;
     static constexpr int MAX_SHOWN = 3;
     double const now = Messages::now();
     auto const& logs = getLogs();
+    // Forget the messages that are no more in the log, or old and not kept
+    // by the mouse (a closed one is kept until it is old).
+    for (auto it = m_toasts.begin(); it != m_toasts.end();)
+    {
+        bool const known = std::any_of(logs.rbegin(), logs.rend(), [&it](auto const& log) {
+            return log.stamp == it->first;
+        });
+        bool const old = (now - it->first > LIFE_ALERT) && (now - it->second > LIFE_ALERT);
+        it = (known && !old) ? std::next(it) : m_toasts.erase(it);
+    }
     // In the bottom right corner of the nets (where the user looks), above
     // the zoom of the last one.
     ImGuiViewport const* viewport = ImGui::GetMainViewport();
@@ -1003,41 +1013,57 @@ void Editor::notifications()
         auto const& log = logs[i];
         if (log.level == Messages::Level::Trace)
             continue;
-        double const age = now - log.stamp;
-        if (age > LIFE_ALERT)
-            continue;
+        // Its life starts when it is given, again when the mouse leaves it.
+        auto const since = m_toasts.emplace(log.stamp, log.stamp).first;
+        double const age = now - since->second;
         double const life = (log.level == Messages::Level::Info) ? LIFE_INFO : LIFE_ALERT;
         if (age > life)
             continue;
-        float const alpha = float(std::clamp((life - age) / 0.5, 0.0, 1.0));
+        float const alpha = float(std::clamp((life - age) / 0.8, 0.0, 1.0));
 
         ImGui::SetNextWindowPos(ImVec2(x, y), ImGuiCond_Always, ImVec2(1.0f, 1.0f));
         ImGui::SetNextWindowViewport(viewport->ID);
-        ImGui::SetNextWindowBgAlpha(0.94f * alpha);
+        ImGui::SetNextWindowBgAlpha(0.97f * alpha);
         ImGui::PushStyleVar(ImGuiStyleVar_Alpha, alpha);
         ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 6.0f);
+        ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(16.0f, 10.0f));
+        ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 1.5f);
+        // Infos in blue: the color of their text is the one of the console.
+        ImVec4 const color = (log.level == Messages::Level::Info) ? levelColor(Messages::Level::Trace)
+                                                                  : levelColor(log.level);
+        ImGui::PushStyleColor(ImGuiCol_Border, color);
         ImGuiWindowFlags const flags = ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_AlwaysAutoResize |
             ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoFocusOnAppearing |
-            ImGuiWindowFlags_NoNav | ImGuiWindowFlags_NoDocking | ImGuiWindowFlags_NoInputs;
+            ImGuiWindowFlags_NoNav | ImGuiWindowFlags_NoDocking;
         std::string const id = "##notification" + std::to_string(shown);
         if (ImGui::Begin(id.c_str(), nullptr, flags))
         {
-            ImVec4 const color = levelColor(log.level);
+            ImGui::SetWindowFontScale(1.15f);
             ImVec2 const p = ImGui::GetWindowPos();
-            ImGui::GetWindowDrawList()->AddRectFilled(p, p + ImVec2(4.0f, ImGui::GetWindowHeight()),
+            ImGui::GetWindowDrawList()->AddRectFilled(p, p + ImVec2(6.0f, ImGui::GetWindowHeight()),
                                                       ImGui::GetColorU32(color), 6.0f,
                                                       ImDrawFlags_RoundCornersLeft);
-            ImGui::PushTextWrapPos(ImGui::GetCursorPosX() + 340.0f);
-            if (log.level != Messages::Level::Info)
-                ImGui::TextColored(color, "%s", (log.level == Messages::Level::Error) ? "Error" : "Warning");
+            ImGui::PushTextWrapPos(ImGui::GetCursorPosX() + 400.0f);
+            char const* title = (log.level == Messages::Level::Error) ? "Error"
+                : (log.level == Messages::Level::Warning) ? "Warning" : "Info";
+            ImGui::TextColored(color, "%s", title);
+            ImGui::SameLine();
+            ImGui::TextDisabled("%s", log.time.c_str());
             ImGui::TextUnformatted(log.message.c_str());
             if (log.count > 1u)
                 ImGui::TextDisabled("(x%zu)", log.count);
             ImGui::PopTextWrapPos();
-            y -= ImGui::GetWindowHeight() + 6.0f;
+            if (ImGui::IsWindowHovered())
+            {
+                ImGui::SetTooltip("Click to close (all the messages are in the console)");
+                // Kept while the mouse is over it; closed by a click.
+                since->second = ImGui::IsMouseClicked(ImGuiMouseButton_Left) ? -LIFE_ALERT : now;
+            }
+            y -= ImGui::GetWindowHeight() + 8.0f;
         }
         ImGui::End();
-        ImGui::PopStyleVar(2);
+        ImGui::PopStyleColor();
+        ImGui::PopStyleVar(4);
         ++shown;
     }
 }

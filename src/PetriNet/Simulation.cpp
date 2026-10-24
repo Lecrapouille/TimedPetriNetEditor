@@ -36,12 +36,15 @@ void Simulation::grafcet(GrafcetEngine* shared)
 //------------------------------------------------------------------------------
 void Simulation::start()
 {
+    m_end_reason.clear();
     m_running = true;
 }
 
 //------------------------------------------------------------------------------
 void Simulation::stop()
 {
+    if (m_running && m_end_reason.empty())
+        m_end_reason = "stopped by the user";
     m_running = false;
 }
 
@@ -232,8 +235,21 @@ void Simulation::handleIdleState()
 //------------------------------------------------------------------------------
 void Simulation::handleHaltingState()
 {
+    // Why it ended, in one message: the toast of the editor shows it.
+    if (m_end_reason.empty())
+        m_end_reason = "stopped";
+    m_end_time = (m_net.type() == TypeOfNet::GRAFCET) ? double(m_engine->time()) : m_sim_time;
+    m_end_revision = m_net.modified.revision();
     if ((m_net.type() != TypeOfNet::GRAFCET) || m_engine->isRunning())
-        onInfo.emit("Simulation has ended!");
+    {
+        char date[32];
+        std::snprintf(date, sizeof(date), "%.1f", m_end_time);
+        std::string const message = "Simulation has ended at t = " + std::string(date) + " s: " + m_end_reason;
+        if (m_end_reason.rfind("deadlock", 0) == 0)
+            onWarning.emit(message);
+        else
+            onInfo.emit(message);
+    }
 
     if ((m_net.type() == TypeOfNet::GRAFCET) && m_engine->isRunning())
     {
@@ -292,7 +308,7 @@ void Simulation::handleSimulatingState(float const dt)
     // the clicks of the user.
     if ((m_net.type() != TypeOfNet::PetriNet) && m_petri->isDeadlocked())
     {
-        onInfo.emit("Deadlock: no transition can fire any more.");
+        m_end_reason = "deadlock, no transition can fire any more";
         m_running = false;
         m_state = State::Halting;
     }
