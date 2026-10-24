@@ -47,8 +47,8 @@ the duration and the tokens of the hidden place.
 
 ![Compact form](pics/Graph01.png)
 
-*The same net in the compact form: `5, P0(2)` is the place `P0`, with 2
-tokens, on an arc of duration 5.*
+*The same net in the compact form: the arc `T0 → T2` holds the place `P0`,
+its 2 tokens as dots near its start, and its duration 5.*
 
 For such nets, the date of each event follows a formula. This is what the
 rest of the chapter uses.

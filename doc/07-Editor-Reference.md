@@ -189,10 +189,11 @@ TimedPetriNetEditor [-r] [-s|-w screenshot.png] [-d seconds] [-f window] [-c end
 | `-s file.png` | save the net as a PNG file once drawn, then quit |
 | `-w file.png` | the same for the whole window |
 | `-d seconds` | wait before the screenshot (the simulation runs meanwhile) |
-| `-f window` | bring this window in front: `Journal`, `Analysis` (its properties), `Console` ... |
+| `-f window` | bring this window in front: `Journal`, `Console`, `Analysis` (its properties) or a tab of the analysis: `Critical circuit` (marked on the net), `Gantt` ... |
 | `-c endpoint` | follow the program publishing its journal there (`tcp://localhost:5556`) |
 
-The pictures of this documentation were made with `-w`.
+The pictures of this documentation were made with `-w` and `-s`; the
+notifications are not drawn in them.
 
 ---
 
