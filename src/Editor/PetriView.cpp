@@ -744,9 +744,23 @@ void PetriView::deleteSelection()
 {
     // Removing a node or an arc moves the others in their containers:
     // remember the keys first, and look each one up again before removal.
+    // A timed event graph drawn compactly: an arc is known by its two
+    // transitions (removing it removes its place, the other places are
+    // renumbered).
+    Net& net = *m_current_net;
+    bool const compact = net.layout().compact;
+    auto keys = [&](Arc const& arc) {
+        if (compact && arc.from.isTransition())
+        {
+            auto const next = net.arcsOut(net.node(arc.to));
+            if (!next.empty())
+                return std::make_pair(arc.from.key(), next.front().to.key());
+        }
+        return std::make_pair(arc.from.key(), arc.to.key());
+    };
     std::vector<std::pair<std::string, std::string>> arcs;
     for (auto const* arc : m_mouse.selected_arcs)
-        arcs.emplace_back(arc->from.key(), arc->to.key());
+        arcs.push_back(keys(*arc));
     std::vector<std::string> nodes;
     for (auto const* node : m_mouse.selected_nodes)
         nodes.push_back(node->key);
@@ -755,15 +769,31 @@ void PetriView::deleteSelection()
         if (m_mouse.hovered_node != nullptr)
             nodes.push_back(m_mouse.hovered_node->key);
         else if (m_mouse.hovered_arc != nullptr)
-            arcs.emplace_back(m_mouse.hovered_arc->from.key(), m_mouse.hovered_arc->to.key());
+            arcs.push_back(keys(*m_mouse.hovered_arc));
     }
     clearAllSelections();
 
     for (auto const& key : arcs)
     {
-        Node* from = m_current_net->findNode(key.first);
-        Node* to = m_current_net->findNode(key.second);
-        Arc* arc = ((from != nullptr) && (to != nullptr)) ? m_current_net->findArc(*from, *to) : nullptr;
+        Node* from = net.findNode(key.first);
+        Node* to = net.findNode(key.second);
+        if ((from == nullptr) || (to == nullptr))
+            continue;
+        Arc* arc = nullptr;
+        if (compact && (from->type == Node::Type::Transition) && (to->type == Node::Type::Transition))
+        {
+            // The arc from the transition to the place going to the other.
+            for (Arc& out : net.arcsOut(*from))
+            {
+                auto const next = net.arcsOut(net.node(out.to));
+                if (!next.empty() && (next.front().to == to->nodeId()))
+                    arc = &out;
+            }
+        }
+        else
+        {
+            arc = net.findArc(*from, *to);
+        }
         if (arc != nullptr)
             m_editor.removeArc(*arc);
     }

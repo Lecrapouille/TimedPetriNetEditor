@@ -226,6 +226,24 @@ static void petriPath(Net const& net, Node const& a, Node const& b, ArcPath& pat
 {
     ImVec2 const pa = at(net, a);
     ImVec2 const pb = at(net, b);
+    if (&a == &b)
+    {
+        // A loop (a timed event graph: a place from a transition to itself):
+        // a handle above the node, leaving on the right, coming back on the
+        // left.
+        ImVec2 const half = nodeHalfSize(a, net.type());
+        float const r = std::max(18.0f, half.x * 0.8f);
+        ImVec2 const center(pa.x, pa.y - half.y - r * 0.6f);
+        constexpr int SEGMENTS = 20;
+        path.points.clear();
+        for (int i = 0; i <= SEGMENTS; ++i)
+        {
+            // From -30 degrees (right, low) round the top to 210 degrees.
+            float const angle = (-30.0f + 240.0f * float(i) / float(SEGMENTS)) * 3.14159265f / 180.0f;
+            path.points.emplace_back(center.x + r * std::cos(angle), center.y - r * std::sin(angle));
+        }
+        return;
+    }
     if (!hasReverse(net, a, b))
     {
         path.points = { border(net, a, pb, 1.0f), border(net, b, pa, ARROW_SPACING) };
