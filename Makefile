@@ -36,7 +36,11 @@ LIB_TPNE_ANALYSIS := $(call internal-lib,TimedPetriAnalysis)
 LIB_TPNE_EDITOR := $(call internal-lib,TimedPetriGUI)
 LIB_TPNE_JULIA := $(call internal-lib,TimedPetriJulia)
 INTERNAL_LIBS := $(LIB_TPNE_EDITOR) $(LIB_TPNE_ANALYSIS) $(LIB_TPNE_RUNTIME) $(LIB_TPNE_MAXPLUS) $(LIB_TPNE_IO) $(LIB_TPNE_NET) $(LIB_TPNE_JULIA)
+# The projects share the build folder: clean removes it once, without
+# going down in the projects this one depends on.
+ifeq ($(filter clean,$(MAKECMDGOALS)),)
 DIRS_WITH_MAKEFILE := $(P)/src/PetriNet $(P)/src/IO $(P)/src/MaxPlus $(P)/src/Runtime $(P)/src/Analysis $(P)/src/Editor $(P)/src/julia $(P)/tools/tpne-check
+endif
 
 $(P)/src/julia: $(P)/src/Editor
 

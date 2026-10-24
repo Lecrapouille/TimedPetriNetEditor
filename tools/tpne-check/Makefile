@@ -27,7 +27,11 @@ LIB_TPNE_NET := $(call internal-lib,TimedPetriNet)
 LIB_TPNE_IO := $(call internal-lib,TimedPetriIO)
 LIB_TPNE_ANALYSIS := $(call internal-lib,TimedPetriAnalysis)
 INTERNAL_LIBS := $(LIB_TPNE_ANALYSIS) $(LIB_TPNE_IO) $(LIB_TPNE_NET)
+# The projects share the build folder: clean removes it once, without
+# going down in the projects this one depends on.
+ifeq ($(filter clean,$(MAKECMDGOALS)),)
 DIRS_WITH_MAKEFILE := $(P)/src/Analysis
+endif
 
 ###################################################
 # MacOS X: get path inside the bundle application
