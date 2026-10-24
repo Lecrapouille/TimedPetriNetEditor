@@ -202,7 +202,7 @@ static Node const* tegTarget(Net const& net, Arc const& arc)
 //! \brief True if an arc goes back from b to a (drawn bent, not on top).
 static bool hasReverse(Net const& net, Node const& a, Node const& b)
 {
-    if (net.type() == TypeOfNet::TimedEventGraph)
+    if (net.layout().compact)
     {
         // a and b are transitions: look for b -> P -> a.
         for (Arc const& out : net.arcsOut(b))
@@ -336,7 +336,7 @@ ArcPath arcPath(Net const& net, Arc const& arc)
     {
         grafcetPath(net, arc, path);
     }
-    else if (net.type() == TypeOfNet::TimedEventGraph)
+    else if (net.layout().compact)
     {
         Node const* next = tegTarget(net, arc);
         if (next != nullptr)
@@ -467,7 +467,7 @@ void drawArc(ImDrawList* draw_list, Net const& net, Arc const& arc,
     drawPath(draw_list, path, origin, zoom, color, thickness);
 
     float const size = fontSizeAt(zoom * 0.9f);
-    if (type == TypeOfNet::TimedEventGraph)
+    if (net.layout().compact)
     {
         // Tokens near the start, duration in the middle.
         size_t const tokens = net.placeOf(arc).tokens;
@@ -744,7 +744,7 @@ void drawPlace(ImDrawList* draw_list, Net const& net, Place const& place,
                float zoom, bool isInitialStep, bool show_identifier)
 {
     TypeOfNet const type = net.type();
-    if (type == TypeOfNet::TimedEventGraph)
+    if (net.layout().compact)
         return; // places are drawn on their arcs
     if (type == TypeOfNet::GRAFCET)
         drawGrafcetStep(draw_list, net, place, origin, show_caption, zoom, isInitialStep, show_identifier);
@@ -1020,7 +1020,7 @@ Node* nodeAt(Net& net, ImVec2 const& position, float const place_radius,
              float const transition_radius)
 {
     Node* node = transitionAt(net, position, transition_radius);
-    if ((node != nullptr) || (net.type() == TypeOfNet::TimedEventGraph))
+    if ((node != nullptr) || net.layout().compact)
         return node;
     return placeAt(net, position, place_radius);
 }

@@ -1,4 +1,4 @@
-net Timed event graph
+net Timed Petri net
 initial: 1 1 0 1 0 0 0 1 0 0 0 0 0 1 0 0 0 0 0 0 0 0
 t=0 T0 k=1
 t=2 T3 k=1

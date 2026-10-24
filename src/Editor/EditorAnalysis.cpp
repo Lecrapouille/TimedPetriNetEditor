@@ -247,7 +247,8 @@ void Editor::analysisWindow()
         ImGui::End();
         return;
     }
-    if ((net().type() != TypeOfNet::TimedEventGraph) && !isEventGraph(net()))
+    if (!net().layout().compact && !isEventGraph(net()))
+
     {
         ImGui::TextWrapped("The (max,+) analysis needs a timed event graph: every place "
                            "has one input and one output transition. Change the type of "

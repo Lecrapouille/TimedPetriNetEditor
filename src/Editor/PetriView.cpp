@@ -174,7 +174,7 @@ void PetriView::centerOnNet(Net const& net)
     float const font = ImGui::GetFontSize();
     for (auto const& place : net.places())
     {
-        if (net.type() == TypeOfNet::TimedEventGraph)
+        if (net.layout().compact)
             continue;
         ImVec2 const half = nodeHalfSize(place, net.type());
         // GRAFCET: room for the action boxes (their longest text).
@@ -288,7 +288,7 @@ void PetriView::selectNodesInRect(ImVec2 const& a, ImVec2 const& b)
         ImVec2 const p = at(*m_current_net, n);
         return p.x >= x0 && p.x <= x1 && p.y >= y0 && p.y <= y1;
     };
-    bool const teg = (m_current_net->type() == TypeOfNet::TimedEventGraph);
+    bool const teg = m_current_net->layout().compact;
     for (auto& place : m_current_net->places())
     {
         if (!teg && inside(place) && !isNodeSelected(&place))
@@ -324,7 +324,7 @@ Node* PetriView::getNode(ImVec2 const& position) const
             if (d < best_distance) { best_distance = d; best = &node; }
         }
     };
-    if (type != TypeOfNet::TimedEventGraph)
+    if (!m_current_net->layout().compact)
     {
         for (auto& place : m_current_net->places())
             test(place);
@@ -610,7 +610,7 @@ void PetriView::clicked(Net& net, Simulation& simulation)
             clearSelection();
             clearArcSelection();
         }
-        else if (net.type() == TypeOfNet::TimedEventGraph)
+        else if (net.layout().compact)
         {
             m_editor.addTransition(at.x, at.y);
         }
@@ -651,7 +651,7 @@ void PetriView::finishArc(Net& net)
         return;
 
     ImVec2 const at(grid.snapValue(m_mouse.position.x), grid.snapValue(m_mouse.position.y));
-    if (net.type() == TypeOfNet::TimedEventGraph)
+    if (net.layout().compact)
     {
         // Arcs link transitions; addArc() inserts the hidden place.
         if (to == nullptr)
@@ -874,7 +874,7 @@ void PetriView::handleKeyboard(Net& net, Simulation& simulation)
 //------------------------------------------------------------------------------
 void PetriView::updateHint(Net const& net, Simulation const& simulation)
 {
-    bool const teg = (net.type() == TypeOfNet::TimedEventGraph);
+    bool const teg = net.layout().compact;
     switch (m_mouse.gesture)
     {
     case Gesture::MoveNodes:
@@ -1212,7 +1212,7 @@ void PetriView::drawBadges(Net const& net, Simulation const& simulation)
     float const pad = 8.0f;
 
     // Top left: type of net and state.
-    std::string label = to_str(net.type());
+    std::string label = net.layout().compact ? std::string("Timed event graph") : to_str(net.type());
     ImU32 color = pal.secondary;
     if (simulation.isRunning())
     {
@@ -1271,7 +1271,7 @@ void PetriView::drawBadges(Net const& net, Simulation const& simulation)
     // Empty net: say how to start.
     if (net.isEmpty())
     {
-        char const* help = (net.type() == TypeOfNet::TimedEventGraph)
+        char const* help = net.layout().compact
             ? "Left click to add a transition, left drag from it to draw an arc"
             : "Left click to add a place, right click to add a transition, left drag from a node to draw an arc";
         ImVec2 const hdim = ImGui::CalcTextSize(help);

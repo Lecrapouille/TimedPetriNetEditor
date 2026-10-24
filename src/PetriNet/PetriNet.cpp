@@ -30,8 +30,6 @@ std::string to_str(TypeOfNet const type)
         return "Petri net";
     case TypeOfNet::TimedPetriNet:
         return "Timed Petri net";
-    case TypeOfNet::TimedEventGraph:
-        return "Timed event graph";
     default:
         return "Undefined type of net";
     }
@@ -96,7 +94,6 @@ unsigned allowedFeatures(TypeOfNet const type)
     case TypeOfNet::TimedPetriNet:
         return Feature::Weights | Feature::Inhibitors | Feature::Resets |
                Feature::Capacities | Feature::Colors;
-    case TypeOfNet::TimedEventGraph:
     case TypeOfNet::GRAFCET:
     default:
         return 0u;
@@ -674,7 +671,7 @@ void Net::removeNode(Node& node)
     else
     {
         transitions.push_back(node.id);
-        if (m_type == TypeOfNet::TimedEventGraph)
+        if (m_layout.compact)
         {
             for (auto const& a: arcsIn(node))
                 places.push_back(a.from.id);
@@ -889,7 +886,10 @@ bool isEventGraph(Net const& net)
 bool convertTo(Net& net, TypeOfNet const type, std::string& error, std::vector<size_t>& erroneous_arcs)
 {
     if (net.type() == type)
+    {
+        net.layout().compact = false;
         return true;
+    }
 
     // The new type shall accept the extensions (weights, inhibitor arcs ...)
     // the net uses.
@@ -907,13 +907,7 @@ bool convertTo(Net& net, TypeOfNet const type, std::string& error, std::vector<s
         return false;
     }
 
-    // Check conditions of a well formed event graph
-    if (type == TypeOfNet::TimedEventGraph)
-    {
-        if ((!net.isEmpty()) && (!isEventGraph(net, error, erroneous_arcs)))
-            return false;
-    }
-    else if (type == TypeOfNet::GRAFCET)
+    if (type == TypeOfNet::GRAFCET)
     {
         // Nothing to do! We do not check here validity of the boolean
         // expression for receptivities (transitions). We will check it
@@ -922,6 +916,7 @@ bool convertTo(Net& net, TypeOfNet const type, std::string& error, std::vector<s
 
     bool const grafcet = (type == TypeOfNet::GRAFCET) || (net.type() == TypeOfNet::GRAFCET);
     net.m_type = type;
+    net.layout().compact = false;
     net.resetReceptivies();
 
     // GRAFCET constrains the number of tokens. Other nets keep the capacities
@@ -934,6 +929,30 @@ bool convertTo(Net& net, TypeOfNet const type, std::string& error, std::vector<s
         }
     }
 
+    return true;
+}
+
+//------------------------------------------------------------------------------
+bool convertToEventGraph(Net& net, std::string& error, std::vector<size_t>& erroneous_arcs)
+{
+    // No extension: the (max,+) algebra does not know them.
+    unsigned const used = features(net);
+    if (used != 0u)
+    {
+        error = "A timed event graph cannot have " + featuresToStr(used);
+        erroneous_arcs.clear();
+        for (size_t i = 0u; i < net.arcs().size(); ++i)
+        {
+            if (net.arcs()[i].features() != 0u)
+                erroneous_arcs.push_back(i);
+        }
+        return false;
+    }
+    if ((!net.isEmpty()) && (!isEventGraph(net, error, erroneous_arcs)))
+        return false;
+    if (!convertTo(net, TypeOfNet::TimedPetriNet, error, erroneous_arcs))
+        return false;
+    net.layout().compact = true;
     return true;
 }
 

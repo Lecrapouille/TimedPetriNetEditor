@@ -36,7 +36,7 @@ std::vector<AnimatedToken> animateTokens(Net const& net, std::vector<Engine::Fli
         Arc const& arc = net.arcs()[flight.arc];
         Point const& from = net.position(arc.from);
         Point const* to = &net.position(arc.to);
-        if (net.type() == TypeOfNet::TimedEventGraph)
+        if (net.layout().compact)
         {
             auto const next = net.arcsOut(net.node(arc.to));
             if (!next.empty())

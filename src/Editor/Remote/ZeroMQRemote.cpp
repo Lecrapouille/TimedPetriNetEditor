@@ -236,8 +236,7 @@ std::string ZeroMQRemote::cmdStart(nlohmann::json const& /*params*/)
 {
     nlohmann::json response;
 
-    if (m_editor.net().type() == TypeOfNet::TimedEventGraph ||
-        m_editor.net().type() == TypeOfNet::TimedPetriNet)
+    if (m_editor.net().type() == TypeOfNet::TimedPetriNet)
     {
         response["status"] = "error";
         response["message"] = "Convert to non-timed net before starting simulation";

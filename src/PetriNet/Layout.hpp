@@ -58,7 +58,12 @@ public:
     {
         m_places.clear();
         m_transitions.clear();
+        compact = false;
     }
+
+    //! \brief Draw the net as a timed event graph: transitions only, each
+    //! place on the arc it links (see convertToEventGraph()).
+    bool compact = false;
 
 private:
 

@@ -140,7 +140,8 @@ TEST(TestHoward, TestPetriNetSemiSimple)
 
     // Load a net that is an event graph but that Howard does find policy (FIXME while it should)
     ASSERT_STREQ(loadFromFile(net, "../data/examples/EventGraph.json", stringify).c_str(), "");
-    ASSERT_EQ(net.type(), TypeOfNet::TimedEventGraph);
+    ASSERT_EQ(net.type(), TypeOfNet::TimedPetriNet);
+    ASSERT_TRUE(net.layout().compact);
     ASSERT_EQ(net.isEmpty(), false);
     res = findCriticalCycle(net);
     ASSERT_EQ(res.success, false);
@@ -152,7 +153,8 @@ TEST(TestHoward, TestPetriNetSemiSimple)
 
     // Load a net that is an event graph
     ASSERT_STREQ(loadFromFile(net,"../data/examples/Howard2.json", stringify).c_str(), "");
-    ASSERT_EQ(net.type(), TypeOfNet::TimedEventGraph);
+    ASSERT_EQ(net.type(), TypeOfNet::TimedPetriNet);
+    ASSERT_TRUE(net.layout().compact);
     ASSERT_EQ(net.isEmpty(), false);
     ASSERT_EQ(isEventGraph(net), true);
     res = findCriticalCycle(net);

@@ -90,7 +90,9 @@ std::string importFromTimedEventGraph(Net& net, std::string const& filename)
         net.addArc(*t0, *t1, tokens, duration);
     }
 
+    net.layout().compact = true;
     return {};
+
 }
 
 } // namespace tpne

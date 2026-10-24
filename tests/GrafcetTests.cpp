@@ -481,7 +481,8 @@ TEST(TestFlowshop, BuildScheduleAndCycleTime)
 
     Net net;
     buildFlowshop(net, shop);
-    EXPECT_EQ(net.type(), TypeOfNet::TimedEventGraph);
+    EXPECT_EQ(net.type(), TypeOfNet::TimedPetriNet);
+    EXPECT_TRUE(net.layout().compact);
 
     std::vector<std::vector<double>> dates;
     ASSERT_STREQ(earliestDates(net, 3, dates).c_str(), "");

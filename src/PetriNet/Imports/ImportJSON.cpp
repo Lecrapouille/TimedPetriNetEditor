@@ -343,6 +343,7 @@ std::string importAllNetsFromJSON(std::vector<Net>& nets, std::string const& fil
 
     // Get the type of net
     TypeOfNet netType = TypeOfNet::PetriNet;
+    bool compact = false;
     if (json.contains("type"))
     {
         auto type = std::string(json["type"]);
@@ -353,7 +354,9 @@ std::string importAllNetsFromJSON(std::vector<Net>& nets, std::string const& fil
         } else if (type == "Timed Petri net") {
             netType = TypeOfNet::TimedPetriNet;
         } else if (type == "Timed event graph") {
-            netType = TypeOfNet::TimedEventGraph;
+            // A timed Petri net drawn with its transitions only.
+            netType = TypeOfNet::TimedPetriNet;
+            compact = true;
         } else {
             error << "Failed parsing '" << filename << "'. Reason: 'Unknown type of net: " << type << "'" << std::endl;
             return error.str();
@@ -372,7 +375,11 @@ std::string importAllNetsFromJSON(std::vector<Net>& nets, std::string const& fil
     {
         Net net(netType);
         std::string parseError = parseNetFromJSON(net, jnet);
+        std::vector<size_t> arcs;
+        if (parseError.empty() && compact && !convertToEventGraph(net, parseError, arcs))
+            parseError = "Timed event graph: " + parseError;
         if (!parseError.empty())
+
         {
             error << "Failed parsing '" << filename << "'. Reason: '" << parseError << "'" << std::endl;
             return error.str();

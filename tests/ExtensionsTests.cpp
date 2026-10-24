@@ -46,7 +46,6 @@ TEST(TestExtensions, LoadAndFeatures)
     ASSERT_EQ(features(net), all);
     ASSERT_TRUE(allows(TypeOfNet::PetriNet, all));
     ASSERT_TRUE(allows(TypeOfNet::TimedPetriNet, all));
-    ASSERT_FALSE(allows(TypeOfNet::TimedEventGraph, Feature::Weights));
     ASSERT_FALSE(allows(TypeOfNet::GRAFCET, Feature::Inhibitors));
     ASSERT_STREQ(featuresToStr(Feature::Weights | Feature::Resets).c_str(), "weights, reset arcs");
 }
@@ -139,7 +138,7 @@ TEST(TestExtensions, Conversions)
     std::vector<size_t> arcs;
 
     // Event graphs and GRAFCET refuse the extensions: the arcs are given.
-    ASSERT_FALSE(convertTo(net, TypeOfNet::TimedEventGraph, error, arcs));
+    ASSERT_FALSE(convertToEventGraph(net, error, arcs));
     ASSERT_NE(error.find("weights"), std::string::npos) << error;
     ASSERT_EQ(arcs.size(), 4u);
     ASSERT_FALSE(convertTo(net, TypeOfNet::GRAFCET, error, arcs));

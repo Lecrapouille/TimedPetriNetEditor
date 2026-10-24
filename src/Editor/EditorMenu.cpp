@@ -121,10 +121,13 @@ void Editor::toolbar()
 
     // Type of the active net.
     ImGui::SetNextItemWidth(150.0f);
-    int type = int(net().type());
+    int kind = net().layout().compact ? 2 : (net().type() == TypeOfNet::GRAFCET) ? 3 : int(net().type());
     ImGui::BeginDisabled(running);
-    if (ImGui::Combo("##type", &type, "Petri net\0Timed Petri net\0Timed event graph\0GRAFCET\0"))
-        switchOfNet(TypeOfNet(type));
+    if (ImGui::Combo("##type", &kind, "Petri net\0Timed Petri net\0Timed event graph\0GRAFCET\0"))
+    {
+        switchOfNet((kind == 3) ? TypeOfNet::GRAFCET : (kind == 0) ? TypeOfNet::PetriNet
+                                                                   : TypeOfNet::TimedPetriNet, kind == 2);
+    }
     ImGui::EndDisabled();
 
     if (ImGui::MenuItem("Fit##toolbar"))
@@ -137,7 +140,7 @@ void Editor::toolbar()
         m_view.grid.snap ^= true;
     if (ImGui::IsItemHovered())
         ImGui::SetTooltip("Snap the nodes to the grid when they move (G)");
-    if ((net().type() == TypeOfNet::TimedEventGraph) || isEventGraph(net()))
+    if (net().layout().compact || isEventGraph(net()))
     {
         // Not "Analysis": the menu of the same name is in this menu bar.
         if (ImGui::MenuItem("Analysis window##toolbar", nullptr, m_states.show_analysis))
@@ -153,16 +156,16 @@ void Editor::menuFile()
 
     if (ImGui::BeginMenu("New"))
     {
-        struct Kind { char const* label; TypeOfNet type; };
-        for (Kind const& kind : { Kind{ "Petri net", TypeOfNet::PetriNet },
-                                  Kind{ "Timed Petri net", TypeOfNet::TimedPetriNet },
-                                  Kind{ "Timed event graph", TypeOfNet::TimedEventGraph },
-                                  Kind{ "GRAFCET", TypeOfNet::GRAFCET } })
+        struct Kind { char const* label; TypeOfNet type; bool compact; };
+        for (Kind const& kind : { Kind{ "Petri net", TypeOfNet::PetriNet, false },
+                                  Kind{ "Timed Petri net", TypeOfNet::TimedPetriNet, false },
+                                  Kind{ "Timed event graph", TypeOfNet::TimedPetriNet, true },
+                                  Kind{ "GRAFCET", TypeOfNet::GRAFCET, false } })
         {
             if (ImGui::MenuItem(kind.label))
             {
                 newDocument();
-                switchOfNet(kind.type);
+                switchOfNet(kind.type, kind.compact);
                 net().name = kind.label;
             }
         }
@@ -262,14 +265,15 @@ void Editor::menuEdit()
     ImGui::Separator();
     if (ImGui::BeginMenu("Type of net"))
     {
-        struct Kind { char const* label; TypeOfNet type; };
-        for (Kind const& kind : { Kind{ "Petri net", TypeOfNet::PetriNet },
-                                  Kind{ "Timed Petri net", TypeOfNet::TimedPetriNet },
-                                  Kind{ "Timed event graph", TypeOfNet::TimedEventGraph },
-                                  Kind{ "GRAFCET", TypeOfNet::GRAFCET } })
+        struct Kind { char const* label; TypeOfNet type; bool compact; };
+        for (Kind const& kind : { Kind{ "Petri net", TypeOfNet::PetriNet, false },
+                                  Kind{ "Timed Petri net", TypeOfNet::TimedPetriNet, false },
+                                  Kind{ "Timed event graph", TypeOfNet::TimedPetriNet, true },
+                                  Kind{ "GRAFCET", TypeOfNet::GRAFCET, false } })
         {
-            if (ImGui::MenuItem(kind.label, nullptr, net().type() == kind.type))
-                switchOfNet(kind.type);
+            bool const current = (net().type() == kind.type) && (net().layout().compact == kind.compact);
+            if (ImGui::MenuItem(kind.label, nullptr, current))
+                switchOfNet(kind.type, kind.compact);
         }
         ImGui::EndMenu();
     }
@@ -480,7 +484,8 @@ void Editor::menuGraphEvents()
     if (!ImGui::BeginMenu("Analysis"))
         return;
 
-    bool const teg = (net().type() == TypeOfNet::TimedEventGraph) || isEventGraph(net());
+    bool const teg = net().layout().compact || isEventGraph(net());
+
     if (!teg)
         ImGui::TextDisabled("Needs a timed event graph");
     ImGui::BeginDisabled(!teg);

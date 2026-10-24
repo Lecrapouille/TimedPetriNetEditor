@@ -244,7 +244,6 @@ TEST(TestPetriNet, TestToMode)
     ASSERT_STREQ(to_str(TypeOfNet::GRAFCET).c_str(), "GRAFCET");
     ASSERT_STREQ(to_str(TypeOfNet::PetriNet).c_str(), "Petri net");
     ASSERT_STREQ(to_str(TypeOfNet::TimedPetriNet).c_str(), "Timed Petri net");
-    ASSERT_STREQ(to_str(TypeOfNet::TimedEventGraph).c_str(), "Timed event graph");
     ASSERT_STREQ(to_str(TypeOfNet(42)).c_str(), "Undefined type of net");
 }
 
@@ -670,7 +669,8 @@ TEST(TestPetriNet, TestLoadedNetTimedPetri)
 
     ASSERT_STREQ(loadFromFile(net, "../data/examples/Howard2.json", stringify).c_str(), "");
     ASSERT_STREQ(net.error().c_str(), "");
-    ASSERT_EQ(net.type(), TypeOfNet::TimedEventGraph);
+    ASSERT_EQ(net.type(), TypeOfNet::TimedPetriNet);
+    ASSERT_TRUE(net.layout().compact);
     ASSERT_EQ(net.isEmpty(), false);
     ASSERT_EQ(net.m_next_place_id, 5u);
     ASSERT_EQ(net.m_next_transition_id, 4u);
@@ -989,7 +989,8 @@ TEST(TestPetriNet, TestLoadedNetGraphEvent)
 
     ASSERT_STREQ(loadFromFile(net, "data/EventGraph2.json", stringify).c_str(), "");
     ASSERT_STREQ(net.error().c_str(), "");
-    ASSERT_EQ(net.type(), TypeOfNet::TimedEventGraph);
+    ASSERT_EQ(net.type(), TypeOfNet::TimedPetriNet);
+    ASSERT_TRUE(net.layout().compact);
     ASSERT_EQ(net.isEmpty(), false);
     ASSERT_EQ(net.m_next_place_id, 5u);
     ASSERT_EQ(net.m_next_transition_id, 4u);
@@ -1296,7 +1297,8 @@ TEST(TestPetriNet, TestRemoveNode)
 
     ASSERT_STREQ(loadFromFile(net, "../data/examples/Howard2.json", stringify).c_str(), "");
     ASSERT_STREQ(net.error().c_str(), "");
-    ASSERT_EQ(net.type(), TypeOfNet::TimedEventGraph);
+    ASSERT_EQ(net.type(), TypeOfNet::TimedPetriNet);
+    ASSERT_TRUE(net.layout().compact);
     ASSERT_EQ(net.m_next_place_id, 5u);
     ASSERT_EQ(net.m_next_transition_id, 4u);
     ASSERT_EQ(net.m_places.size(), 5u);

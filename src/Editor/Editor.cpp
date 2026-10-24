@@ -222,14 +222,14 @@ void Editor::statusBar()
             ImGui::TextUnformatted(m_view.hint().c_str());
             char right[256];
             size_t arcs = current.arcs().size();
-            if (current.type() == TypeOfNet::TimedEventGraph)
+            if (current.layout().compact)
                 arcs /= 2u;
             ImVec2 const mouse = m_view.mouse();
             bool const inside = std::isfinite(mouse.x) && std::isfinite(mouse.y);
             std::snprintf(right, sizeof(right), "%s%zu P   %zu T   %zu arcs   |   x %.0f  y %.0f   |   %d %%",
                           (m_view.selectionSize() > 0u)
                               ? (std::to_string(m_view.selectionSize()) + " selected   |   ").c_str() : "",
-                          (current.type() == TypeOfNet::TimedEventGraph) ? size_t(0) : current.places().size(),
+                          current.layout().compact ? size_t(0) : current.places().size(),
                           current.transitions().size(), arcs, inside ? double(mouse.x) : 0.0,
                           inside ? double(mouse.y) : 0.0, int(std::round(m_view.zoom() * 100.0f)));
             float const width = ImGui::CalcTextSize(right).x;
@@ -1035,8 +1035,7 @@ void Editor::computeCycleTime()
 {
     // Computed on the initial marking, for the timed event graphs only.
     m_states.plot_lambda = 0.0;
-    if ((net().type() == TypeOfNet::TimedEventGraph) ||
-        ((net().type() == TypeOfNet::TimedPetriNet) && isEventGraph(net())))
+    if ((net().type() == TypeOfNet::TimedPetriNet) && isEventGraph(net()))
     {
         CriticalCycleResult const cc = findCriticalCycle(net());
         if (cc.success && !cc.durations.empty())
@@ -1054,14 +1053,16 @@ void Editor::updateSimulationFramerate()
 }
 
 //------------------------------------------------------------------------------
-bool Editor::switchOfNet(TypeOfNet const type)
+bool Editor::switchOfNet(TypeOfNet const type, bool const compact)
 {
     if (simulation().isRunning())
         return false;
 
     std::vector<size_t> arcs;
     std::string error_msg;
-    if (convertTo(net(), type, error_msg, arcs))
+    bool const converted = compact ? convertToEventGraph(net(), error_msg, arcs)
+                                   : convertTo(net(), type, error_msg, arcs);
+    if (converted)
     {
         simulation().validateReceptivities();
         activeDocument().registerNets();
@@ -1157,7 +1158,7 @@ void Editor::removeArc(Arc const& arc)
 {
     // In a timed event graph an arc between two transitions is made of a
     // hidden place and its two arcs: remove the place, which removes both.
-    if ((net().type() == TypeOfNet::TimedEventGraph) &&
+    if (net().layout().compact &&
         (arc.to.type == Node::Type::Place))
     {
         removeNode(net().node(arc.to));

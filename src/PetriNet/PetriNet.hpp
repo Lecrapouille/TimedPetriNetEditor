@@ -48,10 +48,10 @@ enum class TypeOfNet
     //! automatic (The user cannot click on transitions to fire). The
     //! policy concerning divergence transitions: the maximum of tokens are
     //! consumed at once but tokens are shuffled along arcs.
+    //! A timed event graph (each place has a single input arc and a single
+    //! output arc) is a timed Petri net: see isEventGraph(), and
+    //! Layout::compact to draw it with transitions only.
     TimedPetriNet,
-    //! \brief Is a timed Petri where all places have a single input arc and
-    //! a single output arc.
-    TimedEventGraph,
     //! \brief Is a Petri net used for making industrial automata (productive):
     //! Places are named Steps and do discrete actions. Transitions have boolean
     //! expression (named receptivities aka conditions) linked to sensors
@@ -1003,6 +1003,15 @@ bool isEventGraph(Net const& net);
 //! indices of the arcs preventing the conversion are given.
 //-----------------------------------------------------------------------------
 bool convertTo(Net& net, TypeOfNet const type, std::string& error, std::vector<size_t>& erroneous_arcs);
+
+//-----------------------------------------------------------------------------
+//! \brief Draw the net as a timed event graph (Layout::compact): transitions
+//! only, the places on the arcs. The net becomes a timed Petri net; it shall be
+//! an event graph without extension (weights, inhibitor arcs ...).
+//! \return false if the net cannot be: the indices of the arcs preventing it
+//! are given.
+//-----------------------------------------------------------------------------
+bool convertToEventGraph(Net& net, std::string& error, std::vector<size_t>& erroneous_arcs);
 
 //-----------------------------------------------------------------------------
 //! \brief Load the Petri net from a a file. The current net is cleared

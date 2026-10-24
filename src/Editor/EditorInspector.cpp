@@ -553,12 +553,13 @@ static void drawArcsPanel(Net& net, Simulation& simulation, bool& modified)
     const auto readonly = simulation.isRunning() ?
         ImGuiInputTextFlags_ReadOnly : ImGuiInputTextFlags_None;
 
-    if ((net.type() == TypeOfNet::PetriNet) || (net.type() == TypeOfNet::TimedPetriNet))
+    if (!net.layout().compact &&
+        ((net.type() == TypeOfNet::PetriNet) || (net.type() == TypeOfNet::TimedPetriNet)))
     {
         drawArcsTable(net, simulation, modified);
         return;
     }
-    if (net.type() != TypeOfNet::TimedEventGraph)
+    if (!net.layout().compact)
         return;
 
     ImGui::Begin("Arcs");
@@ -568,7 +569,7 @@ static void drawArcsPanel(Net& net, Simulation& simulation, bool& modified)
         if (arc.from.type != Node::Type::Transition)
             continue;
         auto const next = net.arcsOut(net.node(arc.to));
-        std::string const text = (net.type() == TypeOfNet::TimedEventGraph) && !next.empty()
+        std::string const text = net.layout().compact && !next.empty()
             ? arc.from.key() + " -> " + next.front().to.key()
             : arc.from.key() + " -> " + arc.to.key();
         float duration = arc.durationOrZero();

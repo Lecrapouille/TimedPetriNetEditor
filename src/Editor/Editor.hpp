@@ -197,7 +197,9 @@ private:
 
     Place* getPlace(ImVec2 const& position);
     Transition* getTransition(ImVec2 const& position);
-    bool switchOfNet(TypeOfNet const type);
+    //! \brief Convert the active net to the type; compact: to a timed event
+    //! graph drawn with its transitions only.
+    bool switchOfNet(TypeOfNet const type, bool const compact = false);
     Transition& addTransition(float const x, float const y);
     void addPlace(float const x, float const y);
     void removeNode(Node& node);

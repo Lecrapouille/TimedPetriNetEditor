@@ -188,7 +188,7 @@ std::string checkFlowshop(Flowshop const& data)
 // legacy "nan") = epsilon = no task.
 void buildFlowshop(Net& net, Flowshop const& data)
 {
-    net.reset(TypeOfNet::TimedEventGraph);
+    net.reset(TypeOfNet::TimedPetriNet);
     const size_t nmach = data.nmachines;
     const size_t npiece = data.npieces;
 
@@ -322,6 +322,7 @@ void buildFlowshop(Net& net, Flowshop const& data)
             continue; // defensive: skip degenerate edges
         net.addArc(*trans[e.from], *trans[e.to], e.tokens, e.duration);
     }
+    net.layout().compact = true;
 }
 
 //------------------------------------------------------------------------------
@@ -337,7 +338,8 @@ std::string importFlowshop(Net& net, std::string const& filename)
         return error.str();
     }
 
-    net.reset(TypeOfNet::TimedEventGraph);
+    net.reset(TypeOfNet::TimedPetriNet);
+
 
     Flowshop data;
     std::string parseError = parseFlowshopFile(file, data);

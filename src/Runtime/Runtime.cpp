@@ -546,8 +546,7 @@ void Runtime::complete(Instance& instance, size_t const transition, Color const 
 //------------------------------------------------------------------------------
 void Runtime::produce(Instance& instance, size_t const transition, Color const result) const
 {
-    bool const timed = (m_net.type() == TypeOfNet::TimedPetriNet) ||
-                       (m_net.type() == TypeOfNet::TimedEventGraph);
+    bool const timed = (m_net.type() == TypeOfNet::TimedPetriNet);
     for (auto const& a : m_net.arcsOut(m_net.transitions()[transition]))
     {
         Color const color = (a.color != AnyColor) ? a.color : result;
