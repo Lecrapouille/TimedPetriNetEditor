@@ -711,7 +711,34 @@ timed: the durations of its arcs are not waited):
 Deadlocked: 3 urgent and 2 critical calls handled by level 2
 ```
 
-### 9.6 More programs
+### 9.6 🚨 Priorities: who wins a conflict
+
+[`examples/Extended-Petri-Nets/Priorities/Priorities.cpp`](../examples/Extended-Petri-Nets/Priorities/Priorities.cpp)
+runs [`Priorities.json`](../examples/Extended-Petri-Nets/Priorities/Priorities.json)
+on a simulated clock. The car and the ambulance want the crossing at the
+same date; `Options::policy` chooses, as *Simulation > Conflicts* in the
+editor:
+
+```c++
+Runtime::Options options;
+options.policy = Engine::Policy::Random; // Priority (default), Random, FirstDeclared
+options.seed = 7u;                       // the same seed, the same draws
+Runtime runtime(net, std::make_shared<InlineExecutor>(), options);
+```
+
+```text
+Policy Priority:
+  t =  0.0  Ambulance crosses
+  t =  2.0  Car crosses
+  t =  7.0  Ambulance crosses
+...
+Policy Random, first to cross for the seeds 1 to 10:
+  Car Ambulance Ambulance Ambulance Ambulance Ambulance Ambulance Car Ambulance Ambulance
+  the car first 42 times for the seeds 1 to 100
+Seed 7 twice: the same crossings
+```
+
+### 9.7 More programs
 
 [`examples/Runtime/`](../examples/Runtime/README.md) has the programs for
 each target: pick and place on a pool of threads, micro-services with a
