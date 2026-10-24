@@ -50,6 +50,7 @@ static std::vector<Exporter>& registry()
     static std::vector<Exporter> s_exporters = {
         { "JSON", ".json", exportToJSON },
         { "Arduino GRAFCET", ".hpp,.h,.hh,.h++", exportToGrafcetCpp },
+        { "C++ functions for the runtime", ".cpp,.cc,.cxx", exportToRuntimeCpp },
         { "Symfony", ".yaml", exportToSymfony },
         { "Draw.io", ".drawio.xml", exportToDrawIO },
         { "Graphviz", ".gv,.dot", exportToGraphviz },

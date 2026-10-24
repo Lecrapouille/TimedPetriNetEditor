@@ -35,6 +35,9 @@ std::string exportToPetriLaTeX(Net const& net, std::string const& filename);
 std::string exportToGrafcetLaTeX(Net const& net, std::string const& filename);
 std::string exportToGrafcetCpp(Net const& net, std::string const& filename);
 std::string exportToPNML(Net const& net, std::string const& filename);
+//! \brief A C++ program for the runtime: the net built in the code and one
+//! function to fill per transition (TPNE_DEBUG: it publishes its journal).
+std::string exportToRuntimeCpp(Net const& net, std::string const& filename);
 
 //! \brief Interface for exporting a Petri file.
 //! \param[in] net the net we are exporting.

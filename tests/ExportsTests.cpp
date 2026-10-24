@@ -25,6 +25,24 @@ static std::string read(std::string const& path)
 }
 
 //------------------------------------------------------------------------------
+//! \brief The program for the runtime: the net built in the code, a function
+//! per transition, the results asked by the next arcs.
+TEST(TestExports, RuntimeCpp)
+{
+    Net net;
+    ASSERT_STREQ(loadFromFile(net, "../data/examples/PickAndPlace.json").c_str(), "");
+    ASSERT_STREQ(saveToFile(net, "/tmp/tpne-pick.cpp").c_str(), "");
+    std::string const text = read("/tmp/tpne-pick.cpp");
+    ASSERT_THAT(text, HasSubstr("namespace pick_and_place {"));
+    ASSERT_THAT(text, HasSubstr("net.addPlace(1u, \"Ready\")"));
+    ASSERT_THAT(text, HasSubstr("arc->color = net.colors.add(\"Failed\");"));
+    ASSERT_THAT(text, HasSubstr("Color grasp()"));
+    ASSERT_THAT(text, HasSubstr("Its result chooses what comes next: Failed (retry), Success (place)."));
+    ASSERT_THAT(text, HasSubstr("runtime.on(\"grasp\", pick_and_place::grasp);"));
+    ASSERT_THAT(text, HasSubstr("{ { \"Done\", Success } }"));
+}
+
+//------------------------------------------------------------------------------
 //! \brief The journal of the runtime in CSV and XES (process mining).
 TEST(TestExports, JournalFormats)
 {

@@ -1,0 +1,280 @@
+// SPDX-License-Identifier: GPL-3.0-or-later OR LicenseRef-TimedPetriNetEditor-Commercial
+// Copyright (c) 2020-2026 Quentin Quadrat
+//
+// This file is part of TimedPetriNetEditor. It is available under the GNU GPL v3 or,
+// for users who cannot use the GPL, under a commercial license.
+// See LICENSING.md for details.
+
+// Export a net as a C++ program for the runtime (libTimedPetriRuntime): the net
+// is built in the code (a board has no file system) and each transition gets
+// a function to fill. The program runs one instance; with -DTPNE_DEBUG it
+// publishes its journal for the editor (Debug > Connect).
+
+#include "IO/Exports/Exports.hpp"
+#include "PetriNet/PetriNet.hpp"
+
+#include <algorithm>
+#include <cctype>
+#include <cerrno>
+#include <cstring>
+#include <fstream>
+#include <limits>
+#include <set>
+#include <sstream>
+
+namespace tpne {
+
+//------------------------------------------------------------------------------
+//! \brief The text as a C++ string literal.
+static std::string literal(std::string const& text)
+{
+    std::string s = "\"";
+    for (char const c : text)
+    {
+        if ((c == '"') || (c == '\\'))
+            s += '\\';
+        if (c == '\n')
+            s += "\\n";
+        else
+            s += c;
+    }
+    return s + "\"";
+}
+
+//------------------------------------------------------------------------------
+//! \brief The value as a C++ float literal ("3.0f", "0.25f").
+static std::string floatLiteral(float const value)
+{
+    std::ostringstream os;
+    os << value;
+    std::string s = os.str();
+    if (s.find_first_of(".eE") == std::string::npos)
+        s += ".0";
+    return s + "f";
+}
+
+//------------------------------------------------------------------------------
+//! \brief A C++ identifier from the text ("Grasp object" -> grasp_object).
+static std::string identifier(std::string const& text)
+{
+    static std::set<std::string> const keywords = {
+        "auto", "bool", "break", "case", "catch", "char", "class", "const", "continue",
+        "default", "delete", "do", "double", "else", "enum", "explicit", "export", "extern",
+        "false", "float", "for", "friend", "goto", "if", "inline", "int", "long", "main",
+        "namespace", "new", "operator", "private", "protected", "public", "register",
+        "return", "short", "signed", "sizeof", "static", "struct", "switch", "template",
+        "this", "throw", "true", "try", "typedef", "typename", "union", "unsigned", "using",
+        "virtual", "void", "volatile", "while"
+    };
+    std::string id;
+    for (char const c : text)
+    {
+        if (std::isalnum(static_cast<unsigned char>(c)))
+            id += char(std::tolower(static_cast<unsigned char>(c)));
+        else if (!id.empty() && (id.back() != '_'))
+            id += '_';
+    }
+    while (!id.empty() && (id.back() == '_'))
+        id.pop_back();
+    if (id.empty() || std::isdigit(static_cast<unsigned char>(id[0])))
+        id = "t_" + id;
+    if (keywords.count(id) != 0u)
+        id += '_';
+    return id;
+}
+
+//------------------------------------------------------------------------------
+//! \brief Name of a node in the runtime (its caption, else its key).
+static std::string const& nameOf(Node const& node)
+{
+    return node.caption.empty() ? node.key : node.caption;
+}
+
+//------------------------------------------------------------------------------
+static char const* typeOf(TypeOfNet const type)
+{
+    switch (type)
+    {
+    case TypeOfNet::PetriNet: return "TypeOfNet::PetriNet";
+    case TypeOfNet::GRAFCET: return "TypeOfNet::GRAFCET";
+    case TypeOfNet::TimedPetriNet:
+    default: return "TypeOfNet::TimedPetriNet";
+    }
+}
+
+//------------------------------------------------------------------------------
+std::string exportToRuntimeCpp(Net const& net, std::string const& filename)
+{
+    std::ofstream file(filename);
+    if (!file)
+    {
+        std::stringstream error;
+        error << "Failed to export the Petri net to '" << filename
+              << "'. Reason: " << strerror(errno) << std::endl;
+        return error.str();
+    }
+
+    std::string const space = identifier(net.name.empty() ? "net" : net.name);
+
+    // One function per name of transition (the runtime gives the same
+    // function to the transitions of the same name).
+    std::vector<std::string> names;
+    std::vector<std::string> functions;
+    std::vector<std::vector<size_t>> transitions_of;
+    for (auto const& t : net.transitions())
+    {
+        std::string const& name = nameOf(t);
+        size_t i = 0u;
+        while ((i < names.size()) && (names[i] != name))
+            ++i;
+        if (i == names.size())
+        {
+            std::string id = identifier(name);
+            while (std::find(functions.begin(), functions.end(), id) != functions.end())
+                id += "_" + std::to_string(t.id);
+            names.push_back(name);
+            functions.push_back(id);
+            transitions_of.emplace_back();
+        }
+        transitions_of[i].push_back(t.id);
+    }
+
+    file << "// Generated by TimedPetriNetEditor from the net " << literal(net.name) << ".\n"
+         << "// Fill the functions of the transitions, then build the program with the runtime:\n"
+         << "//   g++ -std=c++20 -I<TimedPetriNetEditor>/src " << filename.substr(filename.find_last_of("/\\") + 1u)
+         << "\n//       -L<TimedPetriNetEditor>/build -lTimedPetriRuntime -lTimedPetriNet -pthread\n"
+         << "// With -DTPNE_DEBUG -lzmq it publishes its journal on tcp://*:5556: the editor\n"
+         << "// shows it (Debug > Connect).\n\n"
+         << "#include \"Runtime/Runtime.hpp\"\n"
+         << "#ifdef TPNE_DEBUG\n#  include \"Runtime/JournalPublisher.hpp\"\n#endif\n\n"
+         << "#include <cstdlib>\n#include <iostream>\n\n"
+         << "using namespace tpne;\n\n"
+         << "namespace " << space << " {\n\n";
+
+    // The net.
+    file << "//------------------------------------------------------------------------------\n"
+         << "//! \\brief The net, built in the code.\n"
+         << "Net makeNet()\n{\n"
+         << "    Net net(" << typeOf(net.type()) << ");\n"
+         << "    net.name = " << literal(net.name) << ";\n";
+    for (auto const& color : net.colors.user())
+        file << "    net.colors.add(" << literal(color) << ");\n";
+    for (auto const& p : net.places())
+    {
+        file << "    [[maybe_unused]] Place& " << "p" << p.id << " = net.addPlace(" << p.tokens << "u, "
+             << literal(p.caption) << ");\n";
+        if ((p.capacity != std::numeric_limits<size_t>::max()) &&
+            (p.capacity != Net::defaultCapacity(net.type())))
+            file << "    p" << p.id << ".capacity = " << p.capacity << "u;\n";
+    }
+    for (auto const& t : net.transitions())
+    {
+        file << "    [[maybe_unused]] Transition& t" << t.id << " = net.addTransition(" << literal(t.caption) << ");\n";
+        if (t.delay > 0.0f)
+            file << "    t" << t.id << ".delay = " << floatLiteral(t.delay) << ";\n";
+        if (t.priority != 0)
+            file << "    t" << t.id << ".priority = " << t.priority << ";\n";
+    }
+    bool declared = false;
+    for (auto const& a : net.arcs())
+    {
+        std::string const from = (a.from.isPlace() ? "p" : "t") + std::to_string(a.from.id);
+        std::string const to = (a.to.isPlace() ? "p" : "t") + std::to_string(a.to.id);
+        file << "    net.addArc(" << from << ", " << to;
+        if (a.from.isTransition() && (a.durationOrZero() != 0.0f))
+            file << ", " << floatLiteral(a.durationOrZero());
+        file << ");\n";
+        bool const extra = (a.weight != 1u) || (a.kind != ArcKind::Normal) || (a.color != AnyColor);
+        if (!extra)
+            continue;
+        file << "    " << (declared ? "" : "Arc* ") << "arc = net.findArc(" << from << ", " << to << ");\n";
+        declared = true;
+        if (a.weight != 1u)
+            file << "    arc->weight = " << a.weight << "u;\n";
+        if (a.kind == ArcKind::Inhibitor)
+            file << "    arc->kind = ArcKind::Inhibitor;\n";
+        else if (a.kind == ArcKind::Reset)
+            file << "    arc->kind = ArcKind::Reset;\n";
+        if (a.color != AnyColor)
+            file << "    arc->color = net.colors.add(" << literal(net.colors.name(a.color)) << ");\n";
+    }
+    file << "    return net;\n}\n\n";
+
+    // The functions.
+    for (size_t i = 0u; i < names.size(); ++i)
+    {
+        // What it takes and gives, and the results the next arcs ask for.
+        std::set<std::string> inputs, outputs, results;
+        bool source = true;
+        for (size_t const t : transitions_of[i])
+        {
+            Transition const& transition = net.transitions()[t];
+            for (auto const& a : net.arcsIn(transition))
+            {
+                inputs.insert(nameOf(net.node(a.from)));
+                source = false;
+            }
+            for (auto const& a : net.arcsOut(transition))
+            {
+                outputs.insert(nameOf(net.node(a.to)));
+                if (a.color != AnyColor)
+                    continue; // the arc gives its own color
+                for (auto const& next : net.arcsOut(net.node(a.to)))
+                {
+                    if (next.color != AnyColor)
+                        results.insert(net.colors.name(next.color) + " (" +
+                                       nameOf(net.node(next.to)) + ")");
+                }
+            }
+        }
+        auto list = [](std::set<std::string> const& items) {
+            std::string s;
+            for (auto const& item : items)
+                s += (s.empty() ? "" : ", ") + item;
+            return s.empty() ? std::string("nothing") : s;
+        };
+        file << "//------------------------------------------------------------------------------\n"
+             << "//! \\brief " << names[i] << ": takes " << list(inputs) << ", gives " << list(outputs) << ".\n";
+        if (source)
+            file << "//! No input place: it fires when the program calls runtime.inject(instance, "
+                 << literal(names[i]) << ").\n";
+        if (!results.empty())
+            file << "//! Its result chooses what comes next: " << list(results) << ".\n";
+        file << "Color " << functions[i] << "()\n{\n"
+             << "    // TODO: what " << names[i] << " does.\n"
+             << "    return Success;\n}\n\n";
+    }
+    file << "} // namespace " << space << "\n\n";
+
+    // The program. Goal: the places without output arc (where the tokens end).
+    std::string goal;
+    for (auto const& p : net.places())
+    {
+        if (net.arcsOut(p).empty() && !net.arcsIn(p).empty())
+            goal += std::string(goal.empty() ? "" : ", ") + "{ " + literal(nameOf(p)) + ", Success }";
+    }
+    goal = "{ " + goal + (goal.empty() ? "}" : " }");
+    file << "//------------------------------------------------------------------------------\n"
+         << "int main()\n{\n"
+         << "    Net const net = " << space << "::makeNet();\n"
+         << "    Runtime::Options options;\n"
+         << "#ifdef TPNE_DEBUG\n"
+         << "    JournalPublisher publisher(net);\n"
+         << "    options.journal = [&publisher](LogEntry const& entry) { publisher.publish(entry); };\n"
+         << "#endif\n"
+         << "    // The functions run on a pool of threads (InlineExecutor: in the thread of run()).\n"
+         << "    Runtime runtime(net, std::make_shared<ThreadPoolExecutor>(4u), options);\n";
+    for (size_t i = 0u; i < names.size(); ++i)
+        file << "    runtime.on(" << literal(names[i]) << ", " << space << "::" << functions[i] << ");\n";
+    file << "#ifdef TPNE_DEBUG\n    publisher.manifest(runtime);\n#endif\n\n"
+         << "    // Ends with Success when the tokens reach the goal, else when nothing\n"
+         << "    // can fire any more (Deadlocked).\n"
+         << "    auto instance = runtime.instantiate(\"main\", {}, " << goal << ");\n"
+         << "    Color const result = runtime.run(*instance);\n"
+         << "    std::cout << net.name << \": \" << net.colors.name(result) << std::endl;\n"
+         << "    return (result == Success) ? EXIT_SUCCESS : EXIT_FAILURE;\n"
+         << "}\n";
+    return {};
+}
+
+} // namespace tpne
