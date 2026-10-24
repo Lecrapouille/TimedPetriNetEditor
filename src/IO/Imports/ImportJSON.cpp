@@ -176,7 +176,7 @@ static std::string parseNetFromJSON(Net& net, nlohmann::json const& jnet)
     if (!error.str().empty())
         return error.str();
 
-    // Positions: in "layout" (revision 5), else in the nodes ("x", "y").
+    // Positions: in "layout" (revision 2), else in the nodes ("x", "y", revision 1).
     nlohmann::json const no_layout = nlohmann::json::object();
     nlohmann::json const& layout = jnet.contains("layout") ? jnet["layout"] : no_layout;
     auto const position = [&layout](nlohmann::json const& node, char const* kind, size_t const id)
@@ -379,7 +379,6 @@ std::string importAllNetsFromJSON(std::vector<Net>& nets, std::string const& fil
         if (parseError.empty() && compact && !convertToEventGraph(net, parseError, arcs))
             parseError = "Timed event graph: " + parseError;
         if (!parseError.empty())
-
         {
             error << "Failed parsing '" << filename << "'. Reason: '" << parseError << "'" << std::endl;
             return error.str();

@@ -5,12 +5,38 @@
 // for users who cannot use the GPL, under a commercial license.
 // See LICENSING.md for details.
 
+// Graphviz (https://graphviz.org): dot -Tsvg net.dot -o net.svg. Places are
+// circles with their tokens, transitions boxes; the arcs show their weight,
+// their duration (timed nets), their color (runtime) and their kind
+// (inhibitor: a circle head, reset: a double head).
+
 #include "IO/Exports/Exports.hpp"
 #include "PetriNet/PetriNet.hpp"
-#include <fstream>
+
+#include <cerrno>
 #include <cstring>
+#include <fstream>
+#include <limits>
+#include <sstream>
 
 namespace tpne {
+
+//------------------------------------------------------------------------------
+//! \brief The text as a quoted dot string.
+static std::string quote(std::string const& text)
+{
+    std::string s = "\"";
+    for (char const c : text)
+    {
+        if ((c == '"') || (c == '\\'))
+            s += '\\';
+        if (c == '\n')
+            s += "\\n";
+        else
+            s += c;
+    }
+    return s + "\"";
+}
 
 //------------------------------------------------------------------------------
 std::string exportToGraphviz(Net const& net, std::string const& filename)
@@ -24,51 +50,64 @@ std::string exportToGraphviz(Net const& net, std::string const& filename)
         return error.str();
     }
 
-    file << "digraph G {" << std::endl;
+    bool const timed = (net.type() == TypeOfNet::TimedPetriNet);
+    file << "digraph " << quote(net.name.empty() ? "net" : net.name) << " {\n"
+         << "  rankdir=LR;\n"
+         << "  node [fontname=\"Helvetica\"];\n"
+         << "  edge [fontname=\"Helvetica\", fontsize=10];\n";
 
-    // Places
-    file << "node [shape=circle, color=blue]" << std::endl;
-    for (auto const& p: net.places())
+    // Places: their caption and their tokens (bullets up to 5).
+    file << "  node [shape=circle, fixedsize=false];\n";
+    for (auto const& p : net.places())
     {
-        file << "  " << p.key << " [label=\"" << p.caption;
+        std::string label = p.caption.empty() ? p.key : p.caption;
         if (p.tokens > 0u)
         {
-            file << "\\n" << p.tokens << "&bull;";
+            label += "\n";
+            if (p.tokens <= 5u)
+                for (size_t k = 0u; k < p.tokens; ++k)
+                    label += "\xE2\x80\xA2"; // bullet
+            else
+                label += std::to_string(p.tokens);
         }
-        file << "\"];" << std::endl;
+        file << "  " << p.key << " [label=" << quote(label);
+        if (p.capacity != std::numeric_limits<size_t>::max() && (p.capacity != Net::defaultCapacity(net.type())))
+            file << ", xlabel=" << quote("max " + std::to_string(p.capacity));
+        file << "];\n";
     }
 
-    // Transitions
-    file << "node [shape=box, color=red]" << std::endl;
-    for (auto const& t: net.transitions())
+    // Transitions: their caption (receptivity of a GRAFCET).
+    file << "  node [shape=box, height=0.3];\n";
+    for (auto const& t : net.transitions())
+        file << "  " << t.key << " [label=" << quote(t.caption.empty() ? t.key : t.caption) << "];\n";
+
+    for (auto const& a : net.arcs())
     {
-        if (net.canFire(t))
+        std::string label;
+        if (a.weight != 1u)
+            label = std::to_string(a.weight);
+        if (timed && a.from.isTransition() && (a.durationOrZero() != 0.0f))
         {
-            file << "  " << t.key << " [label=\""
-                 << t.caption << "\", color=green];"
-                 << std::endl;
+            std::ostringstream d;
+            d << a.durationOrZero();
+            label += (label.empty() ? "" : ", ") + d.str() + " s";
         }
-        else
+        if (a.color != AnyColor)
+            label += (label.empty() ? "" : ", ") + net.colors.name(a.color);
+        file << "  " << a.from.key() << " -> " << a.to.key() << " [";
+        std::string sep;
+        if (!label.empty())
         {
-            file << "  " << t.key << " [label=\""
-                 << t.caption << "\"];"
-                 << std::endl;
+            file << "label=" << quote(label);
+            sep = ", ";
         }
+        if (a.kind == ArcKind::Inhibitor)
+            file << sep << "arrowhead=odot";
+        else if (a.kind == ArcKind::Reset)
+            file << sep << "arrowhead=normalnormal, style=dashed";
+        file << "];\n";
     }
-
-    // Arcs
-    file << "edge [style=\"\"]" << std::endl;
-    for (auto const& a: net.arcs())
-    {
-        file << "  " << a.from.key() << " -> " << a.to.key();
-        if (a.from.type == Node::Type::Transition)
-        {
-            file << " [label=\"" << a.durationOrZero() << "\"]";
-        }
-        file << ";" << std::endl;
-    }
-
-    file << "}" << std::endl;
+    file << "}\n";
     return {};
 }
 

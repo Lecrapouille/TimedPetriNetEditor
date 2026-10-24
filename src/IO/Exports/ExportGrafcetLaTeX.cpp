@@ -93,7 +93,7 @@ static Place const* findInitialPlace(Net const& net)
 static std::string getStepNumber(Place const& p)
 {
     if (!p.caption.empty())
-        return p.caption;
+        return escapeLaTeX(p.caption);
     return std::to_string(p.id);
 }
 

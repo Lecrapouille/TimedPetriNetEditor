@@ -196,3 +196,62 @@ TEST(TestExports, JournalFormats)
     ASSERT_THAT(saveJournal(journal, colors, "/tmp/tpne-journal.txt"), HasSubstr("Unknown format"));
 }
 
+//------------------------------------------------------------------------------
+//! \brief A net with captions that the formats shall escape, two transitions
+//! of the same name, weights, an inhibitor arc, a duration and a color.
+static Net trickyNet()
+{
+    Net net(TypeOfNet::TimedPetriNet);
+    net.name = "Tricky \"net\"";
+    Place& p0 = net.addPlace(2u, "a \"b\" <c> & d_e");
+    Place& p1 = net.addPlace(0u, "Out");
+    Transition& t0 = net.addTransition("go");
+    Transition& t1 = net.addTransition("go");
+    net.position(p0) = { 100.0f, 100.0f };
+    net.position(p1) = { 300.0f, 100.0f };
+    net.position(t0) = { 200.0f, 50.0f };
+    net.position(t1) = { 200.0f, 150.0f };
+    net.addArc(p0, t0);
+    net.addArc(t0, p1, 1.5f);
+    net.addArc(p1, t1);
+    net.addArc(t1, p0);
+    net.findArc(p0, t0)->weight = 2u;
+    net.findArc(p1, t1)->kind = ArcKind::Inhibitor;
+    net.findArc(t1, p0)->color = net.colors.add("Blue");
+    return net;
+}
+
+//------------------------------------------------------------------------------
+TEST(TestExports, EscapedAndComplete)
+{
+    Net const net = trickyNet();
+
+    ASSERT_STREQ(saveToFile(net, "/tmp/tpne-tricky.dot").c_str(), "");
+    std::string text = read("/tmp/tpne-tricky.dot");
+    ASSERT_THAT(text, HasSubstr("digraph \"Tricky \\\"net\\\"\""));
+    ASSERT_THAT(text, HasSubstr("label=\"a \\\"b\\\" <c> & d_e"));
+    ASSERT_THAT(text, HasSubstr("P0 -> T0 [label=\"2\"]"));
+    ASSERT_THAT(text, HasSubstr("T0 -> P1 [label=\"1.5 s\"]"));
+    ASSERT_THAT(text, HasSubstr("P1 -> T1 [arrowhead=odot]"));
+    ASSERT_THAT(text, HasSubstr("T1 -> P0 [label=\"Blue\"]"));
+
+    ASSERT_STREQ(saveToFile(net, "/tmp/tpne-tricky.drawio.xml").c_str(), "");
+    text = read("/tmp/tpne-tricky.drawio.xml");
+    ASSERT_THAT(text, HasSubstr("value=\"a &quot;b&quot; &lt;c&gt; &amp; d_e\""));
+    ASSERT_THAT(text, HasSubstr("endArrow=oval"));
+    ASSERT_THAT(text, HasSubstr("x=\"80\" y=\"80\" width=\"40\"")); // centered on 100, 100
+
+    ASSERT_STREQ(saveToFile(net, "/tmp/tpne-tricky.tex").c_str(), "");
+    text = read("/tmp/tpne-tricky.tex");
+    ASSERT_THAT(text, HasSubstr("label=below:{a \"b\" <c> \\& d\\_e}"));
+    ASSERT_THAT(text, HasSubstr("(P0) at (2.00, -2.00)"));
+    ASSERT_THAT(text, HasSubstr("\\draw[inhibitor] (P1) -- (T1);"));
+
+    ASSERT_STREQ(saveToFile(net, "/tmp/tpne-tricky.yaml").c_str(), "");
+    text = read("/tmp/tpne-tricky.yaml");
+    ASSERT_THAT(text, HasSubstr("'go_t0':"));
+    ASSERT_THAT(text, HasSubstr("'go_t1':"));
+    ASSERT_THAT(text, HasSubstr("- 'a_b_c_d_e'"));
+    ASSERT_THAT(text, HasSubstr("# Symfony does not know the weights, inhibitor arcs, colored arcs"));
+}
+

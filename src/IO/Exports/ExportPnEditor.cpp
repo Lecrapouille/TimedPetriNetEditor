@@ -37,6 +37,13 @@ static void write_float32(std::ofstream& file, T const val)
 //------------------------------------------------------------------------------
 std::string exportToPNEditor(Net const& net, std::string const& filename)
 {
+    // pn-editor knows neither inhibitor nor reset arcs.
+    if (features(net) & (Feature::Inhibitors | Feature::Resets))
+    {
+        return "Failed to export the Petri net to '" + filename +
+               "'. Reason: 'PN-Editor has no inhibitor nor reset arcs'\n";
+    }
+
     // .pns file: contains the logical contents of the petri net
     {
         std::string filename_pns(filename.substr(0, filename.find_last_of('.')) + ".pns");
@@ -60,15 +67,24 @@ std::string exportToPNEditor(Net const& net, std::string const& filename)
         write_int32(file, net.transitions().size());
         for (auto const& t: net.transitions())
         {
-            write_int32(file, net.arcsOut(t).size());
+            // An arc of weight w is the place written w times.
+            size_t count = 0u;
+            for (auto const& a: net.arcsOut(t))
+                count += a.weight;
+            write_int32(file, count);
             for (auto const& a: net.arcsOut(t))
             {
-                write_int32(file, a.to.id);
+                for (size_t w = 0u; w < a.weight; ++w)
+                    write_int32(file, a.to.id);
             }
-            write_int32(file, net.arcsIn(t).size());
+            count = 0u;
+            for (auto const& a: net.arcsIn(t))
+                count += (a.kind == ArcKind::Normal) ? a.weight : 0u;
+            write_int32(file, count);
             for (auto const& a: net.arcsIn(t))
             {
-                write_int32(file, a.from.id);
+                for (size_t w = 0u; (a.kind == ArcKind::Normal) && (w < a.weight); ++w)
+                    write_int32(file, a.from.id);
             }
         }
     }
@@ -98,7 +114,7 @@ std::string exportToPNEditor(Net const& net, std::string const& filename)
         }
     }
 
-    // .pnkp: list of names for all the transitions
+    // .pnkp: list of names for all the places
     {
         std::string filename_pnkp(filename.substr(0, filename.find_last_of('.')) + ".pnkp");
         std::ofstream file(filename_pnkp);
@@ -116,7 +132,7 @@ std::string exportToPNEditor(Net const& net, std::string const& filename)
         }
     }
 
-    // .pnk: list of names for all the places
+    // .pnk: list of names for all the transitions
     {
         std::string filename_pnk(filename.substr(0, filename.find_last_of('.')) + ".pnk");
         std::ofstream file(filename_pnk);
