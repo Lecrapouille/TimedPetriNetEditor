@@ -253,5 +253,10 @@ TEST(TestExports, EscapedAndComplete)
     ASSERT_THAT(text, HasSubstr("'go_t1':"));
     ASSERT_THAT(text, HasSubstr("- 'a_b_c_d_e'"));
     ASSERT_THAT(text, HasSubstr("# Symfony does not know the weights, inhibitor arcs, colored arcs"));
+
+    ASSERT_STREQ(saveToFile(net, "/tmp/tpne-tricky.svg").c_str(), "");
+    text = read("/tmp/tpne-tricky.svg");
+    ASSERT_THAT(text, HasSubstr("<title>Tricky &quot;net&quot;</title>"));
+    ASSERT_THAT(text, HasSubstr("marker-end=\"url(#circle)\""));
 }
 

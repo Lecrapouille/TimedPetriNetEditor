@@ -35,6 +35,8 @@ std::string exportToPetriLaTeX(Net const& net, std::string const& filename);
 std::string exportToGrafcetLaTeX(Net const& net, std::string const& filename);
 std::string exportToGrafcetCpp(Net const& net, std::string const& filename);
 std::string exportToPNML(Net const& net, std::string const& filename);
+//! \brief A vector picture of the net at the positions of the editor.
+std::string exportToSVG(Net const& net, std::string const& filename);
 //! \brief PNML read by Symmetri: one <initialMarking> per token, the node
 //! identifiers are their captions.
 std::string exportToSymmetriPNML(Net const& net, std::string const& filename);
