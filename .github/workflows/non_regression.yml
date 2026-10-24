@@ -43,6 +43,10 @@ jobs:
       - name: Compile and run the examples of the runtime
         run: |
           make -C examples/runtime run
+      - name: Check the properties of the examples
+        run: |
+          build/tpne-check data/examples/Philosophers.json data/examples/ProducerConsumer.json
+          build/tpne-check --allow-deadlock data/examples/PickAndPlace.json
       - name: Check if the library can be linked against a project
         run: |
           export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/lib/
