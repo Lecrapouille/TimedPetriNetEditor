@@ -609,8 +609,23 @@ void Editor::onDraw()
     }
     if (!m_focus_window.empty() && (ImGui::GetFrameCount() > 3))
     {
-        if (m_focus_window == "Analysis")
-            openAnalysis(6); // the properties of the net
+        // "Analysis": the properties of the net; a tab of the analysis by its
+        // name: that tab ("Critical circuit" also marks the circuit).
+        char const* tabs[] = { "Critical circuit", "Gantt", "Linear system", "Equations",
+                               "Adjacency", "Firing dates", "Properties", "Analysis" };
+        for (int i = 0; i < 8; ++i)
+        {
+            if (m_focus_window != tabs[i])
+                continue;
+            openAnalysis(std::min(i, 6));
+            if (i == 0)
+            {
+                CriticalCycleResult const cc = findCriticalCycle(net());
+                if (cc.success)
+                    markArcs(net(), cc.arcs);
+            }
+            m_focus_window = "Analysis";
+        }
         ImGui::SetWindowFocus(m_focus_window.c_str());
         m_focus_window.clear();
     }
@@ -621,7 +636,10 @@ void Editor::onDraw()
     programWindow();
     inspector();
     view();
-    notifications();
+    // A screenshot asked from the command line shows the windows, not the
+    // messages of the moment (the console keeps them).
+    if (!m_auto_screenshot_pending)
+        notifications();
 }
 
 //------------------------------------------------------------------------------
