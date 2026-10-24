@@ -51,9 +51,9 @@ SRC_FILES += $(call rwildcard,$(P)/src/PetriNet,*.c)
 SRC_FILES += $(call rwildcard,$(P)/src/MaxPlus,*.cpp)
 SRC_FILES += $(call rwildcard,$(P)/src/MaxPlus,*.c)
 SRC_FILES += $(call rwildcard,$(P)/src/Runtime,*.cpp)
-SRC_FILES += $(call rwildcard,$(P)/src/IO,*.cpp)
 SRC_FILES += $(call rwildcard,$(P)/src/Analysis,*.cpp)
-SRC_FILES += $(call rwildcard,$(P)/tests,*.cpp)
+SRC_FILES += $(call rwildcard,$(P)/src/IO,*.cpp)
+SRC_FILES += $(wildcard $(P)/tests/*.cpp)
 
 # BEWARE: Disable fast math for testing, else the tests on NaN will fail.
 USER_CXXFLAGS += -Wno-float-equal -fno-fast-math -Wno-nan-infinity-disabled

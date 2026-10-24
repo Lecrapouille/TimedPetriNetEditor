@@ -34,6 +34,11 @@ std::string exportToGraphviz(Net const& net, std::string const& filename);
 std::string exportToPetriLaTeX(Net const& net, std::string const& filename);
 std::string exportToGrafcetLaTeX(Net const& net, std::string const& filename);
 std::string exportToGrafcetCpp(Net const& net, std::string const& filename);
+//! \brief The GRAFCETs of a document in one C++ class running them together
+//! (cross references, forcing orders), with the rules of the editor; no
+//! library needed (micro-controllers). GRAFCET_DEBUG: it publishes its steps
+//! for the editor.
+std::string exportGrafcetsToCpp(std::vector<Net> const& nets, std::string const& filename);
 std::string exportToPNML(Net const& net, std::string const& filename);
 //! \brief GRML: the format of GreatSPN (CosyVerif), read by Symmetri.
 std::string exportToGRML(Net const& net, std::string const& filename);
@@ -61,6 +66,9 @@ struct Exporter
     std::string extensions;
     //! \brief the pointer function for importing (i.e. importFromJSON)
     ExportFunc exportFct;
+    //! \brief For a document of several nets (GRAFCETs running together):
+    //! the function exporting them all, else null (the active net only).
+    std::string (*exportAllFct)(std::vector<Net> const&, std::string const&) = nullptr;
 };
 
 //! \brief Container of file formats we can export the net to (LaTeX, Symfony, Dot ...).

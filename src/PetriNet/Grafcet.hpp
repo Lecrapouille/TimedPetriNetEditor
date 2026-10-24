@@ -547,7 +547,10 @@ public:
         virtual void timers(std::vector<Timer>& /*out*/) const {}
         //! \brief Write the expression in C ("C") or Structured Text ("ST").
         //! Set `supported` to false for constructs with a memory (edges,
-        //! timers) that have no direct translation.
+        //! timers) that have no direct translation. "gen": for the GRAFCET
+        //! code generator: inputs "(in.a != 0)", steps "X[#graph#][n]",
+        //! "RISE(e)", "FALL(e)", "TIMER(t1, e, t2)", operands of and/or
+        //! always evaluated (& and |).
         virtual std::string translate(std::string const& lang, bool& supported) const = 0;
     };
 

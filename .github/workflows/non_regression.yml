@@ -44,6 +44,9 @@ jobs:
       - name: Compile and run the examples of the runtime
         run: |
           make -C examples/runtime run
+      - name: Check the generated GRAFCET code against the engine
+        run: |
+          tests/codegen/run.sh
       - name: Test the remote control and the journal published on ZeroMQ
         run: |
           xvfb-run -a python3 tests/remote/test_remote.py build/TimedPetriNetEditor build/examples/Debugger

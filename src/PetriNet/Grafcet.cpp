@@ -47,7 +47,11 @@ class InputNode : public Receptivity::Node
 public:
     InputNode(std::string const& name, int const* value) : m_name(name), m_value(value) {}
     bool evaluate() const override { return *m_value != 0; }
-    std::string translate(std::string const&, bool&) const override { return m_name; }
+    std::string translate(std::string const& lang, bool&) const override
+    {
+        // Generated code: the inputs are integers.
+        return (lang == "gen") ? "(in." + m_name + " != 0)" : m_name;
+    }
 private:
     std::string m_name;
     int const* m_value;
@@ -61,8 +65,11 @@ public:
         : m_graph(graph), m_id(id), m_place(place)
     {}
     bool evaluate() const override { return (m_place != nullptr) && (m_place->tokens > 0u); }
-    std::string translate(std::string const&, bool&) const override
+    std::string translate(std::string const& lang, bool&) const override
     {
+        // Generated code: the graph between # is replaced by its array.
+        if (lang == "gen")
+            return "X[#" + m_graph + "#][" + std::to_string(m_id) + "]";
         return (m_graph.empty() ? "" : m_graph + ".") + "X[" + std::to_string(m_id) + "]";
     }
 private:
@@ -112,7 +119,10 @@ public:
     void endOfCycle() override { m_left->endOfCycle(); m_right->endOfCycle(); }
     std::string translate(std::string const& lang, bool& supported) const override
     {
-        char const* op = m_and ? word(lang, " && ", " AND ") : word(lang, " || ", " OR ");
+        // Generated code: both operands are evaluated (their edges and time
+        // operators see the values), as by evaluate().
+        char const* op = (lang == "gen") ? (m_and ? " & " : " | ")
+                       : (m_and ? word(lang, " && ", " AND ") : word(lang, " || ", " OR "));
         return "(" + m_left->translate(lang, supported) + op + m_right->translate(lang, supported) + ")";
     }
 private:
@@ -145,6 +155,8 @@ public:
     void endOfCycle() override { m_operand->endOfCycle(); }
     std::string translate(std::string const& lang, bool& supported) const override
     {
+        if (lang == "gen")
+            return std::string(m_rising ? "RISE(" : "FALL(") + m_operand->translate(lang, supported) + ")";
         supported = false;
         return std::string(m_rising ? "RISING(" : "FALLING(") + m_operand->translate(lang, supported) + ")";
     }
@@ -201,7 +213,8 @@ public:
     }
     std::string translate(std::string const& lang, bool& supported) const override
     {
-        supported = false;
+        if (lang != "gen")
+            supported = false;
         return "TIMER(" + std::to_string(m_t1) + ", " + m_operand->translate(lang, supported)
             + ", " + std::to_string(m_t2) + ")";
     }
@@ -248,7 +261,7 @@ public:
         else if (op == "!=") op = word(lang, "!=", "<>");
         std::ostringstream number;
         number << m_number;
-        return "(" + m_name + " " + op + " " + number.str() + ")";
+        return "(" + std::string((lang == "gen") ? "in." : "") + m_name + " " + op + " " + number.str() + ")";
     }
 private:
     std::string m_name;

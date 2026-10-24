@@ -1533,7 +1533,19 @@ void Editor::exportNetTo(Exporter const& exporter)
 
     if (FileDialogHelper::display("ExportDlgKey", [this, &exporter](std::string const& path)
     {
-        std::string error = exporter.exportFct(net(), path);
+        // The GRAFCETs of a document run together: exported together.
+        std::string error;
+        if ((exporter.exportAllFct != nullptr) && (activeDocument().netCount() > 1u))
+        {
+            std::vector<Net> nets;
+            for (size_t i = 0u; i < activeDocument().netCount(); ++i)
+                nets.push_back(activeDocument().getNet(i).net);
+            error = exporter.exportAllFct(nets, path);
+        }
+        else
+        {
+            error = exporter.exportFct(net(), path);
+        }
         if (error.empty())
         {
             if (m_states.file_dialog == States::FileDialog::Export)
