@@ -6,6 +6,7 @@
 // See LICENSING.md for details.
 
 #include "Editor/Editor.hpp" // Selected by Makefile
+#include <cstdlib>
 #include <iostream>
 #include <unistd.h> // getopt
 
@@ -13,12 +14,14 @@
 static void usage(const char* name)
 {
     std::cout
-      << name << " [-r] [-s|-w screenshot.png] [petri.json]" << std::endl
+      << name << " [-r] [-s|-w screenshot.png] [-d seconds] [-f window] [petri.json]" << std::endl
       << "Where:" << std::endl
       << "  [petri.json] is an optional Petri net file to load (i.e. examples/Howard1.json)" << std::endl
       << "  -r starts the simulation once the file is loaded" << std::endl
       << "  -s screenshot.png saves the net as a PNG file once drawn, then quits" << std::endl
       << "  -w screenshot.png saves the whole window as a PNG file once drawn, then quits" << std::endl
+      << "  -d seconds waits before the screenshot (the simulation runs meanwhile)" << std::endl
+      << "  -f window brings this window in front (Journal, Analysis, Console ...)" << std::endl
       << std::endl;
 }
 
@@ -33,7 +36,9 @@ int main(int argc, char* argv[])
 
     bool whole_window = false;
     bool start = false;
-    while ((opt = getopt(argc, argv, "hrs:w:")) != -1)
+    double delay = 0.0;
+    std::string focus;
+    while ((opt = getopt(argc, argv, "hrs:w:d:f:")) != -1)
     {
         switch (opt)
         {
@@ -49,6 +54,12 @@ int main(int argc, char* argv[])
                 break;
             case 'r':
                 start = true;
+                break;
+            case 'd':
+                delay = std::atof(optarg);
+                break;
+            case 'f':
+                focus = optarg;
                 break;
             case '?':
                 std::cerr << "Unknown option: '" << char(optopt) << "'!" << std::endl;
@@ -67,6 +78,11 @@ int main(int argc, char* argv[])
     if (!screenshot.empty())
     {
         editor.setAutoScreenshot(screenshot, true, whole_window);
+    }
+    editor.screenshotDelay(delay);
+    if (!focus.empty())
+    {
+        editor.focusWindowAtLaunch(focus);
     }
     if (start)
     {

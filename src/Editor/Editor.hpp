@@ -73,6 +73,18 @@ public:
                            bool whole_window = false);
 
     //-------------------------------------------------------------------------
+    //! \brief Take the screenshot of setAutoScreenshot() after these seconds
+    //! (a simulation started at launch has run).
+    //-------------------------------------------------------------------------
+    void screenshotDelay(double const seconds) { m_screenshot_delay = seconds; }
+
+    //-------------------------------------------------------------------------
+    //! \brief Bring this window in front once the layout is built (the tab of
+    //! a dock: "Journal", "Analysis" ...).
+    //-------------------------------------------------------------------------
+    void focusWindowAtLaunch(std::string const& name) { m_focus_window = name; }
+
+    //-------------------------------------------------------------------------
     //! \brief Start the simulation of the document once it is loaded.
     //-------------------------------------------------------------------------
     void startSimulationAtLaunch() { m_start_simulation = true; }
@@ -484,6 +496,8 @@ private:
     bool m_screenshot_window = false;
     bool m_start_simulation = false;
     int m_screenshot_defer_frames = 0;
+    double m_screenshot_delay = 0.0;
+    std::string m_focus_window;
     //! \brief Frames to draw before sleeping (docking and centering settle).
     static constexpr int BUSY_FRAMES = 20;
     int m_busy_frames = BUSY_FRAMES;

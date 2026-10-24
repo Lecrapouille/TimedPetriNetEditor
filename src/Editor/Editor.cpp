@@ -596,6 +596,11 @@ void Editor::onDraw()
     }
 
     keepNetProportions();
+    if (!m_focus_window.empty() && (ImGui::GetFrameCount() > 3))
+    {
+        ImGui::SetWindowFocus(m_focus_window.c_str());
+        m_focus_window.clear();
+    }
     menu();
     console();
     m_journal.draw(net(), activeDocument().isAnySimulationRunning(), m_marks);
@@ -1584,6 +1589,8 @@ void Editor::onFrameEnd()
         --m_screenshot_defer_frames;
         return;
     }
+    if (ImGui::GetTime() < m_screenshot_delay)
+        return;
 
     std::string const path = m_auto_screenshot_path;
     m_last_screenshot_ok = saveScreenshot(path);
