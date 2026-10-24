@@ -388,10 +388,11 @@ while (rt.step(inst, now())) { /*...*/ }    // non bloquant, dans ta boucle
       (`doc/11-From-Editor-To-Code.md`, sorties réelles).
 - [x] Exemples : micro-services (HTTP fictif), robot (pick-and-place ; Robotik l'utilise
       de son côté), Arduino (feu tricolore), plus `Debugger.cpp` et `Benchmark.cpp`.
-- [ ] Benchmark contre Symmetri sur leurs réseaux PNML d'exemple : côté TPNE fait
-      (`examples/runtime/Benchmark.cpp`, même charge que l'exemple *performance* de Symmetri,
-      ~5 M franchissements/s en `-O3`) ; reste à mesurer Symmetri sur la même machine
-      (compiler son exemple, cf. `examples/runtime/README.md`).
+- [x] Benchmark contre Symmetri sur la même machine (`examples/runtime/Benchmark.cpp` et
+      `SymmetriBenchmark.cpp`, résultats dans `examples/runtime/README.md`) : Symmetri plus
+      rapide sur les petits réseaux (0,6 µs contre 1,0 µs pour 6 franchissements) ; TPNE
+      4 à 6 fois plus rapide sur `auto.pnml` (1921 transitions) ; les cycles sans durée
+      (`n1`, `sat`) : arrêtés par TPNE, sans fin chez Symmetri (mémoire épuisée).
 
 ## 10. Suite (liste du 24 octobre 2026)
 

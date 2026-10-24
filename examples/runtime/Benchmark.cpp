@@ -17,8 +17,7 @@
 //
 //   ./Benchmark [net.pnml] [runs]
 //
-// Symmetri: build its examples (cmake -DBUILD_EXAMPLES=ON) and run
-// ./Performance [net.pnml] on the same machine.
+// Symmetri: SymmetriBenchmark.cpp times it the same way (README.md).
 //=============================================================================
 
 #include "IO/IO.hpp"
