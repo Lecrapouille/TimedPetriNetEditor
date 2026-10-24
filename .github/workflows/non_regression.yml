@@ -18,6 +18,7 @@ jobs:
           sudo apt-get install libdw-dev pkg-config libmosquitto-dev libzmq3-dev libx11-dev libxinerama-dev
           sudo apt-get install libasound2-dev libxrandr-dev libxi-dev libgl1-mesa-dev libglu1-mesa-dev libxcursor-dev
           sudo apt-get install libwayland-dev libxkbcommon-x11-dev libglfw3-dev libxcursor-dev libxinerama-dev
+          sudo apt-get install xvfb python3-zmq
       - name: Checkout TimedPetriNetEditor
         uses: actions/checkout@v6
         with:
@@ -43,6 +44,9 @@ jobs:
       - name: Compile and run the examples of the runtime
         run: |
           make -C examples/runtime run
+      - name: Test the remote control and the journal published on ZeroMQ
+        run: |
+          xvfb-run -a python3 tests/remote/test_remote.py build/TimedPetriNetEditor build/examples/Debugger
       - name: Check the properties of the examples
         run: |
           build/tpne-check data/examples/Philosophers.json data/examples/ProducerConsumer.json
