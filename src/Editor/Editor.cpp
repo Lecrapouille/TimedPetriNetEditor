@@ -291,6 +291,8 @@ Simulation const& Editor::simulation() const
 //------------------------------------------------------------------------------
 void Editor::newDocument()
 {
+    // The journal is the one of the net of the document shown.
+    m_journal.clear();
     createDocument();
     m_active_document_index = m_documents.size() - 1;
 }
@@ -312,7 +314,7 @@ void Editor::closeDocument(Document const* doc)
 {
     if (doc == nullptr)
         return;
-    m_journal.stopReplay();
+    m_journal.clear();
 
     for (size_t i = 0; i < m_documents.size(); ++i)
     {
@@ -335,8 +337,9 @@ void Editor::closeDocument(Document const* doc)
 //------------------------------------------------------------------------------
 void Editor::setActiveDocument(size_t index)
 {
-    if (index < m_documents.size())
+    if ((index < m_documents.size()) && (index != m_active_document_index))
     {
+        m_journal.clear();
         m_active_document_index = index;
     }
 }
@@ -354,6 +357,7 @@ void Editor::createGEMMADocument()
     auto& doc = activeDocument();
 
     // Unregister old nets
+    m_journal.clear();
     doc.unregisterNets();
     doc.nets().clear();
 
@@ -1322,7 +1326,8 @@ void Editor::loadNetFile()
 //------------------------------------------------------------------------------
 void Editor::loadDocumentFromFile(std::string const& filepath)
 {
-    m_journal.stopReplay();
+    // The firings of the previous nets mean nothing for the loaded ones.
+    m_journal.clear();
     std::string ext = Path::extension(filepath);
     Importer const* importer = getImporter(ext);
 
@@ -1429,6 +1434,7 @@ void Editor::importNetFrom(Importer const& importer)
 
     if (FileDialogHelper::display("ImportDlgKey", [this, &importer](std::string const& filepath)
     {
+        m_journal.clear();
         m_marked_arcs.clear();
         net().clear();
         std::string error = importer.importFct(net(), filepath);
@@ -1675,6 +1681,7 @@ void Editor::clearNet()
     if (simulation().isRunning())
         return ;
 
+    m_journal.clear();
     auto action = std::make_unique<NetModificationAction>([this]() -> Net& { return net(); });
     action->before(net());
 
