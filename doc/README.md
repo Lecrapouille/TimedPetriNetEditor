@@ -17,12 +17,13 @@ Chapters 5 to 10 are references: open them when you need them.
 
 | # | Chapter | Contents |
 |---|---------|----------|
-| 5 | [Exports and code generation](05-Exports-and-Code-Generation.md) | LaTeX, Graphviz, Draw.io, pn-editor, C++ code of a GRAFCET |
+| 5 | [Exports and code generation](05-Exports-and-Code-Generation.md) | SVG, LaTeX, Graphviz, PNML, GRML, journals; C++ for the runtime and for GRAFCETs; the editor as a debugger |
 | 6 | [File format](06-File-Format.md) | The JSON file: nets, GRAFCET actions, inputs and outputs, descriptions |
 | 7 | [Editor reference](07-Editor-Reference.md) | Every window, mouse gesture, key, menu and command line option |
 | 8 | [Julia](08-Julia.md) | Drive the editor and the (max,+) algorithms from Julia |
-| 9 | [Remote control](09-Remote-Control.md) | JSON commands over ZeroMQ: load, start, fire, read the state |
-| 10 | [Use the library in C++](10-Library.md) | Load a file, simulate, run a GRAFCET, compute dates without the editor |
+| 9 | [Remote control](09-Remote-Control.md) | JSON commands over ZeroMQ: load, start, fire, read the state; follow a running program |
+| 10 | [Use the library in C++](10-Library.md) | Load a file, simulate, run a GRAFCET, compute dates, run your functions, check the properties, without the editor |
+| 11 | [From the editor to the code](11-From-Editor-To-Code.md) | A robot from the drawing to a running program, watched in the editor |
 | — | [Glossary](Glossary.md) | The words of the editor in simple English |
 | — | [Bibliography](Bibliography.md) | Books, lectures and other editors |
 
@@ -32,7 +33,8 @@ Chapters 5 to 10 are references: open them when you need them.
 - *"How fast can my factory produce?"* → [3. Timed nets](03-Timed-Nets-and-Max-Plus.md)
 - *"I teach or learn automation (GRAFCET, GEMMA)."* → [4. GRAFCET and GEMMA](04-GRAFCET-and-GEMMA.md)
 - *"Which key does what?"* → [7. Editor reference](07-Editor-Reference.md)
-- *"I want my program to use the nets."* → [10. Use the library](10-Library.md), [9. Remote control](09-Remote-Control.md)
+- *"I want my program to use the nets."* → [11. From the editor to the code](11-From-Editor-To-Code.md), [10. Use the library](10-Library.md), [9. Remote control](09-Remote-Control.md)
+- *"Can my net deadlock?"* → [7. Editor reference](07-Editor-Reference.md#7-journal-and-analysis)
 
 ## A note on the language
 

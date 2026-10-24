@@ -2,16 +2,23 @@
 
 What you will find here: how a program uses the nets without the editor:
 load a file, run a GRAFCET, compute the dates of a timed event graph,
-simulate it, draw a net in your own Dear ImGui window.
+simulate it, draw a net in your own Dear ImGui window, run your functions,
+check the properties of a net.
 
-The editor is made of three libraries:
+The editor is made of these libraries (C++20):
 
-| Library | Sources | What |
-|---------|---------|------|
-| `libTimedPetriNet` | `src/PetriNet` | nets, firing rule, engine, simulation, GRAFCET engine, imports, exports; no graphics, no (max,+) |
-| `libTimedPetriMaxPlus` | `src/MaxPlus` | (max,+) algebra, Howard, critical circuit, linear systems, equations, the Julia export |
-| `libTimedPetriRuntime` | `src/Runtime` | the runtime: a transition is a function of your program (§6) |
-| `libTimedPetriGUI` | `src/Editor` | the editor |
+| Library | Sources | Needs | What |
+|---------|---------|-------|------|
+| `libTimedPetriNet` | `src/PetriNet` | | nets, firing rule, engine, simulation, GRAFCET engine; no file format, no graphics |
+| `libTimedPetriIO` | `src/IO` | Net | the file formats: `loadFromFile()`, `saveToFile()`, importers and exporters ([chapter 5](05-Exports-and-Code-Generation.md)) |
+| `libTimedPetriMaxPlus` | `src/MaxPlus` | Net, IO | (max,+) algebra, Howard, critical circuit, linear systems, equations, flowshops, the Julia export |
+| `libTimedPetriAnalysis` | `src/Analysis` | Net | reachability and coverability graphs, deadlocks, bounds, liveness, invariants (§8) |
+| `libTimedPetriRuntime` | `src/Runtime` | Net | the runtime: a transition is a function of your program (§6) |
+| `libTimedPetriGUI` | `src/Editor` | all | the editor |
+
+A program running a net on a board needs only `libTimedPetriNet` and
+`libTimedPetriRuntime`: it builds its net in the code (§6) or the editor
+writes this code (*File > Export > C++ functions for the runtime*).
 
 [RobotIK](https://github.com/Lecrapouille/Robotik) drives its robot cells
 with the first one.
@@ -24,15 +31,18 @@ After `make`, the libraries are in `build/`. A program `main.cpp`:
 
 ```sh
 g++ -std=c++20 -Isrc -Iexternal/json/include -Iexternal main.cpp \
-    -Lbuild -lTimedPetriMaxPlus -lTimedPetriNet -Wl,-rpath,$PWD/build -o main
+    -Lbuild -lTimedPetriMaxPlus -lTimedPetriIO -lTimedPetriNet -Wl,-rpath,$PWD/build -o main
 ```
 
 `-lTimedPetriMaxPlus` only for §3 (cycle time, dates of the (max,+)
-equations). It needs `registerMaxPlusExporters()` to save `.jl` files.
+equations). Call `registerMaxPlusFormats()` once to load `.flowshop` files
+and save `.jl` files with `loadFromFile()` and `saveToFile()`.
 
 A project built with Make can compile the sources instead: define
-`TPNE_DIR` and include `TimedPetriNet.mk`, which gives `TPNE_SOURCES`,
-`TPNE_INCLUDES` and `TPNE_CXXFLAGS` (and `TPNE_VIEWER_SOURCES` for §5).
+`TPNE_DIR` and include `TimedPetriNet.mk`, which gives `TPNE_SOURCES` (nets,
+formats, (max,+)), `TPNE_CORE_SOURCES` (the nets only), `TPNE_RUNTIME_SOURCES`,
+`TPNE_ANALYSIS_SOURCES`, `TPNE_INCLUDES` and `TPNE_CXXFLAGS` (and
+`TPNE_VIEWER_SOURCES` for §5).
 
 ## 2. Run a GRAFCET
 
@@ -42,7 +52,7 @@ cycle, and reads the steps and the outputs:
 
 ```c++
 #include "PetriNet/GrafcetEngine.hpp"
-#include "PetriNet/Imports/Imports.hpp"
+#include "IO/Imports/Imports.hpp"
 #include <iostream>
 using namespace tpne;
 
@@ -105,7 +115,7 @@ descriptions and the kinds of the inputs and outputs.
 
 ```c++
 #include "MaxPlus/Algorithms.hpp"
-#include "PetriNet/Flowshop.hpp"
+#include "MaxPlus/Flowshop.hpp"
 
 Net net;
 importFlowshop(net, "data/examples/simple.flowshop");
@@ -198,10 +208,11 @@ of a function chooses what comes next.
 ```
 
 ```c++
+#include "IO/IO.hpp"
 #include "Runtime/Runtime.hpp"
 
 Net net;                                         // drawn in the editor
-loadFromFile(net, "pick.json", springify);       // arcs from Held: Success / Failed
+loadFromFile(net, "pick.json");                  // arcs from Held: Success / Failed
 
 Runtime rt(net, std::make_shared<ThreadPoolExecutor>(4));
 rt.on("detect", [] { camera.detect(); });               // nothing: Success
@@ -237,6 +248,15 @@ while (rt.step(*order)) { /* ... */ }
   Runtime::Recovery::Restart)` rebuilds the instance from the journal and
   calls again the functions that were running (`Recovery::Fail` ends them
   with `Failed`).
+- Without file (a board): build the net in the code, the positions are not
+  needed: `Place& ready = net.addPlace(1u, "Ready"); Transition& detect =
+  net.addTransition("detect"); net.addArc(ready, detect);` (and
+  `net.findArc(...)->weight`, `->kind`, `->color = net.colors.add("Blue")`).
+- `saveJournal(order->log(), net.colors, "orders.xes")` writes the journal
+  as JSON lines, CSV or XES (process mining), by the extension.
+- `JournalPublisher` (`Runtime/JournalPublisher.hpp`, `-lzmq`) publishes the
+  journal: the editor shows the program running
+  ([chapter 9](09-Remote-Control.md#4-follow-a-running-program)).
 - A net can be the function of a transition of another net (a macro step):
   `parent.on("pick", SubNet(child_runtime, { { "Done", Success } }))` runs
   an instance of the child net at each firing; its end (`Success`,
@@ -268,6 +288,28 @@ the erroneous arcs of `isEventGraph()`, `NetViewer::Options::highlighted_arcs`).
 
 ---
 
-That is the end of the reference. The words are in the
+## 8. Check the properties of a net
+
+```c++
+#include "Analysis/Analysis.hpp"            // -lTimedPetriAnalysis
+
+Properties p = properties(net);             // explores up to 100000 markings
+if (p.deadlock)                             // the marking and the path to it
+    std::cout << "deadlock after " << p.deadlock_path.size() << " firings\n";
+std::string error;
+auto pinv = pInvariants(net, error);        // y.C = 0, y >= 0 (minimal supports)
+std::cout << report(net);                   // all of it, as text
+```
+
+`reachabilityGraph()` and `coverabilityGraph()` (Karp-Miller) give the
+graphs of the markings, `toDot()` writes them for Graphviz. The durations
+are not considered; Karp-Miller refuses inhibitor and reset arcs and
+capacities. `tpne-check` is the same in a terminal or a CI: its exit code is
+1 when a net can deadlock.
+
+---
+
+Next: [11. From the editor to the code](11-From-Editor-To-Code.md), the
+whole way with one example. The words are in the
 [glossary](Glossary.md); books and other tools in the
 [bibliography](Bibliography.md).

@@ -14,6 +14,7 @@ make -C examples/runtime run    # run them
 | [PickAndPlace.cpp](PickAndPlace.cpp) | desktop | [`PickAndPlace.json`](../../data/examples/PickAndPlace.json) run on a pool of threads; the result of `grasp` (Success, Failed) colors the token, the arcs choose `place` or `retry`; the journal in JSON lines |
 | [MicroServices.cpp](MicroServices.cpp) | services | a request to a fake HTTP service; its answer is injected; a **timeout** is a transition with a delay in conflict with the answer, going to a place of error; the net saved as JSON, PNML and Graphviz (libTimedPetriIO), the journal as CSV and XES (process mining) |
 | [Benchmark.cpp](Benchmark.cpp) | desktop | the workload of the example *performance* of Symmetri: its default net, or one of its PNML nets, timed (§ below) |
+| [Debugger.cpp](Debugger.cpp) | desktop | the pick and place over and over, publishing its journal on ZeroMQ: open `PickAndPlace.json` in the editor, *Debug > Connect*, and watch it run (built when libzmq is found) |
 | [TrafficLight.cpp](TrafficLight.cpp) | micro-controller | `setup()` and `loop()` as in a sketch: one thread, `step()` with the time of `millis()`, synchronous functions, a pedestrian button injected, no journal |
 | [Ros2Node.cpp](Ros2Node.cpp) | ROS 2 | a timer of the node calls `step()`; functions send ROS actions, their results come back by `inject()` (needs `rclcpp`, not built here) |
 

@@ -170,7 +170,8 @@ But : `src/PetriNet` compilable seul, sans ImGui ni coordonnées, consommable pa
       possédé par le `Document` de l'éditeur. Écart : le `Layout` est possédé par le `Net`
       (`net.layout()`, `net.position(node)`), à part des nœuds, pour rester aligné sans effort
       sur les ajouts, suppressions, copies et annulations ; l'`Engine` et les algorithmes
-      ne le lisent pas.
+      ne le lisent pas. L'API du cœur ne prend plus de coordonnées : `addPlace(tokens, caption)`,
+      `addTransition(caption)`, la position se donne par `net.position(node)`.
 - [x] Déplacer `findPlaceAt` / `findTransitionAt` dans l'éditeur (`placeAt()`, `nodeAt()` de `Drawable`).
 - [x] Déplacer `ForceDirected` dans l'éditeur (il ne manipule que le layout), ainsi que
       `arrangeTopDown()` (`Editor/TopDownLayout`).
@@ -250,8 +251,10 @@ But : `src/PetriNet` compilable seul, sans ImGui ni coordonnées, consommable pa
       `features(net)` les calcule et `allows(type, feature)` les valide :
       `TimedEventGraph` et `GRAFCET` n'en acceptent aucune. Les analyses se
       désactivent selon les extensions utilisées, pas selon le type.
-- [ ] Plus tard (après §3.1) : retirer `TimedEventGraph` du cœur, devenu
-      `TimedPetriNet` + `isEventGraph()` + option d'affichage compact dans le `Layout`.
+- [x] Plus tard (après §3.1) : retirer `TimedEventGraph` du cœur, devenu
+      `TimedPetriNet` + `isEventGraph()` + option d'affichage compact dans le `Layout`
+      (`Layout::compact`, `convertToEventGraph()` ; le JSON garde le type « Timed event graph »
+      pour les anciens lecteurs, relu en `TimedPetriNet` compact).
 - [x] Arcs inhibiteurs.
 - [x] Arcs de reset.
 - [x] Poids sur les arcs (si pas déjà complets partout).
@@ -340,33 +343,90 @@ while (rt.step(inst, now())) { /*...*/ }    // non bloquant, dans ta boucle
 
 ## 7. Phase 5 — L'éditeur comme IDE du runtime
 
-- [ ] Éditeur de couleurs de jetons et de couleur attendue sur les arcs.
-- [ ] Mode « connexion » : le runtime publie ses événements sur ZeroMQ (sens inversé
-      du remote actuel), l'éditeur affiche le marquage en direct.
-- [ ] Rejouer un journal dans l'éditeur (barre de temps, pas à pas avant/arrière).
-- [ ] Surligner les transitions sans callback (à partir d'un manifeste exporté par le runtime).
-- [ ] Import/export PNML compatible Symmetri (pour comparer sur les mêmes réseaux).
-- [ ] Remplacer l'export « code GRAFCET C++ » par un export « squelette de callbacks »
-      pour `tpne-runtime`.
-- [ ] Bugs listés : centrage du graphe, sélection d'arcs en mode graphe d'événements.
-- [ ] Tester le remote ZeroMQ (test d'intégration en CI avec un client Python).
+- [x] Éditeur de couleurs de jetons et de couleur attendue sur les arcs (clic droit sur un
+      arc, colonne de la table des arcs, couleurs du réseau dans « Document », couleurs
+      dessinées sur les arcs).
+- [x] Mode « connexion » : le runtime publie ses événements sur ZeroMQ (sens inversé
+      du remote actuel), l'éditeur affiche le marquage en direct (`Runtime/JournalPublisher.hpp`,
+      en-tête seul : seul le programme qui l'inclut lie libzmq ; *Debug > Connect*, option `-c` ;
+      `examples/runtime/Debugger.cpp`).
+- [x] Rejouer un journal dans l'éditeur (barre de temps, pas à pas avant/arrière) : fenêtre
+      *Journal* (simulation, fichier `.jsonl`, programme connecté), *Replay* par `Runtime::restore()`.
+- [x] Surligner les transitions sans callback (à partir d'un manifeste exporté par le runtime) :
+      `toManifest()`, reçu en direct ou *Debug > Open a manifest*.
+- [x] Import/export PNML compatible Symmetri (pour comparer sur les mêmes réseaux) : `.pnml`
+      (standard + `<toolspecific>`) et `.symmetri.pnml` ; GRML (GreatSPN) en plus.
+- [x] Remplacer l'export « code GRAFCET C++ » par un export « squelette de callbacks »
+      pour `tpne-runtime` : nouvel export `.cpp` ; l'export GRAFCET est gardé et refait (§10).
+- [x] Bugs listés : centrage du graphe (correct ; les boucles d'un graphe d'événements
+      compact sont maintenant dessinées), sélection d'arcs en mode graphe d'événements
+      (supprimer plusieurs arcs renumérotait les places cachées : arcs retrouvés par leurs
+      deux transitions).
+- [x] Tester le remote ZeroMQ (test d'intégration en CI avec un client Python) :
+      `tests/remote/test_remote.py` (remote de l'éditeur sous `xvfb-run`, et journal publié).
 
 ## 8. Phase 6 — Analyses (l'avantage sur Symmetri et Symfony)
 
-- [ ] Graphe d'accessibilité (borné) et de couverture (Karp-Miller).
-- [ ] Détection de deadlocks et de transitions mortes.
-- [ ] Bornitude, vivacité.
-- [ ] P-invariants et T-invariants (semi-flots).
-- [ ] Commande CLI `tpne-check net.json` utilisable en CI (code de sortie ≠ 0 si deadlock).
-- [ ] Pour les graphes d'événements temporisés : temps de cycle via Howard,
-      chemin critique affiché dans l'éditeur (déjà en partie là).
+- [x] Graphe d'accessibilité (borné) et de couverture (Karp-Miller) : bibliothèque
+      `tpne::analysis` (`src/Analysis`, `libTimedPetriAnalysis`). Le temps n'est pas
+      considéré ; Karp-Miller refuse les arcs inhibiteurs, de reset et les capacités
+      (règle non monotone), le graphe d'accessibilité les suit.
+- [x] Détection de deadlocks (marquage et chemin le plus court qui y mène) et de
+      transitions mortes.
+- [x] Bornitude (Karp-Miller quand l'exploration s'arrête), vivacité L4 (composantes
+      fortement connexes terminales du graphe d'accessibilité complet).
+- [x] P-invariants et T-invariants (semi-flots minimaux, algorithme de Farkas ; arcs
+      normaux seulement, signalé sinon). Onglet « Properties » de la fenêtre Analysis
+      de l'éditeur, pour tous les types de réseaux.
+- [x] Commande CLI `tpne-check net.json` utilisable en CI (code de sortie ≠ 0 si deadlock) :
+      `tools/tpne-check`, `--max-states N`, `--allow-deadlock` (un marquage but est un
+      deadlock), lancée en CI sur des exemples.
 
 ## 9. Phase 7 — Publication
 
-- [ ] Doc : un guide « de l'éditeur au code » avec l'exemple pick-and-place.
-- [ ] Exemples : micro-services (HTTP fictif), robot (Robotik), Arduino (feu tricolore).
-- [ ] Packaging : paquet CMake installable, release GitHub, version web à jour.
-- [ ] Benchmark contre Symmetri sur leurs réseaux PNML d'exemple.
+- [x] Doc : un guide « de l'éditeur au code » avec l'exemple pick-and-place
+      (`doc/11-From-Editor-To-Code.md`, sorties réelles).
+- [x] Exemples : micro-services (HTTP fictif), robot (pick-and-place ; Robotik l'utilise
+      de son côté), Arduino (feu tricolore), plus `Debugger.cpp` et `Benchmark.cpp`.
+- [ ] Benchmark contre Symmetri sur leurs réseaux PNML d'exemple : côté TPNE fait
+      (`examples/runtime/Benchmark.cpp`, même charge que l'exemple *performance* de Symmetri,
+      ~5 M franchissements/s en `-O3`) ; reste à mesurer Symmetri sur la même machine
+      (compiler son exemple, cf. `examples/runtime/README.md`).
+
+## 10. Suite (liste du 24 octobre 2026)
+
+- [x] Éditeur : clic droit sur une place (jetons, nombre max de jetons), sur un arc (poids,
+      type, couleur, durée) ; double clic sur un arc : durée et poids (et jetons de la place
+      d'un graphe d'événements).
+- [x] Plus de logs sur la console : la simulation émet `onFired`, la fenêtre *Journal* les montre.
+- [x] Génération GRAFCET → C++ refaite : toutes les GRAFCET d'un document dans une classe,
+      mêmes règles que le moteur (situation stable, fronts, `t1/a/t2`, délais, actions et
+      conditions, forçages), sans bibliothèque (Arduino), débogage visuel par `GRAFCET_DEBUG`
+      (ZeroMQ, ou `Serial` + `tools/serial-bridge.py`) ; vérifiée cycle par cycle contre le
+      moteur (`tests/codegen/run.sh`, en CI). Elle a révélé un bug du moteur : une transition
+      vers une étape déjà active était bloquée (règle de capacité de Petri, pas IEC 60848).
+- [x] Fenêtre d'analyse non (max,+) : onglet *Properties* pour tous les réseaux (résumé,
+      deadlock et chemin rejouable dans le Journal, bornes, invariants surlignés, marques
+      sur le réseau, graphe des marquages en Graphviz) ; `tpne-check --dot`.
+- [x] Squelette C++ de fonctions pour le runtime (export `.cpp`, compilé en CI sur les exemples).
+- [x] Backend raylib retiré : GLFW3 partout, y compris le web (boucle Emscripten, WebGL 2,
+      page `shell.html` ; build web non vérifié ici faute d'Emscripten).
+- [x] Projet en C++20 (`Makefile.common`, exemples ; le code GRAFCET généré reste C++11).
+- [x] `Flowshop` (et l'import `.flowshop`) déplacé dans `src/MaxPlus`, enregistré par
+      `registerMaxPlusFormats()`.
+- [x] Imports/exports sortis du cœur : `libTimedPetriIO` (`src/IO`, `loadFromFile()`,
+      `saveToFile()`) ; le cœur et le runtime n'en dépendent pas.
+- [x] Export du réseau et du journal : le réseau par la lib IO (optionnelle), le journal par
+      le runtime (`saveJournal()` : JSON lines, CSV, XES pour le process mining) ;
+      `MicroServices.cpp` le montre.
+- [x] Revue des imports/exports : échappements (Graphviz, draw.io, LaTeX, Symfony, PNML),
+      poids, types d'arcs et couleurs exportés, LaTeX à l'échelle, draw.io centré, noms
+      Symfony uniques, poids PN-Editor ; extension la plus longue choisie (`saveToFile("net.drawio.xml")`
+      était refusé) ; nouveaux formats SVG et GRML ; validé sur tous les
+      exemples (Graphviz, xmllint, YAML, relecture JSON/PNML/GRML).
+- [x] Performances : `findArc()` par l'adjacence, ajout d'arcs et de nœuds sans
+      reconstruire l'adjacence (chargement linéaire au lieu de quadratique), activation
+      incrémentale des transitions dans le runtime.
 
 ---
 

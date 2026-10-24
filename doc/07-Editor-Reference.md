@@ -15,13 +15,15 @@ line option of the editor. The tutorials are in chapters
 | Document | description of the file and of each net (*Edit* to change them); GRAFCET inputs and outputs | always |
 | Places / Steps | captions and tokens; for a running GRAFCET, how long each active step is active | always |
 | Transitions | captions or receptivities; GRAFCET: delays, syntax errors, *Syntax help*, timers that count | always |
-| Arcs | durations of the arcs going out of the transitions | timed nets |
+| Arcs | kind, weight, color of the tokens, duration of each arc (timed event graph: durations) | Petri and timed nets |
 | Actions | actions of each step: qualifier with its timing diagram, name, condition, duration, forcing orders | GRAFCET |
 | Control panel | the inputs as the buttons of a machine | GRAFCET |
 | Outputs | the actuators: lights, motors, heaters, valves, horns | GRAFCET |
 | Timing diagram | steps, inputs and outputs over time | GRAFCET |
-| Analysis | critical circuit, Gantt chart, linear system, equations, matrices, firing dates ([chapter 3](03-Timed-Nets-and-Max-Plus.md#5-reference-the-analysis-window)) | event graphs |
+| Analysis | *Properties* of any net: deadlocks, dead transitions, bounds, liveness, invariants (§7); event graphs: critical circuit, Gantt chart, linear system, equations, matrices, firing dates ([chapter 3](03-Timed-Nets-and-Max-Plus.md#5-reference-the-analysis-window)) | always |
 | Console | all the messages (§6) | always |
+| Journal | the firings of the simulation, of a journal opened, or of a connected program; replays them on the net (§7) | always |
+| Program | the program the editor follows: its inputs and outputs, its transitions without function ([chapter 9](09-Remote-Control.md#4-follow-a-running-program)) | connected |
 | Status bar | what the mouse buttons would do now; counts of nodes, position, zoom | always |
 
 A net is fitted to its window, again each time the window changes size,
@@ -43,15 +45,20 @@ than 4 pixels is a click). **The left button draws, the right button moves.**
 | nothing, left | add a place (timed event graph: a transition); with a selection, the first click only clears it | select in a rectangle |
 | nothing, right | add a transition | move the view |
 | node, left | select it (Ctrl: add or remove it) | draw an arc from it |
-| node, right | menu of the node | move it, with the selection |
+| node, right | menu of the node (place: tokens, max tokens) | move it, with the selection |
 | arc, left | select it | select in a rectangle |
-| arc, right | menu of the arc | move the view |
+| arc, right | menu of the arc: duration and weight, kind (normal, inhibitor, reset), color of the tokens | move the view |
 | middle button | | move the view |
 
 - An arc released in the void creates a node of the other kind there;
   between two nodes of the same kind, a node is inserted in the middle.
 - Double click: rename a node (a GRAFCET transition: its receptivity,
-  checked while typing); the duration of an arc.
+  checked while typing); an arc: its duration (timed nets) and its weight,
+  and the tokens of its place in a timed event graph (Enter applies, Esc
+  cancels).
+- Nodes with a halo: marked by the *Journal* (the transitions whose function
+  runs), a connected program (no function) or the *Analysis* (dead, not
+  live, unbounded, the nodes of an invariant).
 - Wheel: zoom around the mouse. Shift + wheel, or a touchpad: move the view.
 - While simulating a Petri net, a left click on a transition fires it.
 - With several nets, a click in a net makes it the active one (the
@@ -103,22 +110,41 @@ simulation (a message says it).
 ## 6. Console and notifications
 
 One button per kind of message, with its count: *Info*, *Warnings*,
-*Errors*, *Simulation*. A click hides or shows them. The filter keeps the
+*Errors*, *Simulation* (the GRAFCET inputs changed while running; the
+firings are in the *Journal*). A click hides or shows them. The filter keeps the
 messages containing a text; *Copy* puts the shown messages in the
 clipboard. The same message given several times in a row is written once,
 with its count `(x3)`. The last messages also appear a few seconds in the
 bottom right corner of the nets.
 
-The *Simulation* messages:
+## 7. Journal and analysis
 
-| Message | Event |
-|---------|-------|
-| `t = 2.10  M1 starts P2 (k = 1), until 5.10` | a flowshop operation starts (chapter 3) |
-| `t = 3.10  out_P1 (T5) fires (k = 1)` | another transition of a Petri net fires |
-| `t = 14.80  Production: T0 [Controle:X4 . Dcy]  X0 -> X1` | a GRAFCET transition fires |
-| `t = 14.87  input Dcy = 0` | a GRAFCET input changes |
+The **Journal** lists the firings: date, instance (the net, or an instance
+of a program), transition, its number k, the event (`Scheduled`: tokens
+taken, `Started`: its function runs, `Completed`: tokens given) and the
+result (the color of the tokens given). It holds the firings of the last
+simulation, a journal opened (*Open*: JSON lines of the runtime), the path
+to a deadlock found by the analysis, or what a connected program publishes.
+*Save* writes it as JSON lines, CSV or XES (process mining). *Replay* shows
+the marking of the net at a date: the slider, `<` and `>` go from one event
+to the next, *Play* runs the time; the transitions whose function runs are
+marked. A click on a line goes to its date.
 
-## 7. GRAFCET windows
+The tab **Properties** of the *Analysis* window, for every net (the
+durations and the GRAFCET rules not considered): *Compute* explores the
+markings (small nets: again at each change, up to *max markings*). The
+summary says whether the net can deadlock, has dead transitions, is bounded
+and live; the deadlock has its marking and the shortest path to it
+(*Replay the path in the Journal*); the bounds of each place; the
+P-invariants (the weighted tokens of these places never change) and the
+T-invariants (firing these transitions gives the marking back): a click
+marks their nodes. *Show on the net* marks the dead transitions, the ones
+not live and the unbounded places. *Graph of the markings* saves it for
+Graphviz. The same analyses run in a terminal or a CI:
+`tpne-check [--max-states N] [--allow-deadlock] [--dot graph.dot] net.json`
+(exit code 1 when a net can deadlock).
+
+## 8. GRAFCET windows
 
 - **Control panel**: one widget per input, by kind
   ([chapter 4](04-GRAFCET-and-GEMMA.md#6-reference-the-control-panel)).
@@ -138,7 +164,7 @@ The *Simulation* messages:
   and the receptivities of all the graphs (`X3`, `Production:X3`) follow.
   What read the removed step reads a missing step (an error at the start).
 
-## 8. Menus
+## 9. Menus
 
 | Menu | Holds |
 |------|-------|
@@ -146,21 +172,25 @@ The *Simulation* messages:
 | Edit | undo, redo, type of net, add a net to the document, to canonical form, arrange top-down (layers from the initial steps, as a GRAFCET is drawn), spring layout, align to the grid, clear the net |
 | View | fit, zoom, grid, snap, identifiers, action boxes, theme, reset the layout, remote control |
 | Simulation | start/stop, pause, speed, the nets of the document |
-| Analysis | the tabs of the Analysis window (event graphs) |
+| Analysis | the properties of the net; the (max,+) tabs of the Analysis window (event graphs) |
+| Debug | connect to a program publishing its journal, open a manifest (its transitions without function), open and save a journal, clear the marks of the nodes |
 | Help | mouse and keys, GRAFCET receptivities, GRAFCET actions, GRAFCET control panel, about |
 
-## 9. Command line
+## 10. Command line
 
 ```text
-TimedPetriNetEditor [-r] [-s|-w screenshot.png] [petri.json]
+TimedPetriNetEditor [-r] [-s|-w screenshot.png] [-d seconds] [-f window] [-c endpoint] [petri.json]
 ```
 
 | Option | Effect |
 |--------|--------|
-| `petri.json` | the file to open (also `.flowshop`, `.pnml`, `.teg`) |
+| `petri.json` | the file to open (also `.flowshop`, `.pnml`, `.grml`, `.teg`) |
 | `-r` | start the simulation once the file is loaded |
 | `-s file.png` | save the net as a PNG file once drawn, then quit |
 | `-w file.png` | the same for the whole window |
+| `-d seconds` | wait before the screenshot (the simulation runs meanwhile) |
+| `-f window` | bring this window in front: `Journal`, `Analysis` (its properties), `Console` ... |
+| `-c endpoint` | follow the program publishing its journal there (`tcp://localhost:5556`) |
 
 The pictures of this documentation were made with `-w`.
 

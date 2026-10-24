@@ -2,7 +2,7 @@
 
 What you will find here: how another program (a test, a robot, a script)
 drives a running editor: load a net, start it, fire transitions, read the
-tokens.
+tokens; and how the editor follows a program running a net (§4).
 
 ---
 
@@ -77,6 +77,55 @@ A command is `{"command": "<name>", "params": {...}}`. An answer has
 | `clear` | | clear the active net; refused while simulating |
 
 Use Petri nets or GRAFCETs: the timed nets move their tokens by themselves.
+
+The CI runs `tests/remote/test_remote.py` (pyzmq): it drives the editor with
+these commands and checks the answers.
+
+## 4. Follow a running program
+
+The other way round: a program running a net tells the editor what it does,
+and the editor shows it (a visual debugger). The program publishes on a
+ZeroMQ PUB socket (`tcp://*:5556` by default); the editor subscribes with
+*Debug > Connect* (or `TimedPetriNetEditor -c tcp://localhost:5556 net.json`).
+The *Journal* follows the program (its *Replay* shows the marking at the last
+date), the *Program* window shows its inputs and outputs and the
+transitions without function, marked on the net.
+
+Who publishes:
+
+- a program using the runtime: `Runtime/JournalPublisher.hpp`
+  (`examples/runtime/Debugger.cpp`, and the programs of *File > Export > C++
+  functions for the runtime* built with `-DTPNE_DEBUG`);
+- the GRAFCET code of *File > Export > C++ GRAFCET* built with
+  `-DGRAFCET_DEBUG` (on an Arduino, through `tools/serial-bridge.py`).
+
+```c++
+#include "Runtime/JournalPublisher.hpp"   // link with -lzmq
+
+JournalPublisher publisher(net);           // tcp://*:5556
+Runtime::Options options;
+options.journal = [&publisher](LogEntry const& e) { publisher.publish(e); };
+Runtime runtime(net, executor, options);
+runtime.on("grasp", grasp);
+publisher.manifest(runtime);               // its transitions without function
+auto order = runtime.instantiate("order_42");
+publisher.marking(*order);                 // for an editor connected later
+```
+
+Each message is one JSON object:
+
+| Message | Example | The editor |
+|---------|---------|------------|
+| a line of the journal | `{"instance":"order_42","transition":"grasp","event":"Completed","result":"Failed","date":1.5}` | adds it to the *Journal* |
+| manifest | `{"type":"manifest","net":"Pick and place","places":[...],"transitions":[...],"unregistered":["retry"]}` | marks the transitions without function (sent again every second) |
+| marking | `{"type":"marking","instance":"order_42","date":1.5,"tokens":[1,0,0,0]}` | starts the replay of the instance from these tokens |
+| inputs and outputs | `{"type":"io","inputs":{"Start":1},"outputs":{"Motor":true}}` | shows them in the *Program* window (GRAFCET) |
+
+`event` is `Scheduled` (the transition took its tokens), `Started` (its
+function runs) or `Completed` (it gave its tokens, colored by `result`). A
+GRAFCET publishes an instance per graph (its name) and the keys of the
+transitions (`T3`). *Debug > Open a manifest* marks the transitions without
+function from a file written by `toManifest(runtime)`.
 
 ---
 
