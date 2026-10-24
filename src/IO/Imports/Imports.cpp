@@ -48,6 +48,7 @@ static std::vector<Importer>& registry()
     static std::vector<Importer> s_importers = {
         { "JSON", ".json", importFromJSON, false },
         { "Petri Net Markup Language", ".pnml", importFromPNML, false },
+        { "GreatSPN GRML", ".grml", importFromGRML, false },
         { "Timed Event Graph", ".teg", importFromTimedEventGraph, true }
     };
 

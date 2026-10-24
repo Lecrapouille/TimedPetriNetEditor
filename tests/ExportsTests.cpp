@@ -260,3 +260,27 @@ TEST(TestExports, EscapedAndComplete)
     ASSERT_THAT(text, HasSubstr("marker-end=\"url(#circle)\""));
 }
 
+//------------------------------------------------------------------------------
+//! \brief GRML (GreatSPN, Symmetri): weights, inhibitor arcs, colors,
+//! priorities and the durations of a timed net come back.
+TEST(TestExports, GRMLRoundTrip)
+{
+    Net net = trickyNet();
+    net.transitions()[0].priority = 2;
+    ASSERT_STREQ(saveToFile(net, "/tmp/tpne-tricky.grml").c_str(), "");
+    Net back;
+    ASSERT_STREQ(loadFromFile(back, "/tmp/tpne-tricky.grml").c_str(), "");
+    ASSERT_EQ(back.type(), TypeOfNet::TimedPetriNet);
+    ASSERT_EQ(back.places()[0].tokens, 2u);
+    ASSERT_STREQ(back.places()[0].caption.c_str(), "a \"b\" <c> & d_e");
+    ASSERT_EQ(back.transitions()[0].priority, 2);
+    ASSERT_EQ(back.findArc(back.places()[0], back.transitions()[0])->weight, 2u);
+    ASSERT_EQ(back.findArc(back.places()[1], back.transitions()[1])->kind, ArcKind::Inhibitor);
+    ASSERT_EQ(back.findArc(back.transitions()[0], back.places()[1])->durationOrZero(), 1.5f);
+    ASSERT_STREQ(back.colors.name(back.findArc(back.transitions()[1], back.places()[0])->color).c_str(), "Blue");
+
+    // Reset arcs are refused.
+    Net extensions;
+    ASSERT_STREQ(loadFromFile(extensions, "data/Extensions.json").c_str(), "");
+    ASSERT_THAT(saveToFile(extensions, "/tmp/tpne-extensions.grml"), HasSubstr("no reset arcs"));
+}

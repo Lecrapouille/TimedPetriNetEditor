@@ -27,6 +27,8 @@ std::string importAllNetsFromJSON(std::vector<Net>& nets, std::string const& fil
 std::string importFromTimedEventGraph(Net& net, std::string const& filename);
 //! \brief Import the Petri Net Markup Language (standard, Symmetri).
 std::string importFromPNML(Net& net, std::string const& filename);
+//! \brief Import GRML: the format of GreatSPN (CosyVerif), read by Symmetri.
+std::string importFromGRML(Net& net, std::string const& filename);
 
 //! \brief Interface for importing a Petri file.
 //! \param[inout] net the net we are importing. Better to call net.clear()
