@@ -24,7 +24,7 @@ From top to bottom and left to right:
 | Menu bar | *File, Edit, View, Simulation, Analysis, Debug, Help* (§9) |
 | Toolbar (end of the menu bar) | **▶ Run** / **■ Stop**, *Pause*, the speed `x1`, the type of the active net, *Fit*, *Grid*, *Snap*, *Analysis window* |
 | Net window (middle, tab *Philosophers*) | the drawing of a net. In its top left corner: its type, while simulating `simulating t = 3.0 s` (and *paused*), then its description. In its bottom right corner: the zoom |
-| Inspector (right) | tabs *Places* (*Steps* for a GRAFCET), *Transitions*, *Arcs* (*Actions* for a GRAFCET), *Document* |
+| Inspector (right) | tabs *Places* (*Steps* for a GRAFCET), *Transitions*, *Arcs* (*Actions* for a GRAFCET), *Colors* (Petri and timed nets), *Document* |
 | Under the inspector | *Control panel* (GRAFCET), *Analysis*, *Program* (when connected to a program) |
 | Bottom | *Console*, *Journal*, *Timing diagram* (GRAFCET); *Outputs* (GRAFCET) on the right |
 | Status bar | on the left, what the mouse buttons would do now; on the right, the counts of places, transitions and arcs, the position of the mouse in the net and the zoom |
@@ -58,8 +58,9 @@ layout and the theme are saved in the settings folder of the user:
 | Places / Steps | caption, identifier, `◀ ▶` and the number of tokens of each place, and its initial tokens; for a running GRAFCET, how long each active step has been active | always |
 | Transitions | caption (the receptivity of a GRAFCET, checked while typing, with *Syntax help*); priority (Petri and timed nets); delay in seconds (GRAFCET); the timers that count while simulating | always |
 | Arcs | a table: arc, kind (normal, inhibitor, reset), weight, color of the tokens, duration (timed nets) | Petri and timed nets |
+| Colors | the colors of the tokens of the user (*Add*); *Success*, *Failed* and *Canceled* are built in | Petri and timed nets |
 | Actions | actions of each step: qualifier (with its timing diagram), name, condition, duration, forcing orders; *Qualifiers help* | GRAFCET |
-| Document | what the document is about and the description of each net (*Edit* to change them); the nets of the document (a radio button chooses the active one); the colors of the tokens of the user (*Add*); the GRAFCET inputs and outputs | always |
+| Document | what the document is about and the description of each net (*Edit* to change them); the nets of the document (a radio button chooses the active one); the GRAFCET inputs and outputs | always |
 | Control panel | the inputs of the GRAFCETs drawn as the buttons of a machine; *Apply together*, *Apply (F7)*, *Edit*, *Fit*, `?` (§8) | GRAFCET |
 | Outputs | the actuators named by the actions: lights, motors, heaters, valves, horns | GRAFCET |
 | Timing diagram | steps, inputs and outputs over time (§8) | GRAFCET |

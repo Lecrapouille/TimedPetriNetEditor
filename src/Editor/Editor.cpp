@@ -198,7 +198,7 @@ void Editor::setupDefaultLayout(unsigned int const id)
     ImGuiID bottom = ImGui::DockBuilderSplitNode(center, ImGuiDir_Down, 0.22f, nullptr, &center);
     ImGuiID bottom_right = ImGui::DockBuilderSplitNode(bottom, ImGuiDir_Right, 0.40f, nullptr, &bottom);
     ImGuiID right_bottom = ImGui::DockBuilderSplitNode(right, ImGuiDir_Down, 0.52f, nullptr, &right);
-    for (char const* name : { "Document", "Places###Places", "Transitions", "Arcs", "Actions" })
+    for (char const* name : { "Document", "Places###Places", "Transitions", "Arcs", "Colors", "Actions" })
         ImGui::DockBuilderDockWindow(name, right);
     for (char const* name : { "Control panel", "Analysis" })
         ImGui::DockBuilderDockWindow(name, right_bottom);

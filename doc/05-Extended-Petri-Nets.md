@@ -305,9 +305,11 @@ GRML, Symmetri), and the [runtime](11-Runtime.md) uses them. The analysis
 ignores them too, and says so ("The colors of the tokens are not
 considered").
 
-**In the editor.** Right click on an arc > *Color of the tokens*: choose a
-color, or type a new one; *any* removes it. JSON: `"color": "Good"` in the
-arc, and `"colors": ["Good", "Bad"]` in the net for the colors of the user.
+**In the editor.** The *Colors* window lists the colors of the user: *Add*
+creates one. Right click on an arc > *Color of the tokens*, or the Color
+column of *Arcs*, chooses one; *any* removes it. A new color can also be
+typed in the menu of the arc. JSON: `"color": "Good"` in the arc, and
+`"colors": ["Good", "Bad"]` in the net for the colors of the user.
 
 ## 7. All together: the bounded buffer
 

@@ -9,6 +9,7 @@
 #include "Editor/GrafcetHelp.hpp"
 #include "PetriNet/Grafcet.hpp"
 #include "imgui/imgui.h"
+#include "imgui/imgui_internal.h"
 
 #include <algorithm>
 #include <cmath>
@@ -478,6 +479,49 @@ static void drawGrafcetActionsPanel(Net& net, Simulation& simulation, bool& modi
 }
 
 //------------------------------------------------------------------------------
+//! \brief Colors of the tokens of the net: the built-in results, the colors
+//! of the user, and the field that adds one. Its own inspector tab.
+//------------------------------------------------------------------------------
+static void drawColorsPanel(Net& net, Simulation& simulation, bool& modified)
+{
+    if (!allows(net.type(), Feature::Colors))
+        return;
+
+    // First time: sit with the other inspector tabs. Later: the saved place.
+    if (ImGuiWindow* arcs = ImGui::FindWindowByName("Arcs");
+        (arcs != nullptr) && (arcs->DockId != 0u))
+        ImGui::SetNextWindowDockID(arcs->DockId, ImGuiCond_FirstUseEver);
+
+    if (!ImGui::Begin("Colors"))
+    {
+        ImGui::End();
+        return;
+    }
+
+    ImGui::TextDisabled("Success, Failed, Canceled: results of the functions.");
+    std::vector<std::string> const user = net.colors.user();
+    if (user.empty())
+        ImGui::TextDisabled("No color of yours.");
+    for (auto const& name : user)
+        ImGui::BulletText("%s", name.c_str());
+    static std::string new_color;
+    ImGui::BeginDisabled(simulation.isRunning());
+    ImGui::SetNextItemWidth(160.0f);
+    bool const add = ImGui::InputTextWithHint("##newcolor", "new color", &new_color,
+                                              ImGuiInputTextFlags_EnterReturnsTrue);
+    ImGui::SameLine();
+    if ((ImGui::Button("Add") || add) && !new_color.empty())
+    {
+        net.colors.add(new_color);
+        new_color.clear();
+        modified = true;
+    }
+    ImGui::EndDisabled();
+    ImGui::TextDisabled("Assign one in the Color column of Arcs, or right click an arc.");
+    ImGui::End();
+}
+
+//------------------------------------------------------------------------------
 //! \brief Arcs of Petri nets: kind (from a place), weight and duration (from a
 //! transition, timed nets).
 //------------------------------------------------------------------------------
@@ -618,6 +662,7 @@ void Editor::inspector()
         timingDiagram();
     }
     drawArcsPanel(net(), simulation(), modified);
+    drawColorsPanel(net(), simulation(), modified);
     documentPanel();
 
     if (receptivity_help)
