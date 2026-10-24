@@ -339,7 +339,6 @@ std::string importFlowshop(Net& net, std::string const& filename)
 
     net.reset(TypeOfNet::TimedPetriNet);
 
-
     Flowshop data;
     std::string parseError = parseFlowshopFile(file, data);
     if (!parseError.empty())

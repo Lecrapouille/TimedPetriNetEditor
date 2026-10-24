@@ -92,7 +92,6 @@ std::string importFromTimedEventGraph(Net& net, std::string const& filename)
 
     net.layout().compact = true;
     return {};
-
 }
 
 } // namespace tpne

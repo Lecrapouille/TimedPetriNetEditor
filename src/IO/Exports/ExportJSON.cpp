@@ -264,7 +264,6 @@ static std::string writeDocument(std::vector<Net const*> const& nets, std::strin
     // A timed Petri net drawn compactly keeps the type the readers know.
     file << "  \"type\": " << quote(nets[0]->layout().compact ? std::string("Timed event graph")
                                                                : to_str(nets[0]->type())) << ",\n";
-
     if ((info != nullptr) && !info->description.empty())
         file << "  \"description\": " << quote(info->description) << ",\n";
     file << "  \"nets\": [\n";
