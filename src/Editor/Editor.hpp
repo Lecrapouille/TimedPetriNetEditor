@@ -492,6 +492,8 @@ private:
         //! \brief Bars of the Gantt chart, for the net of the given revision.
         std::vector<GanttBarData> gantt_bars;
         std::vector<std::string> gantt_rows;
+        //! \brief Names of the colors of the bars (pieces of a flowshop).
+        std::vector<std::string> gantt_pieces;
         std::string gantt_error;
         AnalysisKey gantt_key;
         int gantt_computed_cycles = 0;

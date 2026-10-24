@@ -309,7 +309,8 @@ faster, buy a faster `M1` (or a second one: `nm: 2 1`), not a faster `M2`.
 ### 6.4 The schedule: the Gantt chart
 
 *Analysis > Gantt*: one row per machine, one bar per operation, one color
-per piece. The bar `P2 k=2` is the 2nd time (cycle `k = 2`) the machine works
+per piece (the legend above the chart names them; the line above it recalls
+which rows are drawn). The bar `P2 k=2` is the 2nd time (cycle `k = 2`) the machine works
 on `P2`; it starts at the earliest date of the dater equation (§3) and lasts
 the processing time. The *Cycles* slider shows more cycles; the mouse on a
 bar gives its start and end.

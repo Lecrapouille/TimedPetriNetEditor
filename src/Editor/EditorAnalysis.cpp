@@ -640,10 +640,11 @@ void Editor::analysisProperties()
 //! flowshop convention) puts the bar on the row of the machine, colored by
 //! piece; other transitions get their own row.
 static void computeGantt(Net const& net, int const cycles,
-                         std::vector<std::string>& rows,
+                         std::vector<std::string>& rows, std::vector<std::string>& pieces,
                          std::vector<Editor::GanttBarData>& bars, std::string& error)
 {
     rows.clear();
+    pieces.clear();
     bars.clear();
     std::vector<std::vector<double>> dates;
     error = earliestDates(net, size_t(cycles), dates);
@@ -673,7 +674,10 @@ static void computeGantt(Net const& net, int const cycles,
             rows.push_back(row);
         }
         if (color_of.find(piece) == color_of.end())
+        {
             color_of[piece] = int(color_of.size());
+            pieces.push_back(piece);
+        }
         for (int k = 0; k < cycles; ++k)
         {
             bars.push_back({ row_of[row], color_of[piece], dates[t][size_t(k)],
@@ -958,6 +962,12 @@ void Editor::analysisGantt()
             "transitions get their own row.");
         ImGui::Spacing();
         ImGui::TextUnformatted(
+            "Why only the machines of a flowshop? The other transitions have no "
+            "duration: M1 (the machine is free again), P1 (the piece enters again) and "
+            "out_... (end of a cycle) take no time, so they have no bar. They still "
+            "count in the dates: they pass the tokens from a cycle to the next.");
+        ImGui::Spacing();
+        ImGui::TextUnformatted(
             "k is the cycle: \"P1 k=2\" is the second time the operation is done. The "
             "dates are the earliest ones given by the (max,+) dater equation "
             "x(k) = max(x_i(k - tokens_i) + duration_i) over the input places, with the "
@@ -971,13 +981,18 @@ void Editor::analysisGantt()
         ImGui::EndTooltip();
     }
 
+    ImGui::PushStyleColor(ImGuiCol_Text, ImGui::GetStyleColorVec4(ImGuiCol_TextDisabled));
+    ImGui::TextWrapped("Rows: the machines of a flowshop (M1_P1 on M1), else the transitions "
+                       "with a duration; the others take no time and have no bar.");
+    ImGui::PopStyleColor();
+
     // The earliest dates from the tokens before the simulation.
     AnalysisKey key = analysisKey();
     if ((m_states.gantt_key != key) ||
         (m_states.gantt_computed_cycles != m_states.gantt_cycles))
     {
         computeGantt(analyzedNet(), m_states.gantt_cycles, m_states.gantt_rows,
-                     m_states.gantt_bars, m_states.gantt_error);
+                     m_states.gantt_pieces, m_states.gantt_bars, m_states.gantt_error);
         m_states.gantt_key = std::move(key);
         m_states.gantt_computed_cycles = m_states.gantt_cycles;
     }
@@ -985,6 +1000,24 @@ void Editor::analysisGantt()
     {
         ImGui::TextColored(ImVec4(1.0f, 0.3f, 0.3f, 1.0f), "%s", m_states.gantt_error.c_str());
         return;
+    }
+
+    // The colors: the pieces of a flowshop (none when each transition has
+    // its row: the rows name them), wrapped on the width of the window.
+    auto const& pieces = m_states.gantt_pieces;
+    for (size_t i = 0u; (pieces != m_states.gantt_rows) && (i < pieces.size()); ++i)
+    {
+        float const size = ImGui::GetTextLineHeight();
+        float const width = size + ImGui::GetStyle().ItemSpacing.x + ImGui::CalcTextSize(pieces[i].c_str()).x;
+        if ((i > 0u) && (ImGui::GetItemRectMax().x + ImGui::GetStyle().ItemSpacing.x + width <
+                         ImGui::GetWindowPos().x + ImGui::GetWindowContentRegionMax().x))
+            ImGui::SameLine();
+        ImVec2 const p = ImGui::GetCursorScreenPos();
+        ImGui::GetWindowDrawList()->AddRectFilled(p, p + ImVec2(size, size),
+            ImGui::GetColorU32(ImPlot::GetColormapColor(int(i))), 3.0f);
+        ImGui::Dummy(ImVec2(size, size));
+        ImGui::SameLine();
+        ImGui::TextUnformatted(pieces[i].c_str());
     }
 
     auto const& rows = m_states.gantt_rows;
