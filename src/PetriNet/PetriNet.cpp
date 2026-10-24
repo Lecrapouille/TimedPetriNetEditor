@@ -247,7 +247,8 @@ Place& Net::addPlace(size_t const id, std::string const& caption, size_t const t
     m_layout.place(id) = Point{};
     if (id + 1u > m_next_place_id)
         m_next_place_id = id + 1u;
-    generateArcsInArcsOut();
+    // A new node has no arc yet.
+    m_place_arcs.resize(m_places.size());
     return applyCapacity(m_places.back());
 }
 
@@ -267,8 +268,7 @@ Transition& Net::addTransition(size_t const id, std::string const& caption)
     m_layout.transition(id) = Point{};
     if (id + 1u > m_next_transition_id)
         m_next_transition_id = id + 1u;
-    generateArcsInArcsOut();
-
+    m_transition_arcs.resize(m_transitions.size());
     return m_transitions.back();
 }
 
@@ -285,9 +285,13 @@ bool Net::sanityArc(Node const& from, Node const& to, bool const strict, std::st
         return false;
     }
 
-    // Key if the origin node exists (TBD: is this really
-    // necessary since findArc would have returned false ?)
-    if (findNode(from.key) == nullptr)
+    // The nodes shall be nodes of this net: identifiers are indices.
+    auto const known = [this](Node const& node) {
+        return (node.type == Node::Type::Place)
+            ? ((node.id < m_places.size()) && (m_places[node.id].key == node.key))
+            : ((node.id < m_transitions.size()) && (m_transitions[node.id].key == node.key));
+    };
+    if (!known(from))
     {
         message << "Failed adding arc " << from.key
                 << " --> " << to.key
@@ -297,9 +301,7 @@ bool Net::sanityArc(Node const& from, Node const& to, bool const strict, std::st
         return false;
     }
 
-    // Key if the destination node exists (TBD: is this really
-    // necessary since findArc would have returned false ?)
-    if (findNode(to.key) == nullptr)
+    if (!known(to))
     {
         message << "Failed adding arc " << from.key
                 << " --> " << to.key
@@ -333,10 +335,8 @@ bool Net::addArc(Transition& from, Transition& to, size_t const tokens, float co
     Place& n = addPlace(tokens);
     position(n) = { a.x + (b.x - a.x) / 2.0f, a.y + (b.y - a.y) / 2.0f };
 
-    m_arcs.emplace_back(from, n, duration);
-    m_arcs.emplace_back(n, to, duration);
-
-    generateArcsInArcsOut();
+    appendArc(Arc(from, n, duration));
+    appendArc(Arc(n, to, duration));
     modified = true;
     return true;
 }
@@ -353,7 +353,7 @@ std::string Net::addArc(Node& from, Node& to, float const duration)
     // Create an arc "Place -> Transition" or "Transition -> Place"
     if (from.type != to.type)
     {
-        m_arcs.emplace_back(from, to, duration);
+        appendArc(Arc(from, to, duration));
     }
     else // Manage the case "Place -> Place" or "Transition -> Transition"
     {
@@ -364,26 +364,39 @@ std::string Net::addArc(Node& from, Node& to, float const duration)
         Node& n = addOppositeNode(to.type);
         position(n) = { a.x + (b.x - a.x) / 2.0f, a.y + (b.y - a.y) / 2.0f };
 
-        m_arcs.emplace_back(from, n, duration);
-        m_arcs.emplace_back(n, to, duration);
+        appendArc(Arc(from, n, duration));
+        appendArc(Arc(n, to, duration));
     }
-
-    generateArcsInArcsOut();
     return message.str();
-
 }
 
 //------------------------------------------------------------------------------
 Arc* Net::findArc(Node const& from, Node const& to)
 {
-    NodeId const f = from.nodeId();
+    // Among the arcs leaving the origin only.
     NodeId const t = to.nodeId();
-    for (auto& it: m_arcs)
+    for (size_t const i : adjacency(from).out)
     {
-        if ((it.from == f) && (it.to == t))
-            return &it;
+        if (m_arcs[i].to == t)
+            return &m_arcs[i];
     }
     return nullptr;
+}
+
+//------------------------------------------------------------------------------
+void Net::appendArc(Arc const& arc)
+{
+    // The adjacency gets the new arc: no need to build it again.
+    m_arcs.push_back(arc);
+    size_t const i = m_arcs.size() - 1u;
+    std::vector<Adjacency>& from = arc.from.isPlace() ? m_place_arcs : m_transition_arcs;
+    std::vector<Adjacency>& to = arc.to.isPlace() ? m_place_arcs : m_transition_arcs;
+    if (from.size() <= arc.from.id)
+        from.resize(arc.from.id + 1u);
+    if (to.size() <= arc.to.id)
+        to.resize(arc.to.id + 1u);
+    from[arc.from.id].out.push_back(i);
+    to[arc.to.id].in.push_back(i);
 }
 
 //------------------------------------------------------------------------------

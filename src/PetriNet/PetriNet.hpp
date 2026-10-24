@@ -898,6 +898,12 @@ private:
     void generateArcsInArcsOut();
 
     //--------------------------------------------------------------------------
+    //! \brief Add the arc and its indices in the adjacency (no rebuild: the
+    //! loading of big nets stays linear).
+    //--------------------------------------------------------------------------
+    void appendArc(Arc const& arc);
+
+    //--------------------------------------------------------------------------
     //! \brief Give the place the capacity of this type of net and constrain
     //! its tokens.
     //--------------------------------------------------------------------------
