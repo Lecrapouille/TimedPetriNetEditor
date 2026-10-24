@@ -69,7 +69,16 @@ struct Exporter
     //! \brief For a document of several nets (GRAFCETs running together):
     //! the function exporting them all, else null (the active net only).
     std::string (*exportAllFct)(std::vector<Net> const&, std::string const&) = nullptr;
+    //! \brief The nets this format can write (the editor proposes it for
+    //! them only), null: all.
+    bool (*accepts)(Net const&) = nullptr;
 };
+
+//! \brief For Exporter::accepts: GRAFCET only, Petri nets and timed nets only,
+//! timed event graphs only.
+bool isGrafcet(Net const& net);
+bool isNotGrafcet(Net const& net);
+bool isTimedEventGraph(Net const& net);
 
 //! \brief Container of file formats we can export the net to (LaTeX, Symfony, Dot ...).
 std::vector<Exporter> const& exporters();

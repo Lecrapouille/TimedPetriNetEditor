@@ -6,6 +6,7 @@
 // See LICENSING.md for details.
 
 #include "IO/Exports/Exports.hpp"
+#include "PetriNet/PetriNet.hpp"
 #include <algorithm>
 #include <sstream>
 
@@ -44,24 +45,41 @@ static Format const* findFormat(std::vector<Format> const& formats, std::string 
 }
 
 //------------------------------------------------------------------------------
+bool isGrafcet(Net const& net)
+{
+    return net.type() == TypeOfNet::GRAFCET;
+}
+
+//------------------------------------------------------------------------------
+bool isNotGrafcet(Net const& net)
+{
+    return net.type() != TypeOfNet::GRAFCET;
+}
+
+//------------------------------------------------------------------------------
+bool isTimedEventGraph(Net const& net)
+{
+    return (net.type() == TypeOfNet::TimedPetriNet) && isEventGraph(net);
+}
+
 //------------------------------------------------------------------------------
 static std::vector<Exporter>& registry()
 {
     static std::vector<Exporter> s_exporters = {
         { "JSON", ".json", exportToJSON },
-        { "C++ GRAFCET (Arduino, computer)", ".hpp,.h,.hh,.h++", exportToGrafcetCpp, exportGrafcetsToCpp },
-        { "C++ functions for the runtime", ".cpp,.cc,.cxx", exportToRuntimeCpp },
+        { "C++ GRAFCET (Arduino, computer)", ".hpp,.h,.hh,.h++", exportToGrafcetCpp, exportGrafcetsToCpp, isGrafcet },
+        { "C++ functions for the runtime", ".cpp,.cc,.cxx", exportToRuntimeCpp, nullptr, isNotGrafcet },
         { "Symfony", ".yaml", exportToSymfony },
         { "Draw.io", ".drawio.xml", exportToDrawIO },
         { "Graphviz", ".gv,.dot", exportToGraphviz },
         { "PN-Editor", ".pns,.pnl,.pnk,.pnkp", exportToPNEditor },
-        { "Petri LaTeX", ".tex", exportToPetriLaTeX },
-        { "Grafcet LaTeX", ".tex", exportToGrafcetLaTeX },
+        { "Petri LaTeX", ".tex", exportToPetriLaTeX, nullptr, isNotGrafcet },
+        { "Grafcet LaTeX", ".tex", exportToGrafcetLaTeX, nullptr, isGrafcet },
         { "Petri Net Markup Language", ".pnml", exportToPNML },
-        { "PNML for Symmetri", ".symmetri.pnml", exportToSymmetriPNML },
+        { "PNML for Symmetri", ".symmetri.pnml", exportToSymmetriPNML, nullptr, isNotGrafcet },
         { "GreatSPN GRML", ".grml", exportToGRML },
         { "SVG picture", ".svg", exportToSVG },
-        { "Timed Event Graph", ".teg", exportToTimedEventGraph },
+        { "Timed Event Graph", ".teg", exportToTimedEventGraph, nullptr, isTimedEventGraph },
         //{ "Codesys", ".codesys.xml", exportToCodesys },
         //{ "Grafcet-LaTeX", ".tex", exportToGrafcetLaTeX },
     };

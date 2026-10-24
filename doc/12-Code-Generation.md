@@ -206,9 +206,8 @@ The export writes the whole file again. Keep the functions you wrote in
 another file (declare them, and erase the generated ones), or copy the new
 `makeNet()` into your program.
 
-A GRAFCET is not refused by this export, but the runtime does not read
-receptivities nor actions: its transitions become functions named after
-their receptivities (`3s/X0` gives `t_3s_x0()`). For a GRAFCET, use the next
+*File > Export* does not propose this export for a GRAFCET: the runtime
+does not read receptivities nor actions. For a GRAFCET, use the next
 section.
 
 ## 2. The C++ code of GRAFCETs

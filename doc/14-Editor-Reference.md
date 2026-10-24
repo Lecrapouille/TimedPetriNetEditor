@@ -267,7 +267,7 @@ Each matrix has a *Copy as Julia* button ([chapter 17](17-Julia.md)).
 | | Open... (Ctrl+O), Open in a new document... | a `.json`, `.flowshop`, `.pnml`, `.grml`, `.teg` file |
 | | Import > *format* | read a file of this format ([chapter 15](15-File-Formats.md)) |
 | | Save (Ctrl+S), Save as... (Ctrl+Shift+S) | the JSON file |
-| | Export > *format* | write the net in this format |
+| | Export > *format* | write the net in this format (only the formats that can write it are listed) |
 | | Screenshot... | a PNG picture of the net |
 | | Documents > *names*, Close this document | several documents opened |
 | | Quit (Ctrl+Q) | asks to save a modified document |

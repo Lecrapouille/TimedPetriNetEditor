@@ -205,6 +205,10 @@ instead of `inputs` are still read.
 *File > Open* and *File > Save as* choose the format by the extension of
 the file; *File > Import* and *File > Export* list the formats by name. The
 longest extension wins: `net.symmetri.pnml` is the Symmetri flavor of PNML.
+*File > Export* lists only the formats that can write the active net: the
+C++ GRAFCET and the GRAFCET LaTeX for a GRAFCET; the C++ for the runtime,
+the Petri LaTeX and the PNML for Symmetri for the other nets; the Timed
+Event Graph and Julia formats for a timed event graph.
 
 | Format | Extension | Read | Write | For |
 |--------|-----------|:----:|:-----:|-----|

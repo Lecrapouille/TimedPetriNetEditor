@@ -167,7 +167,7 @@ std::string exportToJulia(Net const& net, std::string const& filename)
 //------------------------------------------------------------------------------
 void registerMaxPlusFormats()
 {
-    addExporter({ "Julia", ".jl", exportToJulia });
+    addExporter({ "Julia", ".jl", exportToJulia, nullptr, isTimedEventGraph });
     addImporter({ "Flowshop", ".flowshop", importFlowshop, false });
 }
 

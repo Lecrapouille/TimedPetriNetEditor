@@ -211,8 +211,11 @@ void Editor::menuFile()
         m_states.file_dialog = States::FileDialog::SaveAs;
     if (ImGui::BeginMenu("Export"))
     {
+        // The formats that can write the active net only.
         for (auto const& it : exporters())
         {
+            if ((it.accepts != nullptr) && !it.accepts(net()))
+                continue;
             if (ImGui::MenuItem(it.format.c_str()))
             {
                 m_states.file_dialog = States::FileDialog::Export;
