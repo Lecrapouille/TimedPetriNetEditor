@@ -15,6 +15,10 @@
 #include <stdio.h>
 #include <vector>
 
+#ifdef __EMSCRIPTEN__
+#  include <emscripten.h>
+#endif
+
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 #define STB_IMAGE_WRITE_STATIC
 #include "stb_image_write.h"
@@ -22,7 +26,8 @@
 //------------------------------------------------------------------------------
 void reloadFonts()
 {
-    std::cerr << "reloadFonts: Not implemented yet" << std::endl;
+    // Nothing to do: since Dear ImGui 1.92 the backend uploads the atlas of
+    // the fonts each time it changes (ImGuiBackendFlags_RendererHasTextures).
 }
 
 //------------------------------------------------------------------------------
@@ -40,7 +45,8 @@ Application::Application(size_t const width, size_t const height, std::string co
     if (!glfwInit())
         std::exit(1);
 
-#ifdef EXAEQUOS
+#ifdef __EMSCRIPTEN__
+    // WebGL 2 (OpenGL ES 3), for the web version and ExaequOS.
     const char* glsl_version = "#version 300 es";
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 0);
@@ -184,6 +190,13 @@ void Application::run()
         m_lastFrameTime = now;
         m_lastUpdateTime = now;
         m_idle_frames = animating ? 0u : m_idle_frames + 1u;
+
+#ifdef __EMSCRIPTEN__
+        // Give the hand back to the browser until the next frame (needs
+        // -s ASYNCIFY): it draws the canvas and gives the events.
+        double const left = time_per_frame - (glfwGetTime() - now);
+        emscripten_sleep((left > 0.0) ? unsigned(left * 1000.0) : 0u);
+#endif
     }
 }
 

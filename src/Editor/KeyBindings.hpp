@@ -9,8 +9,6 @@
 #  define KEY_BINDINGS_HPP
 
 // -----------------------------------------------------------------------------
-// FIXME: The backend raylib does not support other than US keyboard meaning that
-// other keyboard mapping are fucked up.
 #  define KEY_QUIT_APPLICATION      ImGuiKey_Escape
 #  define KEY_SPRINGIFY_NET         ImGuiKey_L
 #  define KEY_RUN_SIMULATION        ImGuiKey_Space

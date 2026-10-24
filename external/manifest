@@ -10,14 +10,6 @@ epezent/implot
 ### License: MIT
 aiekick/ImGuiFileDialog
 
-### A simple and easy-to-use library to enjoy videogames programming
-### License: Zlib
-raysan5/raylib
-
-### A Raylib integration with DearImGui
-### License: Zlib
-raylib-extras/rlImGui
-
 ### JSON for Modern C++
 ### License: MIT
 nlohmann/json
