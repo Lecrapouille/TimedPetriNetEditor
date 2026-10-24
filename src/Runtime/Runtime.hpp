@@ -32,7 +32,7 @@ class ColoredMarking
 {
 public:
 
-    explicit ColoredMarking(size_t const places = 0u) : m_counts(places) {}
+    explicit ColoredMarking(size_t const places = 0u) : m_counts(places), m_is_touched(places, 0) {}
 
     //! \brief Number of places.
     size_t places() const { return m_counts.size(); }
@@ -58,10 +58,34 @@ public:
 
     bool operator==(ColoredMarking const& other) const { return m_counts == other.m_counts; }
 
+    //! \brief The tokens of the place change (add(), take(), clear() call it):
+    //! the runtime checks again the transitions around it.
+    void touch(size_t const place)
+    {
+        if ((place < m_is_touched.size()) && !m_is_touched[place])
+        {
+            m_is_touched[place] = 1;
+            m_touched.push_back(place);
+        }
+    }
+
+    //! \brief The places touched since the last call.
+    std::vector<size_t> takeTouched()
+    {
+        for (size_t const p : m_touched)
+            m_is_touched[p] = 0;
+        std::vector<size_t> touched;
+        touched.swap(m_touched);
+        return touched;
+    }
+
 private:
 
     //! \brief Tokens by place, then by color.
     std::vector<std::vector<size_t>> m_counts;
+    //! \brief Places whose tokens changed, not yet seen by the runtime.
+    std::vector<size_t> m_touched;
+    std::vector<char> m_is_touched;
 };
 
 // *****************************************************************************
@@ -179,6 +203,10 @@ private:
     std::vector<size_t> m_injected;
     //! \brief Date since which each transition can fire (its delay).
     std::vector<double> m_ready_since;
+    //! \brief Transitions enabled by the marking (Runtime::refresh()): only
+    //! the ones around the places touched are checked again.
+    std::vector<char> m_enabled;
+    bool m_enabled_valid = false;
     std::mt19937_64 m_random;
     //! \brief Requests of the other threads.
     std::mutex m_mutex;
@@ -336,6 +364,8 @@ private:
     size_t placeOf(std::string const& place) const;
     //! \brief Rules of the colored firing.
     bool isEnabled(Instance const& instance, size_t const transition) const;
+    //! \brief Bring Instance::m_enabled up to date with the marking.
+    void refresh(Instance& instance) const;
     bool canFire(Instance const& instance, size_t const transition) const;
     //! \brief Fire one transition: take the tokens, start its function.
     void fire(std::shared_ptr<Instance> const& instance, size_t const transition);
@@ -368,6 +398,9 @@ private:
     std::vector<std::function<bool(Context const&)>> m_guards;
     //! \brief Transitions without input place (fired by inject()).
     std::vector<bool> m_sources;
+    std::vector<size_t> m_source_list;
+    //! \brief Transitions around each place (from it or to it).
+    std::vector<std::vector<size_t>> m_neighbors;
     bool m_has_sources = false;
 };
 

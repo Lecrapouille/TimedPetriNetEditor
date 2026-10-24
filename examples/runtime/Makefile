@@ -14,7 +14,7 @@ TPNE := $(abspath ../..)
 BUILD := $(TPNE)/build/examples
 CXXFLAGS := -std=c++20 -Wall -Wextra -I$(TPNE)/src -I$(TPNE)/external -I$(TPNE)/external/json/include
 LIBS := -L$(TPNE)/build -lTimedPetriRuntime -lTimedPetriIO -lTimedPetriNet -Wl,-rpath,$(TPNE)/build -pthread
-EXAMPLES := PickAndPlace MicroServices TrafficLight
+EXAMPLES := PickAndPlace MicroServices TrafficLight Benchmark
 # Needs libzmq: built when it is found.
 ifneq ($(shell pkg-config --exists libzmq 2>/dev/null && echo 1),)
 EXAMPLES += Debugger
@@ -22,10 +22,14 @@ endif
 
 all: $(addprefix $(BUILD)/,$(EXAMPLES)) no-exceptions
 
-$(BUILD)/Debugger: Debugger.cpp | $(BUILD)
+# The examples follow the headers and the libraries of the project.
+HEADERS := $(wildcard $(TPNE)/src/*/*.hpp)
+DEPENDS := $(HEADERS) $(wildcard $(TPNE)/build/libTimedPetri*.so)
+
+$(BUILD)/Debugger: Debugger.cpp $(DEPENDS) | $(BUILD)
 	$(CXX) $(CXXFLAGS) $< $(LIBS) $(shell pkg-config --cflags --libs libzmq) -o $@
 
-$(BUILD)/%: %.cpp | $(BUILD)
+$(BUILD)/%: %.cpp $(DEPENDS) | $(BUILD)
 	$(CXX) $(CXXFLAGS) $< $(LIBS) -o $@
 
 $(BUILD):

@@ -38,6 +38,7 @@ void ColoredMarking::add(size_t const place, Color const color, size_t const tok
     if (color >= colors.size())
         colors.resize(size_t(color) + 1u, 0u);
     colors[color] += tokens;
+    touch(place);
 }
 
 //------------------------------------------------------------------------------
@@ -45,6 +46,7 @@ bool ColoredMarking::take(size_t const place, Color const color, size_t const to
 {
     if (count(place, color) < tokens)
         return false;
+    touch(place);
     std::vector<size_t>& colors = m_counts[place];
     if (color != AnyColor)
     {
@@ -64,6 +66,7 @@ bool ColoredMarking::take(size_t const place, Color const color, size_t const to
 //------------------------------------------------------------------------------
 void ColoredMarking::clear(size_t const place, Color const color)
 {
+    touch(place);
     std::vector<size_t>& colors = m_counts[place];
     if (color == AnyColor)
         std::fill(colors.begin(), colors.end(), 0u);
@@ -111,7 +114,7 @@ size_t Context::tokens(std::string const& place, Color const color) const
 //------------------------------------------------------------------------------
 Instance::Instance(std::string const& id, size_t const places, size_t const transitions)
     : m_id(id), m_marking(places), m_running(transitions, 0u), m_injected(transitions, 0u),
-      m_ready_since(transitions, NEVER)
+      m_ready_since(transitions, NEVER), m_enabled(transitions, 0)
 {}
 
 //------------------------------------------------------------------------------
@@ -159,10 +162,23 @@ Runtime::Runtime(Net const& net, std::shared_ptr<Executor> executor, Options con
     m_callbacks.resize(transitions);
     m_guards.resize(transitions);
     m_sources.resize(transitions, false);
+    m_neighbors.resize(net.places().size());
     for (size_t t = 0u; t < transitions; ++t)
     {
-        m_sources[t] = net.arcsIn(net.transitions()[t]).empty();
+        Transition const& transition = net.transitions()[t];
+        m_sources[t] = net.arcsIn(transition).empty();
         m_has_sources = m_has_sources || m_sources[t];
+        if (m_sources[t])
+            m_source_list.push_back(t);
+        for (auto const& a : net.arcsIn(transition))
+            m_neighbors[a.from.id].push_back(t);
+        for (auto const& a : net.arcsOut(transition))
+            m_neighbors[a.to.id].push_back(t);
+    }
+    for (auto& around : m_neighbors)
+    {
+        std::sort(around.begin(), around.end());
+        around.erase(std::unique(around.begin(), around.end()), around.end());
     }
 }
 
@@ -420,9 +436,31 @@ bool Runtime::isEnabled(Instance const& instance, size_t const transition) const
 }
 
 //------------------------------------------------------------------------------
+void Runtime::refresh(Instance& instance) const
+{
+    std::vector<size_t> const touched = instance.m_marking.takeTouched();
+    if (!instance.m_enabled_valid)
+    {
+        for (size_t t = 0u; t < instance.m_enabled.size(); ++t)
+            instance.m_enabled[t] = isEnabled(instance, t);
+        instance.m_enabled_valid = true;
+        return;
+    }
+    for (size_t const p : touched)
+    {
+        for (size_t const t : m_neighbors[p])
+            instance.m_enabled[t] = isEnabled(instance, t);
+    }
+    // The sources depend on inject().
+    for (size_t const t : m_source_list)
+        instance.m_enabled[t] = isEnabled(instance, t);
+}
+
+//------------------------------------------------------------------------------
 bool Runtime::canFire(Instance const& instance, size_t const transition) const
 {
-    if (!isEnabled(instance, transition))
+    // Instance::m_enabled is up to date (refresh()).
+    if (!instance.m_enabled[transition])
         return false;
     if (m_guards[transition])
     {
@@ -438,11 +476,12 @@ bool Runtime::canFire(Instance const& instance, size_t const transition) const
 //------------------------------------------------------------------------------
 void Runtime::updateEnabling(Instance& instance)
 {
+    refresh(instance);
     for (size_t t = 0u; t < instance.m_ready_since.size(); ++t)
     {
         if (m_net.transitions()[t].delay <= 0.0f)
             continue;
-        if (!isEnabled(instance, t))
+        if (!instance.m_enabled[t])
             instance.m_ready_since[t] = NEVER;
         else if (instance.m_ready_since[t] == NEVER)
             instance.m_ready_since[t] = instance.m_time;
@@ -452,6 +491,7 @@ void Runtime::updateEnabling(Instance& instance)
 //------------------------------------------------------------------------------
 size_t Runtime::pick(Instance& instance)
 {
+    refresh(instance);
     std::vector<size_t> candidates;
     for (size_t t = 0u; t < m_callbacks.size(); ++t)
     {
@@ -552,7 +592,11 @@ void Runtime::produce(Instance& instance, size_t const transition, Color const r
         Color const color = (a.color != AnyColor) ? a.color : result;
         double const duration = timed ? double(a.durationOrZero()) : 0.0;
         if (duration > 0.0)
+        {
+            // Tokens on their way count for the capacity of the place.
             instance.m_flights.push_back({ a.to.id, color, a.weight, instance.m_time + duration });
+            instance.m_marking.touch(a.to.id);
+        }
         else
             instance.m_marking.add(a.to.id, color, a.weight);
     }
@@ -644,6 +688,7 @@ void Runtime::checkEnd(Instance& instance)
     if ((instance.m_running_total > 0u) || !instance.m_flights.empty() ||
         (nextEventDate(instance) != NEVER) || m_has_sources)
         return;
+    refresh(instance);
     for (size_t t = 0u; t < m_callbacks.size(); ++t)
     {
         if (canFire(instance, t))
