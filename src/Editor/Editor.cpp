@@ -496,7 +496,11 @@ void Editor::onUpdate(float const dt)
         m_states.paused = false;
     if (!m_states.paused)
         activeDocument().stepAllSimulations(dt * m_states.time_scale);
+    bool const unfolding = m_force_directed.isRunning();
     m_force_directed.update();
+    // The net is unfolded: fit it in its view.
+    if (unfolding && !m_force_directed.isRunning())
+        activeDocument().activeNet().view_state.center_request = Document::ViewState::CENTER_FRAMES;
 
     // Poll remote control for commands
     if (m_remote && m_remote->isRunning())
@@ -1451,6 +1455,9 @@ void Editor::importNetFrom(Importer const& importer)
             {
                 springify();
             }
+            // Fit the imported net in its view.
+            activeDocument().activeNet().view_state.center_request = Document::ViewState::CENTER_FRAMES;
+            m_busy_frames = BUSY_FRAMES;
         }
         else
         {
