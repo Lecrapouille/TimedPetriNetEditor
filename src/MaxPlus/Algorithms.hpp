@@ -30,11 +30,12 @@ template<typename T> class SparseMatrix;
 void incidenceMatrices(Net const& net, SparseMatrix<double>& pre, SparseMatrix<double>& post);
 
 //--------------------------------------------------------------------------
-//! \brief Make the exporters needing the (max,+) algebra (Julia) known by
-//! saveToFile() and exporters(). Called once by the programs linking this
+//! \brief Make the file formats needing the (max,+) algebra known by
+//! saveToFile(), loadFromFile(), exporters() and importers(): the Julia
+//! export and the flowshops. Called once by the programs linking this
 //! library (the editor, the Julia binding).
 //--------------------------------------------------------------------------
-void registerMaxPlusExporters();
+void registerMaxPlusFormats();
 
 //--------------------------------------------------------------------------
 //! \brief Export a timed event graph as Julia code for MaxPlus.jl.

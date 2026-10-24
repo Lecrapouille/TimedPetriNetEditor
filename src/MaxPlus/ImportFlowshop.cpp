@@ -5,9 +5,8 @@
 // for users who cannot use the GPL, under a commercial license.
 // See LICENSING.md for details.
 
-#include "Imports.hpp"
 #include "PetriNet/PetriNet.hpp"
-#include "PetriNet/Flowshop.hpp"
+#include "MaxPlus/Flowshop.hpp"
 #include "PetriNet/SafeFloat.hpp"
 #include <sstream>
 #include <fstream>

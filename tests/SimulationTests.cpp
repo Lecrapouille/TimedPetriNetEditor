@@ -7,6 +7,7 @@
 
 #include "main.hpp"
 #include "PetriNet/PetriNet.hpp"
+#include "IO/IO.hpp"
 #include "PetriNet/Simulation.hpp"
 
 using namespace ::tpne;

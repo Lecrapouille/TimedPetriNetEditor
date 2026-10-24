@@ -6,7 +6,7 @@
 // See LICENSING.md for details.
 
 #include "Editor/Editor.hpp"
-#include "PetriNet/Flowshop.hpp"
+#include "MaxPlus/Flowshop.hpp"
 #include "Editor/Theme.hpp"
 #include "Editor/GrafcetHelp.hpp"
 

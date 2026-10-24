@@ -13,7 +13,7 @@
 TPNE := $(abspath ../..)
 BUILD := $(TPNE)/build/examples
 CXXFLAGS := -std=c++17 -Wall -Wextra -I$(TPNE)/src -I$(TPNE)/external -I$(TPNE)/external/json/include
-LIBS := -L$(TPNE)/build -lTimedPetriRuntime -lTimedPetriNet -Wl,-rpath,$(TPNE)/build -pthread
+LIBS := -L$(TPNE)/build -lTimedPetriRuntime -lTimedPetriIO -lTimedPetriNet -Wl,-rpath,$(TPNE)/build -pthread
 EXAMPLES := PickAndPlace MicroServices TrafficLight
 
 all: $(addprefix $(BUILD)/,$(EXAMPLES)) no-exceptions

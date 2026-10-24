@@ -6,11 +6,14 @@
 // See LICENSING.md for details.
 
 #include "main.hpp"
+#include "MaxPlus/Algorithms.hpp"
 
 int main(int argc, char *argv[])
 {
     // The following line must be executed to initialize Google Mock
     // (and Google Test) before running the tests.
     ::testing::InitGoogleMock(&argc, argv);
+    // The flowshops of the examples are loaded by loadFromFile().
+    tpne::registerMaxPlusFormats();
     return RUN_ALL_TESTS();
 }

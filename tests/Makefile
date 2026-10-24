@@ -36,7 +36,7 @@ USER_CXXFLAGS := -Wno-old-style-cast -Wno-sign-conversion
 # Inform Makefile where to find *.cpp files
 #
 VPATH += $(P)/src $(P)/src/PetriNet $(P)/src/MaxPlus $(P)/src/Runtime
-VPATH += $(P)/src/PetriNet/Imports $(P)/src/PetriNet/Exports
+VPATH += $(P)/src/IO $(P)/src/IO/Imports $(P)/src/IO/Exports
 
 ###################################################
 # Inform Makefile where to find header files
@@ -51,6 +51,7 @@ SRC_FILES += $(call rwildcard,$(P)/src/PetriNet,*.c)
 SRC_FILES += $(call rwildcard,$(P)/src/MaxPlus,*.cpp)
 SRC_FILES += $(call rwildcard,$(P)/src/MaxPlus,*.c)
 SRC_FILES += $(call rwildcard,$(P)/src/Runtime,*.cpp)
+SRC_FILES += $(call rwildcard,$(P)/src/IO,*.cpp)
 SRC_FILES += $(call rwildcard,$(P)/tests,*.cpp)
 
 # BEWARE: Disable fast math for testing, else the tests on NaN will fail.

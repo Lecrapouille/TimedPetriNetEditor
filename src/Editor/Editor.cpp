@@ -42,7 +42,7 @@ Editor::Editor(size_t const width, size_t const height,
       m_path(GET_DATA_PATH),
       m_view(*this)
 {
-    registerMaxPlusExporters();
+    registerMaxPlusFormats();
 #ifdef __EMSCRIPTEN__
  constexpr float FONT_SIZE = 18.0f;
 #else

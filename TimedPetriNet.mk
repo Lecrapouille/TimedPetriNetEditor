@@ -15,7 +15,9 @@
 # project: define TPNE_DIR (this folder) then include this file.
 #
 #   TPNE_SOURCES  the library: nets, simulation, GRAFCET engine, (max,+)
-#                 algorithms, imports and exports. No GUI.
+#                 algorithms, imports and exports (the file formats). No GUI.
+#   TPNE_CORE_SOURCES  only the nets, the firing rule, the engines: what a
+#                 board running a net needs (with TPNE_RUNTIME_SOURCES).
 #   TPNE_RUNTIME_SOURCES  the runtime calling functions when transitions
 #                 fire (needs TPNE_SOURCES).
 #   TPNE_VIEWER_SOURCES  NetViewer, a read-only view of a net drawn inside
@@ -29,7 +31,8 @@ endif
 
 TPNE_INCLUDES := $(TPNE_DIR)/src
 TPNE_VPATH := $(TPNE_DIR)/src
-TPNE_SOURCES := $(shell find $(TPNE_DIR)/src/PetriNet $(TPNE_DIR)/src/MaxPlus -name '*.cpp' -o -name '*.c' 2> /dev/null)
+TPNE_CORE_SOURCES := $(shell find $(TPNE_DIR)/src/PetriNet -name '*.cpp' 2> /dev/null)
+TPNE_SOURCES := $(shell find $(TPNE_DIR)/src/PetriNet $(TPNE_DIR)/src/IO $(TPNE_DIR)/src/MaxPlus -name '*.cpp' -o -name '*.c' 2> /dev/null)
 TPNE_SOURCES += $(TPNE_DIR)/external/tinyxml2/tinyxml2.cpp
 # Third parties headers are system headers: no warnings from them.
 TPNE_CXXFLAGS := -isystem $(abspath $(TPNE_DIR)/external/json/include)

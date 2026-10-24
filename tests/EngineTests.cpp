@@ -8,8 +8,8 @@
 #include "main.hpp"
 #include "PetriNet/PetriNet.hpp"
 #include "PetriNet/Engine.hpp"
-#include "PetriNet/Flowshop.hpp"
-#include "PetriNet/Imports/Imports.hpp"
+#include "MaxPlus/Flowshop.hpp"
+#include "IO/Imports/Imports.hpp"
 
 #include <set>
 

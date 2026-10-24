@@ -9,10 +9,10 @@
 #include "PetriNet/PetriNet.hpp"
 #include "PetriNet/GrafcetEngine.hpp"
 #include "PetriNet/Simulation.hpp"
-#include "PetriNet/Flowshop.hpp"
+#include "MaxPlus/Flowshop.hpp"
 #include "MaxPlus/Algorithms.hpp"
-#include "PetriNet/Exports/Exports.hpp"
-#include "PetriNet/Imports/Imports.hpp"
+#include "IO/Exports/Exports.hpp"
+#include "IO/Imports/Imports.hpp"
 
 #include <cstdio>
 #include <fstream>

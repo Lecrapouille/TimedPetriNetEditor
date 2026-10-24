@@ -5,10 +5,43 @@
 // for users who cannot use the GPL, under a commercial license.
 // See LICENSING.md for details.
 
-#include "PetriNet/Exports/Exports.hpp"
+#include "IO/Exports/Exports.hpp"
+#include <algorithm>
 #include <sstream>
 
 namespace tpne {
+
+//------------------------------------------------------------------------------
+//! \brief The format of the list whose extensions (".a,.b") the file ends with,
+//! the longest one winning (case is ignored).
+//------------------------------------------------------------------------------
+template<class Format>
+static Format const* findFormat(std::vector<Format> const& formats, std::string const& filepath,
+                                std::string Format::*extensions)
+{
+    std::string path(filepath);
+    if (!path.empty() && (path.back() == '~'))
+        path.pop_back();
+    std::transform(path.begin(), path.end(), path.begin(), ::tolower);
+
+    Format const* best = nullptr;
+    size_t best_size = 0u;
+    for (auto const& it: formats)
+    {
+        std::stringstream ss(it.*extensions);
+        std::string ext;
+        while (std::getline(ss, ext, ','))
+        {
+            if ((ext.size() > best_size) && (path.size() >= ext.size()) &&
+                (path.compare(path.size() - ext.size(), ext.size(), ext) == 0))
+            {
+                best = &it;
+                best_size = ext.size();
+            }
+        }
+    }
+    return best;
+}
 
 //------------------------------------------------------------------------------
 //------------------------------------------------------------------------------
@@ -67,6 +100,12 @@ Exporter const* getExporter(std::string const& extension)
         }
     }
     return nullptr;
+}
+
+//------------------------------------------------------------------------------
+Exporter const* findExporter(std::string const& filepath)
+{
+    return findFormat(exporters(), filepath, &Exporter::extensions);
 }
 
 } // namespace tpne

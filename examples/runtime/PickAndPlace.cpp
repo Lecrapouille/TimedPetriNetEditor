@@ -15,6 +15,7 @@
 //=============================================================================
 
 #include "PetriNet/PetriNet.hpp"
+#include "IO/IO.hpp"
 #include "Runtime/Runtime.hpp"
 #include "Runtime/Journal.hpp"
 

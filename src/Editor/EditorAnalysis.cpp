@@ -16,7 +16,7 @@
 #include "Editor/Theme.hpp"
 
 #include "MaxPlus/Algorithms.hpp"
-#include "PetriNet/Flowshop.hpp"
+#include "MaxPlus/Flowshop.hpp"
 #include "MaxPlus/SparseMatrix.hpp"
 #include "imgui/imgui.h"
 #include "implot/implot.h"

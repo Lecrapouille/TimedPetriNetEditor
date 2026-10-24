@@ -8,7 +8,9 @@
 #include "PetriNet/PetriNet.hpp"
 #include "MaxPlus/Algorithms.hpp"
 #include "MaxPlus/SparseMatrix.hpp"
-#include "PetriNet/Exports/Exports.hpp"
+#include "IO/Exports/Exports.hpp"
+#include "IO/Imports/Imports.hpp"
+#include "MaxPlus/Flowshop.hpp"
 #include <fstream>
 #include <cstring>
 
@@ -163,9 +165,10 @@ std::string exportToJulia(Net const& net, std::string const& filename)
 }
 
 //------------------------------------------------------------------------------
-void registerMaxPlusExporters()
+void registerMaxPlusFormats()
 {
     addExporter({ "Julia", ".jl", exportToJulia });
+    addImporter({ "Flowshop", ".flowshop", importFlowshop, false });
 }
 
 } // namespace tpne

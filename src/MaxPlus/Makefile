@@ -20,10 +20,11 @@ TARGET_DESCRIPTION := (max,+) algebra and analyses of timed event graphs
 include $(M)/project/Makefile
 
 ###################################################
-# Depends on TimedPetriNet (the nets).
+# Depends on TimedPetriIO (the formats it adds) and TimedPetriNet (the nets).
 #
 LIB_TPNE_NET := $(call internal-lib,TimedPetriNet)
-INTERNAL_LIBS := $(LIB_TPNE_NET)
+LIB_TPNE_IO := $(call internal-lib,TimedPetriIO)
+INTERNAL_LIBS := $(LIB_TPNE_IO) $(LIB_TPNE_NET)
 DIRS_WITH_MAKEFILE := $(P)/src/PetriNet
 
 ###################################################
@@ -42,6 +43,7 @@ VPATH += $(P)/src
 # Inform Makefile where to find header files
 #
 INCLUDES += $(P)/src $(THIRD_PARTIES_DIR)
+INCLUDES += $(THIRD_PARTIES_DIR)/json/include
 
 ###################################################
 # Make the list of compiled files for the library

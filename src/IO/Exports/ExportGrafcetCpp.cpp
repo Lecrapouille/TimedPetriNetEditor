@@ -6,7 +6,7 @@
 // See LICENSING.md for details.
 
 #include "PetriNet/PetriNet.hpp"
-#include "PetriNet/Exports/Exports.hpp"
+#include "IO/Exports/Exports.hpp"
 #include "PetriNet/Grafcet.hpp"
 #include <algorithm>
 #include <fstream>

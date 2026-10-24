@@ -9,6 +9,7 @@
 #define protected public
 #define private public
 #  include "PetriNet/PetriNet.hpp"
+#  include "IO/IO.hpp"
 #  include "MaxPlus/Algorithms.hpp"
 #  include "MaxPlus/SparseMatrix.hpp"
 #  include "MaxPlus/TropicalAlgebra.hpp"

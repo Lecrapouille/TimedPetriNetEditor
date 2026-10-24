@@ -7,6 +7,7 @@
 
 #include "main.hpp"
 #include "PetriNet/PetriNet.hpp"
+#include "IO/IO.hpp"
 #include "MaxPlus/Algorithms.hpp"
 #include "PetriNet/Simulation.hpp"
 

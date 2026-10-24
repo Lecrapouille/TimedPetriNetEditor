@@ -72,6 +72,10 @@ void operationOf(std::string const& name, std::string& machine, std::string& pie
 //!   of index t in Net::transitions().
 //! \return the error (not an event graph, a circuit without token), or empty.
 //------------------------------------------------------------------------------
+//! \brief Import a flowshop file (.flowshop) as a timed event graph. Known by
+//! loadFromFile() after registerMaxPlusFormats().
+std::string importFlowshop(Net& net, std::string const& filename);
+
 std::string earliestDates(Net const& net, size_t cycles,
                           std::vector<std::vector<double>>& dates);
 

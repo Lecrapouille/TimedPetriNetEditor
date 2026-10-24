@@ -60,7 +60,12 @@ std::vector<Exporter> const& exporters();
 //! Julia export of the (max,+) library). Ignored if the format is known.
 void addExporter(Exporter const& exporter);
 
+//! \brief The exporter of the extension (".json"), or null.
 Exporter const* getExporter(std::string const& extension);
+
+//! \brief The exporter of the file, by the longest of its extensions it
+//! ends with ("net.drawio.xml": Draw.io), or null.
+Exporter const* findExporter(std::string const& filepath);
 
 } // namespace tpne
 

@@ -8,7 +8,6 @@
 #include "PetriNet/Simulation.hpp"
 #include "PetriNet/PetriNet.hpp"
 #include "PetriNet/Grafcet.hpp"
-#include "PetriNet/Flowshop.hpp"
 
 #include <algorithm>
 #include <cstdlib>
@@ -375,24 +374,18 @@ void Simulation::trace(Transition const& transition, double const date, size_t c
     if (onTrace.connectionCount() == 0u)
         return;
 
-    // Same words as the Gantt chart: an operation "<machine>_<piece>" of a
-    // flowshop starts on its machine; k counts the firings of the transition.
+    // k counts the firings of the transition.
     float duration = 0.0f;
     for (Arc const& arc : m_net.arcsOut(transition))
     {
         duration = std::max(duration, arc.durationOrZero());
     }
     std::string const name = transition.caption.empty() ? transition.key : transition.caption;
-    std::string machine, piece;
-    operationOf(name, machine, piece);
 
     char text_date[64];
     std::snprintf(text_date, sizeof(text_date), "t = %.2f  ", date);
     std::string text = text_date;
-    if (machine != piece)
-        text += machine + " starts " + piece;
-    else
-        text += name + ((name != transition.key) ? " (" + transition.key + ")" : "") + " fires";
+    text += name + ((name != transition.key) ? " (" + transition.key + ")" : "") + " fires";
     text += " (k = " + std::to_string(k) + ")";
     if ((duration > 0.0f) && (m_net.type() != TypeOfNet::PetriNet))
     {

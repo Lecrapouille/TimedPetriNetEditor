@@ -20,26 +20,10 @@ TARGET_DESCRIPTION := Library manipulating Petri nets
 include $(M)/project/Makefile
 
 ###################################################
-# Set MQTT Library.
-#
-ifeq ($(OS),Linux)
-    INCLUDES += $(THIRD_PARTIES_DIR)/MQTT/include
-    VPATH += $(THIRD_PARTIES_DIR)/MQTT/src
-    DEFINES += -DMQTT_BROKER_ADDR=\"localhost\"
-    DEFINES += -DMQTT_BROKER_PORT=1883
-    PKG_LIBS += libmosquitto
-endif
-
-###################################################
 # Set json ibrary.
 #
 INCLUDES += $(THIRD_PARTIES_DIR)/json/include
 
-###################################################
-# Set xml Library.
-#
-VPATH += $(THIRD_PARTIES_DIR)/tinyxml2
-LIB_FILES += $(THIRD_PARTIES_DIR)/tinyxml2/tinyxml2.cpp
 USER_CXXFLAGS := -Wno-old-style-cast -Wno-sign-conversion
 USER_CXXFLAGS += -Wno-nan-infinity-disabled -Wno-format-nonliteral -Wno-double-promotion
 

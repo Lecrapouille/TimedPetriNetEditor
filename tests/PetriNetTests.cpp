@@ -9,6 +9,7 @@
 #define protected public
 #define private public
 #  include "PetriNet/PetriNet.hpp"
+#  include "IO/IO.hpp"
 #undef protected
 #undef private
 

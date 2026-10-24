@@ -25,10 +25,8 @@ std::string importAllNetsFromJSON(std::vector<Net>& nets, std::string const& fil
                                   DocumentInfo* info = nullptr);
 //! \brief Import http://www.cmap.polytechnique.fr/~gaubert/HOWARD2.html
 std::string importFromTimedEventGraph(Net& net, std::string const& filename);
-//! \brief Import https://gitlab.com/porky11/pn-editor
+//! \brief Import the Petri Net Markup Language (standard, Symmetri).
 std::string importFromPNML(Net& net, std::string const& filename);
-//! \brief Import
-std::string importFlowshop(Net& net, std::string const& filename);
 
 //! \brief Interface for importing a Petri file.
 //! \param[inout] net the net we are importing. Better to call net.clear()
@@ -55,7 +53,16 @@ struct Importer
 //! \brief Container of file formats we can import a Petri net from.
 std::vector<Importer> const& importers();
 
+//! \brief Add a file format to importers() (formats of other libraries, as the
+//! flowshops of the (max,+) library). Ignored if the format is known.
+void addImporter(Importer const& importer);
+
+//! \brief The importer of the extension (".json"), or null.
 Importer const* getImporter(std::string const& ext);
+
+//! \brief The importer of the file, by the longest of its extensions it ends
+//! with, or null.
+Importer const* findImporter(std::string const& filepath);
 
 } // namespace tpne
 

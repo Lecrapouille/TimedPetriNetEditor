@@ -1019,25 +1019,6 @@ bool convertTo(Net& net, TypeOfNet const type, std::string& error, std::vector<s
 //-----------------------------------------------------------------------------
 bool convertToEventGraph(Net& net, std::string& error, std::vector<size_t>& erroneous_arcs);
 
-//-----------------------------------------------------------------------------
-//! \brief Load the Petri net from a a file. The current net is cleared
-//! before the loading. If the loading failed (missing file or invalid
-//! syntax) the net is set dummy.
-//! \param[in] filename: the file path in where a Petri net has been
-//! saved. Should have the .json extension.
-//! \return error message in case of failure, else return dummy string.
-//-----------------------------------------------------------------------------
-// FIXME remplacer bool& springify par bool const springify
-std::string loadFromFile(Net& net, std::string const& filepath, bool& springify);
-
-//-----------------------------------------------------------------------------
-//! \brief Save the Petri net in a a file.
-//! \param[in] filename: the file path in where to save the Petri net.
-//! Should have the .json extension.
-//! \return error message in case of failure, else return dummy string.
-//-----------------------------------------------------------------------------
-std::string saveToFile(Net const& net, std::string const& filename);
-
 } // namespace tpne
 
 #endif

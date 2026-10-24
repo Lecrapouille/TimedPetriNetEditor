@@ -16,8 +16,7 @@
 #  include "Editor/EditorState.hpp"
 #  include "Editor/Path.hpp"
 
-#  include "PetriNet/Exports/Exports.hpp"
-#  include "PetriNet/Imports/Imports.hpp"
+#  include "IO/IO.hpp"
 #  include "Editor/ForceDirected.hpp"
 #  include "MaxPlus/Algorithms.hpp"
 
