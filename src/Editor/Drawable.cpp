@@ -514,6 +514,18 @@ void drawArc(ImDrawList* draw_list, Net const& net, Arc const& arc,
         pill(draw_list, p - normal(dir) * (11.0f * zoom), pal.outline,
              std::to_string(arc.weight).c_str(), size);
     }
+
+    // Color of the tokens: asked near the transition taking them, given near
+    // the transition giving them.
+    if (arc.color != AnyColor)
+    {
+        ImVec2 dir;
+        float const where = (arc.from.type == Node::Type::Place) ? 0.75f : 0.25f;
+        ImVec2 const p = screen(origin, zoom, alongPath(path.points, where, dir));
+        ImU32 const c = (arc.color == Success) ? pal.active : (arc.color == Failed) ? pal.critical
+                                                                                     : pal.enabled;
+        pill(draw_list, p - normal(dir) * (11.0f * zoom), c, net.colors.name(arc.color).c_str(), size);
+    }
 }
 
 //------------------------------------------------------------------------------

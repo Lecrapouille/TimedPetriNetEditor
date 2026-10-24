@@ -1100,6 +1100,33 @@ void Editor::documentPanel()
         ImGui::PopID();
     }
 
+    // Colors of the tokens of the active net (runtime): results of the
+    // functions and colors of the user.
+    if (allows(net().type(), Feature::Colors))
+    {
+        ImGui::SeparatorText("Colors of the tokens");
+        ImGui::TextDisabled("Success, Failed, Canceled: results of the functions.");
+        std::vector<std::string> const user = net().colors.user();
+        if (user.empty())
+            ImGui::TextDisabled("No color of yours.");
+        for (auto const& name : user)
+            ImGui::BulletText("%s", name.c_str());
+        static std::string new_color;
+        ImGui::BeginDisabled(running);
+        ImGui::SetNextItemWidth(160.0f);
+        bool const add = ImGui::InputTextWithHint("##newcolor", "new color", &new_color,
+                                                  ImGuiInputTextFlags_EnterReturnsTrue);
+        ImGui::SameLine();
+        if ((ImGui::Button("Add") || add) && !new_color.empty())
+        {
+            net().colors.add(new_color);
+            new_color.clear();
+            modified = true;
+        }
+        ImGui::EndDisabled();
+        ImGui::TextDisabled("Give them to the arcs: right click on an arc.");
+    }
+
     // The inputs and outputs of a GRAFCET, with their description.
     if (net().type() == TypeOfNet::GRAFCET)
     {

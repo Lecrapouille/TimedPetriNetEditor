@@ -487,11 +487,12 @@ static void drawArcsTable(Net& net, Simulation& simulation, bool& modified)
     ImGui::Begin("Arcs");
     ImGui::BeginDisabled(simulation.isRunning());
     ImGuiTableFlags const flags = ImGuiTableFlags_RowBg | ImGuiTableFlags_SizingFixedFit;
-    if (ImGui::BeginTable("ArcsTable", timed ? 4 : 3, flags))
+    if (ImGui::BeginTable("ArcsTable", timed ? 5 : 4, flags))
     {
         ImGui::TableSetupColumn("Arc");
         ImGui::TableSetupColumn("Kind");
         ImGui::TableSetupColumn("Weight");
+        ImGui::TableSetupColumn("Color");
         if (timed)
             ImGui::TableSetupColumn("Duration");
         ImGui::TableHeadersRow();
@@ -521,6 +522,22 @@ static void drawArcsTable(Net& net, Simulation& simulation, bool& modified)
             {
                 arc.weight = size_t(std::max(1, weight));
                 modified = true;
+            }
+            // Color of the tokens taken or given (runtime).
+            ImGui::TableNextColumn();
+            ImGui::SetNextItemWidth(100.0f);
+            if (ImGui::BeginCombo("##color", net.colors.name(arc.color).c_str()))
+            {
+                auto const& names = net.colors.names();
+                for (size_t c = 0u; c < names.size(); ++c)
+                {
+                    if ((c != size_t(Deadlocked)) && ImGui::Selectable(names[c].c_str(), arc.color == Color(c)))
+                    {
+                        arc.color = Color(c);
+                        modified = true;
+                    }
+                }
+                ImGui::EndCombo();
             }
             if (timed)
             {

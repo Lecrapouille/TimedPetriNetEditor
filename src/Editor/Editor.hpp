@@ -212,6 +212,9 @@ private:
     void setArc(Arc& arc, float duration, size_t weight, size_t tokens);
     //! \brief Change the tokens and the capacity of a place (undoable).
     void setPlace(Place& place, size_t tokens, size_t capacity);
+    //! \brief Change the color of the tokens of an arc, by its name: added to
+    //! the colors of the net if new; empty: any color (undoable).
+    void setArcColor(Arc& arc, std::string const& color);
     Node& addOppositeNode(Node::Type const type, float const x, float const y,
         size_t const tokens = 0u);
     void addArc(Node& from, Node& to, float const duration = 0.0f);

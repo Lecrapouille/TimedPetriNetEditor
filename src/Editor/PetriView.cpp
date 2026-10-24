@@ -1558,6 +1558,38 @@ void PetriView::drawContextMenus(Net& net)
                 }
                 ImGui::EndMenu();
             }
+            // Colors of the tokens (runtime): asked by an arc from a place,
+            // given by an arc to a place (any: the result of the function).
+            if (allows(net.type(), Feature::Colors) && !net.layout().compact &&
+                ImGui::BeginMenu("Color of the tokens", !running))
+            {
+                ImGui::TextDisabled((arc->from.type == Node::Type::Place)
+                                    ? "The transition takes tokens of this color"
+                                    : "The transition gives tokens of this color");
+                auto const& names = net.colors.names();
+                for (size_t c = 0u; c < names.size(); ++c)
+                {
+                    if (c == size_t(Deadlocked))
+                        continue;
+                    std::string const label = (c == size_t(AnyColor))
+                        ? ((arc->from.type == Node::Type::Place) ? "any" : "any (result of the function)")
+                        : names[c];
+                    if (ImGui::MenuItem(label.c_str(), nullptr, arc->color == Color(c)) &&
+                        (arc->color != Color(c)))
+                        m_editor.setArcColor(*arc, (c == size_t(AnyColor)) ? std::string() : names[c]);
+                }
+                ImGui::Separator();
+                static char new_color[64] = {0};
+                ImGui::SetNextItemWidth(140.0f);
+                if (ImGui::InputTextWithHint("##newcolor", "new color", new_color, sizeof(new_color),
+                                             ImGuiInputTextFlags_EnterReturnsTrue) && (new_color[0] != '\0'))
+                {
+                    m_editor.setArcColor(*arc, new_color);
+                    new_color[0] = '\0';
+                    ImGui::CloseCurrentPopup();
+                }
+                ImGui::EndMenu();
+            }
             if (ImGui::MenuItem("Select", nullptr, false, !running))
                 selectArc(arc, false);
             if (ImGui::MenuItem("Delete", "Del", false, !running))

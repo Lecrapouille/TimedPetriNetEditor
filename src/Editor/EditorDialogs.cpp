@@ -156,8 +156,9 @@ void Editor::help() const
                 ImGui::TextWrapped("An arc released in the void creates a node of the other kind there; "
                                    "between two nodes of the same kind, a node is inserted. Double click: "
                                    "rename a node (the receptivity of a GRAFCET transition), or edit the "
-                                   "duration of an arc. Wheel: zoom around the mouse; Shift + wheel: move "
-                                   "the view.");
+                                   "duration and the weight of an arc. Right click on a place: its tokens "
+                                   "and its max of tokens; on an arc: its kind and the color of its "
+                                   "tokens. Wheel: zoom around the mouse; Shift + wheel: move the view.");
                 ImGui::Spacing();
                 helpTable("##keys", { "Key", "Action" }, {
                     { "Space", "start or stop the simulation" },

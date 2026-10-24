@@ -1190,6 +1190,17 @@ void Editor::setPlace(Place& place, size_t const tokens, size_t const capacity)
 }
 
 //------------------------------------------------------------------------------
+void Editor::setArcColor(Arc& arc, std::string const& color)
+{
+    auto action = std::make_unique<NetModificationAction>([this]() -> Net& { return net(); });
+    action->before(net());
+    arc.color = (color.empty() || (color == "any")) ? AnyColor : net().colors.add(color);
+    net().modified = true;
+    action->after(net());
+    m_history.add(std::move(action));
+}
+
+//------------------------------------------------------------------------------
 void Editor::removeArc(Arc const& arc)
 {
     // In a timed event graph an arc between two transitions is made of a
