@@ -11,6 +11,7 @@
 #  include "Editor/NodeMarks.hpp"
 #  include "Runtime/Runtime.hpp"
 
+#  include <map>
 #  include <string>
 #  include <vector>
 
@@ -40,6 +41,19 @@ public:
     void append(LogEntry const& entry);
 
     //--------------------------------------------------------------------------
+    //! \brief Follow a running program on the net: the entries are cleared, the
+    //! replay shows the last date as the entries come (append(), snapshot()).
+    //! An empty source stops it.
+    //--------------------------------------------------------------------------
+    void live(std::string const& source, Net& net);
+
+    //--------------------------------------------------------------------------
+    //! \brief Tokens of each place of an instance at a date (a program
+    //! connected late gives them): the replay of the instance starts there.
+    //--------------------------------------------------------------------------
+    void snapshot(std::string const& instance, double const date, Marking const& tokens);
+
+    //--------------------------------------------------------------------------
     //! \brief Forget the entries (and stop the replay).
     //--------------------------------------------------------------------------
     void clear();
@@ -65,6 +79,7 @@ public:
     void stopReplay();
 
     bool isReplaying() const { return m_replay; }
+    bool isLive() const { return !m_live.empty(); }
     std::vector<LogEntry> const& entries() const { return m_entries; }
 
     //! \brief Ask the window to open a file dialog (menu of the editor).
@@ -103,6 +118,17 @@ private:
     bool m_dirty = true;
     //! \brief Entry selected in the table (its transition is marked).
     size_t m_selected = size_t(-1);
+    //! \brief Endpoint of the program followed (empty: none).
+    std::string m_live;
+    //! \brief Tokens given by the program for an instance at a date.
+    struct Snapshot
+    {
+        double date = 0.0;
+        Marking tokens;
+        //! \brief Number of entries received before it: they are in it.
+        size_t entries = 0u;
+    };
+    std::map<std::string, Snapshot> m_snapshots;
 };
 
 } // namespace tpne

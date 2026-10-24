@@ -12,9 +12,13 @@
 #include "MaxPlus/Algorithms.hpp"
 #include "Editor/TopDownLayout.hpp"
 #include "Editor/KeyBindings.hpp"
+#include "Editor/FileDialogHelper.hpp"
+#include "Runtime/Journal.hpp"
 #include "imgui/imgui.h"
 #include "imgui/imgui_internal.h"
 
+#include <fstream>
+#include <sstream>
 #include <algorithm>
 #include <cstdio>
 #include <cmath>
@@ -33,6 +37,7 @@ void Editor::menu()
         menuView();
         menuSimulation();
         menuGraphEvents();
+        menuDebug();
         menuHelp();
         toolbar();
         ImGui::EndMainMenuBar();
@@ -507,6 +512,117 @@ void Editor::menuGraphEvents()
     }
     ImGui::EndDisabled();
     ImGui::EndMenu();
+}
+
+//------------------------------------------------------------------------------
+void Editor::menuDebug()
+{
+    if (!ImGui::BeginMenu("Debug"))
+        return;
+
+    // A program running the net (runtime, generated GRAFCET) publishes what
+    // it does: the editor draws it.
+    if (!m_monitor.isConnected())
+    {
+        ImGui::TextDisabled("Program publishing its journal (ZeroMQ):");
+        ImGui::SetNextItemWidth(220.0f);
+        ImGui::InputText("##endpoint", &m_monitor_endpoint);
+        ImGui::SameLine();
+        if (ImGui::Button("Connect"))
+        {
+            if (m_monitor.connect(m_monitor_endpoint))
+            {
+                m_journal.live(m_monitor_endpoint, net());
+                m_messages.setInfo("Connected to " + m_monitor_endpoint + ": the Journal follows the program");
+                ImGui::SetWindowFocus("Journal");
+            }
+            else
+                m_messages.setError(m_monitor.error());
+            ImGui::CloseCurrentPopup();
+        }
+    }
+    else if (ImGui::MenuItem(("Disconnect from " + m_monitor.endpoint()).c_str()))
+    {
+        m_monitor.disconnect();
+        m_journal.stopReplay();
+        m_marks.clear("runtime");
+    }
+    ImGui::Separator();
+    if (ImGui::MenuItem("Open a manifest..."))
+        FileDialogHelper::openLoad("ManifestDlgKey", "Open the manifest of a program", ".json");
+    if (ImGui::MenuItem("Open a journal..."))
+        m_journal.request_open = true;
+    if (ImGui::MenuItem("Save the journal..."))
+        m_journal.request_save = true;
+    if (ImGui::MenuItem("Clear the marks of the nodes"))
+    {
+        m_marks.clear("runtime");
+        m_marks.clear("journal");
+        m_marks.clear("analysis");
+    }
+    ImGui::EndMenu();
+}
+
+//------------------------------------------------------------------------------
+void Editor::programWindow()
+{
+    FileDialogHelper::display("ManifestDlgKey", [this](std::string const& path) {
+        std::ifstream file(path);
+        std::stringstream text;
+        text << file.rdbuf();
+        Manifest manifest;
+        std::string const error = fromManifest(text.str(), manifest);
+        if (!error.empty())
+        {
+            m_messages.setError("'" + path + "': " + error);
+            return;
+        }
+        RuntimeMonitor::mark(net(), manifest, m_marks);
+        m_messages.setInfo(std::to_string(manifest.unregistered.size()) +
+                           " transitions without function in '" + path + "'");
+    });
+
+    if (!m_monitor.isConnected())
+        return;
+    if (!ImGui::Begin("Program"))
+    {
+        ImGui::End();
+        return;
+    }
+    ImGui::Text("Connected to %s", m_monitor.endpoint().c_str());
+    ImGui::SameLine();
+    if (ImGui::SmallButton("Disconnect"))
+    {
+        m_monitor.disconnect();
+        m_journal.stopReplay();
+        m_marks.clear("runtime");
+        ImGui::End();
+        return;
+    }
+    Manifest const& manifest = m_monitor.manifest(net().name);
+    if (manifest.net.empty() && manifest.transitions.empty())
+        ImGui::TextDisabled("No manifest received yet");
+    else
+    {
+        ImGui::Text("Net: %s", manifest.net.c_str());
+        if (manifest.transitions.size() != net().transitions().size())
+            ImGui::TextColored(ImVec4(0.95f, 0.55f, 0.05f, 1.0f),
+                               "The program has %zu transitions, this net %zu: is it the same net?",
+                               manifest.transitions.size(), net().transitions().size());
+        if (!manifest.unregistered.empty())
+        {
+            ImGui::TextDisabled("Transitions without function (they fire at once):");
+            for (auto const& name : manifest.unregistered)
+                ImGui::BulletText("%s", name.c_str());
+        }
+    }
+    if (!m_monitor.io().empty())
+    {
+        ImGui::SeparatorText("Inputs and outputs");
+        for (auto const& line : m_monitor.io())
+            ImGui::TextUnformatted(line.c_str());
+    }
+    ImGui::End();
 }
 
 //------------------------------------------------------------------------------

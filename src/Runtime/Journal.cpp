@@ -109,6 +109,62 @@ std::string fromJsonLines(std::string const& text, ColorTable const& colors,
 }
 
 //------------------------------------------------------------------------------
+std::string toManifest(Runtime const& runtime)
+{
+    Net const& net = runtime.net();
+    nlohmann::ordered_json transitions = nlohmann::ordered_json::array();
+    for (auto const& t : net.transitions())
+        transitions.push_back(t.caption.empty() ? t.key : t.caption);
+    nlohmann::ordered_json places = nlohmann::ordered_json::array();
+    for (auto const& p : net.places())
+        places.push_back(p.caption.empty() ? p.key : p.caption);
+    nlohmann::ordered_json json = {
+        { "type", "manifest" },
+        { "net", net.name },
+        { "places", places },
+        { "transitions", transitions },
+        { "unregistered", runtime.unregisteredTransitions() },
+    };
+    return json.dump();
+}
+
+//------------------------------------------------------------------------------
+std::string fromManifest(std::string const& text, Manifest& manifest)
+{
+    nlohmann::json const json = nlohmann::json::parse(text, nullptr, false);
+    if (json.is_discarded() || !json.is_object() || (json.value("type", "") != "manifest"))
+        return "not a manifest";
+    manifest = Manifest{};
+    manifest.net = json.value("net", "");
+    for (char const* key : { "places", "transitions", "unregistered" })
+    {
+        if (!json.contains(key) || !json[key].is_array())
+            continue;
+        std::vector<std::string>& names = (key[0] == 'p') ? manifest.places
+                                        : (key[0] == 't') ? manifest.transitions
+                                                          : manifest.unregistered;
+        for (auto const& name : json[key])
+        {
+            if (name.is_string())
+                names.push_back(name.get<std::string>());
+        }
+    }
+    return {};
+}
+
+//------------------------------------------------------------------------------
+std::string toMarkingMessage(std::string const& instance, double const date, Marking const& tokens)
+{
+    nlohmann::ordered_json json = {
+        { "type", "marking" },
+        { "instance", instance },
+        { "date", date },
+        { "tokens", tokens },
+    };
+    return json.dump();
+}
+
+//------------------------------------------------------------------------------
 //! \brief The text as a CSV field: quoted when it holds a comma, a quote or
 //! a new line.
 static std::string csv(std::string const& text)

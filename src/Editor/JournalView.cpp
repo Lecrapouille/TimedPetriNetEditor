@@ -100,11 +100,35 @@ void JournalView::append(LogEntry const& entry)
 }
 
 //------------------------------------------------------------------------------
+void JournalView::live(std::string const& source, Net& net)
+{
+    clear();
+    m_live = source;
+    if (source.empty())
+        return;
+    m_source = source;
+    m_follow = true;
+    m_replay = true;
+    m_replay_net = &net;
+    m_saved_tokens = net.tokens();
+    m_instance.clear();
+    m_dirty = true;
+}
+
+//------------------------------------------------------------------------------
+void JournalView::snapshot(std::string const& instance, double const date, Marking const& tokens)
+{
+    m_snapshots[instance] = { date, tokens, m_entries.size() };
+    m_dirty = true;
+}
+
+//------------------------------------------------------------------------------
 void JournalView::clear()
 {
     stopReplay();
     m_entries.clear();
     m_k.clear();
+    m_snapshots.clear();
     m_selected = size_t(-1);
     m_error.clear();
 }
@@ -153,6 +177,7 @@ void JournalView::stopReplay()
     m_playing = false;
     m_replay_net = nullptr;
     m_saved_tokens.clear();
+    m_live.clear();
 }
 
 //------------------------------------------------------------------------------
@@ -163,13 +188,27 @@ void JournalView::replay(Net& net, NodeMarks& marks)
     m_dirty = false;
 
     // The marking of the instance at the cursor: the journal replayed from the
-    // tokens the net had (Runtime::restore() does it with the colors).
-    for (size_t p = 0u; p < net.places().size(); ++p)
-        net.places()[p].tokens = m_saved_tokens[p];
+    // tokens the net had, or the ones the program gave (Runtime::restore()
+    // does it with the colors).
+    size_t since = 0u;
+    auto const snapshot = m_snapshots.find(m_instance);
+    if ((snapshot != m_snapshots.end()) && (snapshot->second.date <= m_cursor) &&
+        (snapshot->second.tokens.size() == net.places().size()))
+    {
+        since = snapshot->second.entries;
+        for (size_t p = 0u; p < net.places().size(); ++p)
+            net.places()[p].tokens = snapshot->second.tokens[p];
+    }
+    else
+    {
+        for (size_t p = 0u; p < net.places().size(); ++p)
+            net.places()[p].tokens = m_saved_tokens[p];
+    }
     std::vector<LogEntry> past;
     std::map<std::string, size_t> running;
-    for (auto const& e : m_entries)
+    for (size_t i = since; i < m_entries.size(); ++i)
     {
+        LogEntry const& e = m_entries[i];
         if ((e.instance != m_instance) || (e.date > m_cursor))
             continue;
         past.push_back(e);
@@ -246,6 +285,20 @@ void JournalView::toolbar(Net& net, bool const busy, NodeMarks& marks)
     double first = 0.0, last = 0.0;
     for (auto const& e : m_entries)
         instances.insert(e.instance);
+    for (auto const& it : m_snapshots)
+        instances.insert(it.first);
+    if (isLive() && m_follow)
+    {
+        // Following a program: the instance of the net shown (the graph of
+        // the same name of a GRAFCET), else the one that moved last.
+        std::string const follow = (instances.count(net.name) != 0u) ? net.name
+            : (!m_entries.empty() ? m_entries.back().instance : m_instance);
+        if (follow != m_instance)
+        {
+            m_instance = follow;
+            m_dirty = true;
+        }
+    }
     if (m_instance.empty() || (instances.count(m_instance) == 0u))
         m_instance = (instances.count(net.name) != 0u) ? net.name
                    : (instances.empty() ? std::string() : *instances.begin());
@@ -255,8 +308,10 @@ void JournalView::toolbar(Net& net, bool const busy, NodeMarks& marks)
             continue;
         last = std::max(last, e.date);
     }
+    if (auto const it = m_snapshots.find(m_instance); it != m_snapshots.end())
+        last = std::max(last, it->second.date);
 
-    ImGui::BeginDisabled(busy || m_entries.empty());
+    ImGui::BeginDisabled(busy || (m_entries.empty() && m_snapshots.empty()));
     bool on = m_replay;
     if (ImGui::Checkbox("Replay", &on))
     {
@@ -351,6 +406,11 @@ void JournalView::toolbar(Net& net, bool const busy, NodeMarks& marks)
     ImGui::SameLine();
     ImGui::SetNextItemWidth(60.0f);
     ImGui::DragFloat("##speed", &m_speed, 0.05f, 0.1f, 100.0f, "x%.1f");
+    if (isLive() && m_follow && (m_cursor != last))
+    {
+        m_cursor = last;
+        m_dirty = true;
+    }
     if (m_playing)
     {
         m_cursor = std::min(last, m_cursor + double(ImGui::GetIO().DeltaTime * m_speed));
@@ -437,7 +497,7 @@ void JournalView::table(Net& net, NodeMarks& marks)
                 ImGui::PopStyleColor();
         }
     }
-    if (m_follow && !m_replay && (ImGui::GetScrollY() >= ImGui::GetScrollMaxY() - 1.0f))
+    if (m_follow && (!m_replay || isLive()) && (ImGui::GetScrollY() >= ImGui::GetScrollMaxY() - 1.0f))
         ImGui::SetScrollHereY(1.0f);
     ImGui::EndTable();
 

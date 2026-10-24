@@ -64,6 +64,39 @@ std::string fromJsonLine(std::string const& line, ColorTable const& colors, LogE
 std::string fromJsonLines(std::string const& text, ColorTable const& colors,
                           std::vector<LogEntry>& journal);
 
+// *****************************************************************************
+//! \brief What a program running a net tells the editor about it: the names
+//! of its nodes, the transitions without function (they fire at once). The
+//! editor marks these transitions.
+// *****************************************************************************
+struct Manifest
+{
+    std::string net;
+    std::vector<std::string> places;
+    std::vector<std::string> transitions;
+    std::vector<std::string> unregistered;
+};
+
+//------------------------------------------------------------------------------
+//! \brief The manifest of the runtime, as a JSON object (one line):
+//! {"type":"manifest","net":"Pick","places":[...],"transitions":[...],
+//! "unregistered":["retry"]}. Saved in a file, the editor opens it.
+//------------------------------------------------------------------------------
+std::string toManifest(Runtime const& runtime);
+
+//------------------------------------------------------------------------------
+//! \brief Read a manifest written by toManifest().
+//! \return the error, or empty.
+//------------------------------------------------------------------------------
+std::string fromManifest(std::string const& text, Manifest& manifest);
+
+//------------------------------------------------------------------------------
+//! \brief The tokens of each place of an instance at a date, as a JSON object:
+//! {"type":"marking","instance":"order_42","date":1.5,"tokens":[1,0,2]}. The
+//! editor connected late starts from it.
+//------------------------------------------------------------------------------
+std::string toMarkingMessage(std::string const& instance, double const date, Marking const& tokens);
+
 //------------------------------------------------------------------------------
 //! \brief Name of the event ("Scheduled", "Started", "Completed").
 //------------------------------------------------------------------------------

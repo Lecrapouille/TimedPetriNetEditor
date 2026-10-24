@@ -20,6 +20,7 @@
 #  include "Editor/ForceDirected.hpp"
 #  include "Editor/JournalView.hpp"
 #  include "Editor/NodeMarks.hpp"
+#  include "Editor/RuntimeMonitor.hpp"
 #  include "MaxPlus/Algorithms.hpp"
 
 #  include <deque>
@@ -85,6 +86,12 @@ public:
     void focusWindowAtLaunch(std::string const& name) { m_focus_window = name; }
 
     //-------------------------------------------------------------------------
+    //! \brief Follow the program publishing its journal on the endpoint once
+    //! the net is loaded (Debug > Connect).
+    //-------------------------------------------------------------------------
+    void connectAtLaunch(std::string const& endpoint) { m_connect_endpoint = endpoint; }
+
+    //-------------------------------------------------------------------------
     //! \brief Start the simulation of the document once it is loaded.
     //-------------------------------------------------------------------------
     void startSimulationAtLaunch() { m_start_simulation = true; }
@@ -118,7 +125,10 @@ private: // Widgets
     void menuView();
     void menuSimulation();
     void menuGraphEvents();
+    void menuDebug();
     void menuHelp();
+    //! \brief The program the editor is connected to (RuntimeMonitor).
+    void programWindow();
     void toolbar();
     void shortcuts();
     void statusBar();
@@ -484,6 +494,9 @@ private:
     JournalView m_journal;
     //! \brief Nodes drawn with a halo (journal, runtime, analysis).
     NodeMarks m_marks;
+    //! \brief Running program shown by the editor (debugger).
+    RuntimeMonitor m_monitor;
+    std::string m_monitor_endpoint = "tcp://localhost:5556";
     //! \brief States controlling the GUI
     mutable States m_states;
     //! \brief Cache the path to save the loaded Petri file.
@@ -498,6 +511,7 @@ private:
     int m_screenshot_defer_frames = 0;
     double m_screenshot_delay = 0.0;
     std::string m_focus_window;
+    std::string m_connect_endpoint;
     //! \brief Frames to draw before sleeping (docking and centering settle).
     static constexpr int BUSY_FRAMES = 20;
     int m_busy_frames = BUSY_FRAMES;

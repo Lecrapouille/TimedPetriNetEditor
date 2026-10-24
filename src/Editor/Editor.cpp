@@ -204,6 +204,7 @@ void Editor::setupDefaultLayout(unsigned int const id)
         ImGui::DockBuilderDockWindow(name, right_bottom);
     ImGui::DockBuilderDockWindow("Console", bottom);
     ImGui::DockBuilderDockWindow("Journal", bottom);
+    ImGui::DockBuilderDockWindow("Program", right_bottom);
     ImGui::DockBuilderDockWindow("Timing diagram", bottom);
     ImGui::DockBuilderDockWindow("Outputs", bottom_right);
     for (int i = 0; i < 16; ++i)
@@ -511,7 +512,8 @@ bool Editor::isAnimating() const
         if (entry->view_state.center_request > 0)
             return true;
     }
-    return activeDocument().isAnySimulationRunning() || m_journal.isReplaying() ||
+    return activeDocument().isAnySimulationRunning() || m_monitor.isConnected() ||
+           m_journal.isReplaying() ||
            m_force_directed.isRunning() ||
            (m_remote && m_remote->isRunning()) ||
            m_auto_screenshot_pending || (m_screenshot_defer_frames > 0);
@@ -596,6 +598,15 @@ void Editor::onDraw()
     }
 
     keepNetProportions();
+    if (!m_connect_endpoint.empty() && (ImGui::GetFrameCount() > 2))
+    {
+        m_monitor_endpoint = m_connect_endpoint;
+        m_connect_endpoint.clear();
+        if (m_monitor.connect(m_monitor_endpoint))
+            m_journal.live(m_monitor_endpoint, net());
+        else
+            m_messages.setError(m_monitor.error());
+    }
     if (!m_focus_window.empty() && (ImGui::GetFrameCount() > 3))
     {
         ImGui::SetWindowFocus(m_focus_window.c_str());
@@ -603,7 +614,9 @@ void Editor::onDraw()
     }
     menu();
     console();
+    m_monitor.poll(net(), m_journal, m_marks);
     m_journal.draw(net(), activeDocument().isAnySimulationRunning(), m_marks);
+    programWindow();
     inspector();
     view();
     notifications();

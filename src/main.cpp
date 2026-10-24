@@ -14,7 +14,7 @@
 static void usage(const char* name)
 {
     std::cout
-      << name << " [-r] [-s|-w screenshot.png] [-d seconds] [-f window] [petri.json]" << std::endl
+      << name << " [-r] [-s|-w screenshot.png] [-d seconds] [-f window] [-c endpoint] [petri.json]" << std::endl
       << "Where:" << std::endl
       << "  [petri.json] is an optional Petri net file to load (i.e. examples/Howard1.json)" << std::endl
       << "  -r starts the simulation once the file is loaded" << std::endl
@@ -22,6 +22,7 @@ static void usage(const char* name)
       << "  -w screenshot.png saves the whole window as a PNG file once drawn, then quits" << std::endl
       << "  -d seconds waits before the screenshot (the simulation runs meanwhile)" << std::endl
       << "  -f window brings this window in front (Journal, Analysis, Console ...)" << std::endl
+      << "  -c endpoint follows the program publishing its journal there (tcp://localhost:5556)" << std::endl
       << std::endl;
 }
 
@@ -38,7 +39,8 @@ int main(int argc, char* argv[])
     bool start = false;
     double delay = 0.0;
     std::string focus;
-    while ((opt = getopt(argc, argv, "hrs:w:d:f:")) != -1)
+    std::string endpoint;
+    while ((opt = getopt(argc, argv, "hrs:w:d:f:c:")) != -1)
     {
         switch (opt)
         {
@@ -60,6 +62,9 @@ int main(int argc, char* argv[])
                 break;
             case 'f':
                 focus = optarg;
+                break;
+            case 'c':
+                endpoint = optarg;
                 break;
             case '?':
                 std::cerr << "Unknown option: '" << char(optopt) << "'!" << std::endl;
@@ -83,6 +88,10 @@ int main(int argc, char* argv[])
     if (!focus.empty())
     {
         editor.focusWindowAtLaunch(focus);
+    }
+    if (!endpoint.empty())
+    {
+        editor.connectAtLaunch(endpoint);
     }
     if (start)
     {
