@@ -64,7 +64,7 @@ layout and the theme are saved in the settings folder of the user:
 | Control panel | the inputs of the GRAFCETs drawn as the buttons of a machine; *Apply together*, *Apply (F7)*, *Edit*, *Fit*, `?` (§8) | GRAFCET |
 | Outputs | the actuators named by the actions: lights, motors, heaters, valves, horns | GRAFCET |
 | Timing diagram | steps, inputs and outputs over time (§8) | GRAFCET |
-| Analysis | tab *Properties* for every net; for a timed event graph also *Critical circuit*, *Gantt*, *Linear system*, *Equations*, *Adjacency*, *Firing dates* (§7) | *Analysis window* in the toolbar, or the *Analysis* menu |
+| Analysis | tab *Properties* for every net; for a timed net also the tab *(max,+) algebra*: *Critical circuit*, *Gantt*, *Linear system*, *Equations*, *Adjacency*, *Firing dates* (§7) | *Analysis window* in the toolbar, or the *Analysis* menu |
 | Console | all the messages (§6) | always |
 | Journal | the firings of the simulation, of an opened journal, or of a connected program; replays them on the net (§7) | always |
 | Program | the program followed: its net, its transitions without function, its inputs and outputs ([chapter 13](13-Debugging.md)) | connected (*Debug*) |
@@ -221,8 +221,12 @@ tpne-check [--max-states N] [--allow-deadlock] [--dot graph.dot] net.json ...
 
 (exit code 1 when a net can deadlock).
 
-The other tabs need a timed event graph ([chapters 7](07-Timed-Event-Graphs.md)
-and [8](08-Max-Plus-Algebra.md)):
+The tab **(max,+) algebra** is there for every timed net, with the tabs
+below ([chapters 7](07-Timed-Event-Graphs.md) and
+[8](08-Max-Plus-Algebra.md)). They need a timed event graph: for another
+timed net, the tab says why the net is not one, and *Show the faulty arcs*
+draws the arcs to change. The results are the ones of the initial tokens,
+also while the simulation runs.
 
 | Tab | Shows |
 |-----|-------|
@@ -288,8 +292,8 @@ Each matrix has a *Copy as Julia* button ([chapter 17](17-Julia.md)).
 | | Remote control > Enable / Disable | the ZeroMQ server of [chapter 18](18-Remote-Control.md), and its endpoint (*Disabled at build time* with `TPNE_ZEROMQ=0`) |
 | **Simulation** | Start / Stop (Space), Pause / Resume (P), Speed, Conflicts | §5 |
 | | Start all the nets, the nets of the document | several nets |
-| **Analysis** | Properties (deadlocks, bounds, invariants) | §7 |
-| | Critical circuit (cycle time), Gantt chart (earliest dates), (max,+) linear system, Dater and counter equations, Adjacency matrices, Firing dates of the simulation | timed event graphs only (*Needs a timed event graph* otherwise) |
+| **Analysis** | *Petri net*: Properties (deadlocks, bounds, invariants) | §7 |
+| | *(max,+) algebra*: Critical circuit (cycle time), Gantt chart (earliest dates), (max,+) linear system, Dater and counter equations, Adjacency matrices, Firing dates of the simulation | timed nets only; for a timed net that is not an event graph, the tab says why |
 | **Debug** | endpoint and *Connect* / Disconnect from ... | follow a program publishing its journal ([chapter 13](13-Debugging.md)) |
 | | Open a manifest..., Open a journal..., Save the journal..., Clear the marks of the nodes | |
 | **Help** | Mouse and keys (F1), GRAFCET receptivities, GRAFCET actions (qualifiers), GRAFCET control panel, About | the help window also has a tab *Paths* (data, temporary, log and settings folders) |

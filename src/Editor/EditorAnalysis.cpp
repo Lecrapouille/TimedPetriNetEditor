@@ -277,20 +277,75 @@ void Editor::analysisWindow()
         ImGui::End();
         return;
     }
-    // The (max,+) tabs need a timed event graph, the properties do not.
-    bool const teg = net().layout().compact || isEventGraph(net());
-    char const* tabs[] = { "Critical circuit", "Gantt", "Linear system", "Equations",
-                           "Adjacency", "Firing dates", "Properties" };
-    if (ImGui::BeginTabBar("##analysis", ImGuiTabBarFlags_FittingPolicyScroll))
+    // Two analyses: the properties of any net (Petri net theory, time not
+    // considered), the (max,+) algebra of the timed nets (they shall be event
+    // graphs). Tabs 0 to 5: (max,+), 6: properties (openAnalysis()).
+    bool const timed = (net().type() == TypeOfNet::TimedPetriNet);
+    int const asked = m_states.analysis_tab;
+    auto selected = [](bool const asked_) {
+        return asked_ ? ImGuiTabItemFlags_SetSelected : ImGuiTabItemFlags_None;
+    };
+    // The tab asked is shown: the request is done (a new tab bar may need
+    // more than one frame to select it).
+    auto done = [this](int const tab) {
+        if (m_states.analysis_tab == tab)
+            m_states.analysis_tab = -1;
+    };
+    if (ImGui::BeginTabBar("##analysis"))
     {
-        for (int i = (teg ? 0 : 6); i < 7; ++i)
+        if (ImGui::BeginTabItem("Properties", nullptr, selected(asked == 6)))
+        {
+            done(6);
+            analysisProperties();
+            ImGui::EndTabItem();
+        }
+        if (timed && ImGui::BeginTabItem("(max,+) algebra", nullptr,
+                                         selected((asked >= 0) && (asked < 6))))
+        {
+            analysisMaxPlus();
+            ImGui::EndTabItem();
+        }
+        // A (max,+) tab asked for a net that is not timed.
+        if (!timed && (asked >= 0) && (asked < 6))
+            m_states.analysis_tab = -1;
+        ImGui::EndTabBar();
+    }
+    ImGui::End();
+}
+
+//------------------------------------------------------------------------------
+void Editor::analysisMaxPlus()
+{
+    // The algebra needs an event graph: else, why not and the faulty arcs.
+    std::string error;
+    std::vector<size_t> arcs;
+    if (!isEventGraph(net(), error, arcs))
+    {
+        m_states.analysis_tab = -1;
+        ImGui::PushTextWrapPos(0.0f);
+        ImGui::TextUnformatted("The (max,+) algebra needs a timed event graph: every place has "
+                               "one input and one output transition, arcs with no weight, "
+                               "inhibition, reset nor color, places with no capacity.");
+        ImGui::Spacing();
+        ImGui::TextColored(ImGui::ColorConvertU32ToFloat4(palette().critical), "%s", error.c_str());
+        ImGui::Spacing();
+        ImGui::TextUnformatted("Change the net, or import a flowshop (File > Import > Flowshop).");
+        ImGui::PopTextWrapPos();
+        if (!arcs.empty() && ImGui::Button("Show the faulty arcs"))
+            markArcs(net(), arcs);
+        return;
+    }
+
+    char const* tabs[] = { "Critical circuit", "Gantt", "Linear system", "Equations",
+                           "Adjacency", "Firing dates" };
+    if (ImGui::BeginTabBar("##maxplus", ImGuiTabBarFlags_FittingPolicyScroll))
+    {
+        for (int i = 0; i < 6; ++i)
         {
             ImGuiTabItemFlags const flags = (m_states.analysis_tab == i)
                 ? ImGuiTabItemFlags_SetSelected : ImGuiTabItemFlags_None;
             if (!ImGui::BeginTabItem(tabs[i], nullptr, flags))
                 continue;
-            // The tab asked is shown: the request is done (a new tab bar may
-            // need more than one frame to select it).
             if (m_states.analysis_tab == i)
                 m_states.analysis_tab = -1;
             switch (i)
@@ -301,23 +356,11 @@ void Editor::analysisWindow()
             case 3: analysisEquations(); break;
             case 4: analysisAdjacency(); break;
             case 5: analysisPlot(); break;
-            case 6: analysisProperties(); break;
             }
             ImGui::EndTabItem();
         }
-        // A (max,+) tab asked for a net that is not an event graph.
-        if (!teg && (m_states.analysis_tab < 6))
-            m_states.analysis_tab = -1;
         ImGui::EndTabBar();
     }
-    if (!teg)
-    {
-        ImGui::Separator();
-        ImGui::TextWrapped("The (max,+) analysis needs a timed event graph: every place "
-                           "has one input and one output transition. Change the type of "
-                           "the net (Edit > Type of net) or import a flowshop.");
-    }
-    ImGui::End();
 }
 
 //------------------------------------------------------------------------------

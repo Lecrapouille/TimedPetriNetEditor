@@ -490,14 +490,20 @@ void Editor::menuGraphEvents()
     if (!ImGui::BeginMenu("Analysis"))
         return;
 
+    // Any net: the Petri net theory. Timed nets: the (max,+) algebra.
+    ImGui::SeparatorText("Petri net");
     if (ImGui::MenuItem("Properties (deadlocks, bounds, invariants)"))
         openAnalysis(6);
-    ImGui::Separator();
 
-    bool const teg = net().layout().compact || isEventGraph(net());
-    if (!teg)
-        ImGui::TextDisabled("Needs a timed event graph");
-    ImGui::BeginDisabled(!teg);
+    ImGui::SeparatorText("(max,+) algebra");
+    if (net().type() != TypeOfNet::TimedPetriNet)
+    {
+        ImGui::TextDisabled("For timed event graphs only");
+        ImGui::EndMenu();
+        return;
+    }
+    if (!isEventGraph(net()))
+        ImGui::TextDisabled("The net is not an event graph: see why");
     char const* tabs[] = { "Critical circuit (cycle time)", "Gantt chart (earliest dates)",
                            "(max,+) linear system", "Dater and counter equations",
                            "Adjacency matrices", "Firing dates of the simulation" };
@@ -514,7 +520,6 @@ void Editor::menuGraphEvents()
             }
         }
     }
-    ImGui::EndDisabled();
     ImGui::EndMenu();
 }
 

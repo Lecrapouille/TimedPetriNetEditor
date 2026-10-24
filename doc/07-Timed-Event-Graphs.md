@@ -392,8 +392,11 @@ is a bigger one (8 transitions, 12 places).
 
 ## 8. Reference: the Analysis window of event graphs
 
-The (max,+) tabs appear when the net is an event graph (drawn compactly or
-not); *Properties* is always there.
+The window has two tabs: *Properties* for every net (the Petri net theory
+of [chapter 4](04-Analysis.md)), and *(max,+) algebra* for every timed net,
+with the tabs below. When the timed net is not an event graph, *(max,+)
+algebra* says why (a place with two input arcs, a weight ...) and *Show the
+faulty arcs* draws the arcs to change.
 
 | Tab | Shows | Chapter |
 |-----|-------|---------|

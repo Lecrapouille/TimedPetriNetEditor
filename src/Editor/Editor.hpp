@@ -166,6 +166,8 @@ private: // GRAFCET control panel and description of the document (EditorPanel.c
 private: // Show results from Petri algorithms
 
     void analysisWindow();
+    //! \brief The tabs of the (max,+) algebra (timed event graphs).
+    void analysisMaxPlus();
     void analysisCritical();
     void analysisSyslin();
     void analysisEquations();
