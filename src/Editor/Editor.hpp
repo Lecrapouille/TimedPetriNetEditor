@@ -207,6 +207,11 @@ private:
     void removeArc(Arc const& arc);
     //! \brief Change the kind and the weight of an arc (undoable).
     void setArc(Arc& arc, ArcKind kind, size_t weight);
+    //! \brief Change the duration, the weight of an arc and, for a timed
+    //! event graph, the tokens of its place (undoable).
+    void setArc(Arc& arc, float duration, size_t weight, size_t tokens);
+    //! \brief Change the tokens and the capacity of a place (undoable).
+    void setPlace(Place& place, size_t tokens, size_t capacity);
     Node& addOppositeNode(Node::Type const type, float const x, float const y,
         size_t const tokens = 0u);
     void addArc(Node& from, Node& to, float const duration = 0.0f);

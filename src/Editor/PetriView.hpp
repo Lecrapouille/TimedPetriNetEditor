@@ -146,8 +146,10 @@ private:
         Node* editing_node = nullptr;        //!< Node being renamed
         char edit_buffer[256] = {0};         //!< Buffer for name editing
         bool edit_focus_requested = false;   //!< Request focus for edit widget
-        Arc* editing_arc = nullptr;          //!< Arc whose duration is edited
-        float edit_duration = 0.0f;
+        Arc* editing_arc = nullptr;          //!< Arc whose values are edited
+        float edit_duration = 0.0f;          //!< Duration (timed nets)
+        int edit_weight = 1;                 //!< Weight (if the net allows it)
+        int edit_tokens = 0;                 //!< Tokens of the place (event graph)
         Node* hovered_node = nullptr;        //!< Node under mouse cursor
         Arc* hovered_arc = nullptr;          //!< Arc under mouse cursor
         Node* context_menu_node = nullptr;   //!< Node for context menu
@@ -175,6 +177,9 @@ private:
     //! \brief GRAFCET: state of the timers of the transitions.
     void drawTimers(Net const& net, Simulation const& simulation, float zoom);
     void drawEditWidgets(Net& net);
+    //! \brief Open the widget editing the duration, the weight (and the
+    //! tokens of the place of a timed event graph) of the arc.
+    void editArc(Net const& net, Arc& arc);
     void drawContextMenus(Net& net);
     void drawBadges(Net const& net, Simulation const& simulation);
 

@@ -1163,6 +1163,33 @@ void Editor::setArc(Arc& arc, ArcKind const kind, size_t const weight)
 }
 
 //------------------------------------------------------------------------------
+void Editor::setArc(Arc& arc, float const duration, size_t const weight, size_t const tokens)
+{
+    auto action = std::make_unique<NetModificationAction>([this]() -> Net& { return net(); });
+    action->before(net());
+    if (arc.from.type == Node::Type::Transition)
+        arc.duration = std::max(0.0f, duration);
+    arc.weight = std::max(size_t(1u), weight);
+    if (net().layout().compact)
+        net().placeOf(arc).tokens = tokens;
+    net().modified = true;
+    action->after(net());
+    m_history.add(std::move(action));
+}
+
+//------------------------------------------------------------------------------
+void Editor::setPlace(Place& place, size_t const tokens, size_t const capacity)
+{
+    auto action = std::make_unique<NetModificationAction>([this]() -> Net& { return net(); });
+    action->before(net());
+    place.capacity = std::max(size_t(1u), capacity);
+    place.tokens = std::min(tokens, place.capacity);
+    net().modified = true;
+    action->after(net());
+    m_history.add(std::move(action));
+}
+
+//------------------------------------------------------------------------------
 void Editor::removeArc(Arc const& arc)
 {
     // In a timed event graph an arc between two transitions is made of a

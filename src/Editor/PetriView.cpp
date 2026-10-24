@@ -27,6 +27,20 @@
 namespace tpne {
 
 //------------------------------------------------------------------------------
+//! \brief The arc has a duration to edit: from a transition, in a timed net.
+static bool hasDuration(Net const& net, Arc const& arc)
+{
+    return (arc.from.type == Node::Type::Transition) && (net.type() == TypeOfNet::TimedPetriNet);
+}
+
+//------------------------------------------------------------------------------
+//! \brief The arc has a weight to edit: the net accepts weights.
+static bool hasWeight(Net const& net)
+{
+    return allows(net.type(), Feature::Weights) && !net.layout().compact;
+}
+
+//------------------------------------------------------------------------------
 //! \brief Position of the node, from the layout of its net.
 static ImVec2 at(Net const& net, Node const& node)
 {
@@ -913,7 +927,7 @@ void PetriView::updateHint(Net const& net, Simulation const& simulation)
     }
     else if (m_mouse.hovered_arc != nullptr)
     {
-        m_hint = "Left click: select | Double click: duration | Right click: menu | Del: delete";
+        m_hint = "Left click: select | Double click: duration, weight | Right click: menu | Del: delete";
     }
     else
     {
@@ -997,13 +1011,8 @@ void PetriView::onHandleInput(Net& net, Simulation& simulation)
         }
         else if (Arc* arc = getArc(m_mouse.position))
         {
-            if ((arc->from.type == Node::Type::Transition) && (net.type() != TypeOfNet::GRAFCET) &&
-                (net.type() != TypeOfNet::PetriNet))
-            {
-                m_mouse.editing_arc = arc;
-                m_mouse.edit_duration = arc->durationOrZero();
-                m_mouse.edit_focus_requested = true;
-            }
+            if (hasDuration(net, *arc) || hasWeight(net))
+                editArc(net, *arc);
         }
     }
 
@@ -1353,29 +1362,68 @@ void PetriView::drawEditWidgets(Net& net)
     }
     else if (m_mouse.editing_arc != nullptr)
     {
-        popup(net.node(m_mouse.editing_arc->from));
-        if (m_mouse.edit_focus_requested)
+        Arc& arc = *m_mouse.editing_arc;
+        popup(net.node(arc.from));
+        ImGui::TextDisabled("%s -> %s", arc.from.key().c_str(), arc.to.key().c_str());
+
+        // Enter in any field applies them all; Escape or a click elsewhere
+        // cancels.
+        bool apply = false;
+        bool first = true;
+        auto focus = [&]() {
+            if (first && m_mouse.edit_focus_requested)
+            {
+                ImGui::SetKeyboardFocusHere();
+                m_mouse.edit_focus_requested = false;
+            }
+            first = false;
+            ImGui::SetNextItemWidth(120.0f);
+        };
+        if (hasDuration(net, arc))
         {
-            ImGui::SetKeyboardFocusHere();
-            m_mouse.edit_focus_requested = false;
+            focus();
+            apply |= ImGui::InputFloat("duration##arc", &m_mouse.edit_duration, 0.0f, 0.0f, "%.2f",
+                                       ImGuiInputTextFlags_EnterReturnsTrue);
         }
-        ImGui::SetNextItemWidth(120.0f);
-        if (ImGui::InputFloat("duration##arc", &m_mouse.edit_duration, 0.0f, 0.0f, "%.2f",
-                              ImGuiInputTextFlags_EnterReturnsTrue))
+        if (hasWeight(net))
         {
-            auto action = std::make_unique<NetModificationAction>([this]() -> Net& { return m_editor.net(); });
-            action->before(net);
-            m_mouse.editing_arc->duration = std::max(0.0f, m_mouse.edit_duration);
-            action->after(net);
-            m_editor.m_history.add(std::move(action));
-            net.modified = true;
+            focus();
+            apply |= ImGui::InputInt("weight##arc", &m_mouse.edit_weight, 1, 1,
+                                     ImGuiInputTextFlags_EnterReturnsTrue);
+            m_mouse.edit_weight = std::max(1, m_mouse.edit_weight);
+        }
+        if (net.layout().compact)
+        {
+            focus();
+            apply |= ImGui::InputInt("tokens##arc", &m_mouse.edit_tokens, 1, 1,
+                                     ImGuiInputTextFlags_EnterReturnsTrue);
+            m_mouse.edit_tokens = std::max(0, m_mouse.edit_tokens);
+        }
+        apply |= ImGui::Button("OK");
+        if (apply)
+        {
+            m_editor.setArc(arc, m_mouse.edit_duration, size_t(m_mouse.edit_weight),
+                            size_t(m_mouse.edit_tokens));
             m_mouse.editing_arc = nullptr;
         }
-        if (m_mouse.editing_arc != nullptr &&
-            (ImGui::IsKeyPressed(ImGuiKey_Escape) || (!ImGui::IsWindowFocused() && !m_mouse.edit_focus_requested)))
+        else if (ImGui::IsKeyPressed(ImGuiKey_Escape) ||
+                 (!ImGui::IsWindowFocused(ImGuiFocusedFlags_ChildWindows) && !m_mouse.edit_focus_requested))
+        {
             m_mouse.editing_arc = nullptr;
+        }
         ImGui::End();
     }
+}
+
+//------------------------------------------------------------------------------
+void PetriView::editArc(Net const& net, Arc& arc)
+{
+    m_mouse.editing_node = nullptr;
+    m_mouse.editing_arc = &arc;
+    m_mouse.edit_duration = arc.durationOrZero();
+    m_mouse.edit_weight = int(arc.weight);
+    m_mouse.edit_tokens = net.layout().compact ? int(net.placeOf(arc).tokens) : 0;
+    m_mouse.edit_focus_requested = true;
 }
 
 //------------------------------------------------------------------------------
@@ -1430,6 +1478,37 @@ void PetriView::drawContextMenus(Net& net)
                         place->decrement(1u);
                         net.modified = true;
                     }
+
+                    // Tokens and the max of tokens it can hold.
+                    constexpr size_t UNBOUNDED = std::numeric_limits<size_t>::max();
+                    int tokens = int(place->tokens);
+                    ImGui::SetNextItemWidth(110.0f);
+                    if (ImGui::InputInt("Tokens", &tokens) && (tokens >= 0))
+                        m_editor.setPlace(*place, size_t(tokens), place->capacity);
+                    if (allows(net.type(), Feature::Capacities))
+                    {
+                        bool bounded = (place->capacity != UNBOUNDED);
+                        ImGui::BeginDisabled(running);
+                        if (ImGui::Checkbox("Max tokens", &bounded))
+                        {
+                            m_editor.setPlace(*place, place->tokens,
+                                              bounded ? std::max(size_t(1u), place->tokens) : UNBOUNDED);
+                        }
+                        if (bounded)
+                        {
+                            int capacity = int(std::min(place->capacity, size_t(1000000u)));
+                            ImGui::SameLine();
+                            ImGui::SetNextItemWidth(110.0f);
+                            if (ImGui::InputInt("##capacity", &capacity) && (capacity >= 1))
+                                m_editor.setPlace(*place, place->tokens, size_t(capacity));
+                        }
+                        else
+                        {
+                            ImGui::SameLine();
+                            ImGui::TextDisabled("unbounded");
+                        }
+                        ImGui::EndDisabled();
+                    }
                 }
             }
             ImGui::Separator();
@@ -1449,13 +1528,22 @@ void PetriView::drawContextMenus(Net& net)
         {
             ImGui::TextDisabled("%s -> %s", arc->from.key().c_str(), arc->to.key().c_str());
             ImGui::Separator();
-            if ((arc->from.type == Node::Type::Transition) && (net.type() != TypeOfNet::GRAFCET) &&
-                (net.type() != TypeOfNet::PetriNet) &&
-                ImGui::MenuItem("Duration...", "double click", false, !running))
+            if ((hasDuration(net, *arc) || hasWeight(net)) &&
+                ImGui::MenuItem(hasDuration(net, *arc) ? "Duration and weight..." : "Weight...",
+                                "double click", false, !running))
             {
-                m_mouse.editing_arc = arc;
-                m_mouse.edit_duration = arc->durationOrZero();
-                m_mouse.edit_focus_requested = true;
+                editArc(net, *arc);
+            }
+            if (hasWeight(net))
+            {
+                // The weight right here: tokens taken or given, the threshold of
+                // an inhibitor arc.
+                int weight = int(arc->weight);
+                ImGui::BeginDisabled(running || (arc->kind == ArcKind::Reset));
+                ImGui::SetNextItemWidth(110.0f);
+                if (ImGui::InputInt("Weight", &weight) && (weight >= 1))
+                    m_editor.setArc(*arc, arc->kind, size_t(weight));
+                ImGui::EndDisabled();
             }
             // Inhibitor and reset arcs go from a place to a transition.
             if ((arc->from.type == Node::Type::Place) &&
@@ -1545,7 +1633,10 @@ void PetriView::showPlaceTooltip(Place const& place, TypeOfNet type)
             ImGui::SameLine();
             ImGui::TextDisabled("%s", place.caption.c_str());
         }
-        ImGui::Text("Tokens: %zu", place.tokens);
+        if (place.capacity == std::numeric_limits<size_t>::max())
+            ImGui::Text("Tokens: %zu", place.tokens);
+        else
+            ImGui::Text("Tokens: %zu (max %zu)", place.tokens, place.capacity);
     }
     ImGui::EndTooltip();
 }
@@ -1572,6 +1663,8 @@ void PetriView::showTransitionTooltip(Net const& net, Transition const& trans)
     else
     {
         ImGui::Text("%s", net.canFire(trans) ? "Can fire" : (net.isEnabled(trans) ? "Enabled" : "Not enabled"));
+        if (trans.priority != 0)
+            ImGui::Text("Priority: %d", trans.priority);
     }
     ImGui::EndTooltip();
 }
