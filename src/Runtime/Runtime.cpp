@@ -256,6 +256,10 @@ std::shared_ptr<Instance> Runtime::instantiate(std::string const& id,
 {
     std::shared_ptr<Instance> instance(new Instance(id, m_net.places().size(),
                                                     m_net.transitions().size()));
+    // Memory for the first firings, not taken again at each one.
+    if (m_options.log)
+        instance->m_log.reserve(64u);
+    instance->m_touched.reserve(16u);
     if (initial.empty())
     {
         for (auto const& place : m_net.places())
@@ -438,7 +442,8 @@ bool Runtime::isEnabled(Instance const& instance, size_t const transition) const
 //------------------------------------------------------------------------------
 void Runtime::refresh(Instance& instance) const
 {
-    std::vector<size_t> const touched = instance.m_marking.takeTouched();
+    std::vector<size_t>& touched = instance.m_touched;
+    instance.m_marking.takeTouched(touched);
     if (!instance.m_enabled_valid)
     {
         for (size_t t = 0u; t < instance.m_enabled.size(); ++t)
@@ -492,28 +497,42 @@ void Runtime::updateEnabling(Instance& instance)
 size_t Runtime::pick(Instance& instance)
 {
     refresh(instance);
-    std::vector<size_t> candidates;
-    for (size_t t = 0u; t < m_callbacks.size(); ++t)
-    {
-        if (canFire(instance, t))
-            candidates.push_back(t);
-    }
-    if (candidates.empty())
-        return size_t(-1);
-
+    size_t const none = size_t(-1);
     switch (m_options.policy)
     {
     case Engine::Policy::FirstDeclared:
-        return candidates.front();
+        for (size_t t = 0u; t < m_callbacks.size(); ++t)
+        {
+            if (canFire(instance, t))
+                return t;
+        }
+        return none;
     case Engine::Policy::Random:
+    {
+        std::vector<size_t>& candidates = instance.m_candidates;
+        candidates.clear();
+        for (size_t t = 0u; t < m_callbacks.size(); ++t)
+        {
+            if (canFire(instance, t))
+                candidates.push_back(t);
+        }
+        if (candidates.empty())
+            return none;
         return candidates[std::uniform_int_distribution<size_t>(0u, candidates.size() - 1u)(instance.m_random)];
+    }
     case Engine::Policy::Priority:
     default:
-        return *std::max_element(candidates.begin(), candidates.end(), [this](size_t a, size_t b) {
-            int const pa = m_net.transitions()[a].priority;
-            int const pb = m_net.transitions()[b].priority;
-            return (pa < pb) || ((pa == pb) && (a > b));
-        });
+    {
+        // The highest priority, the first declared among equals.
+        size_t best = none;
+        for (size_t t = 0u; t < m_callbacks.size(); ++t)
+        {
+            if (((best == none) || (m_net.transitions()[t].priority > m_net.transitions()[best].priority))
+                && canFire(instance, t))
+                best = t;
+        }
+        return best;
+    }
     }
 }
 

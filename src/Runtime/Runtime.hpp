@@ -72,11 +72,19 @@ public:
     //! \brief The places touched since the last call.
     std::vector<size_t> takeTouched()
     {
+        std::vector<size_t> touched;
+        takeTouched(touched);
+        return touched;
+    }
+
+    //! \brief The same in a vector given (its memory is kept for the next
+    //! ones: no allocation at each step).
+    void takeTouched(std::vector<size_t>& touched)
+    {
         for (size_t const p : m_touched)
             m_is_touched[p] = 0;
-        std::vector<size_t> touched;
+        touched.clear();
         touched.swap(m_touched);
-        return touched;
     }
 
 private:
@@ -207,6 +215,9 @@ private:
     //! the ones around the places touched are checked again.
     std::vector<char> m_enabled;
     bool m_enabled_valid = false;
+    //! \brief Memory kept between the steps: places touched, candidates.
+    std::vector<size_t> m_touched;
+    std::vector<size_t> m_candidates;
     std::mt19937_64 m_random;
     //! \brief Requests of the other threads.
     std::mutex m_mutex;
