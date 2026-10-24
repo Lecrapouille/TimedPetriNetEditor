@@ -233,6 +233,24 @@ TEST(TestGrafcetRules, Rule5ActivatedAndDeactivatedStaysActive)
 }
 
 //------------------------------------------------------------------------------
+//! \brief Rule 2: a transition is validated by its upstream steps only. Its
+//! downstream step already active does not block it (the capacity of the
+//! steps is not the Petri rule).
+TEST(TestGrafcetRules, Rule2DownstreamStepAlreadyActive)
+{
+    // X0 -a-> X1, X1 initially active too.
+    Net net = makeGrafcet({ 1u, 1u }, { { { 0u }, { 1u }, "a" } });
+    GrafcetEngine engine;
+    engine.graphs({ &net });
+    ASSERT_TRUE(engine.start());
+    engine.setInput("a", 1);
+    engine.step(0.1f);
+    ASSERT_EQ(engine.firings().size(), 1u);
+    EXPECT_FALSE(active(net, 0));
+    EXPECT_TRUE(active(net, 1));
+}
+
+//------------------------------------------------------------------------------
 TEST(TestGrafcetEngine, EdgesLastOneInstant)
 {
     // X0 -↑a-> X1 -↑a-> X2: one rising edge crosses only one transition.

@@ -19,10 +19,20 @@ static GrafcetEngine::ActionState const NO_ACTION_STATE;
 static std::vector<size_t> const NO_MARKING;
 
 //------------------------------------------------------------------------------
-//! \brief True if all the steps upstream of the transition are active.
+//! \brief True if all the steps upstream of the transition are active
+//! (IEC 60848 rule 2: the downstream steps do not matter, an active one stays
+//! active; not the capacity rule of the Petri nets).
 static bool isEnabled(Net const& net, Transition const& transition)
 {
-    return !net.arcsIn(transition).empty() && net.isEnabled(transition);
+    auto const upstream = net.arcsIn(transition);
+    if (upstream.empty())
+        return false;
+    for (Arc const& arc : upstream)
+    {
+        if (net.placeOf(arc).tokens == 0u)
+            return false;
+    }
+    return true;
 }
 
 //------------------------------------------------------------------------------
