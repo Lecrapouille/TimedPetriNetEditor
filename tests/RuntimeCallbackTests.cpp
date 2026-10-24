@@ -71,14 +71,14 @@ TEST(TestExecutor, InlineAndPool)
 {
     int value = 0;
     InlineExecutor inline_executor;
-    inline_executor.post([&value]() { value = 42; });
+    inline_executor.post([&value]() noexcept { value = 42; });
     ASSERT_EQ(value, 42); // at once
 
     std::atomic<int> count{0};
     {
         ThreadPoolExecutor pool(4u);
         for (int i = 0; i < 1000; ++i)
-            pool.post([&count]() { ++count; });
+            pool.post([&count]() noexcept { ++count; });
     } // waits for the tasks
     ASSERT_EQ(count.load(), 1000);
 }

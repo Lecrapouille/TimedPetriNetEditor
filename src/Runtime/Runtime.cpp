@@ -333,7 +333,7 @@ std::shared_ptr<Instance> Runtime::restore(std::string const& id, std::vector<Lo
 void Runtime::inject(Instance& instance, std::string const& transition)
 {
     std::vector<size_t> const found = find(transition);
-    instance.post([found](Instance& i) {
+    instance.post([found](Instance& i) noexcept {
         for (size_t const t : found)
             ++i.m_injected[t];
     });

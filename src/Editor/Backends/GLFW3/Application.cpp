@@ -19,9 +19,14 @@
 #  include <emscripten.h>
 #endif
 
+// A third-party header: its warnings are not ours.
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 #define STB_IMAGE_WRITE_STATIC
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wmissing-field-initializers"
+#pragma GCC diagnostic ignored "-Wunused-function"
 #include "stb_image_write.h"
+#pragma GCC diagnostic pop
 
 //------------------------------------------------------------------------------
 void reloadFonts()
@@ -241,10 +246,10 @@ bool Application::screenshot(std::string const& path, int const region_x,
 
     std::vector<unsigned char> flipped(pixels.size());
     size_t const row_bytes = size_t(width) * 4u;
-    for (int y = 0; y < height; ++y)
+    for (int row = 0; row < height; ++row)
     {
-        std::memcpy(flipped.data() + size_t(y) * row_bytes,
-                    pixels.data() + size_t(height - 1 - y) * row_bytes,
+        std::memcpy(flipped.data() + size_t(row) * row_bytes,
+                    pixels.data() + size_t(height - 1 - row) * row_bytes,
                     row_bytes);
     }
 

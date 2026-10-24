@@ -122,7 +122,9 @@ private:
     template<class T>
     struct Model final : Concept
     {
-        explicit Model(T callback_) : callback(std::move(callback_)) {}
+        explicit Model(T callback_) noexcept(std::is_nothrow_move_constructible_v<T>)
+            : callback(std::move(callback_))
+        {}
 
         Color fire() const override { return detail::call(callback); }
 

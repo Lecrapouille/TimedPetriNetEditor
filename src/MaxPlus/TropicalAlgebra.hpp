@@ -26,7 +26,7 @@ class MaxPlus
 public:
 
     MaxPlus() : val() {};
-    MaxPlus(const MaxPlus & d) : val(d.val){}
+    MaxPlus(const MaxPlus & d) noexcept : val(d.val){}
     MaxPlus(const double t) : val(t){}
     inline bool operator==(const MaxPlus &rhs) const noexcept { return val == rhs.val; }
     inline bool operator==(const double &rhs) const noexcept { return val == rhs; }
@@ -60,7 +60,7 @@ class MinPlus
 public:
 
     MinPlus() : val() {};
-    MinPlus(const MinPlus & d) : val(d.val){}
+    MinPlus(const MinPlus & d) noexcept : val(d.val){}
     MinPlus(const double t) : val(t){}
     inline bool operator==(const MinPlus &rhs) const noexcept { return val == rhs.val; }
     inline bool operator==(const double &rhs) const noexcept { return val == rhs; }

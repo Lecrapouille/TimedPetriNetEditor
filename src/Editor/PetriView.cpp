@@ -576,7 +576,10 @@ void PetriView::dragged(Net& net)
             p.y = grid.snapValue(m_mouse.position.y + m_mouse.drag_offsets[i].y);
         }
         break;
-    default:
+    case Gesture::None:
+    case Gesture::Pending:
+    case Gesture::RubberBand:
+    case Gesture::Arc:
         break;
     }
 }
@@ -702,7 +705,8 @@ void PetriView::released(Net& net, Simulation& simulation)
     case Gesture::Arc:
         finishArc(net);
         break;
-    default:
+    case Gesture::None:
+    case Gesture::Pan:
         break;
     }
     m_mouse.gesture = Gesture::None;
@@ -935,7 +939,8 @@ void PetriView::updateHint(Net const& net, Simulation const& simulation)
     case Gesture::Pan:
         m_hint = "Moving the view";
         return;
-    default:
+    case Gesture::None:
+    case Gesture::Pending:
         break;
     }
     if (simulation.isRunning())
@@ -975,7 +980,9 @@ void PetriView::updateCursor() const
     case Gesture::MoveNodes: ImGui::SetMouseCursor(ImGuiMouseCursor_ResizeAll); break;
     case Gesture::Pan: ImGui::SetMouseCursor(ImGuiMouseCursor_ResizeAll); break;
     case Gesture::Arc: ImGui::SetMouseCursor(ImGuiMouseCursor_Hand); break;
-    default:
+    case Gesture::None:
+    case Gesture::Pending:
+    case Gesture::RubberBand:
         if ((m_mouse.hovered_node != nullptr) || (m_mouse.hovered_arc != nullptr))
             ImGui::SetMouseCursor(ImGuiMouseCursor_Hand);
         break;

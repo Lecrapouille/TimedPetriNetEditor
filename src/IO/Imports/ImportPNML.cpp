@@ -13,7 +13,15 @@
 
 #include "IO/Imports/Imports.hpp"
 #include "PetriNet/PetriNet.hpp"
+// A third-party header: its warnings are not ours.
+#if defined(__GNUC__) && !defined(__clang__)
+#  pragma GCC diagnostic push
+#  pragma GCC diagnostic ignored "-Wuseless-cast"
+#endif
 #include "tinyxml2/tinyxml2.h"
+#if defined(__GNUC__) && !defined(__clang__)
+#  pragma GCC diagnostic pop
+#endif
 
 #include <cerrno>
 #include <cstdlib>

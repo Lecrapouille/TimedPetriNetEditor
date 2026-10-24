@@ -240,7 +240,7 @@ static void petriPath(Net const& net, Node const& a, Node const& b, ArcPath& pat
         {
             // From -30 degrees (right, low) round the top to 210 degrees.
             float const angle = (-30.0f + 240.0f * float(i) / float(SEGMENTS)) * 3.14159265f / 180.0f;
-            path.points.emplace_back(center.x + r * std::cos(angle), center.y - r * std::sin(angle));
+            path.points.push_back(ImVec2(center.x + r * std::cos(angle), center.y - r * std::sin(angle)));
         }
         return;
     }

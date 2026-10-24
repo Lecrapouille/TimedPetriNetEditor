@@ -245,7 +245,7 @@ TEST(TestEngine, Callbacks)
     std::vector<std::pair<size_t, double>> fired;
     size_t arrivals = 0u;
     engine.onFire = [&fired](size_t t, double date, size_t) { fired.push_back({ t, date }); };
-    engine.onArrival = [&arrivals](Engine::Flight const&) { ++arrivals; };
+    engine.onArrival = [&arrivals](Engine::Flight const&) noexcept { ++arrivals; };
     engine.reset();
     engine.advanceTo(5.0);
     ASSERT_EQ(fired.size(), 3u); // T0 at 0, T1 at 3, T0 at 5
@@ -261,7 +261,7 @@ TEST(TestEngine, InjectedClock)
     Engine engine(net);
     engine.reset();
     double now = 0.0;
-    TimeSource const clock = [&now]() { return now; };
+    TimeSource const clock = [&now]() noexcept { return now; };
     now = 6.0;
     engine.update(clock);
     ASSERT_EQ(engine.time(), 6.0);

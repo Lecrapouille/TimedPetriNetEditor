@@ -31,7 +31,7 @@ static char const* word(std::string const& lang, char const* c, char const* st)
 class ConstNode : public Receptivity::Node
 {
 public:
-    explicit ConstNode(bool value) : m_value(value) {}
+    explicit ConstNode(bool value) noexcept : m_value(value) {}
     bool evaluate() const override { return m_value; }
     std::string translate(std::string const& lang, bool&) const override
     {
@@ -82,7 +82,7 @@ private:
 class NotNode : public Receptivity::Node
 {
 public:
-    explicit NotNode(NodePtr operand) : m_operand(std::move(operand)) {}
+    explicit NotNode(NodePtr operand) noexcept : m_operand(std::move(operand)) {}
     bool evaluate() const override { return !m_operand->evaluate(); }
     void tick(float dt) override { m_operand->tick(dt); }
     void timers(std::vector<Receptivity::Timer>& out) const override { m_operand->timers(out); }
@@ -100,7 +100,7 @@ private:
 class BinaryNode : public Receptivity::Node
 {
 public:
-    BinaryNode(bool is_and, NodePtr left, NodePtr right)
+    BinaryNode(bool is_and, NodePtr left, NodePtr right) noexcept
         : m_and(is_and), m_left(std::move(left)), m_right(std::move(right))
     {}
     bool evaluate() const override

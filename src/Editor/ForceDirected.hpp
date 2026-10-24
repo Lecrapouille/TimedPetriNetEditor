@@ -63,7 +63,7 @@ public:
     // *************************************************************************
     struct Vertex
     {
-        explicit Vertex(Node* n) : node(n) {}
+        explicit Vertex(Node* n) noexcept : node(n) {}
 
         Node* node = nullptr;              //!< Place or Transition pointer
         Vec2 displacement;                 //!< Accumulated force displacement

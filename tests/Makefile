@@ -69,3 +69,7 @@ PKG_LIBS += gtest gmock
 # Generic Makefile rules
 #
 include $(M)/rules/Makefile
+###################################################
+# tinyxml2 is a third party: its warnings are not ours.
+#
+$(OBJS_ROOT_DIR)/external/tinyxml2/tinyxml2.o: USER_CXXFLAGS += -Wno-useless-cast -Wno-double-promotion
