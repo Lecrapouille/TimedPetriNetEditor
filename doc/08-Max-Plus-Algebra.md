@@ -449,7 +449,8 @@ The library gives the same results to a program: `findCriticalCycle()`,
 ## 12. Pitfalls
 
 - **Only event graphs**: one choice in the net and the algebra no longer
-  applies (the tabs disappear).
+  applies: the tab *(max,+) algebra* says why, and *Show the faulty arcs*
+  draws the arcs to change.
 - **A circuit without token** makes `D*` infinite: the net never starts.
 - **Inputs**: the Howard tab needs every transition to have an input place
   (§6.3).
