@@ -116,6 +116,29 @@ void JournalView::live(std::string const& source, Net& net)
 }
 
 //------------------------------------------------------------------------------
+void JournalView::showFirings(Net& net, std::string const& source, std::vector<size_t> const& transitions)
+{
+    clear();
+    for (size_t i = 0u; i < transitions.size(); ++i)
+    {
+        if (transitions[i] >= net.transitions().size())
+            continue;
+        std::string const& name = nameOf(net.transitions()[transitions[i]]);
+        double const date = double(i + 1u);
+        append({ net.name, name, LogEntry::Event::Scheduled, Success, date });
+        append({ net.name, name, LogEntry::Event::Completed, Success, date });
+    }
+    m_source = source;
+    m_follow = false;
+    m_replay = true;
+    m_replay_net = &net;
+    m_saved_tokens = net.tokens();
+    m_instance = net.name;
+    m_cursor = 0.0;
+    m_dirty = true;
+}
+
+//------------------------------------------------------------------------------
 void JournalView::snapshot(std::string const& instance, double const date, Marking const& tokens)
 {
     m_snapshots[instance] = { date, tokens, m_entries.size() };

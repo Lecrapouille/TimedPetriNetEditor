@@ -22,6 +22,7 @@
 #  include "Editor/NodeMarks.hpp"
 #  include "Editor/RuntimeMonitor.hpp"
 #  include "MaxPlus/Algorithms.hpp"
+#  include "Analysis/Analysis.hpp"
 
 #  include <deque>
 #  include <vector>
@@ -171,6 +172,7 @@ private: // Show results from Petri algorithms
     void analysisAdjacency();
     void analysisGantt();
     void analysisPlot();
+    void analysisProperties();
     void openAnalysis(int tab) { m_states.show_analysis = true; m_states.analysis_tab = tab; }
 
 private: // Document management
@@ -448,6 +450,25 @@ private:
         TextCache adjacency[2];  // durations, tokens
         TextCache equations[2];  // counter, dater
         TextCache syslin[4];     // D, A, B, C
+        //! \brief Properties of a net (Petri analysis) at a revision.
+        struct PetriProperties
+        {
+            Net const* net = nullptr;
+            size_t revision = 0u;
+            Properties properties;
+            std::vector<std::vector<int64_t>> p_invariants;
+            std::vector<std::vector<int64_t>> t_invariants;
+            std::string invariants_note;
+            std::string report;
+            //! \brief Invariant whose nodes are marked (-1: none; T-invariants
+            //! after the P-invariants).
+            int marked_invariant = -1;
+        };
+        PetriProperties petri;
+        int max_markings = 20000;
+        bool mark_properties = true;
+        //! \brief The tab of the properties was drawn in this frame.
+        bool properties_shown = false;
         //! \brief Bars of the Gantt chart, for the net of the given revision.
         std::vector<GanttBarData> gantt_bars;
         std::vector<std::string> gantt_rows;

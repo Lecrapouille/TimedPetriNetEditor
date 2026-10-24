@@ -609,6 +609,8 @@ void Editor::onDraw()
     }
     if (!m_focus_window.empty() && (ImGui::GetFrameCount() > 3))
     {
+        if (m_focus_window == "Analysis")
+            openAnalysis(6); // the properties of the net
         ImGui::SetWindowFocus(m_focus_window.c_str());
         m_focus_window.clear();
     }

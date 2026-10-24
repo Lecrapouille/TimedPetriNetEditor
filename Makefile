@@ -40,7 +40,7 @@ DIRS_WITH_MAKEFILE := $(P)/src/PetriNet $(P)/src/IO $(P)/src/MaxPlus $(P)/src/Ru
 
 $(P)/src/julia: $(P)/src/Editor
 
-$(P)/src/Editor: $(P)/src/MaxPlus $(P)/src/IO $(P)/src/Runtime
+$(P)/src/Editor: $(P)/src/MaxPlus $(P)/src/Analysis $(P)/src/IO $(P)/src/Runtime
 
 $(P)/src/IO: $(P)/src/PetriNet
 

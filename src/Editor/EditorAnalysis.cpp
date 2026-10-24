@@ -9,12 +9,15 @@
 // graph, in one dockable window with tabs (it replaces the modal dialogs that
 // blocked the edition): critical circuit, dynamic linear system, counter and
 // dater equations, adjacency matrices, Gantt chart of the earliest dates,
-// firing dates of the simulation. Matrices are tables, ε (the (max,+) zero)
+// firing dates of the simulation; and, for any net, its properties
+// (deadlocks, bounds, liveness, invariants). Matrices are tables, ε (the (max,+) zero)
 // is greyed, and each one can be copied as a Julia matrix.
 
 #include "Editor/Editor.hpp"
 #include "Editor/Theme.hpp"
+#include "Editor/FileDialogHelper.hpp"
 
+#include "Analysis/Analysis.hpp"
 #include "MaxPlus/Algorithms.hpp"
 #include "MaxPlus/Flowshop.hpp"
 #include "MaxPlus/SparseMatrix.hpp"
@@ -23,6 +26,7 @@
 
 #include <algorithm>
 #include <cmath>
+#include <fstream>
 #include <iomanip>
 #include <map>
 #include <set>
@@ -247,21 +251,13 @@ void Editor::analysisWindow()
         ImGui::End();
         return;
     }
-    if (!net().layout().compact && !isEventGraph(net()))
-
-    {
-        ImGui::TextWrapped("The (max,+) analysis needs a timed event graph: every place "
-                           "has one input and one output transition. Change the type of "
-                           "the net (Edit > Type of net) or import a flowshop.");
-        ImGui::End();
-        return;
-    }
-
+    // The (max,+) tabs need a timed event graph, the properties do not.
+    bool const teg = net().layout().compact || isEventGraph(net());
     char const* tabs[] = { "Critical circuit", "Gantt", "Linear system", "Equations",
-                           "Adjacency", "Firing dates" };
+                           "Adjacency", "Firing dates", "Properties" };
     if (ImGui::BeginTabBar("##analysis", ImGuiTabBarFlags_FittingPolicyScroll))
     {
-        for (int i = 0; i < 6; ++i)
+        for (int i = (teg ? 0 : 6); i < 7; ++i)
         {
             ImGuiTabItemFlags const flags = (m_states.analysis_tab == i)
                 ? ImGuiTabItemFlags_SetSelected : ImGuiTabItemFlags_None;
@@ -275,13 +271,292 @@ void Editor::analysisWindow()
             case 3: analysisEquations(); break;
             case 4: analysisAdjacency(); break;
             case 5: analysisPlot(); break;
+            case 6: analysisProperties(); break;
             }
             ImGui::EndTabItem();
         }
         m_states.analysis_tab = -1;
         ImGui::EndTabBar();
     }
+    if (!teg)
+    {
+        ImGui::Separator();
+        ImGui::TextWrapped("The (max,+) analysis needs a timed event graph: every place "
+                           "has one input and one output transition. Change the type of "
+                           "the net (Edit > Type of net) or import a flowshop.");
+    }
     ImGui::End();
+}
+
+//------------------------------------------------------------------------------
+//! \brief "2 P0 + P1" for an invariant over the nodes (their captions).
+template<class Nodes>
+static std::string invariantText(Nodes const& nodes, std::vector<int64_t> const& x)
+{
+    std::string s;
+    for (size_t i = 0u; i < x.size(); ++i)
+    {
+        if (x[i] == 0)
+            continue;
+        if (!s.empty())
+            s += " + ";
+        if (x[i] != 1)
+            s += std::to_string(x[i]) + " ";
+        s += (nodes[i].caption.empty() || (nodes[i].caption == nodes[i].key))
+            ? nodes[i].key : nodes[i].key + " (" + nodes[i].caption + ")";
+    }
+    return s;
+}
+
+//------------------------------------------------------------------------------
+//! \brief A colored badge: "yes" in green, "no" in red, else gray.
+static void badge(char const* label, int const state, std::string const& text)
+{
+    Palette const& pal = palette();
+    ImU32 const color = (state > 0) ? pal.active : (state < 0) ? pal.critical : pal.secondary;
+    ImGui::TextUnformatted(label);
+    ImGui::SameLine(ImGui::GetFontSize() * 9.0f);
+    ImGui::TextColored(ImGui::ColorConvertU32ToFloat4(color), "%s", text.c_str());
+}
+
+//------------------------------------------------------------------------------
+void Editor::analysisProperties()
+{
+    // Properties of the net (time not considered): computed on demand, the
+    // reachability graph can be big; again at each change of a small net.
+    auto& cache = m_states.petri;
+    Net& current = net();
+    m_states.properties_shown = true;
+    bool const stale = (cache.net != &current) || (cache.revision != current.modified.revision());
+    bool compute = ImGui::Button(stale ? "Compute" : "Compute again");
+    ImGui::SameLine();
+    ImGui::SetNextItemWidth(110.0f);
+    if (ImGui::InputInt("max markings", &m_states.max_markings, 1000, 10000))
+        m_states.max_markings = std::clamp(m_states.max_markings, 10, 10000000);
+    if (stale && (cache.net == &current) && (current.places().size() + current.transitions().size() <= 60u))
+        compute = true; // small net: follow the edition
+    if (stale && (cache.net != &current))
+        compute = (current.places().size() + current.transitions().size() <= 60u);
+    if (compute)
+    {
+        cache = States::PetriProperties{};
+        cache.net = &current;
+        cache.revision = current.modified.revision();
+        size_t const max = size_t(m_states.max_markings);
+        cache.properties = properties(current, max);
+        std::string note;
+        cache.p_invariants = pInvariants(current, note);
+        cache.t_invariants = tInvariants(current, cache.invariants_note);
+        if (cache.invariants_note.empty())
+            cache.invariants_note = note;
+        cache.report = report(current, max);
+    }
+    if ((cache.net != &current) || cache.report.empty())
+    {
+        ImGui::TextWrapped("Deadlocks, dead transitions, bounds, liveness and invariants of the net "
+                           "(durations and GRAFCET rules not considered): press Compute.");
+        m_marks.clear("analysis");
+        return;
+    }
+    if (stale)
+        ImGui::TextColored(ImVec4(0.95f, 0.55f, 0.05f, 1.0f), "The net changed: compute again.");
+
+    if (ImGui::SmallButton("Copy the report"))
+        ImGui::SetClipboardText(cache.report.c_str());
+    ImGui::SameLine();
+    if (ImGui::SmallButton("Graph of the markings..."))
+        FileDialogHelper::openSave("MarkingsDlgKey", "Save the graph of the markings", ".dot,.gv");
+    FileDialogHelper::display("MarkingsDlgKey", [this, &current](std::string const& path) {
+        size_t const max = size_t(m_states.max_markings);
+        CoverabilityGraph const cover = coverabilityGraph(current, max);
+        ReachabilityGraph const reach = reachabilityGraph(current, max);
+        // The coverability graph when the reachable markings are too many.
+        std::string const dot = (!reach.complete && cover.complete) ? toDot(current, cover.states, cover.edges)
+                                                                    : toDot(current, reach.states, reach.edges);
+        std::ofstream file(path);
+        if (file << dot)
+            m_messages.setInfo("Graph of the markings saved in '" + path + "' (dot -Tsvg to draw it)");
+        else
+            m_messages.setError("Cannot write '" + path + "'");
+    });
+    ImGui::SameLine();
+    ImGui::Checkbox("Show on the net", &m_states.mark_properties);
+
+    Properties const& prop = cache.properties;
+    Palette const& pal = palette();
+    auto names = [&current](std::vector<size_t> const& ids) {
+        std::string s;
+        for (size_t t : ids)
+        {
+            if (t < current.transitions().size())
+                s += (s.empty() ? "" : ", ") + current.transitions()[t].key;
+        }
+        return s;
+    };
+
+    // Summary.
+    ImGui::SeparatorText("Summary");
+    badge("Markings", prop.complete ? 1 : 0, std::to_string(prop.states) + (prop.complete ? " (all)" : " (stopped: maybe more)"));
+    badge("Deadlock", prop.deadlock ? -1 : (prop.complete ? 1 : 0),
+          prop.deadlock ? "yes" : (prop.complete ? "none" : "none found"));
+    badge("Dead transitions", prop.dead_transitions.empty() ? 1 : -1,
+          prop.dead_transitions.empty() ? "none" : names(prop.dead_transitions));
+    std::string unbounded;
+    size_t k = 0u;
+    for (size_t p = 0u; p < prop.bounds.size(); ++p)
+    {
+        if (prop.bounds[p] == OMEGA)
+            unbounded += (unbounded.empty() ? "" : ", ") + current.places()[p].key;
+        else
+            k = std::max(k, prop.bounds[p]);
+    }
+    badge("Bounded", prop.bounded ? 1 : (unbounded.empty() ? 0 : -1),
+          prop.bounded ? "yes (" + std::to_string(k) + "-bounded)" : (unbounded.empty() ? "unknown" : "no: " + unbounded));
+    badge("Live", !prop.complete ? 0 : (prop.live ? 1 : -1),
+          !prop.complete ? "unknown" : (prop.live ? "yes" : "no: " + names(prop.not_live)));
+    ImGui::PushStyleColor(ImGuiCol_Text, ImGui::GetStyleColorVec4(ImGuiCol_TextDisabled));
+    for (auto const& note : prop.notes)
+        ImGui::TextWrapped("%s", note.c_str());
+    ImGui::PopStyleColor();
+
+    // Marks on the net: dead transitions, transitions not live, unbounded places.
+    std::vector<NodeMark> marks;
+    if (m_states.mark_properties)
+    {
+        for (size_t t : prop.not_live)
+        {
+            bool const dead = std::find(prop.dead_transitions.begin(), prop.dead_transitions.end(), t) !=
+                              prop.dead_transitions.end();
+            if (!dead && (t < current.transitions().size()))
+                marks.push_back({ current.transitions()[t].nodeId(), pal.enabled, "not live" });
+        }
+        for (size_t t : prop.dead_transitions)
+        {
+            if (t < current.transitions().size())
+                marks.push_back({ current.transitions()[t].nodeId(), pal.critical, "dead" });
+        }
+        for (size_t p = 0u; (p < prop.bounds.size()) && (p < current.places().size()); ++p)
+        {
+            if (prop.bounds[p] == OMEGA)
+                marks.push_back({ current.places()[p].nodeId(), pal.critical, "unbounded" });
+        }
+    }
+
+    // Deadlock.
+    if (prop.deadlock && ImGui::CollapsingHeader("Deadlock", ImGuiTreeNodeFlags_DefaultOpen))
+    {
+        std::string marking;
+        for (size_t p = 0u; p < prop.deadlock_marking.size(); ++p)
+        {
+            if (prop.deadlock_marking[p] > 0u)
+                marking += (marking.empty() ? "" : ", ") + current.places()[p].key + "=" +
+                           std::to_string(prop.deadlock_marking[p]);
+        }
+        ImGui::TextWrapped("Marking: %s", marking.empty() ? "no token" : marking.c_str());
+        ImGui::TextWrapped("Reached %s %s", prop.deadlock_path.empty() ? "at once" : "after firing",
+                           names(prop.deadlock_path).c_str());
+        ImGui::BeginDisabled(prop.deadlock_path.empty() || activeDocument().isAnySimulationRunning());
+        if (ImGui::Button("Replay the path in the Journal"))
+        {
+            m_journal.showFirings(current, "path to the deadlock", prop.deadlock_path);
+            ImGui::SetWindowFocus("Journal");
+        }
+        ImGui::EndDisabled();
+    }
+
+    // Bounds.
+    if (ImGui::CollapsingHeader("Bounds of the places"))
+    {
+        if (ImGui::BeginTable("##bounds", 2, ImGuiTableFlags_RowBg | ImGuiTableFlags_SizingStretchProp))
+        {
+            ImGui::TableSetupColumn("Place");
+            ImGui::TableSetupColumn("Max tokens");
+            ImGui::TableHeadersRow();
+            for (size_t p = 0u; (p < prop.bounds.size()) && (p < current.places().size()); ++p)
+            {
+                ImGui::TableNextRow();
+                ImGui::TableNextColumn();
+                ImGui::Text("%s %s", current.places()[p].key.c_str(), current.places()[p].caption.c_str());
+                ImGui::TableNextColumn();
+                if (prop.bounds[p] == OMEGA)
+                    ImGui::TextColored(ImGui::ColorConvertU32ToFloat4(pal.critical), "unbounded");
+                else
+                    ImGui::Text("%zu", prop.bounds[p]);
+            }
+            ImGui::EndTable();
+        }
+    }
+
+    // Invariants: a click marks their nodes.
+    if (ImGui::CollapsingHeader("Invariants", ImGuiTreeNodeFlags_DefaultOpen))
+    {
+        if (!cache.invariants_note.empty())
+        {
+            ImGui::PushStyleColor(ImGuiCol_Text, ImGui::GetStyleColorVec4(ImGuiCol_TextDisabled));
+            ImGui::TextWrapped("%s", cache.invariants_note.c_str());
+            ImGui::PopStyleColor();
+        }
+        Marking const m0 = current.tokens();
+        ImGui::TextDisabled("P-invariants: the weighted tokens of these places never change");
+        if (cache.p_invariants.empty())
+            ImGui::BulletText("none");
+        for (size_t i = 0u; i < cache.p_invariants.size(); ++i)
+        {
+            auto const& y = cache.p_invariants[i];
+            int64_t c = 0;
+            for (size_t p = 0u; (p < y.size()) && (p < m0.size()); ++p)
+                c += y[p] * int64_t(m0[p]);
+            std::string const label = invariantText(current.places(), y) + " = " + std::to_string(c) +
+                                      "##p" + std::to_string(i);
+            if (ImGui::Selectable(label.c_str(), cache.marked_invariant == int(i)))
+                cache.marked_invariant = (cache.marked_invariant == int(i)) ? -1 : int(i);
+        }
+        ImGui::TextDisabled("T-invariants: firing these transitions gives the marking back");
+        if (cache.t_invariants.empty())
+            ImGui::BulletText("none");
+        size_t const offset = cache.p_invariants.size();
+        for (size_t i = 0u; i < cache.t_invariants.size(); ++i)
+        {
+            std::string const label = invariantText(current.transitions(), cache.t_invariants[i]) +
+                                      "##t" + std::to_string(i);
+            int const id = int(offset + i);
+            if (ImGui::Selectable(label.c_str(), cache.marked_invariant == id))
+                cache.marked_invariant = (cache.marked_invariant == id) ? -1 : id;
+        }
+        // The nodes of the selected invariant.
+        if (cache.marked_invariant >= 0)
+        {
+            size_t const i = size_t(cache.marked_invariant);
+            if (i < offset)
+            {
+                auto const& y = cache.p_invariants[i];
+                for (size_t p = 0u; (p < y.size()) && (p < current.places().size()); ++p)
+                {
+                    if (y[p] != 0)
+                        marks.push_back({ current.places()[p].nodeId(), pal.selection,
+                                          (y[p] == 1) ? "" : "x" + std::to_string(y[p]) });
+                }
+            }
+            else if (i - offset < cache.t_invariants.size())
+            {
+                auto const& x = cache.t_invariants[i - offset];
+                for (size_t t = 0u; (t < x.size()) && (t < current.transitions().size()); ++t)
+                {
+                    if (x[t] != 0)
+                        marks.push_back({ current.transitions()[t].nodeId(), pal.selection,
+                                          (x[t] == 1) ? "" : "x" + std::to_string(x[t]) });
+                }
+            }
+        }
+    }
+    m_marks.set(current, "analysis", std::move(marks));
+
+    if (ImGui::CollapsingHeader("Report"))
+    {
+        ImGui::BeginChild("##report", ImVec2(0.0f, ImGui::GetTextLineHeight() * 14.0f), ImGuiChildFlags_Borders);
+        ImGui::TextUnformatted(cache.report.c_str());
+        ImGui::EndChild();
+    }
 }
 
 //------------------------------------------------------------------------------

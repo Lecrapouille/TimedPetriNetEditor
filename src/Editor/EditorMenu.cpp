@@ -145,12 +145,10 @@ void Editor::toolbar()
         m_view.grid.snap ^= true;
     if (ImGui::IsItemHovered())
         ImGui::SetTooltip("Snap the nodes to the grid when they move (G)");
-    if (net().layout().compact || isEventGraph(net()))
-    {
-        // Not "Analysis": the menu of the same name is in this menu bar.
-        if (ImGui::MenuItem("Analysis window##toolbar", nullptr, m_states.show_analysis))
-            m_states.show_analysis ^= true;
-    }
+    // Not "Analysis": the menu of the same name is in this menu bar. Every net
+    // has its properties; timed event graphs also the (max,+) tabs.
+    if (ImGui::MenuItem("Analysis window##toolbar", nullptr, m_states.show_analysis))
+        m_states.show_analysis ^= true;
 }
 
 //------------------------------------------------------------------------------
@@ -489,8 +487,11 @@ void Editor::menuGraphEvents()
     if (!ImGui::BeginMenu("Analysis"))
         return;
 
-    bool const teg = net().layout().compact || isEventGraph(net());
+    if (ImGui::MenuItem("Properties (deadlocks, bounds, invariants)"))
+        openAnalysis(6);
+    ImGui::Separator();
 
+    bool const teg = net().layout().compact || isEventGraph(net());
     if (!teg)
         ImGui::TextDisabled("Needs a timed event graph");
     ImGui::BeginDisabled(!teg);
@@ -683,7 +684,11 @@ void Editor::handleMenuActions()
     }
 
     // Analysis window (dockable, not modal)
+    m_states.properties_shown = false;
     if (m_states.show_analysis) { analysisWindow(); }
+    // The marks of the analysis go with its tab.
+    if (!m_states.properties_shown)
+        m_marks.clear("analysis");
 
     // Quit request handling
     if (m_states.request_quitting)

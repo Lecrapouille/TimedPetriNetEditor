@@ -48,6 +48,12 @@ public:
     void live(std::string const& source, Net& net);
 
     //--------------------------------------------------------------------------
+    //! \brief Replace the entries by these firings of the net (a path found by
+    //! the analysis), one per second, and replay them from the start.
+    //--------------------------------------------------------------------------
+    void showFirings(Net& net, std::string const& source, std::vector<size_t> const& transitions);
+
+    //--------------------------------------------------------------------------
     //! \brief Tokens of each place of an instance at a date (a program
     //! connected late gives them): the replay of the instance starts there.
     //--------------------------------------------------------------------------
