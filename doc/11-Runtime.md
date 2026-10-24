@@ -738,7 +738,27 @@ Policy Random, first to cross for the seeds 1 to 10:
 Seed 7 twice: the same crossings
 ```
 
-### 9.7 More programs
+### 9.7 🍝 Philosophers: the tokens are the locks
+
+[`examples/Petri-Nets/Philosophers/Philosophers.cpp`](../examples/Petri-Nets/Philosophers/Philosophers.cpp)
+runs [`Philosophers.json`](../examples/Petri-Nets/Philosophers/Philosophers.json)
+on a pool of three threads. A meal is the function of `PhiN eats`: it lasts
+100 ms, on its own thread. The program has no mutex: a meal starts only
+once the runtime has taken the tokens of its cutlery. The program counts
+the philosophers eating at the same time:
+
+```text
+   0 ms  Phi0 starts meal 1 (1 eating)
+ 102 ms  Phi1 starts meal 1 (1 eating)
+...
+ 817 ms  Phi2 starts meal 3 (1 eating)
+ 919 ms  Canceled: 3, 3 and 3 meals, at most 1 philosopher eating at once
+```
+
+Never more than one, as the P-invariants of the analysis said: the net
+proved the property before the program ran.
+
+### 9.8 More programs
 
 [`examples/Runtime/`](../examples/Runtime/README.md) has the programs for
 each target: pick and place on a pool of threads, micro-services with a
