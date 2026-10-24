@@ -26,12 +26,12 @@ static Net makeSequence(std::string const& r0, std::string const& r1,
 {
     Net net(TypeOfNet::GRAFCET);
     net.name = name;
-    Place& p0 = net.addPlace(0.0f, 0.0f, 1u);
-    Place& p1 = net.addPlace(0.0f, 100.0f, 0u);
-    Place& p2 = net.addPlace(0.0f, 200.0f, 0u);
-    Transition& t0 = net.addTransition(0.0f, 50.0f);
-    Transition& t1 = net.addTransition(0.0f, 150.0f);
-    Transition& t2 = net.addTransition(100.0f, 100.0f);
+    Place& p0 = net.addPlace(1u);
+    Place& p1 = net.addPlace(0u);
+    Place& p2 = net.addPlace(0u);
+    Transition& t0 = net.addTransition();
+    Transition& t1 = net.addTransition();
+    Transition& t2 = net.addTransition();
     t0.caption = r0; t1.caption = r1; t2.caption = r2;
     net.addArc(p0, t0); net.addArc(t0, p1);
     net.addArc(p1, t1); net.addArc(t1, p2);
@@ -130,10 +130,10 @@ static Net makeGrafcet(std::vector<size_t> const& steps, std::vector<Link> const
     Net net(TypeOfNet::GRAFCET);
     net.name = "G";
     for (size_t const initial : steps)
-        net.addPlace(0.0f, 0.0f, initial);
+        net.addPlace(initial);
     for (auto const& link : links)
     {
-        Transition& t = net.addTransition(0.0f, 0.0f);
+        Transition& t = net.addTransition();
         t.caption = link.receptivity;
         for (size_t const s : link.from)
             net.addArc(net.places()[s], net.transitions()[t.id]);

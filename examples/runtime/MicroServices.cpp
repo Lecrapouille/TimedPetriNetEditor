@@ -33,19 +33,15 @@ static Net makeOrder()
 {
     Net net(TypeOfNet::TimedPetriNet);
     net.name = "Order";
-    Place& created = net.addPlace(0.0f, 0.0f, 1u);
-    Place& waiting = net.addPlace(0.0f, 0.0f, 0u);
-    Place& paid = net.addPlace(0.0f, 0.0f, 0u);
-    Place& failed = net.addPlace(0.0f, 0.0f, 0u);
-    Place& answer = net.addPlace(0.0f, 0.0f, 0u);
-    created.caption = "New"; waiting.caption = "Waiting"; paid.caption = "Paid";
-    failed.caption = "Error"; answer.caption = "Answer";
-    Transition& request = net.addTransition(0.0f, 0.0f);
-    Transition& response = net.addTransition(0.0f, 0.0f);
-    Transition& confirm = net.addTransition(0.0f, 0.0f);
-    Transition& timeout = net.addTransition(0.0f, 0.0f);
-    request.caption = "request"; response.caption = "paid"; confirm.caption = "confirm";
-    timeout.caption = "timeout";
+    Place& created = net.addPlace(1u, "New");
+    Place& waiting = net.addPlace(0u, "Waiting");
+    Place& paid = net.addPlace(0u, "Paid");
+    Place& failed = net.addPlace(0u, "Error");
+    Place& answer = net.addPlace(0u, "Answer");
+    Transition& request = net.addTransition("request");
+    Transition& response = net.addTransition("paid");
+    Transition& confirm = net.addTransition("confirm");
+    Transition& timeout = net.addTransition("timeout");
     timeout.delay = 0.5f;
     net.addArc(created, request); net.addArc(request, waiting);
     net.addArc(response, answer); // input transition: the message of the service

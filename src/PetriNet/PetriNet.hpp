@@ -589,35 +589,32 @@ public:
     //! \brief Helper function to create either a place or a transition and
     //! and returning the reference to the base class.
     //--------------------------------------------------------------------------
-    Node& addOppositeNode(Node::Type const type, float const x, float const y, size_t const tokens = 0u)
+    Node& addOppositeNode(Node::Type const type, size_t const tokens = 0u)
     {
         if (type == Node::Type::Transition)
-            return addPlace(x, y, tokens);
-        return addTransition(x, y);
+            return addPlace(tokens);
+        return addTransition();
     }
 
     //--------------------------------------------------------------------------
-    //! \brief Add a new Petri Place. To be used when the user clicked on the
-    //! GUI.
-    //! \param[in] x: X-axis coordinate in the window needed for the display.
-    //! \param[in] y: Y-axis coordinate in the window needed for the display.
+    //! \brief Add a new place with the next identifier. Its position is
+    //! (0, 0): the editor sets it with position().
     //! \param[in] tokens: Initial number of tokens in the place.
+    //! \param[in] caption: Displayed text under the node.
     //! \return the reference of the created place.
     //--------------------------------------------------------------------------
-    Place& addPlace(float const x, float const y, size_t const tokens = 0u);
+    Place& addPlace(size_t const tokens = 0u, std::string const& caption = "");
 
     //--------------------------------------------------------------------------
-    //! \brief Add a new Petri Place. To be used when loading a Petri net from
-    //! a file.
+    //! \brief Add a new place of the given identifier. To be used when loading
+    //! a net from a file.
     //! \param[in] id: unique node identifier. Identifiers are indices in
     //! places(): it shall be the number of places (importers sort nodes).
-    //! \param[in] x: X-axis coordinate in the window needed for the display.
-    //! \param[in] y: Y-axis coordinate in the window needed for the display.
+    //! \param[in] caption: Displayed text under the node.
     //! \param[in] tokens: Initial number of tokens in the place.
     //! \return the reference of the created place.
     //--------------------------------------------------------------------------
-    Place& addPlace(size_t const id, std::string const& caption, float const x,
-                    float const y, size_t const tokens);
+    Place& addPlace(size_t const id, std::string const& caption, size_t const tokens);
 
     //--------------------------------------------------------------------------
     //! \brief Const getter. Return the reference to the container of Places.
@@ -642,26 +639,22 @@ public:
     std::vector<size_t> tokens() const;
 
     //--------------------------------------------------------------------------
-    //! \brief Add a new Petri Transition. To be called when the user clicked on
-    //! the GUI.
-    //! \param[in] x: X-axis coordinate in the window needed for the display.
-    //! \param[in] y: Y-axis coordinate in the window needed for the display.
+    //! \brief Add a new transition with the next identifier. Its position is
+    //! (0, 0): the editor sets it with position().
+    //! \param[in] caption: node description.
     //! \return the reference of the created element.
     //--------------------------------------------------------------------------
-    Transition& addTransition(float const x, float const y);
+    Transition& addTransition(std::string const& caption = "");
 
     //--------------------------------------------------------------------------
-    //! \brief Add a new Petri Transition. To be used when loading a Petri net
-    //! from a file.
+    //! \brief Add a new transition of the given identifier. To be used when
+    //! loading a net from a file.
     //! \param[in] id: unique node identifier. Identifiers are indices in
     //! transitions(): it shall be the number of transitions.
     //! \param[in] caption: node description.
-    //! \param[in] x: X-axis coordinate in the window needed for the display.
-    //! \param[in] y: Y-axis coordinate in the window needed for the display.
     //! \return the reference of the created element.
     //--------------------------------------------------------------------------
-    Transition& addTransition(size_t const id, std::string const& caption,
-                              float const x, float const y);
+    Transition& addTransition(size_t const id, std::string const& caption);
 
     //--------------------------------------------------------------------------
     //! \brief Const getter. Return the reference to the container of Transitions.

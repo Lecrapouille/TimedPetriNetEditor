@@ -190,7 +190,8 @@ static std::string parseNetFromJSON(Net& net, nlohmann::json const& jnet)
     for (nlohmann::json const* jp : places) {
         nlohmann::json const& p = *jp;
         Point const at = position(p, "places", p["id"]);
-        Place& place = net.addPlace(p["id"], p["caption"], at.x, at.y, p["tokens"]);
+        Place& place = net.addPlace(p["id"], p["caption"], p["tokens"]);
+        net.position(place) = at;
         if (p.contains("capacity"))
         {
             size_t const capacity = p["capacity"];
@@ -222,7 +223,8 @@ static std::string parseNetFromJSON(Net& net, nlohmann::json const& jnet)
         if (grafcet && !Receptivity::check(caption).empty())
             caption = rpnToInfix(caption);
         Point const at = position(t, "transitions", t["id"]);
-        Transition& transition = net.addTransition(t["id"], caption, at.x, at.y);
+        Transition& transition = net.addTransition(t["id"], caption);
+        net.position(transition) = at;
         transition.delay = t.value("delay", 0.0f);
         transition.priority = t.value("priority", 0);
     }

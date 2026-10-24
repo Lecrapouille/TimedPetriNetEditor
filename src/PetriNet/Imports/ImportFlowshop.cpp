@@ -312,8 +312,8 @@ void buildFlowshop(Net& net, Flowshop const& data)
     std::vector<Transition*> trans(nd + 1u, nullptr); // 1-based indexing
     for (size_t k = 0; k < nd; ++k)
     {
-        Transition& t = net.addTransition(nodes[k].x, nodes[k].y);
-        t.caption = nodes[k].caption;
+        Transition& t = net.addTransition(nodes[k].caption);
+        net.position(t) = { nodes[k].x, nodes[k].y };
         trans[k + 1u] = &t;
     }
     for (auto const& e : edges)

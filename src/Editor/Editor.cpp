@@ -1095,7 +1095,8 @@ Transition& Editor::addTransition(float const x, float const y)
 {
     auto action = std::make_unique<NetModificationAction>([this]() -> Net& { return net(); });
     action->before(net());
-    Transition& transition = net().addTransition(x, y);
+    Transition& transition = net().addTransition();
+    net().position(transition) = { x, y };
     action->after(net());
     m_history.add(std::move(action));
     return transition;
@@ -1106,7 +1107,7 @@ void Editor::addPlace(float const x, float const y)
 {
     auto action = std::make_unique<NetModificationAction>([this]() -> Net& { return net(); });
     action->before(net());
-    net().addPlace(x, y);
+    net().position(net().addPlace()) = { x, y };
     action->after(net());
     m_history.add(std::move(action));
 }
@@ -1177,7 +1178,8 @@ Node& Editor::addOppositeNode(Node::Type const type, float const x,
 {
     auto action = std::make_unique<NetModificationAction>([this]() -> Net& { return net(); });
     action->before(net());
-    Node& node = net().addOppositeNode(type, x, y, tokens);
+    Node& node = net().addOppositeNode(type, tokens);
+    net().position(node) = { x, y };
     action->after(net());
     m_history.add(std::move(action));
     return node;

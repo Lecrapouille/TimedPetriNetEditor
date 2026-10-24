@@ -194,8 +194,9 @@ int64_t petri_add_place(int64_t const pn, double const x, double const y,
 {
     CHECK_VALID_PETRI_HANDLE(pn, -1);
 
-    tpne::Place const& p = g_petri_nets[size_t(pn)]->addPlace(float(x), float(y),
-                                                      size_t(tokens));
+    tpne::Net& net = *g_petri_nets[size_t(pn)];
+    tpne::Place const& p = net.addPlace(size_t(tokens));
+    net.position(p) = { float(x), float(y) };
     return int64_t(p.id);
 }
 
@@ -204,7 +205,9 @@ int64_t petri_add_transition(int64_t const pn, double const x, double const y)
 {
     CHECK_VALID_PETRI_HANDLE(pn, -1);
 
-    tpne::Transition const& t = g_petri_nets[size_t(pn)]->addTransition(float(x), float(y));
+    tpne::Net& net = *g_petri_nets[size_t(pn)];
+    tpne::Transition const& t = net.addTransition();
+    net.position(t) = { float(x), float(y) };
     return int64_t(t.id);
 }
 

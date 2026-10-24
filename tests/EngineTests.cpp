@@ -20,10 +20,10 @@ using namespace ::tpne;
 static Net loop()
 {
     Net net(TypeOfNet::TimedPetriNet);
-    Place& p0 = net.addPlace(0u, "", 0.0f, 0.0f, 0u);
-    Place& p1 = net.addPlace(1u, "", 0.0f, 0.0f, 1u);
-    Transition& t0 = net.addTransition(0u, "", 0.0f, 0.0f);
-    Transition& t1 = net.addTransition(1u, "", 0.0f, 0.0f);
+    Place& p0 = net.addPlace(0u, "", 0u);
+    Place& p1 = net.addPlace(1u, "", 1u);
+    Transition& t0 = net.addTransition(0u, "");
+    Transition& t1 = net.addTransition(1u, "");
     net.addArc(t0, p0, 3.0f);
     net.addArc(p0, t1);
     net.addArc(t1, p1, 2.0f);
@@ -101,11 +101,11 @@ TEST(TestEngine, SameDatesAsMaxPlus)
 static Net conflict()
 {
     Net net(TypeOfNet::TimedPetriNet);
-    Place& p0 = net.addPlace(0u, "", 0.0f, 0.0f, 1u);
-    Place& p1 = net.addPlace(1u, "", 0.0f, 0.0f, 0u);
-    Place& p2 = net.addPlace(2u, "", 0.0f, 0.0f, 0u);
-    Transition& t0 = net.addTransition(0u, "", 0.0f, 0.0f);
-    Transition& t1 = net.addTransition(1u, "", 0.0f, 0.0f);
+    Place& p0 = net.addPlace(0u, "", 1u);
+    Place& p1 = net.addPlace(1u, "", 0u);
+    Place& p2 = net.addPlace(2u, "", 0u);
+    Transition& t0 = net.addTransition(0u, "");
+    Transition& t1 = net.addTransition(1u, "");
     net.addArc(p0, t0);
     net.addArc(t0, p1, 1.0f);
     net.addArc(p0, t1);
@@ -206,9 +206,9 @@ TEST(TestEngine, SourceTransitionsAndCapacity)
 {
     // Source T0 -(4)-> P0 (capacity 2): fires at 0, 4, then P0 is full.
     Net net(TypeOfNet::TimedPetriNet);
-    Place& p0 = net.addPlace(0u, "", 0.0f, 0.0f, 0u);
+    Place& p0 = net.addPlace(0u, "", 0u);
     p0.capacity = 2u;
-    Transition& t0 = net.addTransition(0u, "", 0.0f, 0.0f);
+    Transition& t0 = net.addTransition(0u, "");
     net.addArc(t0, p0, 4.0f);
     Engine engine(net);
     engine.reset();

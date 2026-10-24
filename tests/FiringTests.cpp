@@ -18,10 +18,10 @@ using namespace ::tpne;
 static Net cycle()
 {
     Net net(TypeOfNet::PetriNet);
-    Place& p0 = net.addPlace(0u, "", 0.0f, 0.0f, 2u);
-    Place& p1 = net.addPlace(1u, "", 0.0f, 0.0f, 0u);
-    Transition& t0 = net.addTransition(0u, "", 0.0f, 0.0f);
-    Transition& t1 = net.addTransition(1u, "", 0.0f, 0.0f);
+    Place& p0 = net.addPlace(0u, "", 2u);
+    Place& p1 = net.addPlace(1u, "", 0u);
+    Transition& t0 = net.addTransition(0u, "");
+    Transition& t1 = net.addTransition(1u, "");
     net.addArc(p0, t0);
     net.addArc(t0, p1);
     net.addArc(p1, t1);

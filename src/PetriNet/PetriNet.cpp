@@ -236,23 +236,18 @@ Place& Net::applyCapacity(Place& place) const
 }
 
 //------------------------------------------------------------------------------
-Place& Net::addPlace(float const x, float const y, size_t const tokens)
+Place& Net::addPlace(size_t const tokens, std::string const& caption)
 {
-    modified = true;
-    m_places.emplace_back(m_next_place_id++, "", tokens);
-    m_layout.place(m_places.back().id) = { x, y };
-    generateArcsInArcsOut();
-    return applyCapacity(m_places.back());
+    return addPlace(m_next_place_id, caption, tokens);
 }
 
 //------------------------------------------------------------------------------
-Place& Net::addPlace(size_t const id, std::string const& caption, float const x,
-                     float const y, size_t const tokens)
+Place& Net::addPlace(size_t const id, std::string const& caption, size_t const tokens)
 {
     assert((id == m_places.size()) && "Identifiers of places shall be their indices");
     modified = true;
     m_places.emplace_back(id, caption, tokens);
-    m_layout.place(id) = { x, y };
+    m_layout.place(id) = Point{};
     if (id + 1u > m_next_place_id)
         m_next_place_id = id + 1u;
     generateArcsInArcsOut();
@@ -260,28 +255,23 @@ Place& Net::addPlace(size_t const id, std::string const& caption, float const x,
 }
 
 //------------------------------------------------------------------------------
-Transition& Net::addTransition(float const x, float const y)
+Transition& Net::addTransition(std::string const& caption)
 {
-    modified = true;
-    m_transitions.push_back(Transition(m_next_transition_id++, "",
-                   (m_type == TypeOfNet::TimedPetriNet) ? true : false));
-    m_layout.transition(m_transitions.back().id) = { x, y };
-    generateArcsInArcsOut();
-    return m_transitions.back();
+    return addTransition(m_next_transition_id, caption);
 }
 
 //------------------------------------------------------------------------------
-Transition& Net::addTransition(size_t const id, std::string const& caption,
-                               float const x, float const y)
+Transition& Net::addTransition(size_t const id, std::string const& caption)
 {
     assert((id == m_transitions.size()) && "Identifiers of transitions shall be their indices");
     modified = true;
     m_transitions.emplace_back(id, caption,
                    (m_type == TypeOfNet::TimedPetriNet) ? true : false);
-    m_layout.transition(id) = { x, y };
+    m_layout.transition(id) = Point{};
     if (id + 1u > m_next_transition_id)
         m_next_transition_id = id + 1u;
     generateArcsInArcsOut();
+
     return m_transitions.back();
 }
 
@@ -343,7 +333,8 @@ bool Net::addArc(Transition& from, Transition& to, size_t const tokens, float co
     // Create the intermediate node
     Point const a = position(from);
     Point const b = position(to);
-    Place& n = addPlace(a.x + (b.x - a.x) / 2.0f, a.y + (b.y - a.y) / 2.0f, tokens);
+    Place& n = addPlace(tokens);
+    position(n) = { a.x + (b.x - a.x) / 2.0f, a.y + (b.y - a.y) / 2.0f };
 
     m_arcs.emplace_back(from, n, duration);
     m_arcs.emplace_back(n, to, duration);
@@ -373,7 +364,8 @@ std::string Net::addArc(Node& from, Node& to, float const duration)
         // nodes are stored in a std::deque.
         Point const a = position(from);
         Point const b = position(to);
-        Node& n = addOppositeNode(to.type, a.x + (b.x - a.x) / 2.0f, a.y + (b.y - a.y) / 2.0f);
+        Node& n = addOppositeNode(to.type);
+        position(n) = { a.x + (b.x - a.x) / 2.0f, a.y + (b.y - a.y) / 2.0f };
 
         m_arcs.emplace_back(from, n, duration);
         m_arcs.emplace_back(n, to, duration);
@@ -381,6 +373,7 @@ std::string Net::addArc(Node& from, Node& to, float const duration)
 
     generateArcsInArcsOut();
     return message.str();
+
 }
 
 //------------------------------------------------------------------------------

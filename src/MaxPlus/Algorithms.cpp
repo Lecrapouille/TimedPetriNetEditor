@@ -38,9 +38,9 @@ void toCanonicalForm(Net const& net, Net& canonic)
                 canonic.removeArc(*from, p);
                 while (tokens--)
                 {
-                    Node& tmp1 = canonic.addPlace(10.0f, 10.0f, 1u);
+                    Node& tmp1 = canonic.addPlace(1u);
                     canonic.addArc(*from, tmp1);
-                    Node& tmp2 = canonic.addTransition(20.0f, 20.0f);
+                    Node& tmp2 = canonic.addTransition();
                     canonic.addArc(tmp1, tmp2);
 
                     from = &tmp2;
@@ -71,8 +71,8 @@ void toCanonicalForm(Net const& net, Net& canonic)
                     float duration = in.durationOrZero();
                     canonic.removeArc(*from, p);
 
-                    Node& tmp1 = canonic.addPlace(50.0f, 50.0f, 0u);
-                    Node& tmp2 = canonic.addTransition(60.0f, 60.0f);
+                    Node& tmp1 = canonic.addPlace();
+                    Node& tmp2 = canonic.addTransition();
                     canonic.addArc(*from, tmp1);
                     canonic.addArc(tmp1, tmp2, duration);
                     canonic.addArc(tmp2, p);
@@ -84,8 +84,8 @@ void toCanonicalForm(Net const& net, Net& canonic)
                 {
                     canonic.removeArc(p, *to);
 
-                    Node& tmp1 = canonic.addTransition(60.0f, 60.0f);
-                    Node& tmp2 = canonic.addPlace(50.0f, 50.0f, 0u);
+                    Node& tmp1 = canonic.addTransition();
+                    Node& tmp2 = canonic.addPlace();
                     canonic.addArc(p, tmp1);
                     canonic.addArc(tmp1, tmp2);
                     canonic.addArc(tmp2, *to);

@@ -61,18 +61,16 @@ static void light(char const* name, char const* color)
 void setup()
 {
     Net& net = g_light.net;
-    Place& red = net.addPlace(0.0f, 0.0f, 1u);
-    Place& green = net.addPlace(0.0f, 0.0f, 0u);
-    Place& orange = net.addPlace(0.0f, 0.0f, 0u);
-    Place& request = net.addPlace(0.0f, 0.0f, 0u);
+    Place& red = net.addPlace(1u, "red");
+    Place& green = net.addPlace(0u, "green");
+    Place& orange = net.addPlace(0u, "orange");
+    Place& request = net.addPlace(0u, "request");
     request.capacity = 1u;
-    Transition& go = net.addTransition(0.0f, 0.0f);
-    Transition& slow = net.addTransition(0.0f, 0.0f);
-    Transition& stop = net.addTransition(0.0f, 0.0f);
-    Transition& button = net.addTransition(0.0f, 0.0f);
-    Transition& hurry = net.addTransition(0.0f, 0.0f);
-    go.caption = "go"; slow.caption = "slow"; stop.caption = "stop";
-    button.caption = "button"; hurry.caption = "hurry";
+    Transition& go = net.addTransition("go");
+    Transition& slow = net.addTransition("slow");
+    Transition& stop = net.addTransition("stop");
+    Transition& button = net.addTransition("button");
+    Transition& hurry = net.addTransition("hurry");
     go.delay = 3.0f; slow.delay = 3.0f; stop.delay = 1.0f;
     hurry.priority = 1;
     net.addArc(red, go); net.addArc(go, green);

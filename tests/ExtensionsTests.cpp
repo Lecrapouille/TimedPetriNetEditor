@@ -173,9 +173,9 @@ TEST(TestExtensions, Colors)
 
     // Grasp -> Held; Held -(Success)-> Place; Held -(Failed)-> Retry
     Net net(TypeOfNet::PetriNet);
-    Place& held = net.addPlace(0.0f, 0.0f, 0u);
-    Transition& place = net.addTransition(0.0f, 0.0f);
-    Transition& retry = net.addTransition(0.0f, 0.0f);
+    Place& held = net.addPlace(0u);
+    Transition& place = net.addTransition();
+    Transition& retry = net.addTransition();
     net.addArc(held, place);
     net.addArc(held, retry);
     net.findArc(held, place)->color = Success;

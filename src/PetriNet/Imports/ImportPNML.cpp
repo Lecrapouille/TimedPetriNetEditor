@@ -68,7 +68,7 @@ std::string importFromPNML(Net& net, std::string const& filename)
                             ->Attribute("y"));
         }
 
-        net.addPlace(place_id, caption, x, y, size_t(tokens));
+        net.position(net.addPlace(place_id, caption, size_t(tokens))) = { x, y };
         place_id++;
     }
 
@@ -91,7 +91,7 @@ std::string importFromPNML(Net& net, std::string const& filename)
                             ->FirstChildElement("position")
                             ->Attribute("y"));
         }
-        net.addTransition(transition_id, caption, x, y);
+        net.position(net.addTransition(transition_id, caption)) = { x, y };
         transition_id++;
     }
 

@@ -210,7 +210,7 @@ TEST(TestJSONLoader, SaveAndLoadDummyNet)
     bool stringify;
 
     ASSERT_STREQ(saveToFile(net, "/tmp/foo.json").c_str(), "");
-    net.addPlace(1.0, 1.0, 2u);
+    net.addPlace(2u);
     ASSERT_EQ(net.m_places.size(), 1u);
 
     ASSERT_STREQ(loadFromFile(net, "/tmp/foo.json", stringify).c_str(), "");

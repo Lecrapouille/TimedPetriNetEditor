@@ -22,15 +22,15 @@ using namespace ::tpne;
 static Net pickAndPlace()
 {
     Net net(TypeOfNet::PetriNet);
-    Place& ready = net.addPlace(0.0f, 0.0f, 1u);
-    Place& seen = net.addPlace(0.0f, 0.0f, 0u);
-    Place& held = net.addPlace(0.0f, 0.0f, 0u);
-    Place& done = net.addPlace(0.0f, 0.0f, 0u);
+    Place& ready = net.addPlace(1u);
+    Place& seen = net.addPlace(0u);
+    Place& held = net.addPlace(0u);
+    Place& done = net.addPlace(0u);
     ready.caption = "Ready"; seen.caption = "Seen"; held.caption = "Held"; done.caption = "Done";
-    Transition& detect = net.addTransition(0.0f, 0.0f);
-    Transition& grasp = net.addTransition(0.0f, 0.0f);
-    Transition& place = net.addTransition(0.0f, 0.0f);
-    Transition& retry = net.addTransition(0.0f, 0.0f);
+    Transition& detect = net.addTransition();
+    Transition& grasp = net.addTransition();
+    Transition& place = net.addTransition();
+    Transition& retry = net.addTransition();
     detect.caption = "detect"; grasp.caption = "grasp"; place.caption = "place"; retry.caption = "retry";
     net.addArc(ready, detect); net.addArc(detect, seen);
     net.addArc(seen, grasp); net.addArc(grasp, held);
@@ -127,11 +127,11 @@ TEST(TestRuntime, GuardsAndInjectedInputs)
 {
     // Button (source) -> Ready -> detect -> Seen
     Net net(TypeOfNet::PetriNet);
-    Place& ready = net.addPlace(0.0f, 0.0f, 0u);
-    Place& seen = net.addPlace(0.0f, 0.0f, 0u);
+    Place& ready = net.addPlace(0u);
+    Place& seen = net.addPlace(0u);
     ready.caption = "Ready"; seen.caption = "Seen";
-    Transition& button = net.addTransition(0.0f, 0.0f);
-    Transition& detect = net.addTransition(0.0f, 0.0f);
+    Transition& button = net.addTransition();
+    Transition& detect = net.addTransition();
     button.caption = "button"; detect.caption = "detect";
     net.addArc(button, ready); net.addArc(ready, detect); net.addArc(detect, seen);
 
@@ -184,12 +184,12 @@ TEST(TestRuntime, TimedArcsAndDelays)
 {
     // Timed: T0 -(2)-> P1 -> T1 (delay 1) -> P2
     Net net(TypeOfNet::TimedPetriNet);
-    Place& p0 = net.addPlace(0.0f, 0.0f, 1u);
-    Place& p1 = net.addPlace(0.0f, 0.0f, 0u);
-    Place& p2 = net.addPlace(0.0f, 0.0f, 0u);
+    Place& p0 = net.addPlace(1u);
+    Place& p1 = net.addPlace(0u);
+    Place& p2 = net.addPlace(0u);
     p2.caption = "End";
-    Transition& t0 = net.addTransition(0.0f, 0.0f);
-    Transition& t1 = net.addTransition(0.0f, 0.0f);
+    Transition& t0 = net.addTransition();
+    Transition& t1 = net.addTransition();
     t1.delay = 1.0f;
     net.addArc(p0, t0); net.addArc(t0, p1, 2.0f);
     net.addArc(p1, t1); net.addArc(t1, p2);
@@ -210,11 +210,11 @@ TEST(TestRuntime, PrioritiesAndZeno)
 {
     // P0 -> T0 (priority 1) -> P1, P0 -> T1 -> P2
     Net net(TypeOfNet::PetriNet);
-    Place& p0 = net.addPlace(0.0f, 0.0f, 1u);
-    net.addPlace(0.0f, 0.0f, 0u);
-    net.addPlace(0.0f, 0.0f, 0u);
-    Transition& t0 = net.addTransition(0.0f, 0.0f);
-    Transition& t1 = net.addTransition(0.0f, 0.0f);
+    Place& p0 = net.addPlace(1u);
+    net.addPlace(0u);
+    net.addPlace(0u);
+    Transition& t0 = net.addTransition();
+    Transition& t1 = net.addTransition();
     net.addArc(p0, t0); net.addArc(t0, net.places()[1]);
     net.addArc(p0, t1); net.addArc(t1, net.places()[2]);
     t1.priority = 1;
@@ -225,8 +225,8 @@ TEST(TestRuntime, PrioritiesAndZeno)
 
     // P0 -> T0 -> P0: no function, no duration.
     Net loop(TypeOfNet::PetriNet);
-    Place& q = loop.addPlace(0.0f, 0.0f, 1u);
-    Transition& t = loop.addTransition(0.0f, 0.0f);
+    Place& q = loop.addPlace(1u);
+    Transition& t = loop.addTransition();
     loop.addArc(q, t); loop.addArc(t, q);
     Runtime::Options options;
     options.max_firings_per_date = 50u;
@@ -243,14 +243,14 @@ TEST(TestRuntime, PrioritiesAndZeno)
 static Net parent()
 {
     Net net(TypeOfNet::PetriNet);
-    Place& start = net.addPlace(0.0f, 0.0f, 1u);
-    Place& picked = net.addPlace(0.0f, 0.0f, 0u);
-    Place& shipped = net.addPlace(0.0f, 0.0f, 0u);
-    Place& alarm = net.addPlace(0.0f, 0.0f, 0u);
+    Place& start = net.addPlace(1u);
+    Place& picked = net.addPlace(0u);
+    Place& shipped = net.addPlace(0u);
+    Place& alarm = net.addPlace(0u);
     start.caption = "Start"; picked.caption = "Picked"; shipped.caption = "Shipped"; alarm.caption = "Alarm";
-    Transition& pick = net.addTransition(0.0f, 0.0f);
-    Transition& ship = net.addTransition(0.0f, 0.0f);
-    Transition& raise = net.addTransition(0.0f, 0.0f);
+    Transition& pick = net.addTransition();
+    Transition& ship = net.addTransition();
+    Transition& raise = net.addTransition();
     pick.caption = "pick"; ship.caption = "ship"; raise.caption = "alarm";
     net.addArc(start, pick); net.addArc(pick, picked);
     net.addArc(picked, ship); net.addArc(ship, shipped);

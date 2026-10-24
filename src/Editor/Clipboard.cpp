@@ -49,9 +49,8 @@ void Clipboard::paste(Net& target_net, float x, float y,
     // Paste places
     for (auto& p : m_places)
     {
-        Place& new_place = target_net.addPlace(p.x + offset_x, p.y + offset_y);
-        new_place.caption = p.caption;
-        new_place.tokens = p.tokens;
+        Place& new_place = target_net.addPlace(p.tokens, p.caption);
+        target_net.position(new_place) = { p.x + offset_x, p.y + offset_y };
         old_to_new_place[p.id] = &new_place;
         created_nodes.push_back(&new_place);
     }
@@ -59,8 +58,8 @@ void Clipboard::paste(Net& target_net, float x, float y,
     // Paste transitions
     for (auto& t : m_transitions)
     {
-        Transition& new_trans = target_net.addTransition(t.x + offset_x, t.y + offset_y);
-        new_trans.caption = t.caption;
+        Transition& new_trans = target_net.addTransition(t.caption);
+        target_net.position(new_trans) = { t.x + offset_x, t.y + offset_y };
         old_to_new_trans[t.id] = &new_trans;
         created_nodes.push_back(&new_trans);
     }

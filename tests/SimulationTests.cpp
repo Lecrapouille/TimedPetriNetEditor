@@ -73,9 +73,9 @@ TEST(TestSimulation, PetriNetFiresClickedTransitions)
 {
     // P0 (1) -> T0 -> P1
     Net net(TypeOfNet::PetriNet);
-    Place& p0 = net.addPlace(0u, "", 0.0f, 0.0f, 1u);
-    Place& p1 = net.addPlace(1u, "", 100.0f, 0.0f, 0u);
-    Transition& t0 = net.addTransition(0u, "", 50.0f, 0.0f);
+    Place& p0 = net.addPlace(0u, "", 1u);
+    Place& p1 = net.addPlace(1u, "", 0u);
+    Transition& t0 = net.addTransition(0u, "");
     net.addArc(p0, t0);
     net.addArc(t0, p1);
     Simulation simulation(net);
@@ -100,10 +100,10 @@ TEST(TestSimulation, UserAddsTokens)
     // A timed net stopped for lack of tokens, restarted by a token added by
     // the user (keys + and -) before it stops.
     Net net(TypeOfNet::TimedPetriNet);
-    Place& p0 = net.addPlace(0u, "", 0.0f, 0.0f, 0u);
-    Place& p1 = net.addPlace(1u, "", 100.0f, 0.0f, 0u);
-    Transition& t0 = net.addTransition(0u, "", 50.0f, 0.0f);
-    Transition& t1 = net.addTransition(1u, "", 50.0f, 50.0f);
+    Place& p0 = net.addPlace(0u, "", 0u);
+    Place& p1 = net.addPlace(1u, "", 0u);
+    Transition& t0 = net.addTransition(0u, "");
+    Transition& t1 = net.addTransition(1u, "");
     net.addArc(p0, t0);
     net.addArc(t0, p1, 2.0f);
     net.addArc(p1, t1);
@@ -124,9 +124,9 @@ TEST(TestSimulation, UserAddsTokens)
 TEST(TestSimulation, TimedNetStopsWhenDeadlocked)
 {
     Net net(TypeOfNet::TimedPetriNet);
-    Place& p0 = net.addPlace(0u, "", 0.0f, 0.0f, 1u);
-    Place& p1 = net.addPlace(1u, "", 100.0f, 0.0f, 0u);
-    Transition& t0 = net.addTransition(0u, "", 50.0f, 0.0f);
+    Place& p0 = net.addPlace(0u, "", 1u);
+    Place& p1 = net.addPlace(1u, "", 0u);
+    Transition& t0 = net.addTransition(0u, "");
     net.addArc(p0, t0);
     net.addArc(t0, p1, 1.0f);
     Simulation simulation(net);
@@ -140,11 +140,11 @@ TEST(TestSimulation, SeedReplaysConflicts)
     // P0 (1 token) feeds T0 and T1: the seed decides, the same each time.
     auto winner = [](uint64_t seed) {
         Net net(TypeOfNet::TimedPetriNet);
-        Place& p0 = net.addPlace(0u, "", 0.0f, 0.0f, 1u);
-        net.addPlace(1u, "", 0.0f, 0.0f, 0u);
-        net.addPlace(2u, "", 0.0f, 0.0f, 0u);
-        Transition& t0 = net.addTransition(0u, "", 0.0f, 0.0f);
-        Transition& t1 = net.addTransition(1u, "", 0.0f, 0.0f);
+        Place& p0 = net.addPlace(0u, "", 1u);
+        net.addPlace(1u, "", 0u);
+        net.addPlace(2u, "", 0u);
+        Transition& t0 = net.addTransition(0u, "");
+        Transition& t1 = net.addTransition(1u, "");
         net.addArc(p0, t0);
         net.addArc(t0, net.places()[1], 1.0f);
         net.addArc(p0, t1);

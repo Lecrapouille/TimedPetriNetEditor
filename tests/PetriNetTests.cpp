@@ -190,11 +190,11 @@ TEST(TestPetriNet, TestArcsOfNodes)
 {
     // P0 -> T0 -> P1, P1 -> T1
     Net net(TypeOfNet::PetriNet);
-    Place& p0 = net.addPlace(0u, "", 0.0f, 0.0f, 2u);
-    Place& p1 = net.addPlace(1u, "", 0.0f, 0.0f, 0u);
-    Transition& t0 = net.addTransition(0u, "", 0.0f, 0.0f);
-    Transition& t1 = net.addTransition(1u, "", 0.0f, 0.0f);
-    Transition& t2 = net.addTransition(2u, "", 0.0f, 0.0f);
+    Place& p0 = net.addPlace(0u, "", 2u);
+    Place& p1 = net.addPlace(1u, "", 0u);
+    Transition& t0 = net.addTransition(0u, "");
+    Transition& t1 = net.addTransition(1u, "");
+    Transition& t2 = net.addTransition(2u, "");
     ASSERT_TRUE(net.addArc(p0, t0).empty());
     ASSERT_TRUE(net.addArc(t0, p1, 3.0f).empty());
     ASSERT_TRUE(net.addArc(p1, t1).empty());
@@ -302,19 +302,19 @@ TEST(TestPetriNet, TestIncrementId)
     // Identifiers are indices: given ones follow the number of nodes.
     Net net(TypeOfNet::TimedPetriNet);
 
-    net.addPlace(0u, "", 3.5f, 4.0f, 45u);
+    net.addPlace(0u, "", 45u);
     ASSERT_EQ(net.m_next_place_id, 1u);
 
-    net.addPlace(1u, "", 3.5f, 4.0f, 45u);
+    net.addPlace(1u, "", 45u);
     ASSERT_EQ(net.m_next_place_id, 2u);
 
-    net.addPlace(3.5f, 4.0f, 45u);
+    net.addPlace(45u);
     ASSERT_EQ(net.m_next_place_id, 3u);
     ASSERT_EQ(net.m_places[2].id, 2u);
     ASSERT_STREQ(net.m_places[2].key.c_str(), "P2");
 
-    net.addTransition(0u, "", 3.5f, 4.0f);
-    net.addTransition(3.5f, 4.0f);
+    net.addTransition(0u, "");
+    net.addTransition();
     ASSERT_EQ(net.m_next_transition_id, 2u);
     ASSERT_EQ(net.m_transitions[1].id, 1u);
 }
@@ -334,7 +334,7 @@ TEST(TestPetriNet, TestAddRemoveOperations)
     ASSERT_STREQ(error.c_str(), "Empty Petri net is not an event graph");
 
     // Add Place 0: net = P0
-    Place& p0 = net.addPlace(3.14f, 2.16f, 10u);
+    Place& p0 = net.addPlace(10u);
     ASSERT_EQ(net.m_next_place_id, 1u);
     ASSERT_EQ(p0.id, 0u);
     ASSERT_STREQ(p0.key.c_str(), "P0");
@@ -348,7 +348,7 @@ TEST(TestPetriNet, TestAddRemoveOperations)
     ASSERT_STREQ(net.m_places[0].key.c_str(), "P0");
 
     // Add Transition 0: net = P0 T0
-    Transition* t0 = &net.addTransition(3.14f, 2.16f);
+    Transition* t0 = &net.addTransition();
     ASSERT_EQ(net.m_next_transition_id, 1u);
     ASSERT_EQ(t0->id, 0u);
     ASSERT_STREQ(t0->key.c_str(), "T0");
@@ -362,7 +362,7 @@ TEST(TestPetriNet, TestAddRemoveOperations)
     ASSERT_STREQ(net.m_transitions[0].key.c_str(), "T0");
 
     // Add Place 1: net = P0 T0 P1
-    Place& p1 = net.addPlace(3.14f, 2.16f, 10u);
+    Place& p1 = net.addPlace(10u);
     ASSERT_EQ(net.m_next_place_id, 2u);
     ASSERT_EQ(p1.id, 1u);
     ASSERT_STREQ(p1.key.c_str(), "P1");
@@ -395,7 +395,7 @@ TEST(TestPetriNet, TestAddRemoveOperations)
     ASSERT_EQ(net.m_arcs.size(), 0u);
 
     // Add T0 back: net = P0 T0 P1
-    t0 = &net.addTransition(3.14f, 2.16f);
+    t0 = &net.addTransition();
     ASSERT_EQ(net.m_next_transition_id, 1u);
     ASSERT_EQ(t0->id, 0u);
     ASSERT_STREQ(t0->key.c_str(), "T0");
@@ -473,7 +473,7 @@ TEST(TestPetriNet, TestAddRemoveOperations)
 TEST(TestPetriNet, TestDecrTokens)
 {
     Net net(TypeOfNet::TimedPetriNet);
-    Place& p0 = net.addPlace(0u, "Hello", 3.14f, 2.16f, 10u);
+    Place& p0 = net.addPlace(0u, "Hello", 10u);
     ASSERT_EQ(p0.tokens, 10u);
     p0.decrement(2u);
     ASSERT_EQ(p0.tokens, 8u);
@@ -489,7 +489,7 @@ TEST(TestPetriNet, TestDecrTokens)
 TEST(TestPetriNet, TestIncrTokens)
 {
     Net net(TypeOfNet::TimedPetriNet);
-    Place& p0 = net.addPlace(0u, "Hello", 3.14f, 2.16f, 0u);
+    Place& p0 = net.addPlace(0u, "Hello", 0u);
     ASSERT_EQ(p0.tokens, 0u);
     p0.increment(2u);
     ASSERT_EQ(p0.tokens, 2u);
@@ -523,9 +523,9 @@ TEST(TestPetriNet, TestCapacityIsPerNet)
     Net grafcet(TypeOfNet::GRAFCET);
     Net petri2(TypeOfNet::PetriNet);
 
-    Place& p1 = petri1.addPlace(0.0f, 0.0f, 5u);
-    Place& s0 = grafcet.addPlace(0.0f, 0.0f, 5u);
-    Place& p2 = petri2.addPlace(0.0f, 0.0f, 5u);
+    Place& p1 = petri1.addPlace(5u);
+    Place& s0 = grafcet.addPlace(5u);
+    Place& p2 = petri2.addPlace(5u);
     ASSERT_EQ(p1.tokens, 5u);
     ASSERT_EQ(s0.tokens, 1u);
     ASSERT_EQ(p2.tokens, 5u);
@@ -551,8 +551,9 @@ TEST(TestPetriNet, TestCaptionAfterRemove)
 {
     // Add P0 and P1
     Net net(TypeOfNet::TimedPetriNet);
-    Place& p0 = net.addPlace(0u, "Hello", 3.14f, 2.16f, 10u);
-    net.addPlace(1u, "World", 1.0f, 1.5f, 42u);
+    Place& p0 = net.addPlace(0u, "Hello", 10u);
+    net.position(p0) = { 3.14f, 2.16f };
+    net.position(net.addPlace(1u, "World", 42u)) = { 1.0f, 1.5f };
 
     ASSERT_EQ(net.m_places.size(), 2u);
     ASSERT_STREQ(net.m_places[0].key.c_str(), "P0");
@@ -570,7 +571,7 @@ TEST(TestPetriNet, TestCaptionAfterRemove)
     ASSERT_EQ(net.m_places[0].tokens, 42u);
 
     // Add P1. Check we have P0 P1
-    net.addPlace(1u, "", 2.0f, 2.5f, 24u);
+    net.position(net.addPlace(1u, "", 24u)) = { 2.0f, 2.5f };
     ASSERT_EQ(net.m_places.size(), 2u);
     ASSERT_STREQ(net.m_places[0].key.c_str(), "P0");
     ASSERT_STREQ(net.m_places[0].caption.c_str(), "World");
@@ -592,8 +593,8 @@ TEST(TestPetriNet, TestDoubleAdd)
 {
     Net net(TypeOfNet::TimedPetriNet);
 
-    Place& p1 = net.addPlace(0u, "", 3.5f, 4.0f, 45u);
-    Transition& t1 = net.addTransition(0u, "", 3.5f, 4.0f);
+    Place& p1 = net.addPlace(0u, "", 45u);
+    Transition& t1 = net.addTransition(0u, "");
     ASSERT_EQ(net.m_next_place_id, 1u);
     ASSERT_EQ(net.m_next_transition_id, 1u);
 
@@ -656,7 +657,7 @@ TEST(TestPetriNet, TestInvalidAddArc)
     ASSERT_EQ(net.m_transitions.size(), 0u);
     ASSERT_EQ(net.m_arcs.size(), 0u);
 
-    Transition& t3 = net.addTransition(0u, "", 3.5f, 4.0f);
+    Transition& t3 = net.addTransition(0u, "");
     ASSERT_FALSE(net.addArc(t3, p2).empty());
     ASSERT_EQ(net.m_arcs.size(), 0u);
 }
@@ -1424,10 +1425,10 @@ TEST(TestPetriNet, TestRemoveNode)
 TEST(TestPetriNet, TestRemoveNodeRenumbers)
 {
     Net net(TypeOfNet::PetriNet);
-    Place& p0 = net.addPlace(0u, "A", 0.0f, 0.0f, 1u);
-    net.addPlace(1u, "", 10.0f, 0.0f, 2u);
-    net.addPlace(2u, "C", 20.0f, 0.0f, 3u);
-    Transition& t0 = net.addTransition(0u, "", 5.0f, 0.0f);
+    Place& p0 = net.addPlace(0u, "A", 1u);
+    net.addPlace(1u, "", 2u);
+    net.addPlace(2u, "C", 3u);
+    Transition& t0 = net.addTransition(0u, "");
     ASSERT_TRUE(net.addArc(net.m_places[1], t0).empty());
     ASSERT_TRUE(net.addArc(t0, net.m_places[2], 4.0f).empty());
     ASSERT_TRUE(net.addArc(p0, t0).empty());
@@ -1454,7 +1455,7 @@ TEST(TestPetriNet, TestRemoveNodeRenumbers)
     ASSERT_EQ(&net.placeOf(net.arcsOut(net.m_transitions[0])[0]), &net.m_places[0]);
 
     // New nodes take the next identifier.
-    ASSERT_STREQ(net.addPlace(0.0f, 0.0f).key.c_str(), "P2");
+    ASSERT_STREQ(net.addPlace().key.c_str(), "P2");
 }
 
 //------------------------------------------------------------------------------
@@ -1463,11 +1464,11 @@ TEST(TestPetriNet, TestRemoveNodeRenumbers)
 TEST(TestPetriNet, TestRemoveStepRenamesReferences)
 {
     Net net(TypeOfNet::GRAFCET);
-    net.addPlace(0u, "", 0.0f, 0.0f, 1u);
-    net.addPlace(1u, "", 0.0f, 0.0f, 0u);
-    net.addPlace(2u, "", 0.0f, 0.0f, 0u);
-    net.addTransition(0u, "X2 . a", 0.0f, 0.0f);
-    net.addTransition(1u, "X1", 0.0f, 0.0f);
+    net.addPlace(0u, "", 1u);
+    net.addPlace(1u, "", 0u);
+    net.addPlace(2u, "", 0u);
+    net.addTransition(0u, "X2 . a");
+    net.addTransition(1u, "X1");
 
     net.removeNode(net.m_places[1]);
     ASSERT_EQ(net.m_places.size(), 2u);
