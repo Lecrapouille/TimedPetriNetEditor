@@ -360,7 +360,8 @@ Color result = runtime.run(*order);
 ```
 
 A program that saved its journal and crashed while `grasp` ran (the function
-threw an exception) gives, when restarted with this code:
+threw an exception) gives, when restarted with this code (§9.8 does it in a
+whole program):
 
 ```text
 crash!
@@ -758,7 +759,35 @@ the philosophers eating at the same time:
 Never more than one, as the P-invariants of the analysis said: the net
 proved the property before the program ran.
 
-### 9.8 More programs
+### 9.8 🏭 Producer and consumers: restart after a crash
+
+[`examples/Petri-Nets/ProducerConsumer/ProducerConsumer.cpp`](../examples/Petri-Nets/ProducerConsumer/ProducerConsumer.cpp)
+runs [`ProducerConsumer.json`](../examples/Petri-Nets/ProducerConsumer/ProducerConsumer.json)
+and is §5.1 in a real program. The journal goes to a file line by line; the
+program dies while two consumers work; the second run rebuilds the
+instance from the file and calls the two `Consume` again:
+
+```c++
+options.journal = [&](LogEntry const& entry) {
+    journal << toJsonLine(entry, net.colors) << std::endl; // flushed: it survives a crash
+};
+...
+fromJsonLines(text.str(), net.colors, entries);
+auto line = runtime->restore("line", entries, Runtime::Recovery::Restart);
+```
+
+```text
+  crash! (while the parts 3 to 4 are used)
+Second run
+  journal: 47 lines, 5 parts made, 2 used
+  restored: Buffer 5, Accepted 0, Ready 0; Consume running at the crash: 2, called again
+...
+Done: 6 parts made, 10 used (expected 10)
+```
+
+No part is lost, none is used twice.
+
+### 9.9 More programs
 
 [`examples/Runtime/`](../examples/Runtime/README.md) has the programs for
 each target: pick and place on a pool of threads, micro-services with a

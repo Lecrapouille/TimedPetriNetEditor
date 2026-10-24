@@ -28,7 +28,7 @@ Chapters [3](../doc/03-Petri-Nets.md) and [4](../doc/04-Analysis.md).
 | <img src="Petri-Nets/Conflict/Conflict.png" width="220"> | 📝 [Conflict](Petri-Nets/Conflict/README.md) | choice between two transitions |
 | <img src="Petri-Nets/MutualExclusion/MutualExclusion.png" width="220"> | 📝 [MutualExclusion](Petri-Nets/MutualExclusion/README.md) | a shared resource, a P-invariant |
 | <img src="Petri-Nets/Deadlock/Deadlock.png" width="220"> | 📝 [Deadlock](Petri-Nets/Deadlock/README.md) | a deadlock and the path to it |
-| <img src="Petri-Nets/ProducerConsumer/ProducerConsumer.png" width="220"> | [ProducerConsumer](Petri-Nets/ProducerConsumer/README.md) | a buffer, an unbounded place |
+| <img src="Petri-Nets/ProducerConsumer/ProducerConsumer.png" width="220"> | ⚙️ [ProducerConsumer](Petri-Nets/ProducerConsumer/README.md) | a buffer, an unbounded place; restart after a crash |
 | <img src="Petri-Nets/Philosophers/Philosophers.png" width="220"> | ⚙️ [Philosophers](Petri-Nets/Philosophers/README.md) | shared resources, invariants; tokens as locks of threads |
 | <img src="Petri-Nets/Coffee/Coffee.png" width="220"> | ⚙️ [Coffee](Petri-Nets/Coffee/README.md) | synchronization, choice by the result of a function |
 | <img src="Petri-Nets/TrafficLights/TrafficLights.png" width="220"> | [TrafficLights](Petri-Nets/TrafficLights/README.md) | safety by a conflict: never two greens |

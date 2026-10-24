@@ -54,7 +54,7 @@ no-exceptions: | $(BUILD)
 # Run the programs that end by themselves, from the root of the project (they
 # load their net by its path from there).
 RUN := PickAndPlace MicroServices TrafficLight Coffee LandingGear Colors BoundedBuffer EmergencyCalls \
-       Priorities Philosophers
+       Priorities Philosophers ProducerConsumer
 run: all
 	cd $(TPNE) && $(foreach e,$(RUN),$(BUILD)/$(e) &&) true
 
