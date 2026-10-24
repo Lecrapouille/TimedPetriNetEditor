@@ -12,7 +12,7 @@
 
 TPNE := $(abspath ../..)
 BUILD := $(TPNE)/build/examples
-CXXFLAGS := -std=c++17 -Wall -Wextra -I$(TPNE)/src -I$(TPNE)/external -I$(TPNE)/external/json/include
+CXXFLAGS := -std=c++20 -Wall -Wextra -I$(TPNE)/src -I$(TPNE)/external -I$(TPNE)/external/json/include
 LIBS := -L$(TPNE)/build -lTimedPetriRuntime -lTimedPetriIO -lTimedPetriNet -Wl,-rpath,$(TPNE)/build -pthread
 EXAMPLES := PickAndPlace MicroServices TrafficLight
 
@@ -27,11 +27,11 @@ $(BUILD):
 # The core and the runtime compile without exceptions nor RTTI, as on a
 # micro-controller (Ros2Node.cpp needs rclcpp and is not built here).
 no-exceptions: | $(BUILD)
-	$(CXX) -std=c++17 -fno-exceptions -fno-rtti -I$(TPNE)/src -I$(TPNE)/external -c \
+	$(CXX) -std=c++20 -fno-exceptions -fno-rtti -I$(TPNE)/src -I$(TPNE)/external -c \
 	    $(TPNE)/src/Runtime/Runtime.cpp -o $(BUILD)/Runtime-noexcept.o
-	$(CXX) -std=c++17 -fno-exceptions -fno-rtti -I$(TPNE)/src -I$(TPNE)/external -c \
+	$(CXX) -std=c++20 -fno-exceptions -fno-rtti -I$(TPNE)/src -I$(TPNE)/external -c \
 	    $(TPNE)/src/PetriNet/Engine.cpp -o $(BUILD)/Engine-noexcept.o
-	$(CXX) -std=c++17 -fno-exceptions -fno-rtti -I$(TPNE)/src -I$(TPNE)/external -c \
+	$(CXX) -std=c++20 -fno-exceptions -fno-rtti -I$(TPNE)/src -I$(TPNE)/external -c \
 	    $(TPNE)/src/PetriNet/Firing.cpp -o $(BUILD)/Firing-noexcept.o
 
 run: all

@@ -347,7 +347,7 @@ void Editor::analysisCritical()
 
     if (!res.success)
     {
-        ImGui::Text(u8"%s", res.message.str().c_str());
+        ImGui::TextUnformatted(res.message.str().c_str());
     }
     else
     {
