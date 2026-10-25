@@ -1,3 +1,5 @@
+![TimedPetriNetEditor](doc/logos/TimedPetriNetEditor.png)
+
 # ⏱️ Timed Petri Net Editor
 
 [![Non regression tests](https://github.com/Lecrapouille/TimedPetriNetEditor/actions/workflows/non_regression.yml/badge.svg)](https://github.com/Lecrapouille/TimedPetriNetEditor/actions/workflows/non_regression.yml)
