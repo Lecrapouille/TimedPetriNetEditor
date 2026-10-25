@@ -1,3 +1,19 @@
+October 2026: version 0.7.0
+        * Discrete-event engine for Petri nets and timed nets: firing on markings, weighted, inhibitor and reset arcs, a capacity on each place, an optional duration on arcs.
+        * Conflicts can be solved by priority, edited on the transitions.
+        * Colors of tokens on the arcs. The position of a node lives in a layout, not in the node.
+        * A timed event graph is drawn compactly, instead of being a type of net. The nodes added by the canonical form sit between their neighbors.
+        * Big nets load in linear time. The file formats are a library of their own: PNML and the GRML of GreatSPN, as Symmetri reads them, and SVG.
+        * Exports escape the names and keep the weights, the kinds and the colors of the arcs. File > Export lists only the formats that can write the active net.
+        * Analysis of any net, apart from the (max,+) algebra: a path to the deadlock, bounds, liveness, invariants, from the tokens before the simulation.
+        * The (max,+) algebra is its own library. The Gantt chart says why a flowshop shows only its machines.
+        * Runtime: callbacks and executors, a net run as the function of a transition, journals saved and restored after a crash, CSV and XES, no memory taken at each step. Examples for a desktop, for services and for boards, timed against Symmetri.
+        * The C++ code of the GRAFCETs of a document is generated and checked against the engine. A transition may fire when its downstream step is already active.
+        * The editor follows a running program. Tokens, capacity, weight, duration and colors are edited with the mouse. Animated tokens follow their arc, bent or not. A hidden place draws one disk and the number of tokens.
+        * An imported net is fitted in its view, also once it is unfolded. The journal clears when another document is shown. A notification says why a simulation ended.
+        * The raylib backend is gone: GLFW3 everywhere. The project builds as C++20, without warnings, with clang-format, clang-tidy and a sanitizer in the CI.
+        * Documentation of the analysis, the exports, the code generation and the debugger, and a text for each example.
+
 October 2026: version 0.6.0
         * Editor redesign: mouse gestures, drawing, menus, analysis window, screenshots of the Petri view.
         * Editor sleeps in the main loop when nothing animates; analysis results are cached.
