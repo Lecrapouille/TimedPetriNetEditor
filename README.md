@@ -4,13 +4,17 @@
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](LICENSE)
 ![C++20](https://img.shields.io/badge/C%2B%2B-20-blue.svg)
 
+> **🌐 Try the online version instantly:**
+> 👉 [Click here to launch TimedPetriNetEditor in your browser!](https://lecrapouille.github.io/TimedPetriNetEditor/TimedPetriNetEditor.html)
+>
+
 [TimedPetriNetEditor](https://github.com/Lecrapouille/TimedPetriNetEditor) is a C++20 library and a graphical editor and simulator of **Petri nets** and of the nets derived from them:
 
 - 🔵 **Petri nets** and **extended Petri nets** (weights, capacities, inhibitor and reset arcs, priorities, colored tokens), with the analysis of their properties: deadlocks, bounds, liveness, invariants;
 - ⏱️ **timed Petri nets** and **timed event graphs**, with the **(max,+) algebra**: cycle time, critical circuit (the bottleneck), Gantt chart, dater equations and linear systems;
 - 🔘 **GRAFCET** (IEC 60848) and **GEMMA**, to describe and test the control of a machine with a control panel, and to generate its C++ code (usable for an Arduino);
 - ⚙️ a **runtime** in the spirit of [Symmetri](https://github.com/thorstink/Symmetri): a net drawn in the editor drives your C++ program, each transition calling one of your functions, and the editor follows the program while it runs.
-- It can import the folowing files: JSON (its own format), PNML (standard and Symmetri), GRML(GreatSPN), flowshops, `.teg`; and export to SVG, LaTeX (TikZ), Graphviz,draw.io, PN-Editor, Symfony workflows, Julia, C++.
+- It can import the following files: JSON (its own format), PNML (standard and Symmetri), GRML (GreatSPN), flowshops, `.teg`; and export to SVG, LaTeX (TikZ), Graphviz, draw.io, PN-Editor, Symfony workflows, Julia, C++.
 - It allows a remote control by JSON commands over ZeroMQ (real time debugger).
 
 It is also a set of C++ libraries (the nets, the file formats, the (max,+) algebra, the analysis, the runtime) usable without the editor, from C++ or Julia.
@@ -66,8 +70,7 @@ You can run your first Petri net:
 
 - In the editor, press **Space** to simulate, click on the green transition to fire it. To draw: the **left** mouse button draws (a click adds a place, a drag from a node draws an arc), the **right** one moves (a click adds a transition); the status bar always says what a click would do; **F1** is the help.
 
-Optional you can `sudo make install` to install the editor and its libraries. A web version is
-in progress: 🌐 [try it in your browser](https://lecrapouille.github.io/TimedPetriNetEditor/TimedPetriNetEditor.html).
+Optional you can `sudo make install` to install the editor and its libraries. A web version, built with Emscripten by the CI: 🌐 [TimedPetriNetEditor.html](https://lecrapouille.github.io/TimedPetriNetEditor/TimedPetriNetEditor.html). The same sources also build for [ExaequOS](https://www.exaequos.com) ([how](doc/02-Getting-Started.md#13-build-for-exaequos)).
 
 ## 📚 Documentation
 
@@ -102,4 +105,4 @@ The unit tests: `make -C tests`, then `../build/TimedPetriNetEditor-UnitTest` fr
 
 ## 📄 License
 
-TimedPetriNetEditor is dual-licensed: GNU GPL v3 or later, or a commercial license for those who cannot use the GPL. See [LICENSING.md](LICENSING.md)..
+TimedPetriNetEditor is dual-licensed: GNU GPL v3 or later, or a commercial license for those who cannot use the GPL. See [LICENSING.md](LICENSING.md).

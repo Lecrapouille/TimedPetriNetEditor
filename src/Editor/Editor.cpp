@@ -1526,6 +1526,7 @@ std::string Editor::writeDocument(std::string const& path)
     std::string const error = exportAllNetsToJSON(nets, path, &doc.info());
     if (error.empty())
     {
+        FileDialogHelper::download(path);
         setSavePath(path);
         doc.setFilepath(path);
         doc.setModified(false);
@@ -1609,6 +1610,7 @@ void Editor::exportNetTo(Exporter const& exporter)
         }
         if (error.empty())
         {
+            FileDialogHelper::download(path);
             if (m_states.file_dialog == States::FileDialog::Export)
             {
                 m_messages.setInfo("Exported with success '" + path + "'");
@@ -1684,7 +1686,10 @@ void Editor::onFrameEnd()
     m_auto_screenshot_path.clear();
 
     if (m_last_screenshot_ok)
+    {
+        FileDialogHelper::download(path);
         m_messages.setInfo("Screenshot taken as file '" + path + "'");
+    }
     else
         m_messages.setError("Failed to save screenshot to file '" + path + "'");
 

@@ -6,7 +6,7 @@
   <title>TimedPetriNetEditor</title>
   <style>
     html, body { margin: 0; padding: 0; height: 100%; overflow: hidden; background: #1b1d20; }
-    #canvas { display: block; width: 100vw; height: 100vh; outline: none; }
+    #canvas { display: block; outline: none; }
     #status { position: absolute; top: 45%; width: 100%; text-align: center;
               color: #d0d0d0; font: 16px sans-serif; }
   </style>
@@ -15,20 +15,16 @@
   <div id="status">Loading TimedPetriNetEditor…</div>
   <canvas id="canvas" oncontextmenu="event.preventDefault()" tabindex="-1"></canvas>
   <script>
-    var status = document.getElementById('status');
+    // Not "status": window.status is a string, so the element would be lost.
+    var statusElement = document.getElementById('status');
+    // The editor fills the page: the program sets the size of the canvas
+    // from its CSS size and the density of the screen.
     var canvas = document.getElementById('canvas');
-    // The editor fills the page: GLFW follows the size of the canvas.
-    function resize() {
-      canvas.width = window.innerWidth * window.devicePixelRatio;
-      canvas.height = window.innerHeight * window.devicePixelRatio;
-    }
-    window.addEventListener('resize', resize);
-    resize();
     var Module = {
       canvas: canvas,
       setStatus: function (text) {
-        status.textContent = text;
-        status.style.display = text ? 'block' : 'none';
+        statusElement.textContent = text;
+        statusElement.style.display = text ? 'block' : 'none';
       },
       print: function (text) { console.log(text); },
       printErr: function (text) { console.error(text); },

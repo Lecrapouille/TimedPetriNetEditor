@@ -299,6 +299,8 @@ void JournalView::toolbar(Net& net, bool const busy, NodeMarks& marks)
     });
     FileDialogHelper::display("JournalSave", [&](std::string const& path) {
         m_error = save(path, net);
+        if (m_error.empty())
+            FileDialogHelper::download(path);
     });
     if (!m_error.empty())
         ImGui::TextColored(ImGui::ColorConvertU32ToFloat4(palette().critical), "%s", m_error.c_str());

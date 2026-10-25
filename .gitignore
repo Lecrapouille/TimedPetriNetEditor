@@ -5,6 +5,8 @@ petri-gen.*
 grafcet-gen.*
 petri.json
 build/
+build-*/
+media/
 doc/coverage/
 external/*/
 src/*/VERSION.txt

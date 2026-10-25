@@ -69,6 +69,10 @@ ifeq ($(OS),Emscripten)
     ifndef EXAEQUOS
         # Install the folder data in the Emscripten filesystem
         LINKER_FLAGS += --preload-file $(PROJECT_DATA_DIR)
+        # The nets of the examples in /examples: File > Open starts there
+        LINKER_FLAGS += --preload-file $(abspath $(P)/examples)@/examples
+        LINKER_FLAGS += --exclude-file '*.png' --exclude-file '*.cpp' --exclude-file '*.md'
+        LINKER_FLAGS += --exclude-file '*.args' --exclude-file '*Makefile'
         LINKER_FLAGS += -s FORCE_FILESYSTEM=1
         # Add this flag ONLY in case we are using ASYNCIFY code
         LINKER_FLAGS += -s ASYNCIFY

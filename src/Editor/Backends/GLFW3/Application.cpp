@@ -17,6 +17,7 @@
 
 #ifdef __EMSCRIPTEN__
 #  include <emscripten.h>
+#  include <emscripten/html5.h>
 #endif
 
 // A third-party header: its warnings are not ours.
@@ -41,6 +42,18 @@ static void error_callback(int error, const char* description)
     fprintf(stderr, "Glfw Error %d: %s\n", error, description);
 }
 
+#if defined(__EMSCRIPTEN__) && !defined(EXAEQUOS)
+//------------------------------------------------------------------------------
+//! \brief The window fills the page. Emscripten writes the size of the window
+//! in the style of the canvas, so the canvas cannot follow the page by CSS.
+static EM_BOOL resize_callback(int /*event_type*/, EmscriptenUiEvent const* event, void* window)
+{
+    glfwSetWindowSize(static_cast<GLFWwindow*>(window), event->windowInnerWidth,
+                      event->windowInnerHeight);
+    return EM_TRUE;
+}
+#endif
+
 //------------------------------------------------------------------------------
 Application::Application(size_t const width, size_t const height, std::string const& title)
     : m_clear_color(ImVec4(0.1058, 0.1137f, 0.1255f, 1.00f))
@@ -55,6 +68,10 @@ Application::Application(size_t const width, size_t const height, std::string co
     const char* glsl_version = "#version 300 es";
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 0);
+#  if defined(GLFW_SCALE_TO_MONITOR) && !defined(EXAEQUOS)
+    // Draw at the density of the screen (devicePixelRatio), not blurred.
+    glfwWindowHint(GLFW_SCALE_TO_MONITOR, GLFW_TRUE);
+#  endif
 #else
     const char* glsl_version = "#version 150";
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
@@ -93,6 +110,14 @@ Application::Application(size_t const width, size_t const height, std::string co
     // Setup Platform/Renderer backends
     ImGui_ImplGlfw_InitForOpenGL(m_window, true);
     ImGui_ImplOpenGL3_Init(glsl_version);
+#if defined(__EMSCRIPTEN__) && !defined(EXAEQUOS)
+    // Dear ImGui fixes the mouse wheel; the window follows the page.
+    ImGui_ImplGlfw_InstallEmscriptenCallbacks(m_window, "#canvas");
+    emscripten_set_resize_callback(EMSCRIPTEN_EVENT_TARGET_WINDOW, m_window, false, resize_callback);
+    int const page_width = EM_ASM_INT({ return window.innerWidth; });
+    int const page_height = EM_ASM_INT({ return window.innerHeight; });
+    glfwSetWindowSize(m_window, page_width, page_height);
+#endif
 
     // Enable controls
     ImGuiIO& io = ImGui::GetIO();

@@ -450,7 +450,11 @@ void Editor::analysisProperties()
                                                                     : toDot(analyzed, reach.states, reach.edges);
         std::ofstream file(path);
         if (file << dot)
+        {
+            file.close();
+            FileDialogHelper::download(path);
             m_messages.setInfo("Graph of the markings saved in '" + path + "' (dot -Tsvg to draw it)");
+        }
         else
             m_messages.setError("Cannot write '" + path + "'");
     });

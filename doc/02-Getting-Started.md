@@ -16,8 +16,10 @@ transition, token, firing.
 
 The editor is written in C++20 with [Dear ImGui](https://github.com/ocornut/imgui)
 and GLFW. It is built and tested on Linux (the CI runs Ubuntu), and builds on
-macOS; a web version made with Emscripten is in progress:
-🌐 [try it in your browser](https://lecrapouille.github.io/TimedPetriNetEditor/TimedPetriNetEditor.html).
+macOS. The CI builds it with Emscripten and publishes it on GitHub Pages:
+🌐 [TimedPetriNetEditor.html](https://lecrapouille.github.io/TimedPetriNetEditor/TimedPetriNetEditor.html).
+The same sources also build for [ExaequOS](https://www.exaequos.com), a
+POSIX fork of Emscripten ([section 1.3](#13-build-for-exaequos)).
 
 ### 1.1 System packages
 
@@ -64,6 +66,70 @@ This gives, in `build/`:
 `sudo make install` installs them on the system. The examples run by the
 runtime are built with `make -C examples` ([chapter 11](11-Runtime.md)), the
 unit tests with `make -C tests`.
+
+### 1.3 Build for ExaequOS
+
+ExaequOS is a POSIX fork of Emscripten. The compiler is the Docker image
+[`lecrapouille/exaequos:light`](https://hub.docker.com/r/lecrapouille/exaequos)
+([how the image is built](https://github.com/Lecrapouille/docker-exa)).
+Docker is the only extra tool. The image runs with any user id.
+
+Create the compiler cache before the first run. If the folder is missing,
+Docker creates it as root inside your home:
+
+```sh
+mkdir -p ~/.cache/exaequos
+docker run -it --rm \
+    -u "$(id -u):$(id -g)" \
+    -v "$PWD:$PWD" \
+    -v "$HOME/.cache/exaequos:/opt/emscripten-exa/cache" \
+    -p 127.0.0.1:7777:7777 \
+    -w "$PWD" \
+    lecrapouille/exaequos:light
+```
+
+The image sets `EXAEQUOS`, so the same targets as on Linux compile for it.
+`BUILD=build-exa` leaves a native `build/` untouched:
+
+```sh
+make BUILD=build-exa download-external-libs
+make BUILD=build-exa compile-external-libs
+make BUILD=build-exa -j"$(nproc)"
+make BUILD=build-exa install
+```
+
+`download-external-libs` installs `exa-wayland`, `glfw` and `raylib` into
+`exapkgs/`. `make install` writes the editor in
+`media/localhost/TimedPetriNetEditor/exa/`:
+
+| File | What |
+|------|------|
+| `TimedPetriNetEditor.js` | the program |
+| `TimedPetriNetEditor.wasm` | its WebAssembly |
+| `exa.html` | the page that loads the program |
+
+The program runs only inside the ExaequOS desktop: it asks the desktop for
+its process number, its window and its files. Opened alone in a browser, its
+page stays empty. This is why GitHub Pages hosts the Emscripten build.
+
+To run it, start the file server of the container from the project
+directory, so it sees `media/`, on the port 7777 published above:
+
+```sh
+node /opt/emscripten-exa/third_party/server/server.js &
+```
+
+Open [exaequos.com](https://www.exaequos.com), start the console Havoc and
+type:
+
+```text
+/media/localhost/TimedPetriNetEditor
+```
+
+The CI makes this build too
+([`.github/workflows/publish_web_version.yml`](../.github/workflows/publish_web_version.yml))
+and keeps `media/localhost/TimedPetriNetEditor/exa/` as the artifact
+`TimedPetriNetEditor-exaequos` of the run.
 
 ## 2. ▶️ Open an example
 
