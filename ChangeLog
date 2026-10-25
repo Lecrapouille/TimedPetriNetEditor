@@ -1,3 +1,8 @@
+October 2026: version 0.7.1
+        * The CI publishes the Emscripten build on GitHub Pages. The page fills the browser, File > Open starts in the examples, and a save, an export, a screenshot or a journal is downloaded to the computer.
+        * The same sources build for ExaequOS. The CI keeps that build, and the getting-started chapter says how to compile it and run it.
+        * The Linux CI runs the program that links against the installed library from the build folder of LinkAgainstMyLibs.
+
 October 2026: version 0.7.0
         * Discrete-event engine for Petri nets and timed nets: firing on markings, weighted, inhibitor and reset arcs, a capacity on each place, an optional duration on arcs.
         * Conflicts can be solved by priority, edited on the transitions.
