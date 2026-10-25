@@ -60,7 +60,7 @@ jobs:
           git clone https://github.com/Lecrapouille/LinkAgainstMyLibs.git --recurse-submodules --depth=1
           cd LinkAgainstMyLibs/TimedPetriNetEditor
           V=1 make -j`nproc --all`
-          ./build/TimedPetriNetEditor
+          ../build/TimedPetriNetEditor
 
   sanitizers_linux:
     name: Unit tests with AddressSanitizer and UndefinedBehaviorSanitizer
