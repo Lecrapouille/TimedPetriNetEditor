@@ -76,7 +76,7 @@ var ENVIRONMENT_IS_SHELL = !ENVIRONMENT_IS_WEB && !ENVIRONMENT_IS_NODE && !ENVIR
 
 // --pre-jses are emitted after the Module integration code, so that they can
 // refer to Module (if they choose; they can also define Module)
-// include: /tmp/tmp0t1j8288.js
+// include: /tmp/tmph8xh1ka_.js
 
   if (!Module['expectedDataFileDownloads']) Module['expectedDataFileDownloads'] = 0;
   Module['expectedDataFileDownloads']++;
@@ -164,6 +164,53 @@ var ENVIRONMENT_IS_SHELL = !ENVIRONMENT_IS_WEB && !ENVIRONMENT_IS_NODE && !ENVIR
       function assert(check, msg) {
         if (!check) throw new Error(msg);
       }
+Module['FS_createPath']("/", "examples", true, true);
+Module['FS_createPath']("/examples", "Extended-Petri-Nets", true, true);
+Module['FS_createPath']("/examples/Extended-Petri-Nets", "BoundedBuffer", true, true);
+Module['FS_createPath']("/examples/Extended-Petri-Nets", "Capacity", true, true);
+Module['FS_createPath']("/examples/Extended-Petri-Nets", "Colors", true, true);
+Module['FS_createPath']("/examples/Extended-Petri-Nets", "Inhibitor", true, true);
+Module['FS_createPath']("/examples/Extended-Petri-Nets", "Priorities", true, true);
+Module['FS_createPath']("/examples/Extended-Petri-Nets", "Reset", true, true);
+Module['FS_createPath']("/examples/Extended-Petri-Nets", "Weights", true, true);
+Module['FS_createPath']("/examples", "GRAFCET", true, true);
+Module['FS_createPath']("/examples/GRAFCET", "ExclusiveChoice", true, true);
+Module['FS_createPath']("/examples/GRAFCET", "GEMMA-Dryer", true, true);
+Module['FS_createPath']("/examples/GRAFCET", "GermanTrafficLights", true, true);
+Module['FS_createPath']("/examples/GRAFCET", "GrafcetActions", true, true);
+Module['FS_createPath']("/examples/GRAFCET", "ParallelSequences", true, true);
+Module['FS_createPath']("/examples", "Petri-Nets", true, true);
+Module['FS_createPath']("/examples/Petri-Nets", "ChainSaw", true, true);
+Module['FS_createPath']("/examples/Petri-Nets", "Coffee", true, true);
+Module['FS_createPath']("/examples/Petri-Nets", "Conflict", true, true);
+Module['FS_createPath']("/examples/Petri-Nets", "Deadlock", true, true);
+Module['FS_createPath']("/examples/Petri-Nets", "ElevatorControl", true, true);
+Module['FS_createPath']("/examples/Petri-Nets", "EmergencyCalls", true, true);
+Module['FS_createPath']("/examples/Petri-Nets", "FirstNet", true, true);
+Module['FS_createPath']("/examples/Petri-Nets", "ForkJoin", true, true);
+Module['FS_createPath']("/examples/Petri-Nets", "FourRoadJunctions", true, true);
+Module['FS_createPath']("/examples/Petri-Nets", "LandingGear", true, true);
+Module['FS_createPath']("/examples/Petri-Nets", "MutualExclusion", true, true);
+Module['FS_createPath']("/examples/Petri-Nets", "Philosophers", true, true);
+Module['FS_createPath']("/examples/Petri-Nets", "ProducerConsumer", true, true);
+Module['FS_createPath']("/examples/Petri-Nets", "SmarthomeSafety", true, true);
+Module['FS_createPath']("/examples/Petri-Nets", "TrafficLights", true, true);
+Module['FS_createPath']("/examples", "Runtime", true, true);
+Module['FS_createPath']("/examples/Runtime", "PickAndPlace", true, true);
+Module['FS_createPath']("/examples", "Timed-Event-Graphs", true, true);
+Module['FS_createPath']("/examples/Timed-Event-Graphs", "EventGraph", true, true);
+Module['FS_createPath']("/examples/Timed-Event-Graphs", "Flowshop", true, true);
+Module['FS_createPath']("/examples/Timed-Event-Graphs", "Howard1", true, true);
+Module['FS_createPath']("/examples/Timed-Event-Graphs", "Howard2", true, true);
+Module['FS_createPath']("/examples/Timed-Event-Graphs", "JPQ", true, true);
+Module['FS_createPath']("/examples/Timed-Event-Graphs", "SemiHoward", true, true);
+Module['FS_createPath']("/examples/Timed-Event-Graphs", "SemiNetherlands", true, true);
+Module['FS_createPath']("/examples", "Timed-Petri-Nets", true, true);
+Module['FS_createPath']("/examples/Timed-Petri-Nets", "Durations", true, true);
+Module['FS_createPath']("/examples/Timed-Petri-Nets", "InputsOutputs", true, true);
+Module['FS_createPath']("/examples/Timed-Petri-Nets", "TimedConflict", true, true);
+Module['FS_createPath']("/examples/Timed-Petri-Nets", "Timeout", true, true);
+Module['FS_createPath']("/examples/Timed-Petri-Nets", "Unbounded", true, true);
 Module['FS_createPath']("/", "home", true, true);
 Module['FS_createPath']("/home", "runner", true, true);
 Module['FS_createPath']("/home/runner", "work", true, true);
@@ -205,25 +252,25 @@ Module['FS_createPath']("/home/runner/work/TimedPetriNetEditor/TimedPetriNetEdit
     }
 
     }
-    loadPackage({"files": [{"filename": "/home/runner/work/TimedPetriNetEditor/TimedPetriNetEditor/data/GEMMA.drawio", "start": 0, "end": 31772}, {"filename": "/home/runner/work/TimedPetriNetEditor/TimedPetriNetEditor/data/GEMMA.pdf", "start": 31772, "end": 76525}, {"filename": "/home/runner/work/TimedPetriNetEditor/TimedPetriNetEditor/data/TimedPetriNetEditor.icns", "start": 76525, "end": 114673}, {"filename": "/home/runner/work/TimedPetriNetEditor/TimedPetriNetEditor/data/font.ttf", "start": 114673, "end": 286465}, {"filename": "/home/runner/work/TimedPetriNetEditor/TimedPetriNetEditor/data/grafcet2.sty", "start": 286465, "end": 316805}, {"filename": "/home/runner/work/TimedPetriNetEditor/TimedPetriNetEditor/data/imgui.ini", "start": 316805, "end": 347710}, {"filename": "/home/runner/work/TimedPetriNetEditor/TimedPetriNetEditor/data/math.ttf", "start": 347710, "end": 408278}, {"filename": "/home/runner/work/TimedPetriNetEditor/TimedPetriNetEditor/data/math.ttf.LICENSE", "start": 408278, "end": 417094}, {"filename": "/home/runner/work/TimedPetriNetEditor/TimedPetriNetEditor/data/theme.ini", "start": 417094, "end": 417095}], "remote_package_size": 417095});
+    loadPackage({"files": [{"filename": "/examples/Extended-Petri-Nets/BoundedBuffer/BoundedBuffer.json", "start": 0, "end": 2074}, {"filename": "/examples/Extended-Petri-Nets/Capacity/Capacity.json", "start": 2074, "end": 3164}, {"filename": "/examples/Extended-Petri-Nets/Colors/Colors.json", "start": 3164, "end": 4681}, {"filename": "/examples/Extended-Petri-Nets/Inhibitor/Inhibitor.json", "start": 4681, "end": 6484}, {"filename": "/examples/Extended-Petri-Nets/Priorities/Priorities.json", "start": 6484, "end": 8467}, {"filename": "/examples/Extended-Petri-Nets/Reset/Reset.json", "start": 8467, "end": 9725}, {"filename": "/examples/Extended-Petri-Nets/Weights/Weights.json", "start": 9725, "end": 11066}, {"filename": "/examples/GRAFCET/ExclusiveChoice/ExclusiveChoice.json", "start": 11066, "end": 12774}, {"filename": "/examples/GRAFCET/GEMMA-Dryer/GEMMA-Dryer.json", "start": 12774, "end": 20742}, {"filename": "/examples/GRAFCET/GermanTrafficLights/GermanTrafficLights.json", "start": 20742, "end": 22971}, {"filename": "/examples/GRAFCET/GrafcetActions/GrafcetActions.json", "start": 22971, "end": 26096}, {"filename": "/examples/GRAFCET/ParallelSequences/ParallelSequences.json", "start": 26096, "end": 29337}, {"filename": "/examples/Petri-Nets/ChainSaw/ChainSaw.json", "start": 29337, "end": 32372}, {"filename": "/examples/Petri-Nets/Coffee/Coffee.json", "start": 32372, "end": 34427}, {"filename": "/examples/Petri-Nets/Conflict/Conflict.json", "start": 34427, "end": 35621}, {"filename": "/examples/Petri-Nets/Deadlock/Deadlock.json", "start": 35621, "end": 38311}, {"filename": "/examples/Petri-Nets/ElevatorControl/ElevatorControl.json", "start": 38311, "end": 41015}, {"filename": "/examples/Petri-Nets/EmergencyCalls/EmergencyCalls.json", "start": 41015, "end": 45415}, {"filename": "/examples/Petri-Nets/FirstNet/FirstNet.json", "start": 45415, "end": 46363}, {"filename": "/examples/Petri-Nets/ForkJoin/ForkJoin.json", "start": 46363, "end": 48366}, {"filename": "/examples/Petri-Nets/FourRoadJunctions/FourRoadJunctions.json", "start": 48366, "end": 54117}, {"filename": "/examples/Petri-Nets/LandingGear/LandingGear.json", "start": 54117, "end": 56509}, {"filename": "/examples/Petri-Nets/MutualExclusion/MutualExclusion.json", "start": 56509, "end": 58427}, {"filename": "/examples/Petri-Nets/Philosophers/Philosophers.json", "start": 58427, "end": 61821}, {"filename": "/examples/Petri-Nets/ProducerConsumer/ProducerConsumer.json", "start": 61821, "end": 63664}, {"filename": "/examples/Petri-Nets/SmarthomeSafety/SmarthomeSafety.json", "start": 63664, "end": 67200}, {"filename": "/examples/Petri-Nets/TrafficLights/TrafficLights.json", "start": 67200, "end": 70308}, {"filename": "/examples/Runtime/PickAndPlace/PickAndPlace.json", "start": 70308, "end": 71724}, {"filename": "/examples/Timed-Event-Graphs/EventGraph/EventGraph.json", "start": 71724, "end": 73855}, {"filename": "/examples/Timed-Event-Graphs/Flowshop/complex.flowshop", "start": 73855, "end": 74537}, {"filename": "/examples/Timed-Event-Graphs/Flowshop/simple.flowshop", "start": 74537, "end": 74896}, {"filename": "/examples/Timed-Event-Graphs/Howard1/Howard1.json", "start": 74896, "end": 76323}, {"filename": "/examples/Timed-Event-Graphs/Howard2/Howard2.json", "start": 76323, "end": 78028}, {"filename": "/examples/Timed-Event-Graphs/JPQ/JPQ.json", "start": 78028, "end": 79947}, {"filename": "/examples/Timed-Event-Graphs/SemiHoward/SemiHoward.teg", "start": 79947, "end": 80032}, {"filename": "/examples/Timed-Event-Graphs/SemiNetherlands/SemiNetherlands.teg", "start": 80032, "end": 80245}, {"filename": "/examples/Timed-Petri-Nets/Durations/Durations.json", "start": 80245, "end": 81616}, {"filename": "/examples/Timed-Petri-Nets/InputsOutputs/InputsOutputs.json", "start": 81616, "end": 83688}, {"filename": "/examples/Timed-Petri-Nets/TimedConflict/TimedConflict.json", "start": 83688, "end": 85509}, {"filename": "/examples/Timed-Petri-Nets/Timeout/Timeout.json", "start": 85509, "end": 87169}, {"filename": "/examples/Timed-Petri-Nets/Unbounded/Unbounded.json", "start": 87169, "end": 88091}, {"filename": "/home/runner/work/TimedPetriNetEditor/TimedPetriNetEditor/data/GEMMA.drawio", "start": 88091, "end": 119863}, {"filename": "/home/runner/work/TimedPetriNetEditor/TimedPetriNetEditor/data/GEMMA.pdf", "start": 119863, "end": 164616}, {"filename": "/home/runner/work/TimedPetriNetEditor/TimedPetriNetEditor/data/TimedPetriNetEditor.icns", "start": 164616, "end": 202764}, {"filename": "/home/runner/work/TimedPetriNetEditor/TimedPetriNetEditor/data/font.ttf", "start": 202764, "end": 374556}, {"filename": "/home/runner/work/TimedPetriNetEditor/TimedPetriNetEditor/data/grafcet2.sty", "start": 374556, "end": 404896}, {"filename": "/home/runner/work/TimedPetriNetEditor/TimedPetriNetEditor/data/imgui.ini", "start": 404896, "end": 435801}, {"filename": "/home/runner/work/TimedPetriNetEditor/TimedPetriNetEditor/data/math.ttf", "start": 435801, "end": 496369}, {"filename": "/home/runner/work/TimedPetriNetEditor/TimedPetriNetEditor/data/math.ttf.LICENSE", "start": 496369, "end": 505185}, {"filename": "/home/runner/work/TimedPetriNetEditor/TimedPetriNetEditor/data/theme.ini", "start": 505185, "end": 505186}], "remote_package_size": 505186});
 
   })();
 
-// end include: /tmp/tmp0t1j8288.js
-// include: /tmp/tmpab0s7imh.js
+// end include: /tmp/tmph8xh1ka_.js
+// include: /tmp/tmp9la8ffm7.js
 
     // All the pre-js content up to here must remain later on, we need to run
     // it.
     if ((typeof ENVIRONMENT_IS_WASM_WORKER !== 'undefined' && ENVIRONMENT_IS_WASM_WORKER) || (typeof ENVIRONMENT_IS_PTHREAD !== 'undefined' && ENVIRONMENT_IS_PTHREAD) || (typeof ENVIRONMENT_IS_AUDIO_WORKLET !== 'undefined' && ENVIRONMENT_IS_AUDIO_WORKLET)) Module['preRun'] = [];
     var necessaryPreJSTasks = Module['preRun'].slice();
-  // end include: /tmp/tmpab0s7imh.js
-// include: /tmp/tmphefzwtas.js
+  // end include: /tmp/tmp9la8ffm7.js
+// include: /tmp/tmpiofq7reb.js
 
     if (!Module['preRun']) throw 'Module.preRun should exist because file support used it; did a pre-js delete it?';
     necessaryPreJSTasks.forEach((task) => {
       if (Module['preRun'].indexOf(task) < 0) throw 'All preRun tasks that exist before user pre-js code should remain after; did you replace Module or modify Module.preRun?';
     });
-  // end include: /tmp/tmphefzwtas.js
+  // end include: /tmp/tmpiofq7reb.js
 
 
 var programArgs = [];
@@ -4543,8 +4590,86 @@ var stringToUTF8Array = (str, heap, outIdx, maxBytesToWrite) => {
     ;
   }
 
+  var readEmAsmArgsArray = [];
+  
+  
+  
+  
+  /** @type {!Float64Array} */
+  var HEAPF64;
+  
+  var readEmAsmArgs = (sigPtr, buf) => {
+      // Nobody should have mutated _readEmAsmArgsArray underneath us to be something else than an array.
+      assert(Array.isArray(readEmAsmArgsArray));
+      // The input buffer is allocated on the stack, so it must be stack-aligned.
+      assert(buf % 16 == 0);
+      readEmAsmArgsArray.length = 0;
+      var ch;
+      // Most arguments are i32s, so shift the buffer pointer so it is a plain
+      // index into HEAP32.
+      while (ch = HEAPU8[sigPtr++]) {
+        var chr = String.fromCharCode(ch);
+        var validChars = ['d', 'f', 'i', 'p'];
+        // In WASM_BIGINT mode we support passing i64 values as bigint.
+        validChars.push('j');
+        assert(validChars.includes(chr), `Invalid character ${ch}("${chr}") in readEmAsmArgs! Use only [${validChars}], and do not specify "v" for void return argument.`);
+        // Floats are always passed as doubles, so all types except for 'i'
+        // are 8 bytes and require alignment.
+        var wide = (ch != 105);
+        wide &= (ch != 112);
+        buf += wide && (buf % 8) ? 4 : 0;
+        readEmAsmArgsArray.push(
+          // Special case for pointers under wasm64 or CAN_ADDRESS_2GB mode.
+          ch == 112 ? HEAPU32[((buf)>>2)] :
+          ch == 106 ? HEAP64[((buf)>>3)] :
+          ch == 105 ?
+            HEAP32[((buf)>>2)] :
+            HEAPF64[((buf)>>3)]
+        );
+        buf += wide ? 8 : 4;
+      }
+      return readEmAsmArgsArray;
+    };
+  var runEmAsmFunction = (code, sigPtr, argbuf) => {
+      var args = readEmAsmArgs(sigPtr, argbuf);
+      assert(ASM_CONSTS.hasOwnProperty(code), `No EM_ASM constant found at address ${code}.  The loaded WebAssembly file is likely out of sync with the generated JavaScript.`);
+      return ASM_CONSTS[code](...args);
+    };
+  var _emscripten_asm_const_int = (code, sigPtr, argbuf) => {
+      return runEmAsmFunction(code, sigPtr, argbuf);
+    };
+
 
   var _emscripten_err = (str) => err(UTF8ToString(str));
+
+  var maybeCStringToJsString = (cString) => {
+      // 'cString > 2' checks if the input is a number, and isn't of the special
+      // values we accept here, EMSCRIPTEN_EVENT_TARGET_* (which map to 0, 1, 2).
+      // In other words, if cString > 2 then it's a pointer to a valid place in
+      // memory, and points to a C string.
+      return cString > 2 ? UTF8ToString(cString) : cString;
+    };
+  
+  /** @type {Object} */
+  var specialHTMLTargets = [0, globalThis.document ?? 0, globalThis.window ?? 0];
+  var findEventTarget = (target) => {
+      target = maybeCStringToJsString(target);
+      var domElement = specialHTMLTargets[target] || globalThis.document?.querySelector(target);
+      return domElement;
+    };
+  
+  var getBoundingClientRect = (e) => specialHTMLTargets.indexOf(e) < 0 ? e.getBoundingClientRect() : {'left':0,'top':0};
+  
+  var _emscripten_get_element_css_size = (target, width, height) => {
+      target = findEventTarget(target);
+      if (!target) return -4;
+  
+      var rect = getBoundingClientRect(target);
+      HEAPF64[((width)>>3)] = rect.width;
+      HEAPF64[((height)>>3)] = rect.height;
+  
+      return 0;
+    };
 
   var abortOnCannotGrowMemory = (requestedSize) => {
       abort(`Cannot enlarge memory arrays to size ${requestedSize} bytes (OOM). Either (1) compile with -sINITIAL_MEMORY=X with X higher than the current value ${HEAP8.length}, (2) compile with -sALLOW_MEMORY_GROWTH which allows increasing the size at runtime, or (3) if you want malloc to return NULL (0) instead of this abort, compile with -sABORTING_MALLOC=0`);
@@ -4569,8 +4694,6 @@ var stringToUTF8Array = (str, heap, outIdx, maxBytesToWrite) => {
   /** @type {!Float32Array} */
   var HEAPF32;
   
-  /** @type {!Float64Array} */
-  var HEAPF64;
   
   
   /** not-@type {!BigUint64Array} */
@@ -4716,9 +4839,123 @@ var stringToUTF8Array = (str, heap, outIdx, maxBytesToWrite) => {
       },
   };
   
-  /** @type {Object} */
-  var specialHTMLTargets = [0, globalThis.document ?? 0, globalThis.window ?? 0];
-  var getBoundingClientRect = (e) => specialHTMLTargets.indexOf(e) < 0 ? e.getBoundingClientRect() : {'left':0,'top':0};
+  
+  
+  
+  function getFullscreenElement() {
+      return document.fullscreenElement
+             ?? document.webkitFullscreenElement
+             ;
+    }
+  
+  
+  var fillFullscreenChangeEventData = (eventStruct) => {
+      var fullscreenElement = getFullscreenElement();
+      var isFullscreen = !!fullscreenElement;
+      // Assigning a boolean to HEAP32 with expected type coercion.
+      /** @suppress{checkTypes} */
+      HEAP8[eventStruct] = isFullscreen;
+      HEAP8[(eventStruct)+(1)] = JSEvents.fullscreenEnabled();
+      // If transitioning to fullscreen, report info about the element that is now fullscreen.
+      // If transitioning to windowed mode, report info about the element that just was fullscreen.
+      var reportedElement = isFullscreen ? fullscreenElement : JSEvents.previousFullscreenElement;
+      var nodeName = JSEvents.getNodeNameForTarget(reportedElement);
+      var id = reportedElement?.id ?? '';
+      stringToUTF8(nodeName, eventStruct + 2, 128);
+      stringToUTF8(id, eventStruct + 130, 128);
+      HEAP32[(((eventStruct)+(260))>>2)] = reportedElement?.clientWidth ?? 0;
+      HEAP32[(((eventStruct)+(264))>>2)] = reportedElement?.clientHeight ?? 0;
+      HEAP32[(((eventStruct)+(268))>>2)] = screen.width;
+      HEAP32[(((eventStruct)+(272))>>2)] = screen.height;
+      if (isFullscreen) {
+        JSEvents.previousFullscreenElement = fullscreenElement;
+      }
+    };
+  
+  var registerFullscreenChangeEventCallback = (target, userData, useCapture, callbackfunc, eventTypeId, eventTypeString, targetThread) => {
+      const eventSize = 276;
+      JSEvents.fullscreenChangeEvent ||= _malloc(eventSize);
+  
+      var fullscreenChangeEventHandlerFunc = (e) => {
+        var fullscreenChangeEvent = JSEvents.fullscreenChangeEvent;
+        fillFullscreenChangeEventData(fullscreenChangeEvent);
+  
+        if (((a1, a2, a3) => dynCall_iiii(callbackfunc, a1, a2, a3))(eventTypeId, fullscreenChangeEvent, userData)) e.preventDefault();
+      };
+  
+      var eventHandler = {
+        target,
+        eventTypeString,
+        eventTypeId,
+        userData,
+        callbackfunc,
+        handlerFunc: fullscreenChangeEventHandlerFunc,
+        useCapture
+      };
+      return JSEvents.registerOrRemoveHandler(eventHandler);
+    };
+  
+  var _emscripten_set_fullscreenchange_callback_on_thread = (target, userData, useCapture, callbackfunc, targetThread) => {
+      if (!JSEvents.fullscreenEnabled()) return -1;
+      target = findEventTarget(target);
+      if (!target) return -4;
+  
+      // TODO: When this block is removed, also change test/test_html5_remove_event_listener.c test expectation on emscripten_set_fullscreenchange_callback().
+      registerFullscreenChangeEventCallback(target, userData, useCapture, callbackfunc, 19, 'webkitfullscreenchange', targetThread);
+  
+      return registerFullscreenChangeEventCallback(target, userData, useCapture, callbackfunc, 19, 'fullscreenchange', targetThread);
+    };
+
+  
+  
+  
+  var registerUiEventCallback = (target, userData, useCapture, callbackfunc, eventTypeId, eventTypeString, targetThread) => {
+      const eventSize = 36;
+      JSEvents.uiEvent ||= _malloc(eventSize);
+  
+      target = findEventTarget(target);
+  
+      var uiEventHandlerFunc = (e) => {
+        if (e.target != target) {
+          // Never take ui events such as scroll via a 'bubbled' route, but always from the direct element that
+          // was targeted. Otherwise e.g. if app logs a message in response to a page scroll, the Emscripten log
+          // message box could cause to scroll, generating a new (bubbled) scroll message, causing a new log print,
+          // causing a new scroll, etc..
+          return;
+        }
+        var b = document.body; // Take document.body to a variable, Closure compiler does not outline access to it on its own.
+        if (!b) {
+          // During a page unload 'body' can be null, with "Cannot read property 'clientWidth' of null" being thrown
+          return;
+        }
+        var uiEvent = JSEvents.uiEvent;
+        HEAP32[((uiEvent)>>2)] = 0; // always zero for resize and scroll
+        HEAP32[(((uiEvent)+(4))>>2)] = b.clientWidth;
+        HEAP32[(((uiEvent)+(8))>>2)] = b.clientHeight;
+        HEAP32[(((uiEvent)+(12))>>2)] = innerWidth;
+        HEAP32[(((uiEvent)+(16))>>2)] = innerHeight;
+        HEAP32[(((uiEvent)+(20))>>2)] = outerWidth;
+        HEAP32[(((uiEvent)+(24))>>2)] = outerHeight;
+        HEAP32[(((uiEvent)+(28))>>2)] = pageXOffset | 0; // scroll offsets are float
+        HEAP32[(((uiEvent)+(32))>>2)] = pageYOffset | 0;
+        if (((a1, a2, a3) => dynCall_iiii(callbackfunc, a1, a2, a3))(eventTypeId, uiEvent, userData)) e.preventDefault();
+      };
+  
+      var eventHandler = {
+        target,
+        eventTypeString,
+        eventTypeId,
+        userData,
+        callbackfunc,
+        handlerFunc: uiEventHandlerFunc,
+        useCapture
+      };
+      return JSEvents.registerOrRemoveHandler(eventHandler);
+    };
+  var _emscripten_set_resize_callback_on_thread = (target, userData, useCapture, callbackfunc, targetThread) =>
+      registerUiEventCallback(target, userData, useCapture, callbackfunc, 10, 'resize', targetThread);
+
+  
   
   
   
@@ -4776,19 +5013,6 @@ var stringToUTF8Array = (str, heap, outIdx, maxBytesToWrite) => {
       return JSEvents.registerOrRemoveHandler(eventHandler);
     };
   
-  var maybeCStringToJsString = (cString) => {
-      // 'cString > 2' checks if the input is a number, and isn't of the special
-      // values we accept here, EMSCRIPTEN_EVENT_TARGET_* (which map to 0, 1, 2).
-      // In other words, if cString > 2 then it's a pointer to a valid place in
-      // memory, and points to a C string.
-      return cString > 2 ? UTF8ToString(cString) : cString;
-    };
-  
-  var findEventTarget = (target) => {
-      target = maybeCStringToJsString(target);
-      var domElement = specialHTMLTargets[target] || globalThis.document?.querySelector(target);
-      return domElement;
-    };
   var _emscripten_set_wheel_callback_on_thread = (target, userData, useCapture, callbackfunc, targetThread) => {
       target = findEventTarget(target);
       if (!target) return -4;
@@ -6376,11 +6600,6 @@ var stringToUTF8Array = (str, heap, outIdx, maxBytesToWrite) => {
 
   
   
-  function getFullscreenElement() {
-      return document.fullscreenElement
-             ?? document.webkitFullscreenElement
-             ;
-    }
   
   
   var handleException = (e) => {
@@ -8859,6 +9078,7 @@ var stringToUTF8Array = (str, heap, outIdx, maxBytesToWrite) => {
   };
 
 
+
   var FS_createPath = (...args) => FS.createPath(...args);
 
 
@@ -8961,7 +9181,7 @@ if (Module['printErr']) err = Module['printErr'];
   'inetNtop6',
   'readSockaddr',
   'writeSockaddr',
-  'readEmAsmArgs',
+  'runMainThreadEmAsm',
   'autoResumeAudioContext',
   'getDynCaller',
   'asmjsMangle',
@@ -8996,7 +9216,6 @@ if (Module['printErr']) err = Module['printErr'];
   'writeArrayToMemory',
   'registerKeyEventCallback',
   'registerMouseEventCallback',
-  'registerUiEventCallback',
   'registerFocusEventCallback',
   'fillDeviceOrientationEventData',
   'registerDeviceOrientationEventCallback',
@@ -9005,8 +9224,6 @@ if (Module['printErr']) err = Module['printErr'];
   'screenOrientation',
   'fillOrientationChangeEventData',
   'registerOrientationChangeEventCallback',
-  'fillFullscreenChangeEventData',
-  'registerFullscreenChangeEventCallback',
   'callCanvasResizedCallback',
   'JSEvents_requestFullscreen',
   'JSEvents_resizeCanvasForFullscreen',
@@ -9114,6 +9331,8 @@ missingLibrarySymbols.forEach(missingLibrarySymbol)
   'timers',
   'warnOnce',
   'readEmAsmArgsArray',
+  'readEmAsmArgs',
+  'runEmAsmFunction',
   'jstoi_q',
   'getExecutableName',
   'dynCallLegacy',
@@ -9155,6 +9374,9 @@ missingLibrarySymbols.forEach(missingLibrarySymbol)
   'getBoundingClientRect',
   'fillMouseEventData',
   'registerWheelEventCallback',
+  'registerUiEventCallback',
+  'fillFullscreenChangeEventData',
+  'registerFullscreenChangeEventCallback',
   'restoreOldWindowedStyle',
   'UNWIND_CACHE',
   'ExitStatus',
@@ -9373,6 +9595,11 @@ function checkIncomingModuleAPI() {
   ignoredModuleProp('wasmMemory');
   ignoredModuleProp('wasmBinary');
 }
+var ASM_CONSTS = {
+  295688: () => { return window.innerWidth; },  
+ 295718: () => { return window.innerHeight; },  
+ 295749: ($0) => { var path = UTF8ToString($0); var blob = new Blob([FS.readFile(path)], { type: 'application/octet-stream' }); var link = document.createElement('a'); link.href = URL.createObjectURL(blob); link.download = path.split('/').pop(); document.body.appendChild(link); link.click(); link.remove(); setTimeout(function() { URL.revokeObjectURL(link.href); }, 1000); }
+};
 function ImGui_ImplGlfw_EmscriptenOpenURL(url) { url = url ? UTF8ToString(url) : null; if (url) window.open(url, '_blank'); }
 
 // Imports from the Wasm binary.
@@ -9756,13 +9983,21 @@ var wasmImports = {
   /** @export */
   clock_time_get: _clock_time_get,
   /** @export */
+  emscripten_asm_const_int: _emscripten_asm_const_int,
+  /** @export */
   emscripten_date_now: _emscripten_date_now,
   /** @export */
   emscripten_err: _emscripten_err,
   /** @export */
+  emscripten_get_element_css_size: _emscripten_get_element_css_size,
+  /** @export */
   emscripten_resize_heap: _emscripten_resize_heap,
   /** @export */
   emscripten_run_script: _emscripten_run_script,
+  /** @export */
+  emscripten_set_fullscreenchange_callback_on_thread: _emscripten_set_fullscreenchange_callback_on_thread,
+  /** @export */
+  emscripten_set_resize_callback_on_thread: _emscripten_set_resize_callback_on_thread,
   /** @export */
   emscripten_set_wheel_callback_on_thread: _emscripten_set_wheel_callback_on_thread,
   /** @export */
