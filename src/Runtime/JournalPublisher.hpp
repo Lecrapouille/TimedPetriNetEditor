@@ -90,11 +90,12 @@ public:
     }
 
     //--------------------------------------------------------------------------
-    //! \brief Publish the tokens of the places of the instance.
+    //! \brief Publish the tokens of the places of the instance, with their
+    //! colors.
     //--------------------------------------------------------------------------
     void marking(Instance const& instance)
     {
-        send(toMarkingMessage(instance.id(), instance.time(), instance.marking().counts()));
+        send(toMarkingMessage(instance.id(), instance.time(), instance.marking(), m_net.colors));
     }
 
     //--------------------------------------------------------------------------

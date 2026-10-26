@@ -101,12 +101,13 @@ void RuntimeMonitor::handle(std::string const& message, Net& net, JournalView& j
             mark(net, manifest(net.name), marks);
         }
     }
-    else if ((type == "marking") && json.contains("tokens") && json["tokens"].is_array())
+    else if (type == "marking")
     {
-        Marking tokens;
-        for (auto const& n : json["tokens"])
-            tokens.push_back(n.is_number_unsigned() ? n.get<size_t>() : 0u);
-        journal.snapshot(json.value("instance", ""), json.value("date", 0.0), tokens);
+        std::string instance;
+        double date = 0.0;
+        ColoredMarking marking;
+        if (fromMarkingMessage(message, net.colors, instance, date, marking).empty())
+            journal.snapshot(instance, date, marking);
     }
     else if (type == "io")
     {

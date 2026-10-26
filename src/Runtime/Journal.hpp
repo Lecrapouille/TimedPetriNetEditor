@@ -91,11 +91,22 @@ std::string toManifest(Runtime const& runtime);
 std::string fromManifest(std::string const& text, Manifest& manifest);
 
 //------------------------------------------------------------------------------
-//! \brief The tokens of each place of an instance at a date, as a JSON object:
-//! {"type":"marking","instance":"order_42","date":1.5,"tokens":[1,0,2]}. The
-//! editor connected late starts from it.
+//! \brief The tokens of each place of an instance at a date, as a JSON object,
+//! their number and their colors by place:
+//! {"type":"marking","instance":"order_42","date":1.5,"tokens":[1,0,2],
+//!  "colors":[{"Success":1},{},{"Good":1,"Bad":1}]}. The editor connected late
+//! starts from it.
 //------------------------------------------------------------------------------
-std::string toMarkingMessage(std::string const& instance, double const date, Marking const& tokens);
+std::string toMarkingMessage(std::string const& instance, double const date,
+                             ColoredMarking const& marking, ColorTable const& colors);
+
+//------------------------------------------------------------------------------
+//! \brief Read a message written by toMarkingMessage(). Without "colors" (an
+//! older program), the tokens are Success.
+//! \return the error, or empty.
+//------------------------------------------------------------------------------
+std::string fromMarkingMessage(std::string const& text, ColorTable const& colors,
+                               std::string& instance, double& date, ColoredMarking& marking);
 
 //------------------------------------------------------------------------------
 //! \brief Name of the event ("Scheduled", "Started", "Completed").

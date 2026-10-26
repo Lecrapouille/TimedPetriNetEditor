@@ -118,7 +118,7 @@ Each message is one JSON object:
 |---------|---------|------------|
 | a line of the journal | `{"instance":"order_42","transition":"grasp","event":"Completed","result":"Failed","date":1.5}` | adds it to the *Journal* |
 | manifest | `{"type":"manifest","net":"Pick and place","places":[...],"transitions":[...],"unregistered":["retry"]}` | marks the transitions without function (sent again every second) |
-| marking | `{"type":"marking","instance":"order_42","date":1.5,"tokens":[1,0,0,0]}` | starts the replay of the instance from these tokens |
+| marking | `{"type":"marking","instance":"order_42","date":1.5,"tokens":[1,0,0,0],"colors":[{"Success":1},{},{},{}]}` | starts the replay of the instance from these tokens, with their colors (without `colors`: `Success`) |
 | inputs and outputs | `{"type":"io","inputs":{"Start":1},"outputs":{"Motor":true}}` | shows them in the *Program* window (GRAFCET) |
 
 `event` is `Scheduled` (the transition took its tokens), `Started` (its

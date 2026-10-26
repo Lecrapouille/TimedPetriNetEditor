@@ -384,6 +384,36 @@ TEST(TestRuntime, JournalInJsonLines)
 }
 
 //------------------------------------------------------------------------------
+TEST(TestRuntime, MarkingMessageKeepsTheColors)
+{
+    Net net = pickAndPlace();
+    Color const dropped = net.colors.add("Dropped");
+    ColoredMarking marking(net.places().size());
+    marking.add(0u, Success, 2u);
+    marking.add(2u, Failed);
+    marking.add(2u, dropped, 3u);
+
+    std::string const text = toMarkingMessage("order_7", 1.5, marking, net.colors);
+    ASSERT_NE(text.find("\"tokens\":[2,0,4"), std::string::npos) << text;
+    ASSERT_NE(text.find("{\"Failed\":1,\"Dropped\":3}"), std::string::npos) << text;
+
+    std::string instance;
+    double date = 0.0;
+    ColoredMarking read;
+    ASSERT_STREQ(fromMarkingMessage(text, net.colors, instance, date, read).c_str(), "");
+    ASSERT_EQ(instance, "order_7");
+    ASSERT_EQ(date, 1.5);
+    ASSERT_TRUE(read == marking);
+
+    // A program without colors: its tokens are Success.
+    ASSERT_STREQ(fromMarkingMessage("{\"type\":\"marking\",\"instance\":\"a\",\"date\":0,"
+                                    "\"tokens\":[1,0,0,0]}", net.colors, instance, date, read).c_str(), "");
+    ASSERT_EQ(read.count(0u, Success), 1u);
+    ASSERT_STRNE(fromMarkingMessage("{\"type\":\"marking\",\"tokens\":[1],\"colors\":[{\"Oops\":1}]}",
+                                    net.colors, instance, date, read).c_str(), "");
+}
+
+//------------------------------------------------------------------------------
 TEST(TestRuntime, RestoreAfterCrash)
 {
     Net const net = pickAndPlace();

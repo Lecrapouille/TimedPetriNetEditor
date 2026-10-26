@@ -57,7 +57,7 @@ public:
     //! \brief Tokens of each place of an instance at a date (a program
     //! connected late gives them): the replay of the instance starts there.
     //--------------------------------------------------------------------------
-    void snapshot(std::string const& instance, double const date, Marking const& tokens);
+    void snapshot(std::string const& instance, double const date, ColoredMarking const& marking);
 
     //--------------------------------------------------------------------------
     //! \brief Forget the entries (and stop the replay).
@@ -91,6 +91,11 @@ public:
     {
         return (m_replay && (m_replay_net == &net)) ? m_saved_tokens : net.tokens();
     }
+
+    //! \brief Colored marking at the cursor of the replay (the places of the
+    //! net hold their number).
+    ColoredMarking const& coloredMarking() const { return m_colored; }
+
     bool isLive() const { return !m_live.empty(); }
     std::vector<LogEntry> const& entries() const { return m_entries; }
 
@@ -105,6 +110,7 @@ private:
     void numberLast();
     //! \brief Marking of the net at the cursor (instance selected).
     void replay(Net& net, NodeMarks& marks);
+
     void toolbar(Net& net, bool const busy, NodeMarks& marks);
     void table(Net& net, NodeMarks& marks);
 
@@ -136,11 +142,12 @@ private:
     struct Snapshot
     {
         double date = 0.0;
-        Marking tokens;
+        ColoredMarking marking;
         //! \brief Number of entries received before it: they are in it.
         size_t entries = 0u;
     };
     std::map<std::string, Snapshot> m_snapshots;
+    ColoredMarking m_colored;
 };
 
 } // namespace tpne

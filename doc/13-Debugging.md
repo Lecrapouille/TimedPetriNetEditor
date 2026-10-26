@@ -82,7 +82,7 @@ Each message is one JSON object, as text. There are four kinds.
 |---------|---------|------------|
 | a line of the journal | `{"instance":"order_1","transition":"grasp","event":"Completed","result":"Failed","date":1.614213573}` | adds it to the Journal, moves the tokens |
 | manifest | `{"type":"manifest","net":"Pick and place","places":[...],"transitions":[...],"unregistered":["retry"]}` | marks the transitions without function |
-| marking | `{"type":"marking","instance":"German traffic lights","date":3.000,"tokens":[0,1,0,0]}` | starts the replay of the instance from these tokens |
+| marking | `{"type":"marking","instance":"German traffic lights","date":3.000,"tokens":[0,1,0,0]}` | starts the replay of the instance from these tokens; the runtime adds `"colors":[{"Success":1},...]`, the color of the tokens of each place (without it: `Success`) |
 | inputs and outputs | `{"type":"io","inputs":{},"outputs":{"Green LED":false,"Red LED":false,"Yellow LED":true}}` | shows them in the Program window |
 
 `event` is `Scheduled` (the transition took its input tokens), `Started` (its

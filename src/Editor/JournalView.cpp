@@ -139,9 +139,9 @@ void JournalView::showFirings(Net& net, std::string const& source, std::vector<s
 }
 
 //------------------------------------------------------------------------------
-void JournalView::snapshot(std::string const& instance, double const date, Marking const& tokens)
+void JournalView::snapshot(std::string const& instance, double const date, ColoredMarking const& marking)
 {
-    m_snapshots[instance] = { date, tokens, m_entries.size() };
+    m_snapshots[instance] = { date, marking, m_entries.size() };
     m_dirty = true;
 }
 
@@ -214,13 +214,19 @@ void JournalView::replay(Net& net, NodeMarks& marks)
     // tokens the net had, or the ones the program gave (Runtime::restore()
     // does it with the colors).
     size_t since = 0u;
+    std::vector<PlaceTokens> initial;
     auto const snapshot = m_snapshots.find(m_instance);
     if ((snapshot != m_snapshots.end()) && (snapshot->second.date <= m_cursor) &&
-        (snapshot->second.tokens.size() == net.places().size()))
+        (snapshot->second.marking.places() == net.places().size()))
     {
         since = snapshot->second.entries;
+        ColoredMarking const& marking = snapshot->second.marking;
         for (size_t p = 0u; p < net.places().size(); ++p)
-            net.places()[p].tokens = snapshot->second.tokens[p];
+        {
+            net.places()[p].tokens = marking.count(p);
+            for (auto const& [color, tokens] : marking.tokens(p))
+                initial.push_back({ net.places()[p].key, color, tokens });
+        }
     }
     else
     {
@@ -241,8 +247,9 @@ void JournalView::replay(Net& net, NodeMarks& marks)
             --running[e.transition];
     }
     Runtime runtime(net);
-    std::shared_ptr<Instance> instance = runtime.restore(m_instance, past, Runtime::Recovery::Fail);
-    Marking const counts = instance->marking().counts();
+    std::shared_ptr<Instance> instance = runtime.restore(m_instance, past, Runtime::Recovery::Fail, initial);
+    m_colored = instance->marking();
+    Marking const counts = m_colored.counts();
     for (size_t p = 0u; (p < counts.size()) && (p < net.places().size()); ++p)
         net.places()[p].tokens = counts[p];
 

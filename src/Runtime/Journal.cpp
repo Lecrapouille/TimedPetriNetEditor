@@ -153,15 +153,71 @@ std::string fromManifest(std::string const& text, Manifest& manifest)
 }
 
 //------------------------------------------------------------------------------
-std::string toMarkingMessage(std::string const& instance, double const date, Marking const& tokens)
+std::string toMarkingMessage(std::string const& instance, double const date,
+                             ColoredMarking const& marking, ColorTable const& colors)
 {
+    nlohmann::ordered_json places = nlohmann::ordered_json::array();
+    for (size_t p = 0u; p < marking.places(); ++p)
+    {
+        nlohmann::ordered_json place = nlohmann::ordered_json::object();
+        for (auto const& [color, tokens] : marking.tokens(p))
+            place[colors.name(color)] = tokens;
+        places.push_back(place);
+    }
     nlohmann::ordered_json json = {
         { "type", "marking" },
         { "instance", instance },
         { "date", date },
-        { "tokens", tokens },
+        { "tokens", marking.counts() },
+        { "colors", places },
     };
     return json.dump();
+}
+
+//------------------------------------------------------------------------------
+std::string fromMarkingMessage(std::string const& text, ColorTable const& colors,
+                               std::string& instance, double& date, ColoredMarking& marking)
+{
+    nlohmann::json const json = nlohmann::json::parse(text, nullptr, false);
+    if (json.is_discarded() || !json.is_object() || (json.value("type", "") != "marking"))
+        return "not a marking message";
+    if (!json.contains("tokens") || !json["tokens"].is_array())
+        return "marking message without tokens";
+    instance = json.value("instance", "");
+    date = json.value("date", 0.0);
+
+    nlohmann::json const& tokens = json["tokens"];
+    marking = ColoredMarking(tokens.size());
+    if (!json.contains("colors"))
+    {
+        for (size_t p = 0u; p < tokens.size(); ++p)
+        {
+            if (tokens[p].is_number_unsigned() && (tokens[p].get<size_t>() > 0u))
+                marking.add(p, Success, tokens[p].get<size_t>());
+        }
+    }
+    else
+    {
+        nlohmann::json const& places = json["colors"];
+        if (!places.is_array() || (places.size() != tokens.size()))
+            return "colors and tokens of the marking differ in size";
+        for (size_t p = 0u; p < places.size(); ++p)
+        {
+            if (!places[p].is_object())
+                return "colors of the place " + std::to_string(p) + " are not an object";
+            for (auto const& it : places[p].items())
+            {
+                std::optional<Color> const color = colors.find(it.key());
+                if (!color)
+                    return "unknown color '" + it.key() + "'";
+                if (!it.value().is_number_unsigned())
+                    return "tokens of the color '" + it.key() + "' are not a number";
+                marking.add(p, *color, it.value().get<size_t>());
+            }
+        }
+    }
+    marking.takeTouched();
+    return {};
 }
 
 //------------------------------------------------------------------------------
