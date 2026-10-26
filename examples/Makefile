@@ -50,6 +50,8 @@ no-exceptions: | $(BUILD)
 	    $(TPNE)/src/PetriNet/Engine.cpp -o $(BUILD)/Engine-noexcept.o
 	$(CXX) -std=c++20 -fno-exceptions -fno-rtti -I$(TPNE)/src -I$(TPNE)/external -c \
 	    $(TPNE)/src/PetriNet/Firing.cpp -o $(BUILD)/Firing-noexcept.o
+	$(CXX) -std=c++20 -fno-exceptions -fno-rtti -I$(TPNE)/src -I$(TPNE)/external -c \
+	    $(TPNE)/src/PetriNet/ColoredMarking.cpp -o $(BUILD)/ColoredMarking-noexcept.o
 
 # Run the programs that end by themselves, from the root of the project (they
 # load their net by its path from there).

@@ -8,6 +8,7 @@
 #include "main.hpp"
 #include "PetriNet/PetriNet.hpp"
 #include "PetriNet/Firing.hpp"
+#include "PetriNet/ColoredMarking.hpp"
 #include "MaxPlus/SparseMatrix.hpp"
 #include "MaxPlus/Algorithms.hpp"
 
@@ -83,4 +84,99 @@ TEST(TestFiring, IncidenceMatrices)
     ASSERT_EQ(post.get(1u, 0u), 1.0);
     ASSERT_EQ(post.get(0u, 1u), 1.0);
     ASSERT_EQ(pre.get(0u, 1u), 0.0);
+}
+
+//------------------------------------------------------------------------------
+//! \brief P0 -(Success)-> T0 -> P1, P0 -(Failed)-> T1 -(Failed)-> P1.
+static Net colored()
+{
+    Net net(TypeOfNet::PetriNet);
+    Place& p0 = net.addPlace(0u, "", 0u);
+    Place& p1 = net.addPlace(1u, "", 0u);
+    Transition& t0 = net.addTransition(0u, "");
+    Transition& t1 = net.addTransition(1u, "");
+    net.addArc(p0, t0);
+    net.addArc(t0, p1);
+    net.addArc(p0, t1);
+    net.addArc(t1, p1);
+    net.findArc(p0, t0)->color = Success;
+    net.findArc(p0, t1)->color = Failed;
+    net.findArc(t1, p1)->color = Failed;
+    return net;
+}
+
+//------------------------------------------------------------------------------
+TEST(TestFiring, ColoredArcsTakeTheirColor)
+{
+    Net const net = colored();
+    ColoredMarking m(net.places().size());
+    m.add(0u, Success);
+    ASSERT_TRUE(isEnabled(net, m, 0u));
+    ASSERT_FALSE(isEnabled(net, m, 1u));
+
+    m.clear(0u);
+    m.add(0u, Failed);
+    ASSERT_FALSE(isEnabled(net, m, 0u));
+    ASSERT_TRUE(isEnabled(net, m, 1u));
+
+    // The uncolored rule sees one token: both are enabled.
+    ASSERT_EQ(enabledTransitions(net, m.counts()), std::vector<size_t>({ 0u, 1u }));
+}
+
+//------------------------------------------------------------------------------
+TEST(TestFiring, ColoredConsumeThenProduce)
+{
+    Net const net = colored();
+    ColoredMarking m(net.places().size());
+    m.add(0u, Success);
+    m.add(0u, Failed);
+
+    // Output arc without color: the result of the transition.
+    consume(net, m, 0u);
+    ASSERT_EQ(m.count(0u, Success), 0u);
+    ASSERT_EQ(m.count(0u, Failed), 1u);
+    produce(net, m, 0u, Canceled);
+    ASSERT_EQ(m.count(1u, Canceled), 1u);
+
+    // Output arc with a color: its color, whatever the result.
+    consume(net, m, 1u);
+    produce(net, m, 1u, Success);
+    ASSERT_EQ(m.count(0u), 0u);
+    ASSERT_EQ(m.count(1u, Failed), 1u);
+    ASSERT_EQ(m.counts(), Marking({ 0u, 2u }));
+}
+
+//------------------------------------------------------------------------------
+TEST(TestFiring, ColoredInhibitorAndReset)
+{
+    Net net = colored();
+    net.findArc(net.places()[0], net.transitions()[0])->kind = ArcKind::Inhibitor;
+    net.findArc(net.places()[0], net.transitions()[1])->kind = ArcKind::Reset;
+    ColoredMarking m(net.places().size());
+    m.add(0u, Failed, 2u);
+
+    // The inhibitor arc only sees the Success tokens.
+    ASSERT_TRUE(isEnabled(net, m, 0u));
+    m.add(0u, Success);
+    ASSERT_FALSE(isEnabled(net, m, 0u));
+
+    // The reset arc only empties the Failed tokens.
+    consume(net, m, 1u);
+    ASSERT_EQ(m.count(0u, Failed), 0u);
+    ASSERT_EQ(m.count(0u, Success), 1u);
+}
+
+//------------------------------------------------------------------------------
+TEST(TestFiring, ColoredCapacityCountsAllColors)
+{
+    Net net = colored();
+    net.places()[1].capacity = 1u;
+    ColoredMarking m(net.places().size());
+    m.add(0u, Success);
+    ASSERT_TRUE(isEnabled(net, m, 0u));
+    m.add(1u, Failed);
+    ASSERT_FALSE(isEnabled(net, m, 0u));
+    m.clear(1u);
+    Marking const incoming = { 0u, 1u };
+    ASSERT_FALSE(isEnabled(net, m, 0u, &incoming));
 }

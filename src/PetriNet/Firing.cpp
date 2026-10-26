@@ -6,6 +6,7 @@
 // See LICENSING.md for details.
 
 #include "PetriNet/Firing.hpp"
+#include "PetriNet/ColoredMarking.hpp"
 #include "PetriNet/PetriNet.hpp"
 
 #include <algorithm>
@@ -15,8 +16,9 @@
 namespace tpne {
 
 //------------------------------------------------------------------------------
-//! \brief The enabling rule, whatever holds the tokens: tokens(p) gives the
-//! tokens of the place p, incoming(p) the tokens on their way to it.
+//! \brief The enabling rule, whatever holds the tokens: tokens(p, color) gives
+//! the tokens of the color in the place p (AnyColor: all), incoming(p) the
+//! tokens on their way to it.
 //------------------------------------------------------------------------------
 template<class Tokens, class Incoming>
 static bool enabled(Net const& net, Transition const& transition, Tokens const& tokens,
@@ -24,7 +26,7 @@ static bool enabled(Net const& net, Transition const& transition, Tokens const& 
 {
     for (auto const& a: net.arcsIn(transition))
     {
-        size_t const n = tokens(a.from.id);
+        size_t const n = tokens(a.from.id, a.color);
         if ((a.kind == ArcKind::Normal) && (n < a.weight))
             return false;
         if ((a.kind == ArcKind::Inhibitor) && (n >= a.weight))
@@ -36,13 +38,13 @@ static bool enabled(Net const& net, Transition const& transition, Tokens const& 
         size_t const capacity = net.places()[a.to.id].capacity;
         if (capacity == std::numeric_limits<size_t>::max())
             continue;
-        size_t n = tokens(a.to.id);
+        size_t n = tokens(a.to.id, AnyColor);
         if (Arc const* in = net.findArc(net.places()[a.to.id], transition))
         {
             if (in->kind == ArcKind::Normal)
-                n -= in->weight;
+                n -= std::min(n, in->weight);
             else if (in->kind == ArcKind::Reset)
-                n = 0u;
+                n -= std::min(n, tokens(a.to.id, in->color));
         }
         n += incoming(a.to.id);
         if (a.weight > capacity - std::min(capacity, n))
@@ -58,7 +60,7 @@ bool isEnabled(Net const& net, Marking const& marking, size_t const transition,
     assert(marking.size() == net.places().size());
     assert(transition < net.transitions().size());
     return enabled(net, net.transitions()[transition],
-                   [&marking](size_t p) { return marking[p]; },
+                   [&marking](size_t p, Color) { return marking[p]; },
                    [incoming](size_t p) { return (incoming == nullptr) ? 0u : (*incoming)[p]; });
 }
 
@@ -66,8 +68,19 @@ bool isEnabled(Net const& net, Marking const& marking, size_t const transition,
 bool isEnabled(Net const& net, Transition const& transition)
 {
     return enabled(net, transition,
-                   [&net](size_t p) { return net.places()[p].tokens; },
+                   [&net](size_t p, Color) { return net.places()[p].tokens; },
                    [](size_t) { return size_t(0u); });
+}
+
+//------------------------------------------------------------------------------
+bool isEnabled(Net const& net, ColoredMarking const& marking, size_t const transition,
+               Marking const* incoming)
+{
+    assert(marking.places() == net.places().size());
+    assert(transition < net.transitions().size());
+    return enabled(net, net.transitions()[transition],
+                   [&marking](size_t p, Color c) { return marking.count(p, c); },
+                   [incoming](size_t p) { return (incoming == nullptr) ? 0u : (*incoming)[p]; });
 }
 
 //------------------------------------------------------------------------------
@@ -109,6 +122,31 @@ void produce(Net const& net, Marking& marking, size_t const transition)
         size_t& n = marking[a.to.id];
         n = (a.weight > capacity - std::min(capacity, n)) ? capacity : n + a.weight;
     }
+}
+
+//------------------------------------------------------------------------------
+Color tokenColor(Arc const& arc, Color const result)
+{
+    return (arc.color != AnyColor) ? arc.color : result;
+}
+
+//------------------------------------------------------------------------------
+void consume(Net const& net, ColoredMarking& marking, size_t const transition)
+{
+    for (auto const& a: net.arcsIn(net.transitions()[transition]))
+    {
+        if (a.kind == ArcKind::Normal)
+            marking.take(a.from.id, a.color, a.weight);
+        else if (a.kind == ArcKind::Reset)
+            marking.clear(a.from.id, a.color);
+    }
+}
+
+//------------------------------------------------------------------------------
+void produce(Net const& net, ColoredMarking& marking, size_t const transition, Color const result)
+{
+    for (auto const& a: net.arcsOut(net.transitions()[transition]))
+        marking.add(a.to.id, tokenColor(a, result), a.weight);
 }
 
 //------------------------------------------------------------------------------

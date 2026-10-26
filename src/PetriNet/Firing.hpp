@@ -8,6 +8,8 @@
 #ifndef TPNE_FIRING_HPP
 #  define TPNE_FIRING_HPP
 
+#  include "PetriNet/Color.hpp"
+
 #  include <cstddef>
 #  include <vector>
 
@@ -21,12 +23,15 @@
 namespace tpne {
 
 class Net;
+class Arc;
 class Transition;
 
 //------------------------------------------------------------------------------
 //! \brief Number of tokens of each place, by place identifier.
 //------------------------------------------------------------------------------
 using Marking = std::vector<size_t>;
+
+class ColoredMarking;
 
 //------------------------------------------------------------------------------
 //! \brief Is the transition enabled for the marking:
@@ -39,6 +44,15 @@ using Marking = std::vector<size_t>;
 //! A transition without input arc is enabled (its guard decides).
 //------------------------------------------------------------------------------
 bool isEnabled(Net const& net, Marking const& marking, size_t const transition,
+               Marking const* incoming = nullptr);
+
+//------------------------------------------------------------------------------
+//! \brief Same rule on colored tokens: a normal or inhibitor arc counts the
+//! tokens of its color only (all of them without color), a reset arc empties
+//! the tokens of its color; capacities count the tokens of all colors. This is
+//! the rule of the runtime.
+//------------------------------------------------------------------------------
+bool isEnabled(Net const& net, ColoredMarking const& marking, size_t const transition,
                Marking const* incoming = nullptr);
 
 //------------------------------------------------------------------------------
@@ -62,6 +76,24 @@ void consume(Net const& net, Marking& marking, size_t const transition);
 //! their capacity).
 //------------------------------------------------------------------------------
 void produce(Net const& net, Marking& marking, size_t const transition);
+
+//------------------------------------------------------------------------------
+//! \brief Color of the tokens given by an output arc: its own color, else the
+//! result of the transition.
+//------------------------------------------------------------------------------
+Color tokenColor(Arc const& arc, Color const result);
+
+//------------------------------------------------------------------------------
+//! \brief Colored start of a firing: take the tokens of the color of each
+//! normal input arc, empty the tokens of the color of each reset arc.
+//------------------------------------------------------------------------------
+void consume(Net const& net, ColoredMarking& marking, size_t const transition);
+
+//------------------------------------------------------------------------------
+//! \brief Colored end of a firing, without durations: give the tokens of
+//! tokenColor() to the output places.
+//------------------------------------------------------------------------------
+void produce(Net const& net, ColoredMarking& marking, size_t const transition, Color const result);
 
 //------------------------------------------------------------------------------
 //! \brief Marking after firing the enabled transition (consume then produce,

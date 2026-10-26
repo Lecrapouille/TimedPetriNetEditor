@@ -16,87 +16,6 @@ namespace tpne {
 static constexpr double NEVER = std::numeric_limits<double>::infinity();
 
 //==============================================================================
-// ColoredMarking
-//==============================================================================
-
-//------------------------------------------------------------------------------
-size_t ColoredMarking::count(size_t const place, Color const color) const
-{
-    std::vector<size_t> const& colors = m_counts[place];
-    if (color != AnyColor)
-        return (color < colors.size()) ? colors[color] : 0u;
-    size_t total = 0u;
-    for (size_t const n : colors)
-        total += n;
-    return total;
-}
-
-//------------------------------------------------------------------------------
-void ColoredMarking::add(size_t const place, Color const color, size_t const tokens)
-{
-    std::vector<size_t>& colors = m_counts[place];
-    if (color >= colors.size())
-        colors.resize(size_t(color) + 1u, 0u);
-    colors[color] += tokens;
-    touch(place);
-}
-
-//------------------------------------------------------------------------------
-bool ColoredMarking::take(size_t const place, Color const color, size_t const tokens)
-{
-    if (count(place, color) < tokens)
-        return false;
-    touch(place);
-    std::vector<size_t>& colors = m_counts[place];
-    if (color != AnyColor)
-    {
-        colors[color] -= tokens;
-        return true;
-    }
-    size_t left = tokens;
-    for (size_t& n : colors)
-    {
-        size_t const taken = std::min(n, left);
-        n -= taken;
-        left -= taken;
-    }
-    return true;
-}
-
-//------------------------------------------------------------------------------
-void ColoredMarking::clear(size_t const place, Color const color)
-{
-    touch(place);
-    std::vector<size_t>& colors = m_counts[place];
-    if (color == AnyColor)
-        std::fill(colors.begin(), colors.end(), 0u);
-    else if (color < colors.size())
-        colors[color] = 0u;
-}
-
-//------------------------------------------------------------------------------
-std::vector<std::pair<Color, size_t>> ColoredMarking::tokens(size_t const place) const
-{
-    std::vector<std::pair<Color, size_t>> result;
-    std::vector<size_t> const& colors = m_counts[place];
-    for (size_t c = 0u; c < colors.size(); ++c)
-    {
-        if (colors[c] > 0u)
-            result.push_back({ Color(c), colors[c] });
-    }
-    return result;
-}
-
-//------------------------------------------------------------------------------
-Marking ColoredMarking::counts() const
-{
-    Marking result(m_counts.size(), 0u);
-    for (size_t p = 0u; p < m_counts.size(); ++p)
-        result[p] = count(p);
-    return result;
-}
-
-//==============================================================================
 // Instance
 //==============================================================================
 
@@ -113,7 +32,7 @@ size_t Context::tokens(std::string const& place, Color const color) const
 
 //------------------------------------------------------------------------------
 Instance::Instance(std::string const& id, size_t const places, size_t const transitions)
-    : m_id(id), m_marking(places), m_running(transitions, 0u), m_injected(transitions, 0u),
+    : m_id(id), m_marking(places), m_incoming(places, 0u), m_running(transitions, 0u), m_injected(transitions, 0u),
       m_ready_since(transitions, NEVER), m_enabled(transitions, 0)
 {}
 
@@ -298,13 +217,12 @@ std::shared_ptr<Instance> Runtime::restore(std::string const& id, std::vector<Lo
             continue;
         if (entry.event == LogEntry::Event::Scheduled)
         {
-            consume(instance->m_marking, t);
+            tpne::consume(m_net, instance->m_marking, t);
             ++running[t];
         }
         else if (entry.event == LogEntry::Event::Completed)
         {
-            for (auto const& a : m_net.arcsOut(m_net.transitions()[t]))
-                instance->m_marking.add(a.to.id, (a.color != AnyColor) ? a.color : entry.result, a.weight);
+            tpne::produce(m_net, instance->m_marking, t, entry.result);
             running[t] -= std::min(running[t], size_t(1u));
         }
         if (m_options.log)
@@ -402,36 +320,8 @@ void Runtime::log(Instance& instance, size_t const transition, LogEntry::Event c
 //------------------------------------------------------------------------------
 bool Runtime::isEnabled(Instance const& instance, size_t const transition) const
 {
-    Transition const& t = m_net.transitions()[transition];
-    ColoredMarking const& marking = instance.m_marking;
-    for (auto const& a : m_net.arcsIn(t))
-    {
-        size_t const n = marking.count(a.from.id, a.color);
-        if ((a.kind == ArcKind::Normal) && (n < a.weight))
-            return false;
-        if ((a.kind == ArcKind::Inhibitor) && (n >= a.weight))
-            return false;
-    }
-
-    // Capacities, with the tokens on their way.
-    for (auto const& a : m_net.arcsOut(t))
-    {
-        size_t const capacity = m_net.places()[a.to.id].capacity;
-        if (capacity == std::numeric_limits<size_t>::max())
-            continue;
-        size_t n = marking.count(a.to.id);
-        for (auto const& flight : instance.m_flights)
-            n += (flight.place == a.to.id) ? flight.tokens : 0u;
-        if (Arc const* in = m_net.findArc(m_net.places()[a.to.id], t))
-        {
-            if (in->kind == ArcKind::Normal)
-                n -= std::min(n, in->weight);
-            else if (in->kind == ArcKind::Reset)
-                n -= std::min(n, marking.count(a.to.id, in->color));
-        }
-        if (a.weight > capacity - std::min(capacity, n))
-            return false;
-    }
+    if (!tpne::isEnabled(m_net, instance.m_marking, transition, &instance.m_incoming))
+        return false;
 
     // Sources fire when asked.
     if (m_sources[transition] && (instance.m_injected[transition] == 0u))
@@ -549,22 +439,10 @@ size_t Runtime::pick(Instance& instance)
 }
 
 //------------------------------------------------------------------------------
-void Runtime::consume(ColoredMarking& marking, size_t const transition) const
-{
-    for (auto const& a : m_net.arcsIn(m_net.transitions()[transition]))
-    {
-        if (a.kind == ArcKind::Normal)
-            marking.take(a.from.id, a.color, a.weight);
-        else if (a.kind == ArcKind::Reset)
-            marking.clear(a.from.id, a.color);
-    }
-}
-
-//------------------------------------------------------------------------------
 void Runtime::fire(std::shared_ptr<Instance> const& instance, size_t const transition)
 {
     Instance& i = *instance;
-    consume(i.m_marking, transition);
+    tpne::consume(m_net, i.m_marking, transition);
     if (m_sources[transition])
         --i.m_injected[transition];
     i.m_ready_since[transition] = NEVER;
@@ -620,12 +498,13 @@ void Runtime::produce(Instance& instance, size_t const transition, Color const r
     bool const timed = (m_net.type() == TypeOfNet::TimedPetriNet);
     for (auto const& a : m_net.arcsOut(m_net.transitions()[transition]))
     {
-        Color const color = (a.color != AnyColor) ? a.color : result;
+        Color const color = tokenColor(a, result);
         double const duration = timed ? double(a.durationOrZero()) : 0.0;
         if (duration > 0.0)
         {
             // Tokens on their way count for the capacity of the place.
             instance.m_flights.push_back({ a.to.id, color, a.weight, instance.m_time + duration });
+            instance.m_incoming[a.to.id] += a.weight;
             instance.m_marking.touch(a.to.id);
         }
         else
@@ -644,6 +523,7 @@ void Runtime::deliver(Instance& instance)
     while ((arrived < flights.size()) && (flights[arrived].end <= instance.m_time))
     {
         instance.m_marking.add(flights[arrived].place, flights[arrived].color, flights[arrived].tokens);
+        instance.m_incoming[flights[arrived].place] -= flights[arrived].tokens;
         ++arrived;
     }
     flights.erase(flights.begin(), flights.begin() + std::ptrdiff_t(arrived));

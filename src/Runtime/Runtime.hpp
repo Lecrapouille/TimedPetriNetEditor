@@ -10,6 +10,7 @@
 
 #  include "Runtime/Callback.hpp"
 #  include "Runtime/Executor.hpp"
+#  include "PetriNet/ColoredMarking.hpp"
 #  include "PetriNet/Engine.hpp"
 #  include "PetriNet/PetriNet.hpp"
 
@@ -24,77 +25,6 @@
 #  include <vector>
 
 namespace tpne {
-
-// *****************************************************************************
-//! \brief Tokens of each color in each place.
-// *****************************************************************************
-class ColoredMarking
-{
-public:
-
-    explicit ColoredMarking(size_t const places = 0u) : m_counts(places), m_is_touched(places, 0) {}
-
-    //! \brief Number of places.
-    size_t places() const { return m_counts.size(); }
-
-    //! \brief Tokens of the color in the place (AnyColor: of all colors).
-    size_t count(size_t const place, Color const color = AnyColor) const;
-
-    //! \brief Add tokens of the color in the place.
-    void add(size_t const place, Color const color, size_t const tokens = 1u);
-
-    //! \brief Remove tokens of the color (AnyColor: the first colors first).
-    //! Return false, removing nothing, when there are not enough.
-    bool take(size_t const place, Color const color, size_t const tokens);
-
-    //! \brief Remove all the tokens of the color (AnyColor: all).
-    void clear(size_t const place, Color const color = AnyColor);
-
-    //! \brief (color, count) of the tokens of the place.
-    std::vector<std::pair<Color, size_t>> tokens(size_t const place) const;
-
-    //! \brief Number of tokens of each place, colors not considered.
-    Marking counts() const;
-
-    bool operator==(ColoredMarking const& other) const { return m_counts == other.m_counts; }
-
-    //! \brief The tokens of the place change (add(), take(), clear() call it):
-    //! the runtime checks again the transitions around it.
-    void touch(size_t const place)
-    {
-        if ((place < m_is_touched.size()) && !m_is_touched[place])
-        {
-            m_is_touched[place] = 1;
-            m_touched.push_back(place);
-        }
-    }
-
-    //! \brief The places touched since the last call.
-    std::vector<size_t> takeTouched()
-    {
-        std::vector<size_t> touched;
-        takeTouched(touched);
-        return touched;
-    }
-
-    //! \brief The same in a vector given (its memory is kept for the next
-    //! ones: no allocation at each step).
-    void takeTouched(std::vector<size_t>& touched)
-    {
-        for (size_t const p : m_touched)
-            m_is_touched[p] = 0;
-        touched.clear();
-        touched.swap(m_touched);
-    }
-
-private:
-
-    //! \brief Tokens by place, then by color.
-    std::vector<std::vector<size_t>> m_counts;
-    //! \brief Places whose tokens changed, not yet seen by the runtime.
-    std::vector<size_t> m_touched;
-    std::vector<char> m_is_touched;
-};
 
 // *****************************************************************************
 //! \brief Tokens in a place, by its name: to give the initial and the goal
@@ -204,6 +134,8 @@ private:
     double m_origin = 0.0;
     bool m_started = false;
     std::vector<Flight> m_flights;
+    //! \brief Tokens of m_flights, by place (capacities count them).
+    Marking m_incoming;
     //! \brief Functions running, by transition, and their callbacks.
     std::vector<size_t> m_running;
     size_t m_running_total = 0u;
@@ -373,7 +305,8 @@ private:
     //! \brief Name of the transition in the journal and the callbacks.
     std::string const& nameOf(size_t const transition) const;
     size_t placeOf(std::string const& place) const;
-    //! \brief Rules of the colored firing.
+    //! \brief Rules of the colored firing (tpne::isEnabled() on the colored
+    //! marking, plus the sources).
     bool isEnabled(Instance const& instance, size_t const transition) const;
     //! \brief Bring Instance::m_enabled up to date with the marking.
     void refresh(Instance& instance) const;
@@ -383,8 +316,6 @@ private:
     bool waitsForGuard(Instance const& instance) const;
     //! \brief Fire one transition: take the tokens, start its function.
     void fire(std::shared_ptr<Instance> const& instance, size_t const transition);
-    //! \brief Take the input tokens of the transition.
-    void consume(ColoredMarking& marking, size_t const transition) const;
     //! \brief Call the function of the transition (its tokens are taken).
     void start(std::shared_ptr<Instance> const& instance, size_t const transition);
     //! \brief Give the output tokens of the transition, colored by its result.

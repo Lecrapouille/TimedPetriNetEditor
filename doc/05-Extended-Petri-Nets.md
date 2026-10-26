@@ -271,6 +271,11 @@ and it is mainly the **result** of the action of a transition.
   **result** of the function of the transition (`Success`, `Failed`, or a
   color of yours) when the net is run by the runtime.
 
+**Not a general colored Petri net (yet).** A color is only a name: a token
+does not carry a typed object (an identifier, a value, a set of fields), and
+arcs have no expressions nor bindings on token values. General colored Petri
+nets in the sense of §6.1 are planned for a later version.
+
 So a transition whose function can succeed or fail puts a token whose color
 is its result, and the next arcs choose: the `Success` arc goes on, the
 `Failed` arc retries. The result of a function **chooses what comes next**.
