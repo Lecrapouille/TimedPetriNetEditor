@@ -8,6 +8,7 @@
 #ifndef TPNE_ENGINE_HPP
 #  define TPNE_ENGINE_HPP
 
+#  include "PetriNet/ColoredMarking.hpp"
 #  include "PetriNet/Firing.hpp"
 
 #  include <cstdint>
@@ -70,10 +71,23 @@ public:
         FirstDeclared,
     };
 
+    //! \brief Result of a firing when onResult is not set: the color of the
+    //! tokens given by the output arcs without color. There is no function
+    //! to give it, as in the runtime.
+    enum class Results
+    {
+        //! \brief Always Success.
+        AlwaysSuccess,
+        //! \brief One at random (Options::seed) among the colors asked by
+        //! the arcs leaving its output places; Success when none is asked.
+        Asked,
+    };
+
     //! \brief Settings of the engine.
     struct Options
     {
         Policy policy = Policy::Random;
+        Results results = Results::Asked;
         //! \brief Seed of the Random policy. 0: a random seed is drawn; seed()
         //! gives it to replay the same simulation.
         uint64_t seed = 0u;
@@ -95,6 +109,8 @@ public:
         size_t arc;
         //! \brief Number of tokens (weight of the arc).
         size_t tokens;
+        //! \brief Color of the tokens (tokenColor() of the arc).
+        Color color;
         //! \brief Date of the firing and date of arrival in the place.
         double start;
         double end;
@@ -109,10 +125,12 @@ public:
 
     //--------------------------------------------------------------------------
     //! \brief Start again at date 0 from the marking of the net (or the given
-    //! one). Draws the seed when Options::seed is 0.
+    //! one, its tokens colored Success). Draws the seed when Options::seed is
+    //! 0.
     //--------------------------------------------------------------------------
     void reset();
     void reset(Marking const& marking);
+    void reset(ColoredMarking const& marking);
 
     //--------------------------------------------------------------------------
     //! \brief Let time go until the given date (or during dt): tokens arrive,
@@ -147,14 +165,18 @@ public:
     bool isZeno() const { return m_zeno; }
 
     //--------------------------------------------------------------------------
-    //! \brief Current date, marking and tokens on their way.
+    //! \brief Current date, marking and tokens on their way. The engine
+    //! follows the colors of the tokens as the runtime does (Firing.hpp);
+    //! marking() gives their number by place, colors not considered.
     //--------------------------------------------------------------------------
     double time() const { return m_time; }
     Marking const& marking() const { return m_marking; }
+    ColoredMarking const& coloredMarking() const { return m_colored; }
     std::vector<Flight> const& flights() const { return m_flights; }
 
     //--------------------------------------------------------------------------
-    //! \brief Change the tokens of a place (the user adds a token ...).
+    //! \brief Change the tokens of a place (the user adds a token ...): the
+    //! tokens added are Success, the ones removed of any color.
     //--------------------------------------------------------------------------
     void setTokens(size_t const place, size_t const tokens);
 
@@ -189,6 +211,10 @@ public:
     //! \brief Called at each firing: transition, date, number k of the firing
     //! of this transition (1 for the first one).
     std::function<void(size_t, double, size_t)> onFire;
+    //! \brief Result of the firing of the transition: the color of the
+    //! tokens given by its output arcs without color. Not set:
+    //! Options::results.
+    std::function<Color(size_t)> onResult;
     //! \brief Called when tokens reach their place.
     std::function<void(Flight const&)> onArrival;
     //! \brief Called with warnings (Zeno behavior ...).
@@ -209,6 +235,10 @@ private:
     size_t pick();
     //! \brief Enabled and armed, delay not considered.
     bool isReady(size_t const transition) const;
+    //! \brief Result of the firing (onResult, else Options::results).
+    Color result(size_t const transition);
+    //! \brief m_marking follows the places of m_colored that changed.
+    void count();
 
 private:
 
@@ -219,7 +249,10 @@ private:
     uint64_t m_seed = 0u;
     std::mt19937_64 m_random;
     double m_time = 0.0;
+    ColoredMarking m_colored;
+    //! \brief Tokens of m_colored by place.
     Marking m_marking;
+    std::vector<size_t> m_touched;
     //! \brief Tokens on their way to each place (capacities).
     Marking m_incoming;
     std::vector<Flight> m_flights;
@@ -229,6 +262,8 @@ private:
     //! \brief Date since which each transition is ready, or NEVER.
     std::vector<double> m_ready_since;
     std::vector<std::vector<double>> m_firing_dates;
+    //! \brief Colors asked after each transition (Results::Asked).
+    std::vector<std::vector<Color>> m_asked;
     bool m_zeno = false;
 };
 

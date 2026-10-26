@@ -398,7 +398,7 @@ drive a program. They share the firing rule but differ on purpose:
 
 | | Simulation of the editor | Runtime |
 |-|--------------------------|---------|
-| Colors of the tokens | drawn, not used | used: the arcs take their color, functions give theirs |
+| Colors of the tokens | used: the arcs take their color; the results are drawn among the colors asked after the transition | used: the arcs take their color, functions give theirs |
 | A transition fires | Petri net: when you click on it; timed net: as soon as it can | as soon as it can, and its guard allows it |
 | Its duration | the durations of the arcs | the time of its function, plus the durations of the arcs (timed nets) |
 | Source transitions | Petri net: on a click; timed net: again when the tokens of their last firing arrived | only on `inject()` |

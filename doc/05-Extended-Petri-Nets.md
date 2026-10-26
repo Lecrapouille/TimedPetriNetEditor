@@ -302,13 +302,13 @@ The same mechanism chooses `Accept` or `Reject Coin` in
 [Coffee](../examples/Petri-Nets/Coffee/README.md) and the kind of the call
 in [EmergencyCalls](../examples/Petri-Nets/EmergencyCalls/README.md).
 
-**Be aware.** The **simulation of the editor ignores the colors**: there is
-no function to give a result, so it moves the tokens as if the arcs had no
-color (in Colors, `Ship` and `Scrap` are both enabled by any inspected part).
-The editor draws the colors on the arcs, saves them, exports them (PNML,
-GRML, Symmetri), and the [runtime](11-Runtime.md) uses them. The analysis
-ignores them too, and says so ("The colors of the tokens are not
-considered").
+**In the simulation.** The simulation of the editor follows the colors with
+the same rule as the runtime: an arc that asks for a color takes only the
+tokens of this color. There is no function to give a result, so the result
+of a firing is drawn at random among the colors asked by the arcs after the
+transition (in Colors: `Good` or `Bad`), `Success` when no arc asks for one.
+The [analysis](04-Analysis.md) still ignores the colors, and says so ("The
+colors of the tokens are not considered").
 
 **In the editor.** The *Colors* window lists the colors of the user: *Add*
 creates one. Right click on an arc > *Color of the tokens*, or the Color

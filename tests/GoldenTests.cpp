@@ -51,11 +51,13 @@ static std::string marking(Marking const& m)
 //! \brief Petri nets and timed nets: the engine fires every enabled transition
 //! (the first declared one first) during 60 time units, at most 300 firings.
 //! Untimed nets get 1 time unit on each arc (else they fire for ever at 0).
+//! The results of the transitions are drawn with a fixed seed (colors).
 static std::string runPetri(Net const& net)
 {
     std::ostringstream journal;
     Engine::Options options;
     options.policy = Engine::Policy::FirstDeclared;
+    options.seed = 42u;
     options.timed = (net.type() != TypeOfNet::PetriNet);
     options.untimed_duration = 1.0;
     options.max_firings_per_date = 200u;

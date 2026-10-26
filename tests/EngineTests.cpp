@@ -267,3 +267,66 @@ TEST(TestEngine, InjectedClock)
     ASSERT_EQ(engine.time(), 6.0);
     ASSERT_EQ(engine.firingDates()[0].size(), 2u);
 }
+
+//------------------------------------------------------------------------------
+//! \brief P0 (1 token) -> T0 -> P1, P1 -(Success)-> T1 -> P2,
+//! P1 -(Failed)-> T2 -> P3: the result of T0 chooses the way, as in the
+//! runtime.
+static Net coloredChoice()
+{
+    Net net(TypeOfNet::PetriNet);
+    Place& p0 = net.addPlace(0u, "", 1u);
+    Place& p1 = net.addPlace(1u, "", 0u);
+    Place& p2 = net.addPlace(2u, "", 0u);
+    Place& p3 = net.addPlace(3u, "", 0u);
+    Transition& t0 = net.addTransition(0u, "");
+    Transition& t1 = net.addTransition(1u, "");
+    Transition& t2 = net.addTransition(2u, "");
+    net.addArc(p0, t0);
+    net.addArc(t0, p1);
+    net.addArc(p1, t1);
+    net.addArc(t1, p2);
+    net.addArc(p1, t2);
+    net.addArc(t2, p3);
+    net.findArc(p1, t1)->color = Success;
+    net.findArc(p1, t2)->color = Failed;
+    return net;
+}
+
+//------------------------------------------------------------------------------
+TEST(TestEngine, ColoredResultChoosesTheWay)
+{
+    Net const net = coloredChoice();
+    Engine::Options options;
+    options.policy = Engine::Policy::FirstDeclared;
+    options.results = Engine::Results::AlwaysSuccess;
+    Engine engine(net, options);
+    engine.reset();
+    engine.advanceTo(1.0);
+    ASSERT_EQ(engine.marking(), Marking({ 0u, 0u, 1u, 0u }));
+    ASSERT_EQ(engine.coloredMarking().count(2u, Success), 1u);
+
+    engine.onResult = [](size_t t) noexcept { return (t == 0u) ? Failed : Success; };
+    engine.reset();
+    engine.advanceTo(1.0);
+    ASSERT_EQ(engine.marking(), Marking({ 0u, 0u, 0u, 1u }));
+}
+
+//------------------------------------------------------------------------------
+TEST(TestEngine, ColoredResultsAskedByTheArcs)
+{
+    Net const net = coloredChoice();
+    bool success = false, failed = false;
+    for (uint64_t seed = 1u; seed <= 50u; ++seed)
+    {
+        Engine::Options options;
+        options.seed = seed;
+        Engine engine(net, options);
+        engine.reset();
+        engine.advanceTo(1.0);
+        success |= (engine.marking()[2] == 1u);
+        failed |= (engine.marking()[3] == 1u);
+        ASSERT_EQ(engine.marking()[2] + engine.marking()[3], 1u);
+    }
+    ASSERT_TRUE(success && failed);
+}

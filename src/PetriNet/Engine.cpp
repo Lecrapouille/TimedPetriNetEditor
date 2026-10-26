@@ -43,18 +43,48 @@ void Engine::reset()
 //------------------------------------------------------------------------------
 void Engine::reset(Marking const& marking)
 {
+    ColoredMarking colored(marking.size());
+    for (size_t p = 0u; p < marking.size(); ++p)
+    {
+        if (marking[p] > 0u)
+            colored.add(p, Success, marking[p]);
+    }
+    reset(colored);
+}
+
+//------------------------------------------------------------------------------
+void Engine::reset(ColoredMarking const& marking)
+{
     size_t const transitions = m_net.transitions().size();
     m_seed = (m_options.seed != 0u) ? m_options.seed
                                     : ((uint64_t(std::random_device{}()) << 32) | std::random_device{}());
     m_random.seed(m_seed);
     m_time = 0.0;
-    m_marking = marking;
+    m_colored = marking;
+    m_colored.takeTouched(m_touched);
+    m_marking = m_colored.counts();
     m_incoming.assign(m_marking.size(), 0u);
     m_flights.clear();
     m_flying.assign(transitions, 0u);
     m_armed.assign(transitions, !m_options.manual);
     m_ready_since.assign(transitions, NEVER);
     m_firing_dates.assign(transitions, {});
+    m_asked.assign(transitions, {});
+    for (size_t t = 0u; t < transitions; ++t)
+    {
+        std::vector<Color>& asked = m_asked[t];
+        for (auto const& out: m_net.arcsOut(m_net.transitions()[t]))
+        {
+            if (out.color != AnyColor)
+                continue;
+            for (auto const& next: m_net.arcsOut(m_net.places()[out.to.id]))
+            {
+                if ((next.color != AnyColor) && (std::find(asked.begin(), asked.end(), next.color) == asked.end()))
+                    asked.push_back(next.color);
+            }
+        }
+        std::sort(asked.begin(), asked.end());
+    }
     m_zeno = false;
 
     // An isolated transition would fire for ever.
@@ -73,7 +103,12 @@ void Engine::reset(Marking const& marking)
 //------------------------------------------------------------------------------
 void Engine::setTokens(size_t const place, size_t const tokens)
 {
-    m_marking[place] = tokens;
+    size_t const n = m_colored.count(place);
+    if (tokens > n)
+        m_colored.add(place, Success, tokens - n);
+    else
+        m_colored.take(place, AnyColor, n - tokens);
+    count();
     updateEnabling();
 }
 
@@ -87,7 +122,15 @@ void Engine::arm(size_t const transition, bool const armed)
 //------------------------------------------------------------------------------
 bool Engine::isReady(size_t const transition) const
 {
-    return m_armed[transition] && isEnabled(m_net, m_marking, transition, &m_incoming);
+    return m_armed[transition] && isEnabled(m_net, m_colored, transition, &m_incoming);
+}
+
+//------------------------------------------------------------------------------
+void Engine::count()
+{
+    m_colored.takeTouched(m_touched);
+    for (size_t const p: m_touched)
+        m_marking[p] = m_colored.count(p);
 }
 
 //------------------------------------------------------------------------------
@@ -180,17 +223,19 @@ size_t Engine::pick()
 void Engine::fire(size_t const transition)
 {
     Transition const& t = m_net.transitions()[transition];
-    consume(m_net, m_marking, transition);
+    consume(m_net, m_colored, transition);
+    count();
     m_firing_dates[transition].push_back(m_time);
 
     // Tokens leave on the output arcs.
+    Color const color = result(transition);
     for (size_t const arc: m_net.arcsOut(t).indices())
     {
         Arc const& a = m_net.arcs()[arc];
         double duration = m_options.untimed_duration;
         if (m_options.timed)
             duration = double(a.durationOrZero());
-        m_flights.push_back({ arc, a.weight, m_time, m_time + duration });
+        m_flights.push_back({ arc, a.weight, tokenColor(a, color), m_time, m_time + duration });
         m_incoming[a.to.id] += a.weight;
         ++m_flying[transition];
     }
@@ -203,6 +248,17 @@ void Engine::fire(size_t const transition)
 
     if (onFire)
         onFire(transition, m_time, m_firing_dates[transition].size());
+}
+
+//------------------------------------------------------------------------------
+Color Engine::result(size_t const transition)
+{
+    if (onResult)
+        return onResult(transition);
+    std::vector<Color> const& asked = m_asked[transition];
+    if ((m_options.results == Results::AlwaysSuccess) || asked.empty())
+        return Success;
+    return asked[std::uniform_int_distribution<size_t>(0u, asked.size() - 1u)(m_random)];
 }
 
 //------------------------------------------------------------------------------
@@ -224,8 +280,9 @@ void Engine::deliver()
     {
         Arc const& arc = m_net.arcs()[flight.arc];
         size_t const capacity = m_net.places()[arc.to.id].capacity;
-        size_t& tokens = m_marking[arc.to.id];
-        tokens = (flight.tokens > capacity - std::min(capacity, tokens)) ? capacity : tokens + flight.tokens;
+        size_t const tokens = m_colored.count(arc.to.id);
+        m_colored.add(arc.to.id, flight.color, std::min(flight.tokens, capacity - std::min(capacity, tokens)));
+        count();
         m_incoming[arc.to.id] -= flight.tokens;
 
         // Automatic mode: a source transition fires again once its tokens
