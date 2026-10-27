@@ -99,6 +99,253 @@
   "type": "Petri net",
   "nets": [
     {
+      "name": "Colored philosophers",
+      "description": "Thinking and Eating hold one token per philosopher, colored by its name: Phi i eats only with its own token and Fork i, Fork i+1. Fire Phi0 eats, then look at the color of the token in Eating.",
+      "colors": [
+        "Phi0",
+        "Phi1",
+        "Phi2"
+      ],
+      "places": [
+        {
+          "id": 0,
+          "caption": "Thinking",
+          "tokens": 3,
+          "colors": {
+            "Phi0": 1,
+            "Phi1": 1,
+            "Phi2": 1
+          }
+        },
+        {
+          "id": 1,
+          "caption": "Eating",
+          "tokens": 0
+        },
+        {
+          "id": 2,
+          "caption": "Fork0",
+          "tokens": 1
+        },
+        {
+          "id": 3,
+          "caption": "Fork1",
+          "tokens": 1
+        },
+        {
+          "id": 4,
+          "caption": "Fork2",
+          "tokens": 1
+        }
+      ],
+      "transitions": [
+        {
+          "id": 0,
+          "caption": "Phi0 eats"
+        },
+        {
+          "id": 1,
+          "caption": "Phi1 eats"
+        },
+        {
+          "id": 2,
+          "caption": "Phi2 eats"
+        },
+        {
+          "id": 3,
+          "caption": "Phi0 thinks"
+        },
+        {
+          "id": 4,
+          "caption": "Phi1 thinks"
+        },
+        {
+          "id": 5,
+          "caption": "Phi2 thinks"
+        }
+      ],
+      "arcs": [
+        {
+          "from": "P0",
+          "to": "T0",
+          "color": "Phi0"
+        },
+        {
+          "from": "P2",
+          "to": "T0"
+        },
+        {
+          "from": "P3",
+          "to": "T0"
+        },
+        {
+          "from": "T0",
+          "to": "P1",
+          "color": "Phi0",
+          "duration": 1
+        },
+        {
+          "from": "P1",
+          "to": "T3",
+          "color": "Phi0"
+        },
+        {
+          "from": "T3",
+          "to": "P0",
+          "color": "Phi0",
+          "duration": 1
+        },
+        {
+          "from": "T3",
+          "to": "P2",
+          "duration": 1
+        },
+        {
+          "from": "T3",
+          "to": "P3",
+          "duration": 1
+        },
+        {
+          "from": "P0",
+          "to": "T1",
+          "color": "Phi1"
+        },
+        {
+          "from": "P3",
+          "to": "T1"
+        },
+        {
+          "from": "P4",
+          "to": "T1"
+        },
+        {
+          "from": "T1",
+          "to": "P1",
+          "color": "Phi1",
+          "duration": 1
+        },
+        {
+          "from": "P1",
+          "to": "T4",
+          "color": "Phi1"
+        },
+        {
+          "from": "T4",
+          "to": "P0",
+          "color": "Phi1",
+          "duration": 1
+        },
+        {
+          "from": "T4",
+          "to": "P3",
+          "duration": 1
+        },
+        {
+          "from": "T4",
+          "to": "P4",
+          "duration": 1
+        },
+        {
+          "from": "P0",
+          "to": "T2",
+          "color": "Phi2"
+        },
+        {
+          "from": "P4",
+          "to": "T2"
+        },
+        {
+          "from": "P2",
+          "to": "T2"
+        },
+        {
+          "from": "T2",
+          "to": "P1",
+          "color": "Phi2",
+          "duration": 1
+        },
+        {
+          "from": "P1",
+          "to": "T5",
+          "color": "Phi2"
+        },
+        {
+          "from": "T5",
+          "to": "P0",
+          "color": "Phi2",
+          "duration": 1
+        },
+        {
+          "from": "T5",
+          "to": "P4",
+          "duration": 1
+        },
+        {
+          "from": "T5",
+          "to": "P2",
+          "duration": 1
+        }
+      ],
+      "actions": [],
+      "layout": {
+        "places": [
+          [
+            600,
+            80
+          ],
+          [
+            600,
+            820
+          ],
+          [
+            600,
+            300
+          ],
+          [
+            600,
+            450
+          ],
+          [
+            600,
+            600
+          ]
+        ],
+        "transitions": [
+          [
+            200,
+            300
+          ],
+          [
+            200,
+            450
+          ],
+          [
+            200,
+            600
+          ],
+          [
+            1000,
+            300
+          ],
+          [
+            1000,
+            450
+          ],
+          [
+            1000,
+            600
+          ]
+        ]
+      }
+    }
+  ],
+  "inputs": []
+}
+{
+  "revision": 2,
+  "type": "Petri net",
+  "nets": [
+    {
        "name": "Colored tokens",
        "description": "Colored tokens: the result of Inspect colors the token it puts in Inspected, Good or Bad. Ship takes only Good tokens, Scrap only Bad ones: the color chooses the branch. The editor draws the colors; the runtime runs them (Colors.cpp).",
        "colors": ["Good", "Bad"],
@@ -334,6 +581,95 @@
   "inputs": [
   ]
 }
+# Same factory as complex.flowshop, with a second Conveyor3.
+# A conveyor costs less than a machine: add one where the column is critical.
+nconveyors: 6
+nmachines: 8
+
+# How many of each machine (tokens of the horizontal cycle)
+nm: 1 1 1 1 1 1 1 1
+
+# How many of each conveyor (tokens of the vertical cycle)
+np: 1 1 2 1 1 1
+
+# Conveyor names (columns)
+conveyors: Conveyor1 Conveyor2 Conveyor3 Conveyor4 Conveyor5 Conveyor6
+
+# Processing times: machine: time on each conveyor
+# -inf means (max,+) zero: this conveyor does not visit this machine
+Machine1: 2.0  3.9  0.95 1.1  0.7  1.4
+Machine2: -inf -inf 2.0  1.2  -inf 1.7
+Machine3: 3.7  -inf 2.2  -inf 6.4  -inf
+Machine4: -inf -inf 2.0  -inf 1.0  1.0
+Machine5: 1.7  3.1  3.0  -inf 1.3  -inf
+Machine6: 0.5  3.2  4.3  1.9  1.6  0.4
+Machine7: 1.0  1.0  1.0  1.0  1.0  1.0
+Machine8: 1.5  1.5  1.5  1.2  1.2  1.2
+# Same factory as complex.flowshop, with two of every conveyor.
+# The critical circuit is now the row of Machine3.
+nconveyors: 6
+nmachines: 8
+
+# How many of each machine (tokens of the horizontal cycle)
+nm: 1 1 1 1 1 1 1 1
+
+# How many of each conveyor (tokens of the vertical cycle)
+np: 2 2 2 2 2 2
+
+# Conveyor names (columns)
+conveyors: Conveyor1 Conveyor2 Conveyor3 Conveyor4 Conveyor5 Conveyor6
+
+# Processing times: machine: time on each conveyor
+# -inf means (max,+) zero: this conveyor does not visit this machine
+Machine1: 2.0  3.9  0.95 1.1  0.7  1.4
+Machine2: -inf -inf 2.0  1.2  -inf 1.7
+Machine3: 3.7  -inf 2.2  -inf 6.4  -inf
+Machine4: -inf -inf 2.0  -inf 1.0  1.0
+Machine5: 1.7  3.1  3.0  -inf 1.3  -inf
+Machine6: 0.5  3.2  4.3  1.9  1.6  0.4
+Machine7: 1.0  1.0  1.0  1.0  1.0  1.0
+Machine8: 1.5  1.5  1.5  1.2  1.2  1.2
+# Flowshop: 8 machines, 6 conveyors, one of each resource.
+# The critical circuit is the column of Conveyor3.
+nconveyors: 6
+nmachines: 8
+
+# How many of each machine (tokens of the horizontal cycle)
+nm: 1 1 1 1 1 1 1 1
+
+# How many of each conveyor (tokens of the vertical cycle)
+np: 1 1 1 1 1 1
+
+# Conveyor names (columns)
+conveyors: Conveyor1 Conveyor2 Conveyor3 Conveyor4 Conveyor5 Conveyor6
+
+# Processing times: machine: time on each conveyor
+# -inf means (max,+) zero: this conveyor does not visit this machine
+Machine1: 2.0  3.9  0.95 1.1  0.7  1.4
+Machine2: -inf -inf 2.0  1.2  -inf 1.7
+Machine3: 3.7  -inf 2.2  -inf 6.4  -inf
+Machine4: -inf -inf 2.0  -inf 1.0  1.0
+Machine5: 1.7  3.1  3.0  -inf 1.3  -inf
+Machine6: 0.5  3.2  4.3  1.9  1.6  0.4
+Machine7: 1.0  1.0  1.0  1.0  1.0  1.0
+Machine8: 1.5  1.5  1.5  1.2  1.2  1.2
+# Simple flowshop: 2 machines, 3 conveyors, one of each resource
+nconveyors: 3
+nmachines: 2
+
+# How many of each machine (tokens of the horizontal cycle)
+nm: 1 1
+
+# How many of each conveyor (tokens of the vertical cycle)
+np: 1 1 1
+
+# Conveyor names (columns)
+conveyors: C1 C2 C3
+
+# Processing times: machine: time on C1, C2, C3
+# -inf means (max,+) zero: this conveyor does not visit this machine
+M1: 2.0 3.0 1.0
+M2: 1.0 2.0 1.5
 {
   "revision": 2,
   "type": "GRAFCET",
@@ -1945,46 +2281,6 @@
   "inputs": [
   ]
 }
-# Flowshop definition
-npieces: 6
-nmachines: 8
-
-# Tokens per machine class (nm) - horizontal cycle
-nm: 1 1 1 1 1 1 1 1
-
-# Tokens per piece class (np) - vertical cycle
-np: 1 1 1 1 1 1
-
-# Piece names (columns)
-pieces: Piece1 Piece2 Piece3 Piece4 Piece5 Piece6
-
-# Processing times: machine_name: time1 time2 ...
-# Note: (-inf means (max,+) 0 therefore no task to perform)
-Machine1: 2.0  3.9  0.95 1.1  0.7  1.4
-Machine2: -inf -inf 2.0  1.2  -inf 1.7
-Machine3: 3.7  -inf 2.2  -inf 6.4  -inf
-Machine4: -inf -inf 2.0  -inf 1.0  1.0
-Machine5: 1.7  3.1  3.0  -inf 1.3  -inf
-Machine6: 0.5  3.2  4.3  1.9  1.6  0.4
-Machine7: 1.0  1.0  1.0  1.0  1.0  1.0
-Machine8: 1.5  1.5  1.5  1.2  1.2  1.2
-# Simple Flowshop example (2x3)
-npieces: 3
-nmachines: 2
-
-# Tokens per machine class (nm) - horizontal cycle
-nm: 1 1
-
-# Tokens per piece class (np) - vertical cycle
-np: 1 1 1
-
-# Piece names (columns)
-pieces: P1 P2 P3
-
-# Processing times: machine_name: time1 time2 ...
-# Note: (-inf means (max,+) 0 therefore no task to perform)
-M1: 2.0 3.0 1.0
-M2: 1.0 2.0 1.5
 {
   "revision": 2,
   "type": "Timed event graph",

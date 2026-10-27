@@ -76,7 +76,7 @@ var ENVIRONMENT_IS_SHELL = !ENVIRONMENT_IS_WEB && !ENVIRONMENT_IS_NODE && !ENVIR
 
 // --pre-jses are emitted after the Module integration code, so that they can
 // refer to Module (if they choose; they can also define Module)
-// include: /tmp/tmpcbsi9nv9.js
+// include: /tmp/tmpmqzgv4zv.js
 
   if (!Module['expectedDataFileDownloads']) Module['expectedDataFileDownloads'] = 0;
   Module['expectedDataFileDownloads']++;
@@ -168,11 +168,13 @@ Module['FS_createPath']("/", "examples", true, true);
 Module['FS_createPath']("/examples", "Extended-Petri-Nets", true, true);
 Module['FS_createPath']("/examples/Extended-Petri-Nets", "BoundedBuffer", true, true);
 Module['FS_createPath']("/examples/Extended-Petri-Nets", "Capacity", true, true);
+Module['FS_createPath']("/examples/Extended-Petri-Nets", "ColoredPhilosophers", true, true);
 Module['FS_createPath']("/examples/Extended-Petri-Nets", "Colors", true, true);
 Module['FS_createPath']("/examples/Extended-Petri-Nets", "Inhibitor", true, true);
 Module['FS_createPath']("/examples/Extended-Petri-Nets", "Priorities", true, true);
 Module['FS_createPath']("/examples/Extended-Petri-Nets", "Reset", true, true);
 Module['FS_createPath']("/examples/Extended-Petri-Nets", "Weights", true, true);
+Module['FS_createPath']("/examples", "Flowshops", true, true);
 Module['FS_createPath']("/examples", "GRAFCET", true, true);
 Module['FS_createPath']("/examples/GRAFCET", "ExclusiveChoice", true, true);
 Module['FS_createPath']("/examples/GRAFCET", "GEMMA-Dryer", true, true);
@@ -199,7 +201,6 @@ Module['FS_createPath']("/examples", "Runtime", true, true);
 Module['FS_createPath']("/examples/Runtime", "PickAndPlace", true, true);
 Module['FS_createPath']("/examples", "Timed-Event-Graphs", true, true);
 Module['FS_createPath']("/examples/Timed-Event-Graphs", "EventGraph", true, true);
-Module['FS_createPath']("/examples/Timed-Event-Graphs", "Flowshop", true, true);
 Module['FS_createPath']("/examples/Timed-Event-Graphs", "Howard1", true, true);
 Module['FS_createPath']("/examples/Timed-Event-Graphs", "Howard2", true, true);
 Module['FS_createPath']("/examples/Timed-Event-Graphs", "JPQ", true, true);
@@ -252,25 +253,25 @@ Module['FS_createPath']("/home/runner/work/TimedPetriNetEditor/TimedPetriNetEdit
     }
 
     }
-    loadPackage({"files": [{"filename": "/examples/Extended-Petri-Nets/BoundedBuffer/BoundedBuffer.json", "start": 0, "end": 2074}, {"filename": "/examples/Extended-Petri-Nets/Capacity/Capacity.json", "start": 2074, "end": 3164}, {"filename": "/examples/Extended-Petri-Nets/Colors/Colors.json", "start": 3164, "end": 4681}, {"filename": "/examples/Extended-Petri-Nets/Inhibitor/Inhibitor.json", "start": 4681, "end": 6484}, {"filename": "/examples/Extended-Petri-Nets/Priorities/Priorities.json", "start": 6484, "end": 8467}, {"filename": "/examples/Extended-Petri-Nets/Reset/Reset.json", "start": 8467, "end": 9725}, {"filename": "/examples/Extended-Petri-Nets/Weights/Weights.json", "start": 9725, "end": 11066}, {"filename": "/examples/GRAFCET/ExclusiveChoice/ExclusiveChoice.json", "start": 11066, "end": 12774}, {"filename": "/examples/GRAFCET/GEMMA-Dryer/GEMMA-Dryer.json", "start": 12774, "end": 20742}, {"filename": "/examples/GRAFCET/GermanTrafficLights/GermanTrafficLights.json", "start": 20742, "end": 22971}, {"filename": "/examples/GRAFCET/GrafcetActions/GrafcetActions.json", "start": 22971, "end": 26096}, {"filename": "/examples/GRAFCET/ParallelSequences/ParallelSequences.json", "start": 26096, "end": 29337}, {"filename": "/examples/Petri-Nets/ChainSaw/ChainSaw.json", "start": 29337, "end": 32372}, {"filename": "/examples/Petri-Nets/Coffee/Coffee.json", "start": 32372, "end": 34427}, {"filename": "/examples/Petri-Nets/Conflict/Conflict.json", "start": 34427, "end": 35621}, {"filename": "/examples/Petri-Nets/Deadlock/Deadlock.json", "start": 35621, "end": 38311}, {"filename": "/examples/Petri-Nets/ElevatorControl/ElevatorControl.json", "start": 38311, "end": 41015}, {"filename": "/examples/Petri-Nets/EmergencyCalls/EmergencyCalls.json", "start": 41015, "end": 45415}, {"filename": "/examples/Petri-Nets/FirstNet/FirstNet.json", "start": 45415, "end": 46363}, {"filename": "/examples/Petri-Nets/ForkJoin/ForkJoin.json", "start": 46363, "end": 48366}, {"filename": "/examples/Petri-Nets/FourRoadJunctions/FourRoadJunctions.json", "start": 48366, "end": 54117}, {"filename": "/examples/Petri-Nets/LandingGear/LandingGear.json", "start": 54117, "end": 56509}, {"filename": "/examples/Petri-Nets/MutualExclusion/MutualExclusion.json", "start": 56509, "end": 58427}, {"filename": "/examples/Petri-Nets/Philosophers/Philosophers.json", "start": 58427, "end": 61821}, {"filename": "/examples/Petri-Nets/ProducerConsumer/ProducerConsumer.json", "start": 61821, "end": 63664}, {"filename": "/examples/Petri-Nets/SmarthomeSafety/SmarthomeSafety.json", "start": 63664, "end": 67200}, {"filename": "/examples/Petri-Nets/TrafficLights/TrafficLights.json", "start": 67200, "end": 70308}, {"filename": "/examples/Runtime/PickAndPlace/PickAndPlace.json", "start": 70308, "end": 71724}, {"filename": "/examples/Timed-Event-Graphs/EventGraph/EventGraph.json", "start": 71724, "end": 73855}, {"filename": "/examples/Timed-Event-Graphs/Flowshop/complex.flowshop", "start": 73855, "end": 74537}, {"filename": "/examples/Timed-Event-Graphs/Flowshop/simple.flowshop", "start": 74537, "end": 74896}, {"filename": "/examples/Timed-Event-Graphs/Howard1/Howard1.json", "start": 74896, "end": 76323}, {"filename": "/examples/Timed-Event-Graphs/Howard2/Howard2.json", "start": 76323, "end": 78028}, {"filename": "/examples/Timed-Event-Graphs/JPQ/JPQ.json", "start": 78028, "end": 79947}, {"filename": "/examples/Timed-Event-Graphs/SemiHoward/SemiHoward.teg", "start": 79947, "end": 80032}, {"filename": "/examples/Timed-Event-Graphs/SemiNetherlands/SemiNetherlands.teg", "start": 80032, "end": 80245}, {"filename": "/examples/Timed-Petri-Nets/Durations/Durations.json", "start": 80245, "end": 81616}, {"filename": "/examples/Timed-Petri-Nets/InputsOutputs/InputsOutputs.json", "start": 81616, "end": 83688}, {"filename": "/examples/Timed-Petri-Nets/TimedConflict/TimedConflict.json", "start": 83688, "end": 85509}, {"filename": "/examples/Timed-Petri-Nets/Timeout/Timeout.json", "start": 85509, "end": 87169}, {"filename": "/examples/Timed-Petri-Nets/Unbounded/Unbounded.json", "start": 87169, "end": 88091}, {"filename": "/home/runner/work/TimedPetriNetEditor/TimedPetriNetEditor/data/GEMMA.drawio", "start": 88091, "end": 119863}, {"filename": "/home/runner/work/TimedPetriNetEditor/TimedPetriNetEditor/data/GEMMA.pdf", "start": 119863, "end": 164616}, {"filename": "/home/runner/work/TimedPetriNetEditor/TimedPetriNetEditor/data/TimedPetriNetEditor.icns", "start": 164616, "end": 202764}, {"filename": "/home/runner/work/TimedPetriNetEditor/TimedPetriNetEditor/data/font.ttf", "start": 202764, "end": 374556}, {"filename": "/home/runner/work/TimedPetriNetEditor/TimedPetriNetEditor/data/grafcet2.sty", "start": 374556, "end": 404896}, {"filename": "/home/runner/work/TimedPetriNetEditor/TimedPetriNetEditor/data/imgui.ini", "start": 404896, "end": 435801}, {"filename": "/home/runner/work/TimedPetriNetEditor/TimedPetriNetEditor/data/math.ttf", "start": 435801, "end": 496369}, {"filename": "/home/runner/work/TimedPetriNetEditor/TimedPetriNetEditor/data/math.ttf.LICENSE", "start": 496369, "end": 505185}, {"filename": "/home/runner/work/TimedPetriNetEditor/TimedPetriNetEditor/data/theme.ini", "start": 505185, "end": 505186}], "remote_package_size": 505186});
+    loadPackage({"files": [{"filename": "/examples/Extended-Petri-Nets/BoundedBuffer/BoundedBuffer.json", "start": 0, "end": 2074}, {"filename": "/examples/Extended-Petri-Nets/Capacity/Capacity.json", "start": 2074, "end": 3164}, {"filename": "/examples/Extended-Petri-Nets/ColoredPhilosophers/ColoredPhilosophers.json", "start": 3164, "end": 7632}, {"filename": "/examples/Extended-Petri-Nets/Colors/Colors.json", "start": 7632, "end": 9149}, {"filename": "/examples/Extended-Petri-Nets/Inhibitor/Inhibitor.json", "start": 9149, "end": 10952}, {"filename": "/examples/Extended-Petri-Nets/Priorities/Priorities.json", "start": 10952, "end": 12935}, {"filename": "/examples/Extended-Petri-Nets/Reset/Reset.json", "start": 12935, "end": 14193}, {"filename": "/examples/Extended-Petri-Nets/Weights/Weights.json", "start": 14193, "end": 15534}, {"filename": "/examples/Flowshops/complex-conveyors.flowshop", "start": 15534, "end": 16391}, {"filename": "/examples/Flowshops/complex-machine.flowshop", "start": 16391, "end": 17224}, {"filename": "/examples/Flowshops/complex.flowshop", "start": 17224, "end": 18052}, {"filename": "/examples/Flowshops/simple.flowshop", "start": 18052, "end": 18481}, {"filename": "/examples/GRAFCET/ExclusiveChoice/ExclusiveChoice.json", "start": 18481, "end": 20189}, {"filename": "/examples/GRAFCET/GEMMA-Dryer/GEMMA-Dryer.json", "start": 20189, "end": 28157}, {"filename": "/examples/GRAFCET/GermanTrafficLights/GermanTrafficLights.json", "start": 28157, "end": 30386}, {"filename": "/examples/GRAFCET/GrafcetActions/GrafcetActions.json", "start": 30386, "end": 33511}, {"filename": "/examples/GRAFCET/ParallelSequences/ParallelSequences.json", "start": 33511, "end": 36752}, {"filename": "/examples/Petri-Nets/ChainSaw/ChainSaw.json", "start": 36752, "end": 39787}, {"filename": "/examples/Petri-Nets/Coffee/Coffee.json", "start": 39787, "end": 41842}, {"filename": "/examples/Petri-Nets/Conflict/Conflict.json", "start": 41842, "end": 43036}, {"filename": "/examples/Petri-Nets/Deadlock/Deadlock.json", "start": 43036, "end": 45726}, {"filename": "/examples/Petri-Nets/ElevatorControl/ElevatorControl.json", "start": 45726, "end": 48430}, {"filename": "/examples/Petri-Nets/EmergencyCalls/EmergencyCalls.json", "start": 48430, "end": 52830}, {"filename": "/examples/Petri-Nets/FirstNet/FirstNet.json", "start": 52830, "end": 53778}, {"filename": "/examples/Petri-Nets/ForkJoin/ForkJoin.json", "start": 53778, "end": 55781}, {"filename": "/examples/Petri-Nets/FourRoadJunctions/FourRoadJunctions.json", "start": 55781, "end": 61532}, {"filename": "/examples/Petri-Nets/LandingGear/LandingGear.json", "start": 61532, "end": 63924}, {"filename": "/examples/Petri-Nets/MutualExclusion/MutualExclusion.json", "start": 63924, "end": 65842}, {"filename": "/examples/Petri-Nets/Philosophers/Philosophers.json", "start": 65842, "end": 69236}, {"filename": "/examples/Petri-Nets/ProducerConsumer/ProducerConsumer.json", "start": 69236, "end": 71079}, {"filename": "/examples/Petri-Nets/SmarthomeSafety/SmarthomeSafety.json", "start": 71079, "end": 74615}, {"filename": "/examples/Petri-Nets/TrafficLights/TrafficLights.json", "start": 74615, "end": 77723}, {"filename": "/examples/Runtime/PickAndPlace/PickAndPlace.json", "start": 77723, "end": 79139}, {"filename": "/examples/Timed-Event-Graphs/EventGraph/EventGraph.json", "start": 79139, "end": 81270}, {"filename": "/examples/Timed-Event-Graphs/Howard1/Howard1.json", "start": 81270, "end": 82697}, {"filename": "/examples/Timed-Event-Graphs/Howard2/Howard2.json", "start": 82697, "end": 84402}, {"filename": "/examples/Timed-Event-Graphs/JPQ/JPQ.json", "start": 84402, "end": 86321}, {"filename": "/examples/Timed-Event-Graphs/SemiHoward/SemiHoward.teg", "start": 86321, "end": 86406}, {"filename": "/examples/Timed-Event-Graphs/SemiNetherlands/SemiNetherlands.teg", "start": 86406, "end": 86619}, {"filename": "/examples/Timed-Petri-Nets/Durations/Durations.json", "start": 86619, "end": 87990}, {"filename": "/examples/Timed-Petri-Nets/InputsOutputs/InputsOutputs.json", "start": 87990, "end": 90062}, {"filename": "/examples/Timed-Petri-Nets/TimedConflict/TimedConflict.json", "start": 90062, "end": 91883}, {"filename": "/examples/Timed-Petri-Nets/Timeout/Timeout.json", "start": 91883, "end": 93543}, {"filename": "/examples/Timed-Petri-Nets/Unbounded/Unbounded.json", "start": 93543, "end": 94465}, {"filename": "/home/runner/work/TimedPetriNetEditor/TimedPetriNetEditor/data/GEMMA.drawio", "start": 94465, "end": 126237}, {"filename": "/home/runner/work/TimedPetriNetEditor/TimedPetriNetEditor/data/GEMMA.pdf", "start": 126237, "end": 170990}, {"filename": "/home/runner/work/TimedPetriNetEditor/TimedPetriNetEditor/data/TimedPetriNetEditor.icns", "start": 170990, "end": 209138}, {"filename": "/home/runner/work/TimedPetriNetEditor/TimedPetriNetEditor/data/font.ttf", "start": 209138, "end": 380930}, {"filename": "/home/runner/work/TimedPetriNetEditor/TimedPetriNetEditor/data/grafcet2.sty", "start": 380930, "end": 411270}, {"filename": "/home/runner/work/TimedPetriNetEditor/TimedPetriNetEditor/data/imgui.ini", "start": 411270, "end": 442175}, {"filename": "/home/runner/work/TimedPetriNetEditor/TimedPetriNetEditor/data/math.ttf", "start": 442175, "end": 502743}, {"filename": "/home/runner/work/TimedPetriNetEditor/TimedPetriNetEditor/data/math.ttf.LICENSE", "start": 502743, "end": 511559}, {"filename": "/home/runner/work/TimedPetriNetEditor/TimedPetriNetEditor/data/theme.ini", "start": 511559, "end": 511560}], "remote_package_size": 511560});
 
   })();
 
-// end include: /tmp/tmpcbsi9nv9.js
-// include: /tmp/tmpq6d9t18s.js
+// end include: /tmp/tmpmqzgv4zv.js
+// include: /tmp/tmpudnyz1i5.js
 
     // All the pre-js content up to here must remain later on, we need to run
     // it.
     if ((typeof ENVIRONMENT_IS_WASM_WORKER !== 'undefined' && ENVIRONMENT_IS_WASM_WORKER) || (typeof ENVIRONMENT_IS_PTHREAD !== 'undefined' && ENVIRONMENT_IS_PTHREAD) || (typeof ENVIRONMENT_IS_AUDIO_WORKLET !== 'undefined' && ENVIRONMENT_IS_AUDIO_WORKLET)) Module['preRun'] = [];
     var necessaryPreJSTasks = Module['preRun'].slice();
-  // end include: /tmp/tmpq6d9t18s.js
-// include: /tmp/tmpyvg0tbg5.js
+  // end include: /tmp/tmpudnyz1i5.js
+// include: /tmp/tmp7cu9y3gi.js
 
     if (!Module['preRun']) throw 'Module.preRun should exist because file support used it; did a pre-js delete it?';
     necessaryPreJSTasks.forEach((task) => {
       if (Module['preRun'].indexOf(task) < 0) throw 'All preRun tasks that exist before user pre-js code should remain after; did you replace Module or modify Module.preRun?';
     });
-  // end include: /tmp/tmpyvg0tbg5.js
+  // end include: /tmp/tmp7cu9y3gi.js
 
 
 var programArgs = [];
@@ -9596,9 +9597,9 @@ function checkIncomingModuleAPI() {
   ignoredModuleProp('wasmBinary');
 }
 var ASM_CONSTS = {
-  295688: () => { return window.innerWidth; },  
- 295718: () => { return window.innerHeight; },  
- 295749: ($0) => { var path = UTF8ToString($0); var blob = new Blob([FS.readFile(path)], { type: 'application/octet-stream' }); var link = document.createElement('a'); link.href = URL.createObjectURL(blob); link.download = path.split('/').pop(); document.body.appendChild(link); link.click(); link.remove(); setTimeout(function() { URL.revokeObjectURL(link.href); }, 1000); }
+  296744: () => { return window.innerWidth; },  
+ 296774: () => { return window.innerHeight; },  
+ 296805: ($0) => { var path = UTF8ToString($0); var blob = new Blob([FS.readFile(path)], { type: 'application/octet-stream' }); var link = document.createElement('a'); link.href = URL.createObjectURL(blob); link.download = path.split('/').pop(); document.body.appendChild(link); link.click(); link.remove(); setTimeout(function() { URL.revokeObjectURL(link.href); }, 1000); }
 };
 function ImGui_ImplGlfw_EmscriptenOpenURL(url) { url = url ? UTF8ToString(url) : null; if (url) window.open(url, '_blank'); }
 
@@ -9667,19 +9668,20 @@ var dynCall_iiifii = makeInvalidEarlyAccess('dynCall_iiifii');
 var dynCall_d = makeInvalidEarlyAccess('dynCall_d');
 var dynCall_vf = makeInvalidEarlyAccess('dynCall_vf');
 var dynCall_viiffi = makeInvalidEarlyAccess('dynCall_viiffi');
-var dynCall_fii = makeInvalidEarlyAccess('dynCall_fii');
-var dynCall_vfii = makeInvalidEarlyAccess('dynCall_vfii');
-var dynCall_iiiffii = makeInvalidEarlyAccess('dynCall_iiiffii');
 var dynCall_vid = makeInvalidEarlyAccess('dynCall_vid');
 var dynCall_iiiiif = makeInvalidEarlyAccess('dynCall_iiiiif');
 var dynCall_vij = makeInvalidEarlyAccess('dynCall_vij');
 var dynCall_vddddi = makeInvalidEarlyAccess('dynCall_vddddi');
 var dynCall_viddii = makeInvalidEarlyAccess('dynCall_viddii');
 var dynCall_viiiiffi = makeInvalidEarlyAccess('dynCall_viiiiffi');
+var dynCall_fii = makeInvalidEarlyAccess('dynCall_fii');
+var dynCall_vfii = makeInvalidEarlyAccess('dynCall_vfii');
+var dynCall_iiiffii = makeInvalidEarlyAccess('dynCall_iiiffii');
 var dynCall_iiiff = makeInvalidEarlyAccess('dynCall_iiiff');
 var dynCall_viifii = makeInvalidEarlyAccess('dynCall_viifii');
 var dynCall_iiifffii = makeInvalidEarlyAccess('dynCall_iiifffii');
 var dynCall_iifiif = makeInvalidEarlyAccess('dynCall_iifiif');
+var dynCall_viifffi = makeInvalidEarlyAccess('dynCall_viifffi');
 var dynCall_viifffiii = makeInvalidEarlyAccess('dynCall_viifffiii');
 var dynCall_viifiiiifi = makeInvalidEarlyAccess('dynCall_viifiiiifi');
 var dynCall_dii = makeInvalidEarlyAccess('dynCall_dii');
@@ -9777,19 +9779,20 @@ function assignWasmExports(wasmExports) {
   assert(typeof wasmExports['dynCall_d'] !== 'undefined', 'missing Wasm export: dynCall_d');
   assert(typeof wasmExports['dynCall_vf'] !== 'undefined', 'missing Wasm export: dynCall_vf');
   assert(typeof wasmExports['dynCall_viiffi'] !== 'undefined', 'missing Wasm export: dynCall_viiffi');
-  assert(typeof wasmExports['dynCall_fii'] !== 'undefined', 'missing Wasm export: dynCall_fii');
-  assert(typeof wasmExports['dynCall_vfii'] !== 'undefined', 'missing Wasm export: dynCall_vfii');
-  assert(typeof wasmExports['dynCall_iiiffii'] !== 'undefined', 'missing Wasm export: dynCall_iiiffii');
   assert(typeof wasmExports['dynCall_vid'] !== 'undefined', 'missing Wasm export: dynCall_vid');
   assert(typeof wasmExports['dynCall_iiiiif'] !== 'undefined', 'missing Wasm export: dynCall_iiiiif');
   assert(typeof wasmExports['dynCall_vij'] !== 'undefined', 'missing Wasm export: dynCall_vij');
   assert(typeof wasmExports['dynCall_vddddi'] !== 'undefined', 'missing Wasm export: dynCall_vddddi');
   assert(typeof wasmExports['dynCall_viddii'] !== 'undefined', 'missing Wasm export: dynCall_viddii');
   assert(typeof wasmExports['dynCall_viiiiffi'] !== 'undefined', 'missing Wasm export: dynCall_viiiiffi');
+  assert(typeof wasmExports['dynCall_fii'] !== 'undefined', 'missing Wasm export: dynCall_fii');
+  assert(typeof wasmExports['dynCall_vfii'] !== 'undefined', 'missing Wasm export: dynCall_vfii');
+  assert(typeof wasmExports['dynCall_iiiffii'] !== 'undefined', 'missing Wasm export: dynCall_iiiffii');
   assert(typeof wasmExports['dynCall_iiiff'] !== 'undefined', 'missing Wasm export: dynCall_iiiff');
   assert(typeof wasmExports['dynCall_viifii'] !== 'undefined', 'missing Wasm export: dynCall_viifii');
   assert(typeof wasmExports['dynCall_iiifffii'] !== 'undefined', 'missing Wasm export: dynCall_iiifffii');
   assert(typeof wasmExports['dynCall_iifiif'] !== 'undefined', 'missing Wasm export: dynCall_iifiif');
+  assert(typeof wasmExports['dynCall_viifffi'] !== 'undefined', 'missing Wasm export: dynCall_viifffi');
   assert(typeof wasmExports['dynCall_viifffiii'] !== 'undefined', 'missing Wasm export: dynCall_viifffiii');
   assert(typeof wasmExports['dynCall_viifiiiifi'] !== 'undefined', 'missing Wasm export: dynCall_viifiiiifi');
   assert(typeof wasmExports['dynCall_dii'] !== 'undefined', 'missing Wasm export: dynCall_dii');
@@ -9883,19 +9886,20 @@ function assignWasmExports(wasmExports) {
   dynCall_d = dynCalls['d'] = createExportWrapper('dynCall_d', wasmExports['dynCall_d'], 1);
   dynCall_vf = dynCalls['vf'] = createExportWrapper('dynCall_vf', wasmExports['dynCall_vf'], 2);
   dynCall_viiffi = dynCalls['viiffi'] = createExportWrapper('dynCall_viiffi', wasmExports['dynCall_viiffi'], 6);
-  dynCall_fii = dynCalls['fii'] = createExportWrapper('dynCall_fii', wasmExports['dynCall_fii'], 3);
-  dynCall_vfii = dynCalls['vfii'] = createExportWrapper('dynCall_vfii', wasmExports['dynCall_vfii'], 4);
-  dynCall_iiiffii = dynCalls['iiiffii'] = createExportWrapper('dynCall_iiiffii', wasmExports['dynCall_iiiffii'], 7);
   dynCall_vid = dynCalls['vid'] = createExportWrapper('dynCall_vid', wasmExports['dynCall_vid'], 3);
   dynCall_iiiiif = dynCalls['iiiiif'] = createExportWrapper('dynCall_iiiiif', wasmExports['dynCall_iiiiif'], 6);
   dynCall_vij = dynCalls['vij'] = createExportWrapper('dynCall_vij', wasmExports['dynCall_vij'], 3);
   dynCall_vddddi = dynCalls['vddddi'] = createExportWrapper('dynCall_vddddi', wasmExports['dynCall_vddddi'], 6);
   dynCall_viddii = dynCalls['viddii'] = createExportWrapper('dynCall_viddii', wasmExports['dynCall_viddii'], 6);
   dynCall_viiiiffi = dynCalls['viiiiffi'] = createExportWrapper('dynCall_viiiiffi', wasmExports['dynCall_viiiiffi'], 8);
+  dynCall_fii = dynCalls['fii'] = createExportWrapper('dynCall_fii', wasmExports['dynCall_fii'], 3);
+  dynCall_vfii = dynCalls['vfii'] = createExportWrapper('dynCall_vfii', wasmExports['dynCall_vfii'], 4);
+  dynCall_iiiffii = dynCalls['iiiffii'] = createExportWrapper('dynCall_iiiffii', wasmExports['dynCall_iiiffii'], 7);
   dynCall_iiiff = dynCalls['iiiff'] = createExportWrapper('dynCall_iiiff', wasmExports['dynCall_iiiff'], 5);
   dynCall_viifii = dynCalls['viifii'] = createExportWrapper('dynCall_viifii', wasmExports['dynCall_viifii'], 6);
   dynCall_iiifffii = dynCalls['iiifffii'] = createExportWrapper('dynCall_iiifffii', wasmExports['dynCall_iiifffii'], 8);
   dynCall_iifiif = dynCalls['iifiif'] = createExportWrapper('dynCall_iifiif', wasmExports['dynCall_iifiif'], 6);
+  dynCall_viifffi = dynCalls['viifffi'] = createExportWrapper('dynCall_viifffi', wasmExports['dynCall_viifffi'], 7);
   dynCall_viifffiii = dynCalls['viifffiii'] = createExportWrapper('dynCall_viifffiii', wasmExports['dynCall_viifffiii'], 9);
   dynCall_viifiiiifi = dynCalls['viifiiiifi'] = createExportWrapper('dynCall_viifiiiifi', wasmExports['dynCall_viifiiiifi'], 10);
   dynCall_dii = dynCalls['dii'] = createExportWrapper('dynCall_dii', wasmExports['dynCall_dii'], 3);
@@ -10316,6 +10320,8 @@ var wasmImports = {
   invoke_viif,
   /** @export */
   invoke_viifff,
+  /** @export */
+  invoke_viifffi,
   /** @export */
   invoke_viifffiii,
   /** @export */
@@ -10861,39 +10867,6 @@ function invoke_viiffi(index,a1,a2,a3,a4,a5) {
   }
 }
 
-function invoke_fii(index,a1,a2) {
-  var sp = stackSave();
-  try {
-    return dynCall_fii(index,a1,a2);
-  } catch(e) {
-    stackRestore(sp);
-    if (!(e instanceof EmscriptenEH)) throw e;
-    _setThrew(1, 0);
-  }
-}
-
-function invoke_vfii(index,a1,a2,a3) {
-  var sp = stackSave();
-  try {
-    dynCall_vfii(index,a1,a2,a3);
-  } catch(e) {
-    stackRestore(sp);
-    if (!(e instanceof EmscriptenEH)) throw e;
-    _setThrew(1, 0);
-  }
-}
-
-function invoke_iiiffii(index,a1,a2,a3,a4,a5,a6) {
-  var sp = stackSave();
-  try {
-    return dynCall_iiiffii(index,a1,a2,a3,a4,a5,a6);
-  } catch(e) {
-    stackRestore(sp);
-    if (!(e instanceof EmscriptenEH)) throw e;
-    _setThrew(1, 0);
-  }
-}
-
 function invoke_vid(index,a1,a2) {
   var sp = stackSave();
   try {
@@ -10960,6 +10933,39 @@ function invoke_viiiiffi(index,a1,a2,a3,a4,a5,a6,a7) {
   }
 }
 
+function invoke_fii(index,a1,a2) {
+  var sp = stackSave();
+  try {
+    return dynCall_fii(index,a1,a2);
+  } catch(e) {
+    stackRestore(sp);
+    if (!(e instanceof EmscriptenEH)) throw e;
+    _setThrew(1, 0);
+  }
+}
+
+function invoke_vfii(index,a1,a2,a3) {
+  var sp = stackSave();
+  try {
+    dynCall_vfii(index,a1,a2,a3);
+  } catch(e) {
+    stackRestore(sp);
+    if (!(e instanceof EmscriptenEH)) throw e;
+    _setThrew(1, 0);
+  }
+}
+
+function invoke_iiiffii(index,a1,a2,a3,a4,a5,a6) {
+  var sp = stackSave();
+  try {
+    return dynCall_iiiffii(index,a1,a2,a3,a4,a5,a6);
+  } catch(e) {
+    stackRestore(sp);
+    if (!(e instanceof EmscriptenEH)) throw e;
+    _setThrew(1, 0);
+  }
+}
+
 function invoke_iiiff(index,a1,a2,a3,a4) {
   var sp = stackSave();
   try {
@@ -11004,6 +11010,17 @@ function invoke_iifiif(index,a1,a2,a3,a4,a5) {
   }
 }
 
+function invoke_viifffi(index,a1,a2,a3,a4,a5,a6) {
+  var sp = stackSave();
+  try {
+    dynCall_viifffi(index,a1,a2,a3,a4,a5,a6);
+  } catch(e) {
+    stackRestore(sp);
+    if (!(e instanceof EmscriptenEH)) throw e;
+    _setThrew(1, 0);
+  }
+}
+
 function invoke_viifffiii(index,a1,a2,a3,a4,a5,a6,a7,a8) {
   var sp = stackSave();
   try {
@@ -11019,17 +11036,6 @@ function invoke_viifiiiifi(index,a1,a2,a3,a4,a5,a6,a7,a8,a9) {
   var sp = stackSave();
   try {
     dynCall_viifiiiifi(index,a1,a2,a3,a4,a5,a6,a7,a8,a9);
-  } catch(e) {
-    stackRestore(sp);
-    if (!(e instanceof EmscriptenEH)) throw e;
-    _setThrew(1, 0);
-  }
-}
-
-function invoke_diii(index,a1,a2,a3) {
-  var sp = stackSave();
-  try {
-    return dynCall_diii(index,a1,a2,a3);
   } catch(e) {
     stackRestore(sp);
     if (!(e instanceof EmscriptenEH)) throw e;
@@ -11074,6 +11080,17 @@ function invoke_iij(index,a1,a2) {
   var sp = stackSave();
   try {
     return dynCall_iij(index,a1,a2);
+  } catch(e) {
+    stackRestore(sp);
+    if (!(e instanceof EmscriptenEH)) throw e;
+    _setThrew(1, 0);
+  }
+}
+
+function invoke_diii(index,a1,a2,a3) {
+  var sp = stackSave();
+  try {
+    return dynCall_diii(index,a1,a2,a3);
   } catch(e) {
     stackRestore(sp);
     if (!(e instanceof EmscriptenEH)) throw e;
