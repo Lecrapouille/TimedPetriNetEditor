@@ -25,7 +25,7 @@ first ones with pictures.
 | **k (cycle)** | The number of a firing: k = 2 is the second time the transition fires. |
 | **Cycle time (λ)** | In the long run, the time between two firings of a transition of a timed event graph: the speed of the system. |
 | **Critical circuit** | The loop of the net that sets the cycle time: the bottleneck. |
-| **Flowshop** | A factory where every piece visits the machines in the same order. |
+| **Flowshop** | A factory that produces parts. On its timed event graph, each machine is a horizontal cycle and each conveyor a vertical one. |
 | **Gantt chart** | One row per machine, one bar per operation and cycle. |
 | **GRAFCET** | A French standard (IEC 60848, also called SFC) to describe the control of a machine: steps, transitions with conditions, actions. |
 | **Step** | The place of a GRAFCET: active (it has a token) or not. Named `X0`, `X1` ... |

@@ -350,7 +350,7 @@ A document can hold several GRAFCETs (*Edit > Add a net to the document >
 GRAFCET*, or *File > New > GEMMA (3 GRAFCETs)*). They run together, with one
 engine: one search of the stable situation for all of them. A graph reads
 the steps of another with `Name:Xn` and forces it with `Name{...}`. The
-name of a graph (and its description) is changed with *Edit* in the *Document* tab of the inspector.
+name of a graph (and its description) is changed with *Edit* in the *Document* tab, at the bottom next to the *Console*.
 
 ## 9. Inputs, outputs and the control panel
 

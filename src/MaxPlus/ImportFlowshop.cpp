@@ -19,7 +19,7 @@ namespace tpne {
 //------------------------------------------------------------------------------
 //! \brief (max,+) epsilon: the neutral element of the ⊕ (max) operator, i.e.
 //! Scilab's %0 == -inf (see zero<MaxPlus>() in TropicalAlgebra.hpp). A cell
-//! holding epsilon means "no operation" (a hole) for that machine/piece.
+//! holding epsilon means "no operation" (a hole) for that machine/conveyor.
 float flowshopNoOperation()
 {
     return safeNegInfF();
@@ -80,9 +80,9 @@ static std::string parseFlowshopFile(std::ifstream& file, Flowshop& data)
         std::string key = trim(line.substr(0, colonPos));
         std::string value = trim(line.substr(colonPos + 1));
 
-        if (key == "npieces")
+        if (key == "nconveyors")
         {
-            data.npieces = std::stoul(value);
+            data.nconveyors = std::stoul(value);
         }
         else if (key == "nmachines")
         {
@@ -104,9 +104,9 @@ static std::string parseFlowshopFile(std::ifstream& file, Flowshop& data)
                 data.np.push_back(std::stoul(t));
             }
         }
-        else if (key == "pieces")
+        else if (key == "conveyors")
         {
-            data.pieceNames = splitBySpace(value);
+            data.conveyorNames = splitBySpace(value);
         }
         else
         {
@@ -137,9 +137,9 @@ static std::string parseFlowshopFile(std::ifstream& file, Flowshop& data)
 std::string checkFlowshop(Flowshop const& data)
 {
     std::stringstream error;
-    if (data.npieces == 0 || data.nmachines == 0)
+    if (data.nconveyors == 0 || data.nmachines == 0)
     {
-        error << "Missing npieces or nmachines" << std::endl;
+        error << "Missing nconveyors or nmachines" << std::endl;
         return error.str();
     }
     if (data.nm.size() != data.nmachines)
@@ -147,14 +147,14 @@ std::string checkFlowshop(Flowshop const& data)
         error << "nm size (" << data.nm.size() << ") != nmachines (" << data.nmachines << ")" << std::endl;
         return error.str();
     }
-    if (data.np.size() != data.npieces)
+    if (data.np.size() != data.nconveyors)
     {
-        error << "np size (" << data.np.size() << ") != npieces (" << data.npieces << ")" << std::endl;
+        error << "np size (" << data.np.size() << ") != nconveyors (" << data.nconveyors << ")" << std::endl;
         return error.str();
     }
-    if (data.pieceNames.size() != data.npieces)
+    if (data.conveyorNames.size() != data.nconveyors)
     {
-        error << "pieces count (" << data.pieceNames.size() << ") != npieces (" << data.npieces << ")" << std::endl;
+        error << "conveyors count (" << data.conveyorNames.size() << ") != nconveyors (" << data.nconveyors << ")" << std::endl;
         return error.str();
     }
     if (data.PT.size() != data.nmachines)
@@ -164,9 +164,9 @@ std::string checkFlowshop(Flowshop const& data)
     }
     for (size_t m = 0; m < data.nmachines; ++m)
     {
-        if (data.PT[m].size() != data.npieces)
+        if (data.PT[m].size() != data.nconveyors)
         {
-            error << "Machine " << m << " has " << data.PT[m].size() << " values, expected " << data.npieces << std::endl;
+            error << "Machine " << m << " has " << data.PT[m].size() << " values, expected " << data.nconveyors << std::endl;
             return error.str();
         }
     }
@@ -183,33 +183,33 @@ std::string checkFlowshop(Flowshop const& data)
 // duration)). Token/duration follow the Scilab convention: %1 -> 0 (one
 // neutral element), the buffer feeds carry p(i)/m(j) tokens.
 //
-// Node numbering is 1-based (like Scilab). PT[machine][piece], %0 (-inf, or the
-// legacy "nan") = epsilon = no task.
+// Node numbering is 1-based (like Scilab). PT[machine][conveyor], %0 (-inf, or
+// the legacy "nan") = epsilon = no task.
 void buildFlowshop(Net& net, Flowshop const& data)
 {
     net.reset(TypeOfNet::TimedPetriNet);
     const size_t nmach = data.nmachines;
-    const size_t npiece = data.npieces;
+    const size_t nconv = data.nconveyors;
 
-    // Layout: operations on a machine(row) x piece(col) grid; buffers around it.
-    const float dx = 220.0f;     // horizontal spacing (pieces / columns)
+    // Layout: operations on a machine(row) x conveyor(col) grid; buffers around it.
+    const float dx = 220.0f;     // horizontal spacing (conveyors / columns)
     const float dy = 160.0f;     // vertical spacing (machines / rows)
     const float margin = 120.0f; // margin from origin (room for buffers)
 
     // Push the input (buffer) and output (closing) nodes off the operation grid
     // lines so the long loop-back arcs (out_* -> buffer) do not run over the
-    // internal operation nodes. A piece loop-back is vertical, so its endpoints
-    // are shifted along X; a machine loop-back is horizontal, so its endpoints
-    // are shifted along Y. The input and output of the same piece/machine share
-    // the same shift, hence stay aligned with each other.
-    const float loopX = 0.40f * dx; // piece buffer/closing: clears the column
+    // internal operation nodes. A conveyor loop-back is vertical, so its
+    // endpoints are shifted along X; a machine loop-back is horizontal, so its
+    // endpoints are shifted along Y. The input and output of the same
+    // conveyor/machine share the same shift, hence stay aligned with each other.
+    const float loopX = 0.40f * dx; // conveyor buffer/closing: clears the column
     const float loopY = 0.45f * dy; // machine buffer/closing: clears the row
 
-    // A[machine][piece] = 1-based node id of the operation, 0 if ε / none.
-    std::vector<std::vector<size_t>> A(nmach, std::vector<size_t>(npiece, 0u));
+    // A[machine][conveyor] = 1-based node id of the operation, 0 if ε / none.
+    std::vector<std::vector<size_t>> A(nmach, std::vector<size_t>(nconv, 0u));
     std::vector<size_t> l(nmach, 0u);   // ε run-length on the current machine row
-    std::vector<size_t> d(npiece, 0u);  // ε run-length on the current piece column
-    std::vector<size_t> bp(npiece, 0u); // piece buffer node id
+    std::vector<size_t> d(nconv, 0u);   // ε run-length on the current conveyor column
+    std::vector<size_t> bp(nconv, 0u);  // conveyor buffer node id
     std::vector<size_t> bm(nmach, 0u);  // machine buffer node id
 
     struct NodeInfo { float x; float y; std::string caption; };
@@ -223,7 +223,7 @@ void buildFlowshop(Net& net, Flowshop const& data)
         return ++nd; // 1-based id
     };
 
-    for (size_t i = 0; i < npiece; ++i)
+    for (size_t i = 0; i < nconv; ++i)
     {
         for (size_t j = 0; j < nmach; ++j)
         {
@@ -237,36 +237,38 @@ void buildFlowshop(Net& net, Flowshop const& data)
             {
                 size_t cur = newNode(margin + float(i) * dx,
                                      margin + float(j) * dy,
-                                     data.machineNames[j] + "_" + data.pieceNames[i]);
+                                     data.machineNames[j] + "_" + data.conveyorNames[i]);
                 A[j][i] = cur;
 
-                // Horizontal predecessor (same machine, previous used piece).
+                // Horizontal predecessor (same machine, previous used conveyor).
                 if (l[j] != 0u)
                 {
                     size_t hc = A[j][i - l[j]];
                     edges.push_back({ hc, cur, data.PT[j][i - l[j]], 0u });
                 }
-                // Vertical predecessor (same piece, previous used machine).
+                // Vertical predecessor (same conveyor, previous used machine).
                 if (d[i] != 0u)
                 {
                     size_t hc = A[j - d[i]][i];
                     edges.push_back({ hc, cur, data.PT[j - d[i]][i], 0u });
                 }
-                // First operation of this piece: create its buffer feed (np
-                // tokens). Shifted by loopX off the operation column (kept
-                // aligned with the closing node "out_<piece>").
+                // First operation of this conveyor: create its buffer feed (np
+                // tokens, the number of conveyors). Shifted by loopX off the
+                // operation column (kept aligned with the closing node
+                // "out_<conveyor>").
                 if (d[i] == 0u)
                 {
                     size_t b = newNode(margin + float(i) * dx - loopX,
                                        margin - dy,
-                                       data.pieceNames[i]);
+                                       data.conveyorNames[i]);
                     bp[i] = b;
                     edges.push_back({ b, cur, 0.0f, data.np[i] });
                 }
                 d[i] = 1u;
                 // First operation of this machine: create its buffer feed (nm
-                // tokens). Shifted by loopY off the operation row (kept aligned
-                // with the closing node "out_<machine>").
+                // tokens, the number of machines). Shifted by loopY off the
+                // operation row (kept aligned with the closing node
+                // "out_<machine>").
                 if (l[j] == 0u)
                 {
                     size_t b = newNode(margin - dx,
@@ -279,14 +281,14 @@ void buildFlowshop(Net& net, Flowshop const& data)
             }
         }
 
-        // Closing node of piece i: last_op -> closing -> buffer (loopback).
+        // Closing node of conveyor i: last_op -> closing -> buffer (loopback).
         if (d[i] != 0u)
         {
             size_t lastMachine = nmach - d[i]; // 0-based: Scilab A(nmach-d(i)+1, i)
             size_t hc = A[lastMachine][i];
             size_t cp = newNode(margin + float(i) * dx - loopX,
                                 margin + float(nmach) * dy,
-                                "out_" + data.pieceNames[i]);
+                                "out_" + data.conveyorNames[i]);
             edges.push_back({ hc, cp, data.PT[lastMachine][i], 0u });
             edges.push_back({ cp, bp[i], 0.0f, 0u });
         }
@@ -297,12 +299,12 @@ void buildFlowshop(Net& net, Flowshop const& data)
         // Closing node of machine j: last_op -> closing -> buffer (loopback).
         if (l[j] != 0u)
         {
-            size_t lastPiece = npiece - l[j]; // 0-based: Scilab A(j, npiece-l(j)+1)
-            size_t hc = A[j][lastPiece];
-            size_t cm = newNode(margin + float(npiece) * dx,
+            size_t lastConveyor = nconv - l[j]; // 0-based: Scilab A(j, nconv-l(j)+1)
+            size_t hc = A[j][lastConveyor];
+            size_t cm = newNode(margin + float(nconv) * dx,
                                 margin + float(j) * dy - loopY,
                                 "out_" + data.machineNames[j]);
-            edges.push_back({ hc, cm, data.PT[j][lastPiece], 0u });
+            edges.push_back({ hc, cm, data.PT[j][lastConveyor], 0u });
             edges.push_back({ cm, bm[j], 0.0f, 0u });
         }
     }

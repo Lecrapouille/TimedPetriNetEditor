@@ -1,0 +1,17 @@
+# Simple flowshop: 2 machines, 3 conveyors, one of each resource
+nconveyors: 3
+nmachines: 2
+
+# How many of each machine (tokens of the horizontal cycle)
+nm: 1 1
+
+# How many of each conveyor (tokens of the vertical cycle)
+np: 1 1 1
+
+# Conveyor names (columns)
+conveyors: C1 C2 C3
+
+# Processing times: machine: time on C1, C2, C3
+# -inf means (max,+) zero: this conveyor does not visit this machine
+M1: 2.0 3.0 1.0
+M2: 1.0 2.0 1.5

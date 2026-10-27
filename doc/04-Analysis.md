@@ -118,7 +118,7 @@ A transition is **dead** when it is enabled in no reachable marking: it can neve
 
 ### 3.3 Boundedness
 
-A place is **k-bounded** when it never holds more than `k` tokens in any reachable marking; a net is bounded when all its places are. A **safe** net is 1-bounded: each place is a boolean condition (true when marked). The editor gives the bound of each place (*Bounds of the places*) and the bound of the net: `1-bounded` for the deadlock example, `3-bounded` for [SmarthomeSafety](../examples/Petri-Nets/SmarthomeSafety/README.md) (the place `Remaining` holds 3 tokens). A bounded net has a finite reachability graph. An unbounded place is a buffer without limit: memory that will overflow, a queue that will never empty.
+A place is **k-bounded** when it never holds more than `k` tokens in any reachable marking; a net is bounded when all its places are. A **safe** net is 1-bounded: each place is a boolean condition (true when marked). The editor gives the bound of each place (tab *Bounds*) and the bound of the net: `1-bounded` for the deadlock example, `3-bounded` for [SmarthomeSafety](../examples/Petri-Nets/SmarthomeSafety/README.md) (the place `Remaining` holds 3 tokens). A bounded net has a finite reachability graph. An unbounded place is a buffer without limit: memory that will overflow, a queue that will never empty.
 
 ### 3.4 Liveness
 
@@ -282,17 +282,16 @@ A T-invariant is a candidate cycle: the order of the firings is not given, and s
 
 ### 8.1 Analysis > Properties
 
-*Analysis > Properties* opens the tab **Properties** of the *Analysis* window, for every type of net. For a small net (60 nodes or fewer) it is computed at once, and again after each change: draw and watch the properties follow. For a bigger net, press **Compute**; *max markings* sets the limit of the exploration.
+*Analysis > Properties* brings the tab **Summary** of the *Analysis* window in front (the window is always there), for every type of net. The properties have four tabs: *Summary*, *Bounds*, *Invariants* and *Report*; each one starts with *Compute*, *max markings*, *Graph of the markings* and *Show on the net*. For a small net (60 nodes or fewer) it is computed at once, and again after each change: draw and watch the properties follow. For a bigger net, press **Compute**; *max markings* sets the limit of the exploration.
 
 ![Properties of the deadlock example](pics/04-Properties-Deadlock.png)
 
-*The tab Properties for the two robots. The summary: 6 markings (all), a deadlock, no dead transition, 1-bounded, not live. With *Show on the net*, the transitions that are not live are framed on the net.*
+*The properties of the two robots. The summary: 6 markings (all), a deadlock, no dead transition, 1-bounded, not live. With *Show on the net*, the transitions that are not live are framed on the net.*
 
-| Part | What it shows |
-|------|---------------|
-| Summary | markings explored (and whether all were), deadlock, dead transitions, bounded, live, in green or red |
-| Deadlock | the deadlock marking, the shortest firing sequence to it, and *Replay the path in the Journal* |
-| Bounds of the places | the maximum number of tokens of each place, or unbounded |
+| Tab or button | What it shows |
+|---------------|---------------|
+| Summary | markings explored (and whether all were), deadlock, dead transitions, bounded, live, in green or red; then the deadlock marking, the shortest firing sequence to it, and *Replay the path in the Journal* |
+| Bounds | the maximum number of tokens of each place, or unbounded |
 | Invariants | the P- and T-invariants; a click on one marks its nodes on the net |
 | Report | the same text as `tpne-check` (*Copy the report*) |
 | *Show on the net* | marks the dead transitions, the transitions not live and the unbounded places |

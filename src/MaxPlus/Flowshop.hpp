@@ -16,26 +16,28 @@ namespace tpne {
 class Net;
 
 // *****************************************************************************
-//! \brief A flowshop: every piece visits the machines in the same order (rows
-//! of PT), every machine works on the pieces in the same order (columns of
-//! PT). Same data as the .flowshop files and the flowshop of ScicosLab and
-//! MaxPlus.jl.
+//! \brief A flowshop: a factory that produces parts. Every part visits the
+//! machines in the same order (rows of PT), and every machine works on the
+//! conveyors in the same order (columns of PT). On the timed event graph a
+//! machine is a horizontal cycle and a conveyor a vertical one; nm and np are
+//! how many of each resource the factory owns. Same data as the .flowshop
+//! files and the flowshop of ScicosLab and MaxPlus.jl.
 // *****************************************************************************
 struct Flowshop
 {
-    size_t npieces = 0;
+    size_t nconveyors = 0;
     size_t nmachines = 0;
-    std::vector<std::string> pieceNames;
+    std::vector<std::string> conveyorNames;
     std::vector<std::string> machineNames;
-    //! \brief Tokens per piece (pieces of this kind in the shop at once).
+    //! \brief Tokens per conveyor (how many conveyors of this column).
     std::vector<size_t> np;
-    //! \brief Tokens per machine (pieces a machine works on at once).
+    //! \brief Tokens per machine (how many machines of this row).
     std::vector<size_t> nm;
-    //! \brief PT[machine][piece]: processing time, or flowshopNoOperation().
+    //! \brief PT[machine][conveyor]: processing time, or flowshopNoOperation().
     std::vector<std::vector<float>> PT;
 };
 
-//! \brief Value of PT for "this piece does not visit this machine" ((max,+)
+//! \brief Value of PT for "this conveyor does not visit this machine" ((max,+)
 //! epsilon, -inf).
 float flowshopNoOperation();
 
@@ -49,19 +51,19 @@ std::string checkFlowshop(Flowshop const& flowshop);
 
 //------------------------------------------------------------------------------
 //! \brief Replace the net by the timed event graph of the flowshop: one
-//! transition "<machine>_<piece>" per operation (it fires when the operation
-//! starts), one input and one output transition per piece and per machine
-//! ("<piece>", "out_<piece>", ...). The flowshop shall be checked.
+//! transition "<machine>_<conveyor>" per operation (it fires when the operation
+//! starts), one input and one output transition per conveyor and per machine
+//! ("<conveyor>", "out_<conveyor>", ...). The flowshop shall be checked.
 //------------------------------------------------------------------------------
 void buildFlowshop(Net& net, Flowshop const& flowshop);
 
 //------------------------------------------------------------------------------
-//! \brief Machine and piece of an operation: a transition named
-//! "<machine>_<piece>" by buildFlowshop() (the Gantt chart draws it on the row
-//! of the machine, colored by piece). Other names ("T3", "out_P1") are their
-//! own machine and piece.
+//! \brief Machine and conveyor of an operation: a transition named
+//! "<machine>_<conveyor>" by buildFlowshop() (the Gantt chart draws it on the
+//! row of the machine, colored by conveyor). Other names ("T3", "out_C1") are
+//! their own machine and conveyor.
 //------------------------------------------------------------------------------
-void operationOf(std::string const& name, std::string& machine, std::string& piece);
+void operationOf(std::string const& name, std::string& machine, std::string& conveyor);
 
 //------------------------------------------------------------------------------
 //! \brief Earliest firing dates of a timed event graph during its first

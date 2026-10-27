@@ -689,7 +689,6 @@ void Editor::inspector()
     }
     drawArcsPanel(net(), simulation(), modified);
     drawColorsPanel(net(), simulation(), modified);
-    documentPanel();
 
     if (receptivity_help)
         openHelp(1);

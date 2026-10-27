@@ -200,7 +200,7 @@ Right click on an arc or a place of a Petri net: weights, inhibitor and reset ar
 | You want to | Read | Open |
 |-------------|------|------|
 | understand Petri nets | [3](03-Petri-Nets.md), [4](04-Analysis.md), [5](05-Extended-Petri-Nets.md) | [examples/Petri-Nets](../examples/README.md#-petri-nets) |
-| know how fast a system goes, and why | [6](06-Timed-Petri-Nets.md), [7](07-Timed-Event-Graphs.md), [8](08-Max-Plus-Algebra.md) | `examples/Timed-Event-Graphs/Flowshop/simple.flowshop` |
+| know how fast a system goes, and why | [6](06-Timed-Petri-Nets.md), [7](07-Timed-Event-Graphs.md), [8](08-Max-Plus-Algebra.md) | `examples/Flowshops/simple.flowshop` |
 | control a machine | [9](09-GRAFCET.md), [10](10-GEMMA.md) | `examples/GRAFCET/GEMMA-Dryer/GEMMA-Dryer.json` |
 | drive your program with a net | [11](11-Runtime.md), [12](12-Code-Generation.md), [13](13-Debugging.md) | `examples/Runtime/PickAndPlace/PickAndPlace.json` |
 

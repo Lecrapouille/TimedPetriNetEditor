@@ -293,9 +293,9 @@ the whole system; they are its **bottleneck**.
 cycles: `Node 0: 0 8 12 17 21 26 30 35 39 44`: from `k = 2`, the steps
 alternate 4 and 5, and `Node0(k + 2) = 9 + Node0(k)`: cyclicity 2, `λ = 9 / 2`.
 
-**The flowshop** of chapter 7: the loop of `M1` lasts 2 + 3 + 1 = 6 with one
-token, the loop of `M2` 4.5, the loops of the pieces 3, 5 and 2.5, and the
-mixed circuits less: `λ = 6`.
+**The flowshop** of chapter 7: the loop of machine `M1` lasts 2 + 3 + 1 = 6
+with one token, the loop of `M2` 4.5, the loops of the conveyors 3, 5 and
+2.5, and the mixed circuits less: `λ = 6`.
 
 ### 5.3 What if the net is not strongly connected?
 
@@ -372,7 +372,7 @@ On the flowshop, it draws the loop of the machine `M1`, `λ = 6`:
 
 ![Critical circuit of the flowshop](pics/08-Flowshop-Critical.png)
 
-and on `complex.flowshop` the column of `Piece3`, `λ = 16.95` (chapter 7,
+and on `complex.flowshop` the column of `Conveyor3`, `λ = 16.95` (chapter 7,
 §6.6):
 
 ![Critical circuit of the big flowshop](pics/08-Complex-Critical.png)
@@ -444,7 +444,7 @@ The library gives the same results to a program: `findCriticalCycle()`,
 | [JPQ](../examples/Timed-Event-Graphs/JPQ/README.md) | *Linear system* | `D`, `A`, `B`, `C` of §4.1 |
 | [SemiHoward](../examples/Timed-Event-Graphs/SemiHoward/README.md) | *Critical circuit*, *Gantt* | two components (§5.3) |
 | [SemiNetherlands](../examples/Timed-Event-Graphs/SemiNetherlands/README.md) | *Critical circuit* | λ = 47.67 on a net of 8 transitions |
-| [Flowshop](../examples/Timed-Event-Graphs/Flowshop/README.md) | add a token to a machine | λ goes down, the critical circuit moves |
+| [Flowshop](../examples/Flowshops/README.md) | add a conveyor (`np`), then look at *Critical circuit* | λ goes down; the red circuit can move from a column to a row |
 
 ## 12. Pitfalls
 

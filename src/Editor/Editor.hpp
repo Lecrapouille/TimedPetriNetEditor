@@ -167,6 +167,9 @@ private: // GRAFCET control panel and description of the document (EditorPanel.c
 private: // Show results from Petri algorithms
 
     void analysisWindow();
+    //! \brief Begin the tab of this number of the Analysis window, selected
+    //! when asked (openAnalysis()).
+    bool analysisTab(char const* name, int const tab);
     //! \brief The tabs of the (max,+) algebra (timed event graphs).
     void analysisMaxPlus();
     void analysisCritical();
@@ -180,7 +183,7 @@ private: // Show results from Petri algorithms
     void markingsWindow();
     //! \brief Compute the graph of the markings of the net, open its window.
     void showMarkingsGraph(Net const& analyzed);
-    void openAnalysis(int tab) { m_states.show_analysis = true; m_states.analysis_tab = tab; }
+    void openAnalysis(int tab) { m_states.analysis_tab = tab; ImGui::SetWindowFocus("Analysis"); }
 
 private: // Document management
 
@@ -387,7 +390,7 @@ private:
         enum class FileDialog { None, Load, SaveAs, Export, Import, Screenshot };
 
         //! \brief Analysis window and the tab to bring in front (-1: none).
-        bool show_analysis = false;
+        bool show_analysis = true;
         int analysis_tab = -1;
         int gantt_cycles = 3;
 
@@ -499,8 +502,8 @@ private:
         //! \brief Bars of the Gantt chart, for the net of the given revision.
         std::vector<GanttBarData> gantt_bars;
         std::vector<std::string> gantt_rows;
-        //! \brief Names of the colors of the bars (pieces of a flowshop).
-        std::vector<std::string> gantt_pieces;
+        //! \brief Names of the colors of the bars (conveyors of a flowshop).
+        std::vector<std::string> gantt_conveyors;
         std::string gantt_error;
         AnalysisKey gantt_key;
         int gantt_computed_cycles = 0;

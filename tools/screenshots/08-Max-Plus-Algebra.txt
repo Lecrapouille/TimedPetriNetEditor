@@ -2,5 +2,5 @@
 doc/pics/08-Howard2-Critical.png -w -f "Critical circuit" examples/Timed-Event-Graphs/Howard2/Howard2.json
 doc/pics/08-Howard2-Adjacency.png -w -f Adjacency examples/Timed-Event-Graphs/Howard2/Howard2.json
 doc/pics/08-JPQ-Linear-System.png -w -f "Linear system" examples/Timed-Event-Graphs/JPQ/JPQ.json
-doc/pics/08-Flowshop-Critical.png -w -f "Critical circuit" examples/Timed-Event-Graphs/Flowshop/simple.flowshop
-doc/pics/08-Complex-Critical.png -s -f "Critical circuit" examples/Timed-Event-Graphs/Flowshop/complex.flowshop
+doc/pics/08-Flowshop-Critical.png -w -f "Critical circuit" examples/Flowshops/simple.flowshop
+doc/pics/08-Complex-Critical.png -s -f "Critical circuit" examples/Flowshops/complex.flowshop

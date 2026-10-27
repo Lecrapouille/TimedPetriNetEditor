@@ -145,10 +145,6 @@ void Editor::toolbar()
         m_view.grid.snap ^= true;
     if (ImGui::IsItemHovered())
         ImGui::SetTooltip("Snap the nodes to the grid when they move (G)");
-    // Not "Analysis": the menu of the same name is in this menu bar. Every net
-    // has its properties; timed event graphs also the (max,+) tabs.
-    if (ImGui::MenuItem("Analysis window##toolbar", nullptr, m_states.show_analysis))
-        m_states.show_analysis ^= true;
 }
 
 //------------------------------------------------------------------------------
@@ -693,7 +689,7 @@ void Editor::handleMenuActions()
 
     // Analysis window (dockable, not modal)
     m_states.properties_shown = false;
-    if (m_states.show_analysis) { analysisWindow(); }
+    analysisWindow(); // always there
     if (m_states.markings.open) { markingsWindow(); }
     // The marks of the analysis go with its tab.
     if (!m_states.properties_shown)

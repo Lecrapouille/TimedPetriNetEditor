@@ -30,7 +30,7 @@ not written by hand.
 | # | Chapter | You will learn |
 |---|---------|----------------|
 | 6 | ⏱️ [Timed Petri nets](06-Timed-Petri-Nets.md) | Durations and delays, how a timed net runs, timeouts, sources and sinks, conflicts in time |
-| 7 | 🔁 [Timed event graphs](07-Timed-Event-Graphs.md) | Event graphs, the compact drawing, dater and counter equations, a factory (flowshop) and its Gantt chart |
+| 7 | 🔁 [Timed event graphs](07-Timed-Event-Graphs.md) | Event graphs, the compact drawing, dater and counter equations, a factory (flowshop): machines, conveyors, Gantt chart |
 | 8 | ➕ [The (max,+) algebra](08-Max-Plus-Algebra.md) | The algebra, its matrices, the linear systems of timed event graphs, the cycle time as an eigenvalue, Howard's algorithm and the critical circuit |
 
 ## 🏭 Part IV — Automation

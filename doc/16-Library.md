@@ -125,10 +125,10 @@ CriticalCycleResult cc = findCriticalCycle(net);   // cc.durations: λ
 std::cout << showDaterEquation(net, "", true, false).str();
 ```
 
-This gives the numbers of [chapter 3](03-Timed-Nets-and-Max-Plus.md#3-tutorial-how-fast-is-my-factory):
-`M1_P1: 0 6 12`, `λ = 6`, `M2_P1(k) = max(2 + M1_P1(k), M2(k - 1))`.
+This gives the numbers of [chapter 7](07-Timed-Event-Graphs.md#6-tutorial-how-fast-is-my-factory):
+`M1_C1: 0 6 12`, `λ = 6`, `M2_C1(k) = max(2 + M1_C1(k), M2(k - 1))`.
 `toSysLin()` and `toAdjacencyMatrices()` give the matrices, `operationOf()`
-splits `M1_P2` into its machine and its piece.
+splits `M1_C2` into its machine and its conveyor.
 
 ## 4. Simulate a timed net
 

@@ -269,97 +269,83 @@ void Editor::analysisEquations()
 }
 
 //------------------------------------------------------------------------------
+bool Editor::analysisTab(char const* name, int const tab)
+{
+    bool const asked = (m_states.analysis_tab == tab);
+    if (!ImGui::BeginTabItem(name, nullptr, asked ? ImGuiTabItemFlags_SetSelected : ImGuiTabItemFlags_None))
+        return false;
+    if (asked)
+        m_states.analysis_tab = -1;
+    return true;
+}
+
+//------------------------------------------------------------------------------
 void Editor::analysisWindow()
 {
+    // Always there, one row of tabs: the properties of any net (Petri net
+    // theory, time not considered), then the (max,+) algebra of a timed net.
+    // Tabs (openAnalysis()): 0 to 5 (max,+), 6 to 9 properties.
     ImGui::SetNextWindowSize(ImVec2(520.0f, 420.0f), ImGuiCond_FirstUseEver);
-    if (!ImGui::Begin("Analysis", &m_states.show_analysis))
+    if (ImGui::Begin("Analysis") && ImGui::BeginTabBar("##analysis", ImGuiTabBarFlags_FittingPolicyScroll))
     {
-        ImGui::End();
-        return;
-    }
-    // Two analyses: the properties of any net (Petri net theory, time not
-    // considered), the (max,+) algebra of the timed nets (they shall be event
-    // graphs). Tabs 0 to 5: (max,+), 6: properties (openAnalysis()).
-    bool const timed = (net().type() == TypeOfNet::TimedPetriNet);
-    int const asked = m_states.analysis_tab;
-    auto selected = [](bool const asked_) {
-        return asked_ ? ImGuiTabItemFlags_SetSelected : ImGuiTabItemFlags_None;
-    };
-    // The tab asked is shown: the request is done (a new tab bar may need
-    // more than one frame to select it).
-    auto done = [this](int const tab) {
-        if (m_states.analysis_tab == tab)
-            m_states.analysis_tab = -1;
-    };
-    if (ImGui::BeginTabBar("##analysis"))
-    {
-        if (ImGui::BeginTabItem("Properties", nullptr, selected(asked == 6)))
-        {
-            done(6);
-            analysisProperties();
-            ImGui::EndTabItem();
-        }
-        if (timed && ImGui::BeginTabItem("(max,+) algebra", nullptr,
-                                         selected((asked >= 0) && (asked < 6))))
-        {
+        analysisProperties();
+        if (net().type() == TypeOfNet::TimedPetriNet)
             analysisMaxPlus();
-            ImGui::EndTabItem();
-        }
-        // A (max,+) tab asked for a net that is not timed.
-        if (!timed && (asked >= 0) && (asked < 6))
-            m_states.analysis_tab = -1;
         ImGui::EndTabBar();
     }
+    // A (max,+) tab asked for a net that is not timed.
+    if ((net().type() != TypeOfNet::TimedPetriNet) && (m_states.analysis_tab >= 0) &&
+        (m_states.analysis_tab < 6))
+        m_states.analysis_tab = -1;
     ImGui::End();
 }
 
 //------------------------------------------------------------------------------
 void Editor::analysisMaxPlus()
 {
-    // The algebra needs an event graph: else, why not and the faulty arcs.
+    // The algebra needs an event graph: else one tab telling why not, with
+    // the faulty arcs.
     std::string error;
     std::vector<size_t> arcs;
     if (!isEventGraph(net(), error, arcs))
     {
-        m_states.analysis_tab = -1;
-        ImGui::PushTextWrapPos(0.0f);
-        ImGui::TextUnformatted("The (max,+) algebra needs a timed event graph: every place has "
-                               "one input and one output transition, arcs with no weight, "
-                               "inhibition, reset nor color, places with no capacity.");
-        ImGui::Spacing();
-        ImGui::TextColored(ImGui::ColorConvertU32ToFloat4(palette().critical), "%s", error.c_str());
-        ImGui::Spacing();
-        ImGui::TextUnformatted("Change the net, or import a flowshop (File > Import > Flowshop).");
-        ImGui::PopTextWrapPos();
-        if (!arcs.empty() && ImGui::Button("Show the faulty arcs"))
-            markArcs(net(), arcs);
+        bool const asked = (m_states.analysis_tab >= 0) && (m_states.analysis_tab < 6);
+        if (ImGui::BeginTabItem("(max,+)", nullptr, asked ? ImGuiTabItemFlags_SetSelected : ImGuiTabItemFlags_None))
+        {
+            if (asked)
+                m_states.analysis_tab = -1;
+            ImGui::PushTextWrapPos(0.0f);
+            ImGui::TextUnformatted("The (max,+) algebra needs a timed event graph: every place has "
+                                   "one input and one output transition, arcs with no weight, "
+                                   "inhibition, reset nor color, places with no capacity.");
+            ImGui::Spacing();
+            ImGui::TextColored(ImGui::ColorConvertU32ToFloat4(palette().critical), "%s", error.c_str());
+            ImGui::Spacing();
+            ImGui::TextUnformatted("Change the net, or import a flowshop (File > Import > Flowshop).");
+            ImGui::PopTextWrapPos();
+            if (!arcs.empty() && ImGui::Button("Show the faulty arcs"))
+                markArcs(net(), arcs);
+            ImGui::EndTabItem();
+        }
         return;
     }
 
     char const* tabs[] = { "Critical circuit", "Gantt", "Linear system", "Equations",
                            "Adjacency", "Firing dates" };
-    if (ImGui::BeginTabBar("##maxplus", ImGuiTabBarFlags_FittingPolicyScroll))
+    for (int i = 0; i < 6; ++i)
     {
-        for (int i = 0; i < 6; ++i)
+        if (!analysisTab(tabs[i], i))
+            continue;
+        switch (i)
         {
-            ImGuiTabItemFlags const flags = (m_states.analysis_tab == i)
-                ? ImGuiTabItemFlags_SetSelected : ImGuiTabItemFlags_None;
-            if (!ImGui::BeginTabItem(tabs[i], nullptr, flags))
-                continue;
-            if (m_states.analysis_tab == i)
-                m_states.analysis_tab = -1;
-            switch (i)
-            {
-            case 0: analysisCritical(); break;
-            case 1: analysisGantt(); break;
-            case 2: analysisSyslin(); break;
-            case 3: analysisEquations(); break;
-            case 4: analysisAdjacency(); break;
-            case 5: analysisPlot(); break;
-            }
-            ImGui::EndTabItem();
+        case 0: analysisCritical(); break;
+        case 1: analysisGantt(); break;
+        case 2: analysisSyslin(); break;
+        case 3: analysisEquations(); break;
+        case 4: analysisAdjacency(); break;
+        case 5: analysisPlot(); break;
         }
-        ImGui::EndTabBar();
+        ImGui::EndTabItem();
     }
 }
 
@@ -403,20 +389,11 @@ void Editor::analysisProperties()
     auto& cache = m_states.petri;
     Net& current = net();
     Net const& analyzed = analyzedNet();
-    AnalysisKey key = analysisKey();
-    m_states.properties_shown = true;
+    AnalysisKey const key = analysisKey();
     bool const stale = (cache.key != key);
-    bool compute = ImGui::Button(stale ? "Compute" : "Compute again");
-    ImGui::SameLine();
-    ImGui::SetNextItemWidth(110.0f);
-    if (ImGui::InputInt("max markings", &m_states.max_markings, 1000, 10000))
-        m_states.max_markings = std::clamp(m_states.max_markings, 10, 10000000);
-    if (stale && (current.places().size() + current.transitions().size() <= 60u))
-        compute = true; // small net: follow the edition
-    if (compute)
-    {
+    auto compute = [&]() {
         cache = States::PetriProperties{};
-        cache.key = std::move(key);
+        cache.key = key;
         size_t const max = size_t(m_states.max_markings);
         cache.properties = properties(analyzed, max);
         std::string note;
@@ -425,26 +402,10 @@ void Editor::analysisProperties()
         if (cache.invariants_note.empty())
             cache.invariants_note = note;
         cache.report = report(analyzed, max);
-    }
-    if ((cache.key.net != &current) || cache.report.empty())
-    {
-        ImGui::TextWrapped("Deadlocks, dead transitions, bounds, liveness and invariants of the net "
-                           "(durations and GRAFCET rules not considered): press Compute.");
-        m_marks.clear("analysis");
-        return;
-    }
-    if (stale)
-        ImGui::TextColored(ImVec4(0.95f, 0.55f, 0.05f, 1.0f), "The net changed: compute again.");
-
-    if (ImGui::SmallButton("Copy the report"))
-        ImGui::SetClipboardText(cache.report.c_str());
-    ImGui::SameLine();
-    if (ImGui::SmallButton("Graph of the markings"))
-        showMarkingsGraph(analyzed);
-    if (ImGui::IsItemHovered())
-        ImGui::SetTooltip("Draw the graph of the markings in a window (and export it to dot)");
-    ImGui::SameLine();
-    ImGui::Checkbox("Show on the net", &m_states.mark_properties);
+    };
+    if (stale && (current.places().size() + current.transitions().size() <= 60u))
+        compute(); // small net: follow the edition
+    auto ready = [&]() { return (cache.key.net == &current) && !cache.report.empty(); };
 
     Properties const& prop = cache.properties;
     Palette const& pal = palette();
@@ -458,32 +419,177 @@ void Editor::analysisProperties()
         return s;
     };
 
-    // Summary.
-    ImGui::SeparatorText("Summary");
-    badge("Markings", prop.complete ? 1 : 0, std::to_string(prop.states) + (prop.complete ? " (all)" : " (stopped: maybe more)"));
-    badge("Deadlock", prop.deadlock ? -1 : (prop.complete ? 1 : 0),
-          prop.deadlock ? "yes" : (prop.complete ? "none" : "none found"));
-    badge("Dead transitions", prop.dead_transitions.empty() ? 1 : -1,
-          prop.dead_transitions.empty() ? "none" : names(prop.dead_transitions));
-    std::string unbounded;
-    size_t k = 0u;
-    for (size_t p = 0u; p < prop.bounds.size(); ++p)
-    {
-        if (prop.bounds[p] == OMEGA)
-            unbounded += (unbounded.empty() ? "" : ", ") + current.places()[p].key;
-        else
-            k = std::max(k, prop.bounds[p]);
-    }
-    badge("Bounded", prop.bounded ? 1 : (unbounded.empty() ? 0 : -1),
-          prop.bounded ? "yes (" + std::to_string(k) + "-bounded)" : (unbounded.empty() ? "unknown" : "no: " + unbounded));
-    badge("Live", !prop.complete ? 0 : (prop.live ? 1 : -1),
-          !prop.complete ? "unknown" : (prop.live ? "yes" : "no: " + names(prop.not_live)));
-    ImGui::PushStyleColor(ImGuiCol_Text, ImGui::GetStyleColorVec4(ImGuiCol_TextDisabled));
-    for (auto const& note : prop.notes)
-        ImGui::TextWrapped("%s", note.c_str());
-    ImGui::PopStyleColor();
+    // On top of each tab of the properties: compute, the graph of the
+    // markings, the marks on the net. False: nothing computed yet.
+    auto toolbar = [&]() -> bool {
+        m_states.properties_shown = true;
+        if (ImGui::Button((stale || !ready()) ? "Compute" : "Compute again"))
+            compute();
+        ImGui::SameLine();
+        ImGui::SetNextItemWidth(110.0f);
+        if (ImGui::InputInt("max markings", &m_states.max_markings, 1000, 10000))
+            m_states.max_markings = std::clamp(m_states.max_markings, 10, 10000000);
+        if (!ready())
+        {
+            ImGui::TextWrapped("Deadlocks, dead transitions, bounds, liveness and invariants of the net "
+                               "(durations and GRAFCET rules not considered): press Compute.");
+            return false;
+        }
+        if (ImGui::SmallButton("Graph of the markings"))
+            showMarkingsGraph(analyzed);
+        if (ImGui::IsItemHovered())
+            ImGui::SetTooltip("Draw the graph of the markings in a window (and export it to dot)");
+        ImGui::SameLine();
+        ImGui::Checkbox("Show on the net", &m_states.mark_properties);
+        if (stale)
+            ImGui::TextColored(ImVec4(0.95f, 0.55f, 0.05f, 1.0f), "The net changed: compute again.");
+        ImGui::Separator();
+        return true;
+    };
 
-    // Marks on the net: dead transitions, transitions not live, unbounded places.
+    // Summary, and the deadlock found.
+    if (analysisTab("Summary", 6))
+    {
+        if (toolbar())
+        {
+            badge("Markings", prop.complete ? 1 : 0, std::to_string(prop.states) + (prop.complete ? " (all)" : " (stopped: maybe more)"));
+            badge("Deadlock", prop.deadlock ? -1 : (prop.complete ? 1 : 0),
+                  prop.deadlock ? "yes" : (prop.complete ? "none" : "none found"));
+            badge("Dead transitions", prop.dead_transitions.empty() ? 1 : -1,
+                  prop.dead_transitions.empty() ? "none" : names(prop.dead_transitions));
+            std::string unbounded;
+            size_t k = 0u;
+            for (size_t p = 0u; p < prop.bounds.size(); ++p)
+            {
+                if (prop.bounds[p] == OMEGA)
+                    unbounded += (unbounded.empty() ? "" : ", ") + current.places()[p].key;
+                else
+                    k = std::max(k, prop.bounds[p]);
+            }
+            badge("Bounded", prop.bounded ? 1 : (unbounded.empty() ? 0 : -1),
+                  prop.bounded ? "yes (" + std::to_string(k) + "-bounded)" : (unbounded.empty() ? "unknown" : "no: " + unbounded));
+            badge("Live", !prop.complete ? 0 : (prop.live ? 1 : -1),
+                  !prop.complete ? "unknown" : (prop.live ? "yes" : "no: " + names(prop.not_live)));
+            ImGui::PushStyleColor(ImGuiCol_Text, ImGui::GetStyleColorVec4(ImGuiCol_TextDisabled));
+            for (auto const& note : prop.notes)
+                ImGui::TextWrapped("%s", note.c_str());
+            ImGui::PopStyleColor();
+
+            if (prop.deadlock)
+            {
+                ImGui::SeparatorText("Deadlock");
+                std::string marking;
+                for (size_t p = 0u; p < prop.deadlock_marking.size(); ++p)
+                {
+                    if (prop.deadlock_marking[p] > 0u)
+                        marking += (marking.empty() ? "" : ", ") + current.places()[p].key + "=" +
+                                   std::to_string(prop.deadlock_marking[p]);
+                }
+                ImGui::TextWrapped("Marking: %s", marking.empty() ? "no token" : marking.c_str());
+                ImGui::TextWrapped("Reached %s %s", prop.deadlock_path.empty() ? "at once" : "after firing",
+                                   names(prop.deadlock_path).c_str());
+                ImGui::BeginDisabled(prop.deadlock_path.empty() || activeDocument().isAnySimulationRunning());
+                if (ImGui::Button("Replay the path in the Journal"))
+                {
+                    m_journal.showFirings(current, "path to the deadlock", prop.deadlock_path);
+                    ImGui::SetWindowFocus("Journal");
+                }
+                ImGui::EndDisabled();
+            }
+        }
+        ImGui::EndTabItem();
+    }
+
+    // Bounds.
+    if (analysisTab("Bounds", 7))
+    {
+        if (toolbar() &&
+            ImGui::BeginTable("##bounds", 2, ImGuiTableFlags_RowBg | ImGuiTableFlags_SizingStretchProp))
+        {
+            ImGui::TableSetupColumn("Place");
+            ImGui::TableSetupColumn("Max tokens");
+            ImGui::TableHeadersRow();
+            for (size_t p = 0u; (p < prop.bounds.size()) && (p < current.places().size()); ++p)
+            {
+                ImGui::TableNextRow();
+                ImGui::TableNextColumn();
+                ImGui::Text("%s %s", current.places()[p].key.c_str(), current.places()[p].caption.c_str());
+                ImGui::TableNextColumn();
+                if (prop.bounds[p] == OMEGA)
+                    ImGui::TextColored(ImGui::ColorConvertU32ToFloat4(pal.critical), "unbounded");
+                else
+                    ImGui::Text("%zu", prop.bounds[p]);
+            }
+            ImGui::EndTable();
+        }
+        ImGui::EndTabItem();
+    }
+
+    // Invariants: a click marks their nodes.
+    size_t const offset = cache.p_invariants.size();
+    if (analysisTab("Invariants", 8))
+    {
+        if (toolbar())
+        {
+            if (!cache.invariants_note.empty())
+            {
+                ImGui::PushStyleColor(ImGuiCol_Text, ImGui::GetStyleColorVec4(ImGuiCol_TextDisabled));
+                ImGui::TextWrapped("%s", cache.invariants_note.c_str());
+                ImGui::PopStyleColor();
+            }
+            Marking const m0 = analyzed.tokens();
+            ImGui::TextDisabled("P-invariants: the weighted tokens of these places never change");
+            if (cache.p_invariants.empty())
+                ImGui::BulletText("none");
+            for (size_t i = 0u; i < cache.p_invariants.size(); ++i)
+            {
+                auto const& y = cache.p_invariants[i];
+                int64_t c = 0;
+                for (size_t p = 0u; (p < y.size()) && (p < m0.size()); ++p)
+                    c += y[p] * int64_t(m0[p]);
+                std::string const label = invariantText(current.places(), y) + " = " + std::to_string(c) +
+                                          "##p" + std::to_string(i);
+                if (ImGui::Selectable(label.c_str(), cache.marked_invariant == int(i)))
+                    cache.marked_invariant = (cache.marked_invariant == int(i)) ? -1 : int(i);
+            }
+            ImGui::TextDisabled("T-invariants: firing these transitions gives the marking back");
+            if (cache.t_invariants.empty())
+                ImGui::BulletText("none");
+            for (size_t i = 0u; i < cache.t_invariants.size(); ++i)
+            {
+                std::string const label = invariantText(current.transitions(), cache.t_invariants[i]) +
+                                          "##t" + std::to_string(i);
+                int const id = int(offset + i);
+                if (ImGui::Selectable(label.c_str(), cache.marked_invariant == id))
+                    cache.marked_invariant = (cache.marked_invariant == id) ? -1 : id;
+            }
+        }
+        ImGui::EndTabItem();
+    }
+
+    // The text of tpne-check.
+    if (analysisTab("Report", 9))
+    {
+        if (toolbar())
+        {
+            if (ImGui::SmallButton("Copy the report"))
+                ImGui::SetClipboardText(cache.report.c_str());
+            ImGui::BeginChild("##report", ImVec2(0.0f, 0.0f), ImGuiChildFlags_Borders,
+                              ImGuiWindowFlags_HorizontalScrollbar);
+            ImGui::TextUnformatted(cache.report.c_str());
+            ImGui::EndChild();
+        }
+        ImGui::EndTabItem();
+    }
+
+    // Marks on the net, while a tab of the properties is shown: dead
+    // transitions, transitions not live, unbounded places, the nodes of the
+    // invariant selected.
+    if (!ready())
+    {
+        m_marks.clear("analysis");
+        return;
+    }
     std::vector<NodeMark> marks;
     if (m_states.mark_properties)
     {
@@ -505,135 +611,44 @@ void Editor::analysisProperties()
                 marks.push_back({ current.places()[p].nodeId(), pal.critical, "unbounded" });
         }
     }
-
-    // Deadlock.
-    if (prop.deadlock && ImGui::CollapsingHeader("Deadlock", ImGuiTreeNodeFlags_DefaultOpen))
+    if (cache.marked_invariant >= 0)
     {
-        std::string marking;
-        for (size_t p = 0u; p < prop.deadlock_marking.size(); ++p)
-        {
-            if (prop.deadlock_marking[p] > 0u)
-                marking += (marking.empty() ? "" : ", ") + current.places()[p].key + "=" +
-                           std::to_string(prop.deadlock_marking[p]);
-        }
-        ImGui::TextWrapped("Marking: %s", marking.empty() ? "no token" : marking.c_str());
-        ImGui::TextWrapped("Reached %s %s", prop.deadlock_path.empty() ? "at once" : "after firing",
-                           names(prop.deadlock_path).c_str());
-        ImGui::BeginDisabled(prop.deadlock_path.empty() || activeDocument().isAnySimulationRunning());
-        if (ImGui::Button("Replay the path in the Journal"))
-        {
-            m_journal.showFirings(current, "path to the deadlock", prop.deadlock_path);
-            ImGui::SetWindowFocus("Journal");
-        }
-        ImGui::EndDisabled();
-    }
-
-    // Bounds.
-    if (ImGui::CollapsingHeader("Bounds of the places"))
-    {
-        if (ImGui::BeginTable("##bounds", 2, ImGuiTableFlags_RowBg | ImGuiTableFlags_SizingStretchProp))
-        {
-            ImGui::TableSetupColumn("Place");
-            ImGui::TableSetupColumn("Max tokens");
-            ImGui::TableHeadersRow();
-            for (size_t p = 0u; (p < prop.bounds.size()) && (p < current.places().size()); ++p)
-            {
-                ImGui::TableNextRow();
-                ImGui::TableNextColumn();
-                ImGui::Text("%s %s", current.places()[p].key.c_str(), current.places()[p].caption.c_str());
-                ImGui::TableNextColumn();
-                if (prop.bounds[p] == OMEGA)
-                    ImGui::TextColored(ImGui::ColorConvertU32ToFloat4(pal.critical), "unbounded");
-                else
-                    ImGui::Text("%zu", prop.bounds[p]);
-            }
-            ImGui::EndTable();
-        }
-    }
-
-    // Invariants: a click marks their nodes.
-    if (ImGui::CollapsingHeader("Invariants", ImGuiTreeNodeFlags_DefaultOpen))
-    {
-        if (!cache.invariants_note.empty())
-        {
-            ImGui::PushStyleColor(ImGuiCol_Text, ImGui::GetStyleColorVec4(ImGuiCol_TextDisabled));
-            ImGui::TextWrapped("%s", cache.invariants_note.c_str());
-            ImGui::PopStyleColor();
-        }
-        Marking const m0 = analyzed.tokens();
-        ImGui::TextDisabled("P-invariants: the weighted tokens of these places never change");
-        if (cache.p_invariants.empty())
-            ImGui::BulletText("none");
-        for (size_t i = 0u; i < cache.p_invariants.size(); ++i)
+        size_t const i = size_t(cache.marked_invariant);
+        if (i < offset)
         {
             auto const& y = cache.p_invariants[i];
-            int64_t c = 0;
-            for (size_t p = 0u; (p < y.size()) && (p < m0.size()); ++p)
-                c += y[p] * int64_t(m0[p]);
-            std::string const label = invariantText(current.places(), y) + " = " + std::to_string(c) +
-                                      "##p" + std::to_string(i);
-            if (ImGui::Selectable(label.c_str(), cache.marked_invariant == int(i)))
-                cache.marked_invariant = (cache.marked_invariant == int(i)) ? -1 : int(i);
-        }
-        ImGui::TextDisabled("T-invariants: firing these transitions gives the marking back");
-        if (cache.t_invariants.empty())
-            ImGui::BulletText("none");
-        size_t const offset = cache.p_invariants.size();
-        for (size_t i = 0u; i < cache.t_invariants.size(); ++i)
-        {
-            std::string const label = invariantText(current.transitions(), cache.t_invariants[i]) +
-                                      "##t" + std::to_string(i);
-            int const id = int(offset + i);
-            if (ImGui::Selectable(label.c_str(), cache.marked_invariant == id))
-                cache.marked_invariant = (cache.marked_invariant == id) ? -1 : id;
-        }
-        // The nodes of the selected invariant.
-        if (cache.marked_invariant >= 0)
-        {
-            size_t const i = size_t(cache.marked_invariant);
-            if (i < offset)
+            for (size_t p = 0u; (p < y.size()) && (p < current.places().size()); ++p)
             {
-                auto const& y = cache.p_invariants[i];
-                for (size_t p = 0u; (p < y.size()) && (p < current.places().size()); ++p)
-                {
-                    if (y[p] != 0)
-                        marks.push_back({ current.places()[p].nodeId(), pal.selection,
-                                          (y[p] == 1) ? "" : "x" + std::to_string(y[p]) });
-                }
+                if (y[p] != 0)
+                    marks.push_back({ current.places()[p].nodeId(), pal.selection,
+                                      (y[p] == 1) ? "" : "x" + std::to_string(y[p]) });
             }
-            else if (i - offset < cache.t_invariants.size())
+        }
+        else if (i - offset < cache.t_invariants.size())
+        {
+            auto const& x = cache.t_invariants[i - offset];
+            for (size_t t = 0u; (t < x.size()) && (t < current.transitions().size()); ++t)
             {
-                auto const& x = cache.t_invariants[i - offset];
-                for (size_t t = 0u; (t < x.size()) && (t < current.transitions().size()); ++t)
-                {
-                    if (x[t] != 0)
-                        marks.push_back({ current.transitions()[t].nodeId(), pal.selection,
-                                          (x[t] == 1) ? "" : "x" + std::to_string(x[t]) });
-                }
+                if (x[t] != 0)
+                    marks.push_back({ current.transitions()[t].nodeId(), pal.selection,
+                                      (x[t] == 1) ? "" : "x" + std::to_string(x[t]) });
             }
         }
     }
     m_marks.set(current, "analysis", std::move(marks));
-
-    if (ImGui::CollapsingHeader("Report"))
-    {
-        ImGui::BeginChild("##report", ImVec2(0.0f, ImGui::GetTextLineHeight() * 14.0f), ImGuiChildFlags_Borders);
-        ImGui::TextUnformatted(cache.report.c_str());
-        ImGui::EndChild();
-    }
 }
 
 //------------------------------------------------------------------------------
 //! \brief Fill the bars of the Gantt chart: one bar per firing of a transition
-//! followed by a duration (an operation). A caption "<machine>_<piece>" (the
+//! followed by a duration (an operation). A caption "<machine>_<conveyor>" (the
 //! flowshop convention) puts the bar on the row of the machine, colored by
-//! piece; other transitions get their own row.
+//! conveyor; other transitions get their own row.
 static void computeGantt(Net const& net, int const cycles,
-                         std::vector<std::string>& rows, std::vector<std::string>& pieces,
+                         std::vector<std::string>& rows, std::vector<std::string>& conveyors,
                          std::vector<Editor::GanttBarData>& bars, std::string& error)
 {
     rows.clear();
-    pieces.clear();
+    conveyors.clear();
     bars.clear();
     std::vector<std::vector<double>> dates;
     error = earliestDates(net, size_t(cycles), dates);
@@ -655,23 +670,23 @@ static void computeGantt(Net const& net, int const cycles,
 
         std::string const name = transitions[t].caption.empty()
             ? transitions[t].key : transitions[t].caption;
-        std::string row, piece;
-        operationOf(name, row, piece);
+        std::string row, conveyor;
+        operationOf(name, row, conveyor);
         if (row_of.find(row) == row_of.end())
         {
             row_of[row] = int(rows.size());
             rows.push_back(row);
         }
-        if (color_of.find(piece) == color_of.end())
+        if (color_of.find(conveyor) == color_of.end())
         {
-            color_of[piece] = int(color_of.size());
-            pieces.push_back(piece);
+            color_of[conveyor] = int(color_of.size());
+            conveyors.push_back(conveyor);
         }
         for (int k = 0; k < cycles; ++k)
         {
-            bars.push_back({ row_of[row], color_of[piece], dates[t][size_t(k)],
+            bars.push_back({ row_of[row], color_of[conveyor], dates[t][size_t(k)],
                              dates[t][size_t(k)] + duration,
-                             piece + " k=" + std::to_string(k + 1) });
+                             conveyor + " k=" + std::to_string(k + 1) });
         }
     }
 }
@@ -891,7 +906,7 @@ void Editor::analysisPlot()
         ImGui::SetTooltip("In the periodic regime, a transition fires every λ: y(k) - λ·k\n"
                           "becomes flat, the remaining shows the transient and the bias.");
 
-    // The flowshop names its outputs "out_<piece>": without such names the
+    // The flowshop names its outputs "out_<conveyor>": without such names the
     // filter would hide everything.
     bool has_outputs = false;
     for (auto const& t : transitions)
@@ -966,7 +981,7 @@ void Editor::analysisPlot()
             // In a flowshop TEG every transition has both incoming and
             // outgoing arcs (because of the controller feedback loops), so
             // Transition::isOutput() is never true. Instead the importer
-            // names the system outputs "out_<piece|machine>".
+            // names the system outputs "out_<conveyor|machine>".
             std::string const& name = transitions[i].caption.empty()
                 ? transitions[i].key : transitions[i].caption;
             if (name.rfind("out_", 0) != 0)
@@ -1001,18 +1016,18 @@ void Editor::analysisGantt()
         ImGui::TextUnformatted(
             "How to read it: each transition followed by a duration is an operation. "
             "Its bar starts at the date of a firing of the transition and lasts the "
-            "duration of its output arc. A flowshop transition \"M1_P1\" (piece P1 on "
-            "machine M1) is drawn on the row M1 with the color of P1; other "
+            "duration of its output arc. A flowshop transition \"M1_C1\" (conveyor C1 on "
+            "machine M1) is drawn on the row M1 with the color of C1; other "
             "transitions get their own row.");
         ImGui::Spacing();
         ImGui::TextUnformatted(
             "Why only the machines of a flowshop? The other transitions have no "
-            "duration: M1 (the machine is free again), P1 (the piece enters again) and "
+            "duration: M1 (the machine is free again), C1 (the conveyor is free again) and "
             "out_... (end of a cycle) take no time, so they have no bar. They still "
             "count in the dates: they pass the tokens from a cycle to the next.");
         ImGui::Spacing();
         ImGui::TextUnformatted(
-            "k is the cycle: \"P1 k=2\" is the second time the operation is done. The "
+            "k is the cycle: \"C1 k=2\" is the second time the operation is done. The "
             "dates are the earliest ones given by the (max,+) dater equation "
             "x(k) = max(x_i(k - tokens_i) + duration_i) over the input places, with the "
             "initial tokens available at time 0: the fastest schedule of the net.");
@@ -1020,13 +1035,13 @@ void Editor::analysisGantt()
         ImGui::TextUnformatted(
             "While simulating, the red line is the time of the simulation, and the "
             "console (Simulation messages) writes each firing with the same words: "
-            "\"t = 4.00  M1 starts P1 (k = 2), until 7.00\".");
+            "\"t = 4.00  M1 starts C1 (k = 2), until 7.00\".");
         ImGui::PopTextWrapPos();
         ImGui::EndTooltip();
     }
 
     ImGui::PushStyleColor(ImGuiCol_Text, ImGui::GetStyleColorVec4(ImGuiCol_TextDisabled));
-    ImGui::TextWrapped("Rows: the machines of a flowshop (M1_P1 on M1), else the transitions "
+    ImGui::TextWrapped("Rows: the machines of a flowshop (M1_C1 on M1), else the transitions "
                        "with a duration; the others take no time and have no bar.");
     ImGui::PopStyleColor();
 
@@ -1036,7 +1051,7 @@ void Editor::analysisGantt()
         (m_states.gantt_computed_cycles != m_states.gantt_cycles))
     {
         computeGantt(analyzedNet(), m_states.gantt_cycles, m_states.gantt_rows,
-                     m_states.gantt_pieces, m_states.gantt_bars, m_states.gantt_error);
+                     m_states.gantt_conveyors, m_states.gantt_bars, m_states.gantt_error);
         m_states.gantt_key = std::move(key);
         m_states.gantt_computed_cycles = m_states.gantt_cycles;
     }
@@ -1046,13 +1061,13 @@ void Editor::analysisGantt()
         return;
     }
 
-    // The colors: the pieces of a flowshop (none when each transition has
+    // The colors: the conveyors of a flowshop (none when each transition has
     // its row: the rows name them), wrapped on the width of the window.
-    auto const& pieces = m_states.gantt_pieces;
-    for (size_t i = 0u; (pieces != m_states.gantt_rows) && (i < pieces.size()); ++i)
+    auto const& conveyors = m_states.gantt_conveyors;
+    for (size_t i = 0u; (conveyors != m_states.gantt_rows) && (i < conveyors.size()); ++i)
     {
         float const size = ImGui::GetTextLineHeight();
-        float const width = size + ImGui::GetStyle().ItemSpacing.x + ImGui::CalcTextSize(pieces[i].c_str()).x;
+        float const width = size + ImGui::GetStyle().ItemSpacing.x + ImGui::CalcTextSize(conveyors[i].c_str()).x;
         if ((i > 0u) && (ImGui::GetItemRectMax().x + ImGui::GetStyle().ItemSpacing.x + width <
                          ImGui::GetWindowPos().x + ImGui::GetWindowContentRegionMax().x))
             ImGui::SameLine();
@@ -1061,7 +1076,7 @@ void Editor::analysisGantt()
             ImGui::GetColorU32(ImPlot::GetColormapColor(int(i))), 3.0f);
         ImGui::Dummy(ImVec2(size, size));
         ImGui::SameLine();
-        ImGui::TextUnformatted(pieces[i].c_str());
+        ImGui::TextUnformatted(conveyors[i].c_str());
     }
 
     auto const& rows = m_states.gantt_rows;

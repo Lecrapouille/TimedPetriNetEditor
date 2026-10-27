@@ -2,6 +2,10 @@
 doc/pics/07-JPQ-Petri.png -s examples/Timed-Event-Graphs/JPQ/JPQ.json
 doc/pics/07-Howard2-Compact.png -s examples/Timed-Event-Graphs/Howard2/Howard2.json
 doc/pics/07-Howard2-Equations.png -w -f Equations examples/Timed-Event-Graphs/Howard2/Howard2.json
-doc/pics/07-Flowshop.png -s examples/Timed-Event-Graphs/Flowshop/simple.flowshop
-doc/pics/07-Flowshop-Gantt.png -w -f Gantt examples/Timed-Event-Graphs/Flowshop/simple.flowshop
-doc/pics/07-Flowshop-Journal.png -w -r -d 7 -f Journal examples/Timed-Event-Graphs/Flowshop/simple.flowshop
+doc/pics/07-Flowshop.png -s examples/Flowshops/simple.flowshop
+doc/pics/07-Flowshop-Critical.png -s -f "Critical circuit" examples/Flowshops/simple.flowshop
+doc/pics/07-Flowshop-Gantt.png -w -f Gantt examples/Flowshops/simple.flowshop
+doc/pics/07-Flowshop-Journal.png -w -r -d 7 -f Journal examples/Flowshops/simple.flowshop
+doc/pics/07-Flowshop-Critical-Conveyor.png -s -f "Critical circuit" examples/Flowshops/complex.flowshop
+doc/pics/07-Flowshop-More-Conveyors.png -s -f "Critical circuit" examples/Flowshops/complex-conveyors.flowshop
+doc/pics/07-Flowshop-Critical-Machine.png -s -f "Critical circuit" examples/Flowshops/complex-machine.flowshop

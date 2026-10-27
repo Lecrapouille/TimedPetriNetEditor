@@ -64,7 +64,7 @@ Editor::Editor(size_t const width, size_t const height,
     std::filesystem::path const settings = settingsFolder();
     // The name changes with the windows of the default layout: a new layout
     // is built instead of reusing one made for other windows.
-    g_ini_filename = (settings / "layout-2.ini").string();
+    g_ini_filename = (settings / "layout-3.ini").string();
     g_theme_filename = (settings / "theme.ini").string();
     io.IniFilename = g_ini_filename.c_str();
     m_states.reset_layout = !std::filesystem::exists(g_ini_filename);
@@ -198,10 +198,11 @@ void Editor::setupDefaultLayout(unsigned int const id)
     ImGuiID bottom = ImGui::DockBuilderSplitNode(center, ImGuiDir_Down, 0.22f, nullptr, &center);
     ImGuiID bottom_right = ImGui::DockBuilderSplitNode(bottom, ImGuiDir_Right, 0.40f, nullptr, &bottom);
     ImGuiID right_bottom = ImGui::DockBuilderSplitNode(right, ImGuiDir_Down, 0.52f, nullptr, &right);
-    for (char const* name : { "Document", "Places###Places", "Transitions", "Arcs", "Colors", "Actions" })
+    for (char const* name : { "Places###Places", "Transitions", "Arcs", "Colors", "Actions" })
         ImGui::DockBuilderDockWindow(name, right);
     for (char const* name : { "Control panel", "Analysis" })
         ImGui::DockBuilderDockWindow(name, right_bottom);
+    ImGui::DockBuilderDockWindow("Document", bottom);
     ImGui::DockBuilderDockWindow("Console", bottom);
     ImGui::DockBuilderDockWindow("Journal", bottom);
     ImGui::DockBuilderDockWindow("Program", right_bottom);
@@ -647,6 +648,8 @@ void Editor::onDraw()
         m_focus_window.clear();
     }
     menu();
+    // The Document tab first, then the Console one (in the order of Begin()).
+    documentPanel();
     console();
     m_monitor.poll(net(), m_journal, m_marks);
     m_journal.draw(net(), activeDocument().isAnySimulationRunning(), m_marks);

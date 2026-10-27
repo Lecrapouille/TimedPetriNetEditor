@@ -351,7 +351,7 @@ when the program injects it).
 | [InputsOutputs](../examples/Timed-Petri-Nets/InputsOutputs/README.md) | Space, wait | `P2` fills up |
 | [Unbounded](../examples/Timed-Petri-Nets/Unbounded/README.md) | Space; *Analysis > Properties* | `P1` grows; the net is unbounded |
 | [Priorities](../examples/Extended-Petri-Nets/Priorities/README.md) | *Conflicts > Highest priority*, Space | the ambulance first |
-| [Flowshop](../examples/Timed-Event-Graphs/Flowshop/README.md) | Space | a real factory, the subject of chapter 7 |
+| [Flowshop](../examples/Flowshops/README.md) | Space | a real factory, the subject of chapter 7 |
 
 ## 10. Pitfalls
 

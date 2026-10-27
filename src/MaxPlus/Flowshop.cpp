@@ -15,13 +15,13 @@
 namespace tpne {
 
 //------------------------------------------------------------------------------
-void operationOf(std::string const& name, std::string& machine, std::string& piece)
+void operationOf(std::string const& name, std::string& machine, std::string& conveyor)
 {
     size_t const underscore = name.find('_');
     bool const operation = (underscore != std::string::npos) && (underscore > 0u) &&
                            (underscore + 1u < name.size()) && (name.rfind("out_", 0) != 0);
     machine = operation ? name.substr(0, underscore) : name;
-    piece = operation ? name.substr(underscore + 1u) : name;
+    conveyor = operation ? name.substr(underscore + 1u) : name;
 }
 
 //------------------------------------------------------------------------------

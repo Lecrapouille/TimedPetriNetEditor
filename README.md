@@ -39,7 +39,7 @@ It is also a set of C++ libraries (the nets, the file formats, the (max,+) algeb
 | | | |
 |:-:|:-:|:-:|
 | ![Philosophers](examples/Petri-Nets/Philosophers/Philosophers.png) | ![Inhibitor arc](examples/Extended-Petri-Nets/Inhibitor/Inhibitor.png) | ![Flowshop](doc/pics/01-Editor-Flowshop.png) |
-| 🍝 [the dining philosophers](examples/Petri-Nets/Philosophers/README.md) | 💡 [an inhibitor arc](examples/Extended-Petri-Nets/Inhibitor/README.md) | 🏭 [a factory, its bottleneck and its schedule](examples/Timed-Event-Graphs/Flowshop/README.md) |
+| 🍝 [the dining philosophers](examples/Petri-Nets/Philosophers/README.md) | 💡 [an inhibitor arc](examples/Extended-Petri-Nets/Inhibitor/README.md) | 🏭 [a factory, its bottleneck and its schedule](examples/Flowshops/README.md) |
 | ![German traffic lights](examples/GRAFCET/GermanTrafficLights/GermanTrafficLights.png) | ![GEMMA](doc/pics/01-Editor-GEMMA.png) | ![Pick and place](examples/Runtime/PickAndPlace/PickAndPlace.png) |
 | 🚦 [a GRAFCET with timers](examples/GRAFCET/GermanTrafficLights/README.md) | 🛑 [a dryer driven by a GEMMA](examples/GRAFCET/GEMMA-Dryer/README.md) | 🤖 [a robot program driven by a net](examples/Runtime/PickAndPlace/README.md) |
 

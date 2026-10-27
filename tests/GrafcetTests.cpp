@@ -488,10 +488,10 @@ TEST(TestGrafcetJSON, ExamplesCompileAndRun)
 //------------------------------------------------------------------------------
 TEST(TestFlowshop, BuildScheduleAndCycleTime)
 {
-    // Two machines, two pieces, one token each: M1 then M2 for both pieces.
+    // Two machines, two conveyors, one of each: M1 then M2 for both conveyors.
     Flowshop shop;
-    shop.npieces = 2; shop.nmachines = 2;
-    shop.pieceNames = { "P1", "P2" };
+    shop.nconveyors = 2; shop.nmachines = 2;
+    shop.conveyorNames = { "C1", "C2" };
     shop.machineNames = { "M1", "M2" };
     shop.np = { 1, 1 }; shop.nm = { 1, 1 };
     shop.PT = { { 2.0f, 3.0f }, { 1.0f, 4.0f } };
@@ -510,21 +510,21 @@ TEST(TestFlowshop, BuildScheduleAndCycleTime)
                 return dates[t][k];
         return -1.0;
     };
-    // First cycle: M1_P1 at 0, M1_P2 at 2, M2_P1 at 2, M2_P2 at max(5, 3) = 5.
-    EXPECT_DOUBLE_EQ(date("M1_P1", 0), 0.0);
-    EXPECT_DOUBLE_EQ(date("M1_P2", 0), 2.0);
-    EXPECT_DOUBLE_EQ(date("M2_P1", 0), 2.0);
-    EXPECT_DOUBLE_EQ(date("M2_P2", 0), 5.0);
+    // First cycle: M1_C1 at 0, M1_C2 at 2, M2_C1 at 2, M2_C2 at max(5, 3) = 5.
+    EXPECT_DOUBLE_EQ(date("M1_C1", 0), 0.0);
+    EXPECT_DOUBLE_EQ(date("M1_C2", 0), 2.0);
+    EXPECT_DOUBLE_EQ(date("M2_C1", 0), 2.0);
+    EXPECT_DOUBLE_EQ(date("M2_C2", 0), 5.0);
 
-    // Cycle time: machine M2 works 1 + 4 = 5, M1 2 + 3 = 5, piece P2 3 + 4 = 7.
+    // Cycle time: machine M2 works 1 + 4 = 5, M1 2 + 3 = 5, conveyor C2 3 + 4 = 7.
     CriticalCycleResult const cycle = findCriticalCycle(net);
     ASSERT_TRUE(cycle.success) << cycle.message.str();
     double lambda = 0.0;
     for (double d : cycle.durations)
         lambda = std::max(lambda, d);
     EXPECT_DOUBLE_EQ(lambda, 7.0);
-    // Steady state: one P2 every 7 time units.
-    EXPECT_DOUBLE_EQ(date("M1_P2", 2) - date("M1_P2", 1), 7.0);
+    // Steady state: one C2 every 7 time units.
+    EXPECT_DOUBLE_EQ(date("M1_C2", 2) - date("M1_C2", 1), 7.0);
 }
 
 //------------------------------------------------------------------------------
@@ -657,7 +657,7 @@ TEST(TestSimulation, FiringDatesAndTraces)
 {
     // The firing dates (plot of the analysis) and the firings given to the
     // journal of the editor, for a timed event graph and a flowshop.
-    for (char const* file : { "../examples/Timed-Event-Graphs/EventGraph/EventGraph.json", "../examples/Timed-Event-Graphs/Flowshop/simple.flowshop" })
+    for (char const* file : { "../examples/Timed-Event-Graphs/EventGraph/EventGraph.json", "../examples/Flowshops/simple.flowshop" })
     {
         Net net;
         std::string const error = (std::string(file).find(".flowshop") != std::string::npos)

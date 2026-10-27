@@ -76,7 +76,7 @@ Chapters [7](../doc/07-Timed-Event-Graphs.md) and [8](../doc/08-Max-Plus-Algebra
 | <img src="Timed-Event-Graphs/Howard1/Howard1.png" width="220"> | [Howard1](Timed-Event-Graphs/Howard1/README.md) | the Howard algorithm |
 | <img src="Timed-Event-Graphs/EventGraph/EventGraph.png" width="220"> | [EventGraph](Timed-Event-Graphs/EventGraph/README.md) | the event graph of *Synchronization and Linearity* |
 | <img src="Timed-Event-Graphs/JPQ/JPQ.png" width="220"> | [JPQ](Timed-Event-Graphs/JPQ/README.md) | inputs, outputs, the (max,+) linear system |
-| <img src="Timed-Event-Graphs/Flowshop/simple.png" width="220"> | [Flowshop](Timed-Event-Graphs/Flowshop/README.md) | a factory: cycle time, bottleneck, Gantt chart |
+| <img src="Flowshops/simple.png" width="220"> | [Flowshop](Flowshops/README.md) | a factory: machines, conveyors, the critical resource, Gantt chart |
 | <img src="Timed-Event-Graphs/SemiHoward/SemiHoward.png" width="220"> | [SemiHoward](Timed-Event-Graphs/SemiHoward/README.md) | the `.teg` format |
 | <img src="Timed-Event-Graphs/SemiNetherlands/SemiNetherlands.png" width="220"> | [SemiNetherlands](Timed-Event-Graphs/SemiNetherlands/README.md) | a bigger `.teg` net |
 

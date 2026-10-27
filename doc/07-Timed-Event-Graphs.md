@@ -9,7 +9,7 @@
 - the **dater** and **counter** equations, computed by hand, then by the
   editor;
 - the **canonical form**, the **inputs** and **outputs** of a system;
-- a factory (a **flowshop**) from its file to its **Gantt chart**;
+- a factory (a **flowshop**): machines, conveyors, the resource that limits it, and its **Gantt chart**;
 - the `.teg` file format.
 
 **Prerequisites**: [6. Timed Petri nets](06-Timed-Petri-Nets.md).
@@ -245,54 +245,64 @@ Chapter 8 writes these equations with matrices.
 
 ### 6.1 The flowshop
 
-A **flowshop** is a workshop where every piece visits the machines in the
-same order. A **job shop** lets each piece have its own route; it needs
-choices, so it is not an event graph. The flowshop is.
+A **flowshop** is a factory that produces parts. Every part visits the
+machines in the same order. A **job shop** lets each part have its own
+route; it needs choices, so it is not an event graph. The flowshop is.
 
-[`examples/Timed-Event-Graphs/Flowshop/simple.flowshop`](../examples/Timed-Event-Graphs/Flowshop/README.md)
-has 3 pieces and 2 machines:
+On the timed event graph the editor builds, the resources are drawn in two
+directions:
+
+- a **machine** is a **horizontal** cycle (a row);
+- a **conveyor** is a **vertical** cycle (a column).
+
+The numbers in the file are how many of each resource the factory owns. The
+examples below start with **one machine** of each kind and **one conveyor**
+of each kind: one token on each cycle.
+
+[`examples/Flowshops/simple.flowshop`](../examples/Flowshops/README.md)
+has 2 machines and 3 conveyors:
 
 ```text
-npieces: 3
+nconveyors: 3
 nmachines: 2
-nm: 1 1              # tokens of each machine: it works on one piece at a time
-np: 1 1 1            # tokens of each piece: one of each kind in the workshop
-pieces: P1 P2 P3
-M1: 2.0 3.0 1.0      # M1 works 2 on P1, 3 on P2, 1 on P3
-M2: 1.0 2.0 1.5      # M2 works 1 on P1, 2 on P2, 1.5 on P3
+nm: 1 1              # one machine of each kind
+np: 1 1 1            # one conveyor of each kind
+conveyors: C1 C2 C3
+M1: 2.0 3.0 1.0      # M1 works 2 on C1, 3 on C2, 1 on C3
+M2: 1.0 2.0 1.5      # M2 works 1 on C1, 2 on C2, 1.5 on C3
 ```
 
-The format: `key: values` lines, `#` starts a comment. `npieces` and
-`nmachines` give the size, `nm` and `np` the tokens of each machine and of
-each piece, `pieces` their names, then one line per machine (its name, then
-its processing time for each piece). A time `-inf`, `eps`, `nan` or `%0` means
-that the machine does nothing for this piece (it is the ε of chapter 8).
+The format: `key: values` lines, `#` starts a comment. `nconveyors` and
+`nmachines` give the size, `nm` and `np` how many machines and conveyors,
+`conveyors` their names, then one line per machine (its name, then its
+processing time for each conveyor). A time `-inf`, `eps`, `nan` or `%0` means
+that the conveyor does not visit this machine (it is the ε of chapter 8).
 
 ### 6.2 The timed event graph of a flowshop
 
 Open it: the editor builds the timed event graph.
 
 ```sh
-./build/TimedPetriNetEditor examples/Timed-Event-Graphs/Flowshop/simple.flowshop
+./build/TimedPetriNetEditor examples/Flowshops/simple.flowshop
 ```
 
 ![The flowshop](pics/07-Flowshop.png)
 
 | Transition | Meaning |
 |------------|---------|
-| `M1_P2` | an **operation**: the machine `M1` starts the piece `P2`; its output arcs carry the processing time 3 |
-| `M1`, `M2` | the machine is free again: its token goes to its first operation (`nm` tokens) |
-| `P1`, `P2`, `P3` | the piece enters the workshop again: its token goes to its first machine (`np` tokens) |
-| `out_M1`, `out_P2` ... | the machine has done its last operation of the cycle, the piece has left its last machine |
+| `M1_C2` | an **operation**: machine `M1` starts work on conveyor `C2`; its output arcs carry the processing time 3 |
+| `M1`, `M2` | the machine is free again: its token goes to its first operation (`nm` tokens, here 1) |
+| `C1`, `C2`, `C3` | the conveyor is free again: its token goes to its first machine (`np` tokens, here 1) |
+| `out_M1`, `out_C2` ... | the machine has done its last operation of the cycle, the conveyor has left its last machine |
 
-Each row of operations is the loop of a machine: `M1 → M1_P1 → M1_P2 → M1_P3
-→ out_M1 → M1`, one token: a machine works on one piece at a time, in the
-order of the columns. Each column is the loop of a piece: `P1 → M1_P1 → M2_P1
-→ out_P1 → P1`, one token: a piece is on one machine at a time, in the order
-of the rows. An operation waits for both its machine and its piece: it has
-two input places, a synchronization.
+Each row is the loop of a machine: `M1 → M1_C1 → M1_C2 → M1_C3 → out_M1 →
+M1`, one token. The machine works on one conveyor at a time, in the order of
+the columns. Each column is the loop of a conveyor: `C1 → M1_C1 → M2_C1 →
+out_C1 → C1`, one token. The conveyor is on one machine at a time, in the
+order of the rows. An operation waits for both its machine and its conveyor:
+it has two input places, a synchronization.
 
-### 6.3 Cycle time and bottleneck
+### 6.3 Cycle time and the critical resource
 
 *Analysis > Critical circuit* (chapter 8 explains it) answers:
 
@@ -300,21 +310,27 @@ two input places, a synchronization.
 Cycle time λ: 6.00 time units.
 ```
 
-and draws in red the **critical circuit**: `M1 → M1_P1 → M1_P2 → M1_P3 →
-out_M1 → M1`. In the long run, the workshop makes one set of pieces every 6
-time units. Why 6? This circuit is the loop of the machine `M1`: it works 2 +
-3 + 1 = 6 per set, with its single token. `M2` works 1 + 2 + 1.5 = 4.5, the
-loop of the piece `P2` is 3 + 2 = 5. `M1` is the **bottleneck**: to go
-faster, buy a faster `M1` (or a second one: `nm: 2 1`), not a faster `M2`.
+and draws in red the **critical circuit**: `M1 → M1_C1 → M1_C2 → M1_C3 →
+out_M1 → M1`. The red circuit is horizontal: the machine `M1` is the
+resource that limits the factory.
+
+![The row of M1 is critical](pics/07-Flowshop-Critical.png)
+
+In the long run the factory finishes one round of the three conveyors every
+6 time units. Why 6? This circuit is the loop of `M1`: it works 2 + 3 + 1 =
+6 per round, with its single token. `M2` works 1 + 2 + 1.5 = 4.5. The column
+of conveyor `C2` is 3 + 2 = 5, `C1` is 2 + 1 = 3, `C3` is 1 + 1.5 = 2.5.
+`M1` is the slowest resource: to go faster, buy a faster `M1`, or a second
+one (`nm: 2 1`), not a faster `M2`.
 
 ### 6.4 The schedule: the Gantt chart
 
 *Analysis > Gantt*: one row per machine, one bar per operation, one color
-per piece (the legend above the chart names them; the line above it recalls
-which rows are drawn). The bar `P2 k=2` is the 2nd time (cycle `k = 2`) the machine works
-on `P2`; it starts at the earliest date of the dater equation (§3) and lasts
-the processing time. The *Cycles* slider shows more cycles; the mouse on a
-bar gives its start and end.
+per conveyor (the legend above the chart names them; the line above it
+recalls which rows are drawn). The bar `C2 k=2` is the 2nd time (cycle
+`k = 2`) the machine works on conveyor `C2`; it starts at the earliest date
+of the dater equation (§3) and lasts the processing time. The *Cycles*
+slider shows more cycles; the mouse on a bar gives its start and end.
 
 ![Gantt chart](pics/07-Flowshop-Gantt.png)
 
@@ -323,50 +339,82 @@ transition?** The Gantt chart draws only the **operations**: the transitions
 followed by a duration (the longest duration of their output arcs is not 0).
 Then:
 
-- a transition named `<machine>_<piece>` (the operations built from a
-  flowshop) is drawn on the row of `<machine>`, with the color of `<piece>`:
-  `M1_P1`, `M1_P2`, `M1_P3` all go on the row `M1`;
+- a transition named `<machine>_<conveyor>` (the operations built from a
+  flowshop) is drawn on the row of `<machine>`, with the color of
+  `<conveyor>`: `M1_C1`, `M1_C2`, `M1_C3` all go on the row `M1`;
 - any other transition with a duration gets a row of its own, named after
   it (in a net that is not a flowshop, each timed transition is a row);
 - the transitions without duration take no time, so there is nothing to
-  draw: here `M1`, `M2` (a machine is free again), `P1`, `P2`, `P3` (a piece
-  enters again) and the `out_...` transitions (end of a cycle). They still
-  count in the dates: they pass the tokens of the machines and of the pieces
-  from a cycle to the next.
+  draw: here `M1`, `M2` (a machine is free again), `C1`, `C2`, `C3` (a
+  conveyor is free again) and the `out_...` transitions (end of a cycle).
+  They still count in the dates: they pass the tokens of the machines and of
+  the conveyors from a cycle to the next.
 
 The earliest dates of the first 3 cycles (the editor, 4 cycles shown):
 
 ```text
-M1_P1: 0 6 12 18       M2_P1: 2 8.5 14.5 20.5
-M1_P2: 2 8 14 20       M2_P2: 5 11 17 23
-M1_P3: 5 11 17 23      M2_P3: 7 13 19 25
+M1_C1: 0 6 12 18       M2_C1: 2 8.5 14.5 20.5
+M1_C2: 2 8 14 20       M2_C2: 5 11 17 23
+M1_C3: 5 11 17 23      M2_C3: 7 13 19 25
 ```
 
-`M1` never stops: `M1_P1` at 0, `M1_P2` at 2 (after 2), `M1_P3` at 5 (after
-3), `M1_P1` again at 6 (after 1): a cycle of 6. `M2` waits for `M1`: it
-starts `P1` at 2, when `M1` has finished it; from the second cycle `M2_P1`
-starts at 8.5 and not at 8, because `M2` is busy with `P3` until 7 + 1.5 =
+`M1` never stops: `M1_C1` at 0, `M1_C2` at 2 (after 2), `M1_C3` at 5 (after
+3), `M1_C1` again at 6 (after 1): a cycle of 6. `M2` waits for `M1`: it
+starts `C1` at 2, when `M1` has finished it; from the second cycle `M2_C1`
+starts at 8.5 and not at 8, because `M2` is busy with `C3` until 7 + 1.5 =
 8.5.
 
 ### 6.5 The same dates in the simulation
 
 Press **Space**: the simulation of chapter 6 runs the same net. The
-*Journal* lists the firings: `M1_P1` at 0, `M1_P2` and `M2_P1` at 2 ... the
+*Journal* lists the firings: `M1_C1` at 0, `M1_C2` and `M2_C1` at 2 ... the
 dates of the Gantt chart, because a timed event graph has no choice and the
 simulation fires as early as possible.
 
 ![Journal of the flowshop](pics/07-Flowshop-Journal.png)
 
-### 6.6 A bigger workshop
+### 6.6 A conveyor, then a machine
 
-[`complex.flowshop`](../examples/Timed-Event-Graphs/Flowshop/README.md) has
-8 machines and 6 pieces; some machines do nothing for some pieces (`-inf`).
-Its cycle time is `16.95`, and the critical circuit is not a machine: it is
-the column of `Piece3`, which visits all the machines (0.95 + 2 + 2.2 + 2 + 3
-+ 4.3 + 1 + 1.5 = 16.95) with a single token. The bottleneck is the number of
-pieces `Piece3` in the workshop: with two of them (`np: 1 1 2 1 1 1`) the
-cycle time drops to 15.12, and the critical circuit moves to the machines
-`Machine3` and `Machine5`.
+[`complex.flowshop`](../examples/Flowshops/README.md) is
+the same kind of factory with 8 machines and 6 conveyors, still one of each
+resource. Some conveyors skip a machine (`-inf`).
+
+*Critical circuit* gives `λ = 16.95` and paints one column in red, the loop
+of `Conveyor3`:
+
+![Conveyor3 is the critical resource](pics/07-Flowshop-Critical-Conveyor.png)
+
+The circuit is vertical. `Conveyor3` visits every machine, and with its
+single token the column lasts
+
+```text
+0.95 + 2 + 2.2 + 2 + 3 + 4.3 + 1 + 1.5 = 16.95
+```
+
+No machine row is that long (the longest is `Machine3`, 3.7 + 2.2 + 6.4 =
+12.3). The scarce resource is a conveyor, not a machine.
+
+A conveyor costs less than a machine, so the next purchase is a conveyor.
+[`complex-conveyors.flowshop`](../examples/Flowshops/complex-conveyors.flowshop)
+is the same table with a second `Conveyor3` (`np: 1 1 2 1 1 1`). The cycle
+time drops to 15.12. The red circuits are no longer that one column: they
+are the columns of `Conveyor2` and `Conveyor5`, and the row of `Machine3`.
+
+![After one more Conveyor3](pics/07-Flowshop-More-Conveyors.png)
+
+Keep adding conveyors.
+[`complex-machine.flowshop`](../examples/Flowshops/complex-machine.flowshop)
+has two of every conveyor (`np: 2 2 2 2 2 2`) and still one of each machine.
+The cycle time is 12.30, and the only red circuit is the row of `Machine3`
+(3.7 + 2.2 + 6.4 = 12.3, one token). The circuit is horizontal: the machine
+is now the resource that limits the factory. Another conveyor would not
+help; a second `Machine3` would.
+
+![Machine3 is the critical resource](pics/07-Flowshop-Critical-Machine.png)
+
+The editor does not choose these numbers. There is no automatic setting of
+an ideal flowshop: you edit `nm` and `np`, open the file again, and read the
+critical circuit.
 
 ## 7. The `.teg` file format
 
@@ -399,11 +447,12 @@ is a bigger one (8 transitions, 12 places).
 
 ## 8. Reference: the Analysis window of event graphs
 
-The window has two tabs: *Properties* for every net (the Petri net theory
-of [chapter 4](04-Analysis.md)), and *(max,+) algebra* for every timed net,
-with the tabs below. When the timed net is not an event graph, *(max,+)
-algebra* says why (a place with two input arcs, a weight ...) and *Show the
-faulty arcs* draws the arcs to change.
+The window has one row of tabs: *Summary*, *Bounds*, *Invariants* and
+*Report* for every net (the Petri net theory of [chapter 4](04-Analysis.md)),
+then, for a timed event graph, the tabs below; they appear by themselves.
+When the timed net is not an event graph, one tab *(max,+)* says why (a
+place with two input arcs, a weight ...) and *Show the faulty arcs* draws the
+arcs to change.
 
 | Tab | Shows | Chapter |
 |-----|-------|---------|
@@ -423,7 +472,7 @@ faulty arcs* draws the arcs to change.
 | [Howard1](../examples/Timed-Event-Graphs/Howard1/README.md) | *Analysis > Equations* | every token shift is `k - 2` |
 | [JPQ](../examples/Timed-Event-Graphs/JPQ/README.md) | *Equations*; change the type to *Timed event graph* | inputs and outputs; the compact drawing |
 | [EventGraph](../examples/Timed-Event-Graphs/EventGraph/README.md) | *Equations* | the example of the book of Baccelli, Cohen, Olsder, Quadrat |
-| [Flowshop](../examples/Timed-Event-Graphs/Flowshop/README.md) | change a processing time of `M1`, look at λ | the bottleneck moves |
+| [Flowshop](../examples/Flowshops/README.md) | *Critical circuit* on `complex.flowshop`, then `complex-conveyors.flowshop`, then `complex-machine.flowshop` | the red circuit goes from a column (a conveyor) to a row (a machine) |
 | [SemiHoward](../examples/Timed-Event-Graphs/SemiHoward/README.md) | open the `.teg` | a net without names |
 
 ## 10. Pitfalls

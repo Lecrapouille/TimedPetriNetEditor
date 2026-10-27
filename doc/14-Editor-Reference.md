@@ -22,11 +22,11 @@ From top to bottom and left to right:
 | Area | What it is |
 |------|------------|
 | Menu bar | *File, Edit, View, Simulation, Analysis, Debug, Help* (§9) |
-| Toolbar (end of the menu bar) | **▶ Run** / **■ Stop**, *Pause*, the speed `x1`, the type of the active net, *Fit*, *Grid*, *Snap*, *Analysis window* |
+| Toolbar (end of the menu bar) | **▶ Run** / **■ Stop**, *Pause*, the speed `x1`, the type of the active net, *Fit*, *Grid*, *Snap* |
 | Net window (middle, tab *Philosophers*) | the drawing of a net. In its top left corner: its type, while simulating `simulating t = 3.0 s` (and *paused*), after it `ended at t = 12.0 s:` and why, then its description. In its bottom right corner: the zoom |
-| Inspector (right) | tabs *Places* (*Steps* for a GRAFCET), *Transitions*, *Arcs* (*Actions* for a GRAFCET), *Colors* (Petri and timed nets), *Document* |
+| Inspector (right) | tabs *Places* (*Steps* for a GRAFCET), *Transitions*, *Arcs* (*Actions* for a GRAFCET), *Colors* (Petri and timed nets) |
 | Under the inspector | *Control panel* (GRAFCET), *Analysis*, *Program* (when connected to a program) |
-| Bottom | *Console*, *Journal*, *Timing diagram* (GRAFCET); *Outputs* (GRAFCET) on the right |
+| Bottom | *Document*, *Console*, *Journal*, *Timing diagram* (GRAFCET); *Outputs* (GRAFCET) on the right |
 | Status bar | on the left, what the mouse buttons would do now; on the right, the counts of places, transitions and arcs, the position of the mouse in the net and the zoom |
 
 A GRAFCET document of three nets while it runs:
@@ -64,7 +64,7 @@ layout and the theme are saved in the settings folder of the user:
 | Control panel | the inputs of the GRAFCETs drawn as the buttons of a machine; *Apply together*, *Apply (F7)*, *Edit*, *Fit*, `?` (§8) | GRAFCET |
 | Outputs | the actuators named by the actions: lights, motors, heaters, valves, horns | GRAFCET |
 | Timing diagram | steps, inputs and outputs over time (§8) | GRAFCET |
-| Analysis | tab *Properties* for every net; for a timed net also the tab *(max,+) algebra*: *Critical circuit*, *Gantt*, *Linear system*, *Equations*, *Adjacency*, *Firing dates* (§7) | *Analysis window* in the toolbar, or the *Analysis* menu |
+| Analysis | one row of tabs: *Summary*, *Bounds*, *Invariants*, *Report* for every net; for a timed event graph also *Critical circuit*, *Gantt*, *Linear system*, *Equations*, *Adjacency*, *Firing dates* (§7), for another timed net *(max,+)*, which says why the algebra does not apply | always there; the *Analysis* menu brings a tab in front |
 | Console | all the messages (§6) | always |
 | Journal | the firings of the simulation, of an opened journal, or of a connected program; replays them on the net (§7) | always |
 | Program | the program followed: its net, its transitions without function, its inputs and outputs ([chapter 13](13-Debugging.md)) | connected (*Debug*) |
@@ -213,14 +213,16 @@ line goes to its date.
 *`examples/Petri-Nets/MutualExclusion/MutualExclusion.json` with `-f
 Properties`.*
 
-The **Analysis** window, tab **Properties**, for every net (durations and
-GRAFCET rules not considered, [chapter 4](04-Analysis.md)): *Compute again*
-explores the markings, up to *max markings* (small nets: again at each
-change). The summary says how many markings, whether the net can deadlock,
-has dead transitions, is bounded and live. The folds give the *Bounds of
-the places*, the *Invariants* (P and T; a click marks their nodes), the
-deadlock with its marking and the shortest path to it (*Replay the path in
-the Journal*), and the *Report* (*Copy the report*). *Show on the net*
+The **Analysis** window, tabs **Summary**, **Bounds**, **Invariants** and
+**Report**, for every net (durations and GRAFCET rules not considered,
+[chapter 4](04-Analysis.md)). Each tab starts with *Compute again*, which
+explores the markings up to *max markings* (small nets: again at each
+change). *Summary* says how many markings, whether the net can deadlock, has
+dead transitions, is bounded and live, then gives the deadlock with its
+marking and the shortest path to it (*Replay the path in the Journal*).
+*Bounds* gives the bound of each place, *Invariants* the P- and
+T-invariants (a click marks their nodes), *Report* the text of `tpne-check`
+(*Copy the report*). *Show on the net*
 marks the dead transitions, the transitions not live and the unbounded
 places. *Graph of the markings* draws the graph of the markings in its own
 window (spring layout, drag and wheel, *Layout again*, *Export to dot...*;

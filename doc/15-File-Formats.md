@@ -320,38 +320,39 @@ exported (extract):
 
 ### 4.3 Flowshop
 
-A **flowshop** is a factory where every piece visits the machines in the
-same order ([chapter 7](07-Timed-Event-Graphs.md)). The file is a table of
-processing times; the editor turns it into a timed event graph.
-[`simple.flowshop`](../examples/Timed-Event-Graphs/Flowshop/simple.flowshop):
+A **flowshop** is a factory that produces parts ([chapter 7](07-Timed-Event-Graphs.md)).
+On the timed event graph, machines are the horizontal cycles and conveyors
+the vertical ones. The file is a table of processing times; the editor turns
+it into that graph.
+[`simple.flowshop`](../examples/Flowshops/simple.flowshop):
 
 ```text
-# Simple Flowshop example (2x3)
-npieces: 3
+# Simple flowshop: 2 machines, 3 conveyors, one of each resource
+nconveyors: 3
 nmachines: 2
 
-# Tokens per machine class (nm) - horizontal cycle
+# How many of each machine (tokens of the horizontal cycle)
 nm: 1 1
 
-# Tokens per piece class (np) - vertical cycle
+# How many of each conveyor (tokens of the vertical cycle)
 np: 1 1 1
 
-# Piece names (columns)
-pieces: P1 P2 P3
+# Conveyor names (columns)
+conveyors: C1 C2 C3
 
-# Processing times: machine_name: time1 time2 ...
-# Note: (-inf means (max,+) 0 therefore no task to perform)
+# Processing times: machine: time on C1, C2, C3
+# -inf means (max,+) zero: this conveyor does not visit this machine
 M1: 2.0 3.0 1.0
 M2: 1.0 2.0 1.5
 ```
 
 | Line | Meaning |
 |------|---------|
-| `npieces`, `nmachines` | the size of the table |
-| `nm` | tokens of the loop of each machine (how many pieces it holds at once) |
-| `np` | tokens of the loop of each piece (how many copies of the piece are in the factory) |
-| `pieces` | the names of the pieces (the columns) |
-| `M1: ...` | a machine and its processing time of each piece; `-inf`: the piece does not visit this machine |
+| `nconveyors`, `nmachines` | the size of the table |
+| `nm` | how many machines of each row (tokens of the horizontal cycle) |
+| `np` | how many conveyors of each column (tokens of the vertical cycle) |
+| `conveyors` | the names of the conveyors (the columns) |
+| `M1: ...` | a machine and its processing time on each conveyor; `-inf`: the conveyor does not visit this machine |
 
 ### 4.4 Timed event graph (`.teg`)
 

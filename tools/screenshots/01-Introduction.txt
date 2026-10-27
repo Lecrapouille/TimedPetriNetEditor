@@ -1,4 +1,4 @@
 # Chapter 1: the editor running an example of each family.
 doc/pics/01-Editor-EmergencyCalls.png -w -r -d 6 examples/Petri-Nets/EmergencyCalls/EmergencyCalls.json
 doc/pics/01-Editor-GEMMA.png -w -r -d 3 examples/GRAFCET/GEMMA-Dryer/GEMMA-Dryer.json
-doc/pics/01-Editor-Flowshop.png -w -f Gantt examples/Timed-Event-Graphs/Flowshop/simple.flowshop
+doc/pics/01-Editor-Flowshop.png -w -f Gantt examples/Flowshops/simple.flowshop
