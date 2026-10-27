@@ -260,6 +260,11 @@ private:
     size_t m_end_revision = 0u;
     //! \brief Initial marking stored at simulation start.
     std::vector<size_t> m_initial_tokens;
+    //! \brief Place::colors before the simulation, which changes them.
+    std::vector<std::vector<std::pair<Color, size_t>>> m_initial_colors;
+    //! \brief The net has colored arcs or colors of the user: the colors of
+    //! the tokens are followed (Place::colors).
+    bool m_colors = false;
     //! \brief Simulation time since start().
     double m_sim_time = 0.0;
     //! \brief True if there are receptivity parsing errors.

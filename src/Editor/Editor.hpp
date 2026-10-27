@@ -19,6 +19,7 @@
 #  include "IO/IO.hpp"
 #  include "Editor/ForceDirected.hpp"
 #  include "Editor/JournalView.hpp"
+#  include "Editor/MarkingsGraph.hpp"
 #  include "Editor/NodeMarks.hpp"
 #  include "Editor/RuntimeMonitor.hpp"
 #  include "MaxPlus/Algorithms.hpp"
@@ -175,6 +176,10 @@ private: // Show results from Petri algorithms
     void analysisGantt();
     void analysisPlot();
     void analysisProperties();
+    //! \brief The window of the graph of the markings (MarkingsGraph).
+    void markingsWindow();
+    //! \brief Compute the graph of the markings of the net, open its window.
+    void showMarkingsGraph(Net const& analyzed);
     void openAnalysis(int tab) { m_states.show_analysis = true; m_states.analysis_tab = tab; }
 
 private: // Document management
@@ -486,6 +491,8 @@ private:
         };
         PetriProperties petri;
         int max_markings = 20000;
+        //! \brief The graph of the markings, drawn in its window.
+        MarkingsGraph markings;
         bool mark_properties = true;
         //! \brief The tab of the properties was drawn in this frame.
         bool properties_shown = false;

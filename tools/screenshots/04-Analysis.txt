@@ -2,3 +2,4 @@
 doc/pics/04-Properties-MutualExclusion.png -w -f Properties examples/Petri-Nets/MutualExclusion/MutualExclusion.json
 doc/pics/04-Properties-Deadlock.png -w -f Properties examples/Petri-Nets/Deadlock/Deadlock.json
 doc/pics/04-Properties-ProducerConsumer.png -w -f Properties examples/Petri-Nets/ProducerConsumer/ProducerConsumer.json
+doc/pics/04-Markings-ColoredPhilosophers.png -w -d 3 -f Markings examples/Extended-Petri-Nets/ColoredPhilosophers/ColoredPhilosophers.json

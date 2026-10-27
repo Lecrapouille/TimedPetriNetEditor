@@ -26,6 +26,16 @@ namespace tpne {
 static char const* const MARKS = "journal";
 
 //------------------------------------------------------------------------------
+//! \brief Place::colors of each place (the replay changes them).
+static std::vector<std::vector<std::pair<Color, size_t>>> colorsOf(Net const& net)
+{
+    std::vector<std::vector<std::pair<Color, size_t>>> colors;
+    for (auto const& place : net.places())
+        colors.push_back(place.colors);
+    return colors;
+}
+
+//------------------------------------------------------------------------------
 //! \brief Name of the transition in the journal (as the runtime writes it).
 static std::string const& nameOf(Transition const& transition)
 {
@@ -111,6 +121,7 @@ void JournalView::live(std::string const& source, Net& net)
     m_replay = true;
     m_replay_net = &net;
     m_saved_tokens = net.tokens();
+    m_saved_colors = colorsOf(net);
     m_instance.clear();
     m_dirty = true;
 }
@@ -133,6 +144,7 @@ void JournalView::showFirings(Net& net, std::string const& source, std::vector<s
     m_replay = true;
     m_replay_net = &net;
     m_saved_tokens = net.tokens();
+    m_saved_colors = colorsOf(net);
     m_instance = net.name;
     m_cursor = 0.0;
     m_dirty = true;
@@ -194,12 +206,16 @@ void JournalView::stopReplay()
     if (m_replay && (net != nullptr) && (m_saved_tokens.size() == net->places().size()))
     {
         for (size_t p = 0u; p < net->places().size(); ++p)
+        {
             net->places()[p].tokens = m_saved_tokens[p];
+            net->places()[p].colors = m_saved_colors[p];
+        }
     }
     m_replay = false;
     m_playing = false;
     m_replay_net = nullptr;
     m_saved_tokens.clear();
+    m_saved_colors.clear();
     m_live.clear();
 }
 
@@ -231,7 +247,10 @@ void JournalView::replay(Net& net, NodeMarks& marks)
     else
     {
         for (size_t p = 0u; p < net.places().size(); ++p)
+        {
             net.places()[p].tokens = m_saved_tokens[p];
+            net.places()[p].colors = m_saved_colors[p];
+        }
     }
     std::vector<LogEntry> past;
     std::map<std::string, size_t> running;
@@ -251,7 +270,10 @@ void JournalView::replay(Net& net, NodeMarks& marks)
     m_colored = instance->marking();
     Marking const counts = m_colored.counts();
     for (size_t p = 0u; (p < counts.size()) && (p < net.places().size()); ++p)
+    {
         net.places()[p].tokens = counts[p];
+        net.places()[p].colors = m_colored.tokens(p);
+    }
 
     // Transitions whose function runs at the cursor, and the one selected.
     Palette const& pal = palette();
@@ -352,6 +374,7 @@ void JournalView::toolbar(Net& net, bool const busy, NodeMarks& marks)
             m_replay = true;
             m_replay_net = &net;
             m_saved_tokens = net.tokens();
+            m_saved_colors = colorsOf(net);
             m_cursor = last;
             m_dirty = true;
         }

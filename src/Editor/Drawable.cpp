@@ -10,6 +10,7 @@
 #  define IMGUI_DEFINE_MATH_OPERATORS
 #endif
 #include "Editor/Drawable.hpp"
+#include "PetriNet/Firing.hpp"
 
 #include <algorithm>
 #include <cfloat>
@@ -528,8 +529,7 @@ void drawArc(ImDrawList* draw_list, Net const& net, Arc const& arc,
         ImVec2 dir;
         float const where = (arc.from.type == Node::Type::Place) ? 0.75f : 0.25f;
         ImVec2 const p = screen(origin, zoom, alongPath(path.points, where, dir));
-        ImU32 const c = (arc.color == Success) ? pal.active : (arc.color == Failed) ? pal.critical
-                                                                                     : pal.enabled;
+        ImU32 const c = (arc.color == Success) ? pal.active : colorOfTokens(arc.color);
         pill(draw_list, p - normal(dir) * (11.0f * zoom), c, net.colors.name(arc.color).c_str(), size);
     }
 }
@@ -565,9 +565,9 @@ void drawArc(ImDrawList* draw_list, ImVec2 const* from, ImVec2 const* to, ImVec2
 // ============================================================================
 
 //------------------------------------------------------------------------------
-void drawToken(ImDrawList* draw_list, float const x, float const y, float zoom)
+void drawToken(ImDrawList* draw_list, float const x, float const y, float zoom, ImU32 const color)
 {
-    draw_list->AddCircleFilled(ImVec2(x, y), std::max(1.5f, TOKEN_RADIUS * zoom), palette().token);
+    draw_list->AddCircleFilled(ImVec2(x, y), std::max(1.5f, TOKEN_RADIUS * zoom), color);
 }
 
 //------------------------------------------------------------------------------
@@ -583,9 +583,12 @@ static void tokenDisk(ImDrawList* draw_list, size_t tokens, ImVec2 const& p, ImU
 }
 
 //------------------------------------------------------------------------------
-void drawTimedToken(ImDrawList* draw_list, size_t tokens, float const x, float const y, float zoom)
+void drawTimedToken(ImDrawList* draw_list, size_t tokens, float const x, float const y, float zoom,
+                    Color const color)
 {
-    tokenDisk(draw_list, tokens, ImVec2(x, y), palette().active, IM_COL32(0, 0, 0, 255), zoom);
+    // Success as usual (green), the other colors as in the places.
+    ImU32 const fill = ((color == Success) || (color == AnyColor)) ? palette().active : colorOfTokens(color);
+    tokenDisk(draw_list, tokens, ImVec2(x, y), fill, IM_COL32(0, 0, 0, 255), zoom);
 }
 
 //------------------------------------------------------------------------------
@@ -595,24 +598,41 @@ void drawWaitingTokens(ImDrawList* draw_list, size_t tokens, float const x, floa
     tokenDisk(draw_list, tokens, ImVec2(x, y), palette().token, palette().fill, zoom);
 }
 
-//! \brief Tokens of a Petri place: dots up to 5, else a number.
-static void drawPlaceTokens(ImDrawList* draw_list, size_t tokens, ImVec2 const& p, float zoom)
+//! \brief Tokens of a Petri place: dots up to 5, drawn with their color
+//! (Place::colors, the others Success), else a number.
+static void drawPlaceTokens(ImDrawList* draw_list, Place const& place, ImVec2 const& p, float zoom)
 {
+    size_t const tokens = place.tokens;
+    ImU32 color[5];
+    size_t n = 0u;
+    for (auto const& [c, count] : place.colors)
+    {
+        for (size_t i = 0u; (i < count) && (n < 5u); ++i)
+            color[n++] = colorOfTokens(c);
+    }
+    while (n < 5u)
+        color[n++] = colorOfTokens(Success);
+
     float const d = 6.0f * zoom;
     switch (tokens)
     {
     case 0u: return;
-    case 1u: drawToken(draw_list, p.x, p.y, zoom); return;
-    case 2u: drawToken(draw_list, p.x - d, p.y, zoom); drawToken(draw_list, p.x + d, p.y, zoom); return;
+    case 1u: drawToken(draw_list, p.x, p.y, zoom, color[0]); return;
+    case 2u:
+        drawToken(draw_list, p.x - d, p.y, zoom, color[0]);
+        drawToken(draw_list, p.x + d, p.y, zoom, color[1]);
+        return;
     case 3u:
-        drawToken(draw_list, p.x, p.y - d, zoom);
-        drawToken(draw_list, p.x - d, p.y + d * 0.7f, zoom);
-        drawToken(draw_list, p.x + d, p.y + d * 0.7f, zoom);
+        drawToken(draw_list, p.x, p.y - d, zoom, color[0]);
+        drawToken(draw_list, p.x - d, p.y + d * 0.7f, zoom, color[1]);
+        drawToken(draw_list, p.x + d, p.y + d * 0.7f, zoom, color[2]);
         return;
     case 4u: case 5u:
-        drawToken(draw_list, p.x - d, p.y - d, zoom); drawToken(draw_list, p.x + d, p.y - d, zoom);
-        drawToken(draw_list, p.x - d, p.y + d, zoom); drawToken(draw_list, p.x + d, p.y + d, zoom);
-        if (tokens == 5u) drawToken(draw_list, p.x, p.y, zoom);
+        drawToken(draw_list, p.x - d, p.y - d, zoom, color[0]);
+        drawToken(draw_list, p.x + d, p.y - d, zoom, color[1]);
+        drawToken(draw_list, p.x - d, p.y + d, zoom, color[2]);
+        drawToken(draw_list, p.x + d, p.y + d, zoom, color[3]);
+        if (tokens == 5u) drawToken(draw_list, p.x, p.y, zoom, color[4]);
         return;
     default:
         textCentered(draw_list, p, palette().token, std::to_string(tokens).c_str(),
@@ -646,7 +666,7 @@ static void drawPetriPlace(ImDrawList* draw_list, Net const& net, Place const& p
     draw_list->AddCircleFilled(p + ImVec2(SHADOW_OFFSET, SHADOW_OFFSET) * zoom, r, pal.shadow, 48);
     draw_list->AddCircleFilled(p, r, pal.fill, 48);
     draw_list->AddCircle(p, r, pal.outline, 48, stroke(2.0f, zoom));
-    drawPlaceTokens(draw_list, place.tokens, p, zoom);
+    drawPlaceTokens(draw_list, place, p, zoom);
 
     char const* label = show_caption ? place.caption.c_str() : place.key.c_str();
     caption(draw_list, p.x, p.y + r + 3.0f * zoom, show_caption ? pal.caption : pal.secondary,
@@ -1056,6 +1076,100 @@ Node* nodeAt(Net& net, ImVec2 const& position, float const place_radius,
     if ((node != nullptr) || net.layout().compact)
         return node;
     return placeAt(net, position, place_radius);
+}
+
+// ============================================================================
+// Colored tokens: the widgets of the places
+// ============================================================================
+
+//------------------------------------------------------------------------------
+bool hasColors(Net const& net)
+{
+    return !net.colors.user().empty() || ((features(net) & Feature::Colors) != 0u);
+}
+
+//------------------------------------------------------------------------------
+Color& currentTokenColor()
+{
+    static Color color = Success;
+    return color;
+}
+
+//------------------------------------------------------------------------------
+//! \brief The colors a token can have: not AnyColor nor Deadlocked (the end
+//! of an instance).
+static bool tokenCanHave(size_t const color)
+{
+    return (color != size_t(AnyColor)) && (color != size_t(Deadlocked));
+}
+
+//------------------------------------------------------------------------------
+//! \brief A dot of the color, as drawn in the places, as large as a line.
+static void tokenSwatch(Color const color)
+{
+    ImVec2 const p = ImGui::GetCursorScreenPos();
+    float const h = ImGui::GetFrameHeight();
+    drawToken(ImGui::GetWindowDrawList(), p.x + h * 0.5f, p.y + h * 0.5f, 1.6f, colorOfTokens(color));
+    ImGui::Dummy(ImVec2(h, h));
+}
+
+//------------------------------------------------------------------------------
+void tokenColorCombo(Net const& net, char const* label)
+{
+    auto const& names = net.colors.names();
+    Color& current = currentTokenColor();
+    if ((current >= names.size()) || !tokenCanHave(current))
+        current = Success;
+    tokenSwatch(current);
+    ImGui::SameLine();
+    ImGui::SetNextItemWidth(120.0f);
+    if (ImGui::BeginCombo(label, names[current].c_str()))
+    {
+        for (size_t c = 0u; c < names.size(); ++c)
+        {
+            if (tokenCanHave(c) && ImGui::Selectable(names[c].c_str(), current == Color(c)))
+                current = Color(c);
+        }
+        ImGui::EndCombo();
+    }
+}
+
+//------------------------------------------------------------------------------
+bool editColoredTokens(Net const& net, Place& place)
+{
+    bool changed = false;
+    auto const& names = net.colors.names();
+    for (size_t c = 0u; c < names.size(); ++c)
+    {
+        if (!tokenCanHave(c))
+            continue;
+        Color const color = Color(c);
+        ImGui::PushID(int(c));
+        tokenSwatch(color);
+        ImGui::SameLine();
+        size_t const now = placeTokens(place, color);
+        int n = int(now);
+        ImGui::SetNextItemWidth(90.0f);
+        if (ImGui::InputInt(names[c].c_str(), &n) && (n >= 0) && (size_t(n) != now))
+        {
+            if (size_t(n) > now)
+                place.increment(size_t(n) - now, color);
+            else
+                place.decrement(now - size_t(n), color);
+            changed = true;
+        }
+        ImGui::PopID();
+    }
+    return changed;
+}
+
+//------------------------------------------------------------------------------
+std::string describeTokens(Net const& net, Place const& place)
+{
+    std::string text;
+    for (auto const& [color, n] : placeColors(place))
+        text += (text.empty() ? "" : ", ") + std::to_string(n) + " " + net.colors.name(color);
+    return text;
 }
 
 } // namespace tpne

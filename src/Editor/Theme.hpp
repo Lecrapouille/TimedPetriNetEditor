@@ -9,6 +9,7 @@
 #define DEAR_IMGUI_THEME_HPP
 
 #include "imgui/imgui.h"
+#include <cstdint>
 
 // *****************************************************************************
 //! \brief Look of the nets: one palette per theme of the interface, and the
@@ -87,5 +88,18 @@ inline ImU32 themeDurationColor() { return palette().duration; }
 inline ImU32 themeTokenColor() { return palette().token; }
 inline ImU32 themeCriticalColor() { return palette().critical; }
 inline ImU32 themePetriViewColor() { return palette().canvas; }
+
+//! \brief Drawing of a color of tokens (tpne::Color, an index of the
+//! ColorTable): Success and any as the tokens, Failed as the critical circuit,
+//! the colors of the user each its hue (golden angle: neighbors differ).
+inline ImU32 colorOfTokens(std::uint8_t const color)
+{
+    if (color <= 1u) // AnyColor, Success
+        return palette().token;
+    if (color == 2u) // Failed
+        return palette().critical;
+    float const hue = float(color) * 0.618034f;
+    return ImColor::HSV(hue - float(int(hue)), 0.65f, 0.95f);
+}
 
 #endif

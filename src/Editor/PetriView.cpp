@@ -600,6 +600,14 @@ void PetriView::clicked(Net& net, Simulation& simulation)
         {
             static_cast<Transition*>(node)->receptivity ^= true;
         }
+        // The menu of a node: its tokens, its capacity, its priority, its
+        // result can change while simulating (not the structure).
+        else if ((m_mouse.button == ImGuiMouseButton_Right) && (node != nullptr))
+        {
+            m_mouse.context_menu_node = node;
+            m_mouse.context_menu_arc = nullptr;
+            ImGui::OpenPopup("NodeContextMenu");
+        }
         return;
     }
 
@@ -862,8 +870,8 @@ void PetriView::handleKeyboard(Net& net, Simulation& simulation)
         bool const more = ImGui::IsKeyPressed(KEY_INCREMENT_TOKENS) || ImGui::IsKeyPressed(ImGuiKey_Equal);
         bool const less = ImGui::IsKeyPressed(KEY_DECREMENT_TOKENS) || ImGui::IsKeyPressed(ImGuiKey_Minus);
         Place* place = static_cast<Place*>(m_mouse.hovered_node);
-        if (more) { place->increment(1u); net.modified = true; }
-        if (less) { place->decrement(1u); net.modified = true; }
+        if (more) { place->increment(1u, currentTokenColor()); net.modified = true; }
+        if (less) { place->decrement(1u, currentTokenColor()); net.modified = true; }
     }
 
     if (simulation.isRunning())
@@ -1172,7 +1180,7 @@ void PetriView::drawNetElements(Net& net, Simulation& simulation, float zoom)
     for (auto const& token : animateTokens(net, simulation.flights(), simulation.simulationTime()))
     {
         drawTimedToken(draw_list, token.tokens, origin.x + token.x * zoom,
-                       origin.y + token.y * zoom, zoom);
+                       origin.y + token.y * zoom, zoom, token.color);
     }
 }
 
@@ -1264,7 +1272,7 @@ void PetriView::drawOverlays(Net& net, Simulation& simulation, float zoom)
         ImGui::IsItemHovered(ImGuiHoveredFlags_DelayNormal | ImGuiHoveredFlags_NoSharedDelay))
     {
         if (m_mouse.hovered_node->type == Node::Type::Place)
-            showPlaceTooltip(*static_cast<Place const*>(m_mouse.hovered_node), type);
+            showPlaceTooltip(net, *static_cast<Place const*>(m_mouse.hovered_node), type);
         else
             showTransitionTooltip(net, *static_cast<Transition const*>(m_mouse.hovered_node));
     }
@@ -1513,15 +1521,28 @@ void PetriView::drawContextMenus(Net& net)
                 }
                 else
                 {
-                    if (ImGui::MenuItem("Add a token", "+"))
+                    // Tokens of the color chosen (Places panel, or below).
+                    bool const colors = hasColors(net);
+                    Color const color = currentTokenColor();
+                    std::string const add = colors ? "Add a token " + net.colors.name(color) : "Add a token";
+                    std::string const remove = colors ? "Remove a token " + net.colors.name(color) : "Remove a token";
+                    if (ImGui::MenuItem(add.c_str(), "+"))
                     {
-                        place->increment(1u);
+                        place->increment(1u, color);
                         net.modified = true;
                     }
-                    if (ImGui::MenuItem("Remove a token", "-", false, place->tokens > 0u))
+                    if (ImGui::MenuItem(remove.c_str(), "-", false, placeTokens(*place, color) > 0u))
                     {
-                        place->decrement(1u);
+                        place->decrement(1u, color);
                         net.modified = true;
+                    }
+                    if (colors && ImGui::BeginMenu("Tokens by color"))
+                    {
+                        if (editColoredTokens(net, *place))
+                            net.modified = true;
+                        ImGui::Separator();
+                        tokenColorCombo(net, "for + and -");
+                        ImGui::EndMenu();
                     }
 
                     // Tokens and the max of tokens it can hold.
@@ -1533,7 +1554,6 @@ void PetriView::drawContextMenus(Net& net)
                     if (allows(net.type(), Feature::Capacities))
                     {
                         bool bounded = (place->capacity != UNBOUNDED);
-                        ImGui::BeginDisabled(running);
                         if (ImGui::Checkbox("Max tokens", &bounded))
                         {
                             m_editor.setPlace(*place, place->tokens,
@@ -1552,9 +1572,50 @@ void PetriView::drawContextMenus(Net& net)
                             ImGui::SameLine();
                             ImGui::TextDisabled("unbounded");
                         }
-                        ImGui::EndDisabled();
                     }
                 }
+            }
+            else if ((node->type == Node::Type::Transition) && (net.type() != TypeOfNet::GRAFCET))
+            {
+                // Which transition fires first in a conflict ("Highest
+                // priority" policy, menu Simulation > Conflicts).
+                Transition* transition = static_cast<Transition*>(node);
+                ImGui::Separator();
+                ImGui::SetNextItemWidth(110.0f);
+                if (ImGui::InputInt("Priority", &transition->priority))
+                    net.modified = true;
+                if (ImGui::IsItemHovered())
+                    ImGui::SetTooltip("With the policy \"Highest priority\" (menu Simulation >\n"
+                                      "Conflicts), the highest one fires first.");
+
+                // Its result in the simulation: the color of the tokens of its
+                // output arcs without color.
+                if (hasColors(net) && ImGui::BeginMenu("Result in the simulation"))
+                {
+                    std::string random = "random:";
+                    for (Color const c : results(net, transition->id))
+                        random += " " + net.colors.name(c);
+                    if (ImGui::MenuItem(random.c_str(), nullptr, transition->result == AnyColor))
+                    {
+                        transition->result = AnyColor;
+                        net.modified = true;
+                    }
+                    ImGui::Separator();
+                    auto const& names = net.colors.names();
+                    for (size_t c = 1u; c < names.size(); ++c)
+                    {
+                        if ((c != size_t(Deadlocked)) &&
+                            ImGui::MenuItem(names[c].c_str(), nullptr, transition->result == Color(c)))
+                        {
+                            transition->result = Color(c);
+                            net.modified = true;
+                        }
+                    }
+                    ImGui::EndMenu();
+                }
+                if (ImGui::IsItemHovered())
+                    ImGui::SetTooltip("Color of the tokens its output arcs without color give in the\n"
+                                      "simulation (the runtime: the result of its function).");
             }
             ImGui::Separator();
             if (ImGui::MenuItem("Delete", "Del", false, !running))
@@ -1679,7 +1740,7 @@ void PetriView::drawPetriNet(Net& net, Simulation& simulation, bool interactive,
 // ============================================================================
 
 //------------------------------------------------------------------------------
-void PetriView::showPlaceTooltip(Place const& place, TypeOfNet type)
+void PetriView::showPlaceTooltip(Net const& net, Place const& place, TypeOfNet type)
 {
     ImGui::BeginTooltip();
     if (type == TypeOfNet::GRAFCET)
@@ -1714,6 +1775,8 @@ void PetriView::showPlaceTooltip(Place const& place, TypeOfNet type)
             ImGui::Text("Tokens: %zu", place.tokens);
         else
             ImGui::Text("Tokens: %zu (max %zu)", place.tokens, place.capacity);
+        if (hasColors(net) && (place.tokens > 0u))
+            ImGui::Text("Colors: %s", describeTokens(net, place).c_str());
     }
     ImGui::EndTooltip();
 }

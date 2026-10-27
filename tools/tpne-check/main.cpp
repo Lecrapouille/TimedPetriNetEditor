@@ -86,7 +86,7 @@ int main(int argc, char* argv[])
         {
             ReachabilityGraph const graph = reachabilityGraph(net, max_states);
             std::ofstream file(dot);
-            file << toDot(net, graph.states, graph.edges);
+            file << toDot(net, graph.states, graph.edges, graph.colored);
             if (!file)
             {
                 std::cerr << "Cannot write " << dot << std::endl;

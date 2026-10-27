@@ -55,7 +55,7 @@ layout and the theme are saved in the settings folder of the user:
 | Window | Shows | When |
 |--------|-------|------|
 | Net (one per net of the document) | the drawing; several nets of a document are side by side and keep their share of the width when the main window changes size | always |
-| Places / Steps | caption, identifier, `◀ ▶` and the number of tokens of each place, and its initial tokens; for a running GRAFCET, how long each active step has been active | always |
+| Places / Steps | caption, identifier, `◀ ▶` and the number of tokens of each place, and its initial tokens; for a running GRAFCET, how long each active step has been active. A net with colors also gets *Color of the tokens*, the color added or removed by `◀ ▶`, by **+** and **-** and by the menu of a place; hovering the number lists the tokens by color; *colors* opens the number of tokens of each color, editable | always |
 | Transitions | caption (the receptivity of a GRAFCET, checked while typing, with *Syntax help*); priority (Petri and timed nets); delay in seconds (GRAFCET); the timers that count while simulating | always |
 | Arcs | a table: arc, kind (normal, inhibitor, reset), weight, color of the tokens, duration (timed nets) | Petri and timed nets |
 | Colors | the colors of the tokens of the user (*Add*); *Success*, *Failed* and *Canceled* are built in | Petri and timed nets |
@@ -113,7 +113,10 @@ moves.** The status bar always says what the buttons would do now.
 |------|------|--------|
 | Rename | all | same as a double click |
 | Select | all | select it |
-| Add a token (+), Remove a token (-), Tokens | place | its tokens |
+| Add a token (+), Remove a token (-), Tokens | place | its tokens; with colors, the tokens of the color chosen in *Places* |
+| Tokens by color | place of a net with colors | the number of tokens of each color, and the color used by **+** and **-** |
+| Priority | transition (not GRAFCET) | its priority, for the policy *Highest priority* |
+| Result in the simulation | transition of a net with colors | the color its output arcs without color give in the simulation: *random* among the colors asked after it (the default), or always one color; saved in the file (`"result"`), not used by the runtime |
 | Max tokens | place (Petri and timed nets) | check it to give a capacity; unchecked: unbounded |
 | Activate step, Deactivate step | GRAFCET step | its initial token |
 | Add an action | GRAFCET step | a new action in the *Actions* window |
@@ -219,7 +222,9 @@ the places*, the *Invariants* (P and T; a click marks their nodes), the
 deadlock with its marking and the shortest path to it (*Replay the path in
 the Journal*), and the *Report* (*Copy the report*). *Show on the net*
 marks the dead transitions, the transitions not live and the unbounded
-places. *Graph of the markings...* saves it for Graphviz. The same in a
+places. *Graph of the markings* draws the graph of the markings in its own
+window (spring layout, drag and wheel, *Layout again*, *Export to dot...*;
+`-f Markings` opens it from the command line). The same in a
 terminal or a CI:
 
 ```text

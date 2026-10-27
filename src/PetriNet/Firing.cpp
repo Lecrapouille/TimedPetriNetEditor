@@ -65,10 +65,52 @@ bool isEnabled(Net const& net, Marking const& marking, size_t const transition,
 }
 
 //------------------------------------------------------------------------------
+size_t placeTokens(Place const& place, Color const color)
+{
+    if (color == AnyColor)
+        return place.tokens;
+    size_t left = place.tokens;
+    size_t result = 0u;
+    for (auto const& [c, n] : place.colors)
+    {
+        size_t const k = std::min(n, left);
+        left -= k;
+        if (c == color)
+            result += k;
+    }
+    return (color == Success) ? result + left : result;
+}
+
+//------------------------------------------------------------------------------
+std::vector<std::pair<Color, size_t>> placeColors(Place const& place)
+{
+    std::vector<std::pair<Color, size_t>> result;
+    auto const add = [&result](Color const color, size_t const n) {
+        if (n == 0u)
+            return;
+        auto it = std::find_if(result.begin(), result.end(), [color](auto const& c) { return c.first == color; });
+        if (it == result.end())
+            result.push_back({ color, n });
+        else
+            it->second += n;
+    };
+    size_t left = place.tokens;
+    for (auto const& [color, n] : place.colors)
+    {
+        size_t const k = std::min(n, left);
+        left -= k;
+        add((color == AnyColor) ? Success : color, k);
+    }
+    add(Success, left);
+    std::sort(result.begin(), result.end());
+    return result;
+}
+
+//------------------------------------------------------------------------------
 bool isEnabled(Net const& net, Transition const& transition)
 {
     return enabled(net, transition,
-                   [&net](size_t p, Color) { return net.places()[p].tokens; },
+                   [&net](size_t p, Color c) { return placeTokens(net.places()[p], c); },
                    [](size_t) { return size_t(0u); });
 }
 
@@ -128,6 +170,26 @@ void produce(Net const& net, Marking& marking, size_t const transition)
 Color tokenColor(Arc const& arc, Color const result)
 {
     return (arc.color != AnyColor) ? arc.color : result;
+}
+
+//------------------------------------------------------------------------------
+std::vector<Color> results(Net const& net, size_t const transition)
+{
+    std::vector<Color> asked;
+    for (auto const& out: net.arcsOut(net.transitions()[transition]))
+    {
+        if (out.color != AnyColor)
+            continue;
+        for (auto const& next: net.arcsOut(net.places()[out.to.id]))
+        {
+            if ((next.color != AnyColor) && (std::find(asked.begin(), asked.end(), next.color) == asked.end()))
+                asked.push_back(next.color);
+        }
+    }
+    if (asked.empty())
+        return { Success };
+    std::sort(asked.begin(), asked.end());
+    return asked;
 }
 
 //------------------------------------------------------------------------------

@@ -8,6 +8,7 @@
 #ifndef TPNE_ANALYSIS_HPP
 #  define TPNE_ANALYSIS_HPP
 
+#  include "PetriNet/ColoredMarking.hpp"
 #  include "PetriNet/Firing.hpp"
 
 #  include <cstdint>
@@ -40,6 +41,9 @@ struct ReachabilityGraph
 
     //! \brief Reachable markings; the first one is the initial marking.
     std::vector<Marking> states;
+    //! \brief Nets with colors: the colored marking of each state (states
+    //! holds their number of tokens: two states can have the same one).
+    std::vector<ColoredMarking> colored;
     std::vector<Edge> edges;
     //! \brief False when the exploration stopped at the max number of
     //! states: the properties found are then only the ones of the explored
@@ -52,7 +56,10 @@ struct ReachabilityGraph
 //------------------------------------------------------------------------------
 //! \brief Explore the markings reachable from the marking of the net (all the
 //! rules of the firing: weights, inhibitor and reset arcs, capacities),
-//! breadth first, until max_states.
+//! breadth first, until max_states. A net with colors is explored with its
+//! colored markings (initialMarking()), as the runtime fires it: a firing
+//! gives one edge for each of its results() (a function of the runtime
+//! returning another color is not considered).
 //------------------------------------------------------------------------------
 ReachabilityGraph reachabilityGraph(Net const& net, size_t const max_states = 100000u);
 
@@ -94,6 +101,8 @@ struct Properties
     //! first one, with the transitions firing to it from the initial marking).
     bool deadlock = false;
     Marking deadlock_marking;
+    //! \brief Its colors (nets with colors, else empty).
+    ColoredMarking deadlock_colored;
     std::vector<size_t> deadlock_path;
     //! \brief Transitions never enabled (quasi-liveness, L1).
     std::vector<size_t> dead_transitions;
@@ -126,12 +135,21 @@ std::vector<std::vector<int64_t>> pInvariants(Net const& net, std::string& error
 std::vector<std::vector<int64_t>> tInvariants(Net const& net, std::string& error);
 
 //------------------------------------------------------------------------------
+//! \brief A marking as text: the tokens of each place ("1 0 2", OMEGA as w),
+//! with their colors when they are not all Success ("2{Phi0:1 Phi1:1}").
+//------------------------------------------------------------------------------
+std::string markingLabel(Net const& net, Marking const& marking, ColoredMarking const* colored = nullptr);
+
+//------------------------------------------------------------------------------
 //! \brief The graph of the markings as Graphviz (dot): a node per marking
 //! ("1 0 2", OMEGA as w), deadlocks in red, the initial one in bold, an edge
-//! per firing labeled by the transition.
+//! per firing labeled by the transition. With the colored markings
+//! (ReachabilityGraph::colored), a place whose tokens are not all Success
+//! gives their colors: "2{Phi0:1 Phi1:1}".
 //------------------------------------------------------------------------------
 std::string toDot(Net const& net, std::vector<Marking> const& states,
-                  std::vector<ReachabilityGraph::Edge> const& edges);
+                  std::vector<ReachabilityGraph::Edge> const& edges,
+                  std::vector<ColoredMarking> const& colored = {});
 
 //------------------------------------------------------------------------------
 //! \brief Report of all the analyses in text (tpne-check, the editor).

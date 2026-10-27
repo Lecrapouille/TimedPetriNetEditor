@@ -427,7 +427,7 @@ names a node. Then the colors: right click on the arc `Held → place` >
 $ tpne-check --allow-deadlock examples/Runtime/PickAndPlace/PickAndPlace.json
 examples/Runtime/PickAndPlace/PickAndPlace.json:
 Net: Pick and place (Petri net, 4 places, 4 transitions)
-Reachable markings: 4
+Reachable markings: 5
 Deadlock: yes, marking (P0=0, P1=0, P2=0, P3=1) after firing T0 (detect), T1 (grasp), T2 (place)
 Dead transitions: none
 Bounded: yes (1-bounded)
@@ -436,15 +436,17 @@ P-invariants:
   P0 (Ready) + P1 (Seen) + P2 (Held) + P3 (Done) = 1
 T-invariants:
   T1 (grasp) + T3 (retry)
-Note: The colors of the tokens are not considered.
+Note: The colors of the tokens are considered: a transition gives one of the colors asked by the arcs after it (Success if none is), a function of the runtime returning another color is not considered.
 ```
 
 The only deadlock is `Done`: the end of the job, wanted, hence
 `--allow-deadlock` (without it the exit code is 1, which fails a CI). The
 P-invariant says that there is always exactly one object somewhere; the
 T-invariant that `grasp` then `retry` gives the same marking back: the retry
-loop. The analysis does not see colors: for it, `place` and `retry` can both
-take the token.
+loop. The analysis follows the colors as the runtime does: `grasp` gives a
+`Success` or a `Failed` token to `Held` (the two colors asked after it), so
+`Held` is two markings, and only `place` takes the first, only `retry` the
+second: 5 markings.
 
 ### 8.3 Generate the program
 

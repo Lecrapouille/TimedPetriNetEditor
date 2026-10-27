@@ -20,7 +20,7 @@ Colored tokens: the result of an inspection chooses the branch.
 ```
 
 1. Open it: the colors `Good` and `Bad` are written on the arcs.
-2. Press **Space** and fire: the simulation of the editor ignores the colors, `Ship` and `Scrap` are both enabled by any inspected part.
+2. Press **Space** and fire `Inspect`: the simulation has no function to give a result, so it draws `Good` or `Bad` at random (the colors asked after `Inspect`). Only `Ship` or only `Scrap` is then enabled, as with the runtime.
 3. Right click on an arc > *Color of the tokens* to change a color, or type a new one.
 
 ## Run it with the runtime

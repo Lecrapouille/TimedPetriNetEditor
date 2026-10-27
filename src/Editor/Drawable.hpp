@@ -92,13 +92,15 @@ void drawArcHighlight(ImDrawList* draw_list, Net const& net, Arc const& arc,
 void drawArc(ImDrawList* draw_list, ImVec2 const* from, ImVec2 const* to, ImVec2 const* click_position,
              ImVec2 const& origin, ImVec2 const& cursor, float zoom = 1.0f);
 
-void drawToken(ImDrawList* draw_list, float const x, float const y, float zoom = 1.0f);
+void drawToken(ImDrawList* draw_list, float const x, float const y, float zoom = 1.0f,
+               ImU32 const color = themeTokenColor());
 //------------------------------------------------------------------------------
 //! \brief Tokens as one disk with their number: green on their way along an
 //! arc (timed nets), of the color of the tokens when they wait in the hidden
 //! place of a timed event graph.
 //------------------------------------------------------------------------------
-void drawTimedToken(ImDrawList* draw_list, size_t tokens, float const x, float const y, float zoom = 1.0f);
+void drawTimedToken(ImDrawList* draw_list, size_t tokens, float const x, float const y, float zoom = 1.0f,
+                    Color const color = Success);
 void drawWaitingTokens(ImDrawList* draw_list, size_t tokens, float const x, float const y, float zoom = 1.0f);
 
 //------------------------------------------------------------------------------
@@ -156,6 +158,28 @@ ImVec2 nodeHalfSize(Node const& node, TypeOfNet type);
 void drawStepActions(ImDrawList* draw_list, Net const& net, Place const& place, ImVec2 const& origin,
                      float zoom, bool (*is_active)(size_t index, void* data) = nullptr,
                      void* data = nullptr, bool compact = false);
+
+// ============================================================================
+// Colored tokens: the widgets of the places
+// ============================================================================
+
+//! \brief The net has colors of its own or colored arcs: the colors of the
+//! tokens are shown and edited.
+bool hasColors(Net const& net);
+
+//! \brief Color of the tokens added or removed by the user (keys + and -, the
+//! buttons of the Places panel, the menu of a place).
+Color& currentTokenColor();
+
+//! \brief Combo choosing currentTokenColor() among the colors of the net.
+void tokenColorCombo(Net const& net, char const* label);
+
+//! \brief The tokens of each color of the place, editable (a dot of the color,
+//! its name, its number). Return true when the tokens changed.
+bool editColoredTokens(Net const& net, Place& place);
+
+//! \brief "3 Phi0, 1 Success": the tokens of the place by color.
+std::string describeTokens(Net const& net, Place const& place);
 
 } // namespace tpne
 

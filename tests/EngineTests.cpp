@@ -330,3 +330,20 @@ TEST(TestEngine, ColoredResultsAskedByTheArcs)
     }
     ASSERT_TRUE(success && failed);
 }
+
+//------------------------------------------------------------------------------
+//! \brief The result chosen for a transition in the editor (Transition::result).
+TEST(TestEngine, ColoredResultOfTheTransition)
+{
+    Net net = coloredChoice();
+    net.transitions()[0].result = Failed;
+    for (uint64_t seed = 1u; seed <= 10u; ++seed)
+    {
+        Engine::Options options;
+        options.seed = seed;
+        Engine engine(net, options);
+        engine.reset();
+        engine.advanceTo(1.0);
+        ASSERT_EQ(engine.marking(), Marking({ 0u, 0u, 0u, 1u }));
+    }
+}

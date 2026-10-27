@@ -153,6 +153,13 @@ static void writeNetToJSON(std::ofstream& file, Net const& net)
                                         { "tokens", p.tokens } };
         if (p.capacity != capacity)
             item["capacity"] = p.capacity;
+        if (!p.colors.empty())
+        {
+            nlohmann::ordered_json colors = nlohmann::ordered_json::object();
+            for (auto const& [color, tokens] : p.colors)
+                colors[net.colors.name(color)] = tokens;
+            item["colors"] = colors;
+        }
         items.push_back(item);
     }
     file << "       \"places\": [";
@@ -167,6 +174,8 @@ static void writeNetToJSON(std::ofstream& file, Net const& net)
             item["delay"] = t.delay;
         if (t.priority != 0)
             item["priority"] = t.priority;
+        if (t.result != AnyColor)
+            item["result"] = net.colors.name(t.result);
         items.push_back(item);
     }
     file << "\n       ],\n       \"transitions\": [";

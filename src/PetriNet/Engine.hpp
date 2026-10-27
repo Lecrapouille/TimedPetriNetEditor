@@ -124,8 +124,8 @@ public:
     Engine(Net const& net, Options const& options);
 
     //--------------------------------------------------------------------------
-    //! \brief Start again at date 0 from the marking of the net (or the given
-    //! one, its tokens colored Success). Draws the seed when Options::seed is
+    //! \brief Start again at date 0 from the marking of the net
+    //! (initialMarking()), or the given one (a Marking: its tokens Success). Draws the seed when Options::seed is
     //! 0.
     //--------------------------------------------------------------------------
     void reset();
@@ -179,6 +179,8 @@ public:
     //! tokens added are Success, the ones removed of any color.
     //--------------------------------------------------------------------------
     void setTokens(size_t const place, size_t const tokens);
+    //! \brief Same with the (color, number) of its tokens.
+    void setTokens(size_t const place, std::vector<std::pair<Color, size_t>> const& tokens);
 
     //--------------------------------------------------------------------------
     //! \brief Arm or disarm a transition (manual mode: a click).
@@ -213,7 +215,7 @@ public:
     std::function<void(size_t, double, size_t)> onFire;
     //! \brief Result of the firing of the transition: the color of the
     //! tokens given by its output arcs without color. Not set:
-    //! Options::results.
+    //! Transition::result, else Options::results.
     std::function<Color(size_t)> onResult;
     //! \brief Called when tokens reach their place.
     std::function<void(Flight const&)> onArrival;
@@ -235,7 +237,8 @@ private:
     size_t pick();
     //! \brief Enabled and armed, delay not considered.
     bool isReady(size_t const transition) const;
-    //! \brief Result of the firing (onResult, else Options::results).
+    //! \brief Result of the firing: onResult, else Transition::result, else
+    //! Options::results.
     Color result(size_t const transition);
     //! \brief m_marking follows the places of m_colored that changed.
     void count();
@@ -262,7 +265,7 @@ private:
     //! \brief Date since which each transition is ready, or NEVER.
     std::vector<double> m_ready_since;
     std::vector<std::vector<double>> m_firing_dates;
-    //! \brief Colors asked after each transition (Results::Asked).
+    //! \brief results() of each transition (Results::Asked).
     std::vector<std::vector<Color>> m_asked;
     bool m_zeno = false;
 };

@@ -694,6 +694,7 @@ void Editor::handleMenuActions()
     // Analysis window (dockable, not modal)
     m_states.properties_shown = false;
     if (m_states.show_analysis) { analysisWindow(); }
+    if (m_states.markings.open) { markingsWindow(); }
     // The marks of the analysis go with its tab.
     if (!m_states.properties_shown)
         m_marks.clear("analysis");

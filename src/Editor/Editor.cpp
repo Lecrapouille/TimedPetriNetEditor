@@ -636,6 +636,13 @@ void Editor::onDraw()
             m_focus_window = "Analysis";
             break;
         }
+        // The graph of the markings ("Markings": a name without space for
+        // the lists of tools/screenshots).
+        if ((m_focus_window == "Graph of the markings") || (m_focus_window == "Markings"))
+        {
+            showMarkingsGraph(net());
+            m_focus_window = "Graph of the markings";
+        }
         ImGui::SetWindowFocus(m_focus_window.c_str());
         m_focus_window.clear();
     }

@@ -10,6 +10,7 @@
 #include "IO/IO.hpp"
 #include "MaxPlus/Algorithms.hpp"
 #include "PetriNet/Simulation.hpp"
+#include "PetriNet/ColoredMarking.hpp"
 
 using namespace ::tpne;
 
@@ -192,4 +193,33 @@ TEST(TestExtensions, Colors)
     ASSERT_EQ(loaded.findArc(loaded.places()[0], loaded.transitions()[0])->color, Success);
     ASSERT_STREQ(loaded.colors.name(loaded.findArc(loaded.places()[0], loaded.transitions()[1])->color).c_str(),
                  "Dropped");
+}
+
+//------------------------------------------------------------------------------
+TEST(TestExtensions, ColoredInitialTokens)
+{
+    Net net(TypeOfNet::PetriNet);
+    bool springify;
+    ASSERT_STREQ(loadFromFile(net, "../examples/Extended-Petri-Nets/ColoredPhilosophers/ColoredPhilosophers.json",
+                              springify).c_str(), "");
+    std::optional<Color> const phi1 = net.colors.find("Phi1");
+    ASSERT_TRUE(phi1.has_value());
+
+    // Thinking holds Phi0, Phi1, Phi2; the forks are Success.
+    ColoredMarking const marking = initialMarking(net);
+    ASSERT_EQ(marking.count(0u), 3u);
+    ASSERT_EQ(marking.count(0u, *phi1), 1u);
+    ASSERT_EQ(marking.count(0u, Success), 0u);
+    ASSERT_EQ(marking.count(2u, Success), 1u);
+
+    // Saved and loaded again.
+    ASSERT_STREQ(saveToFile(net, "/tmp/tpne-colored-tokens.json").c_str(), "");
+    Net loaded(TypeOfNet::PetriNet);
+    ASSERT_STREQ(loadFromFile(loaded, "/tmp/tpne-colored-tokens.json", springify).c_str(), "");
+    ASSERT_TRUE(initialMarking(loaded) == marking);
+
+    // Fewer tokens than colored ones: the first colors are kept.
+    net.places()[0].tokens = 1u;
+    ASSERT_EQ(initialMarking(net).count(0u), 1u);
+    ASSERT_EQ(initialMarking(net).count(0u, *net.colors.find("Phi0")), 1u);
 }

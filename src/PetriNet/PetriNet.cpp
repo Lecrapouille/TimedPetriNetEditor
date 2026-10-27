@@ -104,16 +104,71 @@ Place::Place(size_t const id_, std::string const& caption_, size_t const tokens_
 {}
 
 //------------------------------------------------------------------------------
-size_t Place::increment(size_t const count)
+//! \brief Place::colors without Success (the tokens not listed), without
+//! empty entries, at most Place::tokens (placeTokens()).
+static void tidyColors(Place& place)
 {
-    tokens = (count > capacity - std::min(capacity, tokens)) ? capacity : tokens + count;
+    std::vector<std::pair<Color, size_t>> colors;
+    size_t left = place.tokens;
+    for (auto const& [color, n] : place.colors)
+    {
+        size_t const k = std::min(n, left);
+        left -= k;
+        if ((k == 0u) || (color == Success) || (color == AnyColor))
+            continue;
+        auto it = std::find_if(colors.begin(), colors.end(), [color](auto const& c) { return c.first == color; });
+        if (it == colors.end())
+            colors.push_back({ color, k });
+        else
+            it->second += k;
+    }
+    place.colors = std::move(colors);
+}
+
+//------------------------------------------------------------------------------
+size_t Place::increment(size_t const count, Color const color)
+{
+    tidyColors(*this);
+    size_t const added = std::min(count, capacity - std::min(capacity, tokens));
+    tokens += added;
+    if ((added > 0u) && (color != Success) && (color != AnyColor))
+    {
+        auto it = std::find_if(colors.begin(), colors.end(), [color](auto const& c) { return c.first == color; });
+        if (it == colors.end())
+            colors.push_back({ color, added });
+        else
+            it->second += added;
+    }
     return tokens;
 }
 
 //------------------------------------------------------------------------------
-size_t Place::decrement(size_t const count)
+size_t Place::decrement(size_t const count, Color const color)
 {
-    tokens = std::max(tokens, count) - count;
+    tidyColors(*this);
+    size_t colored = 0u;
+    for (auto const& c : colors)
+        colored += c.second;
+    size_t left = count;
+
+    // Success tokens: the ones not listed.
+    if ((color == Success) || (color == AnyColor))
+    {
+        size_t const k = std::min(left, tokens - colored);
+        tokens -= k;
+        left -= k;
+    }
+    // Then the colors listed, from the last one.
+    for (size_t i = colors.size(); (i-- > 0u) && (left > 0u);)
+    {
+        if ((color != AnyColor) && (colors[i].first != color))
+            continue;
+        size_t const k = std::min(left, colors[i].second);
+        colors[i].second -= k;
+        tokens -= k;
+        left -= k;
+    }
+    tidyColors(*this);
     return tokens;
 }
 

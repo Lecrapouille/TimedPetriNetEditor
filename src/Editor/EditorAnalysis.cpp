@@ -439,25 +439,10 @@ void Editor::analysisProperties()
     if (ImGui::SmallButton("Copy the report"))
         ImGui::SetClipboardText(cache.report.c_str());
     ImGui::SameLine();
-    if (ImGui::SmallButton("Graph of the markings..."))
-        FileDialogHelper::openSave("MarkingsDlgKey", "Save the graph of the markings", ".dot,.gv");
-    FileDialogHelper::display("MarkingsDlgKey", [this, &analyzed](std::string const& path) {
-        size_t const max = size_t(m_states.max_markings);
-        CoverabilityGraph const cover = coverabilityGraph(analyzed, max);
-        ReachabilityGraph const reach = reachabilityGraph(analyzed, max);
-        // The coverability graph when the reachable markings are too many.
-        std::string const dot = (!reach.complete && cover.complete) ? toDot(analyzed, cover.states, cover.edges)
-                                                                    : toDot(analyzed, reach.states, reach.edges);
-        std::ofstream file(path);
-        if (file << dot)
-        {
-            file.close();
-            FileDialogHelper::download(path);
-            m_messages.setInfo("Graph of the markings saved in '" + path + "' (dot -Tsvg to draw it)");
-        }
-        else
-            m_messages.setError("Cannot write '" + path + "'");
-    });
+    if (ImGui::SmallButton("Graph of the markings"))
+        showMarkingsGraph(analyzed);
+    if (ImGui::IsItemHovered())
+        ImGui::SetTooltip("Draw the graph of the markings in a window (and export it to dot)");
     ImGui::SameLine();
     ImGui::Checkbox("Show on the net", &m_states.mark_properties);
 
@@ -689,6 +674,61 @@ static void computeGantt(Net const& net, int const cycles,
                              piece + " k=" + std::to_string(k + 1) });
         }
     }
+}
+
+//------------------------------------------------------------------------------
+void Editor::showMarkingsGraph(Net const& analyzed)
+{
+    size_t const max = size_t(m_states.max_markings);
+    ReachabilityGraph const reach = reachabilityGraph(analyzed, max);
+    std::string const title = analyzed.name.empty() ? "net" : analyzed.name;
+    // The coverability graph when the reachable markings are too many.
+    CoverabilityGraph const cover = reach.complete ? CoverabilityGraph{} : coverabilityGraph(analyzed, max);
+    if (!reach.complete && cover.complete)
+        m_states.markings.set(analyzed, cover.states, cover.edges, {}, title + " (coverability)",
+                              toDot(analyzed, cover.states, cover.edges));
+    else
+        m_states.markings.set(analyzed, reach.states, reach.edges, reach.colored, title,
+                              toDot(analyzed, reach.states, reach.edges, reach.colored));
+    m_states.markings.open = true;
+}
+
+//------------------------------------------------------------------------------
+void Editor::markingsWindow()
+{
+    MarkingsGraph& graph = m_states.markings;
+    ImGui::SetNextWindowSize(ImVec2(700.0f, 500.0f), ImGuiCond_FirstUseEver);
+    if (!ImGui::Begin("Graph of the markings", &graph.open))
+    {
+        ImGui::End();
+        return;
+    }
+    ImGui::Text("%s", graph.title().c_str());
+    ImGui::SameLine();
+    if (ImGui::SmallButton("Layout again"))
+        graph.relayout();
+    ImGui::SameLine();
+    if (ImGui::SmallButton("Export to dot..."))
+        FileDialogHelper::openSave("MarkingsDlgKey", "Save the graph of the markings", ".dot,.gv");
+    FileDialogHelper::display("MarkingsDlgKey", [this](std::string const& path) {
+        std::ofstream file(path);
+        if (file << m_states.markings.dot())
+        {
+            file.close();
+            FileDialogHelper::download(path);
+            m_messages.setInfo("Graph of the markings saved in '" + path + "' (dot -Tsvg to draw it)");
+        }
+        else
+            m_messages.setError("Cannot write '" + path + "'");
+    });
+    ImGui::SameLine();
+    ImGui::TextDisabled("(?)");
+    if (ImGui::IsItemHovered())
+        ImGui::SetTooltip("Bold: the initial marking. Red: a deadlock. Drag a box or the view;\n"
+                          "wheel: zoom. A marking lists the tokens of P0, P1 ... with their\n"
+                          "colors when they are not all Success.");
+    graph.draw();
+    ImGui::End();
 }
 
 //------------------------------------------------------------------------------

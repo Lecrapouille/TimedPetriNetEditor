@@ -61,7 +61,11 @@ Read the properties on the graph: no marking has both critical places marked, so
 
 ### 2.2 By the editor
 
-`tpne-check --dot graph.dot net.json` (or *Graph of the markings...* in the editor) writes the reachability graph for [Graphviz](https://graphviz.org). The initial marking is drawn in bold, the deadlocks in red; `dot -Tpng graph.dot -o graph.png` draws it:
+In the editor, *Analysis > Properties > Graph of the markings* draws the reachability graph in a window: a box per marking, an arrow per firing labeled by its transition, the initial marking in bold, the deadlocks in red. A spring layout places the boxes (*Layout again* starts it again); drag a box or the view, the wheel zooms. A net with colors shows the colors of the tokens (`3{Phi0:1 Phi1:1 Phi2:1}`: 3 tokens, one of each color). Graphs of more than 400 markings are not drawn, only exported. Here, the 4 markings of [ColoredPhilosophers](../examples/Extended-Petri-Nets/ColoredPhilosophers/README.md):
+
+![Graph of the markings of ColoredPhilosophers](pics/04-Markings-ColoredPhilosophers.png)
+
+*Export to dot...* in this window, or `tpne-check --dot graph.dot net.json` in a terminal, writes the same graph for [Graphviz](https://graphviz.org); `dot -Tpng graph.dot -o graph.png` draws it:
 
 ![Graph of the markings of MutualExclusion](pics/04-Graph-MutualExclusion.png)
 
@@ -292,7 +296,7 @@ A T-invariant is a candidate cycle: the order of the firings is not given, and s
 | Invariants | the P- and T-invariants; a click on one marks its nodes on the net |
 | Report | the same text as `tpne-check` (*Copy the report*) |
 | *Show on the net* | marks the dead transitions, the transitions not live and the unbounded places |
-| *Graph of the markings...* | saves the reachability graph for Graphviz |
+| *Graph of the markings* | draws the reachability graph in a window (*Export to dot...* saves it for Graphviz) |
 
 *Replay the path in the Journal* fills the *Journal* with the firings that lead to the deadlock: its replay slider shows the marking after each one, step by step ([chapter 13](13-Debugging.md)).
 
@@ -331,7 +335,9 @@ The report adds a note when it ignores something:
 
 - **durations** of a timed Petri net: "the timed net may reach fewer markings"; a deadlock found may be impossible with the real durations;
 - **GRAFCET rules** (receptivities, simultaneous firing): the analysis of a GRAFCET is the analysis of its Petri net;
-- **colors** of the tokens: an arc that asks for a color is analyzed as an arc that takes any token.
+- **colors** of the tokens: they are considered, as the runtime fires them ("The colors of the tokens are considered"). A marking is the tokens of each color in each place, and a firing gives one branch for each color its result can have: the colors asked by the arcs after the transition (`Success` if none is). A function of the runtime that returns another color is not considered. If the net has too many markings, the coverability graph of the bounds does not consider the colors (a note says so).
+
+  This matters: the analysis without colors finds markings that the runtime never reaches. In [ColoredPhilosophers](../examples/Extended-Petri-Nets/ColoredPhilosophers/README.md), it finds 10 markings, where `Phi0 eats` takes the token of `Phi1`; with the colors there are 4 (at rest, or one philosopher eating).
 
 ## 9. Try it
 

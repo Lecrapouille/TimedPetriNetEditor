@@ -140,7 +140,8 @@ void Simulation::initializeRuntimeState()
             onFired.emit(t, date, k);
         };
         m_petri->onWarning = [this](std::string const& msg) { onWarning.emit(msg); };
-        m_petri->reset(m_initial_tokens);
+        // The tokens of the net (m_initial_tokens), with their colors.
+        m_petri->reset(tpne::initialMarking(m_net));
         m_shown = m_initial_tokens;
     }
 }
@@ -321,7 +322,13 @@ void Simulation::readUserChanges()
     auto const& places = m_net.places();
     for (size_t p = 0u; (p < places.size()) && (p < m_shown.size()); ++p)
     {
-        if (places[p].tokens != m_shown[p])
+        if (m_colors)
+        {
+            std::vector<std::pair<Color, size_t>> const tokens = placeColors(places[p]);
+            if (tokens != m_petri->coloredMarking().tokens(p))
+                m_petri->setTokens(p, tokens);
+        }
+        else if (places[p].tokens != m_shown[p])
             m_petri->setTokens(p, places[p].tokens);
     }
 
@@ -342,6 +349,13 @@ void Simulation::showMarking()
 {
     m_shown = m_petri->marking();
     m_net.tokens(m_shown);
+    // The colors of the tokens, for the drawing and Net::isEnabled().
+    if (m_colors)
+    {
+        ColoredMarking const& colored = m_petri->coloredMarking();
+        for (auto& place : m_net.places())
+            place.colors = colored.tokens(place.id);
+    }
     auto& transitions = m_net.transitions();
     for (size_t t = 0u; t < transitions.size(); ++t)
         transitions[t].receptivity = m_petri->isArmed(t);
@@ -381,6 +395,10 @@ bool Simulation::hasReceptivityErrors() const
 void Simulation::storeInitialMarking()
 {
     m_initial_tokens = m_net.tokens();
+    m_initial_colors.clear();
+    for (auto const& place : m_net.places())
+        m_initial_colors.push_back(place.colors);
+    m_colors = ((features(m_net) & Feature::Colors) != 0u) || !m_net.colors.user().empty();
 }
 
 //------------------------------------------------------------------------------
@@ -390,6 +408,8 @@ void Simulation::restoreInitialMarking()
     {
         m_net.tokens(m_initial_tokens);
     }
+    for (size_t p = 0u; (p < m_initial_colors.size()) && (p < m_net.places().size()); ++p)
+        m_net.places()[p].colors = m_initial_colors[p];
 }
 
 } // namespace tpne

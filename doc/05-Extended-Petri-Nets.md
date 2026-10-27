@@ -307,14 +307,25 @@ the same rule as the runtime: an arc that asks for a color takes only the
 tokens of this color. There is no function to give a result, so the result
 of a firing is drawn at random among the colors asked by the arcs after the
 transition (in Colors: `Good` or `Bad`), `Success` when no arc asks for one.
-The [analysis](04-Analysis.md) still ignores the colors, and says so ("The
-colors of the tokens are not considered").
+The canvas draws each token in a place with its color (`Success` tokens as
+usual, `Failed` ones red, each color of yours with its own hue, the one of
+its name on the arcs), and draws as enabled only the transitions that the
+colors allow. The [analysis](04-Analysis.md) follows the colors with the same
+rule, and explores every possible result.
 
 **In the editor.** The *Colors* window lists the colors of the user: *Add*
 creates one. Right click on an arc > *Color of the tokens*, or the Color
 column of *Arcs*, chooses one; *any* removes it. A new color can also be
 typed in the menu of the arc. JSON: `"color": "Good"` in the arc, and
-`"colors": ["Good", "Bad"]` in the net for the colors of the user.
+`"colors": ["Good", "Bad"]` in the net for the colors of the user. The
+initial tokens of a place are `Success`; `"colors": { "Phi0": 1, "Phi1": 1 }`
+in a place colors some of them (the others stay `Success`). In the editor:
+right click on a place > *Tokens by color*, or *colors* in the *Places*
+panel, where *Color of the tokens* chooses the color added or removed by the
+arrows and the keys **+** and **-**. The tooltip of a place lists its tokens
+by color. Right click on a transition > *Result in the simulation* replaces
+the random result by a color (to simulate a failure, for example). Example:
+[ColoredPhilosophers](../examples/Extended-Petri-Nets/ColoredPhilosophers/README.md).
 
 ## 7. All together: the bounded buffer
 

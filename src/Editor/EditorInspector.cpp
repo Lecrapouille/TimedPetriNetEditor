@@ -6,6 +6,7 @@
 // See LICENSING.md for details.
 
 #include "Editor/Editor.hpp"
+#include "Editor/Drawable.hpp"
 #include "Editor/GrafcetHelp.hpp"
 #include "PetriNet/Grafcet.hpp"
 #include "imgui/imgui.h"
@@ -36,8 +37,8 @@ static bool helpMarker(char const* tooltip)
 static void drawPlacesPanel(Net& net, Simulation& simulation, bool& modified,
                             bool& show_identifiers)
 {
-    const auto readonly = simulation.isRunning() ?
-        ImGuiInputTextFlags_ReadOnly : ImGuiInputTextFlags_None;
+    // Everything of a place can change while simulating: the engine reads
+    // its tokens and its capacity at each firing.
     bool const grafcet = (net.type() == TypeOfNet::GRAFCET);
 
     ImGui::Begin(grafcet ? "Steps###Places" : "Places###Places");
@@ -47,6 +48,14 @@ static void drawPlacesPanel(Net& net, Simulation& simulation, bool& modified,
         ImGui::SetTooltip(grafcet ? "Draw the number of each step above its caption"
                                   : "Draw the identifier (P0, P1 ...) of each place next to its caption");
     }
+    bool const colors = !grafcet && hasColors(net);
+    if (colors)
+    {
+        tokenColorCombo(net, "Color of the tokens");
+        if (ImGui::IsItemHovered())
+            ImGui::SetTooltip("Color of the tokens added or removed by the arrows below,\n"
+                              "the keys + and - and the menu of a place");
+    }
     ImGui::Separator();
     ImGui::TextDisabled(grafcet ? "Captions and active steps:" : "Captions and tokens:");
 
@@ -54,8 +63,8 @@ static void drawPlacesPanel(Net& net, Simulation& simulation, bool& modified,
     {
         ImGui::PushID(place.key.c_str());
         ImGui::AlignTextToFramePadding();
-        ImGui::SetNextItemWidth(std::max(80.0f, ImGui::GetContentRegionAvail().x - 120.0f));
-        if (ImGui::InputText(place.key.c_str(), &place.caption, readonly))
+        ImGui::SetNextItemWidth(std::max(80.0f, ImGui::GetContentRegionAvail().x - (colors ? 180.0f : 120.0f)));
+        if (ImGui::InputText(place.key.c_str(), &place.caption))
             modified = true;
 
         // Token increment/decrement buttons
@@ -63,19 +72,36 @@ static void drawPlacesPanel(Net& net, Simulation& simulation, bool& modified,
         ImGui::PushItemFlag(ImGuiItemFlags_ButtonRepeat, true);
         if (ImGui::ArrowButton("##left", ImGuiDir_Left))
         {
-            place.decrement();
+            place.decrement(1u, colors ? currentTokenColor() : AnyColor);
             modified = true;
         }
         ImGui::SameLine();
         if (ImGui::ArrowButton("##right", ImGuiDir_Right))
         {
-            place.increment();
+            place.increment(1u, colors ? currentTokenColor() : Success);
             modified = true;
         }
         ImGui::PopItemFlag();
 
         ImGui::SameLine();
         ImGui::Text("%zu", place.tokens);
+        if (colors && (place.tokens > 0u) && ImGui::IsItemHovered())
+            ImGui::SetTooltip("%s", describeTokens(net, place).c_str());
+
+        // The tokens of each color.
+        if (colors)
+        {
+            ImGui::SameLine();
+            if (ImGui::SmallButton("colors"))
+                ImGui::OpenPopup("colors");
+            if (ImGui::BeginPopup("colors"))
+            {
+                ImGui::TextDisabled("Tokens of %s by color", place.key.c_str());
+                if (editColoredTokens(net, place))
+                    modified = true;
+                ImGui::EndPopup();
+            }
+        }
 
         // Capacity: 0 for unbounded.
         if (allows(net.type(), Feature::Capacities))
@@ -84,7 +110,7 @@ static void drawPlacesPanel(Net& net, Simulation& simulation, bool& modified,
             ImGui::SetNextItemWidth(40.0f);
             bool const unbounded = (place.capacity == std::numeric_limits<size_t>::max());
             int capacity = unbounded ? 0 : int(std::min(place.capacity, size_t(1000000u)));
-            if (ImGui::InputInt("##capacity", &capacity, 0, 0, readonly))
+            if (ImGui::InputInt("##capacity", &capacity, 0, 0))
             {
                 place.capacity = (capacity <= 0) ? std::numeric_limits<size_t>::max()
                                                  : std::max(size_t(capacity), place.tokens);
@@ -150,7 +176,7 @@ static void drawTransitionsPanel(Net& net, Simulation& simulation, bool& modifie
         {
             ImGui::SameLine();
             ImGui::SetNextItemWidth(40.0f);
-            if (ImGui::InputInt("##priority", &t.priority, 0, 0, readonly))
+            if (ImGui::InputInt("##priority", &t.priority, 0, 0))
                 modified = true;
             if (ImGui::IsItemHovered())
                 ImGui::SetTooltip("Priority: with the policy \"Highest priority\" (menu Simulation >\n"

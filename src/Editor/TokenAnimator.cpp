@@ -47,7 +47,7 @@ std::vector<AnimatedToken> animateTokens(Net const& net, std::vector<Engine::Fli
             ratio *= TEG_TOKENS_AT;
         ImVec2 direction;
         ImVec2 const at = alongPath(path.points, ratio, direction);
-        tokens.push_back({ at.x, at.y, it.second.second });
+        tokens.push_back({ at.x, at.y, it.second.second, flight.color });
     }
     return tokens;
 }

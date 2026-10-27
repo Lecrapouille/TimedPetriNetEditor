@@ -37,7 +37,7 @@ Engine::Engine(Net const& net, Options const& options)
 //------------------------------------------------------------------------------
 void Engine::reset()
 {
-    reset(m_net.tokens());
+    reset(initialMarking(m_net));
 }
 
 //------------------------------------------------------------------------------
@@ -69,22 +69,9 @@ void Engine::reset(ColoredMarking const& marking)
     m_armed.assign(transitions, !m_options.manual);
     m_ready_since.assign(transitions, NEVER);
     m_firing_dates.assign(transitions, {});
-    m_asked.assign(transitions, {});
+    m_asked.resize(transitions);
     for (size_t t = 0u; t < transitions; ++t)
-    {
-        std::vector<Color>& asked = m_asked[t];
-        for (auto const& out: m_net.arcsOut(m_net.transitions()[t]))
-        {
-            if (out.color != AnyColor)
-                continue;
-            for (auto const& next: m_net.arcsOut(m_net.places()[out.to.id]))
-            {
-                if ((next.color != AnyColor) && (std::find(asked.begin(), asked.end(), next.color) == asked.end()))
-                    asked.push_back(next.color);
-            }
-        }
-        std::sort(asked.begin(), asked.end());
-    }
+        m_asked[t] = results(m_net, t);
     m_zeno = false;
 
     // An isolated transition would fire for ever.
@@ -108,6 +95,16 @@ void Engine::setTokens(size_t const place, size_t const tokens)
         m_colored.add(place, Success, tokens - n);
     else
         m_colored.take(place, AnyColor, n - tokens);
+    count();
+    updateEnabling();
+}
+
+//------------------------------------------------------------------------------
+void Engine::setTokens(size_t const place, std::vector<std::pair<Color, size_t>> const& tokens)
+{
+    m_colored.clear(place);
+    for (auto const& [color, n] : tokens)
+        m_colored.add(place, color, n);
     count();
     updateEnabling();
 }
@@ -255,9 +252,13 @@ Color Engine::result(size_t const transition)
 {
     if (onResult)
         return onResult(transition);
+    if (m_net.transitions()[transition].result != AnyColor)
+        return m_net.transitions()[transition].result;
     std::vector<Color> const& asked = m_asked[transition];
-    if ((m_options.results == Results::AlwaysSuccess) || asked.empty())
+    if (m_options.results == Results::AlwaysSuccess)
         return Success;
+    if (asked.size() == 1u)
+        return asked[0];
     return asked[std::uniform_int_distribution<size_t>(0u, asked.size() - 1u)(m_random)];
 }
 

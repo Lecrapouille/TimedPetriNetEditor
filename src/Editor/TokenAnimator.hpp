@@ -25,6 +25,8 @@ struct AnimatedToken
     float y;
     //! \brief Tokens of the same firing on the same arc, drawn as one dot.
     size_t tokens;
+    //! \brief Their color (Engine::Flight::color).
+    Color color;
 };
 
 //------------------------------------------------------------------------------

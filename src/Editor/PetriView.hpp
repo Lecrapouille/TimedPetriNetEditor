@@ -184,7 +184,7 @@ private:
     void drawBadges(Net const& net, Simulation const& simulation);
 
     // Tooltips
-    void showPlaceTooltip(Place const& place, TypeOfNet type);
+    void showPlaceTooltip(Net const& net, Place const& place, TypeOfNet type);
     void showTransitionTooltip(Net const& net, Transition const& trans);
 
     // Selection

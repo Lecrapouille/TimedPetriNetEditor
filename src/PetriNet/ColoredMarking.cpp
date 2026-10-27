@@ -6,6 +6,7 @@
 // See LICENSING.md for details.
 
 #include "PetriNet/ColoredMarking.hpp"
+#include "PetriNet/PetriNet.hpp"
 
 #include <algorithm>
 
@@ -84,12 +85,53 @@ std::vector<std::pair<Color, size_t>> ColoredMarking::tokens(size_t const place)
 }
 
 //------------------------------------------------------------------------------
+std::vector<size_t> ColoredMarking::key() const
+{
+    std::vector<size_t> result;
+    for (size_t p = 0u; p < m_counts.size(); ++p)
+    {
+        size_t const at = result.size();
+        result.push_back(0u);
+        for (size_t c = 0u; c < m_counts[p].size(); ++c)
+        {
+            if (m_counts[p][c] == 0u)
+                continue;
+            result.push_back(c);
+            result.push_back(m_counts[p][c]);
+            ++result[at];
+        }
+    }
+    return result;
+}
+
+//------------------------------------------------------------------------------
 Marking ColoredMarking::counts() const
 {
     Marking result(m_counts.size(), 0u);
     for (size_t p = 0u; p < m_counts.size(); ++p)
         result[p] = count(p);
     return result;
+}
+
+//------------------------------------------------------------------------------
+ColoredMarking initialMarking(Net const& net)
+{
+    ColoredMarking marking(net.places().size());
+    for (auto const& place : net.places())
+    {
+        size_t left = place.tokens;
+        for (auto const& [color, tokens] : place.colors)
+        {
+            size_t const n = std::min(tokens, left);
+            if (n > 0u)
+                marking.add(place.id, color, n);
+            left -= n;
+        }
+        if (left > 0u)
+            marking.add(place.id, Success, left);
+    }
+    marking.takeTouched();
+    return marking;
 }
 
 } // namespace tpne

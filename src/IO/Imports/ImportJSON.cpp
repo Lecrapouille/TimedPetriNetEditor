@@ -204,6 +204,24 @@ static std::string parseNetFromJSON(Net& net, nlohmann::json const& jnet)
             place.capacity = capacity;
         }
 
+        // Colors of the initial tokens: { "Phi0": 1, ... }, the others Success.
+        if (p.contains("colors") && p["colors"].is_object())
+        {
+            size_t colored = 0u;
+            for (auto const& it : p["colors"].items())
+            {
+                size_t const n = it.value().get<size_t>();
+                place.colors.push_back({ net.colors.add(it.key()), n });
+                colored += n;
+            }
+            if (colored > place.tokens)
+            {
+                error << "Place " << place.key << " has " << colored << " colored tokens but "
+                      << place.tokens << " tokens";
+                return error.str();
+            }
+        }
+
         // GRAFCET actions embedded in place
         if (p.contains("actions"))
         {
@@ -227,6 +245,8 @@ static std::string parseNetFromJSON(Net& net, nlohmann::json const& jnet)
         net.position(transition) = at;
         transition.delay = t.value("delay", 0.0f);
         transition.priority = t.value("priority", 0);
+        if (t.contains("result"))
+            transition.result = net.colors.add(t["result"].get<std::string>());
     }
 
     // Arcs

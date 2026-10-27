@@ -17,6 +17,8 @@
 
 namespace tpne {
 
+class Net;
+
 // *****************************************************************************
 //! \brief Tokens of each color in each place.
 // *****************************************************************************
@@ -24,7 +26,8 @@ class ColoredMarking
 {
 public:
 
-    explicit ColoredMarking(size_t const places = 0u) : m_counts(places), m_is_touched(places, 0) {}
+    ColoredMarking() = default;
+    explicit ColoredMarking(size_t const places) : m_counts(places), m_is_touched(places, 0) {}
 
     //! \brief Number of places.
     size_t places() const { return m_counts.size(); }
@@ -48,7 +51,12 @@ public:
     //! \brief Number of tokens of each place, colors not considered.
     Marking counts() const;
 
-    bool operator==(ColoredMarking const& other) const { return m_counts == other.m_counts; }
+    //! \brief Same tokens of the same colors in each place.
+    bool operator==(ColoredMarking const& other) const { return key() == other.key(); }
+
+    //! \brief The tokens as one vector, the same for equal markings: for each
+    //! place, its number of colors then their (color, count). To sort them.
+    std::vector<size_t> key() const;
 
     //! \brief The tokens of the place change (add(), take(), clear() call it):
     //! the runtime checks again the transitions around it.
@@ -87,6 +95,12 @@ private:
     std::vector<size_t> m_touched;
     std::vector<char> m_is_touched;
 };
+
+// *****************************************************************************
+//! \brief Initial colored marking of the net: the tokens of each place, of the
+//! colors of Place::colors (at most Place::tokens of them), the others Success.
+// *****************************************************************************
+ColoredMarking initialMarking(Net const& net);
 
 } // namespace tpne
 

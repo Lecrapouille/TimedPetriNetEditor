@@ -223,3 +223,68 @@ TEST(TestAnalysis, Examples)
     ASSERT_THAT(text, HasSubstr("Live: yes"));
     ASSERT_THAT(text, HasSubstr("P-invariants:"));
 }
+
+//------------------------------------------------------------------------------
+//! \brief The colors are explored as the runtime fires them: the uncolored
+//! analysis of the same net finds markings the runtime never reaches.
+TEST(TestAnalysis, ColoredPhilosophers)
+{
+    Net net(TypeOfNet::PetriNet);
+    bool springify;
+    ASSERT_STREQ(loadFromFile(net, "../examples/Extended-Petri-Nets/ColoredPhilosophers/ColoredPhilosophers.json",
+                              springify).c_str(), "");
+
+    // At rest, or one of the three eating (Phi i eats with its own token).
+    ReachabilityGraph const graph = reachabilityGraph(net);
+    ASSERT_TRUE(graph.complete);
+    ASSERT_EQ(graph.states.size(), 4u);
+    ASSERT_EQ(graph.colored.size(), 4u);
+    Properties const prop = properties(net);
+    ASSERT_FALSE(prop.deadlock);
+    ASSERT_TRUE(prop.live);
+    ASSERT_TRUE(prop.bounded);
+    ASSERT_NE(report(net).find("The colors of the tokens are considered"), std::string::npos);
+
+    // Without colors, Phi0 eats with the token of Phi1 ...
+    for (auto& arc : net.arcs())
+        arc.color = AnyColor;
+    ASSERT_EQ(reachabilityGraph(net).states.size(), 10u);
+    ASSERT_TRUE(reachabilityGraph(net).colored.empty());
+}
+
+//------------------------------------------------------------------------------
+//! \brief Each possible result of a firing is a branch; the deadlock gives
+//! the colors of its tokens.
+TEST(TestAnalysis, ColoredResults)
+{
+    // P0 (1) -> T0 -> P1, P1 -(Good)-> T1 -(Good)-> P2, P1 -(Bad)-> T2 -(Bad)-> P3.
+    Net net(TypeOfNet::PetriNet);
+    build(net, { 1u, 0u, 0u, 0u }, 3u, { "P0>T0", "T0>P1", "P1>T1", "T1>P2", "P1>T2", "T2>P3" });
+    Color const good = net.colors.add("Good");
+    Color const bad = net.colors.add("Bad");
+    net.findArc(net.places()[1], net.transitions()[1])->color = good;
+    net.findArc(net.places()[1], net.transitions()[2])->color = bad;
+    net.findArc(net.transitions()[2], net.places()[3])->color = bad;
+    net.findArc(net.transitions()[1], net.places()[2])->color = good;
+    ASSERT_EQ(results(net, 0u), std::vector<Color>({ good, bad }));
+    ASSERT_EQ(results(net, 1u), std::vector<Color>({ Success }));
+
+    // Initial, P1 Good, P1 Bad, P2 Good, P3 Bad.
+    ReachabilityGraph const graph = reachabilityGraph(net);
+    ASSERT_EQ(graph.states.size(), 5u);
+    ASSERT_EQ(graph.deadlocks.size(), 2u);
+    Properties const prop = properties(net);
+    ASSERT_TRUE(prop.deadlock);
+    ASSERT_TRUE(prop.dead_transitions.empty());
+    ASSERT_NE(report(net).find("P2=1 {Good:1}"), std::string::npos) << report(net);
+}
+
+//------------------------------------------------------------------------------
+TEST(TestAnalysis, ColoredMarkingEquality)
+{
+    ColoredMarking a(1u), b(1u);
+    a.add(0u, Failed);
+    a.take(0u, Failed, 1u); // a keeps a counter at 0 for Failed
+    ASSERT_TRUE(a == b);
+    ASSERT_EQ(a.key(), b.key());
+}

@@ -129,6 +129,7 @@ private:
     bool m_replay = false;
     Net* m_replay_net = nullptr;
     std::vector<size_t> m_saved_tokens;
+    std::vector<std::vector<std::pair<Color, size_t>>> m_saved_colors;
     std::string m_instance;
     double m_cursor = 0.0;
     bool m_playing = false;

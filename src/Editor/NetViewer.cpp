@@ -181,6 +181,8 @@ void NetViewer::draw(char const* id, Net const& net, Options const& options)
             {
                 Place const& place = *static_cast<Place const*>(m_hovered);
                 ImGui::Text("tokens: %zu", place.tokens);
+                if (hasColors(net) && (place.tokens > 0u))
+                    ImGui::Text("colors: %s", describeTokens(net, place).c_str());
                 for (auto const& action : place.actions)
                     ImGui::Text("%s %s", qualifierToStr(action.qualifier), action.name.c_str());
             }

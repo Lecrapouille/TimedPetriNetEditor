@@ -29,8 +29,59 @@ static std::string nameOf(Node const& node)
 }
 
 //------------------------------------------------------------------------------
+//------------------------------------------------------------------------------
+//! \brief reachabilityGraph() of a net with colors.
+//------------------------------------------------------------------------------
+static ReachabilityGraph coloredGraph(Net const& net, size_t const max_states)
+{
+    ReachabilityGraph graph;
+    std::map<std::vector<size_t>, size_t> known;
+
+    graph.colored.push_back(initialMarking(net));
+    graph.states.push_back(graph.colored[0].counts());
+    known.emplace(graph.colored[0].key(), 0u);
+
+    for (size_t s = 0u; s < graph.colored.size(); ++s)
+    {
+        bool enabled = false;
+        for (size_t t = 0u; t < net.transitions().size(); ++t)
+        {
+            if (!isEnabled(net, graph.colored[s], t))
+                continue;
+            enabled = true;
+            for (Color const result: results(net, t))
+            {
+                ColoredMarking next = graph.colored[s];
+                consume(net, next, t);
+                produce(net, next, t, result);
+                next.takeTouched();
+                auto it = known.find(next.key());
+                if (it == known.end())
+                {
+                    if (graph.colored.size() >= max_states)
+                    {
+                        graph.complete = false;
+                        continue;
+                    }
+                    it = known.emplace(next.key(), graph.colored.size()).first;
+                    graph.states.push_back(next.counts());
+                    graph.colored.push_back(std::move(next));
+                }
+                graph.edges.push_back({ s, t, it->second });
+            }
+        }
+        if (!enabled)
+            graph.deadlocks.push_back(s);
+    }
+    return graph;
+}
+
+//------------------------------------------------------------------------------
 ReachabilityGraph reachabilityGraph(Net const& net, size_t const max_states)
 {
+    if (features(net) & Feature::Colors)
+        return coloredGraph(net, max_states);
+
     ReachabilityGraph graph;
     std::map<Marking, size_t> known;
 
@@ -325,7 +376,10 @@ Properties properties(Net const& net, size_t const max_states)
         result.notes.push_back("The rules of evolution of GRAFCET (receptivities, "
                                "simultaneous firing) are not considered.");
     if (features(net) & Feature::Colors)
-        result.notes.push_back("The colors of the tokens are not considered.");
+        result.notes.push_back("The colors of the tokens are considered: a transition gives "
+                               "one of the colors asked by the arcs after it (Success if none "
+                               "is), a function of the runtime returning another color is not "
+                               "considered.");
 
     ReachabilityGraph const graph = reachabilityGraph(net, max_states);
     result.states = graph.states.size();
@@ -338,6 +392,8 @@ Properties properties(Net const& net, size_t const max_states)
         result.deadlock = true;
         size_t s = graph.deadlocks[0];
         result.deadlock_marking = graph.states[s];
+        if (!graph.colored.empty())
+            result.deadlock_colored = graph.colored[s];
 
         constexpr size_t NONE = std::numeric_limits<size_t>::max();
         std::vector<size_t> found_by(graph.states.size(), NONE);
@@ -367,6 +423,8 @@ Properties properties(Net const& net, size_t const max_states)
     result.notes.push_back("Stopped after " + std::to_string(max_states) +
                            " markings: no deadlock found is not a proof, the "
                            "liveness is unknown.");
+    if (features(net) & Feature::Colors)
+        result.notes.push_back("The coverability graph does not consider the colors.");
     CoverabilityGraph const cover = coverabilityGraph(net, max_states);
     if (!cover.complete)
     {
@@ -544,8 +602,34 @@ std::vector<std::vector<int64_t>> tInvariants(Net const& net, std::string& error
 }
 
 //------------------------------------------------------------------------------
+std::string markingLabel(Net const& net, Marking const& marking, ColoredMarking const* colored)
+{
+    std::string label;
+    for (size_t p = 0u; p < marking.size(); ++p)
+    {
+        size_t const n = marking[p];
+        label += (label.empty() ? "" : " ") + ((n == OMEGA) ? std::string("w") : std::to_string(n));
+        // The colors of the tokens, when they are not all Success: 2{Phi0:1 Phi2:1}.
+        if ((colored != nullptr) && (p < colored->places()))
+        {
+            auto const tokens = colored->tokens(p);
+            if (!tokens.empty() && ((tokens.size() > 1u) || (tokens[0].first != Success)))
+            {
+                label += "{";
+                for (size_t i = 0u; i < tokens.size(); ++i)
+                    label += (i ? " " : "") + net.colors.name(tokens[i].first) + ":" +
+                             std::to_string(tokens[i].second);
+                label += "}";
+            }
+        }
+    }
+    return label;
+}
+
+//------------------------------------------------------------------------------
 std::string toDot(Net const& net, std::vector<Marking> const& states,
-                  std::vector<ReachabilityGraph::Edge> const& edges)
+                  std::vector<ReachabilityGraph::Edge> const& edges,
+                  std::vector<ColoredMarking> const& colored)
 {
     std::vector<bool> leaves(states.size(), true);
     for (auto const& e : edges)
@@ -566,9 +650,7 @@ std::string toDot(Net const& net, std::vector<Marking> const& states,
     ss << "\n";
     for (size_t s = 0u; s < states.size(); ++s)
     {
-        std::string label;
-        for (size_t const n : states[s])
-            label += (label.empty() ? "" : " ") + ((n == OMEGA) ? std::string("w") : std::to_string(n));
+        std::string const label = markingLabel(net, states[s], (s < colored.size()) ? &colored[s] : nullptr);
         ss << "  M" << s << " [label=" << quote(label);
         if (s == 0u)
             ss << ", penwidth=2";
@@ -630,7 +712,21 @@ std::string report(Net const& net, size_t const max_states)
     {
         ss << "yes, marking (";
         for (size_t p = 0u; p < prop.deadlock_marking.size(); ++p)
+        {
             ss << (p ? ", " : "") << net.places()[p].key << "=" << prop.deadlock_marking[p];
+            // The colors of the tokens, when they are not all Success.
+            if (p < prop.deadlock_colored.places())
+            {
+                auto const tokens = prop.deadlock_colored.tokens(p);
+                if (!tokens.empty() && ((tokens.size() > 1u) || (tokens[0].first != Success)))
+                {
+                    ss << " {";
+                    for (size_t i = 0u; i < tokens.size(); ++i)
+                        ss << (i ? " " : "") << net.colors.name(tokens[i].first) << ":" << tokens[i].second;
+                    ss << "}";
+                }
+            }
+        }
         ss << ")";
         if (prop.deadlock_path.empty())
             ss << " initially";

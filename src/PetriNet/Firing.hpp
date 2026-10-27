@@ -24,6 +24,7 @@ namespace tpne {
 
 class Net;
 class Arc;
+class Place;
 class Transition;
 
 //------------------------------------------------------------------------------
@@ -56,7 +57,20 @@ bool isEnabled(Net const& net, ColoredMarking const& marking, size_t const trans
                Marking const* incoming = nullptr);
 
 //------------------------------------------------------------------------------
-//! \brief Same rule on the tokens held by the places of the net.
+//! \brief Tokens of the color held by the place (AnyColor: all): the ones of
+//! Place::colors, at most Place::tokens, the others Success.
+//------------------------------------------------------------------------------
+size_t placeTokens(Place const& place, Color const color);
+
+//------------------------------------------------------------------------------
+//! \brief (color, number) of the tokens held by the place, by color, Success
+//! included: as ColoredMarking::tokens().
+//------------------------------------------------------------------------------
+std::vector<std::pair<Color, size_t>> placeColors(Place const& place);
+
+//------------------------------------------------------------------------------
+//! \brief Same rule on the tokens held by the places of the net, with their
+//! colors (placeTokens()).
 //------------------------------------------------------------------------------
 bool isEnabled(Net const& net, Transition const& transition);
 
@@ -82,6 +96,14 @@ void produce(Net const& net, Marking& marking, size_t const transition);
 //! result of the transition.
 //------------------------------------------------------------------------------
 Color tokenColor(Arc const& arc, Color const result);
+
+//------------------------------------------------------------------------------
+//! \brief Results the firing of the transition can give, without the function
+//! that gives them (simulation, analysis): the colors asked by the arcs leaving
+//! the places of its output arcs without color, sorted; Success when none is
+//! asked or when all its output arcs have a color (the result changes nothing).
+//------------------------------------------------------------------------------
+std::vector<Color> results(Net const& net, size_t const transition);
 
 //------------------------------------------------------------------------------
 //! \brief Colored start of a firing: take the tokens of the color of each

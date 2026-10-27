@@ -180,3 +180,54 @@ TEST(TestFiring, ColoredCapacityCountsAllColors)
     Marking const incoming = { 0u, 1u };
     ASSERT_FALSE(isEnabled(net, m, 0u, &incoming));
 }
+
+//------------------------------------------------------------------------------
+//! \brief The places of the net hold colored tokens (Place::colors): the
+//! editor draws the enabled transitions with them.
+TEST(TestFiring, ColoredTokensOfThePlaces)
+{
+    Net net = colored();
+    Place& p0 = net.places()[0];
+    p0.tokens = 2u;
+    p0.colors = { { Failed, 1u } };
+    ASSERT_EQ(placeTokens(p0, AnyColor), 2u);
+    ASSERT_EQ(placeTokens(p0, Failed), 1u);
+    ASSERT_EQ(placeTokens(p0, Success), 1u); // not listed: Success
+    ASSERT_TRUE(isEnabled(net, net.transitions()[0]));
+    ASSERT_TRUE(isEnabled(net, net.transitions()[1]));
+
+    p0.colors = { { Failed, 5u } }; // more than tokens: capped
+    ASSERT_EQ(placeTokens(p0, Failed), 2u);
+    ASSERT_FALSE(isEnabled(net, net.transitions()[0]));
+    ASSERT_TRUE(isEnabled(net, net.transitions()[1]));
+}
+
+//------------------------------------------------------------------------------
+//! \brief The user adds and removes tokens of a color (editor).
+TEST(TestFiring, AddAndRemoveColoredTokens)
+{
+    Place place(0u, "", 1u); // one Success token
+    place.increment(2u, Failed);
+    place.increment(1u, Canceled);
+    ASSERT_EQ(place.tokens, 4u);
+    ASSERT_EQ(placeColors(place), (std::vector<std::pair<Color, size_t>>{
+                                      { Success, 1u }, { Failed, 2u }, { Canceled, 1u } }));
+
+    place.decrement(1u, Failed);
+    ASSERT_EQ(placeTokens(place, Failed), 1u);
+    place.decrement(5u, Failed); // only the ones there are
+    ASSERT_EQ(placeTokens(place, Failed), 0u);
+    ASSERT_EQ(place.tokens, 2u);
+
+    // Any color: the Success ones first, then the last colors listed.
+    place.decrement(1u);
+    ASSERT_EQ(placeColors(place), (std::vector<std::pair<Color, size_t>>{ { Canceled, 1u } }));
+    place.decrement(1u);
+    ASSERT_EQ(place.tokens, 0u);
+    ASSERT_TRUE(place.colors.empty());
+
+    // Capacity.
+    place.capacity = 2u;
+    place.increment(5u, Failed);
+    ASSERT_EQ(placeTokens(place, Failed), 2u);
+}

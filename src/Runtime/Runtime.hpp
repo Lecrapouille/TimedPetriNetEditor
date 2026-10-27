@@ -226,7 +226,7 @@ public:
 
     //--------------------------------------------------------------------------
     //! \brief New instance. Initial tokens: the given ones, else the tokens of
-    //! the places of the net (Success). Goal: when its tokens are present the
+    //! the places of the net (initialMarking(): Place::colors, else Success). Goal: when its tokens are present the
     //! instance ends with Success (no goal: it ends when nothing more can
     //! happen).
     //--------------------------------------------------------------------------

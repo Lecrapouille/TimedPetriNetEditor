@@ -180,13 +180,7 @@ std::shared_ptr<Instance> Runtime::instantiate(std::string const& id,
         instance->m_log.reserve(64u);
     instance->m_touched.reserve(16u);
     if (initial.empty())
-    {
-        for (auto const& place : m_net.places())
-        {
-            if (place.tokens > 0u)
-                instance->m_marking.add(place.id, Success, place.tokens);
-        }
-    }
+        instance->m_marking = initialMarking(m_net);
     for (auto const& tokens : initial)
     {
         size_t const place = placeOf(tokens.place);

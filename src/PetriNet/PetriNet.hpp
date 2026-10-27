@@ -201,14 +201,15 @@ public:
     }
 
     //--------------------------------------------------------------------------
-    //! \brief Increment the number of token but constrained by the capacity.
+    //! \brief Add tokens of the color, constrained by the capacity.
     //--------------------------------------------------------------------------
-    size_t increment(size_t const count = 1u);
+    size_t increment(size_t const count = 1u, Color const color = Success);
 
     //--------------------------------------------------------------------------
-    //! \brief Decrement the number of token but constrained to 0.
+    //! \brief Remove tokens of the color, constrained to the ones there are.
+    //! AnyColor: the Success ones first, then the last colors listed.
     //--------------------------------------------------------------------------
-    size_t decrement(size_t const count = 1u);
+    size_t decrement(size_t const count = 1u, Color const color = AnyColor);
 
     //--------------------------------------------------------------------------
     //! \brief For debug purpose only.
@@ -229,6 +230,9 @@ public:
     //! unbounded by default for other nets. A transition whose firing would
     //! exceed it is not enabled.
     size_t capacity = std::numeric_limits<size_t>::max();
+    //! \brief Colors of the initial tokens, (color, number): the tokens not
+    //! listed are Success (initialMarking()). Empty for most nets.
+    std::vector<std::pair<Color, size_t>> colors;
     //! \brief GRAFCET actions associated with this step. Only used in GRAFCET mode.
     std::vector<Action> actions;
 };
@@ -299,6 +303,12 @@ public:
     //! \brief Priority when several transitions can fire at the same date
     //! (Engine::Policy::Priority): the highest fires first.
     int priority = 0;
+
+    //! \brief Result of its firings in the simulation of the editor (the
+    //! color of the tokens given by its output arcs without color). AnyColor:
+    //! drawn among results() (Engine::Options::results). The runtime does not
+    //! use it: its function gives the result.
+    Color result = AnyColor;
 };
 
 // *****************************************************************************
