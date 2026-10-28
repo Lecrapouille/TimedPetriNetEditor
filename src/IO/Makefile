@@ -75,4 +75,4 @@ include $(M)/rules/Makefile
 ###################################################
 # tinyxml2 is a third party: its warnings are not ours.
 #
-$(OBJS_ROOT_DIR)/external/tinyxml2/tinyxml2.o: USER_CXXFLAGS += -Wno-useless-cast
+$(OBJS_ROOT_DIR)/external/tinyxml2/tinyxml2.o: USER_CXXFLAGS += $(WNO_USELESS_CAST)

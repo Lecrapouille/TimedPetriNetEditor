@@ -64,6 +64,11 @@ USER_CCFLAGS += -Wno-sign-conversion -Wno-float-equal -fno-fast-math
 # is needed please read the external/README.md file.
 #
 PKG_LIBS += gtest gmock
+# clang: the headers of gtest convert char8_t to char32_t, and the tests
+# open the classes with "#define private public".
+ifneq ($(IS_CLANG),0)
+USER_CXXFLAGS += -Wno-character-conversion -Wno-keyword-macro
+endif
 
 ###################################################
 # Generic Makefile rules
@@ -72,4 +77,4 @@ include $(M)/rules/Makefile
 ###################################################
 # tinyxml2 is a third party: its warnings are not ours.
 #
-$(OBJS_ROOT_DIR)/external/tinyxml2/tinyxml2.o: USER_CXXFLAGS += -Wno-useless-cast -Wno-double-promotion
+$(OBJS_ROOT_DIR)/external/tinyxml2/tinyxml2.o: USER_CXXFLAGS += $(WNO_USELESS_CAST) -Wno-double-promotion -Wno-format-nonliteral

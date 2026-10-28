@@ -2,11 +2,5 @@ net Pick and place
 initial: 1 0 0 0
 t=0 T0 k=1
 t=1 T1 k=1
-t=2 T3 k=1
-t=3 T1 k=2
-t=4 T3 k=2
-t=5 T1 k=3
-t=6 T3 k=3
-t=7 T1 k=4
-t=8 T2 k=1
-final t=9: 0 0 0 1 (deadlock)
+t=2 T2 k=1
+final t=3: 0 0 0 1 (deadlock)

@@ -11,3 +11,17 @@ CXX_STANDARD := --std=c++20
 #
 TPNE_ZEROMQ ?= 1
 
+
+###################################################
+# Warnings known by one compiler only: the other one warns that it does not
+# know them (clang, the compiler of macOS, does not know -Wuseless-cast nor
+# -Wnoexcept).
+#
+IS_CLANG := $(shell $(CXX) --version 2> /dev/null | grep -c clang)
+ifeq ($(IS_CLANG),0)
+WNO_USELESS_CAST := -Wno-useless-cast
+WNO_NOEXCEPT := -Wno-noexcept
+else
+WNO_USELESS_CAST :=
+WNO_NOEXCEPT :=
+endif

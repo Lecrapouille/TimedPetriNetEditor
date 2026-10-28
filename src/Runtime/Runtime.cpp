@@ -6,6 +6,7 @@
 // See LICENSING.md for details.
 
 #include "Runtime/Runtime.hpp"
+#include "PetriNet/Random.hpp"
 
 #include <algorithm>
 #include <chrono>
@@ -414,7 +415,7 @@ size_t Runtime::pick(Instance& instance)
         }
         if (candidates.empty())
             return none;
-        return candidates[std::uniform_int_distribution<size_t>(0u, candidates.size() - 1u)(instance.m_random)];
+        return candidates[randomIndex(instance.m_random, candidates.size())];
     }
     case Engine::Policy::Priority:
     default:

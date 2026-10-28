@@ -7,6 +7,7 @@
 
 #include "PetriNet/Engine.hpp"
 #include "PetriNet/PetriNet.hpp"
+#include "PetriNet/Random.hpp"
 
 #include <algorithm>
 #include <chrono>
@@ -212,7 +213,7 @@ size_t Engine::pick()
         });
     case Policy::Random:
     default:
-        return candidates[std::uniform_int_distribution<size_t>(0u, candidates.size() - 1u)(m_random)];
+        return candidates[randomIndex(m_random, candidates.size())];
     }
 }
 
@@ -259,7 +260,7 @@ Color Engine::result(size_t const transition)
         return Success;
     if (asked.size() == 1u)
         return asked[0];
-    return asked[std::uniform_int_distribution<size_t>(0u, asked.size() - 1u)(m_random)];
+    return asked[randomIndex(m_random, asked.size())];
 }
 
 //------------------------------------------------------------------------------

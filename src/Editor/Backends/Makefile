@@ -99,7 +99,7 @@ GUI_FILES += $(THIRD_PARTIES_DIR)/imgui/imgui_tables.cpp
 GUI_FILES += $(THIRD_PARTIES_DIR)/imgui/imgui.cpp
 GUI_FILES += $(THIRD_PARTIES_DIR)/imgui/misc/cpp/imgui_stdlib.cpp
 ifneq ($(OS),Emscripten)
-USER_CXXFLAGS += -Wno-useless-cast
+USER_CXXFLAGS += $(WNO_USELESS_CAST)
 endif
 USER_CXXFLAGS += -DIMGUI_DEFINE_MATH_OPERATORS
 # Third-party Dear ImGui extras (implot, file dialog): not built with -ffast-math-safe code.

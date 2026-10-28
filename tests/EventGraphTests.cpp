@@ -53,10 +53,10 @@ TEST(TestEventGraph, TestHoward2)
     ASSERT_EQ(canonic.m_places[5].tokens, 1u);
 
     // The nodes added are drawn between T0 (300, 150) and P0 (200, 250).
-    ASSERT_NEAR(canonic.position(canonic.m_places[5]).x, 266.67f, 0.01f);
-    ASSERT_NEAR(canonic.position(canonic.m_places[5]).y, 183.33f, 0.01f);
-    ASSERT_NEAR(canonic.position(canonic.m_transitions[4]).x, 233.33f, 0.01f);
-    ASSERT_NEAR(canonic.position(canonic.m_transitions[4]).y, 216.67f, 0.01f);
+    ASSERT_NEAR(double(canonic.position(canonic.m_places[5]).x), 266.67, 0.01);
+    ASSERT_NEAR(double(canonic.position(canonic.m_places[5]).y), 183.33, 0.01);
+    ASSERT_NEAR(double(canonic.position(canonic.m_transitions[4]).x), 233.33, 0.01);
+    ASSERT_NEAR(double(canonic.position(canonic.m_transitions[4]).y), 216.67, 0.01);
 }
 
 //------------------------------------------------------------------------------

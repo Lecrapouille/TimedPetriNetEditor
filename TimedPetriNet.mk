@@ -39,7 +39,11 @@ TPNE_SOURCES += $(TPNE_DIR)/external/tinyxml2/tinyxml2.cpp
 # Third parties headers are system headers: no warnings from them.
 TPNE_CXXFLAGS := -isystem $(abspath $(TPNE_DIR)/external/json/include)
 TPNE_CXXFLAGS += -isystem $(abspath $(TPNE_DIR)/external)
+# -Wnoexcept and -Wuseless-cast are known by GCC only: clang warns about them.
+TPNE_IS_CLANG := $(shell $(CXX) --version 2> /dev/null | grep -c clang)
+ifeq ($(TPNE_IS_CLANG),0)
 TPNE_CXXFLAGS += -Wno-noexcept
+endif
 # Howard.c
 TPNE_CFLAGS := -Wno-sign-conversion -Wno-float-equal
 
@@ -50,4 +54,7 @@ TPNE_VIEWER_SOURCES += $(TPNE_DIR)/src/Editor/Drawable.cpp
 TPNE_VIEWER_SOURCES += $(TPNE_DIR)/src/Editor/Theme.cpp
 # The viewer only needs the headers of TimedPetriNet and the host Dear ImGui.
 TPNE_VIEWER_CXXFLAGS := -Wno-old-style-cast -Wno-sign-conversion -Wno-float-equal
-TPNE_VIEWER_CXXFLAGS += -Wno-double-promotion -Wno-useless-cast -Wno-conversion
+TPNE_VIEWER_CXXFLAGS += -Wno-double-promotion -Wno-conversion
+ifeq ($(TPNE_IS_CLANG),0)
+TPNE_VIEWER_CXXFLAGS += -Wno-useless-cast
+endif

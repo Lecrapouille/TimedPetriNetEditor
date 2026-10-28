@@ -52,7 +52,7 @@ INCLUDES += $(THIRD_PARTIES_DIR)/json/include
 # Make the list of compiled files for the library
 #
 LIB_FILES += $(call rwildcard,$(P)/src/Runtime,*.cpp)
-USER_CXXFLAGS := -Wno-old-style-cast -Wno-float-equal -Wno-noexcept
+USER_CXXFLAGS := -Wno-old-style-cast -Wno-float-equal $(WNO_NOEXCEPT)
 # Dates use infinity: never with -ffast-math.
 USER_CXXFLAGS += -fno-fast-math
 
