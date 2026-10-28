@@ -10,8 +10,8 @@ The smallest timed Petri net: a toast takes 3 time units, eating it 2, buying br
 
 ## What it teaches
 
-- [The duration of an arc](../../../doc/06-Timed-Petri-Nets.md#31-the-duration-of-an-arc)
-- [The dates computed by hand](../../../doc/06-Timed-Petri-Nets.md#5-your-first-timed-net-the-toaster): `Toast` fires at 0, 6, 12 ... a cycle of 3 + 2 + 1 = 6
+- [The duration of an arc](../../../doc/en/06-Timed-Petri-Nets.md#31-the-duration-of-an-arc)
+- [The dates computed by hand](../../../doc/en/06-Timed-Petri-Nets.md#5-your-first-timed-net-the-toaster): `Toast` fires at 0, 6, 12 ... a cycle of 3 + 2 + 1 = 6
 
 ## Try it in the editor
 
@@ -27,4 +27,4 @@ The smallest timed Petri net: a toast takes 3 time units, eating it 2, buying br
 
 ---
 
-Back to the [examples](../../README.md) · Timed Petri nets: [chapter 6](../../../doc/06-Timed-Petri-Nets.md)
+Back to the [examples](../../README.md) · Timed Petri nets: [chapter 6](../../../doc/en/06-Timed-Petri-Nets.md)

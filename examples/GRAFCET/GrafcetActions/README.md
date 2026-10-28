@@ -14,8 +14,8 @@ retracts until `s0`. An `Error` while extending goes to an alarm, left with
 | 4 Alarm | `N Buzzer`, `L AlarmLamp` (5 s) | continuous; limited to 5 s |
 
 **Notions**: the qualifiers N, S, R, D, L and their timing
-([chapter 9 §6](../../../doc/09-GRAFCET.md#6-actions)), the time operator
-`2s/X2` ([§5.2](../../../doc/09-GRAFCET.md#52-time)), an OR divergence on
+([chapter 9 §6](../../../doc/en/09-GRAFCET.md#6-actions)), the time operator
+`2s/X2` ([§5.2](../../../doc/en/09-GRAFCET.md#52-time)), an OR divergence on
 `s1` / `Error`.
 
 **Try it**
@@ -38,7 +38,7 @@ retracts until `s0`. An `Error` while extending goes to an alarm, left with
 ⚠️ Do not keep `Start`, `Error` and `Reset` on together: the graph turns
 0 → 1 → 4 → 0 ... for ever inside each cycle (an unstable GRAFCET, the
 console warns and the editor uses a whole core). It is the example of the
-pitfall of [chapter 9 §12](../../../doc/09-GRAFCET.md#12-pitfalls).
+pitfall of [chapter 9 §12](../../../doc/en/09-GRAFCET.md#12-pitfalls).
 
 *Help > GRAFCET actions (qualifiers)* draws the timing diagram of every
 qualifier.

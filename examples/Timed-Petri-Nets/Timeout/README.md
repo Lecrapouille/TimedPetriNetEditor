@@ -10,8 +10,8 @@ A request waits for its reply, but not for ever: a transition with a **delay** i
 
 ## What it teaches
 
-- [The delay of a transition](../../../doc/06-Timed-Petri-Nets.md#32-the-delay-of-a-transition)
-- [The pattern of the timeout](../../../doc/06-Timed-Petri-Nets.md#62-the-timeout), used by every protocol
+- [The delay of a transition](../../../doc/en/06-Timed-Petri-Nets.md#32-the-delay-of-a-transition)
+- [The pattern of the timeout](../../../doc/en/06-Timed-Petri-Nets.md#62-the-timeout), used by every protocol
 
 ## Try it in the editor
 
@@ -29,4 +29,4 @@ The runtime of the project runs the same pattern against a real (fake) service t
 
 ---
 
-Back to the [examples](../../README.md) · Timed Petri nets: [chapter 6](../../../doc/06-Timed-Petri-Nets.md)
+Back to the [examples](../../README.md) · Timed Petri nets: [chapter 6](../../../doc/en/06-Timed-Petri-Nets.md)

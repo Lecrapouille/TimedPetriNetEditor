@@ -906,20 +906,42 @@ void Editor::analysisPlot()
         ImGui::SetTooltip("In the periodic regime, a transition fires every λ: y(k) - λ·k\n"
                           "becomes flat, the remaining shows the transient and the bias.");
 
-    // The flowshop names its outputs "out_<conveyor>": without such names the
-    // filter would hide everything.
+    // The flowshop names its outputs "out_<conveyor>" and "out_<machine>", its
+    // operations "<machine>_<conveyor>": the conveyors are known by the
+    // operations, and their outputs are the ones worth plotting. Without such
+    // names the filter would hide everything.
+    auto const name = [](Transition const& t) -> std::string const& {
+        return t.caption.empty() ? t.key : t.caption;
+    };
+    std::set<std::string> conveyors;
     bool has_outputs = false;
     for (auto const& t : transitions)
-        has_outputs = has_outputs || ((t.caption.empty() ? t.key : t.caption).rfind("out_", 0) == 0);
+    {
+        std::string machine, conveyor;
+        operationOf(name(t), machine, conveyor);
+        if (machine != conveyor)
+            conveyors.insert(conveyor);
+        has_outputs = has_outputs || (name(t).rfind("out_", 0) == 0);
+    }
+    auto const shown = [&](Transition const& t) {
+        std::string const& n = name(t);
+        if (n.rfind("out_", 0) != 0)
+            return false;
+        return conveyors.empty() || (conveyors.count(n.substr(4u)) != 0u);
+    };
     bool const filter_outputs = only_outputs && has_outputs;
     if (has_outputs)
     {
         ImGui::SameLine();
-        ImGui::Checkbox("Outputs only (out_*)", &only_outputs);
+        ImGui::Checkbox(conveyors.empty() ? "Outputs only (out_*)" : "Conveyors only (out_<conveyor>)",
+                        &only_outputs);
         if (ImGui::IsItemHovered())
         {
-            ImGui::SetTooltip("Show only transitions whose caption starts "
-                              "with \"out_\" (flowshop output convention).");
+            ImGui::SetTooltip(conveyors.empty()
+                ? "Show only transitions whose caption starts with \"out_\"\n"
+                  "(flowshop output convention)."
+                : "Show only the outputs of the conveyors of the flowshop:\n"
+                  "a part leaves the factory at each firing of out_<conveyor>.");
         }
     }
     if (sim.totalFirings() == 0u)
@@ -976,17 +998,12 @@ void Editor::analysisPlot()
     {
         if (!selected[i])
             continue;
-        if (filter_outputs)
-        {
-            // In a flowshop TEG every transition has both incoming and
-            // outgoing arcs (because of the controller feedback loops), so
-            // Transition::isOutput() is never true. Instead the importer
-            // names the system outputs "out_<conveyor|machine>".
-            std::string const& name = transitions[i].caption.empty()
-                ? transitions[i].key : transitions[i].caption;
-            if (name.rfind("out_", 0) != 0)
-                continue;
-        }
+        // In a flowshop TEG every transition has both incoming and outgoing
+        // arcs (because of the controller feedback loops), so
+        // Transition::isOutput() is never true: the outputs are known by
+        // their name.
+        if (filter_outputs && !shown(transitions[i]))
+            continue;
 
         auto const& dates = sim.firingDates(transitions[i].id);
         if (dates.empty())

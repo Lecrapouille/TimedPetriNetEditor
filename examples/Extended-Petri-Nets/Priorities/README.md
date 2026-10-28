@@ -10,8 +10,8 @@ A car and an ambulance wait for the same crossing (a conflict on `Crossing free`
 
 ## What it teaches
 
-- [Priorities](../../../doc/05-Extended-Petri-Nets.md#5-priorities)
-- [Conflicts in timed nets](../../../doc/03-Petri-Nets.md#52-conflict-a-choice)
+- [Priorities](../../../doc/en/05-Extended-Petri-Nets.md#5-priorities)
+- [Conflicts in timed nets](../../../doc/en/03-Petri-Nets.md#52-conflict-a-choice)
 
 ## Try it in the editor
 
@@ -25,7 +25,7 @@ A car and an ambulance wait for the same crossing (a conflict on `Crossing free`
 
 ## Run it with the runtime
 
-[`Priorities.cpp`](Priorities.cpp) runs this net with the runtime of the project ([chapter 11](../../../doc/11-Runtime.md)). The runtime solves the conflicts as the editor does, with `Runtime::Options::policy`: `Priority` (the default) fires the transition of highest priority, `Random` draws one with a seed. The net is timed: the program gives the dates to `step()` (a simulated clock), the durations are waited without sleeping. Build the examples (`make -C examples`), then from the root of the project:
+[`Priorities.cpp`](Priorities.cpp) runs this net with the runtime of the project ([chapter 11](../../../doc/en/11-Runtime.md)). The runtime solves the conflicts as the editor does, with `Runtime::Options::policy`: `Priority` (the default) fires the transition of highest priority, `Random` draws one with a seed. The net is timed: the program gives the dates to `step()` (a simulated clock), the durations are waited without sleeping. Build the examples (`make -C examples`), then from the root of the project:
 
 ```text
 $ build/examples/Priorities
@@ -46,4 +46,4 @@ With `Priority`, both wait at `t = 0` and at `t = 7` (they come back at the same
 
 ---
 
-Back to the [examples](../../README.md) · Extended Petri nets: [chapter 5](../../../doc/05-Extended-Petri-Nets.md)
+Back to the [examples](../../README.md) · Extended Petri nets: [chapter 5](../../../doc/en/05-Extended-Petri-Nets.md)

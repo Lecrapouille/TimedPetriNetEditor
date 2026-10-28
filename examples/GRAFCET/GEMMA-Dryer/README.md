@@ -21,7 +21,7 @@ with forcing orders, steps of another graph in a receptivity
 (`↑Ack`), a time operator (`3s/X1`), an integer comparison
 (`[Temperature >= 80]`), and every kind of input of the control panel:
 emergency stop, push buttons, selector, sensor driven by an output.
-The whole tutorial is [chapter 10](../../../doc/10-GEMMA.md#4-tutorial-the-gemma-of-a-dryer).
+The whole tutorial is [chapter 10](../../../doc/en/10-GEMMA.md#4-tutorial-the-gemma-of-a-dryer).
 
 **Try it**
 

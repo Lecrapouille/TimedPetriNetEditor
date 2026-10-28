@@ -10,8 +10,8 @@ Robot A takes tool 1 then tool 2; robot B takes tool 2 then tool 1. Each release
 
 ## What it teaches
 
-- [Shared resources and deadlocks](../../../doc/03-Petri-Nets.md#62-shared-resources-and-the-dining-philosophers)
-- [Deadlock detection, shortest path](../../../doc/04-Analysis.md#31-deadlock)
+- [Shared resources and deadlocks](../../../doc/en/03-Petri-Nets.md#62-shared-resources-and-the-dining-philosophers)
+- [Deadlock detection, shortest path](../../../doc/en/04-Analysis.md#31-deadlock)
 
 ## Try it in the editor
 
@@ -38,4 +38,4 @@ Live: no, not live: T0 (A takes 1), T1 (A takes 2), T2 (A releases), T3 (B takes
 
 ---
 
-Back to the [examples](../../README.md) · Petri nets: [chapter 3](../../../doc/03-Petri-Nets.md)
+Back to the [examples](../../README.md) · Petri nets: [chapter 3](../../../doc/en/03-Petri-Nets.md)

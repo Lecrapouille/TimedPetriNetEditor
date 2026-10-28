@@ -7,9 +7,9 @@ The smallest choice between two sequences: from step 0, the receptivity
 ![Exclusive choice](ExclusiveChoice.png)
 
 **Notions**: OR divergence and OR convergence, exclusive receptivities
-([chapter 9 §4.2](../../../doc/09-GRAFCET.md#42-choice-or-divergence-and-or-convergence)),
+([chapter 9 §4.2](../../../doc/en/09-GRAFCET.md#42-choice-or-divergence-and-or-convergence)),
 rule 2: a true receptivity does not fire a transition that is not enabled
-([§3](../../../doc/09-GRAFCET.md#3-the-five-rules-of-evolution)).
+([§3](../../../doc/en/09-GRAFCET.md#3-the-five-rules-of-evolution)).
 
 **Try it**
 
@@ -29,4 +29,4 @@ rule 2: a true receptivity does not fire a transition that is not enabled
 
 With `true` instead of `/A` on the way back, the GRAFCET would turn for
 ever while `A` is held: see the pitfall of the unstable GRAFCET
-([§12](../../../doc/09-GRAFCET.md#12-pitfalls)).
+([§12](../../../doc/en/09-GRAFCET.md#12-pitfalls)).

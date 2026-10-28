@@ -1,12 +1,9 @@
 # 🖱️ 14. Editor reference
 
-What you will find here: every window, mouse gesture, key, menu and command
-line option of the editor, checked against the code. The learning chapters
-show them in use: [2](02-Getting-Started.md) (first net),
-[3](03-Petri-Nets.md) (simulation), [4](04-Analysis.md) (properties),
-[7](07-Timed-Event-Graphs.md) and [8](08-Max-Plus-Algebra.md) (the (max,+)
-analysis), [9](09-GRAFCET.md) (GRAFCET), [13](13-Debugging.md) (journal and
-debugger). In the editor, **F1** opens the same help.
+
+[![fr](https://lecrapouille.github.io/icons/fr.png)](../fr/14-Editor-Reference.md) [![en](https://lecrapouille.github.io/icons/en.png)](../en/14-Editor-Reference.md)
+
+What you will find here: every window, mouse gesture, key, menu and command line option of the editor, checked against the code. The learning chapters show them in use: [2](02-Getting-Started.md) (first net), [3](03-Petri-Nets.md) (simulation), [4](04-Analysis.md) (properties), [7](07-Timed-Event-Graphs.md) and [8](08-Max-Plus-Algebra.md) (the (max,+) analysis), [9](09-GRAFCET.md) (GRAFCET), [13](13-Debugging.md) (journal and debugger). In the editor, **F1** opens the same help.
 
 ---
 
@@ -14,8 +11,7 @@ debugger). In the editor, **F1** opens the same help.
 
 ![The editor with a Petri net](pics/14-Window-Petri.png)
 
-*`examples/Petri-Nets/Philosophers/Philosophers.json` just opened (window of
-1400 x 900 pixels).*
+*`examples/Petri-Nets/Philosophers/Philosophers.json` just opened (window of 1400 x 900 pixels).*
 
 From top to bottom and left to right:
 
@@ -33,13 +29,9 @@ A GRAFCET document of three nets while it runs:
 
 ![The editor with a GEMMA running](pics/14-Window-GRAFCET.png)
 
-*`examples/GRAFCET/GEMMA-Dryer/GEMMA-Dryer.json`, 3 s after **Space**: the
-three nets side by side with a green frame (simulating), the control panel
-(emergency stop, push buttons, selector, sensor) under the inspector, the
-outputs (two motors, an oven) at the bottom right.*
+*`examples/GRAFCET/GEMMA-Dryer/GEMMA-Dryer.json`, 3 s after **Space**: the three nets side by side with a green frame (simulating), the control panel (emergency stop, push buttons, selector, sensor) under the inspector, the outputs (two motors, an oven) at the bottom right.*
 
-The windows can be moved, docked elsewhere, put in tabs or closed. The
-layout and the theme are saved in the settings folder of the user:
+The windows can be moved, docked elsewhere, put in tabs or closed. The layout and the theme are saved in the settings folder of the user:
 
 | System | Settings folder |
 |--------|-----------------|
@@ -47,8 +39,7 @@ layout and the theme are saved in the settings folder of the user:
 | macOS | `~/Library/Application Support/TimedPetriNetEditor` |
 | Windows | `%APPDATA%\TimedPetriNetEditor` |
 
-*View > Reset the layout of the windows* builds the default layout again.
-*Help > Mouse and keys*, tab *Paths*, shows the folders used.
+*View > Reset the layout of the windows* builds the default layout again. *Help > Mouse and keys*, tab *Paths*, shows the folders used.
 
 ## 2. Windows
 
@@ -69,15 +60,11 @@ layout and the theme are saved in the settings folder of the user:
 | Journal | the firings of the simulation, of an opened journal, or of a connected program; replays them on the net (§7) | always |
 | Program | the program followed: its net, its transitions without function, its inputs and outputs ([chapter 13](13-Debugging.md)) | connected (*Debug*) |
 
-A net is fitted to its window, again each time the window changes size,
-until you move or zoom its view (**F** fits it again).
+A net is fitted to its window, again each time the window changes size, until you move or zoom its view (**F** fits it again).
 
 ## 3. Mouse
 
-There is no mode to choose. What a button does depends on what is under the
-mouse, and on whether the mouse moves before the button is released (less
-than 4 pixels is a click). **The left button draws, the right button
-moves.** The status bar always says what the buttons would do now.
+There is no mode to choose. What a button does depends on what is under the mouse, and on whether the mouse moves before the button is released (less than 4 pixels is a click). **The left button draws, the right button moves.** The status bar always says what the buttons would do now.
 
 | Under the mouse | Click | Drag |
 |-----------------|-------|------|
@@ -89,23 +76,13 @@ moves.** The status bar always says what the buttons would do now.
 | arc, right button | the menu of the arc | move the view |
 | anything, middle button | | move the view |
 
-- An arc released in the void creates a node of the other kind there,
-  already linked; between two nodes of the same kind, a node of the other
-  kind is inserted in the middle.
-- **Double click** on a node: rename it (a GRAFCET transition: its
-  receptivity, checked while typing). On an arc: its duration (timed nets)
-  and its weight, and the tokens of its place in a timed event graph. Enter
-  applies, Esc cancels.
-- **Wheel**: zoom around the mouse. Shift + wheel, or a touchpad: move the
-  view.
-- While a Petri net is simulated, a left click on an enabled transition
-  fires it. Timed nets and GRAFCETs run by themselves.
-- With several nets in a document, a click in a net makes it the active one
-  (the inspector shows it) and acts at once.
-- Nodes with a halo are marked: by the *Journal* (the transitions whose
-  function runs), by a connected program (transitions without function), or
-  by the *Analysis* (dead transitions, not live, unbounded places, the nodes
-  of an invariant). *Debug > Clear the marks of the nodes* removes them.
+- An arc released in the void creates a node of the other kind there, already linked; between two nodes of the same kind, a node of the other kind is inserted in the middle.
+- **Double click** on a node: rename it (a GRAFCET transition: its receptivity, checked while typing). On an arc: its duration (timed nets) and its weight, and the tokens of its place in a timed event graph. Enter or *OK* applies (the **+** and **-** buttons only change the value), Esc cancels.
+- **Hovering** an arc of a timed event graph shows its two transitions, its duration and the tokens of its hidden place.
+- **Wheel**: zoom around the mouse. Shift + wheel, or a touchpad: move the view.
+- While a Petri net is simulated, a left click on an enabled transition fires it. Timed nets and GRAFCETs run by themselves.
+- With several nets in a document, a click in a net makes it the active one (the inspector shows it) and acts at once.
+- Nodes with a halo are marked: by the *Journal* (the transitions whose function runs), by a connected program (transitions without function), or by the *Analysis* (dead transitions, not live, unbounded places, the nodes of an invariant). *Debug > Clear the marks of the nodes* removes them.
 
 ### Menu of a node (right click)
 
@@ -164,70 +141,27 @@ The keys act on the net window that has the focus.
 | Conflicts: Random, Highest priority, First declared | *Simulation > Conflicts* (not for a GRAFCET) | which transition fires first when several can; with *Random*, a *Seed* (0: a new one each time, written in the console) and *Replay the last simulation* |
 | Start all the nets, the nets of the document | *Simulation* (several nets) | run them together; choose the active net |
 
-The conflict policy is a setting of the editor, not saved in the file.
-Opening, saving or exporting a file while simulating first stops the
-simulation (a message says it). While simulating, the net cannot be edited:
-only tokens (**+** / **-**) and GRAFCET inputs change.
+The conflict policy is a setting of the editor, not saved in the file. Opening, saving or exporting a file while simulating first stops the simulation (a message says it). While simulating, the net cannot be edited: only tokens (**+** / **-**) and GRAFCET inputs change.
 
 ## 6. Console
 
-One button per kind of message, with its count: *Info*, *Warnings*,
-*Errors*, *Simulation* (GRAFCET inputs changed while running; the firings
-are in the *Journal*). A click hides or shows them. The *Filter* keeps the
-messages containing a text; *Copy* puts the shown messages in the
-clipboard; *Clear* empties the console. The same message given several
-times in a row is written once with its count `(x3)`. The last three
-messages also appear in the bottom right corner of the nets, framed by the
-color of their kind (blue info, orange warning, red error): 6 seconds for an
-info, 12 for a warning or an error. The mouse over one keeps it, a click
-closes it. They never appear in the pictures taken by `-s` and `-w`.
+One button per kind of message, with its count: *Info*, *Warnings*, *Errors*, *Simulation* (GRAFCET inputs changed while running; the firings are in the *Journal*). A click hides or shows them. The *Filter* keeps the messages containing a text; *Copy* puts the shown messages in the clipboard; *Clear* empties the console. The same message given several times in a row is written once with its count `(x3)`. The last three messages also appear in the bottom right corner of the nets, framed by the color of their kind (blue info, orange warning, red error): 6 seconds for an info, 12 for a warning or an error. The mouse over one keeps it, a click closes it. They never appear in the pictures taken by `-s` and `-w`.
 
-The end of a simulation says why it ended, with its date: *stopped by the
-user*, or for a timed net *deadlock, no transition can fire any more* (a
-warning). The top left corner of the net keeps it (`ended at t = 12.0 s:
-deadlock ...`) until the net changes.
+The end of a simulation says why it ended, with its date: *stopped by the user*, or for a timed net *deadlock, no transition can fire any more* (a warning). The top left corner of the net keeps it (`ended at t = 12.0 s: deadlock ...`) until the net changes.
 
 ## 7. Journal and Analysis
 
 ![Journal and Analysis](pics/14-Window-Journal.png)
 
-*`examples/Timed-Petri-Nets/Durations/Durations.json` after 4 s: the token
-of `Eat` travels for 2 time units; the Journal lists the firings.*
+*`examples/Timed-Petri-Nets/Durations/Durations.json` after 4 s: the token of `Eat` travels for 2 time units; the Journal lists the firings.*
 
-The **Journal** lists the firings: *Date*, *Instance* (the net, or an
-instance of a program), *Transition*, its number *k*, the *Event*
-(`Scheduled`: the tokens are taken, `Started`: its function runs,
-`Completed`: the tokens are given) and the *Result* (the color of the tokens
-given). It holds the firings of the last simulation, a journal opened
-(*Open...*: JSON lines), the path to a deadlock found by the analysis, or
-what a connected program publishes. *Follow* keeps the last line in view,
-*Filter* keeps the lines containing a text, *Save...* writes JSON lines, CSV
-or XES (by the extension, [chapter 15](15-File-Formats.md#5-journals)),
-*Clear* empties it. **Replay** shows the marking of the net at a date: the
-slider, `<` and `>` go from an event to the next, the arrows to the first
-and the last; the transitions whose function runs are marked. A click on a
-line goes to its date.
+The **Journal** lists the firings: *Date*, *Instance* (the net, or an instance of a program), *Transition*, its number *k*, the *Event* (`Scheduled`: the tokens are taken, `Started`: its function runs, `Completed`: the tokens are given) and the *Result* (the color of the tokens given). It holds the firings of the last simulation, a journal opened (*Open...*: JSON lines), the path to a deadlock found by the analysis, or what a connected program publishes. *Follow* keeps the last line in view, *Filter* keeps the lines containing a text, *Save...* writes JSON lines, CSV or XES (by the extension, [chapter 15](15-File-Formats.md#5-journals)), *Clear* empties it. **Replay** shows the marking of the net at a date: the slider, `<` and `>` go from an event to the next, the arrows to the first and the last; the transitions whose function runs are marked. A click on a line goes to its date.
 
 ![Properties](pics/14-Window-Analysis.png)
 
-*`examples/Petri-Nets/MutualExclusion/MutualExclusion.json` with `-f
-Properties`.*
+*`examples/Petri-Nets/MutualExclusion/MutualExclusion.json` with `-f Properties`.*
 
-The **Analysis** window, tabs **Summary**, **Bounds**, **Invariants** and
-**Report**, for every net (durations and GRAFCET rules not considered,
-[chapter 4](04-Analysis.md)). Each tab starts with *Compute again*, which
-explores the markings up to *max markings* (small nets: again at each
-change). *Summary* says how many markings, whether the net can deadlock, has
-dead transitions, is bounded and live, then gives the deadlock with its
-marking and the shortest path to it (*Replay the path in the Journal*).
-*Bounds* gives the bound of each place, *Invariants* the P- and
-T-invariants (a click marks their nodes), *Report* the text of `tpne-check`
-(*Copy the report*). *Show on the net*
-marks the dead transitions, the transitions not live and the unbounded
-places. *Graph of the markings* draws the graph of the markings in its own
-window (spring layout, drag and wheel, *Layout again*, *Export to dot...*;
-`-f Markings` opens it from the command line). The same in a
-terminal or a CI:
+The **Analysis** window, tabs **Summary**, **Bounds**, **Invariants** and **Report**, for every net (durations and GRAFCET rules not considered, [chapter 4](04-Analysis.md)). Each tab starts with *Compute again*, which explores the markings up to *max markings* (small nets: again at each change). *Summary* says how many markings, whether the net can deadlock, has dead transitions, is bounded and live, then gives the deadlock with its marking and the shortest path to it (*Replay the path in the Journal*). *Bounds* gives the bound of each place, *Invariants* the P- and T-invariants (a click marks their nodes), *Report* the text of `tpne-check` (*Copy the report*). *Show on the net* marks the dead transitions, the transitions not live and the unbounded places. *Graph of the markings* draws the graph of the markings in its own window (spring layout, drag and wheel, *Layout again*, *Export to dot...*; `-f Markings` opens it from the command line). The same in a terminal or a CI:
 
 ```text
 tpne-check [--max-states N] [--allow-deadlock] [--dot graph.dot] net.json ...
@@ -235,12 +169,7 @@ tpne-check [--max-states N] [--allow-deadlock] [--dot graph.dot] net.json ...
 
 (exit code 1 when a net can deadlock).
 
-The tab **(max,+) algebra** is there for every timed net, with the tabs
-below ([chapters 7](07-Timed-Event-Graphs.md) and
-[8](08-Max-Plus-Algebra.md)). They need a timed event graph: for another
-timed net, the tab says why the net is not one, and *Show the faulty arcs*
-draws the arcs to change. The results are the ones of the initial tokens,
-also while the simulation runs.
+The tab **(max,+) algebra** is there for every timed net, with the tabs below ([chapters 7](07-Timed-Event-Graphs.md) and [8](08-Max-Plus-Algebra.md)). They need a timed event graph: for another timed net, the tab says why the net is not one, and *Show the faulty arcs* draws the arcs to change. The results are the ones of the initial tokens, also while the simulation runs.
 
 | Tab | Shows |
 |-----|-------|
@@ -249,38 +178,24 @@ also while the simulation runs.
 | Linear system | the matrices `D`, `A`, `B`, `C` of `X(k) = D X(k) ⊕ A X(k-1) ⊕ B U(k)`, `Y(k) = C X(k)` |
 | Equations | dater ((max,+)) and counter ((min,+)) equations, with captions or identifiers |
 | Adjacency | the matrices of the *Durations* and of the *Tokens* |
-| Firing dates | the dates `y(k)` of each transition during the simulation, with *Subtract drift λ·k* |
+| Firing dates | the dates `y(k)` of each transition during the simulation, with *Subtract drift λ·k*; for a flowshop, *Conveyors only* keeps the outputs `out_<conveyor>` (a part leaves the factory), else *Outputs only* keeps the transitions `out_*` |
 
 Each matrix has a *Copy as Julia* button ([chapter 17](17-Julia.md)).
 
 ## 8. GRAFCET windows
 
-- **Control panel**: one widget per input, by kind
-  ([chapter 9](09-GRAFCET.md)). While stopped, a click changes the initial
-  value (saved with the document); while running, it acts at once, or at
-  *Apply (F7)* when *Apply together* is checked. A right click keeps a push
-  button pressed. *Fit* draws the buttons smaller to see all of them; each
-  section (*Safety*, *Buttons*, *Selectors*, *Sensors* ...) folds. *Edit*
-  shows two tables, *Inputs* (name, kind, settings, description) and
-  *Outputs* (name, kind, description). `?` opens the help of the panel.
+- **Control panel**: one widget per input, by kind ([chapter 9](09-GRAFCET.md)). While stopped, a click changes the initial value (saved with the document); while running, it acts at once, or at *Apply (F7)* when *Apply together* is checked. A right click keeps a push button pressed. *Fit* draws the buttons smaller to see all of them; each section (*Safety*, *Buttons*, *Selectors*, *Sensors* ...) folds. *Edit* shows two tables, *Inputs* (name, kind, settings, description) and *Outputs* (name, kind, description). `?` opens the help of the panel.
 - **Outputs**: the actuators named by the actions, on or off.
-- **Timing diagram**: *Steps*, *Inputs*, *Outputs* choose the rows; *Only
-  what changed* hides the steps never active and the signals always 0; the
-  slider gives the span shown; *Follow* shows the last seconds, else a time
-  line chooses the span. The mouse gives the time and the value.
-- **Actions**: a qualifier shows its meaning and its timing diagram;
-  *Qualifiers help* opens all of them. *Forcing orders*: *Add order*,
-  *Remove*.
-- Removing a step gives its number to the last step: its actions go with
-  it, and the receptivities of all the graphs (`X3`, `Production:X3`)
-  follow. What read the removed step reads a missing step (an error at the
-  start).
+- **Timing diagram**: *Steps*, *Inputs*, *Outputs* choose the rows; *Only what changed* hides the steps never active and the signals always 0; the slider gives the span shown; *Follow* shows the last seconds, else a time line chooses the span. The mouse gives the time and the value.
+- **Actions**: a qualifier shows its meaning and its timing diagram; *Qualifiers help* opens all of them. *Forcing orders*: *Add order*, *Remove*.
+- Removing a step gives its number to the last step: its actions go with it, and the receptivities of all the graphs (`X3`, `Production:X3`) follow. What read the removed step reads a missing step (an error at the start).
 
 ## 9. Menus
 
 | Menu | Item | Effect |
 |------|------|--------|
 | **File** | New > Petri net, Timed Petri net, Timed event graph, GRAFCET, GEMMA (3 GRAFCETs) | a new document of this kind (GEMMA: three empty GRAFCETs Safety, Control, Production) |
+| | New > Flowshop... | a window to fill the table of a flowshop: names and units of the machines and conveyors, processing times; *From the active net* fills it with the flowshop of the active net; *Create* builds its timed event graph in a new document ([chapter 15, §4.3](15-File-Formats.md#43-flowshop)) |
 | | Clear the document (Ctrl+N) | empty the active document |
 | | Open... (Ctrl+O), Open in a new document... | a `.json`, `.flowshop`, `.pnml`, `.grml`, `.teg` file |
 | | Import > *format* | read a file of this format ([chapter 15](15-File-Formats.md)) |
@@ -330,8 +245,7 @@ TimedPetriNetEditor [-r] [-s|-w screenshot.png] [-d seconds] [-f window] [-c end
 | `-g WxH` | size of the window in pixels (default `1100x768`) |
 | `-h` | the usage |
 
-The pictures of this documentation are made with these options by
-`tools/screenshots.sh`, for example:
+The pictures of this documentation are made with these options by `tools/screenshots.sh`, for example:
 
 ```sh
 ./build/TimedPetriNetEditor -g 1400x900 -w doc/pics/14-Window-Journal.png \

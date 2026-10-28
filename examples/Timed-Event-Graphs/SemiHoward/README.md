@@ -22,8 +22,8 @@ TimedEventGraph 3 5
 
 ## What it teaches
 
-- [The `.teg` format](../../../doc/07-Timed-Event-Graphs.md#7-the-teg-file-format)
-- [Nets that are not strongly connected](../../../doc/08-Max-Plus-Algebra.md#53-what-if-the-net-is-not-strongly-connected)
+- [The `.teg` format](../../../doc/en/07-Timed-Event-Graphs.md#7-the-teg-file-format)
+- [Nets that are not strongly connected](../../../doc/en/08-Max-Plus-Algebra.md#53-what-if-the-net-is-not-strongly-connected)
 
 ## Try it in the editor
 
@@ -36,4 +36,4 @@ TimedEventGraph 3 5
 
 ---
 
-Back to the [examples](../../README.md) · Timed event graphs: [chapter 7](../../../doc/07-Timed-Event-Graphs.md) · (max,+) algebra: [chapter 8](../../../doc/08-Max-Plus-Algebra.md)
+Back to the [examples](../../README.md) · Timed event graphs: [chapter 7](../../../doc/en/07-Timed-Event-Graphs.md) · (max,+) algebra: [chapter 8](../../../doc/en/08-Max-Plus-Algebra.md)

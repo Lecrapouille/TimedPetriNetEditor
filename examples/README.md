@@ -3,7 +3,7 @@
 One folder per example, grouped by family of nets. Each folder holds the
 net (`.json`, `.flowshop` or `.teg`), its picture, a README explaining what
 it models and what to try, and sometimes a C++ program that runs it with
-the runtime ([chapter 11](../doc/11-Runtime.md)). Most nets also carry a
+the runtime ([chapter 11](../doc/en/11-Runtime.md)). Most nets also carry a
 **description**, written on the canvas above the net: it tells you what to
 do and what to look at.
 
@@ -19,7 +19,7 @@ one notion each, ⚙️ the examples with a program.
 
 ## 🔵 Petri nets
 
-Chapters [3](../doc/03-Petri-Nets.md) and [4](../doc/04-Analysis.md).
+Chapters [3](../doc/en/03-Petri-Nets.md) and [4](../doc/en/04-Analysis.md).
 
 | | Example | Notions |
 |-|---------|---------|
@@ -41,7 +41,7 @@ Chapters [3](../doc/03-Petri-Nets.md) and [4](../doc/04-Analysis.md).
 
 ## 🧪 Extended Petri nets
 
-Chapter [5](../doc/05-Extended-Petri-Nets.md).
+Chapter [5](../doc/en/05-Extended-Petri-Nets.md).
 
 | | Example | Notions |
 |-|---------|---------|
@@ -56,7 +56,7 @@ Chapter [5](../doc/05-Extended-Petri-Nets.md).
 
 ## ⏱️ Timed Petri nets
 
-Chapter [6](../doc/06-Timed-Petri-Nets.md).
+Chapter [6](../doc/en/06-Timed-Petri-Nets.md).
 
 | | Example | Notions |
 |-|---------|---------|
@@ -68,7 +68,7 @@ Chapter [6](../doc/06-Timed-Petri-Nets.md).
 
 ## 🔁 Timed event graphs and (max,+) algebra
 
-Chapters [7](../doc/07-Timed-Event-Graphs.md) and [8](../doc/08-Max-Plus-Algebra.md).
+Chapters [7](../doc/en/07-Timed-Event-Graphs.md) and [8](../doc/en/08-Max-Plus-Algebra.md).
 
 | | Example | Notions |
 |-|---------|---------|
@@ -82,7 +82,7 @@ Chapters [7](../doc/07-Timed-Event-Graphs.md) and [8](../doc/08-Max-Plus-Algebra
 
 ## 🔘 GRAFCET and GEMMA
 
-Chapters [9](../doc/09-GRAFCET.md) and [10](../doc/10-GEMMA.md).
+Chapters [9](../doc/en/09-GRAFCET.md) and [10](../doc/en/10-GEMMA.md).
 
 | | Example | Notions |
 |-|---------|---------|
@@ -94,8 +94,8 @@ Chapters [9](../doc/09-GRAFCET.md) and [10](../doc/10-GEMMA.md).
 
 ## ⚙️ Runtime
 
-Chapters [11](../doc/11-Runtime.md), [12](../doc/12-Code-Generation.md) and
-[13](../doc/13-Debugging.md). The programs next to the nets above (⚙️) are
+Chapters [11](../doc/en/11-Runtime.md), [12](../doc/en/12-Code-Generation.md) and
+[13](../doc/en/13-Debugging.md). The programs next to the nets above (⚙️) are
 runtime examples too.
 
 | | Example | Notions |

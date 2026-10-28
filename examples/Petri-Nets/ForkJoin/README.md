@@ -10,9 +10,9 @@ Two tasks run in parallel, then wait for each other.
 
 ## What it teaches
 
-- [Concurrency](../../../doc/03-Petri-Nets.md#51-concurrency-independent-events)
-- [Fork, join and loop patterns](../../../doc/03-Petri-Nets.md#6-patterns-of-modeling)
-- [T-invariant: the whole cycle](../../../doc/04-Analysis.md#7-t-invariants)
+- [Concurrency](../../../doc/en/03-Petri-Nets.md#51-concurrency-independent-events)
+- [Fork, join and loop patterns](../../../doc/en/03-Petri-Nets.md#6-patterns-of-modeling)
+- [T-invariant: the whole cycle](../../../doc/en/04-Analysis.md#7-t-invariants)
 
 ## Try it in the editor
 
@@ -27,4 +27,4 @@ Two tasks run in parallel, then wait for each other.
 
 ---
 
-Back to the [examples](../../README.md) · Petri nets: [chapter 3](../../../doc/03-Petri-Nets.md)
+Back to the [examples](../../README.md) · Petri nets: [chapter 3](../../../doc/en/03-Petri-Nets.md)

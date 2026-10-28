@@ -10,8 +10,8 @@ Four extensions in one production line: capacity, weight, inhibitor arc, reset a
 
 ## What it teaches
 
-- [All the extensions together](../../../doc/05-Extended-Petri-Nets.md#7-all-together-the-bounded-buffer)
-- [What they cost](../../../doc/05-Extended-Petri-Nets.md#8-what-the-extensions-cost)
+- [All the extensions together](../../../doc/en/05-Extended-Petri-Nets.md#7-all-together-the-bounded-buffer)
+- [What they cost](../../../doc/en/05-Extended-Petri-Nets.md#8-what-the-extensions-cost)
 
 ## Try it in the editor
 
@@ -26,7 +26,7 @@ Four extensions in one production line: capacity, weight, inhibitor arc, reset a
 
 ## Run it with the runtime
 
-[`BoundedBuffer.cpp`](BoundedBuffer.cpp) runs this net with the runtime of the project: each transition is a function of the program ([chapter 11](../../../doc/11-Runtime.md)). Build the examples (`make -C examples`), then from the root of the project:
+[`BoundedBuffer.cpp`](BoundedBuffer.cpp) runs this net with the runtime of the project: each transition is a function of the program ([chapter 11](../../../doc/en/11-Runtime.md)). Build the examples (`make -C examples`), then from the root of the project:
 
 ```text
 $ build/examples/BoundedBuffer
@@ -58,4 +58,4 @@ The runtime runs the line on a simulated clock: guards make the producer give a 
 
 ---
 
-Back to the [examples](../../README.md) · Extended Petri nets: [chapter 5](../../../doc/05-Extended-Petri-Nets.md)
+Back to the [examples](../../README.md) · Extended Petri nets: [chapter 5](../../../doc/en/05-Extended-Petri-Nets.md)

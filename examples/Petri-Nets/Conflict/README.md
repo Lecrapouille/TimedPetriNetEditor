@@ -10,8 +10,8 @@ A coin can buy a tea or a coffee, not both. `Tea` and `Coffee` share their input
 
 ## What it teaches
 
-- [Conflict (choice)](../../../doc/03-Petri-Nets.md#52-conflict-a-choice)
-- [Who resolves a conflict in the editor](../../../doc/03-Petri-Nets.md#52-conflict-a-choice)
+- [Conflict (choice)](../../../doc/en/03-Petri-Nets.md#52-conflict-a-choice)
+- [Who resolves a conflict in the editor](../../../doc/en/03-Petri-Nets.md#52-conflict-a-choice)
 
 ## Try it in the editor
 
@@ -26,4 +26,4 @@ A coin can buy a tea or a coffee, not both. `Tea` and `Coffee` share their input
 
 ---
 
-Back to the [examples](../../README.md) · Petri nets: [chapter 3](../../../doc/03-Petri-Nets.md)
+Back to the [examples](../../README.md) · Petri nets: [chapter 3](../../../doc/en/03-Petri-Nets.md)

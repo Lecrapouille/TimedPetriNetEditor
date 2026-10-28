@@ -10,8 +10,8 @@ Place capacity: a car park of 3 spaces.
 
 ## What it teaches
 
-- [Capacities](../../../doc/05-Extended-Petri-Nets.md#2-capacities)
-- [What capacities cost to the analysis](../../../doc/05-Extended-Petri-Nets.md#8-what-the-extensions-cost)
+- [Capacities](../../../doc/en/05-Extended-Petri-Nets.md#2-capacities)
+- [What capacities cost to the analysis](../../../doc/en/05-Extended-Petri-Nets.md#8-what-the-extensions-cost)
 
 ## Try it in the editor
 
@@ -26,4 +26,4 @@ Place capacity: a car park of 3 spaces.
 
 ---
 
-Back to the [examples](../../README.md) · Extended Petri nets: [chapter 5](../../../doc/05-Extended-Petri-Nets.md)
+Back to the [examples](../../README.md) · Extended Petri nets: [chapter 5](../../../doc/en/05-Extended-Petri-Nets.md)

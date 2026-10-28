@@ -1,18 +1,15 @@
 # 📄 15. File formats
 
-What you will find here: the JSON file of the editor field by field (§1 to
-§3), then every format the editor reads and writes (§4) and the formats of
-the journals (§5). The excerpts were produced by exporting the examples of
-[`examples/`](../examples/README.md) with the library of this commit.
+
+[![fr](https://lecrapouille.github.io/icons/fr.png)](../fr/15-File-Formats.md) [![en](https://lecrapouille.github.io/icons/en.png)](../en/15-File-Formats.md)
+
+What you will find here: the JSON file of the editor field by field (§1 to §3), then every format the editor reads and writes (§4) and the formats of the journals (§5). The excerpts were produced by exporting the examples of [`examples/`](../../examples/README.md) with the library of this commit.
 
 ---
 
 ## 1. The JSON file
 
-*File > Save* writes a JSON file. You can also write it by hand, or
-generate it from another program. Here is
-[`FirstNet.json`](../examples/Petri-Nets/FirstNet/FirstNet.json) as the
-editor saves it:
+*File > Save* writes a JSON file. You can also write it by hand, or generate it from another program. Here is [`FirstNet.json`](../../examples/Petri-Nets/FirstNet/FirstNet.json) as the editor saves it:
 
 ```json
 {
@@ -95,28 +92,13 @@ editor saves it:
 | | `kind` | optional: `"normal"` (default), `"inhibitor"` or `"reset"`, only on an arc from a place |
 | | `color` | optional: the color of the tokens taken (arc from a place) or given (arc to a place) (§2) |
 
-The meaning of the extensions is taught in
-[chapter 5](05-Extended-Petri-Nets.md). In short: a normal arc of weight
-`w` takes (or gives) `w` tokens; an **inhibitor arc** of weight `w` lets the
-transition fire only while its place holds fewer than `w` tokens; a
-**reset arc** empties its place when the transition fires; a transition is
-not enabled when its firing would put more tokens in a place than its
-capacity.
+The meaning of the extensions is taught in [chapter 5](05-Extended-Petri-Nets.md). In short: a normal arc of weight `w` takes (or gives) `w` tokens; an **inhibitor arc** of weight `w` lets the transition fire only while its place holds fewer than `w` tokens; a **reset arc** empties its place when the transition fires; a transition is not enabled when its firing would put more tokens in a place than its capacity.
 
-Weights, inhibitor and reset arcs, capacities and colors extend the Petri
-nets and the timed Petri nets only: a timed event graph or a GRAFCET using
-them is refused when the file is read.
+Weights, inhibitor and reset arcs, capacities and colors extend the Petri nets and the timed Petri nets only: a timed event graph or a GRAFCET using them is refused when the file is read.
 
 ## 2. Colors
 
-A **color** is the name of a kind of token. The built-in ones are
-`Success`, `Failed` and `Canceled` (the results of the function of a
-transition), the others are listed in `colors`. An arc from a place takes
-only the tokens of its `color` (any color when absent); an arc to a place
-gives tokens of its `color`, else of the result of the function of the
-transition. The editor draws the colors on the arcs; its simulation does
-not use them: the runtime does ([chapter 11](11-Runtime.md)). Example,
-[`Colors.json`](../examples/Extended-Petri-Nets/Colors/Colors.json):
+A **color** is the name of a kind of token. The built-in ones are `Success`, `Failed` and `Canceled` (the results of the function of a transition), the others are listed in `colors`. An arc from a place takes only the tokens of its `color` (any color when absent); an arc to a place gives tokens of its `color`, else of the result of the function of the transition. The editor draws the colors on the arcs; its simulation does not use them: the runtime does ([chapter 11](11-Runtime.md)). Example, [`Colors.json`](../../examples/Extended-Petri-Nets/Colors/Colors.json):
 
 ```json
 "colors": ["Good", "Bad"],
@@ -131,9 +113,7 @@ not use them: the runtime does ([chapter 11](11-Runtime.md)). Example,
 
 ## 3. GRAFCET: actions, inputs, outputs
 
-A GRAFCET net has, after its arcs, the actions of its steps. Extracts of
-[`GrafcetActions.json`](../examples/GRAFCET/GrafcetActions/GrafcetActions.json)
-and of the Control and Safety graphs of `GEMMA-Dryer.json`:
+A GRAFCET net has, after its arcs, the actions of its steps. Extracts of [`GrafcetActions.json`](../../examples/GRAFCET/GrafcetActions/GrafcetActions.json) and of the Control and Safety graphs of `GEMMA-Dryer.json`:
 
 ```json
 "actions": [
@@ -155,11 +135,7 @@ and of the Control and Safety graphs of `GEMMA-Dryer.json`:
 | `script` | a comment, written in the generated code |
 | `forcing` | forcing orders, drawn `Production{init}` (the colon is optional) |
 
-After the nets, the document lists the **inputs** of its GRAFCETs (what the
-receptivities read) and their **outputs** (the names of the actions). Their
-`kind` says how the control panel and the Outputs window draw them. An
-extract of [`GEMMA-Dryer.json`](../examples/GRAFCET/GEMMA-Dryer/GEMMA-Dryer.json),
-with a `clock` added to show its fields:
+After the nets, the document lists the **inputs** of its GRAFCETs (what the receptivities read) and their **outputs** (the names of the actions). Their `kind` says how the control panel and the Outputs window draw them. An extract of [`GEMMA-Dryer.json`](../../examples/GRAFCET/GEMMA-Dryer/GEMMA-Dryer.json), with a `clock` added to show its fields:
 
 ```json
 "inputs": [
@@ -195,20 +171,11 @@ with a `clock` added to show its fields:
 | `kind` | `light` (default), `motor`, `heater`, `valve`, `horn` |
 | `description` | what it is |
 
-The editor saves only the inputs and outputs that were described (*Edit* on
-the control panel); the others are found again from the receptivities and
-the actions when the file is opened. Files of old versions with `sensors`
-instead of `inputs` are still read.
+The editor saves only the inputs and outputs that were described (*Edit* on the control panel); the others are found again from the receptivities and the actions when the file is opened. Files of old versions with `sensors` instead of `inputs` are still read.
 
 ## 4. Other formats
 
-*File > Open* and *File > Save as* choose the format by the extension of
-the file; *File > Import* and *File > Export* list the formats by name. The
-longest extension wins: `net.symmetri.pnml` is the Symmetri flavor of PNML.
-*File > Export* lists only the formats that can write the active net: the
-C++ GRAFCET and the GRAFCET LaTeX for a GRAFCET; the C++ for the runtime,
-the Petri LaTeX and the PNML for Symmetri for the other nets; the Timed
-Event Graph and Julia formats for a timed event graph.
+*File > Open* and *File > Save as* choose the format by the extension of the file; *File > Import* and *File > Export* list the formats by name. The longest extension wins: `net.symmetri.pnml` is the Symmetri flavor of PNML. *File > Export* lists only the formats that can write the active net: the C++ GRAFCET and the GRAFCET LaTeX for a GRAFCET; the C++ for the runtime, the Petri LaTeX and the PNML for Symmetri for the other nets; the Timed Event Graph and Julia formats for a timed event graph; the Flowshop for a net made from a flowshop.
 
 | Format | Extension | Read | Write | For |
 |--------|-----------|:----:|:-----:|-----|
@@ -216,7 +183,7 @@ Event Graph and Julia formats for a timed event graph.
 | Petri Net Markup Language | `.pnml` | yes | yes | the standard exchange format of Petri net tools (§4.1) |
 | PNML for Symmetri | `.symmetri.pnml` | yes | yes | [Symmetri](https://github.com/thorstink/Symmetri) (§4.1) |
 | GreatSPN GRML | `.grml` | yes | yes | [GreatSPN](https://github.com/greatspn/SOURCES), read by Symmetri too (§4.2) |
-| Flowshop | `.flowshop` | yes | | a factory as a table of processing times (§4.3) |
+| Flowshop | `.flowshop` | yes | yes | a factory as a table of processing times (§4.3) |
 | Timed Event Graph | `.teg` | yes | yes | a compact text format of timed event graphs (§4.4) |
 | SVG picture | `.svg` | | yes | a picture for a document or a web page (§4.5) |
 | Petri LaTeX | `.tex` | | yes | a TikZ drawing for a document (§4.6) |
@@ -241,8 +208,7 @@ What each format keeps:
 | PN-Editor | yes (an arc of weight 3 is written 3 times) | refused | refused | | | | | | yes |
 | Symfony | | | | | | | | | |
 
-(\*) in `<toolspecific tool="TimedPetriNetEditor">` elements, that other
-tools ignore: a PNML file written by the editor comes back the same.
+(\*) in `<toolspecific tool="TimedPetriNetEditor">` elements, that other tools ignore: a PNML file written by the editor comes back the same.
 
 A format refuses what it cannot keep, with a message:
 
@@ -255,12 +221,7 @@ Export GRAFCET LaTeX: the net must be of type GRAFCET
 
 ### 4.1 PNML and PNML for Symmetri
 
-PNML writes the places with their initial marking, the transitions and the
-arcs with their weight (`<inscription>`). The identifiers of the nodes are
-their captions when they are unique (Symmetri calls the functions by them),
-else their keys. What PNML does not know goes in `<toolspecific>`.
-[`BoundedBuffer.json`](../examples/Extended-Petri-Nets/BoundedBuffer/BoundedBuffer.json)
-exported (extract):
+PNML writes the places with their initial marking, the transitions and the arcs with their weight (`<inscription>`). The identifiers of the nodes are their captions when they are unique (Symmetri calls the functions by them), else their keys. What PNML does not know goes in `<toolspecific>`. [`BoundedBuffer.json`](../../examples/Extended-Petri-Nets/BoundedBuffer/BoundedBuffer.json) exported (extract):
 
 ```xml
       <place id="Buffer">
@@ -278,10 +239,7 @@ exported (extract):
       </arc>
 ```
 
-The Symmetri flavor writes one `<initialMarking>` per token and the colors
-of the arcs in an attribute `color`;
-[`PickAndPlace.json`](../examples/Runtime/PickAndPlace/PickAndPlace.json)
-exported as `PickAndPlace.symmetri.pnml` (extract):
+The Symmetri flavor writes one `<initialMarking>` per token and the colors of the arcs in an attribute `color`; [`PickAndPlace.json`](../../examples/Runtime/PickAndPlace/PickAndPlace.json) exported as `PickAndPlace.symmetri.pnml` (extract):
 
 ```xml
       <arc id="A4" source="Held" target="place" color="Success">
@@ -292,19 +250,11 @@ exported as `PickAndPlace.symmetri.pnml` (extract):
       </arc>
 ```
 
-The import reads both flavors, and the PNML files of the old versions of
-the editor (where the inscription was the duration).
+The import reads both flavors, and the PNML files of the old versions of the editor (where the inscription was the duration).
 
 ### 4.2 GRML (GreatSPN)
 
-GRML is the XML of CosyVerif, written by GreatSPN and read by Symmetri:
-places with their marking, transitions with their priority and their
-distribution, arcs with their valuation (the weight) and their type (`arc`
-or `inhibitorarc`). A timed net exports a transition as `DETERMINISTIC`
-with the largest duration of its output arcs; the import gives the delay of
-a `DETERMINISTIC` transition to its output arcs.
-[`Durations.json`](../examples/Timed-Petri-Nets/Durations/Durations.json)
-exported (extract):
+GRML is the XML of CosyVerif, written by GreatSPN and read by Symmetri: places with their marking, transitions with their priority and their distribution, arcs with their valuation (the weight) and their type (`arc` or `inhibitorarc`). A timed net exports a transition as `DETERMINISTIC` with the largest duration of its output arcs; the import gives the delay of a `DETERMINISTIC` transition to its output arcs. [`Durations.json`](../../examples/Timed-Petri-Nets/Durations/Durations.json) exported (extract):
 
 ```xml
 <node id="4" nodeType="transition" x="250" y="200">
@@ -320,30 +270,56 @@ exported (extract):
 
 ### 4.3 Flowshop
 
-A **flowshop** is a factory that produces parts ([chapter 7](07-Timed-Event-Graphs.md)).
-On the timed event graph, machines are the horizontal cycles and conveyors
-the vertical ones. The file is a table of processing times; the editor turns
-it into that graph.
-[`simple.flowshop`](../examples/Flowshops/simple.flowshop):
+A **flowshop** is a factory that produces parts ([chapter 7](07-Timed-Event-Graphs.md)). Every part visits the machines in the same order, and every machine works on the conveyors in the same order. On the timed event graph, machines are the horizontal cycles and conveyors the vertical ones. The file is a table of processing times; the editor turns it into that graph. A `.flowshop` file holds the table in one of two syntaxes: a CSV table, read and written, or the older `key: values` lines of ScicosLab and MaxPlus.jl, read only. The editor tells them apart by the first line that is not a comment: a `,` makes it a CSV table.
+
+*File > New > Flowshop...* fills the same table in a window: the names and their number of units in the first row and column, the processing times in the other cells. *From the active net* fills it with the flowshop of the active net, to change it and make the net again.
+
+#### CSV table
+
+[`simple.flowshop`](../../examples/Flowshops/simple.flowshop):
 
 ```text
-# Simple flowshop: 2 machines, 3 conveyors, one of each resource
-nconveyors: 3
-nmachines: 2
+# Simple flowshop: 2 machines, 3 conveyors, one of each resource.
+machine\conveyor,C1,C2,C3
+M1,2.0,3.0,1.0
+M2,1.0,2.0,1.5
+```
+
+| Part | Meaning |
+|------|---------|
+| lines starting with `#` | comments; empty lines are skipped |
+| first row | the conveyors (the columns); its first cell is a title, ignored |
+| first column | the machines (the rows) |
+| `Name*n` | the factory owns `n` machines, or conveyors, of this kind: the tokens of its cycle. Without `*n`: one |
+| `"Name"` | a name between double quotes may hold a `,`, a `*` or a `#`; `""` is a double quote in it: `"C*1"*2` is two conveyors named `C*1` |
+| other cells | processing time of the conveyor on the machine, in the time unit of the net (the durations of the arcs) |
+| empty cell (or `-`, `-inf`, `eps`) | the conveyor does not visit this machine ((max,+) zero) |
+
+The number of machines and of conveyors is the size of the table. [`complex-conveyors.flowshop`](../../examples/Flowshops/complex-conveyors.flowshop) owns two `Conveyor3`, written `Conveyor3*2` in its first row.
+
+*File > Export > Flowshop* writes the table of the active net, after comments that explain the format. It is proposed for the nets made from a flowshop only: the editor finds the table back from the operations `<machine>_<conveyor>`, from the order of the arcs between them, and from the tokens given by the transitions `<machine>` and `<conveyor>`. A machine name shall not hold a `_`: the operation `M1_C2` is split on its first `_`, and the export would not find the table back. The window also refuses a name holding a space.
+
+#### `key: values` lines (older syntax)
+
+The syntax of the flowshops of ScicosLab and of [MaxPlus.jl](https://github.com/Lecrapouille/MaxPlus.jl). [`complex.flowshop`](../../examples/Flowshops/complex.flowshop) begins with:
+
+```text
+nconveyors: 6
+nmachines: 8
 
 # How many of each machine (tokens of the horizontal cycle)
-nm: 1 1
+nm: 1 1 1 1 1 1 1 1
 
 # How many of each conveyor (tokens of the vertical cycle)
-np: 1 1 1
+np: 1 1 1 1 1 1
 
 # Conveyor names (columns)
-conveyors: C1 C2 C3
+conveyors: Conveyor1 Conveyor2 Conveyor3 Conveyor4 Conveyor5 Conveyor6
 
-# Processing times: machine: time on C1, C2, C3
+# Processing times: machine: time on each conveyor
 # -inf means (max,+) zero: this conveyor does not visit this machine
-M1: 2.0 3.0 1.0
-M2: 1.0 2.0 1.5
+Machine1: 2.0  3.9  0.95 1.1  0.7  1.4
+Machine2: -inf -inf 2.0  1.2  -inf 1.7
 ```
 
 | Line | Meaning |
@@ -356,13 +332,7 @@ M2: 1.0 2.0 1.5
 
 ### 4.4 Timed event graph (`.teg`)
 
-A compact text format for timed event graphs, from the
-[Howard algorithm](http://www.cmap.polytechnique.fr/~gaubert/HOWARD2.html)
-project. The first line gives the number of transitions and of arcs, then
-one line per arc between two transitions (the hidden place):
-`<from> <to>: <duration> <tokens>`. The format has no names nor positions.
-[`Howard2.json`](../examples/Timed-Event-Graphs/Howard2/Howard2.json)
-exported:
+A compact text format for timed event graphs, from the [Howard algorithm](http://www.cmap.polytechnique.fr/~gaubert/HOWARD2.html) project. The first line gives the number of transitions and of arcs, then one line per arc between two transitions (the hidden place): `<from> <to>: <duration> <tokens>`. The format has no names nor positions. [`Howard2.json`](../../examples/Timed-Event-Graphs/Howard2/Howard2.json) exported:
 
 ```text
 TimedEventGraph 4 5
@@ -378,11 +348,7 @@ The first arc goes from `T0` to `T2`, lasts 5 and holds 2 tokens.
 
 ### 4.5 SVG
 
-A picture of the net at the positions of the editor: places with their
-tokens (GRAFCET: steps, double for the initial ones), transitions, arcs
-with their weight, duration and color; inhibitor arcs end with a circle,
-reset arcs are dashed. A timed event graph drawn compactly keeps its places
-on its arcs. Open it in a browser, insert it in a document.
+A picture of the net at the positions of the editor: places with their tokens (GRAFCET: steps, double for the initial ones), transitions, arcs with their weight, duration and color; inhibitor arcs end with a circle, reset arcs are dashed. A timed event graph drawn compactly keeps its places on its arcs. Open it in a browser, insert it in a document.
 
 ![SVG export](pics/15-SVG.png)
 
@@ -390,17 +356,10 @@ on its arcs. Open it in a browser, insert it in a document.
 
 ### 4.6 LaTeX
 
-Two exports write a `.tex` file to compile with `pdflatex file.tex` (on
-Debian or Ubuntu: `sudo apt install texlive-pictures`):
+Two exports write a `.tex` file to compile with `pdflatex file.tex` (on Debian or Ubuntu: `sudo apt install texlive-pictures`):
 
-- **Petri LaTeX** uses the `petri` library of TikZ: places with their
-  tokens, transitions, arcs with their weight, duration and color
-  (inhibitor arcs end with an open circle, reset arcs have a double head
-  and are dashed). 50 pixels of the editor are 1 cm.
-- **Grafcet LaTeX** (GRAFCET only) uses the
-  [grafcet2](https://github.com/nagimov/grafcet2) package, given in
-  [`data/grafcet2.sty`](../data/grafcet2.sty): steps (the initial ones
-  double), transitions with their receptivity.
+- **Petri LaTeX** uses the `petri` library of TikZ: places with their tokens, transitions, arcs with their weight, duration and color (inhibitor arcs end with an open circle, reset arcs have a double head and are dashed). 50 pixels of the editor are 1 cm.
+- **Grafcet LaTeX** (GRAFCET only) uses the [grafcet2](https://github.com/nagimov/grafcet2) package, given in [`data/grafcet2.sty`](../data/grafcet2.sty): steps (the initial ones double), transitions with their receptivity.
 
 `FirstNet.json` as Petri LaTeX (complete):
 
@@ -432,8 +391,7 @@ Debian or Ubuntu: `sudo apt install texlive-pictures`):
 \end{document}
 ```
 
-[`GermanTrafficLights.json`](../examples/GRAFCET/GermanTrafficLights/GermanTrafficLights.json)
-as Grafcet LaTeX (the body):
+[`GermanTrafficLights.json`](../../examples/GRAFCET/GermanTrafficLights/GermanTrafficLights.json) as Grafcet LaTeX (the body):
 
 ```latex
 \begin{grafcet}
@@ -452,12 +410,7 @@ as Grafcet LaTeX (the body):
 
 ### 4.7 Graphviz
 
-A `.dot` file: places as circles with their tokens (`•`) and their
-capacity (`max 4`), transitions as boxes, arcs with their weight, duration
-and color; inhibitor arcs end with `odot`, reset arcs are dashed with a
-double head. The layout is the one of Graphviz, not the one of the editor
-(the SVG export keeps the latter). View it with `xdot file.dot`, draw it
-with `dot -Tpng file.dot -o file.png`.
+A `.dot` file: places as circles with their tokens (`•`) and their capacity (`max 4`), transitions as boxes, arcs with their weight, duration and color; inhibitor arcs end with `odot`, reset arcs are dashed with a double head. The layout is the one of Graphviz, not the one of the editor (the SVG export keeps the latter). View it with `xdot file.dot`, draw it with `dot -Tpng file.dot -o file.png`.
 
 ```dot
 digraph "Bounded buffer" {
@@ -477,16 +430,9 @@ digraph "Bounded buffer" {
 
 ### 4.8 Draw.io, PN-Editor, Symfony
 
-- **Draw.io**: an `mxfile` with one cell per node (and one per caption) and
-  per arc, at the positions of the editor, editable in draw.io.
-- **PN-Editor**: the four binary files of
-  [pn-editor](https://gitlab.com/porky11/pn-editor) (`.pns` the structure,
-  `.pnl` the positions, `.pnk` the names of the transitions, `.pnkp` the
-  names of the places; pn-editor is installed by hand). An arc of weight 3
-  is written three times.
-- **Symfony**: a workflow of the Symfony framework (PHP): places,
-  transitions with their `from` and `to`, the initial marking. Names are
-  written in lower case with `_`:
+- **Draw.io**: an `mxfile` with one cell per node (and one per caption) and per arc, at the positions of the editor, editable in draw.io.
+- **PN-Editor**: the four binary files of [pn-editor](https://gitlab.com/porky11/pn-editor) (`.pns` the structure, `.pnl` the positions, `.pnk` the names of the transitions, `.pnkp` the names of the places; pn-editor is installed by hand). An arc of weight 3 is written three times.
+- **Symfony**: a workflow of the Symfony framework (PHP): places, transitions with their `from` and `to`, the initial marking. Names are written in lower case with `_`:
 
 ```yaml
 # Generated by TimedPetriNetEditor from the net 'First net'.
@@ -510,11 +456,7 @@ framework:
 
 ### 4.9 Julia
 
-Writes, for a timed event graph, a Julia script for MaxPlus.jl: the
-transitions, the arcs with their durations and tokens, the counter and
-dater equations as comments, and the matrices `D`, `A`, `B`, `C` of the
-(max,+) linear system of the canonical form ([chapter 8](08-Max-Plus-Algebra.md)).
-`Howard2.json` exported (extract):
+Writes, for a timed event graph, a Julia script for MaxPlus.jl: the transitions, the arcs with their durations and tokens, the counter and dater equations as comments, and the matrices `D`, `A`, `B`, `C` of the (max,+) linear system of the canonical form ([chapter 8](08-Max-Plus-Algebra.md)). `Howard2.json` exported (extract):
 
 ```julia
 using MaxPlus, SparseArrays
@@ -532,13 +474,11 @@ C = sparse([], [], MP([]), 0, 5) # Outputs
 S = MPSysLin(A, B, C, D)
 ```
 
-The tables of the *Analysis* window also have a *Copy as Julia* button
-([chapter 17](17-Julia.md)).
+The tables of the *Analysis* window also have a *Copy as Julia* button ([chapter 17](17-Julia.md)).
 
 ## 5. Journals
 
-The *Journal* window of the editor and the runtime write their journals
-(the firings: instance, transition, event, result, date) as:
+The *Journal* window of the editor and the runtime write their journals (the firings: instance, transition, event, result, date) as:
 
 | Format | Extension | For |
 |--------|-----------|-----|
@@ -564,10 +504,7 @@ fast,request,Completed,Success,0.0101056
 fast,paid,Scheduled,,0.100624
 ```
 
-XES: a trace per instance, an event per line; `concept:name` is the
-transition, `lifecycle:transition` is `schedule`, `start` or `complete`,
-`org:resource` the result, `time:timestamp` the date in seconds since an
-origin (0 gives dates in 1970):
+XES: a trace per instance, an event per line; `concept:name` is the transition, `lifecycle:transition` is `schedule`, `start` or `complete`, `org:resource` the result, `time:timestamp` the date in seconds since an origin (0 gives dates in 1970):
 
 ```xml
   <trace>
@@ -580,9 +517,7 @@ origin (0 gives dates in 1970):
     </event>
 ```
 
-In a program: `saveJournal(instance->log(), net.colors, "orders.xes")`
-(`Runtime/Journal.hpp`) chooses the format by the extension
-([chapter 16](16-Library.md)).
+In a program: `saveJournal(instance->log(), net.colors, "orders.xes")` (`Runtime/Journal.hpp`) chooses the format by the extension ([chapter 16](16-Library.md)).
 
 ---
 

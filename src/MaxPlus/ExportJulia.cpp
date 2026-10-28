@@ -169,6 +169,7 @@ void registerMaxPlusFormats()
 {
     addExporter({ "Julia", ".jl", exportToJulia, nullptr, isTimedEventGraph });
     addImporter({ "Flowshop", ".flowshop", importFlowshop, false });
+    addExporter({ "Flowshop", ".flowshop", exportFlowshop, nullptr, isFlowshop });
 }
 
 } // namespace tpne

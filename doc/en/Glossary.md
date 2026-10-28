@@ -1,7 +1,9 @@
 # Glossary
 
-The words of TimedPetriNetEditor in simple English. Chapter 1 explains the
-first ones with pictures.
+
+[![fr](https://lecrapouille.github.io/icons/fr.png)](../fr/Glossary.md) [![en](https://lecrapouille.github.io/icons/en.png)](../en/Glossary.md)
+
+The words of TimedPetriNetEditor in simple English. Chapter 1 explains the first ones with pictures.
 
 | Word | Meaning |
 |------|---------|

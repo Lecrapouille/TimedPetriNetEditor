@@ -10,8 +10,8 @@ The chain brake, the dead man switch and the throttle are each in one of two sta
 
 ## What it teaches
 
-- [Read arcs as safety conditions](../../../doc/03-Petri-Nets.md#6-patterns-of-modeling)
-- [P-invariants: each device in one state](../../../doc/04-Analysis.md#6-p-invariants)
+- [Read arcs as safety conditions](../../../doc/en/03-Petri-Nets.md#6-patterns-of-modeling)
+- [P-invariants: each device in one state](../../../doc/en/04-Analysis.md#6-p-invariants)
 
 ## Try it in the editor
 
@@ -29,4 +29,4 @@ Credit: YAWL User Group, [the chain saw](https://www.youtube.com/shorts/V42WiF2I
 
 ---
 
-Back to the [examples](../../README.md) · Petri nets: [chapter 3](../../../doc/03-Petri-Nets.md)
+Back to the [examples](../../README.md) · Petri nets: [chapter 3](../../../doc/en/03-Petri-Nets.md)

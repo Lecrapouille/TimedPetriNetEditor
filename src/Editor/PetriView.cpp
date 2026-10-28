@@ -1276,6 +1276,13 @@ void PetriView::drawOverlays(Net& net, Simulation& simulation, float zoom)
         else
             showTransitionTooltip(net, *static_cast<Transition const*>(m_mouse.hovered_node));
     }
+    // Timed event graph: the arc stands for its hidden place.
+    else if ((m_mouse.gesture == Gesture::None) && (m_mouse.hovered_arc != nullptr) &&
+             net.layout().compact && m_mouse.hovered_arc->from.isTransition() &&
+             ImGui::IsItemHovered(ImGuiHoveredFlags_DelayNormal | ImGuiHoveredFlags_NoSharedDelay))
+    {
+        showArcTooltip(net, *m_mouse.hovered_arc);
+    }
     (void) simulation;
 }
 
@@ -1420,9 +1427,14 @@ void PetriView::drawEditWidgets(Net& net)
         ImGui::TextDisabled("%s -> %s", arc.from.key().c_str(), arc.to.key().c_str());
 
         // Enter in any field applies them all; Escape or a click elsewhere
-        // cancels.
+        // cancels. The + and - buttons only change the value: InputInt()
+        // returns true for them too (EnterReturnsTrue is not supported).
         bool apply = false;
         bool first = true;
+        auto entered = [](bool const changed) {
+            return changed && (ImGui::IsKeyPressed(ImGuiKey_Enter) ||
+                               ImGui::IsKeyPressed(ImGuiKey_KeypadEnter));
+        };
         auto focus = [&]() {
             if (first && m_mouse.edit_focus_requested)
             {
@@ -1435,21 +1447,21 @@ void PetriView::drawEditWidgets(Net& net)
         if (hasDuration(net, arc))
         {
             focus();
-            apply |= ImGui::InputFloat("duration##arc", &m_mouse.edit_duration, 0.0f, 0.0f, "%.2f",
-                                       ImGuiInputTextFlags_EnterReturnsTrue);
+            apply |= entered(ImGui::InputFloat("duration##arc", &m_mouse.edit_duration, 0.0f, 0.0f, "%.2f",
+                                               ImGuiInputTextFlags_EnterReturnsTrue));
         }
         if (hasWeight(net))
         {
             focus();
-            apply |= ImGui::InputInt("weight##arc", &m_mouse.edit_weight, 1, 1,
-                                     ImGuiInputTextFlags_EnterReturnsTrue);
+            apply |= entered(ImGui::InputInt("weight##arc", &m_mouse.edit_weight, 1, 1,
+                                             ImGuiInputTextFlags_EnterReturnsTrue));
             m_mouse.edit_weight = std::max(1, m_mouse.edit_weight);
         }
         if (net.layout().compact)
         {
             focus();
-            apply |= ImGui::InputInt("tokens##arc", &m_mouse.edit_tokens, 1, 1,
-                                     ImGuiInputTextFlags_EnterReturnsTrue);
+            apply |= entered(ImGui::InputInt("tokens##arc", &m_mouse.edit_tokens, 1, 1,
+                                             ImGuiInputTextFlags_EnterReturnsTrue));
             m_mouse.edit_tokens = std::max(0, m_mouse.edit_tokens);
         }
         apply |= ImGui::Button("OK");
@@ -1778,6 +1790,19 @@ void PetriView::showPlaceTooltip(Net const& net, Place const& place, TypeOfNet t
         if (hasColors(net) && (place.tokens > 0u))
             ImGui::Text("Colors: %s", describeTokens(net, place).c_str());
     }
+    ImGui::EndTooltip();
+}
+
+//------------------------------------------------------------------------------
+void PetriView::showArcTooltip(Net const& net, Arc const& arc)
+{
+    // From the transition to the one after the hidden place.
+    auto const next = net.arcsOut(net.node(arc.to));
+    ImGui::BeginTooltip();
+    ImGui::Text("%s -> %s", arc.from.key().c_str(),
+                next.empty() ? arc.to.key().c_str() : next.front().to.key().c_str());
+    ImGui::Text("Duration: %.2f", double(arc.durationOrZero()));
+    ImGui::Text("Tokens: %zu", net.placeOf(arc).tokens);
     ImGui::EndTooltip();
 }
 

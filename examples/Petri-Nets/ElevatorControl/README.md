@@ -10,8 +10,8 @@ The elevator is at a floor or moving; its door is open or shut. `Start` reads `D
 
 ## What it teaches
 
-- [Read arcs as safety conditions](../../../doc/03-Petri-Nets.md#6-patterns-of-modeling)
-- [P-invariants: position and door](../../../doc/04-Analysis.md#6-p-invariants)
+- [Read arcs as safety conditions](../../../doc/en/03-Petri-Nets.md#6-patterns-of-modeling)
+- [P-invariants: position and door](../../../doc/en/04-Analysis.md#6-p-invariants)
 
 ## Try it in the editor
 
@@ -25,4 +25,4 @@ The elevator is at a floor or moving; its door is open or shut. `Start` reads `D
 
 ---
 
-Back to the [examples](../../README.md) · Petri nets: [chapter 3](../../../doc/03-Petri-Nets.md)
+Back to the [examples](../../README.md) · Petri nets: [chapter 3](../../../doc/en/03-Petri-Nets.md)

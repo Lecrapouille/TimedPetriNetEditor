@@ -1,5 +1,8 @@
 # 3. 🔵 Petri nets
 
+
+[![fr](https://lecrapouille.github.io/icons/fr.png)](../fr/03-Petri-Nets.md) [![en](https://lecrapouille.github.io/icons/en.png)](../en/03-Petri-Nets.md)
+
 **What you will learn**
 
 - what a Petri net is, in pictures and in its mathematical form;
@@ -31,19 +34,19 @@ A Petri net is a graph with two kinds of nodes and arcs between them:
 |---------|---------|--------|--------|
 | **Place** | A condition, a stock | `( )` | Drawn as a circle; local state or stock ("the machine is idle", "parts in the buffer", "the door is open"). |
 | **Transition** | An event | `▭` | Drawn as a bar or rectangle; an action ("start", "send", "the door opens"). |
-| **Arc** | Who feeds whom | `─►` | An arrow from a place to a transition (**input place**) or from a transition to a place (**output place**). Never between two places nor between two transitions: a Petri net is a **bipartite graph**. |
+| **Arc** | Who feeds whom | `──►` | An arrow from a place to a transition (**input place**) or from a transition to a place (**output place**). Never between two places nor between two transitions: a Petri net is a **bipartite graph**. |
 | **Token** | A resource, a part, "true" | `●` | Held in places (black dots, or a number when there are many): resources, parts, people, or simply that a condition is true. |
 
 The number of tokens in every place is the **marking** of the net: it is the state of the whole system. The marking at the start is the **initial marking**, written `M0`.
 
-Here is the smallest net, the example [FirstNet](../examples/Petri-Nets/FirstNet/README.md):
+Here is the smallest net, the example [FirstNet](../../examples/Petri-Nets/FirstNet/README.md):
 
 ```text
    Ready          Fire          Done
-    (●)  ─►   ▭   ─►  ( )
+    (●)  ──────►   ▭   ──────►  ( )
 ```
 
-![First net](../examples/Petri-Nets/FirstNet/FirstNet.png)
+![First net](../../examples/Petri-Nets/FirstNet/FirstNet.png)
 
 *The net drawn by the editor. The description written in the file is shown above the net: each example tells you what to try.*
 
@@ -53,11 +56,11 @@ The dynamics of a Petri net is one single rule.
 
 > A transition is **enabled** when each of its input places holds at least one token. An enabled transition can **fire**: it removes one token from each input place and adds one token to each output place. Firing is instantaneous.
 
-In [FirstNet](../examples/Petri-Nets/FirstNet/README.md), `Fire` is enabled because `Ready` holds a token. After the firing, `Ready` is empty and `Done` holds a token; `Fire` is no longer enabled and nothing can happen any more.
+In [FirstNet](../../examples/Petri-Nets/FirstNet/README.md), `Fire` is enabled because `Ready` holds a token. After the firing, `Ready` is empty and `Done` holds a token; `Fire` is no longer enabled and nothing can happen any more.
 
 | Before | After |
 |--------|-------|
-| `(●) ─► ▭ ─► ( )` | `( ) ─► ▭ ─► (●)` |
+| `(●) ──► ▭ ──► ( )` | `( ) ──► ▭ ──► (●)` |
 
 Three remarks that surprise beginners:
 
@@ -67,17 +70,17 @@ Three remarks that surprise beginners:
 
 ### 3.1 A worked example: the producer and the consumer
 
-The example [ProducerConsumer](../examples/Petri-Nets/ProducerConsumer/README.md) has five places and four transitions:
+The example [ProducerConsumer](../../examples/Petri-Nets/ProducerConsumer/README.md) has five places and four transitions:
 
 ```text
   Produce          Send             Accept          Consume
-    ▭ ─► (●) ─► ▭ ─► (●●●) ─► ▭ ─► ( ) ─► ▭
+    ▭ ──► (●) ──► ▭ ──► (●●●) ──► ▭ ──► ( ) ──► ▭
     ▲   Producer    │     Buffer    ▲   Accepted   │
     │    ready      ▼               │              ▼
     └────────── (●) Idle            └──── (●●) Ready
 ```
 
-![Producer consumer](../examples/Petri-Nets/ProducerConsumer/ProducerConsumer.png)
+![Producer consumer](../../examples/Petri-Nets/ProducerConsumer/ProducerConsumer.png)
 
 Number the places and the transitions as the editor does (`P0` ... `P4`, `T0` ... `T3`, see §8) and write the marking as a vector, in the order of the places:
 
@@ -153,9 +156,9 @@ Two enabled transitions can be in two very different situations.
 
 ### 5.1 Concurrency: independent events
 
-In [ForkJoin](../examples/Petri-Nets/ForkJoin/README.md), `Fork` puts a token in each branch. `Task A` and `Task B` are then both enabled and do not share any input place: firing one does not disable the other. They are **concurrent**: they can happen in any order, or at the same time.
+In [ForkJoin](../../examples/Petri-Nets/ForkJoin/README.md), `Fork` puts a token in each branch. `Task A` and `Task B` are then both enabled and do not share any input place: firing one does not disable the other. They are **concurrent**: they can happen in any order, or at the same time.
 
-![Fork and join](../examples/Petri-Nets/ForkJoin/ForkJoin.png)
+![Fork and join](../../examples/Petri-Nets/ForkJoin/ForkJoin.png)
 
 | Step | Marking | Enabled transitions |
 |------|---------|---------------------|
@@ -169,9 +172,9 @@ In [ForkJoin](../examples/Petri-Nets/ForkJoin/README.md), `Fork` puts a token in
 
 ### 5.2 Conflict: a choice
 
-In [Conflict](../examples/Petri-Nets/Conflict/README.md), one coin and two transitions `Tea` and `Coffee` share the input place `Coin`. Both are enabled, but firing one **disables** the other: they are in **conflict** (a **choice**).
+In [Conflict](../../examples/Petri-Nets/Conflict/README.md), one coin and two transitions `Tea` and `Coffee` share the input place `Coin`. Both are enabled, but firing one **disables** the other: they are in **conflict** (a **choice**).
 
-![Conflict](../examples/Petri-Nets/Conflict/Conflict.png)
+![Conflict](../../examples/Petri-Nets/Conflict/Conflict.png)
 
 | Step | Marking | Enabled transitions |
 |------|---------|---------------------|
@@ -189,41 +192,41 @@ The old documentation of the editor said it well: when you design a real system,
 
 ## 6. Patterns of modeling
 
-Real nets are built from a few patterns. Learn to recognize them; every example of [`examples/Petri-Nets`](../examples/README.md) is a combination of them.
+Real nets are built from a few patterns. Learn to recognize them; every example of [`examples/Petri-Nets`](../../examples/README.md) is a combination of them.
 
 | Pattern | Drawing | Meaning | Example |
 |---------|---------|---------|---------|
-| **Sequence** | <pre>(●) ─► ▭ ─► ( )&#10;  ( ) ◄─ ▭ ◄─┘</pre> | one step after the other | [FirstNet](../examples/Petri-Nets/FirstNet/README.md) |
-| **Fork** (AND split) | <pre>(●) ─► ▭ ─► ( )&#10;       └───► ( )</pre> | start several activities in parallel | `Fork` of [ForkJoin](../examples/Petri-Nets/ForkJoin/README.md) |
-| **Join** (AND join) | <pre>(●) ─┐&#10;     ├─► ▭ ─► (●)&#10;(●) ─┘</pre> | wait for all of them | `Join` of ForkJoin, `Dispense` of [Coffee](../examples/Petri-Nets/Coffee/README.md) |
-| **Choice** (OR split) | <pre>(●) ─┬─► ▭&#10;     └─► ▭</pre> | one of them will happen | [Conflict](../examples/Petri-Nets/Conflict/README.md), `Accept` / `Reject Coin` of Coffee |
-| **Merge** (OR join) | <pre>▭ ─┐&#10;    ├─► (●)&#10;▭ ─┘</pre> | several ways lead to the same state | `Level 1 operators` of [EmergencyCalls](../examples/Petri-Nets/EmergencyCalls/README.md) |
+| **Sequence** | <pre>(●) ─► ▭ ─► ( )&#10;  ( ) ◄─ ▭ ◄─┘</pre> | one step after the other | [FirstNet](../../examples/Petri-Nets/FirstNet/README.md) |
+| **Fork** (AND split) | <pre>(●) ─► ▭ ─► ( )&#10;       └───► ( )</pre> | start several activities in parallel | `Fork` of [ForkJoin](../../examples/Petri-Nets/ForkJoin/README.md) |
+| **Join** (AND join) | <pre>(●) ─┐&#10;     ├─► ▭ ─► (●)&#10;(●) ─┘</pre> | wait for all of them | `Join` of ForkJoin, `Dispense` of [Coffee](../../examples/Petri-Nets/Coffee/README.md) |
+| **Choice** (OR split) | <pre>(●) ─┬─► ▭&#10;     └─► ▭</pre> | one of them will happen | [Conflict](../../examples/Petri-Nets/Conflict/README.md), `Accept` / `Reject Coin` of Coffee |
+| **Merge** (OR join) | <pre>▭ ─┐&#10;    ├─► (●)&#10;▭ ─┘</pre> | several ways lead to the same state | `Level 1 operators` of [EmergencyCalls](../../examples/Petri-Nets/EmergencyCalls/README.md) |
 | **Loop** | <pre>↻ (●)</pre> | a cyclic behavior | `Restart` of ForkJoin |
-| **Resource** | <pre>▭ ─► (●) ─► ▭</pre> | a machine, a tool, an operator | `Tool 1` of [Deadlock](../examples/Petri-Nets/Deadlock/README.md) |
-| **Mutual exclusion** | <pre>▭ ─► (●) ◄─ ▭</pre> | one at a time | `Mutex` of [MutualExclusion](../examples/Petri-Nets/MutualExclusion/README.md) |
+| **Resource** | <pre>▭ ─► (●) ─► ▭</pre> | a machine, a tool, an operator | `Tool 1` of [Deadlock](../../examples/Petri-Nets/Deadlock/README.md) |
+| **Mutual exclusion** | <pre>▭ ─► (●) ◄─ ▭</pre> | one at a time | `Mutex` of [MutualExclusion](../../examples/Petri-Nets/MutualExclusion/README.md) |
 | **Buffer** | <pre>▭ ─► (●●) ─► ▭</pre> | decouple two processes | `Buffer` of ProducerConsumer |
-| **Read arc** (test) | <pre>(●) ⇄ ▭</pre> | the transition needs the condition but does not change it | `Start` reads `Door shut` in [ElevatorControl](../examples/Petri-Nets/ElevatorControl/README.md) |
-| **Counter** | <pre>(●●●)</pre> | at most N at the same time | `Remaining` of [SmarthomeSafety](../examples/Petri-Nets/SmarthomeSafety/README.md) |
+| **Read arc** (test) | <pre>(●) ⇄ ▭</pre> | the transition needs the condition but does not change it | `Start` reads `Door shut` in [ElevatorControl](../../examples/Petri-Nets/ElevatorControl/README.md) |
+| **Counter** | <pre>(●●●)</pre> | at most N at the same time | `Remaining` of [SmarthomeSafety](../../examples/Petri-Nets/SmarthomeSafety/README.md) |
 
 ### 6.1 Mutual exclusion
 
 Two processes, each one `Idle` or in its `Critical` section, share the token of `Mutex`. `Enter A` takes it, `Leave A` gives it back. While A is in its critical section, `Enter B` is not enabled: it misses the `Mutex` token.
 
-![Mutual exclusion](../examples/Petri-Nets/MutualExclusion/MutualExclusion.png)
+![Mutual exclusion](../../examples/Petri-Nets/MutualExclusion/MutualExclusion.png)
 
 ### 6.2 Shared resources and the dining philosophers
 
-The philosophers problem (Dijkstra, 1965) is the classic of shared resources. In [Philosophers](../examples/Petri-Nets/Philosophers/README.md), three philosophers share one fork and two knives; each one needs two pieces of cutlery to eat. Each piece is a resource place with one token. Who can eat at the same time? Phi0 (fork + knife 1) and Phi1 (fork + knife 2) never together, since they share the fork; Phi2 (both knives) never with anybody.
+The philosophers problem (Dijkstra, 1965) is the classic of shared resources. In [Philosophers](../../examples/Petri-Nets/Philosophers/README.md), three philosophers share one fork and two knives; each one needs two pieces of cutlery to eat. Each piece is a resource place with one token. Who can eat at the same time? Phi0 (fork + knife 1) and Phi1 (fork + knife 2) never together, since they share the fork; Phi2 (both knives) never with anybody.
 
-![Philosophers](../examples/Petri-Nets/Philosophers/Philosophers.png)
+![Philosophers](../../examples/Petri-Nets/Philosophers/Philosophers.png)
 
-When resources are taken **one at a time** and in different orders, a **deadlock** can appear: in [Deadlock](../examples/Petri-Nets/Deadlock/README.md), robot A takes tool 1 then tool 2, robot B takes tool 2 then tool 1. After `A takes 1` and `B takes 2`, each robot waits for the tool held by the other, for ever. [Chapter 4](04-Analysis.md#3-properties) shows how the editor finds such deadlocks for you.
+When resources are taken **one at a time** and in different orders, a **deadlock** can appear: in [Deadlock](../../examples/Petri-Nets/Deadlock/README.md), robot A takes tool 1 then tool 2, robot B takes tool 2 then tool 1. After `A takes 1` and `B takes 2`, each robot waits for the tool held by the other, for ever. [Chapter 4](04-Analysis.md#3-properties) shows how the editor finds such deadlocks for you.
 
 ### 6.3 A real-life net: the emergency call center
 
-[EmergencyCalls](../examples/Petri-Nets/EmergencyCalls/README.md) combines all the patterns. Seven victims call; four level 1 operators (a resource) answer and screen the calls (a choice in three): advice they give themselves, urgent calls they transfer to a level 2 operator and hang up, critical calls they keep until a level 2 operator joins them in a three-way call (a join of two resources). See this [Youtube video](https://www.youtube.com/watch?v=yP5qajIL_YM&t=261s) (in French).
+[EmergencyCalls](../../examples/Petri-Nets/EmergencyCalls/README.md) combines all the patterns. Seven victims call; four level 1 operators (a resource) answer and screen the calls (a choice in three): advice they give themselves, urgent calls they transfer to a level 2 operator and hang up, critical calls they keep until a level 2 operator joins them in a three-way call (a join of two resources). See this [Youtube video](https://www.youtube.com/watch?v=yP5qajIL_YM&t=261s) (in French).
 
-![Emergency calls](../examples/Petri-Nets/EmergencyCalls/EmergencyCalls.png)
+![Emergency calls](../../examples/Petri-Nets/EmergencyCalls/EmergencyCalls.png)
 
 Play it in the editor: you will see the calls pile up in `Hold music` when the four level 2 operators are busy, and the level 1 operators blocked in three-way calls. Its numbers are written on the arcs as durations, but this net is a Petri net: the durations are kept in the file and ignored (they are used if you change its type to a timed Petri net, [chapter 6](06-Timed-Petri-Nets.md)).
 
@@ -296,19 +299,19 @@ Each firing is written in the *Journal* (next to the console), with its number k
 
 | Example | What to do | What to observe |
 |---------|------------|-----------------|
-| [FirstNet](../examples/Petri-Nets/FirstNet/README.md) | Space, click `Fire` | the firing rule; the end of all activity |
-| [ForkJoin](../examples/Petri-Nets/ForkJoin/README.md) | fire the tasks in both orders | concurrency and synchronization |
-| [Conflict](../examples/Petri-Nets/Conflict/README.md) | choose tea, stop, choose coffee | a choice disables the other branch |
-| [ProducerConsumer](../examples/Petri-Nets/ProducerConsumer/README.md) | fire `Send` many times | the buffer grows without limit |
-| [Coffee](../examples/Petri-Nets/Coffee/README.md) | insert a coin, reject it, insert again, accept | choice, then synchronization in `Dispense` |
-| [MutualExclusion](../examples/Petri-Nets/MutualExclusion/README.md) | enter A, then try to enter B | one process at a time |
-| [Philosophers](../examples/Petri-Nets/Philosophers/README.md) | let each philosopher eat | shared resources |
-| [Deadlock](../examples/Petri-Nets/Deadlock/README.md) | `A takes 1`, then `B takes 2` | a deadlock |
-| [TrafficLights](../examples/Petri-Nets/TrafficLights/README.md) | go around the cycle of both lights | a conflict that protects the crossroads |
-| [ElevatorControl](../examples/Petri-Nets/ElevatorControl/README.md) | try to open the door while moving | read arcs as safety conditions |
-| [ChainSaw](../examples/Petri-Nets/ChainSaw/README.md), [LandingGear](../examples/Petri-Nets/LandingGear/README.md), [SmarthomeSafety](../examples/Petri-Nets/SmarthomeSafety/README.md) | try to do the dangerous thing | safety rules as a net |
-| [EmergencyCalls](../examples/Petri-Nets/EmergencyCalls/README.md) | answer all the calls | a real organization, its bottlenecks |
-| [FourRoadJunctions](../examples/Petri-Nets/FourRoadJunctions/README.md) | fire the sources `u0` ... `u3` | sources and sinks |
+| [FirstNet](../../examples/Petri-Nets/FirstNet/README.md) | Space, click `Fire` | the firing rule; the end of all activity |
+| [ForkJoin](../../examples/Petri-Nets/ForkJoin/README.md) | fire the tasks in both orders | concurrency and synchronization |
+| [Conflict](../../examples/Petri-Nets/Conflict/README.md) | choose tea, stop, choose coffee | a choice disables the other branch |
+| [ProducerConsumer](../../examples/Petri-Nets/ProducerConsumer/README.md) | fire `Send` many times | the buffer grows without limit |
+| [Coffee](../../examples/Petri-Nets/Coffee/README.md) | insert a coin, reject it, insert again, accept | choice, then synchronization in `Dispense` |
+| [MutualExclusion](../../examples/Petri-Nets/MutualExclusion/README.md) | enter A, then try to enter B | one process at a time |
+| [Philosophers](../../examples/Petri-Nets/Philosophers/README.md) | let each philosopher eat | shared resources |
+| [Deadlock](../../examples/Petri-Nets/Deadlock/README.md) | `A takes 1`, then `B takes 2` | a deadlock |
+| [TrafficLights](../../examples/Petri-Nets/TrafficLights/README.md) | go around the cycle of both lights | a conflict that protects the crossroads |
+| [ElevatorControl](../../examples/Petri-Nets/ElevatorControl/README.md) | try to open the door while moving | read arcs as safety conditions |
+| [ChainSaw](../../examples/Petri-Nets/ChainSaw/README.md), [LandingGear](../../examples/Petri-Nets/LandingGear/README.md), [SmarthomeSafety](../../examples/Petri-Nets/SmarthomeSafety/README.md) | try to do the dangerous thing | safety rules as a net |
+| [EmergencyCalls](../../examples/Petri-Nets/EmergencyCalls/README.md) | answer all the calls | a real organization, its bottlenecks |
+| [FourRoadJunctions](../../examples/Petri-Nets/FourRoadJunctions/README.md) | fire the sources `u0` ... `u3` | sources and sinks |
 
 ## 11. Pitfalls
 

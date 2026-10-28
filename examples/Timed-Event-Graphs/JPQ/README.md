@@ -18,9 +18,9 @@ Three circuits: `x1 → x1` (3, 1 token), `x2 → x2` (4, 1 token), `x1 → x2 �
 
 ## What it teaches
 
-- [The same net as a Petri net and drawn compactly](../../../doc/07-Timed-Event-Graphs.md#2-the-compact-drawing)
-- [Inputs and outputs](../../../doc/07-Timed-Event-Graphs.md#5-inputs-and-outputs)
-- [The matrices `D`, `A`, `B`, `C`](../../../doc/08-Max-Plus-Algebra.md#41-the-implicit-form)
+- [The same net as a Petri net and drawn compactly](../../../doc/en/07-Timed-Event-Graphs.md#2-the-compact-drawing)
+- [Inputs and outputs](../../../doc/en/07-Timed-Event-Graphs.md#5-inputs-and-outputs)
+- [The matrices `D`, `A`, `B`, `C`](../../../doc/en/08-Max-Plus-Algebra.md#41-the-implicit-form)
 
 ## Try it in the editor
 
@@ -31,8 +31,8 @@ Three circuits: `x1 → x1` (3, 1 token), `x2 → x2` (4, 1 token), `x1 → x2 �
 1. *Analysis > (max,+) algebra > Linear system*: `D` and `A` (2 × 2), `B` (2 × 1), `C` (1 × 2); each one has *Copy as Julia*.
 2. *Gantt*: `Node 0: 0 8 12 17`, `Node 1: 1 5 10 14`, `y(k): 3 11 15 20`.
 3. Change the type to *Timed event graph* (toolbar): the places disappear into the arcs, the analysis is the same.
-4. *File > Export > Julia*: the system for [MaxPlus.jl](https://github.com/Lecrapouille/MaxPlus.jl) ([chapter 17](../../../doc/17-Julia.md)).
+4. *File > Export > Julia*: the system for [MaxPlus.jl](https://github.com/Lecrapouille/MaxPlus.jl) ([chapter 17](../../../doc/en/17-Julia.md)).
 
 ---
 
-Back to the [examples](../../README.md) · Timed event graphs: [chapter 7](../../../doc/07-Timed-Event-Graphs.md) · (max,+) algebra: [chapter 8](../../../doc/08-Max-Plus-Algebra.md)
+Back to the [examples](../../README.md) · Timed event graphs: [chapter 7](../../../doc/en/07-Timed-Event-Graphs.md) · (max,+) algebra: [chapter 8](../../../doc/en/08-Max-Plus-Algebra.md)

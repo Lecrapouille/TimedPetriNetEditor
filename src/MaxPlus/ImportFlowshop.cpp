@@ -59,7 +59,7 @@ static std::vector<std::string> splitBySpace(std::string const& str)
 }
 
 //------------------------------------------------------------------------------
-static std::string parseFlowshopFile(std::ifstream& file, Flowshop& data)
+static std::string parseFlowshopFile(std::istream& file, Flowshop& data)
 {
     std::string line;
     std::stringstream error;
@@ -341,8 +341,25 @@ std::string importFlowshop(Net& net, std::string const& filename)
 
     net.reset(TypeOfNet::TimedPetriNet);
 
+    // Two syntaxes of the same table: a CSV table (a ',' on its first line
+    // that is not a comment), or the older "key: values" lines.
+    std::stringstream content;
+    content << file.rdbuf();
+    bool csv = false;
+    std::string line;
+    while (std::getline(content, line))
+    {
+        line = trim(line);
+        if (line.empty() || line[0] == '#')
+            continue;
+        csv = (line.find(',') != std::string::npos);
+        break;
+    }
+    content.clear();
+    content.seekg(0);
+
     Flowshop data;
-    std::string parseError = parseFlowshopFile(file, data);
+    std::string parseError = csv ? parseFlowshopCSV(content, data) : parseFlowshopFile(content, data);
     if (!parseError.empty())
     {
         return parseError;

@@ -1,24 +1,18 @@
 # Same factory as complex.flowshop, with a second Conveyor3.
 # A conveyor costs less than a machine: add one where the column is critical.
-nconveyors: 6
-nmachines: 8
-
-# How many of each machine (tokens of the horizontal cycle)
-nm: 1 1 1 1 1 1 1 1
-
-# How many of each conveyor (tokens of the vertical cycle)
-np: 1 1 2 1 1 1
-
-# Conveyor names (columns)
-conveyors: Conveyor1 Conveyor2 Conveyor3 Conveyor4 Conveyor5 Conveyor6
-
-# Processing times: machine: time on each conveyor
-# -inf means (max,+) zero: this conveyor does not visit this machine
-Machine1: 2.0  3.9  0.95 1.1  0.7  1.4
-Machine2: -inf -inf 2.0  1.2  -inf 1.7
-Machine3: 3.7  -inf 2.2  -inf 6.4  -inf
-Machine4: -inf -inf 2.0  -inf 1.0  1.0
-Machine5: 1.7  3.1  3.0  -inf 1.3  -inf
-Machine6: 0.5  3.2  4.3  1.9  1.6  0.4
-Machine7: 1.0  1.0  1.0  1.0  1.0  1.0
-Machine8: 1.5  1.5  1.5  1.2  1.2  1.2
+# Format: first row the conveyors, first column the machines. Name*n: the
+# factory owns n of them (1 without *n). A name holding a "," a "*" or a
+# "#" is written between double quotes: "C*1"*2.
+# Cells: processing time of the conveyor on the machine, in the time unit
+# of the net. Empty: the conveyor does not visit the machine.
+# Every part visits the machines from top to bottom, every machine works
+# on the conveyors from left to right.
+machine\conveyor,Conveyor1,Conveyor2,Conveyor3*2,Conveyor4,Conveyor5,Conveyor6
+Machine1,2.0,3.9,0.95,1.1,0.7,1.4
+Machine2,,,2.0,1.2,,1.7
+Machine3,3.7,,2.2,,6.4,
+Machine4,,,2.0,,1.0,1.0
+Machine5,1.7,3.1,3.0,,1.3,
+Machine6,0.5,3.2,4.3,1.9,1.6,0.4
+Machine7,1.0,1.0,1.0,1.0,1.0,1.0
+Machine8,1.5,1.5,1.5,1.2,1.2,1.2

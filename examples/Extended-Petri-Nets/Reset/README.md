@@ -10,8 +10,8 @@ A reset arc: empty the bin, however full it is.
 
 ## What it teaches
 
-- [Reset arcs](../../../doc/05-Extended-Petri-Nets.md#4-reset-arcs)
-- [What reset arcs cost](../../../doc/05-Extended-Petri-Nets.md#8-what-the-extensions-cost)
+- [Reset arcs](../../../doc/en/05-Extended-Petri-Nets.md#4-reset-arcs)
+- [What reset arcs cost](../../../doc/en/05-Extended-Petri-Nets.md#8-what-the-extensions-cost)
 
 ## Try it in the editor
 
@@ -25,4 +25,4 @@ A reset arc: empty the bin, however full it is.
 
 ---
 
-Back to the [examples](../../README.md) · Extended Petri nets: [chapter 5](../../../doc/05-Extended-Petri-Nets.md)
+Back to the [examples](../../README.md) · Extended Petri nets: [chapter 5](../../../doc/en/05-Extended-Petri-Nets.md)

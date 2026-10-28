@@ -141,6 +141,7 @@ private: // Widgets
     void showUnsavedChangesDialog();
     void saveCurrentDocument();
     void about() const;
+    void newFlowshopDialog();
     void help() const;
     void openHelp(int tab) { m_states.show_help = true; m_states.help_tab = tab; }
     void console();
@@ -378,6 +379,20 @@ public:
     //! \brief One bar of the Gantt chart: an operation during one cycle.
     struct GanttBarData { int row; int color; double start; double end; std::string label; };
 
+    //! \brief File > New > Flowshop: the table being filled. Names, how
+    //! many of each resource (nm, np), processing times as typed
+    //! times[machine][conveyor] (empty: no operation).
+    struct FlowshopForm
+    {
+        bool open = false;
+        std::vector<std::string> machines;
+        std::vector<std::string> conveyors;
+        std::vector<int> nm;
+        std::vector<int> np;
+        std::vector<std::vector<std::string>> times;
+        std::string error;
+    };
+
 private:
 
     // ************************************************************************
@@ -405,6 +420,8 @@ private:
         //! \brief Tab of the help to bring in front (-1: none).
         int help_tab = -1;
         bool show_theme = false;
+        //! \brief File > New > Flowshop: the table being filled.
+        FlowshopForm flowshop;
         bool show_unsaved_dialog = false;
 
         //! \brief Display options

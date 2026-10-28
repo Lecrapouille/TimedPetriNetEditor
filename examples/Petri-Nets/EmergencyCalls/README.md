@@ -10,10 +10,10 @@ Seven victims call. Four level 1 operators answer and screen the calls: **advice
 
 ## What it teaches
 
-- [A real-life net combining all the patterns](../../../doc/03-Petri-Nets.md#63-a-real-life-net-the-emergency-call-center)
-- [Resources, choices, merges](../../../doc/03-Petri-Nets.md#6-patterns-of-modeling)
-- [State explosion: 25 443 markings](../../../doc/04-Analysis.md#23-the-limit-state-explosion)
-- [Colors of results](../../../doc/05-Extended-Petri-Nets.md#6-colored-tokens)
+- [A real-life net combining all the patterns](../../../doc/en/03-Petri-Nets.md#63-a-real-life-net-the-emergency-call-center)
+- [Resources, choices, merges](../../../doc/en/03-Petri-Nets.md#6-patterns-of-modeling)
+- [State explosion: 25 443 markings](../../../doc/en/04-Analysis.md#23-the-limit-state-explosion)
+- [Colors of results](../../../doc/en/05-Extended-Petri-Nets.md#6-colored-tokens)
 
 ## Try it in the editor
 
@@ -24,11 +24,11 @@ Seven victims call. Four level 1 operators answer and screen the calls: **advice
 1. Press **Space**, fire `Level 1 answers` four times: all the level 1 operators are busy.
 2. Send calls to `Urgent` and `Critical`: watch them wait in `Hold music` and `Waiting for a three-way call` when level 2 is busy.
 3. *Analysis > Properties* (*Compute*): 25 443 markings; the end, all calls handled, is a deadlock; the P-invariants say that each level always has 4 operators.
-4. Change the type to *Timed Petri net* in the toolbar and press **Space**: the durations are used and the calls run by themselves ([chapter 6](../../../doc/06-Timed-Petri-Nets.md)).
+4. Change the type to *Timed Petri net* in the toolbar and press **Space**: the durations are used and the calls run by themselves ([chapter 6](../../../doc/en/06-Timed-Petri-Nets.md)).
 
 ## Run it with the runtime
 
-[`EmergencyCalls.cpp`](EmergencyCalls.cpp) runs this net with the runtime of the project: each transition is a function of the program ([chapter 11](../../../doc/11-Runtime.md)). Build the examples (`make -C examples`), then from the root of the project:
+[`EmergencyCalls.cpp`](EmergencyCalls.cpp) runs this net with the runtime of the project: each transition is a function of the program ([chapter 11](../../../doc/en/11-Runtime.md)). Build the examples (`make -C examples`), then from the root of the project:
 
 ```text
 $ build/examples/EmergencyCalls
@@ -74,4 +74,4 @@ A video of an older version: [YouTube](https://youtu.be/hOhunzgFpcA).
 
 ---
 
-Back to the [examples](../../README.md) · Petri nets: [chapter 3](../../../doc/03-Petri-Nets.md)
+Back to the [examples](../../README.md) · Petri nets: [chapter 3](../../../doc/en/03-Petri-Nets.md)

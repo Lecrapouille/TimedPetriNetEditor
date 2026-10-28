@@ -17,9 +17,9 @@ The cycle time is the largest mean: λ = 6.5.
 
 ## What it teaches
 
-- [The compact drawing](../../../doc/07-Timed-Event-Graphs.md#2-the-compact-drawing)
-- [The dater equations, by hand](../../../doc/07-Timed-Event-Graphs.md#32-by-hand-on-howard2)
-- [Howard's algorithm, by hand](../../../doc/08-Max-Plus-Algebra.md#62-by-hand-on-howard2)
+- [The compact drawing](../../../doc/en/07-Timed-Event-Graphs.md#2-the-compact-drawing)
+- [The dater equations, by hand](../../../doc/en/07-Timed-Event-Graphs.md#32-by-hand-on-howard2)
+- [Howard's algorithm, by hand](../../../doc/en/08-Max-Plus-Algebra.md#62-by-hand-on-howard2)
 
 ## Try it in the editor
 
@@ -35,4 +35,4 @@ The cycle time is the largest mean: λ = 6.5.
 
 ---
 
-Back to the [examples](../../README.md) · Timed event graphs: [chapter 7](../../../doc/07-Timed-Event-Graphs.md) · (max,+) algebra: [chapter 8](../../../doc/08-Max-Plus-Algebra.md)
+Back to the [examples](../../README.md) · Timed event graphs: [chapter 7](../../../doc/en/07-Timed-Event-Graphs.md) · (max,+) algebra: [chapter 8](../../../doc/en/08-Max-Plus-Algebra.md)

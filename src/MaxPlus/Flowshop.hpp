@@ -8,6 +8,7 @@
 #ifndef TPNE_FLOWSHOP_HPP
 #  define TPNE_FLOWSHOP_HPP
 
+#  include <iosfwd>
 #  include <string>
 #  include <vector>
 
@@ -74,9 +75,40 @@ void operationOf(std::string const& name, std::string& machine, std::string& con
 //!   of index t in Net::transitions().
 //! \return the error (not an event graph, a circuit without token), or empty.
 //------------------------------------------------------------------------------
-//! \brief Import a flowshop file (.flowshop) as a timed event graph. Known by
-//! loadFromFile() after registerMaxPlusFormats().
+//! \brief Import a flowshop file (.flowshop) as a timed event graph: a CSV
+//! table (parseFlowshopCSV()), or the older "key: values" lines of ScicosLab
+//! and MaxPlus.jl. Known by loadFromFile() after registerMaxPlusFormats().
 std::string importFlowshop(Net& net, std::string const& filename);
+
+//------------------------------------------------------------------------------
+//! \brief Read a flowshop written as a CSV table: first row the conveyors,
+//! first column the machines, cells the processing times (empty: no
+//! operation). "Name*n": n units of the resource (1 without); a name holding
+//! a ',', a '*' or a '#' is between double quotes. Lines starting with '#'
+//! are comments. Return the error, or empty.
+//------------------------------------------------------------------------------
+std::string parseFlowshopCSV(std::istream& input, Flowshop& flowshop);
+
+//------------------------------------------------------------------------------
+//! \brief Write the flowshop as a CSV table read by parseFlowshopCSV(),
+//! after comments explaining the format.
+//------------------------------------------------------------------------------
+void writeFlowshopCSV(std::ostream& output, Flowshop const& flowshop);
+
+//------------------------------------------------------------------------------
+//! \brief The flowshop of a timed event graph made by buildFlowshop(): the
+//! operations "<machine>_<conveyor>", their order from the arcs between them,
+//! the units from the tokens given by the buffer transitions "<machine>" and
+//! "<conveyor>". Return the error (not such a net), or empty.
+//------------------------------------------------------------------------------
+std::string flowshopOfNet(Net const& net, Flowshop& flowshop);
+
+//! \brief The net is a flowshop (flowshopOfNet() succeeds).
+bool isFlowshop(Net const& net);
+
+//! \brief Export the flowshop of the net (flowshopOfNet()) as a CSV table
+//! (.flowshop). Known by saveToFile() after registerMaxPlusFormats().
+std::string exportFlowshop(Net const& net, std::string const& filename);
 
 std::string earliestDates(Net const& net, size_t cycles,
                           std::vector<std::vector<double>>& dates);

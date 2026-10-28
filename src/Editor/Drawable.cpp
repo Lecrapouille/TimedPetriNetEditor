@@ -586,9 +586,11 @@ static void tokenDisk(ImDrawList* draw_list, size_t tokens, ImVec2 const& p, ImU
 void drawTimedToken(ImDrawList* draw_list, size_t tokens, float const x, float const y, float zoom,
                     Color const color)
 {
-    // Success as usual (green), the other colors as in the places.
-    ImU32 const fill = ((color == Success) || (color == AnyColor)) ? palette().active : colorOfTokens(color);
-    tokenDisk(draw_list, tokens, ImVec2(x, y), fill, IM_COL32(0, 0, 0, 255), zoom);
+    // The same color as in the places. Success: the number in the color of
+    // the nodes, as the waiting tokens.
+    bool const success = (color == Success) || (color == AnyColor);
+    ImU32 const text = success ? palette().fill : IM_COL32(0, 0, 0, 255);
+    tokenDisk(draw_list, tokens, ImVec2(x, y), colorOfTokens(color), text, zoom);
 }
 
 //------------------------------------------------------------------------------

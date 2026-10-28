@@ -53,9 +53,9 @@ Symmetri at commit `22e47a4`), mean of the runs:
 
 ## What it teaches
 
-- [Compared with Symmetri](../../../doc/11-Runtime.md#10-compared-with-symmetri)
-- [The PNML of Symmetri](../../../doc/15-File-Formats.md#41-pnml-and-pnml-for-symmetri): the editor reads and writes it, to compare on the same nets
+- [Compared with Symmetri](../../../doc/en/11-Runtime.md#10-compared-with-symmetri)
+- [The PNML of Symmetri](../../../doc/en/15-File-Formats.md#41-pnml-and-pnml-for-symmetri): the editor reads and writes it, to compare on the same nets
 
 ---
 
-Back to the [runtime examples](../README.md) · [all the examples](../../README.md) · The runtime: [chapter 11](../../../doc/11-Runtime.md)
+Back to the [runtime examples](../README.md) · [all the examples](../../README.md) · The runtime: [chapter 11](../../../doc/en/11-Runtime.md)

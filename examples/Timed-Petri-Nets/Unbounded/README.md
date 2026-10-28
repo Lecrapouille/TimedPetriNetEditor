@@ -10,8 +10,8 @@ The smallest net that grows for ever.
 
 ## What it teaches
 
-- [The queue that grows](../../../doc/06-Timed-Petri-Nets.md#64-the-queue-that-grows)
-- [Boundedness and the Karp-Miller tree](../../../doc/04-Analysis.md)
+- [The queue that grows](../../../doc/en/06-Timed-Petri-Nets.md#64-the-queue-that-grows)
+- [Boundedness and the Karp-Miller tree](../../../doc/en/04-Analysis.md)
 
 ## Try it in the editor
 
@@ -25,4 +25,4 @@ The smallest net that grows for ever.
 
 ---
 
-Back to the [examples](../../README.md) · Timed Petri nets: [chapter 6](../../../doc/06-Timed-Petri-Nets.md)
+Back to the [examples](../../README.md) · Timed Petri nets: [chapter 6](../../../doc/en/06-Timed-Petri-Nets.md)

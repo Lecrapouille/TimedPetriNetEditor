@@ -25,7 +25,7 @@ and `Phi0 thinks` gives it back to `Thinking` with the two forks.
 ## What it teaches
 
 - Colored tokens and the colors of the initial tokens:
-  [chapter 5, colored tokens](../../../doc/05-Extended-Petri-Nets.md#6-colored-tokens).
+  [chapter 5, colored tokens](../../../doc/en/05-Extended-Petri-Nets.md#6-colored-tokens).
 - The **limit** of the colors of this editor: a color is a name, not a
   variable. The places are folded, but not the transitions: there is still one
   `eats` and one `thinks` transition per philosopher. A general colored Petri
@@ -52,7 +52,7 @@ and `Phi0 thinks` gives it back to `Thinking` with the two forks.
 
 [`ColoredPhilosophers.cpp`](ColoredPhilosophers.cpp) runs the net twice:
 with the engine of the editor (the simulation) and with the
-[runtime](../../../doc/11-Runtime.md), both with the policy `FirstDeclared`.
+[runtime](../../../doc/en/11-Runtime.md), both with the policy `FirstDeclared`.
 It prints the colored marking at each firing of the simulation, then checks
 that both fire the same transitions in the same order. Build the examples
 (`make -C examples`), then from the root of the project:
@@ -80,4 +80,4 @@ meals.
 
 ---
 
-Back to the [examples](../../README.md) · Extended Petri nets: [chapter 5](../../../doc/05-Extended-Petri-Nets.md)
+Back to the [examples](../../README.md) · Extended Petri nets: [chapter 5](../../../doc/en/05-Extended-Petri-Nets.md)

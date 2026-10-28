@@ -186,6 +186,7 @@ private:
     // Tooltips
     void showPlaceTooltip(Net const& net, Place const& place, TypeOfNet type);
     void showTransitionTooltip(Net const& net, Transition const& trans);
+    void showArcTooltip(Net const& net, Arc const& arc);
 
     // Selection
     bool isNodeSelected(Node const* node) const;

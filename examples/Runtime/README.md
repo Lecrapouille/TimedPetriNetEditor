@@ -1,6 +1,6 @@
 # ⚙️ Examples of the runtime
 
-A net drawn in the editor (or built in the code), run by a program that gives a function to each transition ([chapter 11](../../doc/11-Runtime.md)). Build the project first, then:
+A net drawn in the editor (or built in the code), run by a program that gives a function to each transition ([chapter 11](../../doc/en/11-Runtime.md)). Build the project first, then:
 
 ```sh
 make -C examples                # build/examples/
@@ -21,4 +21,4 @@ The nets of the other families have programs too (⚙️ in [the gallery](../REA
 
 ---
 
-Back to the [examples](../README.md) · The runtime: [chapter 11](../../doc/11-Runtime.md) · The debugger: [chapter 13](../../doc/13-Debugging.md)
+Back to the [examples](../README.md) · The runtime: [chapter 11](../../doc/en/11-Runtime.md) · The debugger: [chapter 13](../../doc/en/13-Debugging.md)

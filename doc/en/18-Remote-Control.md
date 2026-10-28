@@ -1,29 +1,26 @@
-# 9. Remote control
+# 📡 18. Remote control
 
-What you will find here: how another program (a test, a robot, a script)
-drives a running editor: load a net, start it, fire transitions, read the
-tokens; and how the editor follows a program running a net (§4).
+
+[![fr](https://lecrapouille.github.io/icons/fr.png)](../fr/18-Remote-Control.md) [![en](https://lecrapouille.github.io/icons/en.png)](../en/18-Remote-Control.md)
+
+What you will find here: how another program (a test, a robot, a script) drives a running editor: load a net, start it, fire transitions, read the tokens; and how the editor follows a program running a net (§4).
 
 ---
 
 ## 1. How it works
 
-The editor listens on `tcp://*:5555` with [ZeroMQ](https://zeromq.org/) (a
-REP socket). A client sends one JSON command and receives one JSON answer.
+The editor listens on `tcp://*:5555` with [ZeroMQ](https://zeromq.org/) (a REP socket). A client sends one JSON command and receives one JSON answer.
 
 ```text
   your program  ── {"command": "fire", "params": {...}} ──►  editor
                 ◄── {"status": "ok", "message": "..."} ───
 ```
 
-The remote control starts with the editor (the console says
-`Remote control listening on tcp://*:5555`); *View > Remote control*
-stops or starts it. Build without it with `make TPNE_ZEROMQ=0`.
+The remote control starts with the editor (the console says `Remote control listening on tcp://*:5555`); *View > Remote control* stops or starts it. Build without it with `make TPNE_ZEROMQ=0`.
 
 ## 2. Tutorial: drive the producer-consumer
 
-Open `data/examples/ProducerConsumer.json` in the editor, then run this
-Python script (`pip install pyzmq`):
+Open `data/examples/ProducerConsumer.json` in the editor, then run this Python script (`pip install pyzmq`):
 
 ```python
 import json, time, zmq
@@ -58,13 +55,11 @@ It prints (the lists of transitions are cut here):
 << {"message":"Simulation stopped","status":"ok"}
 ```
 
-`Send` (`T0`) fired: `Producer ready` lost its token, `Idle` and `Buffer`
-got one.
+`Send` (`T0`) fired: `Producer ready` lost its token, `Idle` and `Buffer` got one.
 
 ## 3. Reference: commands
 
-A command is `{"command": "<name>", "params": {...}}`. An answer has
-`"status": "ok"` or `"error"` and a `"message"`.
+A command is `{"command": "<name>", "params": {...}}`. An answer has `"status": "ok"` or `"error"` and a `"message"`.
 
 | Command | Params | Does |
 |---------|--------|------|
@@ -78,26 +73,16 @@ A command is `{"command": "<name>", "params": {...}}`. An answer has
 
 Use Petri nets or GRAFCETs: the timed nets move their tokens by themselves.
 
-The CI runs `tests/remote/test_remote.py` (pyzmq): it drives the editor with
-these commands and checks the answers.
+The CI runs `tests/remote/test_remote.py` (pyzmq): it drives the editor with these commands and checks the answers.
 
 ## 4. Follow a running program
 
-The other way round: a program running a net tells the editor what it does,
-and the editor shows it (a visual debugger). The program publishes on a
-ZeroMQ PUB socket (`tcp://*:5556` by default); the editor subscribes with
-*Debug > Connect* (or `TimedPetriNetEditor -c tcp://localhost:5556 net.json`).
-The *Journal* follows the program (its *Replay* shows the marking at the last
-date), the *Program* window shows its inputs and outputs and the
-transitions without function, marked on the net.
+The other way round: a program running a net tells the editor what it does, and the editor shows it (a visual debugger). The program publishes on a ZeroMQ PUB socket (`tcp://*:5556` by default); the editor subscribes with *Debug > Connect* (or `TimedPetriNetEditor -c tcp://localhost:5556 net.json`). The *Journal* follows the program (its *Replay* shows the marking at the last date), the *Program* window shows its inputs and outputs and the transitions without function, marked on the net.
 
 Who publishes:
 
-- a program using the runtime: `Runtime/JournalPublisher.hpp`
-  (`examples/runtime/Debugger.cpp`, and the programs of *File > Export > C++
-  functions for the runtime* built with `-DTPNE_DEBUG`);
-- the GRAFCET code of *File > Export > C++ GRAFCET* built with
-  `-DGRAFCET_DEBUG` (on an Arduino, through `tools/serial-bridge.py`).
+- a program using the runtime: `Runtime/JournalPublisher.hpp` (`examples/runtime/Debugger.cpp`, and the programs of *File > Export > C++ functions for the runtime* built with `-DTPNE_DEBUG`);
+- the GRAFCET code of *File > Export > C++ GRAFCET* built with `-DGRAFCET_DEBUG` (on an Arduino, through `tools/serial-bridge.py`).
 
 ```c++
 #include "Runtime/JournalPublisher.hpp"   // link with -lzmq
@@ -121,11 +106,7 @@ Each message is one JSON object:
 | marking | `{"type":"marking","instance":"order_42","date":1.5,"tokens":[1,0,0,0],"colors":[{"Success":1},{},{},{}]}` | starts the replay of the instance from these tokens, with their colors (without `colors`: `Success`) |
 | inputs and outputs | `{"type":"io","inputs":{"Start":1},"outputs":{"Motor":true}}` | shows them in the *Program* window (GRAFCET) |
 
-`event` is `Scheduled` (the transition took its tokens), `Started` (its
-function runs) or `Completed` (it gave its tokens, colored by `result`). A
-GRAFCET publishes an instance per graph (its name) and the keys of the
-transitions (`T3`). *Debug > Open a manifest* marks the transitions without
-function from a file written by `toManifest(runtime)`.
+`event` is `Scheduled` (the transition took its tokens), `Started` (its function runs) or `Completed` (it gave its tokens, colored by `result`). A GRAFCET publishes an instance per graph (its name) and the keys of the transitions (`T3`). *Debug > Open a manifest* marks the transitions without function from a file written by `toManifest(runtime)`.
 
 ---
 

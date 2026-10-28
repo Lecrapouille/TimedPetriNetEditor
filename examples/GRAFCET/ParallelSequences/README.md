@@ -9,8 +9,8 @@ step 8. The last transition waits for steps 3 and 8, then goes back to step
 ![Parallel sequences](ParallelSequences.png)
 
 **Notions**: AND divergence and AND convergence
-([chapter 9 §4.3](../../../doc/09-GRAFCET.md#43-parallelism-and-divergence-and-and-convergence)),
-jumps and loops ([§4.4](../../../doc/09-GRAFCET.md#44-jumps)), a receptivity
+([chapter 9 §4.3](../../../doc/en/09-GRAFCET.md#43-parallelism-and-divergence-and-and-convergence)),
+jumps and loops ([§4.4](../../../doc/en/09-GRAFCET.md#44-jumps)), a receptivity
 `true` that waits only for its upstream steps.
 
 The numbers in the squares are the identifiers of the steps (`X3` in a
@@ -31,6 +31,6 @@ the drawing this example comes from.
 4. Turn `c0` on: `c0 . m` jumps to step 7. Now `c1` would go back to step 6,
    and `c0 . m`, still true, straight to step 7 again: while `c1`, `c0` and
    `m` are on together the loop turns for ever (an unstable GRAFCET, the
-   console warns, [chapter 9 §12](../../../doc/09-GRAFCET.md#12-pitfalls)).
+   console warns, [chapter 9 §12](../../../doc/en/09-GRAFCET.md#12-pitfalls)).
    So turn `m` off first: `c1` brings step 6 back, `c0 . /m` goes to step 8,
    and the AND convergence fires at once: back to step 0.

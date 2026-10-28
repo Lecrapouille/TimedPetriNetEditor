@@ -10,9 +10,9 @@ The water is `Cold` or `Hot` (`Brew` heats it). The client inserts a coin; the m
 
 ## What it teaches
 
-- [Choice then synchronization](../../../doc/03-Petri-Nets.md#6-patterns-of-modeling)
-- [P-invariants: the water and the coin each in one state](../../../doc/04-Analysis.md#6-p-invariants)
-- [Colors of results](../../../doc/05-Extended-Petri-Nets.md#6-colored-tokens)
+- [Choice then synchronization](../../../doc/en/03-Petri-Nets.md#6-patterns-of-modeling)
+- [P-invariants: the water and the coin each in one state](../../../doc/en/04-Analysis.md#6-p-invariants)
+- [Colors of results](../../../doc/en/05-Extended-Petri-Nets.md#6-colored-tokens)
 
 ## Try it in the editor
 
@@ -26,7 +26,7 @@ The water is `Cold` or `Hot` (`Brew` heats it). The client inserts a coin; the m
 
 ## Run it with the runtime
 
-[`Coffee.cpp`](Coffee.cpp) runs this net with the runtime of the project: each transition is a function of the program ([chapter 11](../../../doc/11-Runtime.md)). Build the examples (`make -C examples`), then from the root of the project:
+[`Coffee.cpp`](Coffee.cpp) runs this net with the runtime of the project: each transition is a function of the program ([chapter 11](../../../doc/en/11-Runtime.md)). Build the examples (`make -C examples`), then from the root of the project:
 
 ```text
 $ build/examples/Coffee
@@ -52,4 +52,4 @@ Each transition is a function of the machine. `Insert Coin` is the coin checker:
 
 ---
 
-Back to the [examples](../../README.md) · Petri nets: [chapter 3](../../../doc/03-Petri-Nets.md)
+Back to the [examples](../../README.md) · Petri nets: [chapter 3](../../../doc/en/03-Petri-Nets.md)

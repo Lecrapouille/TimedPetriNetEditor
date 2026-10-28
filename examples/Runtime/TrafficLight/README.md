@@ -16,8 +16,8 @@ The **delays** of the transitions make the light wait: 3 s on red, 3 s on green,
 
 ## What it teaches
 
-- [Targets: the micro-controller](../../../doc/11-Runtime.md#6-targets): `InlineExecutor`, `Options::log = false`, `step()` in `loop()` with the time of `millis()`
-- [Time: durations and delays](../../../doc/11-Runtime.md#33-time-durations-and-delays), [conflicts and priorities](../../../doc/11-Runtime.md#35-conflicts-and-priorities)
+- [Targets: the micro-controller](../../../doc/en/11-Runtime.md#6-targets): `InlineExecutor`, `Options::log = false`, `step()` in `loop()` with the time of `millis()`
+- [Time: durations and delays](../../../doc/en/11-Runtime.md#33-time-durations-and-delays), [conflicts and priorities](../../../doc/en/11-Runtime.md#35-conflicts-and-priorities)
 
 ## Run it
 
@@ -42,8 +42,8 @@ The button at 4.5 s cuts the first green (1.5 s instead of 3). `make -C examples
 
 ## On a board
 
-For a board with a C++17 standard library (ESP32, RP2040, STM32 with arduino-pico or STM32duino): compile `src/PetriNet/PetriNet.cpp`, `Firing.cpp`, `Engine.cpp` and `src/Runtime/Runtime.cpp` with `-fno-exceptions -fno-rtti`, keep `setup()` and `loop()`, and remove `main()`. After `setup()`, the runtime only allocates memory for the requests of `inject()` and for the tokens on their way along arcs with a duration. A small AVR without the standard library is out of reach: for it, [generate the code of a GRAFCET](../../../doc/12-Code-Generation.md).
+For a board with a C++17 standard library (ESP32, RP2040, STM32 with arduino-pico or STM32duino): compile `src/PetriNet/PetriNet.cpp`, `Firing.cpp`, `Engine.cpp` and `src/Runtime/Runtime.cpp` with `-fno-exceptions -fno-rtti`, keep `setup()` and `loop()`, and remove `main()`. After `setup()`, the runtime only allocates memory for the requests of `inject()` and for the tokens on their way along arcs with a duration. A small AVR without the standard library is out of reach: for it, [generate the code of a GRAFCET](../../../doc/en/12-Code-Generation.md).
 
 ---
 
-Back to the [runtime examples](../README.md) · [all the examples](../../README.md) · The runtime: [chapter 11](../../../doc/11-Runtime.md)
+Back to the [runtime examples](../README.md) · [all the examples](../../README.md) · The runtime: [chapter 11](../../../doc/en/11-Runtime.md)

@@ -18,9 +18,9 @@ The net is built in the code ([`MicroServices.cpp`](MicroServices.cpp)):
 
 ## What it teaches
 
-- [Sources and injected events](../../../doc/11-Runtime.md#32-sources-and-injected-events)
-- [Timeouts](../../../doc/11-Runtime.md#34-timeouts)
-- [Journals for spreadsheets and process mining](../../../doc/13-Debugging.md#81-spreadsheets-and-process-mining)
+- [Sources and injected events](../../../doc/en/11-Runtime.md#32-sources-and-injected-events)
+- [Timeouts](../../../doc/en/11-Runtime.md#34-timeouts)
+- [Journals for spreadsheets and process mining](../../../doc/en/13-Debugging.md#81-spreadsheets-and-process-mining)
 
 ## Run it
 
@@ -52,4 +52,4 @@ Open `build/examples/Order.json` in the editor to see the net, and `orders.xes` 
 
 ---
 
-Back to the [runtime examples](../README.md) · [all the examples](../../README.md) · The runtime: [chapter 11](../../../doc/11-Runtime.md)
+Back to the [runtime examples](../README.md) · [all the examples](../../README.md) · The runtime: [chapter 11](../../../doc/en/11-Runtime.md)

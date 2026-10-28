@@ -1,15 +1,11 @@
-# 8. Julia
+# 🔢 17. Julia
 
-What you will find here: how to edit, run and analyse nets from
-[Julia](https://julialang.org/), with the (max,+) algebra of
-[MaxPlus.jl](https://github.com/Lecrapouille/MaxPlus.jl).
 
-The status: the C++ side (`src/julia`, a C library) is here; the Julia
-package itself moves to
-[TimedPetriNetEditor.jl](https://github.com/Lecrapouille/TimedPetriNetEditor.jl),
-which builds this library and adds the flowshop functions of ScicosLab. The
-API for the arcs is still missing. The code below is the test of the Julia
-API (`src/julia/tests/test_petri.jl`).
+[![fr](https://lecrapouille.github.io/icons/fr.png)](../fr/17-Julia.md) [![en](https://lecrapouille.github.io/icons/en.png)](../en/17-Julia.md)
+
+What you will find here: how to edit, run and analyse nets from [Julia](https://julialang.org/), with the (max,+) algebra of [MaxPlus.jl](https://github.com/Lecrapouille/MaxPlus.jl).
+
+The status: the C++ side (`src/julia`, a C library) is here; the Julia package itself moves to [TimedPetriNetEditor.jl](https://github.com/Lecrapouille/TimedPetriNetEditor.jl), which builds this library and adds the flowshop functions of ScicosLab. The API for the arcs is still missing. The code below is the test of the Julia API (`src/julia/tests/test_petri.jl`).
 
 ---
 
@@ -19,8 +15,7 @@ API (`src/julia/tests/test_petri.jl`).
 import Pkg; Pkg.add("MaxPlus")
 ```
 
-Then install the editor (`sudo make install`) so that Julia finds the shared
-library.
+Then install the editor (`sudo make install`) so that Julia finds the shared library.
 
 ## 2. Open the editor from Julia
 
@@ -249,8 +244,7 @@ S = to_syslin(pn6)
 @assert full(S.x0) == reshape([mp0; mp0], 2, 1)
 ```
 
-The dater equations use `k`, the number of the firing, as in the Gantt chart
-of [chapter 3](03-Timed-Nets-and-Max-Plus.md#41-dater-form).
+The dater equations use `k`, the number of the firing, as in the Gantt chart of [chapter 3](03-Timed-Nets-and-Max-Plus.md#41-dater-form).
 
 ---
 

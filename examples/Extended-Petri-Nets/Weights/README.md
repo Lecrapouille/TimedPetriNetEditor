@@ -10,8 +10,8 @@ Arc weights: a chemical reaction, 2 H2 + O2 → 2 H2O.
 
 ## What it teaches
 
-- [Weights](../../../doc/05-Extended-Petri-Nets.md#1-weights)
-- [Weighted P-invariants: the atoms are conserved](../../../doc/04-Analysis.md#62-what-p-invariants-tell)
+- [Weights](../../../doc/en/05-Extended-Petri-Nets.md#1-weights)
+- [Weighted P-invariants: the atoms are conserved](../../../doc/en/04-Analysis.md#62-what-p-invariants-tell)
 
 ## Try it in the editor
 
@@ -26,4 +26,4 @@ Arc weights: a chemical reaction, 2 H2 + O2 → 2 H2O.
 
 ---
 
-Back to the [examples](../../README.md) · Extended Petri nets: [chapter 5](../../../doc/05-Extended-Petri-Nets.md)
+Back to the [examples](../../README.md) · Extended Petri nets: [chapter 5](../../../doc/en/05-Extended-Petri-Nets.md)

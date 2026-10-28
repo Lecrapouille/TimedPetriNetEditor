@@ -10,8 +10,8 @@ The source transitions `u0` to `u3` (no input place) let cars in; the sink trans
 
 ## What it teaches
 
-- [Sources and sinks](../../../doc/03-Petri-Nets.md#3-the-firing-rule)
-- [State explosion](../../../doc/04-Analysis.md#23-the-limit-state-explosion)
+- [Sources and sinks](../../../doc/en/03-Petri-Nets.md#3-the-firing-rule)
+- [State explosion](../../../doc/en/04-Analysis.md#23-the-limit-state-explosion)
 
 ## Try it in the editor
 
@@ -24,4 +24,4 @@ The source transitions `u0` to `u3` (no input place) let cars in; the sink trans
 
 ---
 
-Back to the [examples](../../README.md) · Petri nets: [chapter 3](../../../doc/03-Petri-Nets.md)
+Back to the [examples](../../README.md) · Petri nets: [chapter 3](../../../doc/en/03-Petri-Nets.md)

@@ -10,8 +10,8 @@ Phi0 eats with the fork and the first knife, Phi1 with the fork and the second k
 
 ## What it teaches
 
-- [Shared resources](../../../doc/03-Petri-Nets.md#62-shared-resources-and-the-dining-philosophers)
-- [P-invariants: one per resource](../../../doc/04-Analysis.md#62-what-p-invariants-tell)
+- [Shared resources](../../../doc/en/03-Petri-Nets.md#62-shared-resources-and-the-dining-philosophers)
+- [P-invariants: one per resource](../../../doc/en/04-Analysis.md#62-what-p-invariants-tell)
 
 ## Try it in the editor
 
@@ -25,7 +25,7 @@ Phi0 eats with the fork and the first knife, Phi1 with the fork and the second k
 
 ## Run it with the runtime
 
-[`Philosophers.cpp`](Philosophers.cpp) runs this net with the runtime of the project ([chapter 11](../../../doc/11-Runtime.md)), on a pool of three threads: a meal is the function of `PhiN eats`, it lasts 100 ms, and the three philosophers could eat at once if the net let them. The program has **no mutex**: the tokens of `Fork` and of the two `Knife` are the locks, taken when `PhiN eats` fires and given back when `PhiN thinks` fires. A guard gives each philosopher three meals; the three are hungry at the same time, and the `Random` policy chooses who eats (with a seed, the same choices at each run). Build the examples (`make -C examples`), then from the root of the project:
+[`Philosophers.cpp`](Philosophers.cpp) runs this net with the runtime of the project ([chapter 11](../../../doc/en/11-Runtime.md)), on a pool of three threads: a meal is the function of `PhiN eats`, it lasts 100 ms, and the three philosophers could eat at once if the net let them. The program has **no mutex**: the tokens of `Fork` and of the two `Knife` are the locks, taken when `PhiN eats` fires and given back when `PhiN thinks` fires. A guard gives each philosopher three meals; the three are hungry at the same time, and the `Random` policy chooses who eats (with a seed, the same choices at each run). Build the examples (`make -C examples`), then from the root of the project:
 
 ```text
 $ build/examples/Philosophers
@@ -45,4 +45,4 @@ The program counts the philosophers eating at the same time: never more than one
 
 ---
 
-Back to the [examples](../../README.md) · Petri nets: [chapter 3](../../../doc/03-Petri-Nets.md)
+Back to the [examples](../../README.md) · Petri nets: [chapter 3](../../../doc/en/03-Petri-Nets.md)

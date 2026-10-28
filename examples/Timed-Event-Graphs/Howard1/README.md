@@ -16,8 +16,8 @@ Each transition has a loop on itself (`T0`: duration 1, `T1`: duration 4) and th
 
 ## What it teaches
 
-- [Howard's algorithm](../../../doc/08-Max-Plus-Algebra.md#6-howards-algorithm): the cycle time is the largest mean of the circuits
-- [The dater equations](../../../doc/07-Timed-Event-Graphs.md#31-the-dater-form): two tokens give the shift `k - 2`
+- [Howard's algorithm](../../../doc/en/08-Max-Plus-Algebra.md#6-howards-algorithm): the cycle time is the largest mean of the circuits
+- [The dater equations](../../../doc/en/07-Timed-Event-Graphs.md#31-the-dater-form): two tokens give the shift `k - 2`
 
 ## Try it in the editor
 
@@ -31,4 +31,4 @@ Each transition has a loop on itself (`T0`: duration 1, `T1`: duration 4) and th
 
 ---
 
-Back to the [examples](../../README.md) · Timed event graphs: [chapter 7](../../../doc/07-Timed-Event-Graphs.md) · (max,+) algebra: [chapter 8](../../../doc/08-Max-Plus-Algebra.md)
+Back to the [examples](../../README.md) · Timed event graphs: [chapter 7](../../../doc/en/07-Timed-Event-Graphs.md) · (max,+) algebra: [chapter 8](../../../doc/en/08-Max-Plus-Algebra.md)

@@ -10,8 +10,8 @@ Each shutter is up or down; `Remaining` holds the number of shutters that can st
 
 ## What it teaches
 
-- [Counter pattern](../../../doc/03-Petri-Nets.md#6-patterns-of-modeling)
-- [A P-invariant as a safety rule](../../../doc/04-Analysis.md#62-what-p-invariants-tell)
+- [Counter pattern](../../../doc/en/03-Petri-Nets.md#6-patterns-of-modeling)
+- [A P-invariant as a safety rule](../../../doc/en/04-Analysis.md#62-what-p-invariants-tell)
 
 ## Try it in the editor
 
@@ -29,4 +29,4 @@ Credit: YAWL User Group, [smart home safety](https://www.youtube.com/shorts/BB5N
 
 ---
 
-Back to the [examples](../../README.md) · Petri nets: [chapter 3](../../../doc/03-Petri-Nets.md)
+Back to the [examples](../../README.md) · Petri nets: [chapter 3](../../../doc/en/03-Petri-Nets.md)

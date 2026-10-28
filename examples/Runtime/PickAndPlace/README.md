@@ -16,9 +16,9 @@ A robot picks an object and places it; when the gripper slips, it tries again. T
 
 ## What it teaches
 
-- [The idea of Symmetri: a transition is a function](../../../doc/11-Runtime.md#11-the-idea-of-symmetri)
-- [The colors](../../../doc/11-Runtime.md#23-the-colors), [executors](../../../doc/11-Runtime.md#25-executors-where-the-functions-run), [the journal](../../../doc/11-Runtime.md#5-the-journal)
-- [The editor as a debugger](../../../doc/13-Debugging.md)
+- [The idea of Symmetri: a transition is a function](../../../doc/en/11-Runtime.md#11-the-idea-of-symmetri)
+- [The colors](../../../doc/en/11-Runtime.md#23-the-colors), [executors](../../../doc/en/11-Runtime.md#25-executors-where-the-functions-run), [the journal](../../../doc/en/11-Runtime.md#5-the-journal)
+- [The editor as a debugger](../../../doc/en/13-Debugging.md)
 
 ## Run it
 
@@ -57,8 +57,8 @@ order_42: Success
 ./build/TimedPetriNetEditor -c tcp://localhost:5556 examples/Runtime/PickAndPlace/PickAndPlace.json
 ```
 
-The editor moves the tokens as the program runs: `place` is marked `running` while its function runs, `retry` `no function`, and the *Journal* lists the events of each order ([chapter 13](../../../doc/13-Debugging.md)).
+The editor moves the tokens as the program runs: `place` is marked `running` while its function runs, `retry` `no function`, and the *Journal* lists the events of each order ([chapter 13](../../../doc/en/13-Debugging.md)).
 
 ---
 
-Back to the [runtime examples](../README.md) · [all the examples](../../README.md) · The runtime: [chapter 11](../../../doc/11-Runtime.md)
+Back to the [runtime examples](../README.md) · [all the examples](../../README.md) · The runtime: [chapter 11](../../../doc/en/11-Runtime.md)

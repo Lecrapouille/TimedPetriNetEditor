@@ -10,8 +10,8 @@ Two tokens, two ways of different durations: the choice made at `t = 0` changes 
 
 ## What it teaches
 
-- [Conflicts in time](../../../doc/06-Timed-Petri-Nets.md#7-conflicts-in-time): the policy is part of the model
-- [Earliest firing](../../../doc/06-Timed-Petri-Nets.md#33-earliest-firing)
+- [Conflicts in time](../../../doc/en/06-Timed-Petri-Nets.md#7-conflicts-in-time): the policy is part of the model
+- [Earliest firing](../../../doc/en/06-Timed-Petri-Nets.md#33-earliest-firing)
 
 ## Try it in the editor
 
@@ -25,4 +25,4 @@ Two tokens, two ways of different durations: the choice made at `t = 0` changes 
 
 ---
 
-Back to the [examples](../../README.md) · Timed Petri nets: [chapter 6](../../../doc/06-Timed-Petri-Nets.md)
+Back to the [examples](../../README.md) · Timed Petri nets: [chapter 6](../../../doc/en/06-Timed-Petri-Nets.md)

@@ -1,5 +1,8 @@
 # 🚀 2. Getting started
 
+
+[![fr](https://lecrapouille.github.io/icons/fr.png)](../fr/02-Getting-Started.md) [![en](https://lecrapouille.github.io/icons/en.png)](../en/02-Getting-Started.md)
+
 **What you will learn**
 
 - build and install the editor;
@@ -7,8 +10,7 @@
 - draw your first Petri net with the mouse, run it and save it;
 - where to go next, depending on what you want to do.
 
-**Prerequisites**: [chapter 1](01-Introduction.md) for the words place,
-transition, token, firing.
+**Prerequisites**: [chapter 1](01-Introduction.md) for the words place, transition, token, firing.
 
 ---
 
@@ -106,8 +108,7 @@ docker run -it --rm \
     lecrapouille/exaequos:light
 ```
 
-The image sets `EXAEQUOS`, so the same targets as on Linux compile for it.
-`BUILD=build-exa` leaves a native `build/` untouched:
+The image sets `EXAEQUOS`, so the same targets as on Linux compile for it. `BUILD=build-exa` leaves a native `build/` untouched:
 
 ```sh
 make BUILD=build-exa download-external-libs
@@ -132,8 +133,7 @@ To run it, start the file server of the container from the project directory, so
 node /opt/emscripten-exa/third_party/server/server.js &
 ```
 
-Open [exaequos.com](https://www.exaequos.com), start the console Havoc and
-type:
+Open [exaequos.com](https://www.exaequos.com), start the console Havoc and type:
 
 ```text
 /media/localhost/TimedPetriNetEditor
@@ -199,12 +199,12 @@ Right click on an arc or a place of a Petri net: weights, inhibitor and reset ar
 
 | You want to | Read | Open |
 |-------------|------|------|
-| understand Petri nets | [3](03-Petri-Nets.md), [4](04-Analysis.md), [5](05-Extended-Petri-Nets.md) | [examples/Petri-Nets](../examples/README.md#-petri-nets) |
+| understand Petri nets | [3](03-Petri-Nets.md), [4](04-Analysis.md), [5](05-Extended-Petri-Nets.md) | [examples/Petri-Nets](../../examples/README.md#-petri-nets) |
 | know how fast a system goes, and why | [6](06-Timed-Petri-Nets.md), [7](07-Timed-Event-Graphs.md), [8](08-Max-Plus-Algebra.md) | `examples/Flowshops/simple.flowshop` |
 | control a machine | [9](09-GRAFCET.md), [10](10-GEMMA.md) | `examples/GRAFCET/GEMMA-Dryer/GEMMA-Dryer.json` |
 | drive your program with a net | [11](11-Runtime.md), [12](12-Code-Generation.md), [13](13-Debugging.md) | `examples/Runtime/PickAndPlace/PickAndPlace.json` |
 
-All the examples, with their pictures, are in the [gallery](../examples/README.md). **F1** opens the help of the editor.
+All the examples, with their pictures, are in the [gallery](../../examples/README.md). **F1** opens the help of the editor.
 
 ---
 

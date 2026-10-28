@@ -10,8 +10,8 @@ People go `Outside` ↔ `Inside`; they can enter only when the light is on (`Ent
 
 ## What it teaches
 
-- [Inhibitor arcs](../../../doc/05-Extended-Petri-Nets.md#3-inhibitor-arcs)
-- [Read arcs](../../../doc/03-Petri-Nets.md#6-patterns-of-modeling)
+- [Inhibitor arcs](../../../doc/en/05-Extended-Petri-Nets.md#3-inhibitor-arcs)
+- [Read arcs](../../../doc/en/03-Petri-Nets.md#6-patterns-of-modeling)
 
 ## Try it in the editor
 
@@ -25,4 +25,4 @@ People go `Outside` ↔ `Inside`; they can enter only when the light is on (`Ent
 
 ---
 
-Back to the [examples](../../README.md) · Extended Petri nets: [chapter 5](../../../doc/05-Extended-Petri-Nets.md)
+Back to the [examples](../../README.md) · Extended Petri nets: [chapter 5](../../../doc/en/05-Extended-Petri-Nets.md)

@@ -8,11 +8,11 @@ step 0 became active).
 ![German traffic lights](GermanTrafficLights.png)
 
 **Notions**: sequence and loop
-([chapter 9 §4.1](../../../doc/09-GRAFCET.md#41-sequence-and-loop)), time
-operators ([§5.2](../../../doc/09-GRAFCET.md#52-time)), several actions on one
+([chapter 9 §4.1](../../../doc/en/09-GRAFCET.md#41-sequence-and-loop)), time
+operators ([§5.2](../../../doc/en/09-GRAFCET.md#52-time)), several actions on one
 step and several actions driving the same output
-([§6](../../../doc/09-GRAFCET.md#6-actions)), the Outputs window and the
-timing diagram ([§9](../../../doc/09-GRAFCET.md#9-inputs-outputs-and-the-control-panel)).
+([§6](../../../doc/en/09-GRAFCET.md#6-actions)), the Outputs window and the
+timing diagram ([§9](../../../doc/en/09-GRAFCET.md#9-inputs-outputs-and-the-control-panel)).
 
 **Try it**
 

@@ -1,9 +1,9 @@
-# 10. Use the library in C++
+# 🧰 16. Use the library in C++
 
-What you will find here: how a program uses the nets without the editor:
-load a file, run a GRAFCET, compute the dates of a timed event graph,
-simulate it, draw a net in your own Dear ImGui window, run your functions,
-check the properties of a net.
+
+[![fr](https://lecrapouille.github.io/icons/fr.png)](../fr/16-Library.md) [![en](https://lecrapouille.github.io/icons/en.png)](../en/16-Library.md)
+
+What you will find here: how a program uses the nets without the editor: load a file, run a GRAFCET, compute the dates of a timed event graph, simulate it, draw a net in your own Dear ImGui window, run your functions, check the properties of a net.
 
 The editor is made of these libraries (C++20):
 
@@ -16,12 +16,9 @@ The editor is made of these libraries (C++20):
 | `libTimedPetriRuntime` | `src/Runtime` | Net | the runtime: a transition is a function of your program (§6) |
 | `libTimedPetriGUI` | `src/Editor` | all | the editor |
 
-A program running a net on a board needs only `libTimedPetriNet` and
-`libTimedPetriRuntime`: it builds its net in the code (§6) or the editor
-writes this code (*File > Export > C++ functions for the runtime*).
+A program running a net on a board needs only `libTimedPetriNet` and `libTimedPetriRuntime`: it builds its net in the code (§6) or the editor writes this code (*File > Export > C++ functions for the runtime*).
 
-[RobotIK](https://github.com/Lecrapouille/Robotik) drives its robot cells
-with the first one.
+[RobotIK](https://github.com/Lecrapouille/Robotik) drives its robot cells with the first one.
 
 ---
 
@@ -34,21 +31,13 @@ g++ -std=c++20 -Isrc -Iexternal/json/include -Iexternal main.cpp \
     -Lbuild -lTimedPetriMaxPlus -lTimedPetriIO -lTimedPetriNet -Wl,-rpath,$PWD/build -o main
 ```
 
-`-lTimedPetriMaxPlus` only for §3 (cycle time, dates of the (max,+)
-equations). Call `registerMaxPlusFormats()` once to load `.flowshop` files
-and save `.jl` files with `loadFromFile()` and `saveToFile()`.
+`-lTimedPetriMaxPlus` only for §3 (cycle time, dates of the (max,+) equations). Call `registerMaxPlusFormats()` once to load and save `.flowshop` files and save `.jl` files with `loadFromFile()` and `saveToFile()`.
 
-A project built with Make can compile the sources instead: define
-`TPNE_DIR` and include `TimedPetriNet.mk`, which gives `TPNE_SOURCES` (nets,
-formats, (max,+)), `TPNE_CORE_SOURCES` (the nets only), `TPNE_RUNTIME_SOURCES`,
-`TPNE_ANALYSIS_SOURCES`, `TPNE_INCLUDES` and `TPNE_CXXFLAGS` (and
-`TPNE_VIEWER_SOURCES` for §5).
+A project built with Make can compile the sources instead: define `TPNE_DIR` and include `TimedPetriNet.mk`, which gives `TPNE_SOURCES` (nets, formats, (max,+)), `TPNE_CORE_SOURCES` (the nets only), `TPNE_RUNTIME_SOURCES`, `TPNE_ANALYSIS_SOURCES`, `TPNE_INCLUDES` and `TPNE_CXXFLAGS` (and `TPNE_VIEWER_SOURCES` for §5).
 
 ## 2. Run a GRAFCET
 
-The dryer of [chapter 4](04-GRAFCET-and-GEMMA.md#3-tutorial-the-gemma-of-a-dryer),
-without the editor. The program writes the inputs, calls `step(dt)` once per
-cycle, and reads the steps and the outputs:
+The dryer of [chapter 4](04-GRAFCET-and-GEMMA.md#3-tutorial-the-gemma-of-a-dryer), without the editor. The program writes the inputs, calls `step(dt)` once per cycle, and reads the steps and the outputs:
 
 ```c++
 #include "PetriNet/GrafcetEngine.hpp"
@@ -108,8 +97,7 @@ Stop  t=4.2  steps: Production:X2 Control:X4 Safety:X1  outputs: Heat Oven Right
 | `receptivity(net, id)->timers()` | the state of the time operators (`30s/X1`) of a transition |
 | `onWarning` | called with the warnings (unknown forcing target, unstable graphs) |
 
-`DocumentInfo` (third argument of `importAllNetsFromJSON`) gives the
-descriptions and the kinds of the inputs and outputs.
+`DocumentInfo` (third argument of `importAllNetsFromJSON`) gives the descriptions and the kinds of the inputs and outputs.
 
 ## 3. Cycle time and earliest dates
 
@@ -118,25 +106,18 @@ descriptions and the kinds of the inputs and outputs.
 #include "MaxPlus/Flowshop.hpp"
 
 Net net;
-importFlowshop(net, "data/examples/simple.flowshop");
+importFlowshop(net, "examples/Flowshops/simple.flowshop");
 std::vector<std::vector<double>> dates;     // dates[t][k]
 earliestDates(net, 3, dates);               // the Gantt chart: 3 cycles
 CriticalCycleResult cc = findCriticalCycle(net);   // cc.durations: λ
 std::cout << showDaterEquation(net, "", true, false).str();
 ```
 
-This gives the numbers of [chapter 7](07-Timed-Event-Graphs.md#6-tutorial-how-fast-is-my-factory):
-`M1_C1: 0 6 12`, `λ = 6`, `M2_C1(k) = max(2 + M1_C1(k), M2(k - 1))`.
-`toSysLin()` and `toAdjacencyMatrices()` give the matrices, `operationOf()`
-splits `M1_C2` into its machine and its conveyor.
+This gives the numbers of [chapter 7](07-Timed-Event-Graphs.md#6-tutorial-how-fast-is-my-factory): `M1_C1: 0 6 12`, `λ = 6`, `M2_C1(k) = max(2 + M1_C1(k), M2(k - 1))`. `toSysLin()` and `toAdjacencyMatrices()` give the matrices, `operationOf()` splits `M1_C2` into its machine and its conveyor.
 
 ## 4. Simulate a timed net
 
-`Engine` (`PetriNet/Engine.hpp`) runs a Petri net or a timed Petri net as a
-discrete event simulation: it owns the marking and does not modify the net.
-Time goes from event to event, so the dates are exact whatever the steps
-given to `advance()`; they are the earliest dates of the (max,+) dater
-equation for a timed event graph.
+`Engine` (`PetriNet/Engine.hpp`) runs a Petri net or a timed Petri net as a discrete event simulation: it owns the marking and does not modify the net. Time goes from event to event, so the dates are exact whatever the steps given to `advance()`; they are the earliest dates of the (max,+) dater equation for a timed event graph.
 
 ```c++
 #include "PetriNet/Engine.hpp"
@@ -152,14 +133,9 @@ engine.advanceTo(30.0);                    // or advance(dt), update(clock)
 // engine.firingDates()[t], engine.isDeadlocked()
 ```
 
-`options.manual = true` fires a transition only when it is armed
-(`engine.arm(t)`), once, like the clicks of the editor on a Petri net.
-`Transition::delay` makes a transition wait, enabled, before firing;
-`Transition::priority` orders conflicts with `Policy::Priority`.
+`options.manual = true` fires a transition only when it is armed (`engine.arm(t)`), once, like the clicks of the editor on a Petri net. `Transition::delay` makes a transition wait, enabled, before firing; `Transition::priority` orders conflicts with `Policy::Priority`.
 
-`Simulation` is the simulation of the editor on top of it: started and
-stopped, stepped at each frame, the marking shown in the places of the net
-and restored at the end, GRAFCET included.
+`Simulation` is the simulation of the editor on top of it: started and stopped, stepped at each frame, the marking shown in the places of the net and restored at the end, GRAFCET included.
 
 ```c++
 #include "PetriNet/Simulation.hpp"
@@ -180,10 +156,7 @@ t = 2.00  M1 starts P2 (k = 1), until 5.00
 
 ## 5. Draw a net in your window
 
-`NetViewer` (`src/Editor/NetViewer.hpp`, sources in `TPNE_VIEWER_SOURCES`)
-draws a net, read only, inside the current Dear ImGui window of your
-program: the user can pan, zoom and fit it. Your program owns the net and
-its marking, so the viewer can show a GRAFCET run somewhere else.
+`NetViewer` (`src/Editor/NetViewer.hpp`, sources in `TPNE_VIEWER_SOURCES`) draws a net, read only, inside the current Dear ImGui window of your program: the user can pan, zoom and fit it. Your program owns the net and its marking, so the viewer can show a GRAFCET run somewhere else.
 
 ```c++
 tpne::NetViewer viewer;                 // keep it from frame to frame
@@ -193,13 +166,7 @@ viewer.draw("##grafcet", net, options); // inside ImGui::Begin() ... End()
 
 ## 6. Run your functions: the runtime
 
-The runtime (`Runtime/Runtime.hpp`, `-lTimedPetriRuntime`) runs a net drawn
-in the editor by calling your functions: **a transition is a function**.
-When a transition can fire, the runtime takes its input tokens, calls its
-function, and when the function ends gives the output tokens, **colored by
-its result** (`Success`, `Failed` or a color of yours) unless the arc gives
-its own color. An arc from a place asks for a color: this is how the result
-of a function chooses what comes next.
+The runtime (`Runtime/Runtime.hpp`, `-lTimedPetriRuntime`) runs a net drawn in the editor by calling your functions: **a transition is a function**. When a transition can fire, the runtime takes its input tokens, calls its function, and when the function ends gives the output tokens, **colored by its result** (`Success`, `Failed` or a color of yours) unless the arc gives its own color. An arc from a place asks for a color: this is how the result of a function chooses what comes next.
 
 ```text
  (Ready) -> [detect] -> (Seen) -> [grasp] --Success--> (Held) -> [place] -> (Done)
@@ -227,48 +194,20 @@ Color result = rt.run(*order);       // blocking: Success, Deadlocked, Canceled,
 while (rt.step(*order)) { /* ... */ }
 ```
 
-- A function returns nothing (Success), a `bool` (Success or Failed) or a
-  `Color`. Any type works with a free function `Color fire(T const&)`, and
-  optionally `cancel()`, `pause()`, `resume()`, `isSynchronous()` (found by
-  ADL).
-- `InlineExecutor` (default) calls the functions in the thread of `run()` or
-  `step()`; `ThreadPoolExecutor` on threads; `TaskflowExecutor` on
-  [Taskflow](https://github.com/taskflow/taskflow) with `TPNE_WITH_TASKFLOW`.
-- Only the thread of `run()` or `step()` touches the marking: the other
-  threads post requests (end of a function, `inject()`, `cancel()`).
-- A transition without input place fires when `rt.inject(*order, "button")`
-  asks (a button, a message).
-- Timed Petri nets: arcs with a duration give their tokens later;
-  `Transition::delay` waits, enabled, before firing. A timeout is a timed
-  transition in conflict with the slow one, going to a place of error.
-- `order->log()` is the journal: each transition `Scheduled`, `Started`,
-  `Completed` with its result and its date. `Options::journal` receives each
-  line as it is written: save it with `toJsonLine()` (`Runtime/Journal.hpp`,
-  JSON lines). After a crash, `rt.restore("order_42", journal,
-  Runtime::Recovery::Restart)` rebuilds the instance from the journal and
-  calls again the functions that were running (`Recovery::Fail` ends them
-  with `Failed`).
-- Without file (a board): build the net in the code, the positions are not
-  needed: `Place& ready = net.addPlace(1u, "Ready"); Transition& detect =
-  net.addTransition("detect"); net.addArc(ready, detect);` (and
-  `net.findArc(...)->weight`, `->kind`, `->color = net.colors.add("Blue")`).
-- `saveJournal(order->log(), net.colors, "orders.xes")` writes the journal
-  as JSON lines, CSV or XES (process mining), by the extension.
-- `JournalPublisher` (`Runtime/JournalPublisher.hpp`, `-lzmq`) publishes the
-  journal: the editor shows the program running
-  ([chapter 9](09-Remote-Control.md#4-follow-a-running-program)).
-- A net can be the function of a transition of another net (a macro step):
-  `parent.on("pick", SubNet(child_runtime, { { "Done", Success } }))` runs
-  an instance of the child net at each firing; its end (`Success`,
-  `Deadlocked`, `Canceled`, `Failed`) is the result of the transition, and
-  canceling the parent cancels it.
+- A function returns nothing (Success), a `bool` (Success or Failed) or a `Color`. Any type works with a free function `Color fire(T const&)`, and optionally `cancel()`, `pause()`, `resume()`, `isSynchronous()` (found by ADL).
+- `InlineExecutor` (default) calls the functions in the thread of `run()` or `step()`; `ThreadPoolExecutor` on threads; `TaskflowExecutor` on [Taskflow](https://github.com/taskflow/taskflow) with `TPNE_WITH_TASKFLOW`.
+- Only the thread of `run()` or `step()` touches the marking: the other threads post requests (end of a function, `inject()`, `cancel()`).
+- A transition without input place fires when `rt.inject(*order, "button")` asks (a button, a message).
+- Timed Petri nets: arcs with a duration give their tokens later; `Transition::delay` waits, enabled, before firing. A timeout is a timed transition in conflict with the slow one, going to a place of error.
+- `order->log()` is the journal: each transition `Scheduled`, `Started`, `Completed` with its result and its date. `Options::journal` receives each line as it is written: save it with `toJsonLine()` (`Runtime/Journal.hpp`, JSON lines). After a crash, `rt.restore("order_42", journal, Runtime::Recovery::Restart)` rebuilds the instance from the journal and calls again the functions that were running (`Recovery::Fail` ends them with `Failed`).
+- Without file (a board): build the net in the code, the positions are not needed: `Place& ready = net.addPlace(1u, "Ready"); Transition& detect = net.addTransition("detect"); net.addArc(ready, detect);` (and `net.findArc(...)->weight`, `->kind`, `->color = net.colors.add("Blue")`).
+- `saveJournal(order->log(), net.colors, "orders.xes")` writes the journal as JSON lines, CSV or XES (process mining), by the extension.
+- `JournalPublisher` (`Runtime/JournalPublisher.hpp`, `-lzmq`) publishes the journal: the editor shows the program running ([chapter 9](09-Remote-Control.md#4-follow-a-running-program)).
+- A net can be the function of a transition of another net (a macro step): `parent.on("pick", SubNet(child_runtime, { { "Done", Success } }))` runs an instance of the child net at each firing; its end (`Success`, `Deadlocked`, `Canceled`, `Failed`) is the result of the transition, and canceling the parent cancels it.
 
 ## 7. Walk the structure of a net
 
-Identifiers are indices: `net.places()[3].id == 3`, keys are `"P3"`, `"T0"`.
-An arc stores its two ends as `NodeId` (type and identifier), so a copied
-net never refers to the nodes of the original. The net gives the nodes and
-the arcs around a node:
+Identifiers are indices: `net.places()[3].id == 3`, keys are `"P3"`, `"T0"`. An arc stores its two ends as `NodeId` (type and identifier), so a copied net never refers to the nodes of the original. The net gives the nodes and the arcs around a node:
 
 ```c++
 for (Transition const& t : net.transitions())
@@ -280,11 +219,7 @@ for (Transition const& t : net.transitions())
 Node const& from = net.node(arc.from);            // place or transition
 ```
 
-Removing a node keeps identifiers `0 .. n-1`: the last node of the same
-type takes the identifier (and the key) of the removed one, and its arcs
-follow it. References to nodes and arcs are invalid after a removal.
-Algorithms give arcs by index in `net.arcs()` (`CriticalCycleResult::arcs`,
-the erroneous arcs of `isEventGraph()`, `NetViewer::Options::highlighted_arcs`).
+Removing a node keeps identifiers `0 .. n-1`: the last node of the same type takes the identifier (and the key) of the removed one, and its arcs follow it. References to nodes and arcs are invalid after a removal. Algorithms give arcs by index in `net.arcs()` (`CriticalCycleResult::arcs`, the erroneous arcs of `isEventGraph()`, `NetViewer::Options::highlighted_arcs`).
 
 ---
 
@@ -301,15 +236,8 @@ auto pinv = pInvariants(net, error);        // y.C = 0, y >= 0 (minimal supports
 std::cout << report(net);                   // all of it, as text
 ```
 
-`reachabilityGraph()` and `coverabilityGraph()` (Karp-Miller) give the
-graphs of the markings, `toDot()` writes them for Graphviz. The durations
-are not considered; Karp-Miller refuses inhibitor and reset arcs and
-capacities. `tpne-check` is the same in a terminal or a CI: its exit code is
-1 when a net can deadlock.
+`reachabilityGraph()` and `coverabilityGraph()` (Karp-Miller) give the graphs of the markings, `toDot()` writes them for Graphviz. The durations are not considered; Karp-Miller refuses inhibitor and reset arcs and capacities. `tpne-check` is the same in a terminal or a CI: its exit code is 1 when a net can deadlock.
 
 ---
 
-Next: [11. From the editor to the code](11-From-Editor-To-Code.md), the
-whole way with one example. The words are in the
-[glossary](Glossary.md); books and other tools in the
-[bibliography](Bibliography.md).
+Next: [11. From the editor to the code](11-From-Editor-To-Code.md), the whole way with one example. The words are in the [glossary](Glossary.md); books and other tools in the [bibliography](Bibliography.md).

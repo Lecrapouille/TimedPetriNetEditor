@@ -10,9 +10,9 @@ Nothing but the firing rule: a token in `Ready`, a transition `Fire`, an empty p
 
 ## What it teaches
 
-- [Place, transition, arc, token](../../../doc/03-Petri-Nets.md#2-the-elements-of-a-petri-net)
-- [The firing rule](../../../doc/03-Petri-Nets.md#3-the-firing-rule)
-- [A wanted deadlock: the end of all activity](../../../doc/04-Analysis.md#31-deadlock)
+- [Place, transition, arc, token](../../../doc/en/03-Petri-Nets.md#2-the-elements-of-a-petri-net)
+- [The firing rule](../../../doc/en/03-Petri-Nets.md#3-the-firing-rule)
+- [A wanted deadlock: the end of all activity](../../../doc/en/04-Analysis.md#31-deadlock)
 
 ## Try it in the editor
 
@@ -27,4 +27,4 @@ Nothing but the firing rule: a token in `Ready`, a transition `Fire`, an empty p
 
 ---
 
-Back to the [examples](../../README.md) · Petri nets: [chapter 3](../../../doc/03-Petri-Nets.md)
+Back to the [examples](../../README.md) · Petri nets: [chapter 3](../../../doc/en/03-Petri-Nets.md)

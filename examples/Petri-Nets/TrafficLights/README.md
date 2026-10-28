@@ -10,8 +10,8 @@ Each light goes green, orange, red. `Green 1` takes `Light 1 Red` and reads `Lig
 
 ## What it teaches
 
-- [A conflict used as a safety rule](../../../doc/03-Petri-Nets.md#52-conflict-a-choice)
-- [Read arcs](../../../doc/03-Petri-Nets.md#6-patterns-of-modeling)
+- [A conflict used as a safety rule](../../../doc/en/03-Petri-Nets.md#52-conflict-a-choice)
+- [Read arcs](../../../doc/en/03-Petri-Nets.md#6-patterns-of-modeling)
 
 ## Try it in the editor
 
@@ -25,4 +25,4 @@ Each light goes green, orange, red. `Green 1` takes `Light 1 Red` and reads `Lig
 
 ---
 
-Back to the [examples](../../README.md) · Petri nets: [chapter 3](../../../doc/03-Petri-Nets.md)
+Back to the [examples](../../README.md) · Petri nets: [chapter 3](../../../doc/en/03-Petri-Nets.md)

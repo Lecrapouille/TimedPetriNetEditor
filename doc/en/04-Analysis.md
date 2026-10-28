@@ -1,5 +1,8 @@
 # 4. 🔍 Analysis of Petri nets
 
+
+[![fr](https://lecrapouille.github.io/icons/fr.png)](../fr/04-Analysis.md) [![en](https://lecrapouille.github.io/icons/en.png)](../en/04-Analysis.md)
+
 **What you will learn**
 
 - the **reachability graph** of a net, drawn by hand, then by the editor;
@@ -34,7 +37,7 @@ The **reachability graph** has one node per reachable marking and one edge `M �
 
 ### 2.1 By hand: mutual exclusion
 
-[MutualExclusion](../examples/Petri-Nets/MutualExclusion/README.md) has five places, in the order `P0` Idle A, `P1` Critical A, `P2` Mutex, `P3` Idle B, `P4` Critical B, and `M0 = (1 0 1 1 0)`.
+[MutualExclusion](../../examples/Petri-Nets/MutualExclusion/README.md) has five places, in the order `P0` Idle A, `P1` Critical A, `P2` Mutex, `P3` Idle B, `P4` Critical B, and `M0 = (1 0 1 1 0)`.
 
 1. In `M0`, `Enter A` (`T0`) and `Enter B` (`T2`) are enabled. Firing `T0` gives `(0 1 0 1 0)`, firing `T2` gives `(1 0 0 0 1)`.
 2. In `(0 1 0 1 0)` only `Leave A` (`T1`) is enabled: `Enter B` misses the token of Mutex. `T1` gives back `M0`.
@@ -61,7 +64,7 @@ Read the properties on the graph: no marking has both critical places marked, so
 
 ### 2.2 By the editor
 
-In the editor, *Analysis > Properties > Graph of the markings* draws the reachability graph in a window: a box per marking, an arrow per firing labeled by its transition, the initial marking in bold, the deadlocks in red. A spring layout places the boxes (*Layout again* starts it again); drag a box or the view, the wheel zooms. A net with colors shows the colors of the tokens (`3{Phi0:1 Phi1:1 Phi2:1}`: 3 tokens, one of each color). Graphs of more than 400 markings are not drawn, only exported. Here, the 4 markings of [ColoredPhilosophers](../examples/Extended-Petri-Nets/ColoredPhilosophers/README.md):
+In the editor, *Analysis > Properties > Graph of the markings* draws the reachability graph in a window: a box per marking, an arrow per firing labeled by its transition, the initial marking in bold, the deadlocks in red. A spring layout places the boxes (*Layout again* starts it again); drag a box or the view, the wheel zooms. A net with colors shows the colors of the tokens (`3{Phi0:1 Phi1:1 Phi2:1}`: 3 tokens, one of each color). Graphs of more than 400 markings are not drawn, only exported. Here, the 4 markings of [ColoredPhilosophers](../../examples/Extended-Petri-Nets/ColoredPhilosophers/README.md):
 
 ![Graph of the markings of ColoredPhilosophers](pics/04-Markings-ColoredPhilosophers.png)
 
@@ -83,7 +86,7 @@ Let `R(M0)` be the set of the markings reachable from `M0`.
 
 A **deadlock** is a reachable marking where no transition is enabled. The editor explores the graph breadth first: the first deadlock found is the **closest** to `M0`, and the editor gives the **shortest firing sequence** that leads to it.
 
-[Deadlock](../examples/Petri-Nets/Deadlock/README.md) is the classic: robot A takes tool 1 then tool 2, robot B takes tool 2 then tool 1.
+[Deadlock](../../examples/Petri-Nets/Deadlock/README.md) is the classic: robot A takes tool 1 then tool 2, robot B takes tool 2 then tool 1.
 
 ![Graph of the markings of Deadlock](pics/04-Graph-Deadlock.png)
 
@@ -108,9 +111,9 @@ T-invariants:
   T3 (B takes 2) + T4 (B takes 1) + T5 (B releases)
 ```
 
-The cure is to change the net: both robots take the tools in the same order, or take both at once (one transition with the two tools as input places, as the [philosophers](../examples/Petri-Nets/Philosophers/README.md) do).
+The cure is to change the net: both robots take the tools in the same order, or take both at once (one transition with the two tools as input places, as the [philosophers](../../examples/Petri-Nets/Philosophers/README.md) do).
 
-Sometimes a deadlock is wanted: the end of a job. [FirstNet](../examples/Petri-Nets/FirstNet/README.md) ends in `Done`, the [pick and place](../examples/Runtime/PickAndPlace/README.md) of the runtime in `Done`. `--allow-deadlock` tells `tpne-check` not to fail on them.
+Sometimes a deadlock is wanted: the end of a job. [FirstNet](../../examples/Petri-Nets/FirstNet/README.md) ends in `Done`, the [pick and place](../../examples/Runtime/PickAndPlace/README.md) of the runtime in `Done`. `--allow-deadlock` tells `tpne-check` not to fail on them.
 
 ### 3.2 Dead transitions
 
@@ -118,7 +121,7 @@ A transition is **dead** when it is enabled in no reachable marking: it can neve
 
 ### 3.3 Boundedness
 
-A place is **k-bounded** when it never holds more than `k` tokens in any reachable marking; a net is bounded when all its places are. A **safe** net is 1-bounded: each place is a boolean condition (true when marked). The editor gives the bound of each place (tab *Bounds*) and the bound of the net: `1-bounded` for the deadlock example, `3-bounded` for [SmarthomeSafety](../examples/Petri-Nets/SmarthomeSafety/README.md) (the place `Remaining` holds 3 tokens). A bounded net has a finite reachability graph. An unbounded place is a buffer without limit: memory that will overflow, a queue that will never empty.
+A place is **k-bounded** when it never holds more than `k` tokens in any reachable marking; a net is bounded when all its places are. A **safe** net is 1-bounded: each place is a boolean condition (true when marked). The editor gives the bound of each place (tab *Bounds*) and the bound of the net: `1-bounded` for the deadlock example, `3-bounded` for [SmarthomeSafety](../../examples/Petri-Nets/SmarthomeSafety/README.md) (the place `Remaining` holds 3 tokens). A bounded net has a finite reachability graph. An unbounded place is a buffer without limit: memory that will overflow, a queue that will never empty.
 
 ### 3.4 Liveness
 
@@ -126,12 +129,12 @@ A transition is **live** (level L4) when, from every reachable marking, some fir
 
 | Example | Deadlock | Bounded | Live |
 |---------|:--------:|:-------:|:----:|
-| [MutualExclusion](../examples/Petri-Nets/MutualExclusion/README.md) | none | 1 | yes |
-| [Philosophers](../examples/Petri-Nets/Philosophers/README.md) | none | 1 | yes |
-| [Deadlock](../examples/Petri-Nets/Deadlock/README.md) | yes | 1 | no |
-| [Conflict](../examples/Petri-Nets/Conflict/README.md) | yes (after the choice) | 1 | no |
-| [SmarthomeSafety](../examples/Petri-Nets/SmarthomeSafety/README.md) | none | 3 | yes |
-| [ProducerConsumer](../examples/Petri-Nets/ProducerConsumer/README.md) | none found | no (`Buffer`) | unknown |
+| [MutualExclusion](../../examples/Petri-Nets/MutualExclusion/README.md) | none | 1 | yes |
+| [Philosophers](../../examples/Petri-Nets/Philosophers/README.md) | none | 1 | yes |
+| [Deadlock](../../examples/Petri-Nets/Deadlock/README.md) | yes | 1 | no |
+| [Conflict](../../examples/Petri-Nets/Conflict/README.md) | yes (after the choice) | 1 | no |
+| [SmarthomeSafety](../../examples/Petri-Nets/SmarthomeSafety/README.md) | none | 3 | yes |
+| [ProducerConsumer](../../examples/Petri-Nets/ProducerConsumer/README.md) | none found | no (`Buffer`) | unknown |
 
 The editor does not compute **reversibility** (can the initial marking always be reached again?) nor home states; for a live net whose reachability graph is one strongly connected component, as MutualExclusion, it holds.
 
@@ -139,7 +142,7 @@ The editor does not compute **reversibility** (can the initial marking always be
 
 When a place grows for ever, the reachability graph is infinite. In 1969, Karp and Miller built a finite graph that still answers the boundedness question: the **coverability graph**. The idea: if the exploration reaches a marking `M'` that is **larger** than a marking `M` on its path (`M' ≥ M` place by place, and `M' ≠ M`), the firing sequence from `M` to `M'` can be repeated as many times as wanted, and the places that grew can hold as many tokens as wanted: they are replaced by `ω` (omega, "as many as you want").
 
-[Unbounded](../examples/Timed-Petri-Nets/Unbounded/README.md) has one transition `T0` that gives back the token of `P0` and adds one to `P1`:
+[Unbounded](../../examples/Timed-Petri-Nets/Unbounded/README.md) has one transition `T0` that gives back the token of `P0` and adds one to `P1`:
 
 ```text
 M0 = (1 0)  ──T0──►  (1 1)  ≥ (1 0) and larger in P1:  P1 becomes ω
@@ -258,9 +261,9 @@ T-invariants:
 
 ### 6.2 What P-invariants tell
 
-- **Conservation**: each resource of the [philosophers](../examples/Petri-Nets/Philosophers/README.md) is an invariant (`P1 (Phi1 Eating) + P3 (Phi0 Eating) + P6 (Fork) = 1`: the fork is held by Phi0, by Phi1, or free).
-- **Safety rules**: `P1 + P3 + P5 + P7 (the shutters down) + P8 (Remaining) = 3` in [SmarthomeSafety](../examples/Petri-Nets/SmarthomeSafety/README.md): at most three shutters are down, a way out always stays open.
-- **Weights**: invariants can have weights. In [Weights](../examples/Extended-Petri-Nets/Weights/README.md), `2 P1 (O2) + P2 (H2O) = 4`: each molecule of water holds half a molecule of oxygen, the atoms are conserved.
+- **Conservation**: each resource of the [philosophers](../../examples/Petri-Nets/Philosophers/README.md) is an invariant (`P1 (Phi1 Eating) + P3 (Phi0 Eating) + P6 (Fork) = 1`: the fork is held by Phi0, by Phi1, or free).
+- **Safety rules**: `P1 + P3 + P5 + P7 (the shutters down) + P8 (Remaining) = 3` in [SmarthomeSafety](../../examples/Petri-Nets/SmarthomeSafety/README.md): at most three shutters are down, a way out always stays open.
+- **Weights**: invariants can have weights. In [Weights](../../examples/Extended-Petri-Nets/Weights/README.md), `2 P1 (O2) + P2 (H2O) = 4`: each molecule of water holds half a molecule of oxygen, the atoms are conserved.
 - **Boundedness**: a place covered by a P-invariant with a positive weight is bounded, whatever the marking. `Buffer` of ProducerConsumer is in no P-invariant: it is the unbounded place.
 - **Modeling errors**: a place that should be conserved and is not in any invariant is a missing arc. A sum that is not the expected number (2 instead of 1) is a token too many in `M0`. In ProducerConsumer, `Producer ready + Idle = 2`: there are two producers.
 
@@ -272,9 +275,9 @@ A **T-invariant** is a vector `x ≥ 0` of firing counts such that
 C · x = 0
 ```
 
-By the state equation, a firing sequence whose firing count vector is `x` gives back the marking where it started: it is a **cycle** of the behavior. In MutualExclusion, `x = (1, 1, 0, 0)` (Enter A, Leave A): column `T0` plus column `T1` is zero. T-invariants are the loops of a system; a transition in no T-invariant cannot fire infinitely often in a bounded net (it can only fire a finite number of times). [Conflict](../examples/Petri-Nets/Conflict/README.md) has none: nothing comes back after the choice.
+By the state equation, a firing sequence whose firing count vector is `x` gives back the marking where it started: it is a **cycle** of the behavior. In MutualExclusion, `x = (1, 1, 0, 0)` (Enter A, Leave A): column `T0` plus column `T1` is zero. T-invariants are the loops of a system; a transition in no T-invariant cannot fire infinitely often in a bounded net (it can only fire a finite number of times). [Conflict](../../examples/Petri-Nets/Conflict/README.md) has none: nothing comes back after the choice.
 
-A T-invariant is a candidate cycle: the order of the firings is not given, and some orders may not be possible from the current marking (in [Deadlock](../examples/Petri-Nets/Deadlock/README.md), `T0 + T1 + T2` is a cycle of robot A, but not after `B takes 2`).
+A T-invariant is a candidate cycle: the order of the firings is not given, and some orders may not be possible from the current marking (in [Deadlock](../../examples/Petri-Nets/Deadlock/README.md), `T0 + T1 + T2` is a cycle of robot A, but not after `B takes 2`).
 
 **Only the normal arcs** count in `C`: with inhibitor or reset arcs the editor writes "Only the normal arcs are considered: the invariants may not hold with inhibitor or reset arcs" ([chapter 5](05-Extended-Petri-Nets.md#8-what-the-extensions-cost)).
 
@@ -336,18 +339,18 @@ The report adds a note when it ignores something:
 - **GRAFCET rules** (receptivities, simultaneous firing): the analysis of a GRAFCET is the analysis of its Petri net;
 - **colors** of the tokens: they are considered, as the runtime fires them ("The colors of the tokens are considered"). A marking is the tokens of each color in each place, and a firing gives one branch for each color its result can have: the colors asked by the arcs after the transition (`Success` if none is). A function of the runtime that returns another color is not considered. If the net has too many markings, the coverability graph of the bounds does not consider the colors (a note says so).
 
-  This matters: the analysis without colors finds markings that the runtime never reaches. In [ColoredPhilosophers](../examples/Extended-Petri-Nets/ColoredPhilosophers/README.md), it finds 10 markings, where `Phi0 eats` takes the token of `Phi1`; with the colors there are 4 (at rest, or one philosopher eating).
+This matters: the analysis without colors finds markings that the runtime never reaches. In [ColoredPhilosophers](../../examples/Extended-Petri-Nets/ColoredPhilosophers/README.md), it finds 10 markings, where `Phi0 eats` takes the token of `Phi1`; with the colors there are 4 (at rest, or one philosopher eating).
 
 ## 9. Try it
 
 | Example | Do | Observe |
 |---------|----|---------|
-| [MutualExclusion](../examples/Petri-Nets/MutualExclusion/README.md) | open the Properties, then add a token to Mutex | the invariant becomes `= 2`: the exclusion is lost |
-| [Deadlock](../examples/Petri-Nets/Deadlock/README.md) | *Replay the path in the Journal*; then make robot B take tool 1 first | the deadlock disappears |
-| [Philosophers](../examples/Petri-Nets/Philosophers/README.md) | click on each invariant | the nodes of each resource |
-| [SmarthomeSafety](../examples/Petri-Nets/SmarthomeSafety/README.md) | change `Remaining` to 4 | the safety rule is gone, the invariant says `= 4` |
-| [ProducerConsumer](../examples/Petri-Nets/ProducerConsumer/README.md) | right click on `Buffer` > *Max tokens* | the graph becomes finite and the net bounded (Karp-Miller is no longer needed) |
-| [EmergencyCalls](../examples/Petri-Nets/EmergencyCalls/README.md) | *Compute* | 25 443 markings; the end, all calls handled, is a deadlock |
+| [MutualExclusion](../../examples/Petri-Nets/MutualExclusion/README.md) | open the Properties, then add a token to Mutex | the invariant becomes `= 2`: the exclusion is lost |
+| [Deadlock](../../examples/Petri-Nets/Deadlock/README.md) | *Replay the path in the Journal*; then make robot B take tool 1 first | the deadlock disappears |
+| [Philosophers](../../examples/Petri-Nets/Philosophers/README.md) | click on each invariant | the nodes of each resource |
+| [SmarthomeSafety](../../examples/Petri-Nets/SmarthomeSafety/README.md) | change `Remaining` to 4 | the safety rule is gone, the invariant says `= 4` |
+| [ProducerConsumer](../../examples/Petri-Nets/ProducerConsumer/README.md) | right click on `Buffer` > *Max tokens* | the graph becomes finite and the net bounded (Karp-Miller is no longer needed) |
+| [EmergencyCalls](../../examples/Petri-Nets/EmergencyCalls/README.md) | *Compute* | 25 443 markings; the end, all calls handled, is a deadlock |
 
 ## 10. Pitfalls
 

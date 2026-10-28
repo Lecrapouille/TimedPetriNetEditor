@@ -174,6 +174,8 @@ void Editor::menuFile()
             newDocument();
             createGEMMADocument();
         }
+        if (ImGui::MenuItem("Flowshop..."))
+            m_states.flowshop.open = true;
         ImGui::EndMenu();
     }
     if (ImGui::MenuItem("Clear the document", "Ctrl+N"))
@@ -656,6 +658,7 @@ void Editor::handleMenuActions()
     if (m_states.show_help) { help(); }
     if (m_states.show_about) { about(); }
     if (m_states.show_theme) { showStyleSelector(); }
+    if (m_states.flowshop.open) { newFlowshopDialog(); }
 
     // File dialogs (mutually exclusive)
     switch (m_states.file_dialog)

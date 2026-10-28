@@ -10,8 +10,8 @@ The plane flies at `Low speed` or `High speed`; its gear is up or down. `Extend`
 
 ## What it teaches
 
-- [Read arcs and safety rules](../../../doc/03-Petri-Nets.md#6-patterns-of-modeling)
-- [P-invariants](../../../doc/04-Analysis.md#6-p-invariants)
+- [Read arcs and safety rules](../../../doc/en/03-Petri-Nets.md#6-patterns-of-modeling)
+- [P-invariants](../../../doc/en/04-Analysis.md#6-p-invariants)
 
 ## Try it in the editor
 
@@ -25,7 +25,7 @@ The plane flies at `Low speed` or `High speed`; its gear is up or down. `Extend`
 
 ## Run it with the runtime
 
-[`LandingGear.cpp`](LandingGear.cpp) runs this net with the runtime of the project: each transition is a function of the program ([chapter 11](../../../doc/11-Runtime.md)). Build the examples (`make -C examples`), then from the root of the project:
+[`LandingGear.cpp`](LandingGear.cpp) runs this net with the runtime of the project: each transition is a function of the program ([chapter 11](../../../doc/en/11-Runtime.md)). Build the examples (`make -C examples`), then from the root of the project:
 
 ```text
 $ build/examples/LandingGear
@@ -51,4 +51,4 @@ Credit: YAWL User Group, [the landing gear](https://www.youtube.com/shorts/IqMyF
 
 ---
 
-Back to the [examples](../../README.md) · Petri nets: [chapter 3](../../../doc/03-Petri-Nets.md)
+Back to the [examples](../../README.md) · Petri nets: [chapter 3](../../../doc/en/03-Petri-Nets.md)

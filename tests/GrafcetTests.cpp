@@ -16,6 +16,7 @@
 
 #include <cstdio>
 #include <fstream>
+#include <sstream>
 
 using namespace ::tpne;
 
@@ -525,6 +526,116 @@ TEST(TestFlowshop, BuildScheduleAndCycleTime)
     EXPECT_DOUBLE_EQ(lambda, 7.0);
     // Steady state: one C2 every 7 time units.
     EXPECT_DOUBLE_EQ(date("M1_C2", 2) - date("M1_C2", 1), 7.0);
+}
+
+//------------------------------------------------------------------------------
+TEST(TestFlowshop, CSVReadWrite)
+{
+    // Units after the names, quotes for a name holding a '*' or a ',',
+    // comments, empty cells for no operation.
+    std::istringstream input(
+        "# A comment\n"
+        "machine\\conveyor, C1*2, \"C*2\", \"C,3\"*3\n"
+        "\n"
+        "M1*2, 2.5, , 1\n"
+        "# Another comment\n"
+        "M2, -, 4, 0.5\n");
+    Flowshop shop;
+    ASSERT_STREQ(parseFlowshopCSV(input, shop).c_str(), "");
+    EXPECT_EQ(shop.conveyorNames, (std::vector<std::string>{ "C1", "C*2", "C,3" }));
+    EXPECT_EQ(shop.np, (std::vector<size_t>{ 2u, 1u, 3u }));
+    EXPECT_EQ(shop.machineNames, (std::vector<std::string>{ "M1", "M2" }));
+    EXPECT_EQ(shop.nm, (std::vector<size_t>{ 2u, 1u }));
+    EXPECT_FLOAT_EQ(shop.PT[0][0], 2.5f);
+    EXPECT_TRUE(flowshopIsNoOperation(shop.PT[0][1]));
+    EXPECT_TRUE(flowshopIsNoOperation(shop.PT[1][0]));
+    EXPECT_FLOAT_EQ(shop.PT[1][2], 0.5f);
+
+    // Written then read again: the same flowshop.
+    std::stringstream csv;
+    writeFlowshopCSV(csv, shop);
+    Flowshop again;
+    ASSERT_STREQ(parseFlowshopCSV(csv, again).c_str(), "");
+    EXPECT_EQ(again.conveyorNames, shop.conveyorNames);
+    EXPECT_EQ(again.np, shop.np);
+    EXPECT_EQ(again.machineNames, shop.machineNames);
+    EXPECT_EQ(again.nm, shop.nm);
+    for (size_t m = 0u; m < shop.nmachines; ++m)
+        for (size_t c = 0u; c < shop.nconveyors; ++c)
+            EXPECT_EQ(flowshopIsNoOperation(again.PT[m][c]) ? -1.0f : again.PT[m][c],
+                      flowshopIsNoOperation(shop.PT[m][c]) ? -1.0f : shop.PT[m][c]);
+
+    // Errors: a row too short, a name without its closing quote, a bad time.
+    std::istringstream short_row("x,C1,C2\nM1,1\n");
+    EXPECT_STRNE(parseFlowshopCSV(short_row, shop).c_str(), "");
+    std::istringstream quote("x,\"C1\nM1,1\n");
+    EXPECT_STRNE(parseFlowshopCSV(quote, shop).c_str(), "");
+    std::istringstream time("x,C1\nM1,abc\n");
+    EXPECT_STRNE(parseFlowshopCSV(time, shop).c_str(), "");
+}
+
+//------------------------------------------------------------------------------
+TEST(TestFlowshop, FlowshopOfNet)
+{
+    // The examples: the net built from the file gives back its table.
+    for (char const* name : { "simple", "complex", "complex-machine", "complex-conveyors" })
+    {
+        std::string const file = std::string("../examples/Flowshops/") + name + ".flowshop";
+        Net net;
+        ASSERT_STREQ(importFlowshop(net, file).c_str(), "") << file;
+        Flowshop shop;
+        ASSERT_STREQ(flowshopOfNet(net, shop).c_str(), "") << file;
+        EXPECT_TRUE(isFlowshop(net));
+
+        // Same net again from the table.
+        Net rebuilt;
+        buildFlowshop(rebuilt, shop);
+        Flowshop again;
+        ASSERT_STREQ(flowshopOfNet(rebuilt, again).c_str(), "") << file;
+        EXPECT_EQ(again.machineNames, shop.machineNames) << file;
+        EXPECT_EQ(again.conveyorNames, shop.conveyorNames) << file;
+        EXPECT_EQ(again.nm, shop.nm) << file;
+        EXPECT_EQ(again.np, shop.np) << file;
+        ASSERT_EQ(rebuilt.transitions().size(), net.transitions().size()) << file;
+        ASSERT_EQ(rebuilt.places().size(), net.places().size()) << file;
+    }
+
+    // The machines and conveyors in the order of the file.
+    Net net;
+    ASSERT_STREQ(importFlowshop(net, "../examples/Flowshops/simple.flowshop").c_str(), "");
+    Flowshop shop;
+    ASSERT_STREQ(flowshopOfNet(net, shop).c_str(), "");
+    EXPECT_EQ(shop.machineNames, (std::vector<std::string>{ "M1", "M2" }));
+    EXPECT_EQ(shop.conveyorNames, (std::vector<std::string>{ "C1", "C2", "C3" }));
+    EXPECT_FLOAT_EQ(shop.PT[1][2], 1.5f);
+
+    // Holes: Machine2 does not work on Conveyor1, the order is still found.
+    ASSERT_STREQ(importFlowshop(net, "../examples/Flowshops/complex.flowshop").c_str(), "");
+    ASSERT_STREQ(flowshopOfNet(net, shop).c_str(), "");
+    EXPECT_EQ(shop.machineNames, (std::vector<std::string>{ "Machine1", "Machine2", "Machine3",
+        "Machine4", "Machine5", "Machine6", "Machine7", "Machine8" }));
+    EXPECT_EQ(shop.conveyorNames, (std::vector<std::string>{ "Conveyor1", "Conveyor2", "Conveyor3",
+        "Conveyor4", "Conveyor5", "Conveyor6" }));
+    EXPECT_TRUE(flowshopIsNoOperation(shop.PT[1][0]));
+    EXPECT_FLOAT_EQ(shop.PT[2][4], 6.4f);
+    EXPECT_FLOAT_EQ(shop.PT[7][5], 1.2f);
+
+    // Exported as a CSV table in a .flowshop file, read back: the same table.
+    ASSERT_STREQ(exportFlowshop(net, "complex-exported.flowshop").c_str(), "");
+    Net imported;
+    ASSERT_STREQ(importFlowshop(imported, "complex-exported.flowshop").c_str(), "");
+    std::remove("complex-exported.flowshop");
+    Flowshop back;
+    ASSERT_STREQ(flowshopOfNet(imported, back).c_str(), "");
+    EXPECT_EQ(back.machineNames, shop.machineNames);
+    EXPECT_EQ(back.conveyorNames, shop.conveyorNames);
+    EXPECT_FLOAT_EQ(back.PT[2][4], 6.4f);
+    EXPECT_TRUE(flowshopIsNoOperation(back.PT[1][0]));
+
+    // Not a flowshop.
+    Net other(TypeOfNet::TimedPetriNet);
+    other.addTransition("T0");
+    EXPECT_FALSE(isFlowshop(other));
 }
 
 //------------------------------------------------------------------------------

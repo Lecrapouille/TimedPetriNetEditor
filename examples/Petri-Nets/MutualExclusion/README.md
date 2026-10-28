@@ -10,9 +10,9 @@ Each process is `Idle` or `Critical`; entering the critical section takes the to
 
 ## What it teaches
 
-- [Mutual exclusion pattern](../../../doc/03-Petri-Nets.md#61-mutual-exclusion)
-- [Reachability graph by hand](../../../doc/04-Analysis.md#21-by-hand-mutual-exclusion)
-- [State equation and P-invariants by hand](../../../doc/04-Analysis.md#5-the-incidence-matrix-and-the-state-equation)
+- [Mutual exclusion pattern](../../../doc/en/03-Petri-Nets.md#61-mutual-exclusion)
+- [Reachability graph by hand](../../../doc/en/04-Analysis.md#21-by-hand-mutual-exclusion)
+- [State equation and P-invariants by hand](../../../doc/en/04-Analysis.md#5-the-incidence-matrix-and-the-state-equation)
 
 ## Try it in the editor
 
@@ -27,4 +27,4 @@ Each process is `Idle` or `Critical`; entering the critical section takes the to
 
 ---
 
-Back to the [examples](../../README.md) · Petri nets: [chapter 3](../../../doc/03-Petri-Nets.md)
+Back to the [examples](../../README.md) · Petri nets: [chapter 3](../../../doc/en/03-Petri-Nets.md)

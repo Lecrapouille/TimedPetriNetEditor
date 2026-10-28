@@ -10,8 +10,8 @@ A bigger net in the `.teg` format: 8 transitions, 12 places.
 
 ## What it teaches
 
-- [The `.teg` format](../../../doc/07-Timed-Event-Graphs.md#7-the-teg-file-format)
-- [The cycle time is an eigenvalue](../../../doc/08-Max-Plus-Algebra.md#5-the-cycle-time-is-an-eigenvalue), found by [Howard's algorithm](../../../doc/08-Max-Plus-Algebra.md#6-howards-algorithm) on a net too big to do by hand
+- [The `.teg` format](../../../doc/en/07-Timed-Event-Graphs.md#7-the-teg-file-format)
+- [The cycle time is an eigenvalue](../../../doc/en/08-Max-Plus-Algebra.md#5-the-cycle-time-is-an-eigenvalue), found by [Howard's algorithm](../../../doc/en/08-Max-Plus-Algebra.md#6-howards-algorithm) on a net too big to do by hand
 
 ## Try it in the editor
 
@@ -25,4 +25,4 @@ A bigger net in the `.teg` format: 8 transitions, 12 places.
 
 ---
 
-Back to the [examples](../../README.md) · Timed event graphs: [chapter 7](../../../doc/07-Timed-Event-Graphs.md) · (max,+) algebra: [chapter 8](../../../doc/08-Max-Plus-Algebra.md)
+Back to the [examples](../../README.md) · Timed event graphs: [chapter 7](../../../doc/en/07-Timed-Event-Graphs.md) · (max,+) algebra: [chapter 8](../../../doc/en/08-Max-Plus-Algebra.md)

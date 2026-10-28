@@ -12,14 +12,14 @@ The runtime inside a ROS 2 node: the net drives ROS actions, no thread waits.
 
 ## What it teaches
 
-- [Targets: ROS 2](../../../doc/11-Runtime.md#6-targets)
-- [`run()` or `step()`](../../../doc/11-Runtime.md#4-run-or-step): `step()` for a loop that belongs to someone else
-- [Sources and injected events](../../../doc/11-Runtime.md#32-sources-and-injected-events)
+- [Targets: ROS 2](../../../doc/en/11-Runtime.md#6-targets)
+- [`run()` or `step()`](../../../doc/en/11-Runtime.md#4-run-or-step): `step()` for a loop that belongs to someone else
+- [Sources and injected events](../../../doc/en/11-Runtime.md#32-sources-and-injected-events)
 
 ## Build it
 
-It needs `rclcpp`, so it is not built by `make -C examples`. Put it in a colcon package that links `libTimedPetriRuntime`, `libTimedPetriIO` and `libTimedPetriNet` (and their headers, `src/` of this project), with C++20. The node can publish its journal to the editor too ([chapter 13](../../../doc/13-Debugging.md)).
+It needs `rclcpp`, so it is not built by `make -C examples`. Put it in a colcon package that links `libTimedPetriRuntime`, `libTimedPetriIO` and `libTimedPetriNet` (and their headers, `src/` of this project), with C++20. The node can publish its journal to the editor too ([chapter 13](../../../doc/en/13-Debugging.md)).
 
 ---
 
-Back to the [runtime examples](../README.md) · [all the examples](../../README.md) · The runtime: [chapter 11](../../../doc/11-Runtime.md)
+Back to the [runtime examples](../README.md) · [all the examples](../../README.md) · The runtime: [chapter 11](../../../doc/en/11-Runtime.md)

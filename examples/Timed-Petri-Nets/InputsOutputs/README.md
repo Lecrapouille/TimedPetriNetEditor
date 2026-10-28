@@ -10,9 +10,9 @@ Sources and sinks: the inputs `u` and the outputs `y` of a system, and a queue t
 
 ## What it teaches
 
-- [Sources and sinks](../../../doc/06-Timed-Petri-Nets.md#63-sources-and-sinks-the-inputs-and-outputs-of-a-system)
-- [The queue that grows](../../../doc/06-Timed-Petri-Nets.md#64-the-queue-that-grows): bounded without time, unbounded with time, or the opposite
-- [Inputs and outputs in the (max,+) algebra](../../../doc/07-Timed-Event-Graphs.md#5-inputs-and-outputs)
+- [Sources and sinks](../../../doc/en/06-Timed-Petri-Nets.md#63-sources-and-sinks-the-inputs-and-outputs-of-a-system)
+- [The queue that grows](../../../doc/en/06-Timed-Petri-Nets.md#64-the-queue-that-grows): bounded without time, unbounded with time, or the opposite
+- [Inputs and outputs in the (max,+) algebra](../../../doc/en/07-Timed-Event-Graphs.md#5-inputs-and-outputs)
 
 ## Try it in the editor
 
@@ -26,4 +26,4 @@ Sources and sinks: the inputs `u` and the outputs `y` of a system, and a queue t
 
 ---
 
-Back to the [examples](../../README.md) · Timed Petri nets: [chapter 6](../../../doc/06-Timed-Petri-Nets.md)
+Back to the [examples](../../README.md) · Timed Petri nets: [chapter 6](../../../doc/en/06-Timed-Petri-Nets.md)
