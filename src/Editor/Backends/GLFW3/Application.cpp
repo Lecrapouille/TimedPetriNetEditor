@@ -151,6 +151,9 @@ void Application::run()
     // When idle, wake up anyway at this period (seconds) for tooltips delays
     // and blinking cursors.
     constexpr double IDLE_WAKEUP = 0.5;
+    // Longest step of time given to the application (seconds): a frame
+    // after a sleep, or a window moved, makes no jump in the simulation.
+    constexpr double MAX_STEP = 0.1;
 
     m_lastUpdateTime = 0.0;
     m_lastFrameTime = 0.0;
@@ -198,7 +201,13 @@ void Application::run()
         ImGui_ImplGlfw_NewFrame();
         ImGui::NewFrame();
 
-        onUpdate(float(time_per_frame));
+        // The time really gone since the previous frame, not the period of
+        // the frames: a slower frame (vsync of a screen under 60 Hz, a busy
+        // compositor, a big net) shall not slow the simulation down.
+        const double elapsed = (m_lastUpdateTime > 0.0)
+                             ? std::clamp(now - m_lastUpdateTime, 0.0, MAX_STEP)
+                             : time_per_frame;
+        onUpdate(float(elapsed));
 
         // Main loop of the underlying app
         onDraw();
