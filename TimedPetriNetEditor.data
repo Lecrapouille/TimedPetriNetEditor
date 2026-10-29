@@ -583,52 +583,40 @@
 }
 # Same factory as complex.flowshop, with a second Conveyor3.
 # A conveyor costs less than a machine: add one where the column is critical.
-nconveyors: 6
-nmachines: 8
-
-# How many of each machine (tokens of the horizontal cycle)
-nm: 1 1 1 1 1 1 1 1
-
-# How many of each conveyor (tokens of the vertical cycle)
-np: 1 1 2 1 1 1
-
-# Conveyor names (columns)
-conveyors: Conveyor1 Conveyor2 Conveyor3 Conveyor4 Conveyor5 Conveyor6
-
-# Processing times: machine: time on each conveyor
-# -inf means (max,+) zero: this conveyor does not visit this machine
-Machine1: 2.0  3.9  0.95 1.1  0.7  1.4
-Machine2: -inf -inf 2.0  1.2  -inf 1.7
-Machine3: 3.7  -inf 2.2  -inf 6.4  -inf
-Machine4: -inf -inf 2.0  -inf 1.0  1.0
-Machine5: 1.7  3.1  3.0  -inf 1.3  -inf
-Machine6: 0.5  3.2  4.3  1.9  1.6  0.4
-Machine7: 1.0  1.0  1.0  1.0  1.0  1.0
-Machine8: 1.5  1.5  1.5  1.2  1.2  1.2
+# Format: first row the conveyors, first column the machines. Name*n: the
+# factory owns n of them (1 without *n). A name holding a "," a "*" or a
+# "#" is written between double quotes: "C*1"*2.
+# Cells: processing time of the conveyor on the machine, in the time unit
+# of the net. Empty: the conveyor does not visit the machine.
+# Every part visits the machines from top to bottom, every machine works
+# on the conveyors from left to right.
+machine\conveyor,Conveyor1,Conveyor2,Conveyor3*2,Conveyor4,Conveyor5,Conveyor6
+Machine1,2.0,3.9,0.95,1.1,0.7,1.4
+Machine2,,,2.0,1.2,,1.7
+Machine3,3.7,,2.2,,6.4,
+Machine4,,,2.0,,1.0,1.0
+Machine5,1.7,3.1,3.0,,1.3,
+Machine6,0.5,3.2,4.3,1.9,1.6,0.4
+Machine7,1.0,1.0,1.0,1.0,1.0,1.0
+Machine8,1.5,1.5,1.5,1.2,1.2,1.2
 # Same factory as complex.flowshop, with two of every conveyor.
 # The critical circuit is now the row of Machine3.
-nconveyors: 6
-nmachines: 8
-
-# How many of each machine (tokens of the horizontal cycle)
-nm: 1 1 1 1 1 1 1 1
-
-# How many of each conveyor (tokens of the vertical cycle)
-np: 2 2 2 2 2 2
-
-# Conveyor names (columns)
-conveyors: Conveyor1 Conveyor2 Conveyor3 Conveyor4 Conveyor5 Conveyor6
-
-# Processing times: machine: time on each conveyor
-# -inf means (max,+) zero: this conveyor does not visit this machine
-Machine1: 2.0  3.9  0.95 1.1  0.7  1.4
-Machine2: -inf -inf 2.0  1.2  -inf 1.7
-Machine3: 3.7  -inf 2.2  -inf 6.4  -inf
-Machine4: -inf -inf 2.0  -inf 1.0  1.0
-Machine5: 1.7  3.1  3.0  -inf 1.3  -inf
-Machine6: 0.5  3.2  4.3  1.9  1.6  0.4
-Machine7: 1.0  1.0  1.0  1.0  1.0  1.0
-Machine8: 1.5  1.5  1.5  1.2  1.2  1.2
+# Format: first row the conveyors, first column the machines. Name*n: the
+# factory owns n of them (1 without *n). A name holding a "," a "*" or a
+# "#" is written between double quotes: "C*1"*2.
+# Cells: processing time of the conveyor on the machine, in the time unit
+# of the net. Empty: the conveyor does not visit the machine.
+# Every part visits the machines from top to bottom, every machine works
+# on the conveyors from left to right.
+machine\conveyor,Conveyor1*2,Conveyor2*2,Conveyor3*2,Conveyor4*2,Conveyor5*2,Conveyor6*2
+Machine1,2.0,3.9,0.95,1.1,0.7,1.4
+Machine2,,,2.0,1.2,,1.7
+Machine3,3.7,,2.2,,6.4,
+Machine4,,,2.0,,1.0,1.0
+Machine5,1.7,3.1,3.0,,1.3,
+Machine6,0.5,3.2,4.3,1.9,1.6,0.4
+Machine7,1.0,1.0,1.0,1.0,1.0,1.0
+Machine8,1.5,1.5,1.5,1.2,1.2,1.2
 # Flowshop: 8 machines, 6 conveyors, one of each resource.
 # The critical circuit is the column of Conveyor3.
 nconveyors: 6
@@ -653,23 +641,17 @@ Machine5: 1.7  3.1  3.0  -inf 1.3  -inf
 Machine6: 0.5  3.2  4.3  1.9  1.6  0.4
 Machine7: 1.0  1.0  1.0  1.0  1.0  1.0
 Machine8: 1.5  1.5  1.5  1.2  1.2  1.2
-# Simple flowshop: 2 machines, 3 conveyors, one of each resource
-nconveyors: 3
-nmachines: 2
-
-# How many of each machine (tokens of the horizontal cycle)
-nm: 1 1
-
-# How many of each conveyor (tokens of the vertical cycle)
-np: 1 1 1
-
-# Conveyor names (columns)
-conveyors: C1 C2 C3
-
-# Processing times: machine: time on C1, C2, C3
-# -inf means (max,+) zero: this conveyor does not visit this machine
-M1: 2.0 3.0 1.0
-M2: 1.0 2.0 1.5
+# Simple flowshop: 2 machines, 3 conveyors, one of each resource.
+# Format: first row the conveyors, first column the machines. Name*n: the
+# factory owns n of them (1 without *n). A name holding a "," a "*" or a
+# "#" is written between double quotes: "C*1"*2.
+# Cells: processing time of the conveyor on the machine, in the time unit
+# of the net. Empty: the conveyor does not visit the machine.
+# Every part visits the machines from top to bottom, every machine works
+# on the conveyors from left to right.
+machine\conveyor,C1,C2,C3
+M1,2.0,3.0,1.0
+M2,1.0,2.0,1.5
 {
   "revision": 2,
   "type": "GRAFCET",
@@ -719,6 +701,291 @@ M2: 1.0 2.0 1.5
   ],
   "inputs": [
   ]
+}
+{
+  "revision": 2,
+  "type": "GRAFCET",
+  "description": "Bottling line driven by a GEMMA (its GEMMA windows open with the file). Before the production the tank is filled (F2); then each bottle under the nozzle is filled, capped and taken out (F1). Stop finishes the bottle and empties the tank (A2, F3); Pause stops after the bottle (A3, A4). A jam of the capper stops the line (D2): Ack after clearing it, or Degraded to go on without capping (D3). The emergency stop forces everything (D1) until Rearm, Ack and no bottle under the nozzle (A5, A6). Manual: the conveyor and the filling by hand (F4). To start: Start, wait for the tank, put a Bottle.",
+  "nets": [
+    {
+       "name": "Safety",
+       "description": "Safety: while the emergency stop is pushed, then until the rearm (Rearm), Control is forced to D1 and Production to its initial situation.",
+       "places": [
+            { "id": 0, "caption": "Watch", "tokens": 1 },
+            { "id": 1, "caption": "Emergency stop", "tokens": 0 }
+       ],
+       "transitions": [
+            { "id": 0, "caption": "EStop" },
+            { "id": 1, "caption": "/EStop . Rearm" }
+       ],
+       "arcs": [
+            { "from": "P0", "to": "T0" },
+            { "from": "T0", "to": "P1", "duration": 0 },
+            { "from": "P1", "to": "T1" },
+            { "from": "T1", "to": "P0", "duration": 0 }
+       ],
+       "actions": [
+            { "place_id": 1, "script": "Control in D1, Production in its initial situation", "forcing": ["Control:{10}", "Production:{init}"] }
+       ],
+       "layout": {
+          "places": [
+             [100, 50],
+             [100, 150]
+          ],
+          "transitions": [
+             [100, 100],
+             [100, 200]
+          ]
+       }
+    },
+    {
+       "name": "Control",
+       "description": "GMMA: the run and stop modes kept from the GEMMA. Each step forces Production as the mode asks.",
+       "places": [
+            { "id": 0, "caption": "A1 Stop in the initial state", "tokens": 1 },
+            { "id": 1, "caption": "A2 Stop asked at the end of the cycle", "tokens": 0 },
+            { "id": 2, "caption": "A3 Stop asked in a given state", "tokens": 0 },
+            { "id": 3, "caption": "A4 Stop obtained", "tokens": 0 },
+            { "id": 4, "caption": "A5 Preparation of the restart after a failure", "tokens": 0 },
+            { "id": 5, "caption": "A6 Setting the operative part in its initial state", "tokens": 0 },
+            { "id": 6, "caption": "F1 Normal production", "tokens": 0 },
+            { "id": 7, "caption": "F2 Preparation run", "tokens": 0 },
+            { "id": 8, "caption": "F3 Closing run", "tokens": 0 },
+            { "id": 9, "caption": "F4 Verification run out of order", "tokens": 0 },
+            { "id": 10, "caption": "D1 Emergency stop", "tokens": 0 },
+            { "id": 11, "caption": "D2 Diagnosis and treatment of the failure", "tokens": 0 },
+            { "id": 12, "caption": "D3 Production despite the failure", "tokens": 0 }
+       ],
+       "transitions": [
+            { "id": 0, "caption": "Start" },
+            { "id": 1, "caption": "[Tank >= 80]" },
+            { "id": 2, "caption": "Stop" },
+            { "id": 3, "caption": "Production:X0" },
+            { "id": 4, "caption": "[Tank <= 5]" },
+            { "id": 5, "caption": "Pause" },
+            { "id": 6, "caption": "Production:X0" },
+            { "id": 7, "caption": "Start" },
+            { "id": 8, "caption": "Manual" },
+            { "id": 9, "caption": "/Manual" },
+            { "id": 10, "caption": "Safety:X0" },
+            { "id": 11, "caption": "Ack" },
+            { "id": 12, "caption": "/Bottle" },
+            { "id": 13, "caption": "Jam" },
+            { "id": 14, "caption": "Ack . /Jam" },
+            { "id": 15, "caption": "Degraded . /Jam" },
+            { "id": 16, "caption": "Stop" }
+       ],
+       "arcs": [
+            { "from": "P0", "to": "T0" },
+            { "from": "T0", "to": "P7", "duration": 0 },
+            { "from": "P7", "to": "T1" },
+            { "from": "T1", "to": "P6", "duration": 0 },
+            { "from": "P6", "to": "T2" },
+            { "from": "T2", "to": "P1", "duration": 0 },
+            { "from": "P1", "to": "T3" },
+            { "from": "T3", "to": "P8", "duration": 0 },
+            { "from": "P8", "to": "T4" },
+            { "from": "T4", "to": "P0", "duration": 0 },
+            { "from": "P6", "to": "T5" },
+            { "from": "T5", "to": "P2", "duration": 0 },
+            { "from": "P2", "to": "T6" },
+            { "from": "T6", "to": "P3", "duration": 0 },
+            { "from": "P3", "to": "T7" },
+            { "from": "T7", "to": "P6", "duration": 0 },
+            { "from": "P0", "to": "T8" },
+            { "from": "T8", "to": "P9", "duration": 0 },
+            { "from": "P9", "to": "T9" },
+            { "from": "T9", "to": "P5", "duration": 0 },
+            { "from": "P10", "to": "T10" },
+            { "from": "T10", "to": "P4", "duration": 0 },
+            { "from": "P4", "to": "T11" },
+            { "from": "T11", "to": "P5", "duration": 0 },
+            { "from": "P5", "to": "T12" },
+            { "from": "T12", "to": "P0", "duration": 0 },
+            { "from": "P6", "to": "T13" },
+            { "from": "T13", "to": "P11", "duration": 0 },
+            { "from": "P11", "to": "T14" },
+            { "from": "T14", "to": "P4", "duration": 0 },
+            { "from": "P11", "to": "T15" },
+            { "from": "T15", "to": "P12", "duration": 0 },
+            { "from": "P12", "to": "T16" },
+            { "from": "T16", "to": "P1", "duration": 0 }
+       ],
+       "actions": [
+            { "place_id": 0, "script": "Production in its initial situation", "forcing": ["Production:{init}"] },
+            { "place_id": 3, "script": "Production frozen", "forcing": ["Production:{*}"] },
+            { "place_id": 3, "qualifier": "N", "color": "yellow", "name": "PauseLamp", "script": "Paused: Start to go on" },
+            { "place_id": 4, "script": "Production in its initial situation", "forcing": ["Production:{init}"] },
+            { "place_id": 5, "script": "Production in its initial situation", "forcing": ["Production:{init}"] },
+            { "place_id": 6, "qualifier": "N", "color": "green", "name": "RunLamp", "script": "The line produces" },
+            { "place_id": 7, "script": "Production in its initial situation", "forcing": ["Production:{init}"] },
+            { "place_id": 7, "qualifier": "N", "color": "blue", "name": "TankValve", "script": "Fills the tank before the production" },
+            { "place_id": 8, "script": "Production in its initial situation", "forcing": ["Production:{init}"] },
+            { "place_id": 8, "qualifier": "N", "color": "blue", "name": "DrainValve", "script": "Empties and rinses the tank after the production" },
+            { "place_id": 9, "script": "Production in its initial situation", "forcing": ["Production:{init}"] },
+            { "place_id": 9, "qualifier": "N", "color": "green", "name": "Conveyor", "script": "Manual run of the conveyor", "condition": "Jog" },
+            { "place_id": 9, "qualifier": "N", "color": "green", "name": "FillValve", "script": "Manual filling", "condition": "FillByHand" },
+            { "place_id": 10, "script": "Production in its initial situation", "forcing": ["Production:{init}"] },
+            { "place_id": 10, "qualifier": "N", "color": "red", "name": "FaultLamp", "script": "Emergency stop" },
+            { "place_id": 11, "script": "Production frozen", "forcing": ["Production:{*}"] },
+            { "place_id": 11, "qualifier": "N", "color": "red", "name": "FaultLamp", "script": "Jam: clear the capper, then Ack" },
+            { "place_id": 11, "qualifier": "N", "color": "red", "name": "Buzzer", "script": "Calls the operator" },
+            { "place_id": 12, "qualifier": "N", "color": "orange", "name": "FaultLamp", "script": "Degraded: bottles go out without cap" },
+            { "place_id": 12, "qualifier": "N", "color": "green", "name": "RunLamp", "script": "The line produces" }
+       ],
+       "layout": {
+          "places": [
+             [100, 50],
+             [100, 700],
+             [0, 350],
+             [0, 450],
+             [550, 550],
+             [550, 650],
+             [0, 250],
+             [0, 150],
+             [100, 800],
+             [200, 150],
+             [500, 450],
+             [300, 350],
+             [300, 450]
+          ],
+          "transitions": [
+             [0, 100],
+             [0, 200],
+             [-100, 300],
+             [100, 750],
+             [-100, 850],
+             [0, 300],
+             [0, 400],
+             [0, 500],
+             [200, 100],
+             [200, 200],
+             [500, 500],
+             [550, 600],
+             [700, 750],
+             [300, 300],
+             [650, 400],
+             [300, 400],
+             [300, 500]
+          ]
+       }
+    },
+    {
+       "name": "Production",
+       "description": "Normal production (F1, or D3 without capping): a bottle under the nozzle is filled until it is full, capped, then the conveyor takes it out and brings the next one.",
+       "places": [
+            { "id": 0, "caption": "Wait for a bottle", "tokens": 1 },
+            { "id": 1, "caption": "Fill", "tokens": 0 },
+            { "id": 2, "caption": "Cap", "tokens": 0 },
+            { "id": 3, "caption": "Take the bottle out", "tokens": 0 }
+       ],
+       "transitions": [
+            { "id": 0, "caption": "(Control:X6 + Control:X12) . Bottle" },
+            { "id": 1, "caption": "[Level >= 100] . /Control:X12" },
+            { "id": 2, "caption": "[Level >= 100] . Control:X12" },
+            { "id": 3, "caption": "2s/X2" },
+            { "id": 4, "caption": "/Bottle" }
+       ],
+       "arcs": [
+            { "from": "P0", "to": "T0" },
+            { "from": "T0", "to": "P1", "duration": 0 },
+            { "from": "P1", "to": "T1" },
+            { "from": "T1", "to": "P2", "duration": 0 },
+            { "from": "P1", "to": "T2" },
+            { "from": "T2", "to": "P3", "duration": 0 },
+            { "from": "P2", "to": "T3" },
+            { "from": "T3", "to": "P3", "duration": 0 },
+            { "from": "P3", "to": "T4" },
+            { "from": "T4", "to": "P0", "duration": 0 }
+       ],
+       "actions": [
+            { "place_id": 1, "qualifier": "N", "color": "blue", "name": "FillValve", "script": "Fills the bottle" },
+            { "place_id": 2, "qualifier": "N", "color": "green", "name": "Capper", "script": "Screws the cap" },
+            { "place_id": 2, "qualifier": "N", "color": "green", "name": "CapTimer", "script": "2 s of capping" },
+            { "place_id": 3, "qualifier": "N", "color": "green", "name": "Conveyor", "script": "Takes the bottle out" }
+       ],
+       "layout": {
+          "places": [
+             [100, 0],
+             [100, 100],
+             [100, 200],
+             [100, 300]
+          ],
+          "transitions": [
+             [100, 50],
+             [100, 150],
+             [350, 150],
+             [100, 250],
+             [100, 350]
+          ]
+       }
+    }
+  ],
+  "inputs": [
+    { "name": "EStop", "kind": "emergency", "description": "Emergency stop (mushroom button)", "initial": 0 },
+    { "name": "Rearm", "kind": "button", "description": "Rearm after an emergency stop", "initial": 0, "color": "blue" },
+    { "name": "Ack", "kind": "button", "description": "Acknowledge (after a failure)", "initial": 0, "color": "white" },
+    { "name": "Start", "kind": "button", "description": "Start of the production (or go on after a pause)", "initial": 0, "color": "green" },
+    { "name": "Stop", "kind": "button", "description": "Stop at the end of the bottle, then empty the tank", "initial": 0, "color": "red" },
+    { "name": "Pause", "kind": "button", "description": "Stop after the bottle, without emptying", "initial": 0, "color": "yellow" },
+    { "name": "Manual", "kind": "switch", "description": "Manual mode (from A1)", "initial": 0, "color": "black" },
+    { "name": "Jog", "kind": "button", "description": "Manual: runs the conveyor", "initial": 0, "color": "black" },
+    { "name": "FillByHand", "kind": "button", "description": "Manual: opens the filling valve", "initial": 0, "color": "black" },
+    { "name": "Degraded", "kind": "switch", "description": "After a jam: go on without capping", "initial": 0, "color": "yellow" },
+    { "name": "Bottle", "kind": "switch", "description": "Sensor: a bottle is under the nozzle", "initial": 0 },
+    { "name": "Jam", "kind": "switch", "description": "Sensor: the capper is jammed", "initial": 0, "color": "red" },
+    { "name": "Level", "kind": "value", "description": "Level in the bottle", "initial": 0, "min": 0, "max": 100, "unit": "%", "driven_by": "FillValve", "rise": 40, "fall": 100 },
+    { "name": "Tank", "kind": "value", "description": "Level of the tank", "initial": 0, "min": 0, "max": 100, "unit": "%", "driven_by": "TankValve", "rise": 20, "fall": 4 }
+  ],
+  "outputs": [
+    { "name": "Conveyor", "kind": "motor", "description": "Conveyor of the bottles" },
+    { "name": "FillValve", "kind": "valve", "description": "Filling valve of the nozzle" },
+    { "name": "Capper", "kind": "valve", "description": "Capping head" },
+    { "name": "CapTimer", "kind": "timer", "description": "Time of the capping" },
+    { "name": "TankValve", "kind": "valve", "description": "Fills the tank (F2)" },
+    { "name": "DrainValve", "kind": "valve", "description": "Empties the tank (F3)" },
+    { "name": "RunLamp", "kind": "light", "description": "The line produces" },
+    { "name": "PauseLamp", "kind": "light", "description": "The line is paused" },
+    { "name": "FaultLamp", "kind": "light", "description": "Emergency stop or failure" },
+    { "name": "Buzzer", "kind": "buzzer", "description": "Calls the operator" }
+  ],
+  "gemma": {
+    "language": "en",
+    "states": [
+      { "code": "A1", "production": "init" },
+      { "code": "A2", "production": "run" },
+      { "code": "A3", "production": "run" },
+      { "code": "A4", "production": "freeze" },
+      { "code": "A5", "production": "init" },
+      { "code": "A6", "production": "init" },
+      { "code": "F1", "production": "run" },
+      { "code": "F2", "production": "init" },
+      { "code": "F3", "production": "init" },
+      { "code": "F4", "production": "init" },
+      { "code": "D1", "production": "init" },
+      { "code": "D2", "production": "freeze" },
+      { "code": "D3", "production": "run" }
+    ],
+    "links": [
+      { "from": "A1", "to": "F2", "condition": "Start" },
+      { "from": "F2", "to": "F1", "condition": "[Tank >= 80]" },
+      { "from": "F1", "to": "A2", "condition": "Stop" },
+      { "from": "A2", "to": "F3", "condition": "Production:X0" },
+      { "from": "F3", "to": "A1", "condition": "[Tank <= 5]" },
+      { "from": "F1", "to": "A3", "condition": "Pause" },
+      { "from": "A3", "to": "A4", "condition": "Production:X0" },
+      { "from": "A4", "to": "F1", "condition": "Start" },
+      { "from": "A1", "to": "F4", "condition": "Manual" },
+      { "from": "F4", "to": "A6", "condition": "/Manual" },
+      { "from": "D1", "to": "A5", "condition": "Safety:X0" },
+      { "from": "A5", "to": "A6", "condition": "Ack" },
+      { "from": "A6", "to": "A1", "condition": "/Bottle" },
+      { "from": "F1", "to": "D2", "condition": "Jam" },
+      { "from": "D2", "to": "A5", "condition": "Ack . /Jam" },
+      { "from": "D2", "to": "D3", "condition": "Degraded . /Jam" },
+      { "from": "D3", "to": "A2", "condition": "Stop" }
+    ]
+  }
 }
 {
   "revision": 2,
@@ -876,7 +1143,29 @@ M2: 1.0 2.0 1.5
     { "name": "Left Motor", "kind": "motor", "description": "Moves the belt to the left" },
     { "name": "Right Motor", "kind": "motor", "description": "Moves the belt to the right" },
     { "name": "Heat Oven", "kind": "heater", "description": "Heating resistor of the dryer" }
-  ]
+  ],
+  "gemma": {
+    "language": "en",
+    "states": [
+      { "code": "A1", "production": "init" },
+      { "code": "A5", "production": "init" },
+      { "code": "A6", "production": "init" },
+      { "code": "F1", "production": "run" },
+      { "code": "F2", "production": "init" },
+      { "code": "F4", "production": "init" },
+      { "code": "D1", "production": "init" }
+    ],
+    "links": [
+      { "from": "D1", "to": "A5", "condition": "Safety:X1" },
+      { "from": "A5", "to": "A6", "condition": "â†‘Ack" },
+      { "from": "A6", "to": "A1", "condition": "3s/X1" },
+      { "from": "A1", "to": "F2", "condition": "Auto . â†‘Ack" },
+      { "from": "F2", "to": "F1", "condition": "[Temperature >= 80]" },
+      { "from": "A1", "to": "F4", "condition": "Manual . â†‘Ack" },
+      { "from": "F1", "to": "F4", "condition": "Manual . â†‘Ack" },
+      { "from": "F4", "to": "A6", "condition": "Auto . â†‘Ack" }
+    ]
+  }
 }
 {
   "revision": 2,
@@ -981,7 +1270,7 @@ M2: 1.0 2.0 1.5
             { "place_id": 3, "qualifier": "N", "color": "green", "name": "V1-", "script": "Retract cylinder valve" },
             { "place_id": 3, "qualifier": "R", "color": "green", "name": "Lamp1", "script": "Position indicator OFF" },
             { "place_id": 4, "qualifier": "N", "color": "green", "name": "Buzzer", "script": "Alarm sound" },
-            { "place_id": 4, "qualifier": "L", "color": "green", "name": "AlarmLamp", "script": "Flash for 5s", "duration": 5 }
+            { "place_id": 4, "qualifier": "L", "color": "red", "name": "AlarmLamp", "script": "Flash for 5s", "duration": 5 }
        ],
        "layout": {
           "places": [
@@ -1008,6 +1297,14 @@ M2: 1.0 2.0 1.5
     { "name": "Start", "kind": "switch", "initial": 0 },
     { "name": "s0", "kind": "switch", "initial": 0 },
     { "name": "s1", "kind": "switch", "initial": 0 }
+  ],
+  "outputs": [
+    { "name": "V1+", "kind": "valve", "description": "Extends the cylinder" },
+    { "name": "V1-", "kind": "valve", "description": "Retracts the cylinder" },
+    { "name": "Timer1", "kind": "timer", "description": "Delay before the retraction (D, 2 s)" },
+    { "name": "Lamp1", "kind": "light", "description": "Position indicator: set (S) when extended, reset (R) when retracting" },
+    { "name": "Buzzer", "kind": "buzzer", "description": "Alarm sound while in Alarm" },
+    { "name": "AlarmLamp", "kind": "light", "description": "Alarm light, 5 s (L)" }
   ]
 }
 {
@@ -2371,9 +2668,9 @@ M2: 1.0 2.0 1.5
           ],
           "transitions": [
              [300, 150],
-             [450, 400],
+             [400, 350],
              [100, 400],
-             [750, 400]
+             [600, 400]
           ]
        }
     }
@@ -2704,613 +3001,7 @@ TimedEventGraph 3 5
   "inputs": [
   ]
 }
-<mxfile host="Electron" modified="2023-10-03T16:23:52.201Z" agent="Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) draw.io/21.1.2 Chrome/106.0.5249.199 Electron/21.4.3 Safari/537.36" etag="sjEMcKNNgfIJEba2sqsf" version="21.1.2" type="device">
-  <diagram name="Page-1" id="KtN0ZLqnpNNfmL163Krz">
-    <mxGraphModel dx="545" dy="337" grid="1" gridSize="4" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1169" pageHeight="827" math="0" shadow="0">
-      <root>
-        <mxCell id="0" />
-        <mxCell id="1" parent="0" />
-        <mxCell id="92DLcrpx8tp9YhSBpaC1-118" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=0.75;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" parent="1" source="92DLcrpx8tp9YhSBpaC1-104" target="92DLcrpx8tp9YhSBpaC1-95" edge="1">
-          <mxGeometry relative="1" as="geometry" />
-        </mxCell>
-        <mxCell id="92DLcrpx8tp9YhSBpaC1-119" value="Mise en&lt;br&gt;Ã©nergie&lt;br&gt;de P.C." style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" parent="92DLcrpx8tp9YhSBpaC1-118" vertex="1" connectable="0">
-          <mxGeometry x="-0.345" y="-2" relative="1" as="geometry">
-            <mxPoint as="offset" />
-          </mxGeometry>
-        </mxCell>
-        <mxCell id="92DLcrpx8tp9YhSBpaC1-120" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=0.25;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" parent="1" source="92DLcrpx8tp9YhSBpaC1-104" target="92DLcrpx8tp9YhSBpaC1-94" edge="1">
-          <mxGeometry relative="1" as="geometry" />
-        </mxCell>
-        <mxCell id="92DLcrpx8tp9YhSBpaC1-122" value="Mise en&lt;br&gt;Ã©nergie&lt;br&gt;de P.C." style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" parent="92DLcrpx8tp9YhSBpaC1-120" vertex="1" connectable="0">
-          <mxGeometry x="-0.244" y="-1" relative="1" as="geometry">
-            <mxPoint as="offset" />
-          </mxGeometry>
-        </mxCell>
-        <mxCell id="92DLcrpx8tp9YhSBpaC1-104" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;fontColor=#333333;strokeColor=#666666;dashed=1;dashPattern=12 12;" parent="1" vertex="1">
-          <mxGeometry x="25" y="48" width="87" height="717" as="geometry" />
-        </mxCell>
-        <mxCell id="92DLcrpx8tp9YhSBpaC1-99" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;fontColor=#333333;strokeColor=#666666;dashed=1;dashPattern=12 12;" parent="1" vertex="1">
-          <mxGeometry x="702" y="47.5" width="430" height="718" as="geometry" />
-        </mxCell>
-        <mxCell id="92DLcrpx8tp9YhSBpaC1-95" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;fontColor=#333333;strokeColor=#666666;dashed=1;dashPattern=12 12;" parent="1" vertex="1">
-          <mxGeometry x="176" y="476.5" width="481" height="289" as="geometry" />
-        </mxCell>
-        <mxCell id="92DLcrpx8tp9YhSBpaC1-116" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0.5;entryY=0;entryDx=0;entryDy=0;exitX=0.5;exitY=0;exitDx=0;exitDy=0;" parent="1" source="92DLcrpx8tp9YhSBpaC1-98" target="92DLcrpx8tp9YhSBpaC1-104" edge="1">
-          <mxGeometry relative="1" as="geometry">
-            <Array as="points">
-              <mxPoint x="421" y="20" />
-              <mxPoint x="69" y="20" />
-            </Array>
-          </mxGeometry>
-        </mxCell>
-        <mxCell id="92DLcrpx8tp9YhSBpaC1-117" value="Mise hors&lt;br style=&quot;border-color: var(--border-color);&quot;&gt;Ã©nergie&lt;br style=&quot;border-color: var(--border-color);&quot;&gt;de P.C." style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" parent="92DLcrpx8tp9YhSBpaC1-116" vertex="1" connectable="0">
-          <mxGeometry x="0.2111" y="2" relative="1" as="geometry">
-            <mxPoint x="-1" as="offset" />
-          </mxGeometry>
-        </mxCell>
-        <mxCell id="92DLcrpx8tp9YhSBpaC1-94" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;fontColor=#333333;strokeColor=#666666;dashed=1;dashPattern=12 12;" parent="1" vertex="1">
-          <mxGeometry x="176" y="45" width="491" height="417" as="geometry" />
-        </mxCell>
-        <mxCell id="92DLcrpx8tp9YhSBpaC1-101" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;dashed=1;dashPattern=12 12;" parent="1" vertex="1">
-          <mxGeometry x="399" y="306" width="672" height="292" as="geometry" />
-        </mxCell>
-        <mxCell id="92DLcrpx8tp9YhSBpaC1-3" value="(PZ) P.C. hors&lt;br&gt;Ã©nergie" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" parent="1" vertex="1">
-          <mxGeometry x="33" y="59" width="69" height="30" as="geometry" />
-        </mxCell>
-        <mxCell id="92DLcrpx8tp9YhSBpaC1-4" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;" parent="1" vertex="1">
-          <mxGeometry x="199" y="133.91" width="170" height="60" as="geometry" />
-        </mxCell>
-        <mxCell id="92DLcrpx8tp9YhSBpaC1-5" value="(A6) Mise P.O dans Ã©tat initial" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" parent="1" vertex="1">
-          <mxGeometry x="219" y="148.91" width="130" height="30" as="geometry" />
-        </mxCell>
-        <mxCell id="92DLcrpx8tp9YhSBpaC1-68" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=0.75;exitDx=0;exitDy=0;entryX=0.06;entryY=-0.01;entryDx=0;entryDy=0;entryPerimeter=0;" parent="1" source="92DLcrpx8tp9YhSBpaC1-6" target="92DLcrpx8tp9YhSBpaC1-28" edge="1">
-          <mxGeometry relative="1" as="geometry" />
-        </mxCell>
-        <mxCell id="92DLcrpx8tp9YhSBpaC1-69" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" parent="1" source="92DLcrpx8tp9YhSBpaC1-6" target="92DLcrpx8tp9YhSBpaC1-24" edge="1">
-          <mxGeometry relative="1" as="geometry" />
-        </mxCell>
-        <mxCell id="92DLcrpx8tp9YhSBpaC1-73" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=0;exitDx=0;exitDy=0;entryX=0.25;entryY=0;entryDx=0;entryDy=0;" parent="1" source="92DLcrpx8tp9YhSBpaC1-6" target="92DLcrpx8tp9YhSBpaC1-30" edge="1">
-          <mxGeometry relative="1" as="geometry" />
-        </mxCell>
-        <mxCell id="92DLcrpx8tp9YhSBpaC1-6" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=default;" parent="1" vertex="1">
-          <mxGeometry x="402" y="133.91" width="138" height="60" as="geometry" />
-        </mxCell>
-        <mxCell id="92DLcrpx8tp9YhSBpaC1-8" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;" parent="1" vertex="1">
-          <mxGeometry x="267" y="214.91" width="120" height="80" as="geometry" />
-        </mxCell>
-        <mxCell id="92DLcrpx8tp9YhSBpaC1-9" value="(A7) Mise P.O. dans Ã©tat dÃ©terminÃ©" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" parent="1" vertex="1">
-          <mxGeometry x="273" y="221.91" width="110" height="30" as="geometry" />
-        </mxCell>
-        <mxCell id="92DLcrpx8tp9YhSBpaC1-10" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;" parent="1" vertex="1">
-          <mxGeometry x="199" y="333.91" width="170" height="98.09" as="geometry" />
-        </mxCell>
-        <mxCell id="92DLcrpx8tp9YhSBpaC1-11" value="(A5) PrÃ©paration pour remise en route aprÃ¨s dÃ©faillance" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" parent="1" vertex="1">
-          <mxGeometry x="219" y="348.91" width="130" height="30" as="geometry" />
-        </mxCell>
-        <mxCell id="92DLcrpx8tp9YhSBpaC1-41" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0.75;entryY=1;entryDx=0;entryDy=0;" parent="1" source="92DLcrpx8tp9YhSBpaC1-12" target="92DLcrpx8tp9YhSBpaC1-10" edge="1">
-          <mxGeometry relative="1" as="geometry" />
-        </mxCell>
-        <mxCell id="92DLcrpx8tp9YhSBpaC1-12" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;" parent="1" vertex="1">
-          <mxGeometry x="276.5" y="504.91" width="100" height="105.09" as="geometry" />
-        </mxCell>
-        <mxCell id="92DLcrpx8tp9YhSBpaC1-13" value="(D2) Diagnostic et/ou traitement de dÃ©faillance" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" parent="1" vertex="1">
-          <mxGeometry x="288" y="519" width="75" height="73.09" as="geometry" />
-        </mxCell>
-        <mxCell id="92DLcrpx8tp9YhSBpaC1-93" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.25;exitY=0;exitDx=0;exitDy=0;entryX=0.25;entryY=1;entryDx=0;entryDy=0;" parent="1" source="92DLcrpx8tp9YhSBpaC1-14" target="92DLcrpx8tp9YhSBpaC1-12" edge="1">
-          <mxGeometry relative="1" as="geometry">
-            <Array as="points">
-              <mxPoint x="302" y="654" />
-              <mxPoint x="302" y="632" />
-              <mxPoint x="302" y="632" />
-            </Array>
-          </mxGeometry>
-        </mxCell>
-        <mxCell id="92DLcrpx8tp9YhSBpaC1-14" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;" parent="1" vertex="1">
-          <mxGeometry x="211" y="653.91" width="280" height="60" as="geometry" />
-        </mxCell>
-        <mxCell id="92DLcrpx8tp9YhSBpaC1-15" value="(D1) Marche ou arrÃªt en vue d&#39;assurer la sÃ©curitÃ©" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" parent="1" vertex="1">
-          <mxGeometry x="213" y="664.91" width="270" height="30" as="geometry" />
-        </mxCell>
-        <mxCell id="92DLcrpx8tp9YhSBpaC1-67" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0;entryY=0;entryDx=0;entryDy=0;" parent="1" source="92DLcrpx8tp9YhSBpaC1-16" target="92DLcrpx8tp9YhSBpaC1-28" edge="1">
-          <mxGeometry relative="1" as="geometry" />
-        </mxCell>
-        <mxCell id="92DLcrpx8tp9YhSBpaC1-16" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;" parent="1" vertex="1">
-          <mxGeometry x="554" y="224.91" width="97" height="60" as="geometry" />
-        </mxCell>
-        <mxCell id="92DLcrpx8tp9YhSBpaC1-17" value="(A4) ArrÃªt obtenu" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" parent="1" vertex="1">
-          <mxGeometry x="572" y="239.91" width="60" height="30" as="geometry" />
-        </mxCell>
-        <mxCell id="92DLcrpx8tp9YhSBpaC1-78" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=0;exitDx=0;exitDy=0;entryX=0.5;entryY=1;entryDx=0;entryDy=0;" parent="1" source="92DLcrpx8tp9YhSBpaC1-18" target="92DLcrpx8tp9YhSBpaC1-6" edge="1">
-          <mxGeometry relative="1" as="geometry" />
-        </mxCell>
-        <mxCell id="92DLcrpx8tp9YhSBpaC1-18" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;" parent="1" vertex="1">
-          <mxGeometry x="411" y="351.91" width="120" height="82.09" as="geometry" />
-        </mxCell>
-        <mxCell id="92DLcrpx8tp9YhSBpaC1-19" value="(A2) ArrÃªt demandÃ© en fin de cycle" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" parent="1" vertex="1">
-          <mxGeometry x="433" y="375.91" width="77" height="30" as="geometry" />
-        </mxCell>
-        <mxCell id="92DLcrpx8tp9YhSBpaC1-55" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=0;exitDx=0;exitDy=0;" parent="1" source="92DLcrpx8tp9YhSBpaC1-20" target="92DLcrpx8tp9YhSBpaC1-16" edge="1">
-          <mxGeometry relative="1" as="geometry" />
-        </mxCell>
-        <mxCell id="92DLcrpx8tp9YhSBpaC1-20" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;" parent="1" vertex="1">
-          <mxGeometry x="543" y="352.91" width="120" height="79" as="geometry" />
-        </mxCell>
-        <mxCell id="92DLcrpx8tp9YhSBpaC1-21" value="(A3) ArrÃªt demandÃ© dans Ã©tat dÃ©terminÃ©" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" parent="1" vertex="1">
-          <mxGeometry x="564" y="366.91" width="78" height="46" as="geometry" />
-        </mxCell>
-        <mxCell id="92DLcrpx8tp9YhSBpaC1-58" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=1;entryY=0.5;entryDx=0;entryDy=0;" parent="1" source="92DLcrpx8tp9YhSBpaC1-22" target="92DLcrpx8tp9YhSBpaC1-12" edge="1">
-          <mxGeometry relative="1" as="geometry" />
-        </mxCell>
-        <mxCell id="92DLcrpx8tp9YhSBpaC1-90" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.25;exitY=0;exitDx=0;exitDy=0;" parent="1" source="92DLcrpx8tp9YhSBpaC1-22" target="92DLcrpx8tp9YhSBpaC1-18" edge="1">
-          <mxGeometry relative="1" as="geometry" />
-        </mxCell>
-        <mxCell id="92DLcrpx8tp9YhSBpaC1-92" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=0.25;exitDx=0;exitDy=0;entryX=0.5;entryY=1;entryDx=0;entryDy=0;" parent="1" source="92DLcrpx8tp9YhSBpaC1-22" target="92DLcrpx8tp9YhSBpaC1-20" edge="1">
-          <mxGeometry relative="1" as="geometry" />
-        </mxCell>
-        <mxCell id="92DLcrpx8tp9YhSBpaC1-22" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;" parent="1" vertex="1">
-          <mxGeometry x="443" y="528.9100000000001" width="109" height="57.09" as="geometry" />
-        </mxCell>
-        <mxCell id="92DLcrpx8tp9YhSBpaC1-23" value="(D3) Production tout de mÃªme" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" parent="1" vertex="1">
-          <mxGeometry x="448" y="533" width="100" height="30" as="geometry" />
-        </mxCell>
-        <mxCell id="92DLcrpx8tp9YhSBpaC1-64" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;" parent="1" source="92DLcrpx8tp9YhSBpaC1-24" edge="1">
-          <mxGeometry relative="1" as="geometry">
-            <mxPoint x="785" y="385.91" as="targetPoint" />
-          </mxGeometry>
-        </mxCell>
-        <mxCell id="92DLcrpx8tp9YhSBpaC1-24" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;" parent="1" vertex="1">
-          <mxGeometry x="749" y="232.91" width="71" height="118" as="geometry" />
-        </mxCell>
-        <mxCell id="92DLcrpx8tp9YhSBpaC1-25" value="(F2) Marches de prÃ©paration" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" parent="1" vertex="1">
-          <mxGeometry x="751.5" y="241.91" width="66" height="30" as="geometry" />
-        </mxCell>
-        <mxCell id="92DLcrpx8tp9YhSBpaC1-70" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=0;exitDx=0;exitDy=0;entryX=1;entryY=0.25;entryDx=0;entryDy=0;" parent="1" source="92DLcrpx8tp9YhSBpaC1-26" target="92DLcrpx8tp9YhSBpaC1-6" edge="1">
-          <mxGeometry relative="1" as="geometry" />
-        </mxCell>
-        <mxCell id="92DLcrpx8tp9YhSBpaC1-26" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;" parent="1" vertex="1">
-          <mxGeometry x="841" y="231.91" width="81" height="119" as="geometry" />
-        </mxCell>
-        <mxCell id="92DLcrpx8tp9YhSBpaC1-27" value="(F3) Marches de clÃ´ture" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" parent="1" vertex="1">
-          <mxGeometry x="840" y="239.91" width="86" height="30" as="geometry" />
-        </mxCell>
-        <mxCell id="92DLcrpx8tp9YhSBpaC1-57" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.25;exitY=1;exitDx=0;exitDy=0;entryX=1;entryY=0.5;entryDx=0;entryDy=0;" parent="1" source="92DLcrpx8tp9YhSBpaC1-28" target="92DLcrpx8tp9YhSBpaC1-22" edge="1">
-          <mxGeometry relative="1" as="geometry">
-            <Array as="points">
-              <mxPoint x="778" y="557" />
-              <mxPoint x="637" y="557" />
-            </Array>
-          </mxGeometry>
-        </mxCell>
-        <mxCell id="92DLcrpx8tp9YhSBpaC1-59" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0;exitY=0.25;exitDx=0;exitDy=0;entryX=1;entryY=0.5;entryDx=0;entryDy=0;" parent="1" source="92DLcrpx8tp9YhSBpaC1-28" target="92DLcrpx8tp9YhSBpaC1-20" edge="1">
-          <mxGeometry relative="1" as="geometry" />
-        </mxCell>
-        <mxCell id="92DLcrpx8tp9YhSBpaC1-65" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0.5;entryY=1;entryDx=0;entryDy=0;exitX=0.75;exitY=0;exitDx=0;exitDy=0;" parent="1" source="92DLcrpx8tp9YhSBpaC1-28" target="92DLcrpx8tp9YhSBpaC1-26" edge="1">
-          <mxGeometry relative="1" as="geometry" />
-        </mxCell>
-        <mxCell id="92DLcrpx8tp9YhSBpaC1-75" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.75;entryY=1;entryDx=0;entryDy=0;" parent="1" edge="1">
-          <mxGeometry relative="1" as="geometry">
-            <Array as="points">
-              <mxPoint x="789" y="546" />
-              <mxPoint x="789" y="629" />
-              <mxPoint x="351" y="629" />
-            </Array>
-            <mxPoint x="829.5" y="545.9100000000001" as="sourcePoint" />
-            <mxPoint x="351.5" y="610" as="targetPoint" />
-          </mxGeometry>
-        </mxCell>
-        <mxCell id="92DLcrpx8tp9YhSBpaC1-77" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.75;exitY=1;exitDx=0;exitDy=0;entryX=1;entryY=0.25;entryDx=0;entryDy=0;" parent="1" source="92DLcrpx8tp9YhSBpaC1-28" target="92DLcrpx8tp9YhSBpaC1-14" edge="1">
-          <mxGeometry relative="1" as="geometry" />
-        </mxCell>
-        <mxCell id="92DLcrpx8tp9YhSBpaC1-82" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=0.25;exitDx=0;exitDy=0;entryX=0.5;entryY=1;entryDx=0;entryDy=0;startArrow=classic;startFill=1;" parent="1" source="92DLcrpx8tp9YhSBpaC1-28" target="92DLcrpx8tp9YhSBpaC1-32" edge="1">
-          <mxGeometry relative="1" as="geometry" />
-        </mxCell>
-        <mxCell id="92DLcrpx8tp9YhSBpaC1-84" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=0;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;startArrow=classic;startFill=1;" parent="1" source="92DLcrpx8tp9YhSBpaC1-28" target="92DLcrpx8tp9YhSBpaC1-30" edge="1">
-          <mxGeometry relative="1" as="geometry" />
-        </mxCell>
-        <mxCell id="92DLcrpx8tp9YhSBpaC1-91" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0;exitY=0.75;exitDx=0;exitDy=0;entryX=0.75;entryY=1;entryDx=0;entryDy=0;" parent="1" source="92DLcrpx8tp9YhSBpaC1-28" target="92DLcrpx8tp9YhSBpaC1-18" edge="1">
-          <mxGeometry relative="1" as="geometry" />
-        </mxCell>
-        <mxCell id="92DLcrpx8tp9YhSBpaC1-28" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;" parent="1" vertex="1">
-          <mxGeometry x="727" y="386.91" width="205" height="159" as="geometry" />
-        </mxCell>
-        <mxCell id="92DLcrpx8tp9YhSBpaC1-29" value="(F1) Production normale" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" parent="1" vertex="1">
-          <mxGeometry x="762" y="391.91" width="140" height="30" as="geometry" />
-        </mxCell>
-        <mxCell id="92DLcrpx8tp9YhSBpaC1-74" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.75;exitY=0;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" parent="1" source="92DLcrpx8tp9YhSBpaC1-30" target="92DLcrpx8tp9YhSBpaC1-4" edge="1">
-          <mxGeometry relative="1" as="geometry">
-            <Array as="points">
-              <mxPoint x="1035" y="165.91" />
-              <mxPoint x="1035" y="103.91" />
-              <mxPoint x="284" y="103.91" />
-            </Array>
-          </mxGeometry>
-        </mxCell>
-        <mxCell id="92DLcrpx8tp9YhSBpaC1-30" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;" parent="1" vertex="1">
-          <mxGeometry x="972" y="165.91" width="143" height="110" as="geometry" />
-        </mxCell>
-        <mxCell id="92DLcrpx8tp9YhSBpaC1-31" value="(F4) Marches de vÃ©rification dans le dÃ©sordre" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" parent="1" vertex="1">
-          <mxGeometry x="974" y="176.91" width="133" height="30" as="geometry" />
-        </mxCell>
-        <mxCell id="92DLcrpx8tp9YhSBpaC1-32" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;" parent="1" vertex="1">
-          <mxGeometry x="972" y="285.90999999999997" width="143" height="114" as="geometry" />
-        </mxCell>
-        <mxCell id="92DLcrpx8tp9YhSBpaC1-33" value="(F5) Marches de vÃ©rification dans l&#39;ordre" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" parent="1" vertex="1">
-          <mxGeometry x="976" y="296.90999999999997" width="135" height="30" as="geometry" />
-        </mxCell>
-        <mxCell id="92DLcrpx8tp9YhSBpaC1-34" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;" parent="1" vertex="1">
-          <mxGeometry x="972" y="446.91" width="147" height="80" as="geometry" />
-        </mxCell>
-        <mxCell id="92DLcrpx8tp9YhSBpaC1-35" value="(F6) Marches de test" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" parent="1" vertex="1">
-          <mxGeometry x="980.5" y="451.91" width="130" height="30" as="geometry" />
-        </mxCell>
-        <mxCell id="92DLcrpx8tp9YhSBpaC1-39" value="" style="endArrow=classic;html=1;rounded=0;entryX=0.25;entryY=1;entryDx=0;entryDy=0;exitX=0.25;exitY=0;exitDx=0;exitDy=0;" parent="1" source="92DLcrpx8tp9YhSBpaC1-10" target="92DLcrpx8tp9YhSBpaC1-4" edge="1">
-          <mxGeometry width="50" height="50" relative="1" as="geometry">
-            <mxPoint x="169" y="293.90999999999997" as="sourcePoint" />
-            <mxPoint x="219" y="243.91" as="targetPoint" />
-          </mxGeometry>
-        </mxCell>
-        <mxCell id="92DLcrpx8tp9YhSBpaC1-40" value="" style="endArrow=classic;html=1;rounded=0;entryX=0.5;entryY=1;entryDx=0;entryDy=0;exitX=0.75;exitY=0;exitDx=0;exitDy=0;" parent="1" source="92DLcrpx8tp9YhSBpaC1-10" target="92DLcrpx8tp9YhSBpaC1-8" edge="1">
-          <mxGeometry width="50" height="50" relative="1" as="geometry">
-            <mxPoint x="339" y="353.91" as="sourcePoint" />
-            <mxPoint x="389" y="303.90999999999997" as="targetPoint" />
-          </mxGeometry>
-        </mxCell>
-        <mxCell id="92DLcrpx8tp9YhSBpaC1-44" value="" style="endArrow=classic;html=1;rounded=0;entryX=0.171;entryY=1;entryDx=0;entryDy=0;entryPerimeter=0;exitX=0.054;exitY=0.006;exitDx=0;exitDy=0;exitPerimeter=0;" parent="1" source="92DLcrpx8tp9YhSBpaC1-14" target="92DLcrpx8tp9YhSBpaC1-10" edge="1">
-          <mxGeometry width="50" height="50" relative="1" as="geometry">
-            <mxPoint x="225" y="649.91" as="sourcePoint" />
-            <mxPoint x="248" y="580.9100000000001" as="targetPoint" />
-          </mxGeometry>
-        </mxCell>
-        <mxCell id="92DLcrpx8tp9YhSBpaC1-45" value="" style="endArrow=classic;html=1;rounded=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" parent="1" source="92DLcrpx8tp9YhSBpaC1-4" target="92DLcrpx8tp9YhSBpaC1-6" edge="1">
-          <mxGeometry width="50" height="50" relative="1" as="geometry">
-            <mxPoint x="391" y="154.91" as="sourcePoint" />
-            <mxPoint x="441" y="104.91" as="targetPoint" />
-          </mxGeometry>
-        </mxCell>
-        <mxCell id="92DLcrpx8tp9YhSBpaC1-50" value="" style="endArrow=classic;html=1;rounded=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" parent="1" source="92DLcrpx8tp9YhSBpaC1-8" target="92DLcrpx8tp9YhSBpaC1-16" edge="1">
-          <mxGeometry width="50" height="50" relative="1" as="geometry">
-            <mxPoint x="427" y="413.91" as="sourcePoint" />
-            <mxPoint x="477" y="363.91" as="targetPoint" />
-          </mxGeometry>
-        </mxCell>
-        <mxCell id="92DLcrpx8tp9YhSBpaC1-124" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=0;exitDx=0;exitDy=0;entryX=1;entryY=0.75;entryDx=0;entryDy=0;" parent="1" source="92DLcrpx8tp9YhSBpaC1-62" target="92DLcrpx8tp9YhSBpaC1-14" edge="1">
-          <mxGeometry relative="1" as="geometry" />
-        </mxCell>
-        <mxCell id="92DLcrpx8tp9YhSBpaC1-62" value="" style="ellipse;whiteSpace=wrap;html=1;fillColor=#000000;" parent="1" vertex="1">
-          <mxGeometry x="606" y="782" width="17" height="18" as="geometry" />
-        </mxCell>
-        <mxCell id="92DLcrpx8tp9YhSBpaC1-85" value="" style="endArrow=classic;html=1;rounded=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" parent="1" target="92DLcrpx8tp9YhSBpaC1-34" edge="1">
-          <mxGeometry width="50" height="50" relative="1" as="geometry">
-            <mxPoint x="946" y="114.91" as="sourcePoint" />
-            <mxPoint x="977.2849999999999" y="335.38599999999997" as="targetPoint" />
-            <Array as="points">
-              <mxPoint x="946" y="487" />
-            </Array>
-          </mxGeometry>
-        </mxCell>
-        <mxCell id="92DLcrpx8tp9YhSBpaC1-113" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=1;entryDx=0;entryDy=0;" parent="1" source="92DLcrpx8tp9YhSBpaC1-96" target="92DLcrpx8tp9YhSBpaC1-104" edge="1">
-          <mxGeometry relative="1" as="geometry">
-            <Array as="points">
-              <mxPoint x="427" y="799" />
-              <mxPoint x="68" y="799" />
-            </Array>
-          </mxGeometry>
-        </mxCell>
-        <mxCell id="92DLcrpx8tp9YhSBpaC1-114" value="Mise hors&lt;br style=&quot;border-color: var(--border-color);&quot;&gt;Ã©nergie&lt;br style=&quot;border-color: var(--border-color);&quot;&gt;de P.C." style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" parent="92DLcrpx8tp9YhSBpaC1-113" vertex="1" connectable="0">
-          <mxGeometry x="0.2199" y="2" relative="1" as="geometry">
-            <mxPoint x="-1" as="offset" />
-          </mxGeometry>
-        </mxCell>
-        <mxCell id="92DLcrpx8tp9YhSBpaC1-96" value="(D) ProcÃ©dures en dÃ©faillances de la Partie OpÃ©rative" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" parent="1" vertex="1">
-          <mxGeometry x="231" y="730" width="391" height="30" as="geometry" />
-        </mxCell>
-        <mxCell id="92DLcrpx8tp9YhSBpaC1-98" value="(A) ProcÃ©dures d&#39;arrÃªt de la partie opÃ©rative" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" parent="1" vertex="1">
-          <mxGeometry x="280" y="50" width="283" height="30" as="geometry" />
-        </mxCell>
-        <mxCell id="92DLcrpx8tp9YhSBpaC1-100" value="(F) ProcÃ©dures de fonctionnement" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" parent="1" vertex="1">
-          <mxGeometry x="779" y="49" width="283" height="30" as="geometry" />
-        </mxCell>
-        <mxCell id="vjhtcbe_glxGKSI3QMNt-1" value="Production" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" parent="1" vertex="1">
-          <mxGeometry x="654" y="569" width="60" height="30" as="geometry" />
-        </mxCell>
-        <mxCell id="FRNAVG8K-JlzOCXyQ_aj-1" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#000000;" parent="1" vertex="1">
-          <mxGeometry x="405" y="136.91" width="132" height="54" as="geometry" />
-        </mxCell>
-        <mxCell id="92DLcrpx8tp9YhSBpaC1-7" value="(A1) ArrÃªt dans Ã©tat initial" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" parent="1" vertex="1">
-          <mxGeometry x="431" y="148.91" width="85" height="30" as="geometry" />
-        </mxCell>
-        <mxCell id="WsynO-uQ_58KMSJHlODH-4" value="Depuis tous les Ã©tats" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" parent="1" vertex="1">
-          <mxGeometry x="558" y="795" width="116" height="30" as="geometry" />
-        </mxCell>
-        <mxCell id="WsynO-uQ_58KMSJHlODH-5" value="" style="endArrow=classic;html=1;rounded=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" parent="1" target="92DLcrpx8tp9YhSBpaC1-32" edge="1">
-          <mxGeometry width="50" height="50" relative="1" as="geometry">
-            <mxPoint x="946" y="343" as="sourcePoint" />
-            <mxPoint x="969" y="346" as="targetPoint" />
-          </mxGeometry>
-        </mxCell>
-        <mxCell id="WsynO-uQ_58KMSJHlODH-6" value="" style="endArrow=classic;html=1;rounded=0;exitX=0.75;exitY=0;exitDx=0;exitDy=0;" parent="1" source="92DLcrpx8tp9YhSBpaC1-14" edge="1">
-          <mxGeometry width="50" height="50" relative="1" as="geometry">
-            <mxPoint x="781" y="862" as="sourcePoint" />
-            <mxPoint x="1070" y="528" as="targetPoint" />
-            <Array as="points">
-              <mxPoint x="421" y="640" />
-              <mxPoint x="1070" y="640" />
-            </Array>
-          </mxGeometry>
-        </mxCell>
-        <mxCell id="WsynO-uQ_58KMSJHlODH-7" value="" style="endArrow=classic;html=1;rounded=0;exitX=0.999;exitY=0.743;exitDx=0;exitDy=0;exitPerimeter=0;startArrow=classic;startFill=1;" parent="1" source="92DLcrpx8tp9YhSBpaC1-28" edge="1">
-          <mxGeometry width="50" height="50" relative="1" as="geometry">
-            <mxPoint x="932" y="506.1600000000001" as="sourcePoint" />
-            <mxPoint x="971" y="505" as="targetPoint" />
-          </mxGeometry>
-        </mxCell>
-        <mxCell id="WsynO-uQ_58KMSJHlODH-8" value="" style="endArrow=classic;html=1;rounded=0;entryX=0.25;entryY=1;entryDx=0;entryDy=0;exitX=1;exitY=1;exitDx=0;exitDy=0;" parent="1" source="92DLcrpx8tp9YhSBpaC1-12" target="92DLcrpx8tp9YhSBpaC1-34" edge="1">
-          <mxGeometry width="50" height="50" relative="1" as="geometry">
-            <mxPoint x="1187" y="702" as="sourcePoint" />
-            <mxPoint x="1237" y="652" as="targetPoint" />
-            <Array as="points">
-              <mxPoint x="1009" y="613" />
-            </Array>
-          </mxGeometry>
-        </mxCell>
-      </root>
-    </mxGraphModel>
-  </diagram>
-</mxfile>
-%PDF-1.7
-%
-
-11 0 obj
-<<
-/Length1 29644
-/Filter /FlateDecode
-/Length 16590
->>
-stream
-xœí½	|UÖ7|î­ª^ª·ê}Mº;tB:@ÈBÒ,4ì›	&ö]ADE	*‚ˆ‚8¢¸;ˆH†Å!£¸¡n8¢*(.fqÓýž[Ý4qÂ<Ï¼~ó}ß;ïï¹•û¿·îV÷ž:çÜsªª H<ÀÐ‘óÖß>€4aé˜1ýW[3ãG ßó Æ?Lœ=~®pL9€JX¿{â‚ù¾µsß[ `X È2wêìë37a{õÛ Bdêøº¹à 5Ž§eW™:ë†)Ãsç úŸÈ99mÒì…ª¯Ú°lœ6yü¤ÅçWaûzlßu˜fë*ñ¼
-ÏÓ§Íž¿ðõé^¼Ö\ ®jÖœ‰ã7Š¯â|ðz$2{üÂ¹ÂÍÚû0ïÁö¾kÇÏž\Ôç¸8œ97wNÝüX6¬Å|	«Ÿ;oòÜï¶Ô~`Åõ‰­XÆ
-(Äb˜g´ù¡&‚€åt†>8šÛrxÎb™lÌËìªì}%øek4_ê.Ø6|$—Ðw¿?^3ÎPò£Ê­’+žø23›¥;z6¼ñËÖÖ©RwÕ <U'G Ür²gÂCB>žºã)÷.L¡&•@5
-ž²ÀË«jÏ¹v„Áç„÷£ÃI¾²i³Çh¢‡%AòÆ3ŒþØ‡ÇÃEÐúAÃ`,L‡¹° n€ð-œ“GòA&t‚.Øª¯Üj(¶³`žÜê4kûò¿8cËÚÑëƒBÆZ¼ú<9×õ2G%¬ƒ?'ó¤·Ð =ÈMâ5üF>Úþ^^PôTlÃã»¶‡òMå›ª^ªûÚj_›ã±TüX3K«ÐnÖeéNèÇêŸ—¨á~É+m6öÅãIÓŸÍ½Ìû-w³Ãºä_<±îµkwüòß¶ÿÇìŽ)‘+ËxÔ…Gy"¬Iä)èáöDžƒk ˜ÈómÚ¨eô‰¼s€\7y’ñÛ`c`2ž×aÉ¸939³â`ù|ÌGžœ‹mº·éçƒX2®Ãüx,íþOGñAŽ4uÄ<¬©Ã8Gìðý/<*qµ)x6SlÂ8
-¦Éùœ“ågö+ãx,¿xý¹8ÖDœƒå•ÿ8RçäÌ|0kfáÜ/¶©Ã²+0_¯ã‘¹<¹´7öˆÓm:®{ö­KP±N¦ÜÄIŠ6"M‹ÿ¹`“e0–>‹XüÇ:ì·ûb_¾Žc,Á8£ãhŒƒ1Žÿot‡„1±V9}¦`|LóKØøOÎsð œÃDaL¼ýp¼—+ÇµUâ<¯Äxªéa˜öÇXŽk3cÚã2ò:,¿Øó·áõ—±rŒýXšg)ö/Å~éXvæ]Ékøÿ•9þ«ÍïbüÚöûw\×÷Ù¿cœÿ›ÒÈîÝ;\Ú«gIîÅÝŠ
-òóºävîÔ1'”Ý!+3˜‘Hóû¼©)·Ëé°Û¬³É(ô:­FT«”
-ç(œ²@ÿ_$Xáƒ;²óÀx,ß¦ &âÃ¢þ¿mñÕÈÍ|¿mÆ–Sþ¡e8Þ2œlI$_	”tÌñ•|‘ƒý¾&2vxæïî¨ôEZäü`9¿ZÎë0ï÷c_™cZ?_„ÔøÊ"ýL[QVÓ‡Û¦ûúN;æÀ6QƒYæ"öÀÜmÄÞ‹Èj/ë¾‚J‡“Š¸ýÊ"Î@?6ƒ—Q6~RdØðŠ²~n¿¿²cN„ô˜@Ÿˆ!$7¾òe"Š¾¥|ßt¶¸Ë·-§yÅÊ&	&Ô„´““ÆWUD¸ñ•ìÆ^·_Ä~ãIÇ¥SÜÔ·bYÛZ7·¢Ì1ÝÇNW¬Xæ‹l^Ñ¶ÖÏ°²ÇÀ¾4£ÍŠþxé•HÄò‘>¼]ZY!Kñ’>¶¶ªøú&ÊXIÍ_Dè˜¶bFÞ×ŠŒ¸Áßàr…wÅN€«Ì·bTEÀ)u*Ç÷ól³ÀŠ7lw†}ÎßÖtÌÙ&ã„Ý¦7$2Z]ÛÌädœ“›³\ùˆ$e	›Qà
-dˆˆo¢gRÀ5uc0¹¬˜Ø›a¨$Ø+2	ïÈôˆºoÍ
-©;+gý#B†ð­ø-ßÿ¶d|¢D‘!ý,Ëø$ÉjX1	…"ÙÙŒE”}ñžâ{Éç…s4Ñ@`®äÃÉÃ¶ã+»wFòûýìßÕ†	x©^?÷Áw„;‡*#´†Õ4_¬±Žf5õk’ÝkÈÉò¾h¨‚É?ƒd3—Më!¶ÿ¢zr¼¾|d |øØ
-_ÙŠšmËGýæ,^ß-Y—ÈEÌ}+87Mä¨›“k‘)«’ÙI…6ÂgàŸBfêIMJr¥\B|ý#RÍÀ8VŠ~ÿ¿Ø©)v–õ’“KÝÓŒtýö¼ÇoÎ3=í
-'Ìiù¨±+Vˆ¿©CV‹_ðŠD‚£*ü¾¾’™M±æn,Vº#a$Y_Ö ù/^”8ýMCw"_‰qgÇœþ¨èV¬èðõ_Q³b|S¬~BÀ'Vì¢/Ó—WÌ-«¹È8M±Ýw¹#ýWV"­¦‘î…ÝàÄèž'Db_c<ÍÒèôØiVÏRú-Þû¦D´M¶é°öÁËä,öÚ
-» Þ ;î¶ µô´
-hW¿w¢õ5­ã~ðâŒ5¢…÷8ZÉÃAl{Ü»ÁF±o`1,åÞÇ^KAihÇC›ïn2(vT¡uuúzƒÐö›Kêc±{bkbOÁÓ°‹{-'Zñ8ûAøsìS´«à~ô·Ž“5êèe^õØòQ´þâªy›ûgà‡ëq<Z¨I3áè“ákâ ‹¸¾8Ê“±Hl?¶ò@5Z‘ÁnRHP¿P;6¼ÆBu4ÀN<šà%8J´ÂÙØS±³à„´S#=Þ!Í\´uI´)Æüƒh§^ëú#¼‡I€ü‰Î´BžnŒ}€>n³}{~E~¢·à±˜{ïëƒþÄR¸—Q^…Ï‰‹t&CÉÚÎ¡qó@…Wì‚Ç$´zïDÛðuøŒ„ÈNª¥‡¸'ùÍüEJôDLw$Ã£ð'¢Ã•úH¹•!_Ò¾t}˜~ÁýßÄ¿§«¾fÃÝ°~"&Ò'W“idYFî%ëÈAr˜œ¦½é(:“žá¦qµÜK|<FòuümÂÂ]ŠÓÑŠèþè»ÑŸby±;`8òÃœýýh©6"Ÿ‚ñ8_hˆñ“Ñä&<n!w“'ÈF²‰4âU“/È7ä¯äGr¢FÔMý4 G¯§ ÐCx¦ßÓŸ9;—Æ…¸B®„«äæà¬–q«ñØÁ}Î»øC|éœ'¬Ö…ÍÂËÂY…Vy«
-ToÿúdkvëgQˆ.®6DcŸƒï¡©à…œýx<fàý^‹·Þ'Z¤‹d“^dRf™AjÉB¤äíä!ò´<÷È^¤ÒGäÎYG=òœ;ÑBÚ‡Åã:™ÖÒÕtm¤Gè/œ’ÓpÎÊes¸jn27Ÿ»[ËE¸·¹cÜÜyîW<b¼È{ù4>È‡øü8þ:þ1þkþk¡JxK8¥³w(šQvUöRSWV+W)w*?PÕ w¾;àÅ¶v9Á-áÊ¸pÍçôúòó8˜Ä¦È©t#YNo&4]X¨èA{!pUÛèkt==O{pƒI9	3h—øh
-ÿ&%ü+ÐÂïÅµ½ƒ#/ThÉ-ôŒBDö±È«\.âÞ‚£Üq¢ä‡Ox‘ØI}–†\ðßK¨ ?÷¼ÀÕ’›a-/¨V"!èoÀ(’GþÎÅ€£C‹Š¸/á6˜Iÿ-(ÇËá2‰Ÿ
-÷@>Y_Ã3(„kÙ
-+y“NçWP3iÊob~I'œ`ÛI5÷âý=ÌC¼ŸqÏãìÑ¸ÁüYa™†p3Üµ±%pƒPÁ¿G¦GÆ@µÛ".÷cºµJê´(Ý»Qôæc‰9gòÅhÔáñ ê	9h:ÊøU¨ÅÞFÅ(ÚS=A­ƒ^Ê[Ñ06ö¬‹M…kck #êƒe±E8âF8«`#Y½	ýâT”œÏÈ ¡?=$ôu¤+èÇt$]ûÛû‹ÔÎ ø ?ôöÀ
-þ#ô§Kc+c"wg¡†]àJ8‰«ü¯0k†üèº-ÖŸ›‹ë=ÃcÏÆ¼D„i±Y0öÂÓJÆ+C½`àìpc#^ÄÎ‡b‡qÆõr;V2ãbŒû0ž•kÂœ½aM~¸	“»ädûŒYyòéøøiUµ|ºýªÊx:xx<íwE¼Y÷x³.ñâN}âifN<5eäÕ³TÔå5÷¶q68Œ‘Â\DB÷ƒ¼A8+D0RN‘(	s¦íéÁ¼õû8G9‚
-ÕkæHƒÎ˜×[¤1zLà¥?Ð–xmÙ®7æ­ï}%ý¶bÜ‡‘£_àñ9ýÓh1K1®Ç¸ã!Œg0*è	<Žãñý[ƒÎK1ŽÃ¸ã>Œg0*é1D‰~Êì/Y¾#¥Ÿ"Jô\Ö'ˆzsGéQœÚûEÅy»äL¨s"ãÍHdìîDÆdËk¢ï5üÜÁÛD¿Üîy7ôÎ¥@#Å‹}€ƒ >ŒÃ0Ö`œ‹Q¹#˜;õWcÜ€1‚Q}Ž`Ÿ#Øç Æ·1\ŒaŒÃ0ªèá¼L=ÔìãímCíó:Z^z¾!§oÓ×äô-úªœ¾‰i*¦èk©^è­ÁzÀ>¦¦±^ ÚžnòÆzé>$±3ÆRŒC1ŽÃ¸
-£‚î£i“¼&dP¶l€oäôxBáÞp°/ò˜A°{OÌ!¬÷­Òppí:<e¼gæo_‰9Á—`ŽApÖÌ1Nš9Á±ã0Ç 8tæšèc/¦gz‹†Î$¾Þz=Réz¤ÒõH¥ëÇÍø™gs{¸!;)öP8Ô!Û[¿›Ôï%õ#Hý¤~2©¿…Ô/!õ%¤þR"õRŸJêÃ¤~é†¤¨'áÆßœ‡¤þ ©ßBêëH}ÔgútRï#Eá&êo¸"_NÊäd{o&W˜öì•gÀ9ú‘¢~dk?Šý>ÄCcòYùÒâ©,MÛž]?ïÔ=oNïôìø
-Þ†Wà8FoÐ+ÈF¯à ¯à ÄRŒã06c<ƒ1†Q­Ópâ«d4 vÆXŠqÆÅÏ`TÈÓ9ƒ‘ÂœÄ·Êëœ˜ôPvF_ÁƒY~ê§H)$äVyˆ!•M¥Ò"°ÙPyšŒ*cÑíüI÷÷Ÿt î­¦÷ÐU‚7bu"]ÕðsŠ·‰<ØÜãím%@*\GŠ!H20íuòy!xT,- ÝŒi^ƒgv34s¼»‰žõÚéýÙsÒû§‰bö´g÷#_O¼bÉæÞ<wzßìÜ¤Â’½Á&‚ÉnŸÜt—§›wË¹é¬x¨Á{KvzoöðÎôÈ“ã×ÔáYØàëˆãõóLð†ëpÌÞRÏ5Þ’x«BÖg§7§Šg³q²<òE©ò€£‹šÈ´pŽr­²B9M<eŽÒ¯ô*S”n¥EeRI*½J«U*•BÅ«(W–¦Ø‰pˆ½„²($–(x†¼œ—(Cö¦‡é5¢¢¸EÌ\9-Ù‡”Gš'Bù_äüÈ@Ñá}HÄTå£úDº…Ê›”±‘¢PyD9ìêŠm„ÜS‰¥º¼‰ ·ÔDb¬h©›=ÚØ„—ÞífiÖÒ»++Áa[Pê(5õ2÷ïw¨I`èRpü&ŸY[>²"ò\Je$eb)•å‘ûØ³]h­ž-ë·‹ü…%•»¸^ä¯e#X9×«_eey#·ù¶CŽù‹ÜN•
->Ö|ªÔx»‡âí2°?¶Kg	¶S«!Cn—¡VËíxÂÚm«K/ë·-=]nc÷AÜ¦ÎîkÛæ@¶ÉÈÛØêá€Üæ€­žµ‰ô’›x<Ø$Õ#7!hËM<Ä%7s©IçD“;“Mî”¯Ä‘Km<ñ6ºÛèN`›Ð¿&÷	…Èö•«Øs£š@ÙdŒ5‘»LsDê'ø|Û&V&(k&LœÆÒñ“#•Éý"ý|ÛzT]¦ºŠU÷ôÛUe£*¶U…'÷kèîQß¯rû€aE¿¹ÖÉk»Ì`ÃØ`ìZŠ.S]Äª°k±k±k¯2«Ø¦‚>•}«âévª‘_kÜþÊ>6in/™y{ø·¸w£A²4¡Êˆ6Ð'¢ÃÈª:öîØ›U¡L±*={8˜¨rÜÒÃïÞM6&ª$,6ú@hþuu×£lz¿ø_,š#xCuÿ,`]Y$<¾_Ý|€òHöÈòHéð±Û”J,­aKŠt¿X¦Ñ”5Åšã…°°;+ä¸dCVVÂÊÔêDÃö÷ÿºDÚ—IA=Ý³„SÉ|¨«ä"©å£(ª‚Q‰§0»Ñ\bÛC]%.°=†º‹cÈÓ†xØz/Æù×%r	:ÌO¤ñ^Ø¥î"9’ûÄký Ž#G‡ð½¦þ®Š¡®ŠEAêX+ˆ ÊÏ&4ˆZÐ"ê@‡¨—Ñ zD	ˆFÄ_Ñ°4"šÁ„h3¢ñØÀ‚h+¢ñôMí˜wónp!zdL7b*xb?£1ËÐ)ˆ~4UF‹ß‡@ü;¤ƒ1Òƒˆ?A&³ ±³eAfì<ä@bG;A6bg!æ¢Ÿrº þÈÞ¿!æCgÄÈƒB»BÄ"ÈGì±¿A±ŒÝ¡±‡Œ%Ð±'!ö‚nˆ¥Pû+„¡;boèØJû"þúAOÄ2è…Ø½š³0 Âˆ¡7âÐñJË¡/â è‡8úÇÎÀ‡Â Äa0q8\ûFÈ8®Då±ƒÇÈxA¬€¡±ï¡†!ŽEl«ÑOú=À‘ˆÕ0
-ñÇÁèØwPcÇÃUˆ¿…‰P‰8	}½oa2\8ªbßÀT§A5ât¸&vf@ægÊ8Æ#Î†	X~-LDœ#ã\˜ûja2â<˜ŠX'ã|ôÚ¾B¿v:â˜x=â)ô@g"Þ ³oD?óÜ$ã"˜ƒx3ÌE¼=Þ“è×2¬‡:Ä%0ñV¸.Æ|îˆ·Ë¸®}òBÄepâr¸ñN¸)ö9¬€EˆwÁÍX²ñs¸nA¼#®‚%ˆ«OÀ½p+â¸ñ>¸=výj†÷ÃRÄµè‡`9Ö>ˆx=×;‚±Ïàa¸ñX‰ø¨ŒÁ=ˆëaâXø8â1xîE|Ö >÷!>ˆ}
-ÏÀý±OàYX‹¸@Ü$ãsð âfôÈ?çáaÄ-2¾  n…G#ðâ6Ä£èá¯GÜá‰ØÇ°žŒývÊø"<…ØO#î‚gwË¸6"î…M±à%xñ2îƒÍˆÍð<âŸ`âËðâ+°5vöCñUØ†Þük2¾ˆoÀöØð&4"€ˆoÁNÄ·áEÄƒÐ„øìB<$ãaØø.ìE|^Š½ï#¾À?„}ˆG 9ö.|$ãŸáeÄáÄ£°ñ?…WÁkˆŸÁë±Ãp\Æðfì|¿€·¿”ñ$¼x
-"~ï ~‡cïÀi¿w¿…÷bá;xñ{[àÄàHìm8!ž•ñ/ðgÄ¿ÂÇˆƒ£ˆçdü>½çáâOðâßÀÏpñ8x>GüUÆVø2ö&Dá$bN!þNÿ_§ÿå?\§÷/ëôoþ‰Nÿ¦N?ýOtú×ítúWÿ‚N?™Ôéó~£Ó¿ü':ýKY§ÙN§!ëô/Úèô/dþ…¬Ó¿h£Ó?o§ÓOÈ:ý„¬ÓOüêôÿÒéüNÿþ§ÓÿÓíôÿ\þÏìôÿÑéÿ£Ó/¯Óßø¿@§ûn>Õ¨TÉßPž—ŸÕp ˆ‡ä»Q(•‰oöÙFp©B)#/·Fdï¿T¬#¯àX÷K/…6ã¶¯æ/ÿ•äÿ~`i5êË¬Mm– V'ÖÁ¶7U›
-y ¥R¡Trø‡½5¬#gì÷—¹j›q•í*ÿ­kÓiÄäˆ‰µ!þãÚÔlm‰i@T_šh| ¹õo×Æ³µµŸüÿ—k3è4É9A¦3®MÉ–jÐh ±"hÅdE¼‰ ·æU*¶6ë(à™òòkk3®ª]åånôï
-l I§½ÌÚÔñl‰ëÑBbE:äãdE¼‰ V«Ôj^­âåµaÇÿbmmÆU·«ü·®Í¨Ó%GäâRŽ+üß\›Bn+”×Æ:*T¼Zy¹Éÿ7k»œòù]d–ôÉµñÉµiâ!ÙRz=hãyòq²"^¦5¢F£Ðˆ¸6^Â,–L*/·¶6ãjÚUþ[×f5JÉù¸”ã
-µñl©ƒ+2#G²‚¥'¬Uh4[›ï«Wª¹ÜäÚŒ«mWy9&þ]ä°˜’#
-q)Çêâ!ÙÒ FôTây3Þë6,¨tz­^§Ôëöé–^§•V©×\nò mÆÕµ«l¯]~g`¹í–äˆB\p…†xH¶4Å‚7Lèj“ñœÚ`ÐJƒm×6ÖQ­W1Î½tƒ/…6ãÚU^Ž‰W`¥8mÉµ)DY]àÚ¤xH¶4ƒÕŠ”ƒìædE¼L”$ƒ$©$‰©F'ë(T’îr7 Í¸R»J±]Éïl ŸÛ‘¤–".åx÷Lñli»½e9¸ÁiMVÄË4F£d4ŠF[›Û„ü«‘Ô&ÃånÞjcò¶ÛU^N@W`ùÝÎam6p8.­ÍeKV\\›	Ñtqm&,ù?`m^O’”q†œi‡dK'¸ÝÈŒrð"'+âeZ‹ÕlµˆV+[›—uÔšD&•í'ä°X.f­í*/§|~W`e§û’#ªô²ìã
-íñléÔÔ‹¿Q€ß“¬ˆ—éív«Ý®³Û‘Hb:ë¨·hY÷ö“h3®½]åå”Ïï
-l NÁ@RäÕq†:ÚÉ–^ðû!±¢H÷&+âe—Ëîré].¶¶ ëh°ë\öËM Í¸®v•—câßØ@y‚Ij‰qIÀ»ç‰‡dK?¤§CbE óÒ/ãeFÇéñè=d mëhtê=NÆËíC›q=í*/ÇÄ¿+°ºvì¤–×x÷Rã!Ù223/þV²#òq²"^fJMu§¦RS˜Úï˜‚MnCŠ›éö¡Í¸©í*MíJ~g`uï’“Üg4fyãÂýÇÉ–™‚&‡ÎÐ13Y/3û|)>Ÿäó±µuaÍ)’/åòkk3®¯]¥¹]Éïl ¾ÅyÉuòç€+Ìˆ‡dËŽ›{ñ÷µEPÐ1Y/³ed¤ed˜32˜Ú/fmiæÿåÛfÜŒv•¶v%¿3°ÊK»%Õ™Þ)ËªðìxH¶Ìƒ®]¡S<ßºç%+âeÎìì`v¶5;›©ýRÖÑ´fg\nò mÆÍnWy9ý]4r@¯¤:“âRŽ:ºS<$[AI	äÇóeÐ»(Y/ótê”Ý©“£S'ärÓ ÖÑ“mïÔñrûÐfÜNí*Ûk—ßØ@UƒË’ºØä•ÕêèüxH¶ì	}ú@·x¾öLVÄË¼ùùòóÝù¸+[³ŽÞN®üŽŒ—Û‡6ãæ·«ô¶+ù4iTy’Zf¿,x÷ºÅC²e_8+	Cú&+âeþnÝòºuK)ê†\nÅ:úó<Ýº t¹ÌUÛŒÛ­]å¿íwëò@”ý€R`®7‡~\ŸFJN*”Mt]Ø’QÉŸ$àT)„“”ÛK»€š¬#À’Î—´–‘Î•n-RÌK¿"tÉõýÆ<üêãšp||3û¦v,·d
-»ñrÁ°Ž?Pà–øÈjBÉEí³lÜê(m!FSqq—\3W˜oå–w:˜‹=M?þýGYNk„÷Q¿÷‹™’I‰^HÉßëõ*LÃFåzý5ÀIœã¸ç®”n=ß"ÇÑKJq¢¤š©± ¨kQ¾B‰‡U"äøýï»wÉ™=!ŠßKþNô?m½p¸rÅÚ=/E½Qß?\_›E³$ª%&5›¸ž#lXÏ]cÐ{õTÿ¼éò×7ÀXÄ#ßf·Y%Úº„„Bi=3o\²wìàCÑáäù|ï®µ+Æ¾w¡õèÑ¿FUxõÝò¿qïWFØAK@¤%ã`,†­ÀoÀúüãÊW“éØ%7)¸ûàÁƒò7Í±¯i1Îœƒ‘»€‹}Ö`)¦M±ÏÂ>Kñ¡Üzn+G¹@PñŽ`;‘;ô4®hÓ ~û8r‰t®EŠ¯b™Ð)T}³´Ÿ­&²’|B6­ŽV8…ïa#Àqd°B3ZõuaÖfò‹é*ºNÅ?Ï5(Ê©¢¥ä€M±æ°É(ÈÂ¨ìÒ
-a¡@`ÅzV,Ÿ¨àÔì&%d)òàédumˆ­µ6çÃR{11³é@uÈ0*ÊÂ®x‡é…ÆÞïzà‹Îóù›z-ò¾0àÀ86¿öDç—
-_‡»öz(öû{”¯«Þô(¯ÐVjGégj'éo4Ýh¾Ó´×tÊuÊ}Ö¥Ý§yÑLÝ’GJ‘R%ÅcgA;*LÕ±³aWª(©Š—Åãq©<.¤«Êåát©R}jûP#16Ç]ªE€Ô&º'l T+ÖÙßÇù„q™d]‚„Dº…µÆ¥tCSžî¦hb’UÛî’ï-Þó!v#dÑ+mi­>i4±µ#,Ów
-éñ¦0ê’++*"«ªjR=/Ãê!Eºv-,ÒÊÌ®]óólVR
-ÿxå¯EÔžñäCg6®»éÖGÈ.óßß}ÿüÀg_~¢*uË–Þ%›oÙjÊÌûYa>ôñ·[*žÛûÔòñ]’cb_ñ6¤dÞg	:›®Lw‡Ž/3^e\àæFØfI3,“l×én°Ü¡[a¹Óý´N|û_£Ñêô¼’tZÂÆÁööÃT)lÔj­¼c7}
-œtZ8ÝšêøÔ:SÝ8ßõÕ+ë‚Œf¹AA)Hƒ«;:šH·çûd7AÍ‰œ£Áj„Âêœ&²&A¾P# rMË9YJ€H¿âÎ-’LÈ8‘‹rÈH¤Ö\d³åçÅI¦,Jf/R‘OÉiÁ1Þûg.ÞúÄÍùƒ,&M]Ó3¦¯´4ú¿}aá™S&Ýº:zúÈŸbä6Çºe‘[=nyŒ.¼yâ­·ßîÛñúÔ†Iãé”úÒ=ÍÑ¿Â»Ø£>Ô–"zWçÂ]MÚiÚ‡´›´oj…AÜ ÝxÎ„¼Z§D§D—R§;ÀñŽã9P­ŽWr{èöw‘a‘=
-G¯ó€È7Ñ)/
-‚NñˆM¤(¬S†ÓÊz¡rµ2‰Óé,@%ê£Ý¡o"+eÊ}_Ô…Î!ë}%Éò†Àùcq±¬¯—u
-ñÈxƒi'$­Cc*Ö5Å>kò‹¹´ŽÅŸ’RÂ>^®DÊb›°EÖkë‡kÃÁbmšÓŽÅòçÍ•¸’|c¾5`äŒ„®m½>zßk¯5FÉ¸§¹¿^ùtôqû[g"ÓŒŽ}Íû…gP–¿§”»nHY‘²Öü¬ùíí'n•ÚìÐg»8u®«ÙâÊ!ëIfÑj2›è½Ù¢7èÿÂf½˜jë7 ÞÖÂVbµzL(¦/xò>ãMÞp€OõèŒã¤9Òbi•ÄKÈ‡™’ƒ:VûL{I!ÈýÈÅÝô;.ÇÞßòã%ŽDº2.mAŽ¬6b”Z¤“ËTBd©–šÔV·eLäF³ßêç#ÁjQ*G¿d]7ëÖÆ-+¯Z™µéúqë‹Co¿·™¨æß}îVR/­¸kÿ5-µÑ¿<]P=ÿîë÷6œ`ÿÖÙ`¤¦å9­â†pæL'é§[û9ûùÆšFùfr“”“T3L“|óU×y–ªîðQ}`3*Q 3}ŸŸI¶1+5¬¦£ÈJnòþ8F;bµêÒR-:ÜSº¡°#£N’i‡;¨$ITZ#2b¥’â°XjgŸc_lçíM4}{èõ8µZ.R*!º²Èv®n¹H&²JÜVQVQ¥1	51ýH£TÄä•XÚP»°Ý‘sÅÌ1½GO ½÷Nml½þðíŸGO>zçé-ÇZ‹†Þ3dÞSOÜtãsüHýŒÜÁ¹½~øtbMô§÷V´ÜBÊÉ"²éO_þõXõs•M=¸u+ÛSÆ£ÔÚ„gQfç†õûu„Ç?ªâÕ(‘LÝçRÂ«µº:Ž£lÙCeÏQ—AU§þ†’qdåJ1™Cž8õ	.AS«º¶dð¹–!Òy¶Û±˜éþbcq\Ñ3n(ô[À)”®&SÑxnÇÊhKyWÃ.îÖ¿ÝÉÿ²eåýQSôBÓ'[È·äõGð.³ãI¨D£=IOì,åJSUÓÔ5Òrnµô¦ðš¢Y:+iTB%C‡IÓ4éoÚ¿éþ¦WóZ^Çë9¨x¸J¡Tj1¯Rh•hfø”ZPŽóñZ¶P§
-‚*UÁ)šèÜ°TÚoÂ”Pº›h€MØ¤õÁd%7bˆ?Îs«yÂ7ÖÓ6+k¹ÕZ¢eç’AyHI+ë•TyŸáÈGÈH'Füs QârJ--à(-qµ”ž,‘Zð™((6Ë:9B‰=)V¼LÚ¿_¿ÿ2!ž"õÊ#š‘å‘Ôác+y§RîÆýbgUIæÕVÐ¸	p~Îìç‚™
-%Góß¥Ç6·>üøÇä/ëú§yò…Ý¿ô'{£ýèX²v×õwß…¼0%öµ° í­h
-×L¤3R¨òta.ÌO©‡ÛSVÃCÂfîiÝ.®Q÷ºî0œLù[ŠQoJ1¦¤pÙŠ,c¶Çç c¹Ê:Æ9M˜™r“é.ÓCÜ:ýCžä)ºÑø¡ÞpIÉÅ3C®!«˜0í™U,€ðnsª–s§òj)h¸‚>BˆËkúTDåLXçªÁŒ¥âd”w¾P¨ººåh±+ø@Z:-,0¥ççñve	µZLL„øÆ—{F_9Õýèá­¤ïËŸ’œûò_¾oÓ—U³¿ºãÉ/(íræÂŸÈµï"£·x«ã†5ODÏÜ»'úÍŠ½¨cCî‹Üg@úÜú¼¤¯Ê“’ŠŒa”R Â‰ª‰ÚåM‘|²EXÚ£JV ÌÛÝfûÈ^GßÂ]9·R¥P±Wµ¼Âép9¨B#jEÈ)¬6‹ÍlãnÎî'&=‚Cåñ›hôCý{º°„Tçýyv4ÅQ]P=døó†êÿcäçÍco©œ_7äÆ{.n#Å÷>Ý¥lð³†l‰¾-ì¶¦š=´ÿÙhtÓø¼-]»”}óÌW?e§2°5ÂR\§ÊÃÙ
-!U¥Z¥$J%p<[+¨” -£¡Ô¥áÕ‰•Š=7‡™µòí9w¦èJ$¶dœ¬Õ/ÇÜ±_OÑHë0a÷–h÷-­Sp„¼¦D®/jPY¨[Å/ÐÞ¡}CË©µWh¯0pø]Ž¾‚»š_ [¨_¦Si¨ *ÖuÕ¥åª{Õ`]½ø ]Ç­U®UmäžU*LÔ ×ç
-Ô"T…ÖF® Â¬J;Â0‚„Q U*µ¨Ñètz½*5­1Õ›¨i7ÝˆÛ`—Á‡¾Y—°¨U‹¾°v±†hvÓ1¨y4XC›P¨Ñ—óæJMå1/ú„¡^à„&ºq»±G¥#äDz Ex÷eIÇ¼+yr²å¾´¤Djs¸P0ù_v³,ÿ˜ =|IÐ_mìîGP‘å¼<¢Åº,¬c¦Ëß·éEVš°d>Øé/ÖçøekfgQ±>¯HÎîèˆ¥	‹%T‰šj«eV"6{×"â7Œ$@Œ’tru®Í‰¦öDÇlV»/üõÞÃæ~ý¥?ÿÖ…BþÄÛ{'¢Ö8&| zpÃâpË@,’Åâ¶»Ý</ñ]ãæ7Ùwê_Ósv»ÃM})aãPóP{ØU!T¨¯’FÇ™ÇÚÇ9Æ¸®rße_G%g*Ç™R5jkÐ‡ŒçªO!)† ã3§§­¨fZ@ÖÌBéG`–ÀŸÇ3µ@‘h](*˜H–“®o‘þ›£;÷ŠîÞøIùèâ¾á›{ß‰~DÙäÑ—£Oz<ºaÇdì£?E‘âÞN4÷EOA\ð­È¥:pÀUáÂÉÆ™Z.•[®–®¶ðm*2Øq)1U.Ÿ‹àŸË¡Kˆ‰ó’B"ÕVŸÜ’”Y-0S@êTTXÔï7b>)Ï´ÃšÁ³ÖTþ}3ºœÜ´÷±êA]nÞ)ìÖ›&ïœ½'ÚÚú<GV.®ºÍªÃKuÀ™Fp¦Zøj›IÏtlwôf’ªjNTiÔt3O8Jpsy•(SüY"ùY$¢ð,³4žÂ@ÕûóvLyLÃfVŠ]„T¥‚jÄT-¨Ä=dûI2Ùvƒ2WVQÕ•ÚR”—ž€ NÝÎuò}|Ùœé´jK¤“Ò¯I¥ˆV9a,)ûèµŒùõ¸bÜOæÉÖûcXMÓüÅÄá/Vãö±ÃYLÓœ2+Wæ’®E~4(ˆÒoí@Ïøë;¼ë×7+¹ÜæIWnÙò«rêœf%ÿyWx8¨	k¸nvgŒÌßŽ'£•Ëæ,F†¡ÉÃ´vP+J„’e˜i¢#È\­ÙN|í.Òâ+“÷£VTvò}¬f“Â8Ÿ¼{ï×ÁK:ÿ\;Í{ø^E$%|Z§Îvê\ÙtÙÙ¨Ç¬EîîÙWdWëª³gè¦g×ä®ÐÝÑá!ÛÃ®M:ë3Îç²v:÷díwÊzÏz,KÕÏF¼v¯#”“]PÌç\ÁÌ£ªMQM-Ð.CŸëgÝÏ!cQžðRçô{žßâ×aNÚÁÓY_ª_¥_¯é…õú­ú3zN¯÷ph²>¶9î·x<J(Ëó<œ¦Ãxi<døÓ›èÕa)3ÌœV_07¸5(»3BySÑ.n.¦ŠI±=Ã‘Ö9}Ÿâ‚z¥
-ªèÒ¾ÌSÀŠà¹’ÖS§˜Àž¼èÀbm-¦ÌÊIø°Ì}E•”Áìß`asýÙQXwzQæÀÚmV«ÅfÑxÔ£¬°½q%“vÍØºw@ÝÀÂ™G§’ü²å‹oH‰8®=|çòç†Ij{Ú^}Âþ9Uy³§O{"˜rÛèþ›—Y2Ä¢×¹Ò3Äk;ö¬¬uÔÞUe§…g/,íÙËòHYƒ;¬¹zhÏëñÞwÐËö)´Ž„Ÿ'‚Ö.
-e‚Pêx©×‹†•§g®wµWÑÝ\b+q²rU«ªu†jÛ5®ªYºi†km×ºš½kÚ:¿0oÿÞùeÊ	oÌëô	-¹B©!,2¦GS~ä‘´’UÏ+(¸=
-%­½Æ‘~XC$MXS£©×ðšùÄ˜ù\¥Í„¬&H„œ%¼—”’¡„#ÎÔE	“|šâ­çNJ­Hzv+ðÏXò‚Û@í<¨õŒùFt;PIHËä,öKÞéølã¼m¶Ö†£}iïLZ0úÞÏ?}Ý‚ç…Ý­?®ºê@]ôLôÈ£dí¾Ñw|ëðkQâ†ÅNs-Èõ.8 Ö¯§¯¹¯}¤y¤½Æ\c˜>Ì=¤{JzÊ¥Uéœâ:›!\§««×=£Ý¡Þ)îÐjmh|I9}Ú8ÃÃbg ŒY¯ÈEÇtÔ yº6À	8‹&‹ÁÀ¾4y4J‡‡×xÄ®Osã,Ò5!/!h¾“+<ÖôCJâU–¢]ÞÅ]°_ÖÉµÌK›—ø§êvaÿ6\Ë¼s-óäy=[©ú$þ1RÕ"­ÐÔ”´sÒ–fœ¹’m)g^8ýiÞ7wnùÔ»Õ¹xìòçžº}Æ=d©ýÅC$…ˆÏºdëãî™³^yÿÈË·"gõG*GÎ2ÊœµY¤¼.CW ë§
--…ž«è(q„e¤g*$LVO´Ôxš½š9O™OYÎØ¿sž’9Èæõ†\ŒíÊ]Œ•hº®“­;-Ô•Ó2]Ëž«Ä1º©ºSŠ¯m¿sz‰X9½o7RÌÈZœÆ‘O ÃhÈ¤ÃF"ÃÆc½‘7Î7¥ïCæ¸2¦äí†*9¥3µ`X‚±£c‹*½½“Œd%,^b-&ÔþB&Ô(Õq‚!›KÇ¶Ûäý‹?¼nÆ·Õ¬í¼½Õ÷üužÞxÓÂÇïxlå…'×nÅðÞTÿKjzûÀŸ^;úö~¤Y9Jc*r–iöYx’<V:š«ªÕ£5“¹™ÂõdJB£R¢™¦…_,ç]Ê.¦îÎ.žÞ¦Á®Þžá¦*çÏxÓl×xÏBÅBëyzÞ!tvû0[m®³y«¥èçK¼Û#*1žšÜoFæ²‡uLª3³":¢syÙ’,`i8…iF/ñÚò¥te8=» É²ÜzÍ€PdÙiM<C)i­-‘=?SâÑ0©w‘ÙâEé—	¿üÜ@Á]³;ç‡]ßDÏË§=ùõ´Ø°tâÊÖ£t¸¶Û˜;m"cìO6/ê-ÉŠ~ýYòmÝ=ÜGßiÏ0›ßŒÛS=z~vØNµ¨‰ÁÙÙ™ë;ç:Ö>¢Û¤S¹tYºˆ³ÙÉ;Ùê²\Þ‚•ŽÓ<"±ÒÅÌs
-×[ˆ%fóö8ºÅ‘¤K7yw‹oÁj¼Ö“ç^²üpžˆ¸yâÎbÏ†qçD—¸¥š™D%òSâböh]%‹dT¨•
-n)’Úä£Âà&èe/YBBÈXóòÂüÂ‚"öìå‰¡•=…kX¿ÞìºmÁ *w·¼ýâZY;³ ÿU¦GÅþ5Vþ:y¨Ot8÷-òP*dÃÙpF#Xr4–Aš2‹BâLÉÑ-9bMWË•šþ–1Ê
-Í4Í/âV}§@Nf¯@¯ÌA™«s6ä(»ú»v(Íé¯éï/ë0Ê?ªÃtåDÿÄ59õ9G3OûœÉ4Úm
-kÝÖ˜å1+e&ù WÖ_õÐ‡q×ÍáÞ‚ÇcËÒ<ZÑfÍÏÈ3ŽÃv"ÙÃö{½·Ï7Hó¦ï327Ä¼×PjŠZÑÊ™ïg"ä9ö|e²õäyöŒîdâ1ÝÉøë4˜kíÌ}”÷ÎLä.—L{a¾Q~þ4·Ï)[5y}çß¼Ü¡'"Ÿœ½öÝ»÷ÞøÌäO6üñÛuÏÜ¼hã–n¬pÏÈ›4¶(r)9ö !+¬ÿuÆß-ÜÌe¿Û¼ïíW^{ïþ2 Žý›˜Ø¶lìÑ­Õ^ÁreÜn/?cOG;Ì®2jN `ðJºÆêp~×‚˜š4£—=ÄÆ8Ê^Ðµ b;k£sml[ÌÆÛ¨%Cæº°Ÿeï|À~žÁÃë€aŽÄËôÂ09ÇžÊ¬©Œì¹”)Înz…^™¡WhÝD§BFæq/P5	åÇwF›ÍŠ^’L…Õ¸¬ñ–æ/”7^7sØÝ%¸þuMõS´Ž£/»iä=7·îA[Îþ¯
-\3{gys¸z¨zµzƒ:¢nVWŸU+AíUÏU×«×'ŠN¨cjÑ«Æ½JÉSN­àn! ¼¨PfÀ¯ç7ð¾™?Á+šù³<ÞÇÆ3ž¢º¸Ây%òÓî’Ä‹ÉøËIR=¯ÖÌÞOâ*–766òß:tÁÊ/eà6„"yŽ+w€b[ÔM~™µ½ 0žæv‰§iñ—\xß‚WX/ø¡gÎ+ÌE8&ðHw‘rñ[ÁF’o‰et=fÜ¨i›ûÂ'g
-Åç-³ç<ÙCe$¿­‘=«ŠóŽ"ˆ²€×v½‘ÞòÎIþ¤úsû)Ÿð¡pÞGí*_@ípûÔHõ(¬&E ½nñpY±!ƒfØí.}ÆjùåVõGÆj7qc.ìšÈ ‡0‹‚z¡†"EœéMdávÿ€‹²…VTëITáèÓ·)›Üï+4œ˜ÖB’Æ-=”b„¿ÈPZ‹9hÑÝÄ¤³^d(ù•{Y ¿’±Ëoµd®’ÕW[þz<ï™ðÞrà±ç¶ªzÍýCcÅ¤AKºóÁû‡Œ›P±{ëÎÖLúè¬qÝïªõÚ°pá°‡îmý8!i_!µlðvØ,p
-3Ý(5I_r_›ÏrçÍ
-tçÎ†» oÈƒÒaÇ	GÌÁûT½ÅfB‘#
-›Nd_:§kd¹ÓüÓqÈ7’Éã¬ƒÎulpDÍÞÁÑ|«-!z¦v¢g¿(vçJâ¾ 
-ê{&{¥-—$Ï¦0ªE•¨9…4*ônbM	‚±^µ(…µ2ÍN@‚-{âºc5“ÄÆì™ëžåƒl-›;8ïæÖ:zÇµ³{¯y»•=Ãë‡C&ÒDNøS¸Ú¤ÚŠª1ŠJÕTÅt•ª@ênên+t”Iå¦r[™£J¨RªMÕ¶ŽÙÂlõ$i¶i¶m’ãzbU+ÝÕÜ(a”xµv7Y˜,ÎÒŠv¯4"ËYÒ•ŒæôŒ‚\%¥¤ôáæßå8c4,w2ó óútcÆhº¸˜i ¿_A³ ú<z‘ÉçÌ~’à‘ÂHõa‚š'Õ•fùý $Þ´ÕÖýžºóÕOˆí¦ïî:mÙÕ°ìŽ†íK—5P3É¼gAôóÖƒßÝJR‰îí·Þ~÷Õ·à¥—E§ó~¤‹	÷ÁCá§µRG©§T.ñ¥¾ˆz}´”<k^JŸ”¹¾Õ>Uw{w÷•ö+Ý•ª«µUö*÷ÕLíti¶}¦»Ù÷¾å˜ã˜ëýÔ“–“©'|1Ÿ-À‡¤µï.õç¯”ÆJ§4ß¥D%Q¶sg6tg@ïL?,I‹5b½È‹ó‰9Ÿæ›2 .ëÐxÑ¡!—óhd—ÆXÜÖ¡1_2›ÕBÙ¶–iäÚjÙSÝ×L[~xÆuÇo»ª“ñ™7?;¿n[tºðÒŠáÃWÆ|2zá®AÝ[/pOÜÿÖ‡o`ÿÛÏR´—^Czá¶pÎf"ñ$Àð}ù‘ü~>¯PUj•Zg6ªuÀ©ˆF^(ˆê¬Õ*¢Jó™‰™¦ÿéNe°?¹S¡Çqn{šÊ–U|ñÕ%Ho.ÓËÏ«ç±§wñÆm%JÃÒ'zM/½úš^}úô¸Æ’Ê¯ØýÙÌ¥5óZ?`Ú¾½m8ÿ\òqø&>Í’Ö]}¥º_ú˜´Éi‹Ô÷¨oOÆ¼9çeN§¶»öÜòœ#vÁMGS*åÑQ¥ªRW‰Uš*m•n†j†z†8C3C;C×lÌ4dÓ3Ó;tM+Vj&'eÍÌO¯O¿O|D»&ëœûsŸ7iŸÌ|*k{ðÕ -…}ÍaJ-«ÊÌÐŠ¼Ë´òšN).fy¼ÎRçPç8çVç!§Âàô:ç8;y¯s•“:÷ÐÑì»;fCIìI®DJÃv‹­@~±ª7Ò©*eV
-MñX•¼§“Æë"®tgØì(p6Ñ«”éÙØòEOñál’íÊc½‚hÑ×ä5çÑÒ¼ú<š'¡Ï˜¾tCÚq lC àìrÑˆ¯Ì¾.™7DVkÌŽ?J¸ŒµhÊ‡P_Í“YsÞÉøsŽÄcTváÌŽ©46ƒFÉ$™%N‘¦ó¹A¥t¡#BªOýú€Ò:­ªƒè&Y™jQâÝà•R˜Zd·”ÄA~v–Z²„Y*µl«¿ô²53˜Ù	m»®Eq)HzªÌø“5ÊÆ^iƒáÎ›-,Ì¸ïµuC{wË¾wäÍ/5F´uÓÍ°Ù:»oß÷À˜é¯Ý|ècÒÓ3sÞä~=ŽŒ¼+–pC–74ð¦©ŽU#Šž³˜žß{QÕØõW=Ï8-=öWš-¬CÏ¢~ˆxoÁ5£roÌÔ;ÑÊÑêDÂMR‡"*NcÒ èLZSªÊÔe5Ê¹Êzåj%¨E7(#Êfåa¥B¹›Î éºmJ\XP´0Ëîä¹Ùm-azÀ˜Ÿ/½ÿà'Ã÷?™·`,’ßÓËoV©äT2aVÎí·oß±ÃÊJ}|½ÔkòtâJ¢œ½{eë}ƒs\²„RsBþ7Þ_Ú.æû¡D}f[m¦L–‚™¤«Ì6-1Û4(ðF\äÛ2vyµ“f;±qÉbÏ6Q×YëÚàŠ¸b.Þ…6nR! ý§ö©£5È«‡8“¦kËÅý5ƒüü¦¤8ñBYÊÅKzAGñ7K¸‹òZ7èTF7°=4;{	êDä“„#ž‰¤@Sß.³IW–çJ}xÍ“C%M£Æxíðá÷ôh|¤qàì¡…utMëö»»>rÕrZŒ#a_{p§‘"¹æÅB4ÓÓŒÅ"“f±XDŠmŠ}»S’HEöYê/€,<;V£=	6<;Þ‘Õ© |mÈRÅb(Â qC+Uê)d
-®š®^×“ëéª…êëÅed½ƒ»S¹\µBý(<¨¾W|ž_‚•ÛÄ7áUñ(|(~_Šàœ˜#‚ :À&fAP,‡BXTa“­@£)$*UªµhQ«Et`)*h:±‚(¢êV©(%
-¥¨æ€µD›¦
-‡Ãh·Suqï£áKÌ…Õ>&išoßc·¬Åål­n­v9ZNVÇ]úb´z˜È²§#íÞö„BìIw› Õ~’of¯fÌù„¼õÇ“^Gèû]Ñkù`ëíSçŒZ@—Ç-x?z²?àq‘eÛb`wã)Oq–eŒa«È…ua5ø²r$J­ÚdÓ9L™šLm¦®«¶«®P¿Î¨É2e™Ú*M•æJëtÓtótëŠºŒ7Zn´.Õ­0®4­4ßiyPÜ¨Ù+í1î¶|+~mùQ×*ýl‰yRMƒV2šLH;§ÅlÎ0‰<1hFm†F´h4¢ÙdÒj5
-Îã4€GòÐÎž}êi¢¥;æ°)li¢£ÂšRSØDÇ™ö™¨©‰ôÙi iPæY•ÉàÓ„Ã>m®v¨–¦i©[lïlÀÅÒÒF·oª´ó[Ùv$9{ÑæÎt²ïZ\©EÎƒ©výUìu»€w@Ÿø\e™^*)Qí/èG–GÃÇVìmì4hb§I·n•?²Ä>ÛYT,¦ë‘wX‹iÖø«öà]$ÕæÌ¸sÇ¥›È>\¤-¶ôÈ)h7MtöËÇBiÞÐ—ÑY½Ós)ˆNÝ$e¥»gRø¬Öu×-Y´€Î¼ðÆÖ>•#!‹?õ^¦Aˆ·]	wÃß ÀÖÓþ³~êa`ˆÿ.š˜ØW^®W_8†½‚Û¨ü¸ÊˆÌoð’¹^âw÷^ê^*¼Lÿ#ìkIÈ;¨/Ü£Ðî˜W`ð­÷QðD±7%éÉÐ‘“g ÛÞò##œÀ|x³=áNyë=<^Pb__›¾…ÈÙŸñÏÑ¡ò;›ÉìÉììEmûÂ&ˆ™Å¤ž'Ün1,æ¸90‡Ð¡dEO““8Ê-#<i¢5”½¼¹œüÇÏÆßÜ´žk•ßÜÈïmä77fs>÷ÙÒï?eïm¢§™l9qkp
-¸"l„}kFé2˜Äs ”(zò2ÕÚ~Lâ“êTnšæ9ñŽÁ­ÎóŽÖÖ"{ÜÐ‚×*aWSÌùæ ©¨}çÏÍŸ¿-ŒŠ_íŽÉƒ
-endstream
-endobj
-
-12 0 obj
-<<
-/Filter /FlateDecode
-/Length 343
->>
-stream
-xœ]’ÏŠƒ0Æï>EŽÝC1Q«-ˆÐµ-xØ?¬Ý°ÉØÖbzðí7ÎØ6 ðËÌ7™/“°¬•î?í kp¬í´²07+]àÚé@DLuÒ-„Ù7&½¸žF}¥Û!ÈsÆÂ/Øj¯†¼á‡U`;}e«ï²ö\ßŒù…´c<(
-¦ õ•ÞóÞôÀB”­+åã›Ö^óÌ8OX„,¨9(M#Á6ú
-AÎý*X~ò«@«qÁIviåOc1=öéœG¼˜)JA´#J‘bNt : möH›)Û!e”y\Hm‰""Òe¯H§›]ºÚÞ{|zÚc§S¢µ‚ê
-*i“Ä‹ô®C1 ]Lþ“n&‹:(%¹¡UÊLKr¼¡Mº"ïŠPËóÅÏä1Uy³Ö_Nrža§áñÐÌ`fÕüý‰ ²h
-endstream
-endobj
-
-13 0 obj
-<<
-/Filter /FlateDecode
-/Length 22728
->>
-stream
-xœí}Û®%7råûùŠý<€·y¿ †nÛÏv	˜ín»pûÿ‰µ‚·$óT•JuäyhËjŒ2dÜ|:_ù#ÿüÝsyŒ5?­{üòùí¿Þð£&<mJñáB‰Ï’lyüõßßþÏÿzü_yÃ=kÆGD×'Aaøç_ÿù¡üõÏoÿÏþñçÿ&fk³yo€î?ˆ+
-ùùçC®Ï’¿iöjŽ&Ûå/“ák2&ýƒc
-“•ÏŽò‰9>dä!è§åÅçä,þJõ™|{øÔ?Èæð,…Piœ²>„gÜ[ôßlÖßf»×Û_ä«û`~¾OœÃï¥’u2	)?|Åÿ2]gï?¿ýýŸ¢Ðîñó*.(A#cu>x™Ì˜óãçÏoÿ`Œ7Æ„ŸŒ‰Iþ[øo´ÿøøù?ßþéçw‘Å§&9AVMC–6QþûEÊ×‘•X1²d|Cò‘÷DàìÓY6ÅÏÿö—¬ôæþÛ{øÒä~Ïòs.?]_~|hKÏE¿’¾?îËOácÁ¸˜Ï6ã73—Kÿí\€¿ão]‚²é…‚ßµc_‚N¶Ão]‚©/AÁù›—`êKPÚï¾Ÿ5™òXÿW&óN"øò4Œ0Yµ<+3_oU8²I…O2¼gŠ1Zyxšâc	Cï±Ze•ä¿¼YãžÞ'ïÐðl®¶Ê»þi£ó]=…ãyÀ‚‘1	°Vï3Û‡gö1ÉŠõéuE¾ÓÄg(9›
-`vÞÉ:µ&=ÌYyDó´Ò^þBûô¬B	«€SŽ>ãUa£"^¼ 1ùÉG -O›sº°8çb ‚òÌE¾@ðºgî#>c	É
-«ò2ƒP(›„•
-PDJ1¬yºœ Í¢pvë\’´LI5=¢¬ß› íí5=e­U+X™Â]¸„œœã»±8“ªp^™B/0‡êd0±<EœšÔT›‚c}úBŽ|—Ú€)óå-#Ü)Ù¾~!·Ê2²ÒÅÐl”e6° ÊcA/ÓË…áÖ¡dùl®Œ6”6lY\åû²| Æe. ¬Á×Ü&³Í[–ïÆÊHe†³|·¬Œt¡F–¯ÆÊà\LÊŒ¥ñXHœe.°2Âº²L	ÿdû±t –f1?–E&Ä~ÌÀX€a(l>VnN£NXyc(ßëºr
-˜‹¨ý­°Ì[@ÿºÉ8ÖÀ	ösC*ƒ{P¡›|õØÛY”¯¹ïñôËÂðüzó™«Åy>ûÄU\G'bÌG®½<úå|ÐUZ–!z¯Ë9-ß"0®ü|ùlït“”e†¼ånÊËLz£ûÎ¯s.À¶C'q\Õ­œ*ºÒwýJp61×†ˆlr;×Ëç¬«M$@ãNsa
-ŒllYÀ"ÂÀïR¹¬u6Ö8·…ÀÈCãÜ>ÂmC¹l4’1»eOŠ²ÆÍ[–Íëâ²ÁÑlÙÿ¯·Ùbòˆ‰y2“9†•ïôÁú…Eõò/ëŸŸ.l¯ÍS.‡ìóiVÚg>]¸î$ÑdÐ“”““O¢¯L.)ú2ª]ëë-™ƒÖcaNá4×ï”bs¥/ònn‰)ûÖ	C„Æ¾ÇRÒ_Ývc®‹`žûUÈs‘ñ¿P|†‡þ?Ôƒþ·h²Wú«™Ê¡¨|&BsQÀk–& 7E±¤êW´@±,M@G¾.Ÿ)úˆ+s”äÓ?«ì¬9aµ
-/r² úÜ3rM
-Áe«éó&÷ ñàÎä&ùn!ËnQˆà•qS)—„…˜6Õ¹P)WD[5ü²	Esµ©É¥cüü0%GíØó› )¹CzÇ'd¶zx&náþn
-ï+ªÐl÷:0Mì²ðô>èo@³áëÄµtòÑA¬¶PÈG+htõÓ'ú¢Ã˜˜@oòÚq,h«~òÄ+ëªA:ž2[½<·³uÇííŽû„ŒV¯Ï‚;øwŒ×Ï?£ÍëÀ²`Núµ“.×Ñm^–sÝHèÍF±0š¼v­·qCëò†ö ØxE» Z_7´ÑnX€¯Ú	h÷šhóF¦ü†vÚÆw&ÚºÑè”¼¡€Ž6ØdÁm:v#ÙhýF² [ÞN–~ñÑÀ@7¢…¶å'Ã¹Äl` .ÙBÝ¨tÊF¶ÐÑF³‘-ÚJ'Àld[ ­ßÈÃF¥à7²-€¶q”4ñ¦mg€Ñæu`Y0çn±n{ëäj £Mf£Z²‘N€Ù¨¶ Z·Q-ùH'ÀmT[ mÜ¨–ÒF¤7ª-€6o›-•F' o[m´u#Y¶…@ªÉÀÐ±ÜF²ì7
- ·‘l´a#ÙÕ¡¢ÑMc°MÍ2±Ö@óP®¢z¤•°T—É…¨Êèª[˜`S¥ŸVÞÓ9Öæ9¡IÞõA±šB†Úž§å× a[,à/ðŠmR]bÎVQê6(´¦ 	ZÑ0èê©9Š´!Lúâø]:äuh­¢á9 ‚[4AëDž˜žAßþ‹L”ìì:ÌÐÜ¹?¾+Çë8>¿Éj$¤1²¢ãX[mõ—7™â¦Ïo²A™/- Å³¶9!³˜®¶™=ýîAqc:»BW”ØâÉ‹Uþ`D	ƒèƒuýq±ú	€µ*6%íþxXnÀ2¯NäsÍ½ZQ$hn‹í_é(2Ï(|¿¨?å5¿†ccU»üÜ øœËÀhòÚqL´ÖohÝ°€ÑäµãhS©W´)ç+–Pêí
-èhSÜÐF¿a9 )nh@Gì†Ömô=Ánh@Gk7’%³QèØd+ ¡u#Y,…N@ÝH¶:Ú´‘,ÆB' m$[mØHýF¡6’­€ŽÖm$‹F»NËpÉV@CjnÚPâË	M^;Ž‰6ûm²–0š¼vm¨ZŸ7, Ôíèh]ÜÐZ¿a9 .nh@Gkì­/…ÀlòÚq´>o$ómƒûö äd+ £É|Ø(tâF²ÐÑºdÞn:n#Ù
-èhMÿÄ†ÖÕB`6yí8Z×ÉD›6
-€Ñäµã˜hãF26
-€¸‘lt´‘ÌÑ:»a9 £ÉkÇ1Ñ6F2ÐÚ¶Á–0›¼v­-ÉlöÚP6’­€Ž¶1—Þ¶Ã]xNÈlõ:ðLÜ›,¸Û6_0Ùêuà™¸KYp»c:!³ÕëÀ3p—º¡ÎyÃs JÝð®€.ßã†v‹A?…¿ÚÄ@Ž­b	XrÄÐUQ4Ã˜ƒˆ?bJÙFÏgƒg Ç‹–›ˆŽÙ¢¢£}°)2@¥]ˆêaj{\]õM!Ú>düa1žd0ˆ™U!P…<> é@ëKF¤DL(Äc2MF¼$j¤á—·h¶ˆÆÐà„ßÃXÎV	hx¥ó|bì'ZW›ÉO“²o}‰b=ýr7vÍàùöüŽœÒ3öp‹•>úÓObPZZ(Åø¨l-|#ÂË²G‹°• `±&Mí{§º—2V¨ÈÔ
-üm¿Ì»ìcžyÇ)È¾ú 1âž6Fuâ	}•ðt‚Œ‘21%Å‚ 0=CID¨?û ¹¥<¥ÿä–IŠˆåWyÆ¡+ÉX±™ “~ŠXEü™šS³Ÿƒ˜*ËÒt¶Xf`åZY²0­3bY˜ŸbBVË8ŽM&kj
-|)W¤Ï	Ø–‚)ÛWÖtxK±Âú6áml™”l„Sj2C|ÊxcA(ö&ybÓ„\Áf€
-A#[<Ò±EŠÓd1õ¬žü uj`UYòÉÙŽb;Š‰[
-CüÓ]Ä2•'Ÿ °A&ÉX*O¾LÞ•)°‰!b˜†’øY"°}D,Wˆ)²ÛÛdgÖêÄw²nv «Ø‰	ù ÓíšdE*Y'S/vßS¶vV§ƒsOYñH\)–%ÆèœLV)FÞ”ùõ–)&²«}‘?DÐÊ”Vã´y”é¬2ÙE& æÊ,a#"…p"8D-B6› 3¦Z>»À­’Z6Š@‹,öÎçäCù¦|’Lå£Šy*‹V2pY.¥GÕTƒöõÖPxC¸M¡ñFK¼‚Ãd#(V°>›à#D—[¶(À—ñ·óÌ‰Yf2+PŒEHV–¥ÆŽ¢Èf5å"”Ã€½Ó˜‚4,}´:eðÉ4ßÿôð¦Ð%40eéÁ‘	,ÝfAï3¥÷Ê!fƒP9Lûåcà~‹äË‡Ã€Ž²„uâÇ$‰<@z‚³e:3ÔC£	Iœy¸,£é¾ÅgI$dì@Û‘Yn4VjÒç-Wó <\©x£3?IFª€çXÇjÊûû¢¯¼,íñÍÂÚ5¥j.RQ¦déXn®f/;[häÆÂVáåEdNËÉÂ&UÀÂî«IôÒq;É¬áb`ëÆÈ³*:ü±GsiùÅßw³\¡*xÀ²ósHò³@t.‘…%[£ß:ø	|?Qð—Á{J	šGÕØ”Ód+<€ï’¡ÍQ$Kg~¾j‚Jr=‘«óIx‘
-gmá¨p]ÎïÂ}á-Å7é385\N…t[Xzf$Åæû§#J„iCÐ$Qžëf‘(Èº°J 3ù ¥O—TH@òÚÊ"Ò ,\â‹øƒ?Ïq;P~vQ	p’…Q7„*ªd¥U Ãý'tÑ]0…5À¾q!ÑÕUØ~÷¹ª2Ð½ˆÌ»*™ÙMTå]1vÅˆI³™Ÿ9ûÆœ#Å3-Ã!k)Ím™”È:qÓÞ“O‰­-uA¿ÌÝÂC—Ù¤ó™‰]ëÄgšMÑä…FØ9•àbb¿ˆ b&Ù$»hO¸Gó²Bà2Åþõ¾”°Y5öý²êDóÀšÁ(ÇÍÙDŽ©’\ÉA~þ–ä«ãXó9\¢Bjn°!,²ÎÆ>§Š2ô±ã8ã	%õÍ)[B^†#BÃ.»8;èBÈmZ7<¸§eÀ/¼\¶d¢L&’…±$Q0lg7Þ³µ,c²ëŒ	,N¸Î²0°lLs^q 	-l1#‘*ÓÂ?!KU“•Õfá?I±•+Ce[Ù¹wF¦|K¾ðy@…Ó@Ð‘ éæ©,NÙ‘‘‚©ÉžMÌh×8—ùH—²zl‚0'JíUÆ‰–'{6ã÷!‹–LoÈMÀ¼lR{‘°€Z¨ß‹0Ø"¯õ©õDéþÒ¿†ØŸ8Õ`vwÑ#æÈ¥c~Â¢žÌ¯]U™9/Së™Ó7Õ£9Ñ«&5IÒ”.„Péšn†;ˆÜ´8ªs5t…ï1MS±™ÚòòrYˆ]Û\ÖkWJ—…=µ×e=wÙ)C!î{*_tç¹û¦š=wéÔÇç~^U÷¹ó§–?9Ä4+Y‡És¦1yÓ´E&[Í–Éï¦…3ùâ4…&]­¦Ék»…~:Oî†XX¸w·ÙØzðùnÞ•G“Ã]n(l˜‹CÀLÃrÊ¡a€NÕMUw]´M«vŠÀiþvY™.–ò”ªÓ¨ž’7¨x6ú—Ó2³h-xQLùb4ÏD6~û5ÚËŸê)6Œ†.†ú'Þn/,¶†`ï­aÛŸ|[_Xþl“ó@ØþäÛÉm¶†%†u lòí’¶?µaµcrdßvxû“§X¬Ùþlý˜œÂö'ßöaû³5ŒcrjÛŸ|;–íÏÖ°ŒÉ©u lòíâ¶?µ¡•ýÚ[
-(ûß…›´ÿÝ[{3[7[7[x³ÿÝ[Ç0[§4[§¥¿ö¿{kQx‘ÆN?RàiŸÕ$F‡§ßKxcõMçb8îVÙQj ËZ´)ì~S-”N*âIÓ–¬Â¸âj`ß¬ˆ‰áÂÆ<E;»¯ª{I^.N}V>úÌ,lÜÄ¡ŸoÃÕ´6ŽDav>Â@ar‡ˆ6›¶¨G4yúBD6ÃSˆ2ÆX(ªeå‰~É§c¨>‡îÍÁq:nä„kÐJbåxœþ|â •ÍjSUÑh-¸µ˜æ³áùr"ü°³öÁêWˆ¬1Â…(©Ø¡ÕŽg2ª/–«W—ŒHÄ
-i
-tµ–ÅüñA':aóÈˆº+sY xåkBË¾Bª³s²8#èÓ1•	Ž1µ€AA¨Õt¬ÆÜ­å}°-Åf´/è‚"XMûö”´ò~¥O ¤æ åŒGµ,Ž§× ¹ù2þJ…HÞµ¹{8œÍNÁ¢–§	„ô<6„ÕF'6¡ò,£&eÅ Í“Tk‚®¢âiÜY¿ÅkòuÆjöz&¸Á\í°—íØlûºÁ·öñº÷Bý†ñ6Û¾nð­½ˆÅxô’Ûx„7 Ùòuƒmí£´y˜]8cw|7 ÙðuâZ:pÖ¸xtp_'®µŸB=°Ý€|>:X@³ƒd²?°Ý€’=:X@³ƒª$.Øn@%, Ñ7‘eìÃ½™ƒÈ+hvà"‹ò}`»ùƒÈ+hv"ûtPô"¯ ÙA9ˆ,ÚëíT"¯ ÑA0‘ƒ=6îÈD^A³w9([quÁvr‘WÐì Dé è(D^A³ƒ|9”ƒ¢w |y¢9ˆ•¥¬óq2‘WÐì@Ù˜«KÊR.Øn@£áëÄµv lìÒA:(z_'®µƒìJ<°Ý€²?:X@³ƒÁÆFÉÔÛ(^ùŸÛ@£ƒäìþÉ½9»Á
-š„ƒÈ)½…ƒÈ+hv"§rPô”"¯ ÙA=ˆ<ƒZOu}ÅJÕÕSa„³î¨šBÓù¼úþ‘Tí¥yáI'€ûÈCQç•‘åpÙMf~u{¶Ñ:Æ×9ìö-æéE9ê_ô¡´ópx1ä$ÔK1åÐ‚[‰YÂ8W2OÎ#cÂ@õ†oT,…Ô£¢8boéÔI9öÓQé)¶•#±LQU¦a0œÂ¯ª˜ã`¯ÆÜòSøPp#f·vX%ñh·õÞ¤¶5Ð˜)ËbZæì5÷·ÏÀ¤µ8ŒÐ02"¢-D%Ÿ"Á™ârV[ÂòØ)øðd‹Zî4fj„F:“ù-mdZz¨‘‹º-±·Ùu±F§µ	d*2O¢Qé‹aT¹Íb 2—&‚`zÜ'µOe¥DÛN×ÂÄ ›â­º‡BE×/M?È%¶X•ŒÞTø—èœ†çmn9©k90±ýZôf¼ÍÎ–/tÎ~xÅÚ¥¼@h©Ä”4ý=–Œ¸<bHb1šéÔˆQÅÀô©^Ó%õ-¼£àWBåZ E™…î[Ò~õ,Ú!£JÁ0ˆ%ÛÀ·òwƒm¾DS"'uWøðº4›eir Rw€Ø-ÖÃíP,K“ÐÑÒÐŸhÅr½¼²>+Ž¥ÁP¤2)WœùÚíú¬g%ü»Ïc¬WŒáÚçúL±¾ûÜ0ú+•ª»ö¹>ƒï>7ŒöJ R¯}®ÏÄ`í»ÏŠ±”+mJ¾ö¹>óJÉï>7ŒéJ™¯}®ÏzbÝ¿ûÜ0ú+eŠ»ö¹>ƒ¯ï>7ŒöJ™b®}®ÏÄ`ã»ÏŠQøõcÎ×>×gF—«}÷¹aLWÊôè4±%Ç¸æ3x$ªÄ(óÊ‘3ç+¥E¦­õÃU‘Z~"ÄYD¥×)ÉÂŽ5|\“qZédÆé°¿Nöu˜x)TKË	i”9|DGÝ §Ý\Í'Ä	[š‚†±Du³¹‘E<0‚æác3úY5ö‹â6²²NFÁ'DA¥TýE ÛDd4!8VpY“«?oÆÈ±Ë–Æ€;Ã	*º6äâL>2¥&ˆ¢œÓ°g¬˜ ‚èc€â¶r Å ‡ˆ«A…@m‰áÛ‚,dS§ö™-¢gˆn‚ð tãbDÇ	ö„(€*Ò£¼÷arøˆíY«á›NÐÌ>3Ò+¤Å©7è9!›–Ç”x\¶:œ=ƒç
-V•Åù¹ÚB¨¨jÂ¬("u5œ
-Ç$À·ÉžÆïu#è‰ÐItB°è›~ÀÌº3wãÔñ¼ÁDçgB“a¸£.ŒJ[$Œ"êˆ°o õÍÔ3õoQ{žp,sÂ»…äñ·Ð ´(²¦O	,Æ0gvUµÚbUáE˜UÖSëmvÿèò¾õù¹C²ÝÇuBF«×gÁ½{Å-bjÃtBF«×gÁíãŽÛùÓ	ñqÇ½@nk7Ü±ÖÓ	™­^ž‰;–¼ãÎ;Õo %o¸WÈÀvZÆ¸Sî’vZ®Ûï´Œn§ÜÄï´\!·ÝiÍN¹ˆÝi¹B:îPwZ¢FéÓ¤î´\!wÚiâN¹HÚi¹Bî°Ó2ør7°Ór…Üv§e0;ån v§å
-é¸}ÝiéËN¹HÝi¹Bî¼ÓÒÇr7¼Ór…Üa§¥÷;ån a§å
-¸ÝNKowÊÝ@ÜNËÒq;ò!1únWvÊÝ@F«×gÁwZº´Sî’wZ®;î´t~§Ü$î´\!·ÛiéÈú÷º{ˆÛi¹Bn³ÓÒÖr'Ä™–+¤ã¶yß—¶q3‡yÊûÎ\!{ãDf.Û˜ÃŠë4¾N\K­4±b»Í†¯Wï E˜¬ãh=¼Ú‰Ø¡ÈôÇt¦„S6ÄY—ˆ%]\t-ûOt¤‚Œ6ÑèRK”ï/ö’#°{dÑ‰¢ŒÖ)G ±ºÂS.ò«(bQ»AÊZ«JZ\‰±i[ÇHõpŠ«†GAr]õV?@†ˆúþ¥B&’“7<öe¼dÈN¬ä8sDÉõ-‹M¬æŠ…esÕYWôàdd5TÕŠ… }tS5’N%Wº©O¬¢¿Ûž‘w¤2Ï)Ë ?8òÄŽÌÈF3K/ŽŽKS+rÇW}Õ¤Ðhò9¾VrËE3±<5ÉêØt{Ò+Ì™ÂÒ–HWˆP„ÅJ¡0ïÌõ¹G²³Ø2Q³ãÎQªÉ‡"~HÓCîYuG“/=‘ÄÆ£IV,ú6+ròÓÊ+<¥È++™å(ØçsÕÉ°|-'o
-B¦5 ë×FWØ¼VVˆC7>xAáMpBb@ÉÃ<‹Éü<àq7Jµ´a¡yQùE²±¯ÍÞ–ùvU¡È©¡!ìuÈLyiÀœG®Qû“ûlfþhCÐƒYãtM[ùÌ¥jí
-éA¢ÄqåÜŒì×qC¡2ÏÒ!c<ŸßÄZâ	ºy½¡àŽXž¥AxDO¶°ìíäZ»„ÌoT#(•…Œ&Éƒ	X×:=Œ¼MM`AFì±ˆÔR1›a ZG˜÷àÒ© „Ên’åŒ:ïÈÿ+„UÖÄL8•"3÷ÄtN‰I(Ø«–ÐÌ\Ïä˜©UëtÈÑ”]ˆÄ\”ŽD*kÕž±i¢!Mpä*“g6N©„ÕPƒ|‹ÈìÁtœ)ÌI‚U#»Ü¢5ò¦¾”¼LTô<àça*ã«qÆÑ{“T—#-ÆD¯{ÀÙB2Í)àˆ‰¶Þïe ¨„•!bU`‘£%±4B-iÙëõ‚“HÑ.,°ó˜Ã°âL`LÕ"C	‘‚‹pÂC–ž|2}•õ7‘aK&#ÎS¢N§ƒw‚éæ	K3œÌ¬i\ ½X¶HÏ„ÂÖ‘¦Õ·(1¤±ì\™)¢„Á¦Ä¢cDnPBESÀ„ŠØvL¢ÌÁVZ¡)Šô¦l´Ô‡G!¤8Ë°Â,¬ðí;ÈLáðA„DÊ\5/‘v‘ÃdÈÓAÖX½K8O€Ê
-DõIfNã.`¥bOEœ2ä§HïM©"ç,#N€†²r];XBv¼°lä¯ZÊ¬–+'´Æ(|‰›²‹P1¡GyB¡L¤pë¢€mMGeÝ–ÛûÕž=¶/‡ÝñQ°pˆÙ3œ6^$eï™CD>´:<æ—  ælHË'3º9wæä@,Uæ©ÍI„/ÏsoÏéFŠtæÞVZ)a4I{{Ò^¿À½=)VÆÔ q_™›É`Ø}å mZ¸’ÛS9eòtÜXÈ„K®xÑ^}ÕZFÔdwú±¾q#tž¤›£ž€}"J^~Ì£Ñ;|ÁÜZêºk<tlBH¸Ìý=7+r±3÷÷ÜÕZ§XrÌýOQÊ6“Od–ÐîÉNàHMZw¾Ÿkäx'‚w5`ú&#c¬Œ¬³<@+§j²Fºa9¥“‰Âýë9ùhÝÙ-³Qû[¶FÏ+%R³ñoÖÌr£„tcôýTÀ(º@h¥¯¹ºèÐÂâ‰K­»a5í)dº0bz…rÜÅ–¾—¸ÜÑº8†ö¸/¦ ¤ÓÛg
-L€÷$f­,¶Å9E°7›BºO›‚¼Qs–u]h'x¡×/¬0kŒÖ,#@²èVÆÏ¡
-#æñ%·|‘C:nu-4Ð¿ÝÑ§kZIu%‡šð2íy™MG¿sjQMÔ`wl-C3ð"O
-‰@Ø•’2Ñþq<6všVþÆi› “®yÉÁm!X\¹~«¿,7ÔéHÉ»,L‘ŒeËúEÙXáþÆö•®'Â+Wp´}Kà\©HGeŒS÷­Ó´Pb®›ÌŠ¼ÍÿÛ)•™2xn[[
-Ó‰íeƒ‹x&ŠõÉ
-¬h9èueX¦îp‰(sÑ°¾¨UwOcC2Ê‚ }õÊ®P @¯~öÐwZ»gl)†,Ì¢¢KÉ“Q*H¤ã-“£ZØ\'¤ï…Ý\¨kcíõÉÉ-Ô¹È3–ƒå&*BŽ‹h`~¬,L×…ˆæydXð!”EÜ †S´nK
-«w-:Ñ åÇ§¤ÈóÄã‡ Éªg~Èœ€
-MbYD¬ÍiÂúÔE4[,"üÕž»€Ÿø¦
-0{nÊ‚wïCT­•×ç‡Låc~òª¦ÌÉ™
-ÍœÄ©øôéCE²X LZ”©IÀ¡s:¯ºÙ\S‹›ë¦k{nYa]/ää¥85È¾`§ž9v×HSÛºšî
-¾1¶JWqÛžº(Âsëu•›§oÑ®Z¯›¹éà4Ìç¶ïÚºÌë`]«O#¡òï;#é,§Y	X$ƒ5ukbebÝîPØ¸(Ì×LQ™ÌátöÙMÖBŒ¶GÉŽ›EQÐw3¶²2îÎâ‡U6%Á4Þ¦ÌXÍ¼)]¦A8¥P7ã"¯º‰©‚³K¶fŒ>¦øë&«_e³muØC¤N+xŠÝi-ïVö—Oª¡Ä÷x›•)ãòüº<káÿîs+€•òc®WŒË31,ïïÏ£,¿#Ê€¯o¬ÏÄ°¼¿?+FÔó¾`t×>×g`XßßŸF_¯ãµÏõ™|}÷¹aLWÊ î÷cÞÆ”ü»Ïc¹R%¿/ë6¦’ß}VŒ¨Ý½bDµïõõÖ÷÷ç†Ñ_)ƒ:ßxãòLþ:×öÄ¯”AoO	×0.ÏÄ¯³pmOŒåJ°òËW×mLÅ¿û¬!ÂVŒÂë×g`XßßŸF¿~¥`l¹ãòLÞ¾ûÜ0‚¬±OWŒË31,ïïÏc®WŒõÚçúL¹¾û¬QŒ{Åxñ/Ò»ÔÕÌçD§zVæi¬I…¶®®Qæi¼S«V GÊµ½eÞ[[•ë\GŒ"îÚ×ÞiÞšëœ_GËñóÒÁhÕµhŽÉÁ
-E%Wi¥0a3ý|ŠŽ¬a'‹¶
-jlé§0•Åº3êÝ1ä÷@{ÑBxkœkÇ¿aØŠ¶äT¤z(k4W+ó±ÐµÖ£øåfzÀFK«Ô•ißðP ÔB¥f“ww£–@×®ï‚L¼ÿ(Ñ[¦Ž\óµáD^(ÚƒƒÚ/zGTCD{Ñ áÿ_B½Ê[šêb:_¢jLŽñ_nÇÉñ‹)…ûý
-fàÀ'€ú€úTp=‚ €E*Áb!˜<ž/¾¯§ž¬å‚ª4üS·EÝîTP¯"Ï‚â¸>ªÐ‹F3b7%Ž2U„Ž~¹{ÿ&=¢½~îÔ&¹Žã„ŒV¯Ï‚;Ùwö;¦2Z½<îwÜ5ï˜NH‰;îÒqãàÇ7Î`\1Ý@LÝp¯ÛûwØé~ñ~Ç½@î¸Ó'/6L'$î´\!wÙi‰“¦RvZ®ŽykWÜÌZ¼`º˜–+ä/|KìZdr:”1†A%ú‚s3¹ÎŸÃm+Æ”knÛ¤Ç"¢J‡€õ™§ Àp\¦/-¤m:íšG€Õ`-x$=Æµõ	uœèkÎ¬òƒ‹ÉÄ
-/Í{½P¹¥ð¦ˆRp£ ýÕ’[2äËûàÈ¡Ã€Ý\»(ÀÛÉ5ßiv©uYÃÈa-4ê#ÎgãàôK}ª¡4ÇØðÕ‡v«Ý=bã
-cõ0þ\ƒsÍŸ{ŽS.»k:\„EfïƒfúŠü±°Ç}iaÅÐÅ®3zg#N.¤ žHˆÎZI­vþí…™›Ú\ÌèF„—öí#Žv'b“×ÂâÉûånª$à,9·$U;Ìòüº<SÞ,ïïÏ]‘)WŒ)]1.Ï,Gº¼¿?we+\1†kŸë31,ïïÏ]!4WŒöÚçúLÞ¼ûÜ•ÖtÁ	¿¾±>kÖôîsW¬¯”	ùÚçú©H»wŸ»ò¥L×>×gbˆåÝçn \)ÜµÏõ™|x÷¹QWÊëàsO±_Ÿ‰Án³`wÊør¥ŒÏ×>×g­†›Þ}îÆ¨[ÆóöÚçúLËûûs7˜Ë£K×¯^ž‰Á—wŸ»Q®ÍµÏõ™–÷÷çîx¸RÆåkŸë3£ çpu§ŒKé2F¯}®ÏÄÒ»Ï½Þø•2®íÓqy&†àÞ}nÁ	|jwŸ Q	fˆN,†‡£×ÅG'—-ýÂ±-l¡Û•ô´Œ¢±Îk FäyU^Ù“¸;Úû£ò|4—ö B	AÛ$bq@É™^m1ñŽÜ»aòë˜Å&‹õZÀ¦2Ðê5<’y“s‘Ÿ=äðG àO…E¢¡Œ‚“¨ÍËZ]¦†ã1ª+¢g‰‚®iC¶ 3M½æ³{»gRŠÇCpÆ’îÏs”=j¯kUÁ-B<=Kg7£_(5í|óú§â£75	·÷ÐG˜ò%ê†XªZ´†V+
-s#çªdµ6M-®Á£.àe¯&J .±†¼èiP¸“:žoÆ©ãM•»—É‚³„¼4ªq­^ž‰*è7Î+¦Èhõ:ð,¸SÝqÇ¼c:!£ÕëÀ³àqÇíýŽé„„¸ã^ ·³;nSwL'ÄÙ÷é¸ab]qÃ ºbºÔ–+dàÎ;-an˜NHÞi¹Bî°Óì†é„„–+dàv;-¯q³ØyQN8C©KäÑÀŽºÎÄºÀÅðÖ	Spzo¸nTO3EjW¿Œt:#bd›³¿uRá7iÃ_¼âö´BÃÉ•7&[äWò"D³¼¡7	A™¼^ Š‹Ã<}9—++¿ÄMßô¦ÈÑ~Ptl×gšQˆh‰ŒE
-¡´~]#d61‰’î+D²Éo²Eá
-2Zééf”“Ù£f¼^ÂÑ3Q²léÙcxÈF†‚<ëÃ2èc
-®´¦¨BñyÆrJ)ST‰EH÷VÊ™JÊ´	JK¶oqÉYAåM¸áŠC{åö¦ªÃÍ8Á1¸ýu˜SÔ2×’.ÈÀ[MaEBy×`";Ú‹g ÷WgúúÌ0ˆÝ/@)M·&;ËÊ7'§	/áÚêÒœ¿²&‚šþù×~èýóÛßÿsxüù¿E%Öc>Ô–5fT¹üP7Íè½eŸ¤¥GKý5|ùlûŽÐ–öâÑRæõü=M ÆÙFõ¸?½ýËÛ½9œÅÄp®O¿Èâ|à™&ýƒÓÄµp0Ë¬J/¿þûí„þñç·¿ÿÒê?ÿ‡ ôï,¥¶Hr\š?~ûY¸Àâ'ƒtWÙÄ†€ðGyvòoü?ÿçÛ?ýüJä„ó†x—Ê†cP„?h¡|Uá‘Õ`*±ãÆ¨¼gs?6|˜Òèç{ÈK(•çþÛñir­°&QÎ 2þ’ÉþöääF‡Ú˜8É…aÂ3è†Q»?!o?áI¡Ê1œòŒÕ"õ=¡Ve1ˆ»#]ÎZ&N‹Æ/sNž?­‘àµG]ãp=2±’æ“#§ÂæèÃÿ‘ª)³L´Eñ$|‰Î­·ˆV—‘[ˆ$y“$€[gE5±,¦ÜÒÙ‘ˆéÓþk™Þm4kž²Ø|zGNV+3Õ5#à
-ÙH“Ád™¸d˜Èå¥¥zøæ#ËÝÍ,Ã5œÁ¡¼+¢]šƒç¦"¢¯eÔ–¢À¼L«ÉpZUƒ£´ÈþÌ5ÃÍŽtáD'pƒ k0¢’<
-ÃV¡¯·ÜâŒ*Ç,ä‘£Nëøâø‚-ÌKFÝÃ£šGH±%ËGY–ìÍ©ºöpÂ×ÉgÁúBeÅÂdNÔj.,œJjŽÿ€rÈˆáà‹Ó4b„”ŒÔÃŒ9h†nˆ<Þî—€RÄ-l ¹Ñn"I¼T§°Ð¼°âLg®µ  JÓ£F.§åÓ3+tTTAÆ‰ò„'†äÇcú	–¸P©¢öcBúù`•9ðz8ËÏJñ6YYÅuœƒVâIp¹øæ
-Ž|´Ã€Vƒ°#íÞ‘KÓcä•â3‚n¼ð°"ÙAáš*‹C²#«RÇ„‹S“Ñ
-•“Fò™#L¦™õ÷å»p~=·æBÎ¤Ç‚¢à2+B‚7`S;¡£h“yáuheâºa{kçÄp(´áh×¨‰&vé×Aâ ¥nòù1•¬·×ølÄ»±Éé„;ì„,hŸÈ€pS@ÂÎœrTmKF7È Îeb§Ç¤!¤,öøJm†â…ä*c]àr<ìqÐ¦¯ŸàrÛãs¥$¸òÖ,Ó¾&c†.¶x–n@%§JŒ5N——1%·”lÝˆÔëŸ»—F†NÛöH„LˆëyÑØˆ˜óZòcî× G†nñ¾±q–´°àØöìàðïä'5V¬‘œW¢ÜyyL%k¨}ÑäeA*êúìL/ ÿ»ò¨‚òFôŒ¸g€“£qQ,1\F`ƒÍ--Yha*Ïƒ>-™|9pŠqjmáà¬HTZ¤vðzœ¼âÚXdB,m-ÒÉ&±\Ä"gP=Iyý"L[¾«ä2\è¹ùó›Œ“Õ¦[b‘…É¶­³HM¤ÑÖ¢klÊW0llÆ)~qkÒÍüÒ.¶Y×ÁwA­ ÏÎ²…4Q9,RÞÍ°ö	OXm£ƒóÆa^Á’ÆW1½Ñ”þ½ôFáÏšâmbD¥Fùwá†©O  v(à!|3_¦Ú1ËÒ­4aº—‰¤h§|c`ÙþBe$•‘¹/ëégËºAšÅÅe…9dOâò·e-:²NžekgX!©ÒXÜ­eš_¶’ó ûjß.HŽEy®ÄœIÝXœq$üAžú¹-Ó"Iš±O‘T×W[A!å¹ïy·ââŠÉ,«QãbœÎH4“¸P…¨“ã0k2#%bð%˜±PIRç`Ú4ªî²°:Z¶Ì½œ‘™žZQç±¥0Cm
-—…­Í<ÂÉŒaCs¶#˜ÛÂà™ÉÊN¦  =PálC+œA[uPÙB h•n‘A€AÿLiÅd]hª‹\S7ËtùÇÜ_Þ¾JJ@-“¶ºDE˜rJ\<My¬™È‹À~5Àèß"ógÏõ`rjóc¦Æ1?{ÕMæM-¦OdéÚNŠcÊS×‹”Ú8¡kPñ b×´ìBî¦“©‹¸¯‹®¼=æê™:^_gþ¢öé½q®Ü©_Î%¾*¢c/Luî˜©ÙÎ½µêÀsNmylÖ©TÏM½ªßsûO=}r‰©ÏO~²*þ“óLar¨iJL^¶“ëMó¤sG¿X1ºaï(îwZF“3Ojáá‹­µpûa•M¡0Œ·Ez,fÞ"g†A¸Ê£n8®‚kš˜‹ˆÆè"
-›ÑZW¡ÙÌ[Š)]‡!¼È_ÔuèõW‘q·DàgƒVé¼V@;t4› mò—7Ç¾¢Å´Ð°Ì& £õÐZV´Þm]/ Å²49 ­Ú°u½ Þ´±lhóÖõhXby0Ð–d¾n]/€†¥ì³R’³‘,Ø­ë X–&` õÉBØº^ ‹7ïÚ¸‘,¤­ëÐ°Äð.` ÍÉp–ãŠ¶îƒËû¬äƒdÈ£¼ ÅË;@±,MÀ@ë6’E¿u½ —Þ´q#YÜ7xÜYÀÒä ´y#YÜ7xÜY@ÜyOÜ¹“ ­É#Eß¡	“©Wóþc\ÚÈûAËr&G!E‚ÓÐÔWKy¯0u­²Çö9lT<Ñ.Ta08/½ø1Ÿ¼ygyqgŠa2—§Š‰cÂ&K÷Lñ‚L×³<ˆÉ#¯ö(’¢3%Z1j
-ã˜%
-\Ä¢ŽTTD™Nh6ÌðB^œ£÷%!‡ÍU™@‡zÆ;ÛK6ÔäX•"%Ã,wƒÔô:x^EÙi«÷%–L„bbX$Ï3mXÄ%ÓŸqm=’œ1t€±>.OÁõ="<HsÏ¼­ëÅôfT~d/v:)®#AN«èwUË"ØTý”&¡ôÇã—ÛQjZ#®cmL$ôáãgõÙXdu$tÔH_®_‚‚û°¢…S#±(—,J\N"ÄSóyéµ<D3EÔZžÉÇ}côïà–L¬Ä¨~ ø8Ð~X€ðøà¶–©±—èpJŽarô2m¨‡B…;j^†SP¼R†‘EÉƒ‚¨×Y#ÏÃsÂÛõÖOÝ“—žâø``èÄb&w Õbè ð}‰tAáO›‰·ëÙÂD4ÍÁK‰£p9úØ{û'è§q08@©=î ÁÜ€fÃ×‰ké 7Œmà¾·Ûh6|¸–²Î]˜ø‹oë„ŒV¯Ï‚»êw»Û™¼a:!³ÕëÀ3q#‚y·óvÇ}BF«×gÁüŽ;ÆÓ		~Ç½@î”÷9ÉuùÞt­^žwµn‡»b:!³ÕëÀ3qã˜Û†Ûå÷	±;-WÈÀíõ{çÇ¹Ó	­^žwòû¸sÜ1ä÷q/»ì´Ü	”ºÐˆ‹ÉþjóäP×ÖéÒÃëè³3X\ÓUè ‰¼pë3Ã	ØæŽîáJQPQ˜ÅE’F
-/Ntš _[<@.¼ÌŽn€¬£Æ¹cd|£9Ê©+JQ}pü¹,·@3!‘ãñ%4œç(ûy ñN€ÇÛxår²³ÄvÌê;¹hˆŽKw^p‚AàfTá§+F¯:è‘ÉÀ“Ö¨¶“fí[þ5êùË5e§å[<*h$Ë×”µìLÐ»$‘Ìµ<ÑÍ(U±0ÐàÔ	Š[î(Ûp, 0ƒtz
-¢$<ÌjQÐŠd|¨:¨P”è¾µÞiðÌ±.1¦4ö´Û—êJ¬8Bg-³A˜àï0¸e“F}÷,Ó›#ox»&G‚qVÔÕC¦§^‡æk÷,^…3ú½qÚ< .TK†D Ãœ)zªPôšq4oŸgÈš‡]ŒÖÒòþQCŽ½— 1s¦ýôCÒ ÇÍ0UÁ<fN§SÜÝòº@lÓmÃ nØfÇ¯¸HÃ´´:!7¢]pû}+¤aZZÛ¹·ÝG°B&wÌ’ÛgRlÐÊïÅni¸qü…¼.ÛìÒòÈÀwZrQ]F°B¦¼ÏÒŽGMr³Ûï#X!ÓÒê„Ü.í¸mØq/†É³äö™„ãÃm¸…'oo­†iiuB:nŸwZú´`…(¦µÕ	¸cØq‡}+¤aŠû,íxÔ#¦ß'n[.×Ò0-­NÈÀmÒ†Û)gXÞZ!ÓÒê„tÜNùÐŠ;ï#X!ŠimuBîXvÜaÁ
-i˜â>K;âª<ÕÆŸªë‡
-PqMY?*F:z“…iÃìãñŒu6Á¹ƒ×Ø‘£Ra5äpU:wˆÃKÎWqËÝÎ¼s“ÁV£ã‰ÑjÈ‘l5êx3HM§´¨¼‚ˆÒ {ö3#œ"Ê(ž¥]Öh&JCAÔB”Ê¢vžqË,;0nYy½ª–yò•Uaìd½¾XCç"%ll‘ÔëjqT£E«,¢§*òð»Ñ³7£Ô\V$‘"ˆ‚Ûó²è3LÄ­¼³qIV&©št›`î3V)gAÆêÑtO“rì±Ê€ú°A+L²H*¢;ò•‰Qe“÷ÑÃesä8’Á³©Ð{jø 9Ù³ˆ‘(‹À¤´N¹Z¨€ZVÈš¤Œ¹´Œ7†µ
-|‚¨4¤Áh\Ö¨ãêzd¡Z&ëXóŒ»a!hrüBÑ4W©yâVv¬£‹»Žp¦sËâ`}Š#Û³¢×;rº‡ŒV¯Ï‚;û7¶ËÓ	­^žw¨;nŸwL'd´zxÜ.î¸­ß1wÜdà6vÃ-ŒbÃtBf«×gâvy§¥K;ån y§å
-¸ãNKÙ½;¦wZ®Ûí´DqŸÓ	q;-WÈÀmvZÚºSî„ÌV¯ÏÄ(õ†;í”»”–+dàŽú½yâmªÐh÷:0-Ø½ïzg\7 ÙðuâZ:0õèàšÔ   Éf†‹ÂâáüÇ5á9Gaš× ü¹ Y!àÊÀÎ QÂƒÐˆóc®/‹­•ˆ ‡£hmÐ),ª7kÕãÃVòy±­EöBÖ*gŸY]¯‘¤HU¨6æ¿ Úia’*²xR¥ŒÂïL@ >4!%ŸÏò O1nò‡bÑ3TÏ±'B¶^C8Ýã6s/3‘ô´ˆ÷ð¬”§s±‘;‡ÙE¬("L¢ÅMëŸYO1¡bÊƒþp‡tÖ"£°gmsdZ@?ÀõI	™"ÍrðM?µ¢(oÉ*o²B~Îï0gÁÂéÑK–4kæª‰¢Á‹Âó‚AÓ“n†ÙõQ3êÖ=³±†w"£ ­-ÄÀZ›¨_ˆêwôÿ¢z´°”X®Mh-V~JM7;0q<¢ x?*b"st
-4f¦# °
-nAeÐ$à0”-.¼B˜·<º¦àìÃìº¥Œ¹ŸgM‚¥n‰hÊÈ ö¤³Ê²]ÐLÏçÌ!Àß‚½8Â÷í©…ê{¶A{Be@,ØS†²>dýqL%ÑOóÄSn‡»‘êálªðxò œ9•yð¯f4ÁŸú@f®0DÆª=€»QßcÛ `âh²ÑøûÓdV>Ä%†ÓC ³­Ž¦ñ¸¥ u% ÖÜ3"ç€1Á§$ÀÈº;™ÀlÒá³ŠHwò‰hHƒ Â€V¶€%æX±§½%°”Ä’3ÂN@äÄÏ+OÔ Ã'°Ø}lÀÌ¤^ É#j¸Ó[Ö)Ú5•P.“W},ÍO’#B@à·FïM£l*7k!¸ä ['XÀŸÞ²ú'ØŽ¡ŠŽë-¡°ÈU“5¨.ÄPN~‹&‰»Oo €J§5bAä±ã žlÙkV‰€b<bËÔFÇØ\{
-²GÅ]™8f®¡Ð’˜a«§Õr—
-	Îc{(æ#C†r‘érL1&3g9Ydó ­DnÔ)H¼¡ò²ë/­ sÁaÄ)=J›áM‹˜%Õ1î|Š5d#°ÅPÎT€±¯Ô-\B8ðípxÚã[„™ÙY>A#mkËD6\?j-b¬Þƒ5x.€„ºŽ(z‰K×e‘éUµ&áô<*B!eÅ'¯}!‘bðd«£¥qæÊ¬aiw¶ÇùkÃd¤º¨ï–Œ(4ñp×›Uœ<VmTòÓú†áßD]õMÍm÷¸L/³8.€bxaQ1ªÏ%3eX—ö
-Uy@½HÁlµ16ÂIf“Òåß ±1‚iÄ9cÔÄZ@$ÙA€6ÂyJv°|Î*;X& ²ªq¨¾Ï NVL¡‘}™ÖÈ‚Íq%j™ wí$TjE³°¶ê¤«lù®ä.k RaA_/b÷ƒÜ\X¶UŽ*8pÞ×àyÂ´Øë\¬	¡–á\Ö:RÐŒÐ±PkÌ@I¨›ÅbT•ÌÀ=ú®ÂP¡×d^Ýv *ÝBÇá±I"ànQÆ”Ì`Ù×Çè"4¶ÎP]Vt0e¹ß€“´lÔù
-Êò—Lôyð !ü¨çJ»Â¨Žº3¶¤µ1ƒÎ±°ªÁ\hêÉ0QmOæ9Ø“µÆêÆºl@¡…V(ž,;¢6ÂÂÜákË" K,¢Àö]dDÞÖŒuÓ„¨ ®°.ˆ‹YAm¯yàMháTY…b£YÁ]º&K<†Uâ(:¶ƒ’pHÍHó½p¹ù©–¸ŠbÀt?²}Û ëÞ]D;TôEôGæÈNÝ@KYÁ—"%ŠáYÁ‡z¨q#Ü2à<áÒ9‚e`Rn.!03¿|Ó×yOÑúåpAÆe’Ú-sDÈÉôšÓ®5}Û¼Ó©‡¬öÌKÉ'‰Ó>nZÂÑ-$ÂÉí…ìAd¤Ã²>T)2R`ujÜ´®9ºu
-2ÝçòDˆ"Ì-ëi‚!±èô²äá(‚XŒËî‡òsÝFpÚUË†ƒß	2Ù/[3XGáí–=Œ˜§7åu·£P¿ð¸· 9„…ˆ†Ô”Œ•× Š‚”+[BÞ½(.Ñ/ü©¢ã6YfããHþäŠÁ—bö	˜7_9-ÒöµL–Œ(Cá5*ƒuÏ^˜<ÒüeŒ`1C ÆºÅSnZ¬d‹ˆT”¸¸J#À ±úEl!Œ^„^%Ãí	UP¦0Ô*·œŸ!5SÝz°€B‹,&ŒFóÚdN™Îv‹Ð×ººÚfj÷Tæ(V=cŽwª$ó»¦î2g )9LÒšs5õ¡9§Sqš³¿êXƒLC›ÄœJÛ${×ï"Ûöõ1UÁ¹ŽºÎ¸®¸®]r—ŽµÙõPÿ˜k¸+¬eYíS³»bªÀ}÷„EWnûÌ”¡Uë¸ûŽœ
-øÜ¹SSŸ[|Ñé'/˜ÚÿäÓLèÌåjQL64É®¦•2ÛjÐL8mŸÉ*§‘4™êjOMö;M¯Á¥§‰6ÙùjÍMÆ?í¾) º8DI(Ã–$_B§›)›¦y:¥ØjÉNy7Þ)§u<èjHOQ;mî)ŒùÁ3¾aˆ81øDq{Ä°èØ@p  ´µŒ*†/k¼.Ô‚ÞéØCÅ¨ÒÁ¬ìë[+¤aZZŽàn·`…(¦µÕ	¸}ÙqÇ}+¤aòû,íxˆ;¹wÞG°B¦´ÏÒŽ‡¸ËNK¤Lo¸ë1ÊrÌR9i‰\™+îäö¬Å´¶:!·ßi‰ôäwØG¹¶:!wÜi™ò>‚Ò0Å}–v<Ä]vZ¦º`…4Lå˜¥rÒ’—Ð_pg»`…(¦µÕ	¸ýNËö¬†Éï³´ã!î¸Ó2œ!ÜcmuBn~3ä·÷ÁòÁ=ÖV'¤ã.f§e98C9¸G9¸×Ž‡¸ÝNËrp†rprp¯qÇ–åàåàåà^;âÎ;-ËÁÊÁ=ÊÁ½v<Ä]÷}YÎPîQîµãîêvZÖÆüÄ½@S=¸×Ž‡¸ÃNËzp†zpzp¯qç–õàõàõà^;â®;-­9XÃÔpükÇÄ•±;9/‘„Ž§8+Ê-(9#¼3+ À÷E_EÎˆ‘˜BˆÝƒ!ÌTOœlÍŠŽ@h^_€«ý$”ü$VÍ5²ñTœ=>D¿Ž	»¸˜Z¢£*ûY½Jwü= f¢·Sç>2qUqmA5xÀÄÀ0ªËHRÎý€ûq.>jê<[&:ud™:–uÚLÍ7‰bh5’á¢R€9oÕ6\ýŽä~¤)Žj}V»XáÐÅ:I9Ó=ˆb2ghð$ä5Ói*½A×†ëÉk/ý£Ž.XVD~‚…ŽVNOy”&¢‹3ËwZZGÎiHHÌ^—‘?³Ç”Ð‚7çhõ+²EinØ´8~†šÙüÔ²£±*&—a=^S/­åx †oóP„‹=-\I/uZßƒV4zYè T,Í1h‹q<ùnXÇØ1Ú"Ÿz§ûGŒ¯C²Mi] œ¿ßFs_'®µƒêö`ÍnØn@³áëÄµt 3qïÀ•£ƒM{+hvÌÑAt¶P0GhvÂÑA>VÄ(…£ƒ4;(‘qÛ†í4¾N\K¼ÆnëÀ½ÙƒÈ+hvà"?°Ý€üAäÔ:Öï:
-Øð"¼Ï- fQÃ9²Lë, ðƒ‹M=uÍžX%I3’'í¦Â3"(ÖêV–v¸R'ƒ0ï­XäY#OÑ±è	`pÞÃ‚WÊõí¼¶±\fòÑA®lÛgà°¢°JG×k."D¢$ê/À™*ë®@FXœ›¥X˜–S¦™µIG+jux­Š L©<¬™e(3á|²Z W§\Õaá·Ücµûh›‹F:(ÜëÎD¯Ÿ¼=ã4*Y®|§U/Dúð^BŠi/öx"7,h\`÷ã ¡Â‚Âñ~ÄÊ[|HcŸ{h
-N-A«ˆCôåÇÜbÞ7£mj
-ÎÅ²B+«/ ×”»Z¿*CËòþŠµ—·VHn•ÿdà–Õ¸áŽûVHÃ´´:!wˆ;n¿`…4LaŸ§jãvÇmö¬†É³äö™„±ÓSVÐöÖ
-ÉÍfØgiÇ£ÖÏNË’ö¬†)ï³´ã!î°Ó²ø}+¤a
-û,íxÔÚÜiYì>‚Ò0¹c–ÜIËbvZæ²`…4Læ˜%sÒ2ç–¼¡åŠ;í£\[;î´ä»WÜaåÚê„Ün§e>8C>ØÇÚê„Üf§e:8C:¸G>ø×ŽG½Wú½~â>8C:¸ÇÚê„Üq§ejœa¾µB¦ƒ{íxÔ[¸Ó2¹}+¤a:¸×Ž‡¸ÍNËxp†xptp¯zgã6ßñàñàk«2p§–±q†ùÖ
-i˜Ò>K;õ†ï´ŒnÁ
-i˜îµãQ/¾ßÇmö¬†iiuB:îPê†;4Î0ßZ!ŠimuBî´Ó2Ä}+¤aJû,íxˆ¹ù¬rAU)£ÄÙg&QxÔù TÌPëô(p¨MOJÙânfÇÓKš~BšÈ€*^LË©8ç‹Â†8]ˆkÒ|K­H•a%(tÑ¶ÑØnÁÃTy¡¤å9½&‡°Oø"ÇqÂÊó‡¢z&ˆ=rp~—)	¢2BgÆ…Íšã€x‰vñ(ézN‚k=S-Åéµ¬0HpU9ïÎ«§ŸP4°«´åÉoD™ø	ýYtÞ¤!Ðs”ýtcfš.kH¸³ù3ÃÓµ8&¦a- >‰@væåêù»ØBã–§šxS É84<ôsî.iz˜Q[”Í]bUZ\è-6Ha7ÆGF„q9œsjÅ$_[¼ü%
-raŸ£nby|î^'ˆ†ùo!£ÕëÀ³àføú‚§k®˜NÈhõ:ð,¸‘£~ÁwÅtBf«×gâÆ>ßp§¸ã>!9o¸WÈÀýŽ;ØÓ	‰~Ç½@n·Ó‘öÓ	q;-WÈÀmvZúºSî„ÌV¯ÏÄíËNKŸvÊÝ@ÊNË2pÇ–×4… \ œ¥xÌ(Ä‡4{Ï‹7Âé8•SRí,¸åµåÏáx}`	Igl_p±I,º¨ÈÊìÏ3¶Aâ¾|VÈ_˜·£ušqœpËg&1‰©‹$lÇTœå%D•Z0JžßdBé>ÓÜ2¿àïMpc šråMŽh¯3¡}‰šÛ„JÎ™¨ÔL·dÇ´ä€›jMÏŒÚ†©|—¼"_¾ëPbÖsæ0èQ´Ô“»#‘©Â=‘ >ŽÂaÌÐHwdÁE-ŒQ3q•/ÝÝðg‡Šã"z?·Ëô Z\”’“fÒý”œ“æÇ¡¬FebŠ|nõ-]e'Ç¯YEQýÙzž!Z©¢¶EF±*¦ZÑ@Ø‚¥¿°4Þ–2q4ÃP%Þb€Ê+Y“*’æ4O¤†–Q‚°lJÐœsøzøãn÷¸»…KôË1ÜårŒ ó¯Ww¤~u‡ù#.Åÿ·üýÓå’ÔÑ|÷/É¸ï'j?.!(ýŽ/^²Sv„l[”è÷ß|Èw\×a²ëãYô~”þ°Ü‘"DÆY»Š˜ÎÆ™G2z[
-îrsÐ+?PúÔëÉœH\é‹¸¾é—_IhTnÍ%Å¶4)íD]±u¡ôÍÅ-úp Ê–Ž×+R¼k·»àN• 4AcÀH£Ï_&1Šx,œúj+ä§FâŸšŸUøÓo ñ»·Å`ÚqnØù(¥Ï-Í+éššP”¡¨q»-hù¹ôlL Š;°Äs»ÌçÕ’šqÿn™'7–«„~ïŽ?éd¥±vá,Âq8€8YÞ"žCYM¯ó7gJB^&^g{ËšÁú|×8ãrÆóã:#ÔÁ'±+íºk?+€)–#x(\'óÎŠP¬ç™£°ÌŠ¾€YlƒÐØÎ¶V¹ÃßÇfN?Ž÷‹é‡}Oä—ûŸèüÓ×nÀ¹Û…I¢¬˜yïzªÆXßmóý!,Î­òÎ<Ê÷2÷[<ÂØ‘Ã:%;WÿÃoäêøïÉÙ¿ÂÅŠóóÞ.™ÙER)0qx“àÑL–ŸÍGKqÏB©[Q’”)ß/ÈßC÷1²<µu((²Q½¬Z›N,'Ú7ÄIN¶Ó	Çûx‡Ï$ÈW|Ç„6b.×«ßÊÒK\zY.bã¨úˆ¿e©¡¤_ür¯>V4zU 0ü©ýÛVpH¿QG|W€EPB¡Ìû¼rùÇ) ¼æs¬ÞÚ°øþþ›×Ç…uÿ0ŒŸÞx¨,vJy¶Ëê.…Sæåseby?Æee”ÐCYâ ÿ‹tpá™_Æø[	çôh1î†^¶’,#‹•üÓWaUË¤<PVQÛ»UUýCã›N7ÄPc¿²¸aúêý‡Òª¯î¶a¬ëèkcÃ1ú1åß¶IódC­î›¶mÒ•GŸ—+î}¤'ÍºXêÿ›Ð¡H'¯Ó®t®óâ¶¨Z×<žÕÿc,D•¨*¸@jÛ£pŒxùÁ¶-epˆjCâ’‰r—9X}««ËW\×û¡ÝüºÝl×yse±kõ6~Õ‡ˆBxHéÂÉšmÿ†Mêâ/©ó¡ž.ŒÌ"")„Ü²VVõý!¸ðÎZÛÔþí^‰ö_¾×6 q¤¶IÖwÛ~üMºÏ»‡‚Sˆš=„Š2ãùÅg$Æ°[µü¦d3+Q2œÆ£BÎ¦8<p÷FÏ«¥ö!è¿AÓÇ)@˜{"kPˆý{ý;4±Ò#Ë0áz³èv/÷…®WÙ²2‚v]£wÇªþŠ·×@©Ÿúõ»Ø%¨=$†]%Ð\©0¨Qy›ZPøˆU}Çš¤Í]qD‘¯ÐNÇ=Kžß¥Ehà—ßZ»Ë"üAø¾Åžµããhºßfz|	ÝG¬B\ŠWTé>¼ˆñ¯BV‚DW5n÷6G³¨MÝ˜\ú+X¯£ÆìÐ¬ê´<§æÓþ‡þ©I?}”Ú‚KT|tºæù`§Û1áÂ›Ê+×Ñ¾ìþæ Ûà–(®_TÄF}Ô*èJ+ì~bˆˆhã-„˜–~V\—=òá=}Ïcš°Üsý^¦}‡çc¸vnFjöû~I?šk£:)õ}œ%ùÚŽù®¢ã†/mAõüC€›6SáC¼@ïËn@¸–&Ág¸Wwí„êÅ`(ÕP¸Ø¸’ÑéQuxÇ“Q¢÷†›æ|Å1…\ß±\ƒëlfHÔ(ÃJ"ˆSJ¯kn°;à+¸šFü¡èµQÍLðÓ 6kÖ~öæ›í³¾²"Ú$òGvóéùA¸)«:ž‹çnNñV+_nëé/ÜOÏ—è…?k‹ØrC.¿ùžúCðý*KËÐÞ^Vi*l¦ï4ø¾‚ñCô¯CvÖf÷Æ:] Ô^s³Û?Œº?¿¢1 ·‹>ŽáŠ¡eñaîJ˜Y¶ù(…AƒS>š¯,¡M¿Ç=>‡‡Ÿ3Ü	àÃÔBzoaÄ¯ô€Ý‰$—ÒßÊ#Rv¢;Âo¿CŸÞFÍËŠUîmh’Îå”ƒÞ$*³Æ¸]ik>òe¤õµ«A/€¹ÖoÛÄ
-G©7œx\Övý6ŸdŽÓzëJú{þ.È¿Å×‡sûïÑÇo1|Ä&(VˆÐrè£eÆ qe‰ð*ÀZ4pÙ1ÐW¶üˆäê¢°ø½Á’þ^të{;¾Ë¦ø}ºûŽ=Q‚í“ˆ£À¶þÊ=qÛþ#öD	Ì”ÆMW'HÝ¸þ»«ýË+¼àŠæÍï±Û‚°ó›^¾añ¨\M7ô4‚ºª
-=Àçöê†ù¦ZõÏuáYµIèˆP&‹j“D‹$²À$Q­/n¯ý÷éïý~L7ä-XHG®ÁU=¾ì»Ío‚ÂE8âN1ëú¨"Ã}åsÎ†ý÷ûïkû«~÷ÃQ.gž´ñÒäzÀÃ.dÇA¥ftªb–‚sê0p<j„¶™Ú1èöÖL:Ð]¾ô÷èL¾ÝiBû²#P–Ïj¶á99¦ãíõï3ÎÓà=þ£ÞæÎ6Wxî¿Ý„t~ÆAèõk	âzN©Œo<¶Ô@ºa¦¹†
-•nù79W‰Ìi¯ß`èoe·¼µáºZlÝÓ§·ªaì±åYÒõºë;5Ö.»¡j˜{´­ç5„È¯½â~ß½é¿¯í/_þãQ/)aís¬î)TÁmµo>‡¦o~µÇný±hA·„h>ó§ÝƒYjUTí•*îý©®l±+j<ÇÛ7nƒKƒ~Ž>£ºaÿ,AôGM"$»Þ?»ÿŽ %Ÿ/í¯#ÿá¨U\F¸l“žÆãCwxDsçí‰«™š#OuixìíúÛ[çáûÃ1BÊLgôöbFì¯5 ¿„çCÁÔ/$E°gSz×÷7¹:š¢§¤t‡køÈà†5bÞ#³;Åiù 6!ÃVSˆY2fyýÌÀ…¿Álþ"vùH]uØÔò²n\¾|´v%ß¾3ñ\ïöñºf·Î(JìZk~åj~ÉG,åŠƒ«Œ½á˜ê¶”³ùûíÛ½•%UXø½oEmžŠ–mÑã~ìã¤È»°Çu«Ü÷om©QnlÛïHsû…ülÈïZ<®ÐÊPš‡ïX8'‚Y4µ-\¶¼-šòƒë³/>`Ñ Mèžð!$¥[~û.)ø%4³LóÌ åb[ûñ¥¯.‚&óüm/h2b`5MÿÜÏl…ü–“­“¥¹ýv—ÏòÃ0~jIÂãðXq8à„Ãëwð7•AZ({Æ	TßŽFú“»A‚C­ýÅ™Mp`<òž‡þ>ñ®XÛnoÏ4vbI†cÏoþ–fB6|£¼³Aí¡›ÖÐì[„o¼‘nÓ½?½P‡¬gºà†Âw¶:X°oà–§—úÉxÏÌ÷N|WïÂïÒLBÑ´H.ö2,}¾xT­«ùbÔç¢Ö×ÞpünÛï—ö›óôG£þô–,ˆŸV‹þêé>ª_pÕÓ©SO§N=œ:ÙœNúE÷Ñ‡õ4ý½Î?²&ZáòAZòŒ´%™8ÂB”é’œl$¨xÓ,Ç˜qL›%Ñ]A˜Q¦ID®ç›1ñÖH¬¹Š†€ùè0Ä]ÞAoøÔÊÂ„*ÏAi#½û-WÜ¿z&€EÔÉ¬hŠG'ýóå^<šÁQ.‚š0{-„‰ò€žW#ðÎ@­2Nóá„[JÂ‹¸xrÂ0,a¡xVj«2ãö q«qÒüó$ú’ÀÄ.¸ƒ%YœôC>`¢|mŒ:²¸cP1Žª:BQ–¡–­ÅçâŠX\"=g¶–Mm.ó¬¸õf×j?JE]ÛÂËÙY2¶øËï¸­¢ÚÇ«òÖ¡›÷/®C³ÏœúlŸ O3Ž;ŠFâûÇòöOÂ÷¨uÐ§EÖ¢ÀdFÛ<·éCâ®ì¼Î3êäXœìZ(b¤†¹Î MéJb¸éjà7ŽÅ€Ã—ÁÅË¢A‘	ïÝç]Ð–ˆ».’‰~]¨,Óœö%Íkèe#¬‹¦ì¸6Ç&¡Ê»|ÝN¸ÿ"ö=6ž‰çþ4‰»-æ¯(Î«ãj8xµ’oão½	Ì…`\ë­«”§ìØ ãjãG…!]¾v¼Œµi›j‰Íeî
-'™ãç$cŽU÷Â$Gá,#0É†JžÄ\ŒÄ.ÞQ¦nKg²-.ÔY–L‘™Ñøuq	,Ê
-.mi¶e(PT•Ö¥Ù–kAbƒµ~]Ø¨Z"ÛŽ °e]?–Rp	SqvÝR”tJ­±÷¤3÷ÄØ¢Å=¦Òß67Ûi;Å¥“ÁR–áÖ£Ã®neRúyºü';k¡Gl”ë-óEöÈu¢3«Cî|t’`²ÛIªÉ˜W¢N>É?Yý\&*Øš*w¡ÐäÆ\zS¾è-~•Dm1×&‰šÌÒeŸµu“mm{ÔU
-¶TZk—sÇ-RµíË&qi?ýMÿMÿMÿMÿMÿMÿMÿOˆáO#ÐŒ{ÓY¨¤yU @m·cˆvº­‚O‹/‡ž…Äø3#ä¸ÒÇnšó­, ß^¹`¹€ÿð>±LT2p1èßš V¶?³Ý{
-NIýn Knþ³kƒ÷_´Í57ì û&W»}àž¨Â?K”L®ôÀ½*õ½š:Ýo¯Ñ­\žZ7.ŠlwEf¾\ämÃ‰KiéãÇ5»ßZåí}\%V¨Âwfr¶â7ØÛà×â7ßRÐÎI×ò<r¨Û„Ûˆ|?ð}I]å=ú¶
-
-÷õ ¹_µ÷â}œ&mèÖÍª_–yTêÐÃ÷u;Üö]S°ž£¿;ƒÿÎ'Æ/|büŸˆ„Ã^_`;}ï'ŽO¨3fx—§1–½™«ãkgìR¯‰#ZAß•¿êÌGT[ÂOÖ§YŽ'¯¾ZÂë6r˜Q2ž›Úˆc1ó)Í»ð×Î$—>€|á|{Õ¬¯D|çèe2-…¨ØÖv=úéÛšøi.ÓËñ¦KÎƒyçèçú?2‚
-eÄOùOaû¦ßSFøÛUWàe]‹®°6oºî¥^u…†åNùá@¹Ö«ás0½Niý3â¾ë‹:¢`WUƒ'äeâ®%ëŽF¼éøUÛn©¡?©fìÚˆO‹¨åÔÓCtnÙ-‘«âp•™-ôxfeñ^…Ú%YóÄþÒwyœ ¢ ñ€žx÷\ÑßµãùÅ	—[ãWNk+‹8ÚìÜL_,:ªˆ®_öA|zó¬Ø%F¡ÖŠ„ÖÊ=Š¹ÆHyä}OZr-tY˜ÚŽ(4D(›Ã†mm"nèE3ïPñ"§åíV*éD¼×¸ü=û…¬ú—·ÿUdƒ-
-endstream
-endobj
-
-15 0 obj
-<<
-/Type /EmbeddedFile
-/Subtype /application#2Fvnd.jgraph.mxfile
-/Params <<
-/Size 31772
->>
-/Filter /FlateDecode
-/Length 3371
->>
-stream
-xœí]ÛnÛF¾ïS*8ÀZæœÉ(*àëdk'qÖm“v±hq$1¥H•¤;O´îõ¾_lgx‡²,ê0”,`‹PÔˆ"¿ùßÿÏèåè¦ïùÜ†qÒmýèó^…AË…®×÷¸ÛmA¢C`šèg@_ ò˜màï-Ãð@|èmøÍó}çˆ´Mãà ãÜ&7ÆE?SüÜ8}þ‘_yÉA¬¨qpöæç·ç3|ïn¼æ½?Âç†9_Û^xA›µ‰ñj…#~ n›mÂiCË6Š<‚¤mµqéôÈË/Û2xâº-|Àæÿ4±ìOï¯û–÷Ë/¿¶ŒkÅ^ˆJ¿ e$·cÞm¹üÚëñÖßÆK×s‘32g$Þ¹ÏwZ†'@8KÞ™¿ŸÿŒß½ëÎEgÑ·ô3âS£›×‘3¾]îîM·EmÜ2ÜÛn‹X¬e"y\zßÄ•ÅÛƒ‰çò8=Ÿ„¡ŸxãìE/ñˆé±Eá×ìt?ô³‹ŒÅMM.{Ž_¾úè¹ÉP¼ÔÎN¼áÞ`(.eAq#G¾i¶Œxè¸áWy˜Ý¿x‚(“âEú@¯¸ï§Ï-ÆÍ'ýÒ(€ÇÙðä¼o¬dlÿ6¼üûØy°Ä]$·òÖ¹+ž"=£dÂÀñ,Îu¢p¸BÍNùîyŽ» ó…'ÉmŠ¦3IÂÎ0ùâ,¿ñ’Oùÿ¿uÍ6#éáÉ¸Dzp+‚$ºýTÈa$;Ì†¥Gr\ù€âYãpõøcOdŠMœhÀ“GFØBÞä³Êk•PeÂÃ…œ‹ï4"î;‰wM¨#æ}¿S…÷(Ãw%À…@\;þD\ú­sƒÏü¤s=$û»€G—g\n\´_µ+stî\q¿@Ùñ½AÐí	hxÔj•xBÓ“#ÏuåÄñØûæ\‰O›qèIÜý×¿@—y9~£ªBzEZgaƒÍ6Âa¡r‡°µ HõéU.äÍ¥cÂ~?æIêìâ‹6›hnKæá“‘y¼K™‡p/d^ÊÅº21Îd<M™—’OÁØB¼AçëÐKøåØöUøÏhø¯B?Œºß÷‰ü×é‡A’ŸAé_'!À<?GÓ¿ŽëÄÃôºòàÂIÄ<]  «B]‚½ \˜,Ò×Ì«JO>Ìý)L¯°Úö¾ÅL˜!•FT9V™*X–f°È¾‚ÍÁ¢*Z(Ñ1®nßOs<¹O)\ÉoSORõ)™ƒJ‡e.jŽZÞïØVÛIÍÎú~gÆ\G‘s›ŽÈlúÌûŠAŒ!H'š36uv ŒÐç{y”~c3YÚ-Õ'Ã(Î|`."Ïþœ„âe¹<:ìIMx!>ªçžw²q]éÚ—Ù]ÌI×ô¿ÂýO÷î÷&sÛÍ{a{oðÔ\*¶ÒVl%Öí†	6ÃŠ—pVEÆ¦9š‘Avf?I§ÐP7bC½Ð )0¿?OuU±ª!˜'#)0R	Â€+ ¥/ëµ{üÒ[­JÑ#v	ž]b'ƒÐ-Ð?sýë÷a¯W•)—^QB×Q©\p Bm©Jùã¦lTóó—áÚÁ1}n¤Žç¢ýÞp 6îï'1¼ÀK<ÇßÑ [ ÕˆW· Ñ§A—µMZÄy"÷4ÁüXO]ðÈOÎ£•;Z×Ak‡t‚4Û™ƒ…SPik{—ÜCÍ‚½8™‚·†¶´»míþÉå}g"ƒÕÍ+Îé„Yÿ„¬æü“õ„ü3¤,Ë( ®<?TÜ‹¥ùùmÅ?³Ò?·UíŠÿx4ò‚û»}pÒ,ð AƒNZ^ûÉˆQæ¡ažmµMí\“"JDd	Ñý¸ua¶ÂÀ)ŒØ(ãâMÂgÝÿ'–âÕwd9èíCþPh‹A ÓxlêïæÇv+Ô†`-G·ÓÒÐ†ªjõø¬ª^Y“õlUÊËtÔ¬Ú|S‘&`ýÚªäô'ð¹qâ9ƒ Œ…ê<9
-'F9Š‘xÃå{§£–•¡
-Ê,Ÿ¥,´j7¶ÂãÖõ¸®Ä+Ui7T;Ê#EJp×>‰à#åå7¥ˆ´¤œÔ¦¤;@«AŠ(Ñ	1¨õ†Ü6È‰¢û¿0\O„zö=²;NO"¾cÄ÷w½Iä%û–‚,,¥´bè!k’;bM‡ºrdð¤ù ?K^?¼'çùMElÖ †2%´—=™^†W	&{ {„e¦"[…Œ6¨z¬aÚvIK_0PWx§»ÔÏ§ÄâàÜ…"gq þ€^eràTG]>r½K'Ú÷Ë÷n{þ>ñ8¯Ô!FT kNk	Ù¥Ö.¯R–‡æ»TGø”Ø0‚s)"ðQudšuªTz¨‹{Ë­šÅˆÒŠJ*=¦šU²9Gš9I ¯+Ö2_eÌ›27¡×0:aÜe2 ›kž@/¿¾Ð®n¸K¾>%¾çÎ„@Éý›Ó?•¸Uš‰ÓæA•·E²Êº“^ZcIÂIÊÕŽîÿíE|‡s’VÆyóxoítÞVt6³:[˜†“YY­YY@-?–)~:¤©T¸!Áén¹¸ªÁ¼1È:KpÞ|*á S:Kî5P!8OaApÆRWÇJ‘tT–‰œ6“!ˆ+Ù-¥R)Ç-KP)J”7ëÈÎ&orZµÕÂy=ªH›UÑVÝV!;OQE[{þý“I´ÎÕÂæ<ÊÓjPOIsÕ†Ùübžm «ã<áÎ
- Œå±“}ñb#ÄÙdY“4Ü3k.•&mUvÚÇÙs¹dÂY()ÓDÔÂ½K/É¶F/0u+6míÈRYYÀM$1¸ÐR#)´ëZ5xtä›Vý°í¢ç
-“Ù,^>T&–óR¢w‘_ˆskÙkÜË²Õ¼ìæápíšÞ].G°öƒî‹‚É±Ü2¨Ûó8özÙ©S„Šhœ´KÛj˜Âõ™`í.*[œŠ]Fvs=É3Þâ…iú—ëÑ.ëpÃ&½4d9•X)BSi²Dwf®´8œ‚
-÷„ÑÈÙ‹®F³^$dWÛCp“ÍHßƒ~ýQ]ÿÃÎ6&ÊbB@3’}a [Ž6QýhháEƒ›ÌæÑ†-Z·óOU©´ fBJOÇ)®Ð‚×÷w‘×V#5Eis‡Ÿ.™ˆÃÈÝ¶Ðf¹d1Z]Ó„š3JhÃÂn#"eiÌ´Ë?ö˜xaÍh(uÝSR+^i+üþHW¶•´é£à"Ò ¤=¥d!iWU³æù"µ I+Â•ð8Ù²ÌœkÁ3mµM.»Dsvæã[Íír¼Ê§[z)–æ¶) !(ÊQ%
-¨òxnPlsf£Z¿
-ÍV¬·…m³kÏ‰xV˜ûí’åµS¿DâªqêÊ—H“rÊ–fU­bw«ùb³©Ÿã/V˜zÀ@ÍäÏn“SHƒIð”ô0å†;S)q°Þ;õ«9— “4ÊÌwY¥Ø^YF`Ñ9&¼Â"2gÒ%Dd…Ý~ô.ë&~‰:šNÛ`gµ@ðÊóŽóv`âmº²ž+ØÉd×R˜Ûmœó„¬î	0Ë9FºUÇàÖÚD—ë7c›Ê­í§ßeÎáÄ¼qü0…x˜›e†Œ‚šYRÊdoºEŽ’áknµÖóëˆÅ5£íf6Î``uso3Ö†.CÀ|[#ÒFY!0\•Ã-î[Ûm™`k[ß-ì*ÑVP³ë]wº[wæ]˜]×mB­G6+eòÿýºKY{¿îÜ~<íýºËîëƒ“´ÂÙ»¿s'-¹€[Ý…)eï|Ç¸pºÜx?¾¿‹Ò‡Ú6¢,Žg’°ËR7÷ÖMäÙeíüà¸
-k¾«L±BWB:Î ÷
-RËÌ÷S6íi°z“.ÔšrÊ3r£ia>HwÛüË¬¶µãwýe˜ô®øçóúìòèÃÛwÉaYM,»ö &šo>C¨­{•Ó¾;þõµuvø“ÿíý«O·>;_˜´í$°vÆ€Í¼VfŠ¤ÊÖûDsYPÝx”	ìãæé87ú3›§[z
-ãÛàýáäÃgb½½üéÿþä²ùþ	O¼X.‘•µù¼xP#¤ˆ>ËßÁH¶¤)ÌžJšºD—ii*’Eþ•rTZìK›`¨æNÑœzËÒ‘ú*NÛ¥˜•‹ÂÕæ˜Ì,–ìëæ	Š|¢¸îŸ¦w1o¨¦$r®¨°MDÅ¶í²£%ÊQZ[Ÿ·©þæÑ3mºöŠ›ü2dkÆ`NW°ö°€5Ò¸/ô–©I ¬œ2W5*0_TI	ÔmTDb•/ƒ’d‡.Sñò¨ü•çôÓß¬–ç^å¿}ýÃwòMù“à?|÷?É<ç
-endstream
-endobj
-
-16 0 obj
-<<
-/Filter /FlateDecode
-/Type /ObjStm
-/N 11
-/First 67
-/Length 962
->>
-stream
-xœUmoÛ6þ®_qS‘HJ¤¤!0àØVêµî‚:]€ù Xœ'À–™’¿çôb«ëË†Ú¢Dy¯|îN’ E‘¦dª)"­$iŠEB†âPQLqj(¡D§„bH
-’:‰HâIdH77^ððz°Üç[{ô‚weq¤Ï¼/è#=yÁ¬>UŽ¤7™x—Ã³Üå»zëu\$ù°|È÷Xð©ÅþÙ…-²r×Sº½Ït“-²La¤#"Vý|.„Z`ts3›Ð`
-,ÀL3ˆÑXú}S§mñØ©0×ŠéÕA¡X<Fõ´8"œb/ë›Å<¼ßžÕ=?Ì38k²Þ\|£¤[Ÿõ²®E'Cý—=)œZÕÅ<w–®æ¿*¡BD"”&ÔRþùWÐØÜÕÍÿ‰;ÑÈC³ñ“ž¿¬«ïjøânÛ;;ØdtU”ù¶É÷þË~C>e?q@CÖB ôZ ð-Îíq3‹~$‘‹†h/úÛÐÃ|2˜¾ÉÑàvEÁ‡ºÙç»>›2½Û}?#÷oíû‘)«÷H/XOÉ5'ûSüÑÙûˆÖ•Ã±Ó³k—L„ˆÛühy‡‚iûûeÚ”ùnõ€xU›º(«-ËÂV®t¯×o»ˆÙªÈ+Ç\œKé£õ§ª%©†ÿ[=¿YDSK(mÎ~ßŠ³½³åœO°0åñê¡¾[ÎWùáb_K^¿Ý/«¿êöº?ÚmytÍ+]M‹úÙ>¿7…mØ¯«ï«9vv5âÊÈx„gùFüWqì'¡!=±Õ¨M©ðS§1…aè3Öäh†C1jÛˆMA†!­/µ
-#
-„cü4U’c+åKÃ/3A@ ¤(–O%`IÎ:Àr–~ô–<â3¨ÄéHuÌö½#Òev±ø›»#ÓÄh•Œ<Ç+s'ê.¡aÅßT"ºHóá†¤ïaóÇîv¾DÕO¾¸È¤l—oœ(S°£Th_Åa˜vt­¤ÄFÂ  Ñèj~‚†	 •ÞÚrû·£X‚
-Û‘zK4 r3­¶;ËùÈÚooëø{mLäké:T‘£ú2Tâ·~KÆ¾i˜°cÌÈ>Ë¯S‡Û#ùXŸšMßÉÐk6kë )¸ŸgHgû‚ìYîqô¶ÿÎúï’5,^ÜÝÚqéeî;¶Ë¼»]º›¡[Ÿc›Œm¹ÔèÜ=•7VÅ¸s‘/+‰:E×)üQ]¯®œåÚ€ÎÞJ^£0mÜ}Þ´TÁýš§tvõÃû¯
-endstream
-endobj
-
-17 0 obj
-<<
-/Size 18
-/Root 2 0 R
-/Info 3 0 R
-/Filter /FlateDecode
-/Type /XRef
-/Length 67
-/W [ 1 2 2 ]
-/Index [ 0 18 ]
->>
-stream
-xœc``øÿŸ‰A€D0‚&Á"X@+ˆ`ì ‚Dp2‚t0:Z	§[½\Œ³ß¹+÷ ‰µÏ 1°	)
-endstream
-endobj
-
-startxref
-44518
-%%EOFicns  •TOC    ic08  ”ìic08  ”ì‰PNG
+icns  •TOC    ic08  ”ìic08  ”ì‰PNG
 
    IHDR         \r¨f   sRGB ®Îé   PeXIfMM *           ‡i       &                                 u74W  YiTXtXML:com.adobe.xmp     <x:xmpmeta xmlns:x="adobe:ns:meta/" x:xmptk="XMP Core 6.0.0">
    <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">
