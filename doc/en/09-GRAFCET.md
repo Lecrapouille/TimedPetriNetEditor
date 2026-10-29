@@ -269,7 +269,9 @@ By default an input is a switch. *Edit* on the control panel chooses how each in
 | `motor` | a fan that turns while on |
 | `heater` | a resistor that glows while on |
 | `valve` | a cylinder whose rod goes out while on |
-| `horn` | sound waves while on |
+| `horn` | a horn or a siren, sound waves while on |
+| `buzzer` | the buzzer of a panel: a disc that beeps while on |
+| `timer` | a stopwatch: its hand turns (a turn in 5 s) and the time is written while on, back to 0 when off; for the outputs of `D` and `L` actions |
 
 While the simulation is stopped, a click on the panel changes the **initial value** of the input (saved with the document). While it runs, a click acts at once. To change several inputs **in the same instant** (a selector and a button), check *Apply together*: the changes wait until *Apply* (or **F7**). *Fit* draws smaller buttons to see all of them.
 

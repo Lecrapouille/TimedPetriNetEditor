@@ -269,7 +269,9 @@ Par défaut une entrée est un interrupteur. *Edit* sur le pupitre choisit comme
 | `motor` | un ventilateur qui tourne tant qu'il est actif |
 | `heater` | une résistance qui rougit tant qu'elle est active |
 | `valve` | un vérin dont la tige sort tant qu'il est actif |
-| `horn` | des ondes sonores tant qu'il est actif |
+| `horn` | un klaxon ou une sirène, des ondes sonores tant qu'il est actif |
+| `buzzer` | le buzzer d'un pupitre : un disque qui bipe tant qu'il est actif |
+| `timer` | un chronomètre : son aiguille tourne (un tour en 5 s) et le temps est écrit tant qu'il est actif, retour à 0 quand il s'arrête ; pour les sorties des actions `D` et `L` |
 
 Simulation arrêtée, un clic sur le pupitre change la **valeur initiale** de l'entrée (enregistrée avec le document). Pendant l'exécution, un clic agit tout de suite. Pour changer plusieurs entrées **au même instant** (un sélecteur et un bouton), cochez *Apply together* : les changements attendent *Apply* (ou **F7**). *Fit* dessine des boutons plus petits pour tous les voir.
 

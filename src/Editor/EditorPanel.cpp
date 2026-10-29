@@ -45,6 +45,8 @@ static std::map<std::string, float> s_press_time;
 static std::map<std::string, double> s_flash;
 //! \brief Angle of the fan of each motor.
 static std::map<std::string, float> s_fan_angle;
+//! \brief Time each timer has been on (its hand), 0 while off.
+static std::map<std::string, float> s_timer_elapsed;
 
 //------------------------------------------------------------------------------
 //! \brief Color of a cap from its name, or the default color of the kind.
@@ -678,7 +680,7 @@ static bool editIo(Document& doc, std::vector<GrafcetInput*> const& inputs, std:
         ImGui::TableSetupColumn("Kind");
         ImGui::TableSetupColumn("Description", ImGuiTableColumnFlags_WidthStretch);
         ImGui::TableHeadersRow();
-        static char const* KINDS[] = { "light", "motor", "heater", "valve", "horn" };
+        static char const* KINDS[] = { "light", "motor", "heater", "valve", "horn", "buzzer", "timer" };
         for (GrafcetOutput* output : outputs)
         {
             ImGui::PushID(output->name.c_str());
@@ -945,6 +947,69 @@ static void actuator(ImDrawList* draw, GrafcetOutput const& output, ImVec2 const
                 draw->PathArcTo(c + ImVec2(S(4.0f), 0.0f), r, -0.8f, 0.8f, 12);
                 draw->PathStroke(IM_COL32(240, 160, 40, 200), ImDrawFlags_None, 2.0f);
             }
+        }
+        break;
+    }
+
+    case GrafcetOutput::Kind::Buzzer:
+    {
+        // Black piezo disc with its hole, beeping (four times a second) with
+        // short waves on both sides.
+        float const t = float(ImGui::GetTime());
+        bool const beep = on && (std::fmod(t * 4.0f, 1.0f) < 0.5f);
+        draw->AddCircleFilled(c + ImVec2(0.0f, S(3.0f)), S(17.0f), line, 40);
+        draw->AddCircleFilled(c, S(17.0f), beep ? IM_COL32(60, 62, 68, 255) : dark, 40);
+        draw->AddCircle(c, S(17.0f), metal, 40, 1.5f);
+        draw->AddCircle(c, S(11.0f), line, 32, 1.0f);
+        draw->AddCircleFilled(c, S(3.5f), beep ? IM_COL32(240, 160, 40, 255) : line, 16);
+        if (beep)
+        {
+            for (int k = 1; k <= 2; ++k)
+            {
+                float const r = S(17.0f) + S(5.0f) * float(k);
+                draw->PathArcTo(c, r, -0.6f, 0.6f, 10);
+                draw->PathStroke(IM_COL32(240, 160, 40, 200), ImDrawFlags_None, 2.0f);
+                draw->PathArcTo(c, r, 3.14159265f - 0.6f, 3.14159265f + 0.6f, 10);
+                draw->PathStroke(IM_COL32(240, 160, 40, 200), ImDrawFlags_None, 2.0f);
+            }
+        }
+        break;
+    }
+
+    case GrafcetOutput::Kind::Timer:
+    {
+        // Stopwatch: its hand makes a turn in 5 s while on, the time gone
+        // filled in the dial; back to 0 when off.
+        float& elapsed = s_timer_elapsed[output.name];
+        elapsed = on ? elapsed + dt : 0.0f;
+        float const pi = 3.14159265f;
+        float const turn = std::fmod(elapsed / 5.0f, 1.0f);
+        float const top = -pi * 0.5f;
+        ImU32 const blue = IM_COL32(70, 140, 220, 255);
+        draw->AddRectFilled(c + ImVec2(-S(3.0f), -S(25.0f)), c + ImVec2(S(3.0f), -S(19.0f)), metal);
+        draw->AddRectFilled(c + ImVec2(-S(6.0f), -S(28.0f)), c + ImVec2(S(6.0f), -S(25.0f)), metal, 1.0f);
+        draw->AddCircleFilled(c, S(20.0f), metal, 40);
+        draw->AddCircleFilled(c, S(17.0f), IM_COL32(235, 236, 240, 255), 40);
+        if (on && (turn > 0.0f))
+        {
+            draw->PathLineTo(c);
+            draw->PathArcTo(c, S(16.0f), top, top + turn * 2.0f * pi, 32);
+            draw->PathFillConvex(IM_COL32(70, 140, 220, 90));
+        }
+        for (int k = 0; k < 12; ++k)
+        {
+            float const a = float(k) * pi / 6.0f;
+            ImVec2 const d(std::cos(a), std::sin(a));
+            draw->AddLine(c + d * S(13.0f), c + d * S(16.0f), line, 1.0f);
+        }
+        float const a = top + turn * 2.0f * pi;
+        draw->AddLine(c, c + ImVec2(std::cos(a), std::sin(a)) * S(14.0f), on ? blue : line, 2.0f);
+        draw->AddCircleFilled(c, S(2.5f), line, 12);
+        if (on)
+        {
+            char text[16];
+            std::snprintf(text, sizeof(text), "%.1f s", double(elapsed));
+            draw->AddText(c + ImVec2(S(14.0f), -S(28.0f)), blue, text);
         }
         break;
     }

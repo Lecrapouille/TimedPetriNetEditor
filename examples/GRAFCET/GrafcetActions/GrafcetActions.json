@@ -41,7 +41,7 @@
             { "place_id": 3, "qualifier": "N", "color": "green", "name": "V1-", "script": "Retract cylinder valve" },
             { "place_id": 3, "qualifier": "R", "color": "green", "name": "Lamp1", "script": "Position indicator OFF" },
             { "place_id": 4, "qualifier": "N", "color": "green", "name": "Buzzer", "script": "Alarm sound" },
-            { "place_id": 4, "qualifier": "L", "color": "green", "name": "AlarmLamp", "script": "Flash for 5s", "duration": 5 }
+            { "place_id": 4, "qualifier": "L", "color": "red", "name": "AlarmLamp", "script": "Flash for 5s", "duration": 5 }
        ],
        "layout": {
           "places": [
@@ -68,5 +68,13 @@
     { "name": "Start", "kind": "switch", "initial": 0 },
     { "name": "s0", "kind": "switch", "initial": 0 },
     { "name": "s1", "kind": "switch", "initial": 0 }
+  ],
+  "outputs": [
+    { "name": "V1+", "kind": "valve", "description": "Extends the cylinder" },
+    { "name": "V1-", "kind": "valve", "description": "Retracts the cylinder" },
+    { "name": "Timer1", "kind": "timer", "description": "Delay before the retraction (D, 2 s)" },
+    { "name": "Lamp1", "kind": "light", "description": "Position indicator: set (S) when extended, reset (R) when retracting" },
+    { "name": "Buzzer", "kind": "buzzer", "description": "Alarm sound while in Alarm" },
+    { "name": "AlarmLamp", "kind": "light", "description": "Alarm light, 5 s (L)" }
   ]
 }

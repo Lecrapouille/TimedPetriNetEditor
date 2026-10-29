@@ -40,5 +40,10 @@ retracts until `s0`. An `Error` while extending goes to an alarm, left with
 console warns and the editor uses a whole core). It is the example of the
 pitfall of [chapter 9 §12](../../../doc/en/09-GRAFCET.md#12-pitfalls).
 
+The *Outputs* window draws each output as what it is (`outputs` in the
+file): `V1+` and `V1-` as cylinders, `Timer1` as a stopwatch whose hand
+turns while it is on, `Lamp1` and `AlarmLamp` (red) as lamps, `Buzzer` as
+a buzzer that beeps.
+
 *Help > GRAFCET actions (qualifiers)* draws the timing diagram of every
 qualifier.

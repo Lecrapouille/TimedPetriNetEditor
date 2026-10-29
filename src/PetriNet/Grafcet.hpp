@@ -402,7 +402,9 @@ struct GrafcetOutput
         Motor,  //!< Motor: its fan turns while on.
         Heater, //!< Heating resistor: glows while on.
         Valve,  //!< Valve or cylinder: open (out) while on.
-        Horn    //!< Horn or buzzer: sound waves while on.
+        Horn,   //!< Horn or siren: sound waves while on.
+        Buzzer, //!< Buzzer of a panel: a disc that beeps while on.
+        Timer   //!< Timer (a D or L action): its hand turns while on.
     };
 
     std::string name;
@@ -420,6 +422,8 @@ inline const char* outputKindToStr(GrafcetOutput::Kind k)
         case GrafcetOutput::Kind::Heater: return "heater";
         case GrafcetOutput::Kind::Valve: return "valve";
         case GrafcetOutput::Kind::Horn: return "horn";
+        case GrafcetOutput::Kind::Buzzer: return "buzzer";
+        case GrafcetOutput::Kind::Timer: return "timer";
     }
     return "light";
 }
@@ -431,6 +435,8 @@ inline GrafcetOutput::Kind strToOutputKind(std::string const& s)
     if (s == "heater") return GrafcetOutput::Kind::Heater;
     if (s == "valve") return GrafcetOutput::Kind::Valve;
     if (s == "horn") return GrafcetOutput::Kind::Horn;
+    if (s == "buzzer") return GrafcetOutput::Kind::Buzzer;
+    if (s == "timer") return GrafcetOutput::Kind::Timer;
     return GrafcetOutput::Kind::Light;
 }
 

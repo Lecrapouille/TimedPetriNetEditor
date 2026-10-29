@@ -315,7 +315,9 @@ char const* outputKindMeaning(GrafcetOutput::Kind const kind)
     case GrafcetOutput::Kind::Motor: return "Motor: its fan turns while it is on.";
     case GrafcetOutput::Kind::Heater: return "Heater: its resistor glows while it is on.";
     case GrafcetOutput::Kind::Valve: return "Valve or cylinder: open (rod out) while it is on.";
-    case GrafcetOutput::Kind::Horn: return "Horn or buzzer: sound waves while it is on.";
+    case GrafcetOutput::Kind::Horn: return "Horn or siren: sound waves while it is on.";
+    case GrafcetOutput::Kind::Buzzer: return "Buzzer of a panel: the disc beeps while it is on.";
+    case GrafcetOutput::Kind::Timer: return "Timer: its hand turns while it is on, back to 0 when off.";
     }
     return "";
 }
@@ -357,7 +359,8 @@ void controlPanelHelp()
         ImGui::TableHeadersRow();
         for (GrafcetOutput::Kind kind : { GrafcetOutput::Kind::Light, GrafcetOutput::Kind::Motor,
                                           GrafcetOutput::Kind::Heater, GrafcetOutput::Kind::Valve,
-                                          GrafcetOutput::Kind::Horn })
+                                          GrafcetOutput::Kind::Horn, GrafcetOutput::Kind::Buzzer,
+                                          GrafcetOutput::Kind::Timer })
         {
             ImGui::TableNextRow();
             ImGui::TableNextColumn(); ImGui::TextUnformatted(outputKindToStr(kind));

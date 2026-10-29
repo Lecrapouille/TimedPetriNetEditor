@@ -168,7 +168,7 @@ Après les réseaux, le document liste les **inputs** de ses GRAFCET (ce que lis
 | Champ sortie | Signification |
 |--------------|---------|
 | `name` | tel qu'écrit dans les actions |
-| `kind` | `light` (défaut), `motor`, `heater`, `valve`, `horn` |
+| `kind` | `light` (défaut), `motor`, `heater`, `valve` (ou vérin), `horn`, `buzzer`, `timer` (son aiguille tourne tant qu'il est actif) |
 | `description` | ce que c'est |
 
 L'éditeur n'enregistre que les entrées et sorties qui ont été décrites (*Edit* sur le panneau de commande) ; les autres sont retrouvées depuis les réceptivités et les actions à l'ouverture du fichier. Les fichiers d'anciennes versions avec `sensors` au lieu de `inputs` sont encore lus.

@@ -168,7 +168,7 @@ After the nets, the document lists the **inputs** of its GRAFCETs (what the rece
 | Output field | Meaning |
 |--------------|---------|
 | `name` | as written in the actions |
-| `kind` | `light` (default), `motor`, `heater`, `valve`, `horn` |
+| `kind` | `light` (default), `motor`, `heater`, `valve` (or cylinder), `horn`, `buzzer`, `timer` (its hand turns while it is on) |
 | `description` | what it is |
 
 The editor saves only the inputs and outputs that were described (*Edit* on the control panel); the others are found again from the receptivities and the actions when the file is opened. Files of old versions with `sensors` instead of `inputs` are still read.
