@@ -282,9 +282,10 @@ bool Editor::analysisTab(char const* name, int const tab)
 //------------------------------------------------------------------------------
 void Editor::analysisWindow()
 {
-    // Closed by its cross (opened again by the menu Analysis), one row of tabs: the properties of any net (Petri net
-    // theory, time not considered), then the (max,+) algebra of a timed net.
-    // Tabs (openAnalysis()): 0 to 5 (max,+), 6 to 9 properties.
+    // Closed by its cross (opened again by the menu Analysis). Tabs: the
+    // properties of any net (Petri net theory, time not considered), then for
+    // a timed net "(max,+)", with its own tabs for the algebra.
+    // Tabs (openAnalysis()): 0 to 5 in (max,+), 6 to 9 properties.
     if (!m_states.show_analysis)
         return;
     ImGui::SetNextWindowSize(ImVec2(520.0f, 420.0f), ImGuiCond_FirstUseEver);
@@ -305,50 +306,55 @@ void Editor::analysisWindow()
 //------------------------------------------------------------------------------
 void Editor::analysisMaxPlus()
 {
-    // The algebra needs an event graph: else one tab telling why not, with
-    // the faulty arcs.
+    // One tab "(max,+)" with its own row of tabs. The algebra needs an event
+    // graph: else the tab tells why not, with the faulty arcs.
+    bool const asked = (m_states.analysis_tab >= 0) && (m_states.analysis_tab < 6);
+    if (!ImGui::BeginTabItem("(max,+)", nullptr, asked ? ImGuiTabItemFlags_SetSelected : ImGuiTabItemFlags_None))
+        return;
+
     std::string error;
     std::vector<size_t> arcs;
     if (!isEventGraph(net(), error, arcs))
     {
-        bool const asked = (m_states.analysis_tab >= 0) && (m_states.analysis_tab < 6);
-        if (ImGui::BeginTabItem("(max,+)", nullptr, asked ? ImGuiTabItemFlags_SetSelected : ImGuiTabItemFlags_None))
-        {
-            if (asked)
-                m_states.analysis_tab = -1;
-            ImGui::PushTextWrapPos(0.0f);
-            ImGui::TextUnformatted("The (max,+) algebra needs a timed event graph: every place has "
-                                   "one input and one output transition, arcs with no weight, "
-                                   "inhibition, reset nor color, places with no capacity.");
-            ImGui::Spacing();
-            ImGui::TextColored(ImGui::ColorConvertU32ToFloat4(palette().critical), "%s", error.c_str());
-            ImGui::Spacing();
-            ImGui::TextUnformatted("Change the net, or import a flowshop (File > Import > Flowshop).");
-            ImGui::PopTextWrapPos();
-            if (!arcs.empty() && ImGui::Button("Show the faulty arcs"))
-                markArcs(net(), arcs);
-            ImGui::EndTabItem();
-        }
+        if (asked)
+            m_states.analysis_tab = -1;
+        ImGui::PushTextWrapPos(0.0f);
+        ImGui::TextUnformatted("The (max,+) algebra needs a timed event graph: every place has "
+                               "one input and one output transition, arcs with no weight, "
+                               "inhibition, reset nor color, places with no capacity.");
+        ImGui::Spacing();
+        ImGui::TextColored(ImGui::ColorConvertU32ToFloat4(palette().critical), "%s", error.c_str());
+        ImGui::Spacing();
+        ImGui::TextUnformatted("Change the net, or import a flowshop (File > Import > Flowshop).");
+        ImGui::PopTextWrapPos();
+        if (!arcs.empty() && ImGui::Button("Show the faulty arcs"))
+            markArcs(net(), arcs);
+        ImGui::EndTabItem();
         return;
     }
 
-    char const* tabs[] = { "Critical circuit", "Gantt", "Linear system", "Equations",
-                           "Adjacency", "Firing dates" };
-    for (int i = 0; i < 6; ++i)
+    if (ImGui::BeginTabBar("##maxplus", ImGuiTabBarFlags_FittingPolicyScroll))
     {
-        if (!analysisTab(tabs[i], i))
-            continue;
-        switch (i)
+        char const* tabs[] = { "Critical circuit", "Gantt", "Linear system", "Equations",
+                               "Adjacency", "Firing dates" };
+        for (int i = 0; i < 6; ++i)
         {
-        case 0: analysisCritical(); break;
-        case 1: analysisGantt(); break;
-        case 2: analysisSyslin(); break;
-        case 3: analysisEquations(); break;
-        case 4: analysisAdjacency(); break;
-        case 5: analysisPlot(); break;
+            if (!analysisTab(tabs[i], i))
+                continue;
+            switch (i)
+            {
+            case 0: analysisCritical(); break;
+            case 1: analysisGantt(); break;
+            case 2: analysisSyslin(); break;
+            case 3: analysisEquations(); break;
+            case 4: analysisAdjacency(); break;
+            case 5: analysisPlot(); break;
+            }
+            ImGui::EndTabItem();
         }
-        ImGui::EndTabItem();
+        ImGui::EndTabBar();
     }
+    ImGui::EndTabItem();
 }
 
 //------------------------------------------------------------------------------

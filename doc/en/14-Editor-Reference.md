@@ -55,7 +55,7 @@ The layout is kept from a document to another: opening a file never moves the wi
 | Control panel | the inputs of the GRAFCETs drawn as the buttons of a machine; *Apply together*, *Apply (F7)*, *Edit*, *Fit*, `?` (§8) | GRAFCET |
 | Outputs | the actuators named by the actions: lights, motors, heaters, valves, horns, buzzers, timers | GRAFCET |
 | Timing diagram | steps, inputs and outputs over time (§8) | GRAFCET |
-| Analysis | one row of tabs: *Summary*, *Bounds*, *Invariants*, *Report* for every net; for a timed event graph also *Critical circuit*, *Gantt*, *Linear system*, *Equations*, *Adjacency*, *Firing dates* (§7), for another timed net *(max,+)*, which says why the algebra does not apply | closed by its cross, and when a document of GRAFCETs only is opened (it does not consider their rules: the control panel is in front instead); the *Analysis* menu opens it with a tab in front |
+| Analysis | tabs *Summary*, *Bounds*, *Invariants*, *Report* for every net; for a timed net also *(max,+)*, with its own tabs *Critical circuit*, *Gantt*, *Linear system*, *Equations*, *Adjacency*, *Firing dates* for a timed event graph (§7), or why the algebra does not apply for another timed net | closed by its cross, and when a document of GRAFCETs only is opened (it does not consider their rules: the control panel is in front instead); the *Analysis* menu opens it with a tab in front |
 | Console | all the messages (§6) | always |
 | Journal | the firings of the simulation, of an opened journal, or of a connected program; replays them on the net (§7) | always |
 | Program | the program followed: its net, its transitions without function, its inputs and outputs ([chapter 13](13-Debugging.md)) | connected (*Debug*) |
