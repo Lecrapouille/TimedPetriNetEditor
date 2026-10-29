@@ -29,7 +29,7 @@ A GRAFCET document of three nets while it runs:
 
 ![The editor with a GEMMA running](pics/14-Window-GRAFCET.png)
 
-*`examples/GRAFCET/GEMMA-Dryer/GEMMA-Dryer.json`, 3 s after **Space**: the three nets side by side with a green frame (simulating), the control panel (emergency stop, push buttons, selector, sensor) under the inspector, the outputs (two motors, an oven) at the bottom right.*
+*`examples/GRAFCET/GEMMA-Dryer/GEMMA-Dryer.json`, 3 s after **Space**: the three nets as tabs, the first one in front with a green frame (simulating), the control panel (emergency stop, push buttons, selector, sensor) under the inspector, the outputs (two motors, an oven) at the bottom right.*
 
 The windows can be moved, docked elsewhere, put in tabs or closed. The layout and the theme are saved in the settings folder of the user:
 
@@ -39,13 +39,13 @@ The windows can be moved, docked elsewhere, put in tabs or closed. The layout an
 | macOS | `~/Library/Application Support/TimedPetriNetEditor` |
 | Windows | `%APPDATA%\TimedPetriNetEditor` |
 
-*View > Reset the layout of the windows* builds the default layout again. *Help > Mouse and keys*, tab *Paths*, shows the folders used.
+The layout is kept from a document to another: opening a file never moves the windows. *View > Reset the layout of the windows* builds the default layout again. *Help > Mouse and keys*, tab *Paths*, shows the folders used.
 
 ## 2. Windows
 
 | Window | Shows | When |
 |--------|-------|------|
-| Net (one per net of the document) | the drawing; several nets of a document are side by side and keep their share of the width when the main window changes size | always |
+| Net (one per net of the document) | the drawing; the nets of a document are tabs of the same pane, the first one in front (drag a tab to put two nets side by side: they keep their share of the width when the main window changes size) | always |
 | Places / Steps | caption, identifier, `◀ ▶` and the number of tokens of each place, and its initial tokens; for a running GRAFCET, how long each active step has been active. A net with colors also gets *Color of the tokens*, the color added or removed by `◀ ▶`, by **+** and **-** and by the menu of a place; hovering the number lists the tokens by color; *colors* opens the number of tokens of each color, editable | always |
 | Transitions | caption (the receptivity of a GRAFCET, checked while typing, with *Syntax help*); priority (Petri and timed nets); delay in seconds (GRAFCET); the timers that count while simulating | always |
 | Arcs | a table: arc, kind (normal, inhibitor, reset), weight, color of the tokens, duration (timed nets) | Petri and timed nets |
@@ -53,9 +53,9 @@ The windows can be moved, docked elsewhere, put in tabs or closed. The layout an
 | Actions | actions of each step: qualifier (with its timing diagram), name, condition, duration, forcing orders; *Qualifiers help* | GRAFCET |
 | Document | what the document is about and the description of each net (*Edit* to change them); the nets of the document (a radio button chooses the active one); the GRAFCET inputs and outputs | always |
 | Control panel | the inputs of the GRAFCETs drawn as the buttons of a machine; *Apply together*, *Apply (F7)*, *Edit*, *Fit*, `?` (§8) | GRAFCET |
-| Outputs | the actuators named by the actions: lights, motors, heaters, valves, horns | GRAFCET |
+| Outputs | the actuators named by the actions: lights, motors, heaters, valves, horns, buzzers, timers | GRAFCET |
 | Timing diagram | steps, inputs and outputs over time (§8) | GRAFCET |
-| Analysis | one row of tabs: *Summary*, *Bounds*, *Invariants*, *Report* for every net; for a timed event graph also *Critical circuit*, *Gantt*, *Linear system*, *Equations*, *Adjacency*, *Firing dates* (§7), for another timed net *(max,+)*, which says why the algebra does not apply | always there; the *Analysis* menu brings a tab in front |
+| Analysis | one row of tabs: *Summary*, *Bounds*, *Invariants*, *Report* for every net; for a timed event graph also *Critical circuit*, *Gantt*, *Linear system*, *Equations*, *Adjacency*, *Firing dates* (§7), for another timed net *(max,+)*, which says why the algebra does not apply | closed by its cross, and when a document of GRAFCETs only is opened (it does not consider their rules: the control panel is in front instead); the *Analysis* menu opens it with a tab in front |
 | Console | all the messages (§6) | always |
 | Journal | the firings of the simulation, of an opened journal, or of a connected program; replays them on the net (§7) | always |
 | Program | the program followed: its net, its transitions without function, its inputs and outputs ([chapter 13](13-Debugging.md)) | connected (*Debug*) |
@@ -194,7 +194,8 @@ Each matrix has a *Copy as Julia* button ([chapter 17](17-Julia.md)).
 
 | Menu | Item | Effect |
 |------|------|--------|
-| **File** | New > Petri net, Timed Petri net, Timed event graph, GRAFCET, GEMMA (3 GRAFCETs) | a new document of this kind (GEMMA: three empty GRAFCETs Safety, Control, Production) |
+| **File** | New > Petri net, Timed Petri net, Timed event graph, GRAFCET | a new document of this kind |
+| | New > GEMMA... | a new document made from a small GEMMA: its GRAFCETs Safety, Control, Production, and the two GEMMA windows ([chapter 10 §5](10-GEMMA.md#5-make-your-own-gemma-in-the-editor)) |
 | | New > Flowshop... | a window to fill the table of a flowshop: names and units of the machines and conveyors, processing times; *From the active net* fills it with the flowshop of the active net; *Create* builds its timed event graph in a new document ([chapter 15, §4.3](15-File-Formats.md#43-flowshop)) |
 | | Clear the document (Ctrl+N) | empty the active document |
 | | Open... (Ctrl+O), Open in a new document... | a `.json`, `.flowshop`, `.pnml`, `.grml`, `.teg` file |
@@ -207,6 +208,8 @@ Each matrix has a *Copy as Julia* button ([chapter 17](17-Julia.md)).
 | **Edit** | Undo (Ctrl+Z), Redo (Ctrl+Y) | |
 | | Type of net > Petri net, Timed Petri net, Timed event graph, GRAFCET | change the type of the active net (refused when the net uses what the new type does not allow: the faulty arcs are shown) |
 | | Add a net to the document > Petri net, GRAFCET | a second net in the same document |
+| | GEMMA editor... | the window to build the GEMMA of the active document: the procedures kept, the links and their conditions (leaving the procedure selected: green, arriving: blue), the checks, *Make the GRAFCETs*. Docked on the left of the nets, all the height ([chapter 10 §5.1](10-GEMMA.md#51-the-two-gemma-windows)) |
+| | GEMMA graph... | the GEMMA drawn as its form ([GEMMA.drawio](../gemma/GEMMA.drawio)), read only, docked between the GEMMA editor and the nets (opened with a document of GRAFCETs): the step `Xn` of each procedure, the conditions on the arrows |
 | | To canonical form | a timed event graph whose places hold at most one token ([chapter 8](08-Max-Plus-Algebra.md)) |
 | | Arrange top-down | layers from the initial steps, the way a GRAFCET is drawn |
 | | Spring layout (L), Stop the spring layout | a force-directed placement |
@@ -240,7 +243,7 @@ TimedPetriNetEditor [-r] [-s|-w screenshot.png] [-d seconds] [-f window] [-c end
 | `-s file.png` | save the net as a PNG file once drawn, then quit |
 | `-w file.png` | the same for the whole window |
 | `-d seconds` | wait before the screenshot (the simulation runs meanwhile) |
-| `-f window` | bring this window in front: `Journal`, `Console`, `Analysis` (its properties) or a tab of the analysis: `Properties`, `Critical circuit` (also marked on the net), `Gantt`, `Linear system`, `Equations`, `Adjacency`, `Firing dates` |
+| `-f window` | bring this window in front: `Journal`, `Console`, `GEMMA editor` (or `GEMMA`), `GEMMA graph`, `Analysis` (its properties) or a tab of the analysis: `Properties`, `Critical circuit` (also marked on the net), `Gantt`, `Linear system`, `Equations`, `Adjacency`, `Firing dates` |
 | `-c endpoint` | follow the program publishing its journal there (`tcp://localhost:5556`) |
 | `-g WxH` | size of the window in pixels (default `1100x768`) |
 | `-h` | the usage |

@@ -132,6 +132,34 @@ static void parseOutputs(nlohmann::json const& joutputs, std::vector<GrafcetOutp
 }
 
 //------------------------------------------------------------------------------
+//! \brief Read the GEMMA of a document: { "language": "en", "states": [{
+//! "code": "A1", "production": "init" }, ...], "links": [{ "from": "A1",
+//! "to": "F1", "condition": "Start" }, ...] }.
+static Gemma parseGemma(nlohmann::json const& jgemma)
+{
+    Gemma gemma;
+    gemma.language = jgemma.value("language", "en");
+    if (jgemma.contains("states"))
+    {
+        for (nlohmann::json const& s : jgemma["states"])
+        {
+            std::string const code = s.value("code", "");
+            GemmaProcedure const* procedure = gemmaProcedure(code);
+            if (procedure == nullptr)
+                continue;
+            gemma.states.push_back({ code, s.contains("production")
+                ? gemmaProductionFromStr(s.value("production", "init")) : procedure->production });
+        }
+    }
+    if (jgemma.contains("links"))
+    {
+        for (nlohmann::json const& l : jgemma["links"])
+            gemma.links.push_back({ l.value("from", ""), l.value("to", ""), l.value("condition", "") });
+    }
+    return gemma;
+}
+
+//------------------------------------------------------------------------------
 // Helper function to parse a single net from JSON
 static std::string parseNetFromJSON(Net& net, nlohmann::json const& jnet)
 {
@@ -421,6 +449,8 @@ std::string importAllNetsFromJSON(std::vector<Net>& nets, std::string const& fil
         info->description = json.value("description", "");
         if (json.contains("outputs"))
             parseOutputs(json["outputs"], info->outputs);
+        if (json.contains("gemma"))
+            info->gemma = parseGemma(json["gemma"]);
     }
 
     return {};

@@ -188,7 +188,7 @@ void Editor::setupDefaultLayout(unsigned int const id)
 {
     // Nets in the middle, their inspector on the right, the GRAFCET control
     // panel and the analysis under it, the console and the GRAFCET outputs
-    // at the bottom.
+    // at the bottom. The nets of a document are tabs of the same pane.
     ImGuiViewport const* viewport = ImGui::GetMainViewport();
     ImGui::DockBuilderRemoveNode(id);
     ImGui::DockBuilderAddNode(id, ImGuiDockNodeFlags_DockSpace);
@@ -354,28 +354,13 @@ void Editor::addNetToActiveDocument(TypeOfNet type, std::string const& name)
 //------------------------------------------------------------------------------
 void Editor::createGEMMADocument()
 {
-    // Create a new document or clear current one
-    auto& doc = activeDocument();
-
-    // Unregister old nets
-    m_journal.clear();
-    doc.unregisterNets();
-    doc.nets().clear();
-
-    // Create the 3 standard GEMMA graphs
-    doc.addNet(TypeOfNet::GRAFCET, "Securite");
-    doc.addNet(TypeOfNet::GRAFCET, "Production");
-    doc.addNet(TypeOfNet::GRAFCET, "Controle");
-
-    // Reset document state
-    doc.setFilepath("");
-    doc.setModified(true);
-    doc.setActiveNetIndex(0);
-
-    // Request vertical split layout
-    m_states.request_vertical_split = true;
-
-    m_messages.setInfo("Created GEMMA document with 3 graphs: Securite, Production, Controle");
+    // A GEMMA to start from, its GRAFCETs, and its window to change it.
+    activeDocument().info().gemma = defaultGemma();
+    generateFromGemma();
+    activeDocument().setFilepath("");
+    m_states.show_gemma = true;
+    m_states.show_gemma_graph = true;
+    m_states.show_analysis = false;
 }
 
 //------------------------------------------------------------------------------
@@ -535,15 +520,6 @@ void Editor::onDraw()
     // The status bar first: the dock space takes the space left.
     statusBar();
     ImGuiID dockspace_id = ImGui::DockSpaceOverViewport();
-    // A document with another number of nets: rebuild the layout (the nets
-    // side by side), else empty panes of the previous document remain.
-    if (activeDocument().netCount() != m_layout_nets)
-    {
-        m_layout_nets = activeDocument().netCount();
-        m_states.reset_layout = true;
-        m_states.request_vertical_split = (m_layout_nets > 1u);
-    }
-    bool layout_built = false;
     if (m_states.reset_layout)
     {
         for (auto const& entry : activeDocument().nets())
@@ -551,61 +527,11 @@ void Editor::onDraw()
         setupDefaultLayout(dockspace_id);
         m_states.reset_layout = false;
         m_busy_frames = BUSY_FRAMES;
-        layout_built = true;
     }
-
-    // Split the nets side by side once the central node has its size (not in
-    // the frame of a new layout: the sizes are not computed yet).
-    ImGuiDockNode const* central = ImGui::DockBuilderGetCentralNode(dockspace_id);
-    bool const sized = !layout_built && (central != nullptr) && (central->Size.x > 200.0f);
-    if (m_states.request_vertical_split && activeDocument().netCount() > 1 && sized)
-    {
-        auto& doc = activeDocument();
-        size_t count = doc.netCount();
-
-        ImGuiDockNode const* central_node = central;
-        ImGuiID target_id;
-
-        if (central_node)
-        {
-            target_id = central_node->ID;
-        }
-        else
-        {
-            target_id = dockspace_id;
-            ImGui::DockBuilderRemoveNode(dockspace_id);
-            ImGui::DockBuilderAddNode(dockspace_id,
-                ImGuiDockNodeFlags_DockSpace);
-            ImGui::DockBuilderSetNodeSize(dockspace_id,
-                ImGui::GetMainViewport()->Size);
-        }
-
-        std::vector<ImGuiID> dock_ids;
-        ImGuiID remaining = target_id;
-        for (size_t i = 0; i < count - 1; ++i)
-        {
-            ImGuiID dock_left;
-            float ratio = 1.0f / static_cast<float>(count - i);
-            ImGui::DockBuilderSplitNode(remaining, ImGuiDir_Left,
-                ratio, &dock_left, &remaining);
-            dock_ids.push_back(dock_left);
-        }
-        dock_ids.push_back(remaining);
-
-        for (size_t i = 0; i < count; ++i)
-        {
-            std::string title = doc.getNet(i).net.name +
-                "###Net" + std::to_string(i);
-            ImGui::DockBuilderDockWindow(title.c_str(), dock_ids[i]);
-        }
-
-        ImGui::DockBuilderFinish(dockspace_id);
-        m_states.request_vertical_split = false;
-        // The windows changed size: fit each net again.
-        for (auto const& entry : doc.nets())
-            entry->view_state.center_request = Document::ViewState::CENTER_FRAMES;
-        m_busy_frames = BUSY_FRAMES;
-    }
+    // The layout of the user is kept from a document to another; only the
+    // GEMMA panes, when opened and not docked yet, are added to it.
+    dockGemmaPanes(dockspace_id);
+    m_front_net = std::max(0, m_front_net - 1);
 
     keepNetProportions();
     if (!m_connect_endpoint.empty() && (ImGui::GetFrameCount() > 2))
@@ -643,6 +569,14 @@ void Editor::onDraw()
         {
             showMarkingsGraph(net());
             m_focus_window = "Graph of the markings";
+        }
+        if ((m_focus_window == "GEMMA") || (m_focus_window == "GEMMA graph"))
+        {
+            // Both panes, the one named in front.
+            bool const graph = (m_focus_window == "GEMMA graph");
+            m_states.show_gemma = true;
+            m_states.show_gemma_graph = true;
+            m_focus_window = graph ? "GEMMA" : "GEMMA editor";
         }
         ImGui::SetWindowFocus(m_focus_window.c_str());
         m_focus_window.clear();
@@ -754,7 +688,19 @@ void Editor::view()
             continue;
         }
 
-        if (ImGui::IsWindowFocused())
+        if (m_front_net > 0)
+        {
+            // The first net, whatever window Dear ImGui focuses meanwhile.
+            ImGuiWindow const* window = ImGui::GetCurrentWindow();
+            if ((i == 0u) && (window->DockNode != nullptr) && (window->DockNode->TabBar != nullptr))
+                window->DockNode->TabBar->NextSelectedTabId = window->TabId;
+            // At the end, the focus too: else the window focused (the last
+            // one made) becomes the active net.
+            if ((i == 0u) && (m_front_net == 1))
+                ImGui::FocusWindow(ImGui::GetCurrentWindow());
+            doc.setActiveNetIndex(0u);
+        }
+        else if (ImGui::IsWindowFocused())
         {
             doc.setActiveNetIndex(i);
         }
@@ -1406,7 +1352,16 @@ void Editor::loadDocumentFromFile(std::string const& filepath)
         doc.setModified(false);
         setSavePath(filepath);
         doc.setActiveNetIndex(0);
-        m_states.request_vertical_split = true;
+        m_front_net = BUSY_FRAMES;
+        // A document of GRAFCETs only: the GEMMA editor and its graph beside
+        // the nets (to start one when there is none), and the analysis closed:
+        // it does not consider the rules of GRAFCET, the control panel is in
+        // front instead.
+        bool const grafcet = std::all_of(doc.nets().begin(), doc.nets().end(), [](auto const& entry) {
+            return entry->net.type() == TypeOfNet::GRAFCET;
+        });
+        m_states.show_gemma = m_states.show_gemma_graph = grafcet;
+        m_states.show_analysis = !grafcet;
 
         // Center view on each loaded net and validate GRAFCET receptivities
         m_busy_frames = BUSY_FRAMES;
@@ -1654,6 +1609,13 @@ void Editor::setAutoScreenshot(std::string const& path, bool const exit_after,
     m_screenshot_window = whole_window;
     m_auto_screenshot_path = path;
     m_auto_screenshot_pending = !path.empty();
+    // The pictures show the default layout, whatever the layout of the user,
+    // which is left as it is.
+    if (!path.empty())
+    {
+        ImGui::GetIO().IniFilename = nullptr;
+        m_states.reset_layout = true;
+    }
     m_exit_after_screenshot = exit_after;
     m_last_screenshot_ok = false;
     // Let the windows and the docking layout settle before the capture.

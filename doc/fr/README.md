@@ -35,7 +35,7 @@ Chaque nombre, équation, sortie et image de ces pages a été produit par l’�
 | # | Chapitre | Ce que vous apprendrez |
 |---|----------|------------------------|
 | 9 | 🔘 [GRAFCET](09-GRAFCET.md) | La norme IEC 60848 : étapes, réceptivités, règles d’évolution, actions et leurs qualificateurs, temps, forçages ; le pupitre de commande et le chronogramme |
-| 10 | 🛑 [GEMMA](10-GEMMA.md) | Les modes marche et arrêt d’une machine, et un séchoir piloté par trois GRAFCET |
+| 10 | 🛑 [GEMMA](10-GEMMA.md) | Les modes marche et arrêt d’une machine, un séchoir piloté par trois GRAFCET, et la fenêtre GEMMA qui les fait (une ligne d’embouteillage) |
 
 ## ⚙️ Partie V — Du modèle au programme
 

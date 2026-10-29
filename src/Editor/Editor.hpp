@@ -184,7 +184,7 @@ private: // Show results from Petri algorithms
     void markingsWindow();
     //! \brief Compute the graph of the markings of the net, open its window.
     void showMarkingsGraph(Net const& analyzed);
-    void openAnalysis(int tab) { m_states.analysis_tab = tab; ImGui::SetWindowFocus("Analysis"); }
+    void openAnalysis(int tab) { m_states.show_analysis = true; m_states.analysis_tab = tab; ImGui::SetWindowFocus("Analysis"); }
 
 private: // Document management
 
@@ -195,6 +195,16 @@ private: // Document management
     size_t documentCount() const { return m_documents.size(); }
     void addNetToActiveDocument(TypeOfNet type, std::string const& name);
     void createGEMMADocument();
+    //! \brief The GEMMA window of the active document (EditorGemma.cpp).
+    void gemmaWindow();
+    //! \brief The window of the GEMMA drawn as its form (EditorGemma.cpp).
+    void gemmaGraphWindow();
+    //! \brief Add the GEMMA panes opened and not docked to the layout of the
+    //! user: the editor on the left, the graph between it and the nets.
+    void dockGemmaPanes(unsigned int dockspace);
+    //! \brief Make the GRAFCETs Safety and Control of the GEMMA of the active
+    //! document again (and Production when missing).
+    void generateFromGemma();
 
 private: // Petri net services
 
@@ -420,6 +430,16 @@ private:
         //! \brief Tab of the help to bring in front (-1: none).
         int help_tab = -1;
         bool show_theme = false;
+        //! \brief GEMMA window: shown, procedure selected, the two ends of a
+        //! new link.
+        bool show_gemma = false;
+        //! \brief The window of the graph of the GEMMA.
+        bool show_gemma_graph = false;
+        std::string gemma_selected;
+        //! \brief Zoom of the GEMMA graph (1: the form fits the window).
+        float gemma_zoom = 1.0f;
+        std::string gemma_from;
+        std::string gemma_to;
         //! \brief File > New > Flowshop: the table being filled.
         FlowshopForm flowshop;
         bool show_unsaved_dialog = false;
@@ -475,7 +495,6 @@ private:
         //! \brief A document load (Open) has been requested but is still pending
         //! the resolution of unsaved changes in the current document.
         bool request_load = false;
-        bool request_vertical_split = false;
         //! \brief Rebuild the default layout of the windows.
         bool reset_layout = false;
 
@@ -590,12 +609,15 @@ private:
     //! \brief Frames to draw before sleeping (docking and centering settle).
     static constexpr int BUSY_FRAMES = 20;
     int m_busy_frames = BUSY_FRAMES;
+    //! \brief Frames to bring the tab of the active net in front, while the
+    //! docking settles (a document loaded: else the last net drawn is the tab
+    //! in front).
+    int m_front_net = 0;
     //! \brief GRAFCET inputs and outputs not described by the document, with
     //! a default description for the frame (see collectGrafcetIo()).
     std::deque<GrafcetInput> m_undescribed_inputs;
     std::deque<GrafcetOutput> m_undescribed_outputs;
-        //! \brief Number of nets the layout of the windows was made for.
-    size_t m_layout_nets = 0u;
+
 };
 
 } // namespace tpne

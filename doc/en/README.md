@@ -35,7 +35,7 @@ Every number, equation, output and picture of these pages was produced by the ed
 | # | Chapter | You will learn |
 |---|---------|----------------|
 | 9 | 🔘 [GRAFCET](09-GRAFCET.md) | The standard IEC 60848: steps, receptivities, the rules of evolution, actions and their qualifiers, time, forcing; the control panel and the timing diagram |
-| 10 | 🛑 [GEMMA](10-GEMMA.md) | The start and stop modes of a machine, and a dryer driven by three GRAFCETs |
+| 10 | 🛑 [GEMMA](10-GEMMA.md) | The start and stop modes of a machine, a dryer driven by three GRAFCETs, and the GEMMA window that makes them (a bottling line) |
 
 ## ⚙️ Part V — From the model to the program
 

@@ -29,7 +29,7 @@ Un document GRAFCET de trois réseaux pendant l'exécution :
 
 ![The editor with a GEMMA running](pics/14-Window-GRAFCET.png)
 
-*`examples/GRAFCET/GEMMA-Dryer/GEMMA-Dryer.json`, 3 s après **Space** : les trois réseaux côte à côte avec un cadre vert (simulation), le panneau de commande (arrêt d'urgence, boutons poussoirs, sélecteur, capteur) sous l'inspecteur, les sorties (deux moteurs, un four) en bas à droite.*
+*`examples/GRAFCET/GEMMA-Dryer/GEMMA-Dryer.json`, 3 s après **Space** : les trois réseaux en onglets, le premier devant avec un cadre vert (simulation), le panneau de commande (arrêt d'urgence, boutons poussoirs, sélecteur, capteur) sous l'inspecteur, les sorties (deux moteurs, un four) en bas à droite.*
 
 Les fenêtres peuvent être déplacées, ancrées ailleurs, mises en onglets ou fermées. La disposition et le thème sont enregistrés dans le dossier de configuration de l'utilisateur :
 
@@ -39,13 +39,13 @@ Les fenêtres peuvent être déplacées, ancrées ailleurs, mises en onglets ou 
 | macOS | `~/Library/Application Support/TimedPetriNetEditor` |
 | Windows | `%APPDATA%\TimedPetriNetEditor` |
 
-*View > Reset the layout of the windows* reconstruit la disposition par défaut. *Help > Mouse and keys*, onglet *Paths*, montre les dossiers utilisés.
+La disposition est gardée d'un document à l'autre : ouvrir un fichier ne déplace jamais les fenêtres. *View > Reset the layout of the windows* reconstruit la disposition par défaut. *Help > Mouse and keys*, onglet *Paths*, montre les dossiers utilisés.
 
 ## 2. Fenêtres
 
 | Fenêtre | Affiche | Quand |
 |--------|-------|------|
-| Net (une par réseau du document) | le dessin ; plusieurs réseaux d'un document sont côte à côte et gardent leur part de largeur quand la fenêtre principale change de taille | toujours |
+| Net (une par réseau du document) | le dessin ; les réseaux d'un document sont des onglets du même panneau, le premier devant (glisser un onglet met deux réseaux côte à côte : ils gardent leur part de largeur quand la fenêtre principale change de taille) | toujours |
 | Places / Steps | légende, identifiant, `◀ ▶` et le nombre de jetons de chaque place, et ses jetons initiaux ; pour un GRAFCET en marche, depuis combien de temps chaque étape active l'est. Un réseau avec couleurs a aussi *Color of the tokens*, la couleur ajoutée ou retirée par `◀ ▶`, par **+** et **-** et par le menu d'une place ; survoler le nombre liste les jetons par couleur ; *colors* ouvre le nombre de jetons de chaque couleur, modifiable | toujours |
 | Transitions | légende (la réceptivité d'un GRAFCET, vérifiée à la frappe, avec *Syntax help*) ; priorité (réseaux de Petri et temporisés) ; délai en secondes (GRAFCET) ; les minuteries qui comptent pendant la simulation | toujours |
 | Arcs | un tableau : arc, type (normal, inhibitor, reset), poids, couleur des jetons, durée (réseaux temporisés) | réseaux de Petri et temporisés |
@@ -53,9 +53,9 @@ Les fenêtres peuvent être déplacées, ancrées ailleurs, mises en onglets ou 
 | Actions | actions de chaque étape : qualificateur (avec son diagramme temporel), nom, condition, durée, ordres de forçage ; *Qualifiers help* | GRAFCET |
 | Document | l'objet du document et la description de chaque réseau (*Edit* pour les modifier) ; les réseaux du document (un bouton radio choisit l'actif) ; les entrées et sorties GRAFCET | toujours |
 | Control panel | les entrées des GRAFCET dessinées comme les boutons d'une machine ; *Apply together*, *Apply (F7)*, *Edit*, *Fit*, `?` (§8) | GRAFCET |
-| Outputs | les actionneurs nommés par les actions : lampes, moteurs, résistances chauffantes, vannes, sirènes | GRAFCET |
+| Outputs | les actionneurs nommés par les actions : lampes, moteurs, résistances chauffantes, vannes, sirènes, buzzers, minuteries | GRAFCET |
 | Timing diagram | étapes, entrées et sorties dans le temps (§8) | GRAFCET |
-| Analysis | une rangée d'onglets : *Summary*, *Bounds*, *Invariants*, *Report* pour chaque réseau ; pour un graphe d'événements temporisé aussi *Critical circuit*, *Gantt*, *Linear system*, *Equations*, *Adjacency*, *Firing dates* (§7), pour un autre réseau temporisé *(max,+)*, qui explique pourquoi l'algèbre ne s'applique pas | toujours présente ; le menu *Analysis* met un onglet au premier plan |
+| Analysis | une rangée d'onglets : *Summary*, *Bounds*, *Invariants*, *Report* pour chaque réseau ; pour un graphe d'événements temporisé aussi *Critical circuit*, *Gantt*, *Linear system*, *Equations*, *Adjacency*, *Firing dates* (§7), pour un autre réseau temporisé *(max,+)*, qui explique pourquoi l'algèbre ne s'applique pas | fermée par sa croix, et à l'ouverture d'un document fait seulement de GRAFCET (elle ne tient pas compte de leurs règles : le panneau de commande est devant à la place) ; le menu *Analysis* l'ouvre avec un onglet au premier plan |
 | Console | tous les messages (§6) | toujours |
 | Journal | les tirs de la simulation, d'un journal ouvert ou d'un programme connecté ; les rejoue sur le réseau (§7) | toujours |
 | Program | le programme suivi : son réseau, ses transitions sans fonction, ses entrées et sorties ([chapitre 13](13-Debugging.md)) | connecté (*Debug*) |
@@ -194,7 +194,8 @@ Chaque matrice a un bouton *Copy as Julia* ([chapitre 17](17-Julia.md)).
 
 | Menu | Entrée | Effet |
 |------|------|--------|
-| **File** | New > Petri net, Timed Petri net, Timed event graph, GRAFCET, GEMMA (3 GRAFCETs) | un nouveau document de ce type (GEMMA : trois GRAFCET vides Safety, Control, Production) |
+| **File** | New > Petri net, Timed Petri net, Timed event graph, GRAFCET | un nouveau document de ce type |
+| | New > GEMMA... | un nouveau document fait à partir d'une petite GEMMA : ses GRAFCET Safety, Control, Production, et les deux fenêtres GEMMA ([chapitre 10 §5](10-GEMMA.md#5-make-your-own-gemma-in-the-editor)) |
 | | New > Flowshop... | une fenêtre pour remplir le tableau d'un flowshop : noms et unités des machines et des convoyeurs, temps de traitement ; *From the active net* le remplit avec le flowshop du réseau actif ; *Create* construit son graphe d'événements temporisé dans un nouveau document ([chapitre 15, §4.3](15-File-Formats.md#43-flowshop)) |
 | | Clear the document (Ctrl+N) | vider le document actif |
 | | Open... (Ctrl+O), Open in a new document... | un fichier `.json`, `.flowshop`, `.pnml`, `.grml`, `.teg` |
@@ -207,6 +208,8 @@ Chaque matrice a un bouton *Copy as Julia* ([chapitre 17](17-Julia.md)).
 | **Edit** | Undo (Ctrl+Z), Redo (Ctrl+Y) | |
 | | Type of net > Petri net, Timed Petri net, Timed event graph, GRAFCET | changer le type du réseau actif (refusé si le réseau utilise ce que le nouveau type n'autorise pas : les arcs fautifs sont montrés) |
 | | Add a net to the document > Petri net, GRAFCET | un second réseau dans le même document |
+| | GEMMA editor... | la fenêtre pour construire la GEMMA du document actif : les procédures gardées, les liaisons et leurs conditions (qui partent de la procédure sélectionnée : vert, qui y arrivent : bleu), les vérifications, *Make the GRAFCETs*. Ancrée à gauche des réseaux, sur toute la hauteur ([chapitre 10 §5.1](10-GEMMA.md#51-les-deux-fenêtres-gemma)) |
+| | GEMMA graph... | la GEMMA dessinée comme son formulaire ([GEMMA.drawio](../gemma/GEMMA.drawio)), en lecture seule, ancrée entre l'éditeur de GEMMA et les réseaux (ouverte avec un document de GRAFCET) : l'étape `Xn` de chaque procédure, les conditions sur les flèches |
 | | To canonical form | un graphe d'événements temporisé dont les places ont au plus un jeton ([chapitre 8](08-Max-Plus-Algebra.md)) |
 | | Arrange top-down | couches depuis les étapes initiales, comme un GRAFCET se dessine |
 | | Spring layout (L), Stop the spring layout | placement par forces |
@@ -240,7 +243,7 @@ TimedPetriNetEditor [-r] [-s|-w screenshot.png] [-d seconds] [-f window] [-c end
 | `-s file.png` | enregistrer le réseau en PNG une fois dessiné, puis quitter |
 | `-w file.png` | idem pour toute la fenêtre |
 | `-d seconds` | attendre avant la capture (la simulation tourne entre-temps) |
-| `-f window` | mettre cette fenêtre au premier plan : `Journal`, `Console`, `Analysis` (ses propriétés) ou un onglet de l'analyse : `Properties`, `Critical circuit` (aussi marqué sur le réseau), `Gantt`, `Linear system`, `Equations`, `Adjacency`, `Firing dates` |
+| `-f window` | mettre cette fenêtre au premier plan : `Journal`, `Console`, `GEMMA editor` (ou `GEMMA`), `GEMMA graph`, `Analysis` (ses propriétés) ou un onglet de l'analyse : `Properties`, `Critical circuit` (aussi marqué sur le réseau), `Gantt`, `Linear system`, `Equations`, `Adjacency`, `Firing dates` |
 | `-c endpoint` | suivre le programme qui publie son journal là (`tcp://localhost:5556`) |
 | `-g WxH` | taille de la fenêtre en pixels (défaut `1100x768`) |
 | `-h` | l'aide |

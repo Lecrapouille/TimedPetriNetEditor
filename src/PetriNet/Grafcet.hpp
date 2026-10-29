@@ -8,7 +8,10 @@
 #ifndef GRAFCET_HPP
 #  define GRAFCET_HPP
 
+#  include "PetriNet/Gemma.hpp"
+
 #  include <cctype>
+#  include <optional>
 #  include <memory>
 #  include <cstdlib>
 #  include <string>
@@ -450,6 +453,9 @@ struct DocumentInfo
     std::string description;
     std::vector<GrafcetInput> inputs;
     std::vector<GrafcetOutput> outputs;
+    //! \brief The GEMMA the GRAFCETs Safety, Control and Production were made
+    //! from, to change it and make them again.
+    std::optional<Gemma> gemma;
 };
 
 //! \brief Input of the given name, or null.

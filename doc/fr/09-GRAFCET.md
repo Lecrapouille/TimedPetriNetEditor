@@ -237,7 +237,7 @@ Le deux-points de l'ancienne écriture est accepté : `Production:{init}`. Un or
 
 ## 8. Plusieurs graphes dans un document
 
-Un document peut contenir plusieurs GRAFCET (*Edit > Add a net to the document > GRAFCET*, ou *File > New > GEMMA (3 GRAFCETs)*). Ils s'exécutent ensemble, avec un seul moteur : une recherche de situation stable pour tous. Un graphe lit les étapes d'un autre avec `Name:Xn` et le force avec `Name{...}`. Le nom d'un graphe (et sa description) se change avec *Edit* dans l'onglet *Document*, en bas à côté de la *Console*.
+Un document peut contenir plusieurs GRAFCET (*Edit > Add a net to the document > GRAFCET*, ou *File > New > GEMMA...*, [chapitre 10](10-GEMMA.md#5-make-your-own-gemma-in-the-editor)). Ils s'exécutent ensemble, avec un seul moteur : une recherche de situation stable pour tous. Un graphe lit les étapes d'un autre avec `Name:Xn` et le force avec `Name{...}`. Le nom d'un graphe (et sa description) se change avec *Edit* dans l'onglet *Document*, en bas à côté de la *Console*.
 
 ## 9. Entrées, sorties et pupitre de commande
 

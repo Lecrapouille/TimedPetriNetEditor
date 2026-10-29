@@ -61,6 +61,7 @@ What you will find here: the JSON file of the editor field by field (§1 to §3)
 | `description` | optional: what the document is about, shown in the *Document* window |
 | `nets` | one or several nets (a GEMMA has three) |
 | `inputs`, `outputs` | GRAFCET only (§3) |
+| `gemma` | GRAFCET only: the GEMMA the graphs Safety, Control and Production were made from (§3.1) |
 
 ### 1.2 A net
 
@@ -172,6 +173,35 @@ After the nets, the document lists the **inputs** of its GRAFCETs (what the rece
 | `description` | what it is |
 
 The editor saves only the inputs and outputs that were described (*Edit* on the control panel); the others are found again from the receptivities and the actions when the file is opened. Files of old versions with `sensors` instead of `inputs` are still read.
+
+### 3.1 The GEMMA
+
+A document made with the GEMMA window ([chapter 10 §5](10-GEMMA.md#5-make-your-own-gemma-in-the-editor)) keeps its GEMMA after the outputs, to change it and make the GRAFCETs again. An extract of [`GEMMA-Bottling.json`](../../examples/GRAFCET/GEMMA-Bottling/GEMMA-Bottling.json):
+
+```json
+"gemma": {
+  "language": "en",
+  "states": [
+    { "code": "A1", "production": "init" },
+    { "code": "F1", "production": "run" },
+    { "code": "D2", "production": "freeze" }
+  ],
+  "links": [
+    { "from": "A1", "to": "F2", "condition": "Start" },
+    { "from": "F2", "to": "F1", "condition": "[Tank >= 80]" },
+    { "from": "D2", "to": "A5", "condition": "Ack . /Jam" }
+  ]
+}
+```
+
+| Field | Meaning |
+|-------|---------|
+| `language` | `"en"` or `"fr"`: the names of the procedures in the captions of the steps of Control |
+| `states` | the procedures kept, by their code `A1` ... `A7`, `F1` ... `F6`, `D1` ... `D3` |
+| `production` | what Production does while the procedure is active: `"run"`, `"init"` (forced to its initial situation), `"freeze"` (frozen); default: the usual one of the procedure |
+| `links` | one transition of Control each: from a procedure, to another one, with its condition (a receptivity) |
+
+The GRAFCETs are saved as well: a reader that ignores `gemma` gets the same document.
 
 ## 4. Other formats
 

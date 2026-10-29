@@ -169,7 +169,7 @@ void Editor::menuFile()
             }
         }
         ImGui::Separator();
-        if (ImGui::MenuItem("GEMMA (3 GRAFCETs)"))
+        if (ImGui::MenuItem("GEMMA..."))
         {
             newDocument();
             createGEMMADocument();
@@ -289,6 +289,10 @@ void Editor::menuEdit()
             addNetToActiveDocument(TypeOfNet::GRAFCET, "GRAFCET" + std::to_string(activeDocument().netCount() + 1));
         ImGui::EndMenu();
     }
+    if (ImGui::MenuItem("GEMMA editor...", nullptr, m_states.show_gemma))
+        m_states.show_gemma ^= true;
+    if (ImGui::MenuItem("GEMMA graph...", nullptr, m_states.show_gemma_graph))
+        m_states.show_gemma_graph ^= true;
     if (ImGui::MenuItem("To canonical form"))
     {
         Net pn(net().type());
@@ -659,6 +663,8 @@ void Editor::handleMenuActions()
     if (m_states.show_about) { about(); }
     if (m_states.show_theme) { showStyleSelector(); }
     if (m_states.flowshop.open) { newFlowshopDialog(); }
+    if (m_states.show_gemma) { gemmaWindow(); }
+    if (m_states.show_gemma_graph) { gemmaGraphWindow(); }
 
     // File dialogs (mutually exclusive)
     switch (m_states.file_dialog)
@@ -692,7 +698,7 @@ void Editor::handleMenuActions()
 
     // Analysis window (dockable, not modal)
     m_states.properties_shown = false;
-    analysisWindow(); // always there
+    analysisWindow();
     if (m_states.markings.open) { markingsWindow(); }
     // The marks of the analysis go with its tab.
     if (!m_states.properties_shown)

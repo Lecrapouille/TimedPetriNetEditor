@@ -297,6 +297,22 @@ static std::string writeDocument(std::vector<Net const*> const& nets, std::strin
         writeList(file, outputsToJSON(*info), "    ");
         file << "\n  ]";
     }
+    if ((info != nullptr) && info->gemma)
+    {
+        // The GEMMA: one line per procedure kept and per link.
+        Gemma const& gemma = *info->gemma;
+        std::vector<nlohmann::ordered_json> states;
+        for (auto const& state : gemma.states)
+            states.push_back({ { "code", state.code }, { "production", to_str(state.production) } });
+        std::vector<nlohmann::ordered_json> links;
+        for (auto const& link : gemma.links)
+            links.push_back({ { "from", link.from }, { "to", link.to }, { "condition", link.condition } });
+        file << ",\n  \"gemma\": {\n    \"language\": " << quote(gemma.language) << ",\n    \"states\": [";
+        writeList(file, states, "      ");
+        file << "\n    ],\n    \"links\": [";
+        writeList(file, links, "      ");
+        file << "\n    ]\n  }";
+    }
     file << "\n";
 
     file << "}\n";

@@ -61,6 +61,7 @@ Ce que vous trouverez ici : le fichier JSON de l'éditeur champ par champ (§1 �
 | `description` | optionnel : objet du document, affiché dans la fenêtre *Document* |
 | `nets` | un ou plusieurs réseaux (un GEMMA en a trois) |
 | `inputs`, `outputs` | GRAFCET seulement (§3) |
+| `gemma` | GRAFCET seulement : la GEMMA dont les graphes Safety, Control et Production ont été faits (§3.1) |
 
 ### 1.2 Un réseau
 
@@ -172,6 +173,35 @@ Après les réseaux, le document liste les **inputs** de ses GRAFCET (ce que lis
 | `description` | ce que c'est |
 
 L'éditeur n'enregistre que les entrées et sorties qui ont été décrites (*Edit* sur le panneau de commande) ; les autres sont retrouvées depuis les réceptivités et les actions à l'ouverture du fichier. Les fichiers d'anciennes versions avec `sensors` au lieu de `inputs` sont encore lus.
+
+### 3.1 La GEMMA
+
+Un document fait avec la fenêtre GEMMA ([chapitre 10 §5](10-GEMMA.md#5-make-your-own-gemma-in-the-editor)) garde sa GEMMA après les sorties, pour la modifier et refaire les GRAFCET. Un extrait de [`GEMMA-Bottling.json`](../../examples/GRAFCET/GEMMA-Bottling/GEMMA-Bottling.json) :
+
+```json
+"gemma": {
+  "language": "en",
+  "states": [
+    { "code": "A1", "production": "init" },
+    { "code": "F1", "production": "run" },
+    { "code": "D2", "production": "freeze" }
+  ],
+  "links": [
+    { "from": "A1", "to": "F2", "condition": "Start" },
+    { "from": "F2", "to": "F1", "condition": "[Tank >= 80]" },
+    { "from": "D2", "to": "A5", "condition": "Ack . /Jam" }
+  ]
+}
+```
+
+| Champ | Signification |
+|-------|---------|
+| `language` | `"en"` ou `"fr"` : les noms des procédures dans les légendes des étapes de Control |
+| `states` | les procédures gardées, par leur code `A1` ... `A7`, `F1` ... `F6`, `D1` ... `D3` |
+| `production` | ce que fait Production tant que la procédure est active : `"run"`, `"init"` (forcée dans sa situation initiale), `"freeze"` (figée) ; par défaut : l'usage de la procédure |
+| `links` | une transition de Control chacune : d'une procédure vers une autre, avec sa condition (une réceptivité) |
+
+Les GRAFCET sont aussi enregistrés : un lecteur qui ignore `gemma` obtient le même document.
 
 ## 4. Autres formats
 

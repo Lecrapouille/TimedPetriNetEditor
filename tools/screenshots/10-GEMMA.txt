@@ -1,3 +1,5 @@
 # Chapter 10: GEMMA
 doc/pics/10-GEMMA-Dryer.png -w examples/GRAFCET/GEMMA-Dryer/GEMMA-Dryer.json
 doc/pics/10-GEMMA-Dryer-running.png -w -r -d 2 examples/GRAFCET/GEMMA-Dryer/GEMMA-Dryer.json
+doc/pics/10-GEMMA-Window.png -w -f GEMMA examples/GRAFCET/GEMMA-Bottling/GEMMA-Bottling.json
+doc/pics/10-GEMMA-Graph.png -w -g 2400x1500 -f "GEMMA graph" examples/GRAFCET/GEMMA-Bottling/GEMMA-Bottling.json

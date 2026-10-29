@@ -825,3 +825,276 @@ TEST(TestGrafcetEngine, RemoveStepKeepsActionsAndReferences)
     EXPECT_EQ(production.transitions()[0].caption, "Controle:X1 . X5");
     EXPECT_EQ(renameStepReference("Safety:X3 + X3 + X31 + AX3", "", 3, 7), "Safety:X3 + X7 + X31 + AX3");
 }
+
+//------------------------------------------------------------------------------
+TEST(TestGemma, CheckDefaultAndErrors)
+{
+    Gemma gemma = defaultGemma();
+    for (auto const& issue : checkGemma(gemma))
+        EXPECT_FALSE(issue.error) << issue.message;
+    EXPECT_EQ(gemmaName("A1", "fr"), "Arrêt dans l'état initial");
+    EXPECT_EQ(gemmaName("A1", "en"), "Stop in the initial state");
+    EXPECT_EQ(gemmaProcedures().size(), 16u);
+
+    // A procedure without a way out, a link without condition, A1 missing.
+    auto const has = [](std::vector<GemmaIssue> const& issues, std::string const& text) {
+        return std::any_of(issues.begin(), issues.end(), [&](GemmaIssue const& i) {
+            return i.message.find(text) != std::string::npos;
+        });
+    };
+    gemma.states.push_back({ "F2", Gemma::Production::Init });
+    gemma.links.push_back({ "A1", "F2", "" });
+    std::vector<GemmaIssue> issues = checkGemma(gemma);
+    EXPECT_TRUE(has(issues, "F2 has no way out"));
+    EXPECT_TRUE(has(issues, "A1 -> F2: no condition"));
+    gemma.links.back().condition = "Start";
+    EXPECT_TRUE(has(checkGemma(gemma), "same condition"));
+    gemma.states.erase(gemma.states.begin());
+    EXPECT_TRUE(has(checkGemma(gemma), "A1 is not kept"));
+
+    // The names read by the conditions, without graphs, steps and times.
+    Gemma names;
+    names.links = { { "A1", "F1", "Start . /Fault" }, { "F1", "A2", "Stop + Production:X0 . 3s/X1" } };
+    EXPECT_EQ(gemmaInputNames(names), (std::vector<std::string>{ "Fault", "Start", "Stop" }));
+}
+
+//------------------------------------------------------------------------------
+TEST(TestGemma, GenerateAndRun)
+{
+    Gemma const gemma = defaultGemma();
+    Net safety(TypeOfNet::GRAFCET);
+    Net control(TypeOfNet::GRAFCET);
+    Net production(TypeOfNet::GRAFCET);
+    generateGemma(gemma, safety, control);
+    gemmaProductionTemplate(gemma, control, production);
+    std::map<std::string, size_t> const steps = gemmaSteps(control);
+    ASSERT_EQ(control.places().size(), 6u);
+    ASSERT_EQ(control.transitions().size(), gemma.links.size());
+    EXPECT_EQ(steps.at("A1"), 0u);
+    EXPECT_EQ(control.places()[0].tokens, 1u);
+    EXPECT_EQ(control.places()[0].caption, "A1 Stop in the initial state");
+    // Safety forces Control to D1.
+    ASSERT_EQ(safety.places()[1].actions.size(), 1u);
+    Forcing const& forcing = safety.places()[1].actions[0].forcings[0];
+    EXPECT_EQ(forcing.targetNet, "Control");
+    EXPECT_EQ(forcing.type, Forcing::Type::Steps);
+    EXPECT_EQ(forcing.steps, (std::vector<size_t>{ steps.at("D1") }));
+
+    GrafcetEngine engine;
+    engine.graphs({ &safety, &control, &production });
+    ASSERT_TRUE(engine.start());
+    auto const in = [&](std::string const& code) { return control.findPlace(steps.at(code))->tokens > 0u; };
+    auto const step = [&engine](float dt = 0.1f) { engine.step(dt); };
+    auto const press = [&](char const* name) { engine.setInput(name, 1); step(); engine.setInput(name, 0); step(); };
+
+    // Start: F1, the production runs its cycle.
+    step();
+    EXPECT_TRUE(in("A1"));
+    press("Start");
+    EXPECT_TRUE(in("F1"));
+    EXPECT_TRUE(production.findPlace(1)->tokens > 0u);
+    // Stop: A2 until the end of the cycle, then A1.
+    press("Stop");
+    EXPECT_TRUE(in("A2"));
+    for (int i = 0; i < 60; ++i) step();
+    EXPECT_TRUE(in("A1"));
+    EXPECT_TRUE(production.findPlace(0)->tokens > 0u);
+
+    // Emergency stop during the production: D1, Production in its initial
+    // situation; released and rearmed: A5, then A6 and A1.
+    press("Start");
+    EXPECT_TRUE(in("F1"));
+    engine.setInput("EStop", 1); step(); step();
+    EXPECT_TRUE(in("D1"));
+    EXPECT_TRUE(production.findPlace(0)->tokens > 0u);
+    engine.setInput("EStop", 0); step();
+    EXPECT_TRUE(in("D1")) << "until Rearm";
+    press("Rearm");
+    EXPECT_TRUE(in("A5"));
+    press("Ack");
+    EXPECT_TRUE(in("A6"));
+    press("InitialPosition");
+    EXPECT_TRUE(in("A1"));
+}
+
+//------------------------------------------------------------------------------
+TEST(TestGemma, RenumberAndSave)
+{
+    // Control:X4 (F1) becomes the new step of F1 when F2 is kept.
+    Gemma gemma = defaultGemma();
+    Net safety(TypeOfNet::GRAFCET);
+    Net control(TypeOfNet::GRAFCET);
+    Net production(TypeOfNet::GRAFCET);
+    generateGemma(gemma, safety, control);
+    gemmaProductionTemplate(gemma, control, production);
+    auto const before = gemmaSteps(control);
+    EXPECT_EQ(production.transitions()[0].caption, "Control:X" + std::to_string(before.at("F1")));
+    gemma.states.push_back({ "A3", Gemma::Production::Run });
+    gemma.states.push_back({ "A4", Gemma::Production::Freeze });
+    generateGemma(gemma, safety, control);
+    auto const after = gemmaSteps(control);
+    ASSERT_NE(before.at("F1"), after.at("F1"));
+    renumberControlSteps(production, before, after);
+    EXPECT_EQ(production.transitions()[0].caption, "Control:X" + std::to_string(after.at("F1")));
+
+    // Saved with the document and read again.
+    gemma.language = "fr";
+    DocumentInfo info;
+    info.gemma = gemma;
+    std::vector<Net> nets = { safety, control, production };
+    std::string const file = "tpne-gemma-save.json";
+    ASSERT_STREQ(exportAllNetsToJSON(nets, file, &info).c_str(), "");
+    std::vector<Net> again;
+    DocumentInfo read;
+    ASSERT_STREQ(importAllNetsFromJSON(again, file, &read).c_str(), "");
+    std::remove(file.c_str());
+    ASSERT_TRUE(read.gemma.has_value());
+    EXPECT_EQ(read.gemma->language, "fr");
+    ASSERT_EQ(read.gemma->states.size(), gemma.states.size());
+    EXPECT_EQ(read.gemma->find("A4")->production, Gemma::Production::Freeze);
+    ASSERT_EQ(read.gemma->links.size(), gemma.links.size());
+    EXPECT_EQ(read.gemma->links[0].condition, gemma.links[0].condition);
+    EXPECT_EQ(again[2].transitions()[0].caption, production.transitions()[0].caption);
+}
+
+//------------------------------------------------------------------------------
+TEST(TestGemma, KeepControlActions)
+{
+    Gemma gemma = defaultGemma();
+    Net safety(TypeOfNet::GRAFCET);
+    Net control(TypeOfNet::GRAFCET);
+    generateGemma(gemma, safety, control);
+    tpne::Action lamp;
+    lamp.name = "RunLamp";
+    control.places()[gemmaSteps(control).at("F1")].actions.push_back(lamp);
+
+    // F2 kept: F1 moves, its lamp goes with it; the forcing is made once.
+    gemma.states.push_back({ "F2", Gemma::Production::Init });
+    Net again(TypeOfNet::GRAFCET);
+    generateGemma(gemma, safety, again);
+    keepControlActions(control, again);
+    auto const steps = gemmaSteps(again);
+    auto const& f1 = again.places()[steps.at("F1")].actions;
+    ASSERT_EQ(f1.size(), 1u);
+    EXPECT_EQ(f1[0].name, "RunLamp");
+    EXPECT_EQ(again.places()[steps.at("A1")].actions.size(), 1u) << "Production{init} once";
+}
+
+//------------------------------------------------------------------------------
+TEST(TestGemma, BottlingExample)
+{
+    std::vector<Net> nets;
+    DocumentInfo info;
+    ASSERT_STREQ(importAllNetsFromJSON(nets, "../examples/GRAFCET/GEMMA-Bottling/GEMMA-Bottling.json",
+                                       &info).c_str(), "");
+    ASSERT_EQ(nets.size(), 3u);
+    ASSERT_TRUE(info.gemma.has_value());
+    for (auto const& issue : checkGemma(*info.gemma))
+        EXPECT_FALSE(issue.error) << issue.message;
+    Net& safety = nets[0];
+    Net& control = nets[1];
+    Net& production = nets[2];
+    for (Net const* net : { &safety, &control, &production })
+        for (auto const& t : net->transitions())
+            EXPECT_STREQ(Receptivity::check(t.caption).c_str(), "") << t.caption;
+
+    // Made again from its GEMMA: the same Control, with its actions.
+    Net safety2(TypeOfNet::GRAFCET);
+    Net control2(TypeOfNet::GRAFCET);
+    generateGemma(*info.gemma, safety2, control2);
+    keepControlActions(control, control2);
+    ASSERT_EQ(control2.places().size(), control.places().size());
+    ASSERT_EQ(control2.transitions().size(), control.transitions().size());
+    for (size_t i = 0u; i < control.places().size(); ++i)
+    {
+        EXPECT_EQ(control2.places()[i].caption, control.places()[i].caption);
+        EXPECT_EQ(control2.places()[i].actions.size(), control.places()[i].actions.size());
+    }
+    for (size_t i = 0u; i < control.transitions().size(); ++i)
+        EXPECT_EQ(control2.transitions()[i].caption, control.transitions()[i].caption);
+
+    // A run: preparation, a bottle, a jam, degraded, stop and emptying.
+    GrafcetEngine engine;
+    engine.graphs({ &safety, &control, &production });
+    ASSERT_TRUE(engine.start());
+    std::map<std::string, size_t> const steps = gemmaSteps(control);
+    auto const in = [&](std::string const& code) { return control.findPlace(steps.at(code))->tokens > 0u; };
+    auto const at = [&](size_t id) { return production.findPlace(id)->tokens > 0u; };
+    auto const step = [&engine](float dt = 0.1f) { engine.step(dt); };
+    auto const set = [&](char const* name, int value) { engine.setInput(name, value); step(); step(); };
+    auto const press = [&](char const* name) { set(name, 1); set(name, 0); };
+
+    step();
+    EXPECT_TRUE(in("A1"));
+    press("Start");
+    EXPECT_TRUE(in("F2"));
+    EXPECT_TRUE(engine.output("TankValve"));
+    set("Tank", 85);
+    EXPECT_TRUE(in("F1"));
+    EXPECT_TRUE(engine.output("RunLamp"));
+    set("Bottle", 1);
+    EXPECT_TRUE(at(1));
+    EXPECT_TRUE(engine.output("FillValve"));
+    set("Level", 100);
+    EXPECT_TRUE(at(2));
+    EXPECT_TRUE(engine.output("Capper"));
+    set("Level", 0);
+    for (int i = 0; i < 25; ++i) step();
+    EXPECT_TRUE(at(3));
+    EXPECT_TRUE(engine.output("Conveyor"));
+    set("Bottle", 0);
+    EXPECT_TRUE(at(0));
+
+    // Jam: D2, the buzzer; degraded: D3, the bottles are not capped.
+    set("Jam", 1);
+    EXPECT_TRUE(in("D2"));
+    EXPECT_TRUE(engine.output("Buzzer"));
+    set("Degraded", 1);
+    set("Jam", 0);
+    EXPECT_TRUE(in("D3"));
+    set("Bottle", 1);
+    set("Level", 100);
+    EXPECT_TRUE(at(3)) << "no capping in D3";
+    set("Level", 0);
+    set("Bottle", 0);
+
+    // Stop: A2, then the tank is emptied (F3) and back to A1.
+    press("Stop");
+    EXPECT_TRUE(in("F3"));
+    EXPECT_TRUE(engine.output("DrainValve"));
+    set("Tank", 0);
+    EXPECT_TRUE(in("A1"));
+}
+
+//------------------------------------------------------------------------------
+TEST(TestGemma, BottlingWithF5)
+{
+    // The change of the tutorial: F5, its links of the form, a way back.
+    std::vector<Net> nets;
+    DocumentInfo info;
+    ASSERT_STREQ(importAllNetsFromJSON(nets, "../examples/GRAFCET/GEMMA-Bottling/GEMMA-Bottling.json",
+                                       &info).c_str(), "");
+    Gemma gemma = *info.gemma;
+    gemma.states.push_back({ "F5", Gemma::Production::Run });
+    for (auto const& link : gemmaStandardLinks())
+    {
+        if ((link.to == std::string("F5")) && (gemma.find(link.from) != nullptr))
+            gemma.links.push_back(link);
+    }
+    EXPECT_EQ(gemma.links.size(), 19u) << "A1 -> F5 and F1 -> F5";
+    std::vector<GemmaIssue> const issues = checkGemma(gemma);
+    EXPECT_TRUE(std::any_of(issues.begin(), issues.end(),
+                            [](GemmaIssue const& i) { return i.error && (i.code == "F5"); })) << "no way out";
+    gemma.links.push_back({ "F5", "A1", "/StepByStep . Production:X0" });
+    for (auto const& issue : checkGemma(gemma))
+        EXPECT_FALSE(issue.error) << issue.message;
+
+    // Production follows F1 and D3 to their new steps.
+    Net safety(TypeOfNet::GRAFCET);
+    Net control(TypeOfNet::GRAFCET);
+    generateGemma(gemma, safety, control);
+    renumberControlSteps(nets[2], gemmaSteps(nets[1]), gemmaSteps(control));
+    auto const steps = gemmaSteps(control);
+    EXPECT_EQ(nets[2].transitions()[0].caption, "(Control:X" + std::to_string(steps.at("F1")) + " + Control:X" +
+              std::to_string(steps.at("D3")) + ") . Bottle");
+}

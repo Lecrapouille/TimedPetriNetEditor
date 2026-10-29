@@ -40,6 +40,7 @@ The words of TimedPetriNetEditor in simple English. Chapter 1 explains the first
 | **Edge** | `↑a`: a has just become true (rising edge); `↓a`: it has just become false. |
 | **Forcing order** | A step of one graph puts another graph in a given situation: `Production{init}`. |
 | **GEMMA** | A French method (Guide d'Étude des Modes de Marche et d'Arrêt) to describe how a machine starts, stops and recovers. Often three graphs: safety, control, production. |
+| **GMMA** | Graph of the run and stop modes (*Graphe des Modes de Marche et d'Arrêt*): the procedures of the GEMMA a machine keeps and the links between them. In the editor, the GRAFCET Control made from the GEMMA window. |
 | **Control panel** | The window of the editor that shows the inputs of a GRAFCET as the buttons of a machine. |
 | **Timing diagram** | The window that draws the steps, inputs and outputs over time. |
 | **Document** | A file: one or several nets of the same type, their description, the inputs and outputs. |

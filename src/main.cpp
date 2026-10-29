@@ -22,7 +22,7 @@ static void usage(const char* name)
       << "  -s screenshot.png saves the net as a PNG file once drawn, then quits" << std::endl
       << "  -w screenshot.png saves the whole window as a PNG file once drawn, then quits" << std::endl
       << "  -d seconds waits before the screenshot (the simulation runs meanwhile)" << std::endl
-      << "  -f window brings this window in front (Journal, Console, Analysis or one of its tabs: Critical circuit, Gantt ...)" << std::endl
+      << "  -f window brings this window in front (Journal, Console, GEMMA, GEMMA graph, Analysis or one of its tabs: Critical circuit, Gantt ...)" << std::endl
       << "  -c endpoint follows the program publishing its journal there (tcp://localhost:5556)" << std::endl
       << "  -g WxH size of the window in pixels (default 1100x768)" << std::endl
       << std::endl;

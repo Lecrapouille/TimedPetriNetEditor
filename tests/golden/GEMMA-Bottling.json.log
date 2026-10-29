@@ -1,0 +1,16 @@
+c=5 Ack=1
+c=15 Bottle=1
+c=25 Degraded=1
+c=35 EStop=1
+c=35 Safety:T0
+c=45 FillByHand=1
+c=55 Jam=1
+c=65 Jog=1
+c=75 Level=1
+c=85 Manual=1
+c=95 Pause=1
+c=105 Rearm=1
+c=115 Start=1
+final Safety: 0 1
+final Control: 0 0 0 0 0 0 0 0 0 0 1 0 0
+final Production: 1 0 0 0

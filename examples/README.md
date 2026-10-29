@@ -91,6 +91,7 @@ Chapters [9](../doc/en/09-GRAFCET.md) and [10](../doc/en/10-GEMMA.md).
 | <img src="GRAFCET/ParallelSequences/ParallelSequences.png" width="220"> | 📝 [ParallelSequences](GRAFCET/ParallelSequences/README.md) | AND divergence and convergence |
 | <img src="GRAFCET/GrafcetActions/GrafcetActions.png" width="220"> | [GrafcetActions](GRAFCET/GrafcetActions/README.md) | the action qualifiers |
 | <img src="GRAFCET/GEMMA-Dryer/GEMMA-Dryer.png" width="220"> | [GEMMA-Dryer](GRAFCET/GEMMA-Dryer/README.md) | three GRAFCETs, forcing orders, a control panel |
+| <img src="GRAFCET/GEMMA-Bottling/GEMMA-Bottling.png" width="220"> | [GEMMA-Bottling](GRAFCET/GEMMA-Bottling/README.md) | a GEMMA of 13 procedures made with the GEMMA window: preparation, closing, pause, manual, failure and degraded modes |
 
 ## ⚙️ Runtime
 

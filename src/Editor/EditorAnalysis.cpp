@@ -282,11 +282,13 @@ bool Editor::analysisTab(char const* name, int const tab)
 //------------------------------------------------------------------------------
 void Editor::analysisWindow()
 {
-    // Always there, one row of tabs: the properties of any net (Petri net
+    // Closed by its cross (opened again by the menu Analysis), one row of tabs: the properties of any net (Petri net
     // theory, time not considered), then the (max,+) algebra of a timed net.
     // Tabs (openAnalysis()): 0 to 5 (max,+), 6 to 9 properties.
+    if (!m_states.show_analysis)
+        return;
     ImGui::SetNextWindowSize(ImVec2(520.0f, 420.0f), ImGuiCond_FirstUseEver);
-    if (ImGui::Begin("Analysis") && ImGui::BeginTabBar("##analysis", ImGuiTabBarFlags_FittingPolicyScroll))
+    if (ImGui::Begin("Analysis", &m_states.show_analysis) && ImGui::BeginTabBar("##analysis", ImGuiTabBarFlags_FittingPolicyScroll))
     {
         analysisProperties();
         if (net().type() == TypeOfNet::TimedPetriNet)

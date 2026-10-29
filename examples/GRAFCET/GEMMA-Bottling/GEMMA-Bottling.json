@@ -1,0 +1,285 @@
+{
+  "revision": 2,
+  "type": "GRAFCET",
+  "description": "Bottling line driven by a GEMMA (its GEMMA windows open with the file). Before the production the tank is filled (F2); then each bottle under the nozzle is filled, capped and taken out (F1). Stop finishes the bottle and empties the tank (A2, F3); Pause stops after the bottle (A3, A4). A jam of the capper stops the line (D2): Ack after clearing it, or Degraded to go on without capping (D3). The emergency stop forces everything (D1) until Rearm, Ack and no bottle under the nozzle (A5, A6). Manual: the conveyor and the filling by hand (F4). To start: Start, wait for the tank, put a Bottle.",
+  "nets": [
+    {
+       "name": "Safety",
+       "description": "Safety: while the emergency stop is pushed, then until the rearm (Rearm), Control is forced to D1 and Production to its initial situation.",
+       "places": [
+            { "id": 0, "caption": "Watch", "tokens": 1 },
+            { "id": 1, "caption": "Emergency stop", "tokens": 0 }
+       ],
+       "transitions": [
+            { "id": 0, "caption": "EStop" },
+            { "id": 1, "caption": "/EStop . Rearm" }
+       ],
+       "arcs": [
+            { "from": "P0", "to": "T0" },
+            { "from": "T0", "to": "P1", "duration": 0 },
+            { "from": "P1", "to": "T1" },
+            { "from": "T1", "to": "P0", "duration": 0 }
+       ],
+       "actions": [
+            { "place_id": 1, "script": "Control in D1, Production in its initial situation", "forcing": ["Control:{10}", "Production:{init}"] }
+       ],
+       "layout": {
+          "places": [
+             [100, 50],
+             [100, 150]
+          ],
+          "transitions": [
+             [100, 100],
+             [100, 200]
+          ]
+       }
+    },
+    {
+       "name": "Control",
+       "description": "GMMA: the run and stop modes kept from the GEMMA. Each step forces Production as the mode asks.",
+       "places": [
+            { "id": 0, "caption": "A1 Stop in the initial state", "tokens": 1 },
+            { "id": 1, "caption": "A2 Stop asked at the end of the cycle", "tokens": 0 },
+            { "id": 2, "caption": "A3 Stop asked in a given state", "tokens": 0 },
+            { "id": 3, "caption": "A4 Stop obtained", "tokens": 0 },
+            { "id": 4, "caption": "A5 Preparation of the restart after a failure", "tokens": 0 },
+            { "id": 5, "caption": "A6 Setting the operative part in its initial state", "tokens": 0 },
+            { "id": 6, "caption": "F1 Normal production", "tokens": 0 },
+            { "id": 7, "caption": "F2 Preparation run", "tokens": 0 },
+            { "id": 8, "caption": "F3 Closing run", "tokens": 0 },
+            { "id": 9, "caption": "F4 Verification run out of order", "tokens": 0 },
+            { "id": 10, "caption": "D1 Emergency stop", "tokens": 0 },
+            { "id": 11, "caption": "D2 Diagnosis and treatment of the failure", "tokens": 0 },
+            { "id": 12, "caption": "D3 Production despite the failure", "tokens": 0 }
+       ],
+       "transitions": [
+            { "id": 0, "caption": "Start" },
+            { "id": 1, "caption": "[Tank >= 80]" },
+            { "id": 2, "caption": "Stop" },
+            { "id": 3, "caption": "Production:X0" },
+            { "id": 4, "caption": "[Tank <= 5]" },
+            { "id": 5, "caption": "Pause" },
+            { "id": 6, "caption": "Production:X0" },
+            { "id": 7, "caption": "Start" },
+            { "id": 8, "caption": "Manual" },
+            { "id": 9, "caption": "/Manual" },
+            { "id": 10, "caption": "Safety:X0" },
+            { "id": 11, "caption": "Ack" },
+            { "id": 12, "caption": "/Bottle" },
+            { "id": 13, "caption": "Jam" },
+            { "id": 14, "caption": "Ack . /Jam" },
+            { "id": 15, "caption": "Degraded . /Jam" },
+            { "id": 16, "caption": "Stop" }
+       ],
+       "arcs": [
+            { "from": "P0", "to": "T0" },
+            { "from": "T0", "to": "P7", "duration": 0 },
+            { "from": "P7", "to": "T1" },
+            { "from": "T1", "to": "P6", "duration": 0 },
+            { "from": "P6", "to": "T2" },
+            { "from": "T2", "to": "P1", "duration": 0 },
+            { "from": "P1", "to": "T3" },
+            { "from": "T3", "to": "P8", "duration": 0 },
+            { "from": "P8", "to": "T4" },
+            { "from": "T4", "to": "P0", "duration": 0 },
+            { "from": "P6", "to": "T5" },
+            { "from": "T5", "to": "P2", "duration": 0 },
+            { "from": "P2", "to": "T6" },
+            { "from": "T6", "to": "P3", "duration": 0 },
+            { "from": "P3", "to": "T7" },
+            { "from": "T7", "to": "P6", "duration": 0 },
+            { "from": "P0", "to": "T8" },
+            { "from": "T8", "to": "P9", "duration": 0 },
+            { "from": "P9", "to": "T9" },
+            { "from": "T9", "to": "P5", "duration": 0 },
+            { "from": "P10", "to": "T10" },
+            { "from": "T10", "to": "P4", "duration": 0 },
+            { "from": "P4", "to": "T11" },
+            { "from": "T11", "to": "P5", "duration": 0 },
+            { "from": "P5", "to": "T12" },
+            { "from": "T12", "to": "P0", "duration": 0 },
+            { "from": "P6", "to": "T13" },
+            { "from": "T13", "to": "P11", "duration": 0 },
+            { "from": "P11", "to": "T14" },
+            { "from": "T14", "to": "P4", "duration": 0 },
+            { "from": "P11", "to": "T15" },
+            { "from": "T15", "to": "P12", "duration": 0 },
+            { "from": "P12", "to": "T16" },
+            { "from": "T16", "to": "P1", "duration": 0 }
+       ],
+       "actions": [
+            { "place_id": 0, "script": "Production in its initial situation", "forcing": ["Production:{init}"] },
+            { "place_id": 3, "script": "Production frozen", "forcing": ["Production:{*}"] },
+            { "place_id": 3, "qualifier": "N", "color": "yellow", "name": "PauseLamp", "script": "Paused: Start to go on" },
+            { "place_id": 4, "script": "Production in its initial situation", "forcing": ["Production:{init}"] },
+            { "place_id": 5, "script": "Production in its initial situation", "forcing": ["Production:{init}"] },
+            { "place_id": 6, "qualifier": "N", "color": "green", "name": "RunLamp", "script": "The line produces" },
+            { "place_id": 7, "script": "Production in its initial situation", "forcing": ["Production:{init}"] },
+            { "place_id": 7, "qualifier": "N", "color": "blue", "name": "TankValve", "script": "Fills the tank before the production" },
+            { "place_id": 8, "script": "Production in its initial situation", "forcing": ["Production:{init}"] },
+            { "place_id": 8, "qualifier": "N", "color": "blue", "name": "DrainValve", "script": "Empties and rinses the tank after the production" },
+            { "place_id": 9, "script": "Production in its initial situation", "forcing": ["Production:{init}"] },
+            { "place_id": 9, "qualifier": "N", "color": "green", "name": "Conveyor", "script": "Manual run of the conveyor", "condition": "Jog" },
+            { "place_id": 9, "qualifier": "N", "color": "green", "name": "FillValve", "script": "Manual filling", "condition": "FillByHand" },
+            { "place_id": 10, "script": "Production in its initial situation", "forcing": ["Production:{init}"] },
+            { "place_id": 10, "qualifier": "N", "color": "red", "name": "FaultLamp", "script": "Emergency stop" },
+            { "place_id": 11, "script": "Production frozen", "forcing": ["Production:{*}"] },
+            { "place_id": 11, "qualifier": "N", "color": "red", "name": "FaultLamp", "script": "Jam: clear the capper, then Ack" },
+            { "place_id": 11, "qualifier": "N", "color": "red", "name": "Buzzer", "script": "Calls the operator" },
+            { "place_id": 12, "qualifier": "N", "color": "orange", "name": "FaultLamp", "script": "Degraded: bottles go out without cap" },
+            { "place_id": 12, "qualifier": "N", "color": "green", "name": "RunLamp", "script": "The line produces" }
+       ],
+       "layout": {
+          "places": [
+             [100, 50],
+             [100, 700],
+             [0, 350],
+             [0, 450],
+             [550, 550],
+             [550, 650],
+             [0, 250],
+             [0, 150],
+             [100, 800],
+             [200, 150],
+             [500, 450],
+             [300, 350],
+             [300, 450]
+          ],
+          "transitions": [
+             [0, 100],
+             [0, 200],
+             [-100, 300],
+             [100, 750],
+             [-100, 850],
+             [0, 300],
+             [0, 400],
+             [0, 500],
+             [200, 100],
+             [200, 200],
+             [500, 500],
+             [550, 600],
+             [700, 750],
+             [300, 300],
+             [650, 400],
+             [300, 400],
+             [300, 500]
+          ]
+       }
+    },
+    {
+       "name": "Production",
+       "description": "Normal production (F1, or D3 without capping): a bottle under the nozzle is filled until it is full, capped, then the conveyor takes it out and brings the next one.",
+       "places": [
+            { "id": 0, "caption": "Wait for a bottle", "tokens": 1 },
+            { "id": 1, "caption": "Fill", "tokens": 0 },
+            { "id": 2, "caption": "Cap", "tokens": 0 },
+            { "id": 3, "caption": "Take the bottle out", "tokens": 0 }
+       ],
+       "transitions": [
+            { "id": 0, "caption": "(Control:X6 + Control:X12) . Bottle" },
+            { "id": 1, "caption": "[Level >= 100] . /Control:X12" },
+            { "id": 2, "caption": "[Level >= 100] . Control:X12" },
+            { "id": 3, "caption": "2s/X2" },
+            { "id": 4, "caption": "/Bottle" }
+       ],
+       "arcs": [
+            { "from": "P0", "to": "T0" },
+            { "from": "T0", "to": "P1", "duration": 0 },
+            { "from": "P1", "to": "T1" },
+            { "from": "T1", "to": "P2", "duration": 0 },
+            { "from": "P1", "to": "T2" },
+            { "from": "T2", "to": "P3", "duration": 0 },
+            { "from": "P2", "to": "T3" },
+            { "from": "T3", "to": "P3", "duration": 0 },
+            { "from": "P3", "to": "T4" },
+            { "from": "T4", "to": "P0", "duration": 0 }
+       ],
+       "actions": [
+            { "place_id": 1, "qualifier": "N", "color": "blue", "name": "FillValve", "script": "Fills the bottle" },
+            { "place_id": 2, "qualifier": "N", "color": "green", "name": "Capper", "script": "Screws the cap" },
+            { "place_id": 2, "qualifier": "N", "color": "green", "name": "CapTimer", "script": "2 s of capping" },
+            { "place_id": 3, "qualifier": "N", "color": "green", "name": "Conveyor", "script": "Takes the bottle out" }
+       ],
+       "layout": {
+          "places": [
+             [100, 0],
+             [100, 100],
+             [100, 200],
+             [100, 300]
+          ],
+          "transitions": [
+             [100, 50],
+             [100, 150],
+             [350, 150],
+             [100, 250],
+             [100, 350]
+          ]
+       }
+    }
+  ],
+  "inputs": [
+    { "name": "EStop", "kind": "emergency", "description": "Emergency stop (mushroom button)", "initial": 0 },
+    { "name": "Rearm", "kind": "button", "description": "Rearm after an emergency stop", "initial": 0, "color": "blue" },
+    { "name": "Ack", "kind": "button", "description": "Acknowledge (after a failure)", "initial": 0, "color": "white" },
+    { "name": "Start", "kind": "button", "description": "Start of the production (or go on after a pause)", "initial": 0, "color": "green" },
+    { "name": "Stop", "kind": "button", "description": "Stop at the end of the bottle, then empty the tank", "initial": 0, "color": "red" },
+    { "name": "Pause", "kind": "button", "description": "Stop after the bottle, without emptying", "initial": 0, "color": "yellow" },
+    { "name": "Manual", "kind": "switch", "description": "Manual mode (from A1)", "initial": 0, "color": "black" },
+    { "name": "Jog", "kind": "button", "description": "Manual: runs the conveyor", "initial": 0, "color": "black" },
+    { "name": "FillByHand", "kind": "button", "description": "Manual: opens the filling valve", "initial": 0, "color": "black" },
+    { "name": "Degraded", "kind": "switch", "description": "After a jam: go on without capping", "initial": 0, "color": "yellow" },
+    { "name": "Bottle", "kind": "switch", "description": "Sensor: a bottle is under the nozzle", "initial": 0 },
+    { "name": "Jam", "kind": "switch", "description": "Sensor: the capper is jammed", "initial": 0, "color": "red" },
+    { "name": "Level", "kind": "value", "description": "Level in the bottle", "initial": 0, "min": 0, "max": 100, "unit": "%", "driven_by": "FillValve", "rise": 40, "fall": 100 },
+    { "name": "Tank", "kind": "value", "description": "Level of the tank", "initial": 0, "min": 0, "max": 100, "unit": "%", "driven_by": "TankValve", "rise": 20, "fall": 4 }
+  ],
+  "outputs": [
+    { "name": "Conveyor", "kind": "motor", "description": "Conveyor of the bottles" },
+    { "name": "FillValve", "kind": "valve", "description": "Filling valve of the nozzle" },
+    { "name": "Capper", "kind": "valve", "description": "Capping head" },
+    { "name": "CapTimer", "kind": "timer", "description": "Time of the capping" },
+    { "name": "TankValve", "kind": "valve", "description": "Fills the tank (F2)" },
+    { "name": "DrainValve", "kind": "valve", "description": "Empties the tank (F3)" },
+    { "name": "RunLamp", "kind": "light", "description": "The line produces" },
+    { "name": "PauseLamp", "kind": "light", "description": "The line is paused" },
+    { "name": "FaultLamp", "kind": "light", "description": "Emergency stop or failure" },
+    { "name": "Buzzer", "kind": "buzzer", "description": "Calls the operator" }
+  ],
+  "gemma": {
+    "language": "en",
+    "states": [
+      { "code": "A1", "production": "init" },
+      { "code": "A2", "production": "run" },
+      { "code": "A3", "production": "run" },
+      { "code": "A4", "production": "freeze" },
+      { "code": "A5", "production": "init" },
+      { "code": "A6", "production": "init" },
+      { "code": "F1", "production": "run" },
+      { "code": "F2", "production": "init" },
+      { "code": "F3", "production": "init" },
+      { "code": "F4", "production": "init" },
+      { "code": "D1", "production": "init" },
+      { "code": "D2", "production": "freeze" },
+      { "code": "D3", "production": "run" }
+    ],
+    "links": [
+      { "from": "A1", "to": "F2", "condition": "Start" },
+      { "from": "F2", "to": "F1", "condition": "[Tank >= 80]" },
+      { "from": "F1", "to": "A2", "condition": "Stop" },
+      { "from": "A2", "to": "F3", "condition": "Production:X0" },
+      { "from": "F3", "to": "A1", "condition": "[Tank <= 5]" },
+      { "from": "F1", "to": "A3", "condition": "Pause" },
+      { "from": "A3", "to": "A4", "condition": "Production:X0" },
+      { "from": "A4", "to": "F1", "condition": "Start" },
+      { "from": "A1", "to": "F4", "condition": "Manual" },
+      { "from": "F4", "to": "A6", "condition": "/Manual" },
+      { "from": "D1", "to": "A5", "condition": "Safety:X0" },
+      { "from": "A5", "to": "A6", "condition": "Ack" },
+      { "from": "A6", "to": "A1", "condition": "/Bottle" },
+      { "from": "F1", "to": "D2", "condition": "Jam" },
+      { "from": "D2", "to": "A5", "condition": "Ack . /Jam" },
+      { "from": "D2", "to": "D3", "condition": "Degraded . /Jam" },
+      { "from": "D3", "to": "A2", "condition": "Stop" }
+    ]
+  }
+}

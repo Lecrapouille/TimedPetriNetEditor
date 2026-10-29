@@ -237,7 +237,7 @@ The colon of the old writing is accepted: `Production:{init}`. A forcing order i
 
 ## 8. Several graphs in one document
 
-A document can hold several GRAFCETs (*Edit > Add a net to the document > GRAFCET*, or *File > New > GEMMA (3 GRAFCETs)*). They run together, with one engine: one search of the stable situation for all of them. A graph reads the steps of another with `Name:Xn` and forces it with `Name{...}`. The name of a graph (and its description) is changed with *Edit* in the *Document* tab, at the bottom next to the *Console*.
+A document can hold several GRAFCETs (*Edit > Add a net to the document > GRAFCET*, or *File > New > GEMMA...*, [chapter 10](10-GEMMA.md#5-make-your-own-gemma-in-the-editor)). They run together, with one engine: one search of the stable situation for all of them. A graph reads the steps of another with `Name:Xn` and forces it with `Name{...}`. The name of a graph (and its description) is changed with *Edit* in the *Document* tab, at the bottom next to the *Console*.
 
 ## 9. Inputs, outputs and the control panel
 

@@ -8,7 +8,8 @@
 - ce qu'est une GEMMA : la carte de toutes les façons dont une machine démarre, s'arrête et reprend ;
 - ses trois familles de procédures (A, F, D) et ses rectangles ;
 - comment une GEMMA devient une hiérarchie de GRAFCET qui s'imposent les uns aux autres ;
-- à faire tourner un séchoir piloté par trois GRAFCET, depuis le pupitre de commande et depuis un programme.
+- à faire tourner un séchoir piloté par trois GRAFCET, depuis le pupitre de commande et depuis un programme ;
+- à faire les GRAFCET à partir d'une GEMMA dans l'éditeur : garder les procédures, les relier, vérifier, générer ; puis une ligne d'embouteillage de 13 procédures.
 
 **Prérequis** : [9. GRAFCET](09-GRAFCET.md), en particulier les ordres de forçage (§7) et les documents à plusieurs graphes (§8).
 
@@ -86,7 +87,7 @@ L'exemple [`examples/GRAFCET/GEMMA-Dryer`](../../examples/GRAFCET/GEMMA-Dryer/RE
 
 ![GEMMA d'un séchoir](pics/10-GEMMA-Dryer.png)
 
-Le document contient trois graphes, côte à côte :
+Le document contient trois graphes, un onglet chacun :
 
 ```text
   Safety      X0 force Production{init} et Control{init}  ──/EStop . Rearm──►  X1 surveillance  ──EStop──► X0
@@ -170,20 +171,137 @@ Trois lignes méritent un second regard :
 
 Le programme est court : il charge le fichier avec `importAllNetsFromJSON()`, donne les trois réseaux à un `GrafcetEngine`, puis appelle `setInput()`, `step(0.1f)` et lit `outputs()`. Voir le [chapitre 16](16-Library.md) pour l'API.
 
-## 5. Faire votre propre GEMMA
+## 5. Faire votre propre GEMMA dans l'éditeur
 
-1. *File > New > GEMMA (3 GRAFCETs)* : un document avec trois GRAFCET vides, nommés `Securite`, `Production` et `Controle` (les noms français), côte à côte. Renommez-les avec *Edit* dans l'onglet *Document* si vous voulez.
-2. Imprimez le [formulaire GEMMA](../gemma/GEMMA.pdf), barrez les procédures dont votre machine n'a pas besoin, tracez les flèches entre les autres, et notez sur chaque flèche sa condition (un bouton, un capteur, un mode).
-3. Dessinez le graphe **Safety** : une étape initiale dont l'action maintient les ordres de forçage `Production{init}` et `Controle{init}` (*Add an action*, puis *Add order* dans le panneau *Actions*), et une étape « surveillance » atteinte quand l'arrêt d'urgence est relâché et que l'opérateur réarme.
-4. Dessinez le graphe **Control** : une étape par rectangle conservé, une transition par flèche. Utilisez les fronts (`↑Ack`) pour les boutons qui changent de mode, et rendez les choix exclusifs (`Auto . ↑Ack` et `Manual . ↑Ack`).
-5. Dessinez le graphe **Production** comme s'il était seul ; ajoutez le mode dont il a besoin à sa première réceptivité (`Controle:X4 . Start`), et forcez-le depuis les modes où il ne doit pas tourner (`Production{init}`).
-6. Sur le pupitre, *Edit* les types des entrées : l'arrêt d'urgence en `emergency`, le mode en groupe `selector`, les capteurs en `value`.
-7. Lancez la simulation, et essayez chaque flèche de votre GEMMA, l'arrêt d'urgence en premier.
+Le séchoir du §4 a été dessiné à la main. L'éditeur peut aussi faire les trois GRAFCET à partir de la GEMMA elle-même : vous gardez les procédures, vous donnez les conditions des liaisons, il écrit Safety, Control et Production.
+
+### 5.1 Les deux fenêtres GEMMA
+
+*File > New > GEMMA...* fait un nouveau document à partir d'une petite GEMMA (A1, F1, A2, D1, A5, A6 et leurs liaisons), ses trois GRAFCET, et ouvre deux fenêtres : l'**éditeur de GEMMA** (*GEMMA editor*), où la GEMMA se construit, et la **GEMMA**, où elle est dessinée comme son formulaire. Ouvrir un document de GRAFCET les ouvre aussi (avec *Start a GEMMA* quand il n'en a pas). Pour le document actif, *Edit > GEMMA editor...* et *Edit > GEMMA graph...* les ouvrent (ainsi que *Show the graph* dans l'éditeur).
+
+Les deux fenêtres sont ancrées dans la fenêtre principale, pour voir en même temps la GEMMA et ses GRAFCET : quand l'une s'ouvre, elle est découpée dans le panneau des réseaux : l'éditeur de GEMMA à gauche, sur toute la hauteur ; le graphe de la GEMMA entre lui et les réseaux ; Safety, Control et Production restent des onglets du même panneau, à droite. Les autres fenêtres gardent leur place. Chaque panneau se déplace ailleurs en glissant son onglet, comme toute fenêtre de l'éditeur, et y revient quand il est rouvert ; *View > Reset the layout of the windows* remet tout en place. Quand l'éditeur est étroit, ses procédures sont au-dessus de ses liaisons au lieu d'être à côté. Sur le graphe, la molette zoome autour de la souris, le bouton droit ou du milieu fait glisser le formulaire, *Fit* le montre à nouveau en entier.
+
+```sh
+./build/TimedPetriNetEditor examples/GRAFCET/GEMMA-Bottling/GEMMA-Bottling.json   # les fenêtres GEMMA s'ouvrent avec
+```
+
+![L'éditeur de GEMMA](pics/10-GEMMA-Window.png)
+
+*La GEMMA de la ligne d'embouteillage du §5.3. À gauche l'éditeur : les 16 procédures du guide, 13 gardées, puis les 17 liaisons avec leurs conditions. Au milieu le graphe de la GEMMA, à sa droite les trois GRAFCET faits à partir d'elle, en onglets.*
+
+| Partie | Rôle |
+|------|--------------|
+| *Names: English / Français* | les noms des procédures, dans la fenêtre et dans les légendes des étapes de Control |
+| à gauche : A, F, D | les 16 procédures du guide. La case garde la procédure ; la survoler dit à quoi elle sert ; un clic la sélectionne |
+| en dessous | la procédure sélectionnée : ce que fait Production tant qu'elle est active (*runs* : tourne, *is in its initial situation* `{init}`, *is frozen* `{*}` : figée), et ses problèmes. À droite, les liaisons qui en partent sont vertes (sur une ligne verte), celles qui y arrivent bleues (sur une ligne bleue), les autres grisées ; un nouveau clic la désélectionne |
+| *Links* | une ligne par liaison, c'est-à-dire une transition de Control : de, vers, et sa condition, écrite comme une réceptivité (`Start`, `[Tank >= 80]`, `Ack . /Jam`, `Production:X0`) ; **x** la supprime |
+| *Links of the guide* | les flèches du formulaire ([GEMMA.drawio](../gemma/GEMMA.drawio)) entre deux procédures gardées, avec une condition de départ : un clic l'ajoute |
+| *Another link* | toute autre liaison : choisissez ses deux bouts, *Add*, puis écrivez sa condition |
+| *Checks* | ce qui est faux (rouge, erreurs) ou peut l'être (orange, avertissements) |
+| *Make the GRAFCETs* | écrit les GRAFCET ; désactivé tant qu'il y a des erreurs |
+| *Show the graph* | ouvre ou ferme la fenêtre de la GEMMA dessinée comme son formulaire, en lecture seule (ci-dessous) |
+
+Les vérifications :
+
+| Vérification | Type |
+|-------|------|
+| A1 est gardée (c'est l'étape initiale de Control) | erreur |
+| chaque liaison a une condition, et c'est une réceptivité valide | erreur |
+| chaque procédure gardée a une sortie, est atteinte depuis A1, et a un chemin de retour vers A1 (D1 est atteinte de partout : c'est l'arrêt d'urgence) | erreur |
+| D1 est gardée | avertissement : sans elle, l'arrêt d'urgence force Control dans son étape initiale |
+| une liaison va vers une procédure non gardée | avertissement : la liaison est ignorée |
+| deux liaisons quittent une procédure avec la même condition | avertissement : les deux franchiraient ensemble, et Control aurait deux étapes actives |
+
+### 5.2 Ce que fait l'éditeur
+
+| GRAFCET | Fait à partir de la GEMMA |
+|---------|---------------------|
+| **Safety** | `0 Watch` (initiale) ──`EStop`──► `1 Emergency stop` ──`/EStop . Rearm`──► 0. L'étape 1 force Control dans l'étape de D1 (`Control{n}`) et Production dans sa situation initiale (`Production{init}`) |
+| **Control** | le GMMA : une étape par procédure gardée, A1 d'abord (étape 0, initiale), nommée d'après son code (`A1 Arrêt dans l'état initial`) ; une transition par liaison, sa condition comme réceptivité ; chaque étape force Production comme choisi (`Production{init}`, `Production{*}`, rien quand elle tourne) |
+| **Production** | faite seulement quand le document n'en a pas : `0 Wait` ──`Control:Xn`(F1)──► `1 Cycle (to complete)` ──`5s/X1`──► 0. C'est à vous de la compléter : le cycle normal, comme s'il était seul |
+
+*Make the GRAFCETs* peut être pressé de nouveau après chaque modification de la GEMMA :
+
+- **Safety** et **Control** sont refaits ; leurs positions viennent de *Arrange top-down*.
+- **Production** est gardée. Les étapes de Control sont renumérotées, donc ses réceptivités (`Control:X4`) et ordres de forçage (`Control{4}`) sont changés vers le nouveau numéro de la même procédure.
+- Les **actions** que vous avez ajoutées aux étapes de Control (un voyant en F1, une vanne en F2) vont à la nouvelle étape de la même procédure.
+- Les entrées usuelles lues par les conditions prennent leur type sur le pupitre : `EStop` (arrêt d'urgence), `Rearm`, `Ack`, `Start`, `Stop`, `Pause` (boutons poussoirs). Les autres sont des interrupteurs jusqu'à ce que vous les changiez avec *Edit*.
+- La GEMMA est enregistrée avec le document, dans sa partie `gemma` ([chapitre 15 §3.1](15-File-Formats.md#31-the-gemma)) : rouvrez le fichier (ses fenêtres GEMMA s'ouvrent avec), modifiez-la, refaites les GRAFCET.
+
+La fenêtre **GEMMA** dessine la GEMMA comme le [formulaire](../gemma/GEMMA.pdf), avec les places et les tailles de [GEMMA.drawio](../gemma/GEMMA.drawio) : les zones A, F, D, la P.C. hors énergie et les flèches de sa mise en et hors énergie, le cadre de la production, les 16 rectangles (ceux qui ne sont pas gardés sont pâles ; A1 a le double cadre d'une étape initiale), et dans chaque rectangle gardé son étape de Control (`X6` pour F1). Une liaison du formulaire suit le tracé de sa flèche sur le formulaire, à angles droits ; une liaison en sens inverse prend le même tracé à rebours ; une autre liaison a son propre tracé, droit ou avec un ou deux coudes, autour des procédures gardées. Sa condition est écrite sur son plus long segment, à l'écart des autres conditions. D1 est aussi atteinte depuis tous les états par l'arrêt d'urgence de Safety (flèche rouge). C'est en lecture seule : un clic sur un rectangle sélectionne la procédure, dans les deux fenêtres : les liaisons qui en partent passent en vert, celles qui y arrivent en bleu. La souris dessus dit à quoi elle sert.
+
+![La GEMMA dessinée comme son formulaire](pics/10-GEMMA-Graph.png)
+
+*La GEMMA de la ligne d'embouteillage (§5.3) : F1 est l'étape X6 de Control, D3 l'étape X12.*
+
+### 5.3 Tutoriel : une ligne d'embouteillage
+
+L'exemple [`examples/GRAFCET/GEMMA-Bottling`](../../examples/GRAFCET/GEMMA-Bottling/README.md) a été fait avec la fenêtre. Une bouteille sous le bec est remplie jusqu'à ce qu'elle soit pleine, bouchée, et sortie par le convoyeur. Avant la production, la cuve est remplie ; après, elle est vidée.
+
+![La ligne d'embouteillage](../../examples/GRAFCET/GEMMA-Bottling/GEMMA-Bottling.png)
+
+Sa GEMMA garde 13 procédures :
+
+| Procédure | Production | Dans cette machine |
+|-----------|------------|-----------------|
+| A1 | `{init}` | arrêtée, prête |
+| F2 | `{init}` | préparation : `TankValve` remplit la cuve |
+| F1 | tourne | production normale, `RunLamp` |
+| A2 | tourne | `Stop` demandé : la bouteille en cours est terminée |
+| F3 | `{init}` | clôture : `DrainValve` vide la cuve |
+| A3, A4 | tourne, `{*}` | `Pause` : la bouteille est terminée, puis la ligne attend (`PauseLamp`) |
+| F4 | `{init}` | manuel : `Jog` fait tourner le convoyeur, `FillByHand` la vanne |
+| D1 | `{init}` | arrêt d'urgence, `FaultLamp` |
+| A5, A6 | `{init}` | après une défaillance : `Ack`, puis plus de bouteille sous le bec |
+| D2 | `{*}` | bourrage de la boucheuse : `Buzzer`, `FaultLamp` |
+| D3 | tourne | marche dégradée : les bouteilles sortent sans bouchon |
+
+et 17 liaisons :
+
+```text
+A1 ──Start──► F2 ──[Tank >= 80]──► F1 ──Stop──► A2 ──Production:X0──► F3 ──[Tank <= 5]──► A1
+F1 ──Pause──► A3 ──Production:X0──► A4 ──Start──► F1
+A1 ──Manual──► F4 ──/Manual──► A6 ──/Bottle──► A1
+D1 ──Safety:X0──► A5 ──Ack──► A6
+F1 ──Jam──► D2 ──Ack . /Jam──► A5        D2 ──Degraded . /Jam──► D3 ──Stop──► A2
+```
+
+`Production:X0` (la production est revenue dans son étape initiale) est la façon dont A2 et A3 attendent la fin de la bouteille. `Safety:X0` (la sécurité surveille de nouveau) laisse D1 continuer une fois l'arrêt d'urgence relâché et réarmé.
+
+Production a ensuite été écrite à la main. Elle lit les étapes de F1 et D3 de Control (`Control:X6`, `Control:X12`) et choisit entre boucher ou non :
+
+```text
+X0 Wait for a bottle ──(Control:X6 + Control:X12) . Bottle──► X1 Fill (FillValve)
+X1 ──[Level >= 100] . /Control:X12──► X2 Cap (Capper, CapTimer) ──2s/X2──► X3 Take the bottle out (Conveyor)
+X1 ──[Level >= 100] . Control:X12───► X3 ──/Bottle──► X0
+```
+
+Les entrées : `EStop`, les boutons `Rearm`, `Ack`, `Start`, `Stop`, `Pause`, `Jog`, `FillByHand`, les interrupteurs `Manual`, `Degraded`, les capteurs `Bottle`, `Jam` (des interrupteurs que vous basculez), `Level` et `Tank` (des jauges : `Level` monte de 40 % par seconde tant que `FillValve` est ouverte, `Tank` de 20 % par seconde tant que `TankValve` est ouverte et descend de 4 % par seconde sinon). Les sorties montrent les nouveaux dessins du pupitre : le convoyeur (moteur), les vannes, une minuterie, les voyants et un buzzer.
+
+Appuyez sur **Espace** :
+
+| Vous faites | Ce qui se passe |
+|--------|--------------|
+| **Start** | Control en F2 : `TankValve` s'ouvre, la jauge `Tank` monte |
+| attendez 4 s | à 80 %, F1 : `RunLamp` |
+| basculez **Bottle** | Production X1 : `FillValve`, la jauge `Level` monte ; à 100 %, X2 : `Capper` et la minuterie `CapTimer` pendant 2 s ; puis X3 : le convoyeur tourne |
+| rebasculez **Bottle** | Production X0 : elle attend la bouteille suivante |
+| basculez **Jam** | D2 : Production figée, `Buzzer` et `FaultLamp` |
+| basculez **Degraded**, rebasculez **Jam** | D3 : la bouteille suivante est remplie et sortie sans bouchon |
+| **Stop** | A2, aussitôt F3 (la production est en X0) : `DrainValve` ; quand la cuve est sous 5 %, A1 |
+| enfoncez **EStop** | D1 (forcé par Safety) ; Production revient en X0 |
+| relâchez EStop, **Rearm** | A5 |
+| **Ack** | A6, puis A1 quand aucune bouteille n'est sous le bec |
+| basculez **Manual** (en A1) | F4 : maintenez **Jog** pour faire tourner le convoyeur, **FillByHand** pour remplir ; **Manual** rebasculé : A6, puis A1 |
+
+Modifiez ensuite la GEMMA : par exemple gardez F5 (marche de vérification dans l'ordre), ajoutez ses liaisons du guide (A1 → F5 et F1 → F5, condition `StepByStep`), puis le retour que le formulaire ne dessine pas : *Another link* F5 → A1, condition `/StepByStep . Production:X0`. *Make the GRAFCETs*. Control a une étape de plus ; les réceptivités de Production qui lisent `Control:X6` et `Control:X12` suivent F1 et D3 vers leurs nouvelles étapes.
 
 ## 6. Pièges
 
 - **Deux graphes forçant le même graphe différemment.** Les ordres de forçage s'appliquent dans l'ordre des graphes et des étapes : le dernier l'emporte. Un seul maître par graphe.
 - **Un mode atteint via une étape transitoire.** La recherche de la situation stable peut traverser un mode sans exécuter ses actions ([chapitre 9 §12](09-GRAFCET.md#12-pitfalls)) : utilisez des fronts sur les boutons qui changent de mode.
+- **Modifier Control à la main, puis refaire les GRAFCET.** Safety et Control sont refaits à partir de la GEMMA : une transition ou une étape ajoutée à la main est perdue (les actions des étapes sont gardées). Modifiez plutôt la GEMMA.
+- **Deux liaisons qui quittent une procédure vraies ensemble.** Control aurait deux étapes actives (la vérification avertit quand les deux conditions sont le même texte, pas quand elles sont seulement vraies ensemble) : rendez-les exclusives (`Ack . /Jam` et `Degraded . /Jam`).
 - **Oublier la remise en marche après l'arrêt d'urgence.** Après D1, la machine ne doit pas redémarrer toute seule : le séchoir demande `Rearm` (sécurité), puis `Ack` et une évacuation des caisses (A5, A6) avant le choix du mode.
 
 ## 7. Pour aller plus loin

@@ -40,6 +40,7 @@ Les mots de TimedPetriNetEditor, en français simple. Le chapitre 1 explique les
 | **Edge** | `↑a` : a vient de devenir vrai (front montant) ; `↓a` : il vient de devenir faux. |
 | **Forcing order** | Une étape d'un graphe met un autre graphe dans une situation donnée : `Production{init}`. |
 | **GEMMA** | Une méthode française (Guide d'Étude des Modes de Marche et d'Arrêt) pour décrire comment une machine démarre, s'arrête et reprend. Souvent trois graphes : sécurité, commande, production. |
+| **GMMA** | Graphe des Modes de Marche et d'Arrêt : les procédures de la GEMMA qu'une machine garde et les liaisons entre elles. Dans l'éditeur, le GRAFCET Control fait par la fenêtre GEMMA. |
 | **Control panel** | La fenêtre de l'éditeur qui affiche les entrées d'un GRAFCET comme les boutons d'une machine. |
 | **Timing diagram** | La fenêtre qui trace les étapes, les entrées et les sorties dans le temps. |
 | **Document** | Un fichier : un ou plusieurs réseaux du même type, leur description, les entrées et les sorties. |
