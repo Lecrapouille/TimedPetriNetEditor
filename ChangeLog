@@ -1,3 +1,14 @@
+October 2026: version 0.8.0
+        * Colored Petri nets: tokens with colors, the firing rule shared by the editor, the simulation, the analysis and the runtime. The graph of the markings is drawn in its own window. Example ColoredPhilosophers.
+        * GEMMA editor: the procedures kept, the links and their conditions, the checks, and the GRAFCETs Safety, Control and Production made from them. The GEMMA graph draws it as its form, with zoom. The GEMMA is saved in the document. Examples GEMMA-Bottling, and GEMMA-Dryer with its GEMMA.
+        * GRAFCET: buzzer and timer outputs.
+        * The layout of the windows is kept from a document to another. The nets of a document are tabs. The GEMMA windows open beside the GRAFCETs. The Analysis window can be closed, and is closed for GRAFCETs. Its (max,+) tabs are in a parent tab (max,+).
+        * The simulation runs in real time whatever the frame rate.
+        * Flowshops: File > New > Flowshop fills a table, a new format, and examples of their own.
+        * The remote debugger and the journal of a running program.
+        * Golden tests of the examples. The CI passes on macOS (random numbers) and without compilation warnings.
+        * Documentation in English and in French, the screenshots made again by tools/screenshots.sh.
+
 October 2026: version 0.7.1
         * The CI publishes the Emscripten build on GitHub Pages. The page fills the browser, File > Open starts in the examples, and a save, an export, a screenshot or a journal is downloaded to the computer.
         * The same sources build for ExaequOS. The CI keeps that build, and the getting-started chapter says how to compile it and run it.

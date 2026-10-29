@@ -2,7 +2,7 @@
 # Project definition
 #
 PROJECT_NAME := TimedPetriNetEditor
-PROJECT_VERSION := 0.7.1
+PROJECT_VERSION := 0.8.0
 COMPILATION_MODE := debug
 CXX_STANDARD := --std=c++20
 
