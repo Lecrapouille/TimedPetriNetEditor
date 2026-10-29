@@ -113,6 +113,8 @@ On peut les lire sur le formulaire GEMMA :
 | Control:X5 | F4, marche de vérification hors cycle (manuel) |
 | Production:X1, X2 | F1, production normale ; X2 est la fin de cycle demandée par Stop (A2) |
 
+Le fichier garde aussi cette GEMMA, dans sa partie `gemma` : les procédures D1, A5, A6, A1, F2, F1, F4 et les liaisons du tableau, avec les réceptivités de Control. Les fenêtres GEMMA (§5) s'ouvrent avec le fichier et la montrent. Les GRAFCET ont été dessinés à la main : l'étape `Xn` écrite dans chaque procédure du graphe de la GEMMA est celle que donnerait l'éditeur (A1 d'abord : X0), pas celle de ce Control ; *Make the GRAFCETs* remplacerait Safety et Control par ceux de l'éditeur.
+
 Les **entrées** sont le pupitre du séchoir, chacune de son type : l'arrêt d'urgence `EStop` (`emergency`), les boutons-poussoirs `Rearm`, `Ack`, `Start`, `Stop`, `Left`, `Right` (`button`), le sélecteur `Mode` aux positions `Auto` et `Manual` (`selector`), et le capteur `Temperature` (`value`, de 20 à 120 °C, piloté par la sortie `Heat Oven` : +6 °C par seconde tant que le four chauffe, −1 °C par seconde sinon). Les **sorties** sont les moteurs `Left Motor`, `Right Motor` et le chauffage `Heat Oven`.
 
 ### 4.1 Le faire tourner dans l'éditeur

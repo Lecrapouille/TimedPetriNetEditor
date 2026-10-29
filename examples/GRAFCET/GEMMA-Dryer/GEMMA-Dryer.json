@@ -154,5 +154,27 @@
     { "name": "Left Motor", "kind": "motor", "description": "Moves the belt to the left" },
     { "name": "Right Motor", "kind": "motor", "description": "Moves the belt to the right" },
     { "name": "Heat Oven", "kind": "heater", "description": "Heating resistor of the dryer" }
-  ]
+  ],
+  "gemma": {
+    "language": "en",
+    "states": [
+      { "code": "A1", "production": "init" },
+      { "code": "A5", "production": "init" },
+      { "code": "A6", "production": "init" },
+      { "code": "F1", "production": "run" },
+      { "code": "F2", "production": "init" },
+      { "code": "F4", "production": "init" },
+      { "code": "D1", "production": "init" }
+    ],
+    "links": [
+      { "from": "D1", "to": "A5", "condition": "Safety:X1" },
+      { "from": "A5", "to": "A6", "condition": "↑Ack" },
+      { "from": "A6", "to": "A1", "condition": "3s/X1" },
+      { "from": "A1", "to": "F2", "condition": "Auto . ↑Ack" },
+      { "from": "F2", "to": "F1", "condition": "[Temperature >= 80]" },
+      { "from": "A1", "to": "F4", "condition": "Manual . ↑Ack" },
+      { "from": "F1", "to": "F4", "condition": "Manual . ↑Ack" },
+      { "from": "F4", "to": "A6", "condition": "Auto . ↑Ack" }
+    ]
+  }
 }

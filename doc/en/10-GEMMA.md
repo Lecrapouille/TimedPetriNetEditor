@@ -113,6 +113,8 @@ They can be read on the GEMMA form:
 | Control:X5 | F4, verification run out of order (manual) |
 | Production:X1, X2 | F1, normal production; X2 is the end of the cycle asked by Stop (A2) |
 
+The file also keeps this GEMMA, in its `gemma` part: the procedures D1, A5, A6, A1, F2, F1, F4 and the links of the table, with the receptivities of Control. The GEMMA windows (§5) open with the file and show it. The GRAFCETs were drawn by hand, so the step `Xn` written in each procedure of the GEMMA graph is the one the editor would give (A1 first: X0), not the one of this Control; *Make the GRAFCETs* would replace Safety and Control by the ones of the editor.
+
 The **inputs** are the desk of the dryer, each one of its own kind: the emergency stop `EStop` (`emergency`), the push buttons `Rearm`, `Ack`, `Start`, `Stop`, `Left`, `Right` (`button`), the selector `Mode` with the positions `Auto` and `Manual` (`selector`), and the sensor `Temperature` (`value`, from 20 to 120 °C, driven by the output `Heat Oven`: +6 °C per second while the oven heats, -1 °C per second otherwise). The **outputs** are the motors `Left Motor`, `Right Motor` and the heater `Heat Oven`.
 
 ### 4.1 Run it in the editor

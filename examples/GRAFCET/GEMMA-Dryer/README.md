@@ -13,6 +13,9 @@ together:
 - **Production**: the normal cycle: `Start`, the belt runs and the oven
   heats until `Stop`, then the belt runs 3 s more.
 
+The file also keeps the GEMMA itself (its `gemma` part), shown by the GEMMA
+windows that open with it.
+
 ![GEMMA of a dryer](GEMMA-Dryer.png)
 
 **Notions**: the GEMMA and its procedures A, F, D, a hierarchy of GRAFCETs
