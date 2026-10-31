@@ -13,7 +13,7 @@
 #  define IMGUI_DEFINE_MATH_OPERATORS
 #endif
 #include "Editor/GrafcetHelp.hpp"
-#include "imgui/imgui.h"
+#include "imgui.h"
 
 #include <algorithm>
 #include <utility>

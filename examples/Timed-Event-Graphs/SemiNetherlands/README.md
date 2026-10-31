@@ -16,7 +16,7 @@ A bigger net in the `.teg` format: 8 transitions, 12 places.
 ## Try it in the editor
 
 ```sh
-./build/TimedPetriNetEditor examples/Timed-Event-Graphs/SemiNetherlands/SemiNetherlands.teg
+./build/linux-gcc-debug/bin/TimedPetriNetEditor examples/Timed-Event-Graphs/SemiNetherlands/SemiNetherlands.teg
 ```
 
 1. *Analysis > (max,+) algebra > Critical circuit*: λ = 47.67 for every transition, the critical circuit `T0 → T1 → T3 → T2 → T0` (58 + 61 + 81 + 86 = 286 for 6 tokens) is red.

@@ -12,9 +12,14 @@
 ##=====================================================================
 
 TPNE := $(abspath ..)
+# The libraries of TimedPetriNetEditor are in build/<configuration>/lib. The
+# examples stay in build/examples: some write their files there.
+TPNE_BUILD ?= $(TPNE)/$(shell $(MAKE) --no-print-directory -s -C $(TPNE) print-BUILD)
 BUILD := $(TPNE)/build/examples
-CXXFLAGS := -std=c++20 -Wall -Wextra -I$(TPNE)/src -I$(TPNE)/external -I$(TPNE)/external/json/include
-LIBS := -L$(TPNE)/build -lTimedPetriRuntime -lTimedPetriIO -lTimedPetriNet -Wl,-rpath,$(TPNE)/build -pthread
+# The include folders of the libraries and of their third parties.
+TPNE_CFLAGS := $(shell PKG_CONFIG_PATH=$(TPNE_BUILD)/lib/pkgconfig pkg-config --cflags TimedPetriRuntime TimedPetriIO)
+CXXFLAGS := -std=c++20 -Wall -Wextra $(TPNE_CFLAGS)
+LIBS := -L$(TPNE_BUILD)/lib -lTimedPetriRuntime -lTimedPetriIO -lTimedPetriNet -Wl,-rpath,$(TPNE_BUILD)/lib -pthread
 
 # Every program of the examples, but the ones needing what may be missing:
 # Ros2Node.cpp needs rclcpp (not built here), Debugger.cpp needs libzmq (built
@@ -30,7 +35,7 @@ all: $(EXAMPLES) no-exceptions
 
 # The examples follow the headers and the libraries of the project.
 HEADERS := $(wildcard $(TPNE)/src/*/*.hpp)
-DEPENDS := $(HEADERS) $(wildcard $(TPNE)/build/libTimedPetri*.so)
+DEPENDS := $(HEADERS) $(wildcard $(TPNE_BUILD)/lib/libTimedPetri*.so)
 
 $(BUILD)/Debugger: Debugger.cpp $(DEPENDS) | $(BUILD)
 	$(CXX) $(CXXFLAGS) $< $(LIBS) $(shell pkg-config --cflags --libs libzmq) -o $@
@@ -44,13 +49,13 @@ $(BUILD):
 # The core and the runtime compile without exceptions nor RTTI, as on a
 # micro-controller.
 no-exceptions: | $(BUILD)
-	$(CXX) -std=c++20 -fno-exceptions -fno-rtti -I$(TPNE)/src -I$(TPNE)/external -c \
+	$(CXX) -std=c++20 -fno-exceptions -fno-rtti $(TPNE_CFLAGS) -c \
 	    $(TPNE)/src/Runtime/Runtime.cpp -o $(BUILD)/Runtime-noexcept.o
-	$(CXX) -std=c++20 -fno-exceptions -fno-rtti -I$(TPNE)/src -I$(TPNE)/external -c \
+	$(CXX) -std=c++20 -fno-exceptions -fno-rtti $(TPNE_CFLAGS) -c \
 	    $(TPNE)/src/PetriNet/Engine.cpp -o $(BUILD)/Engine-noexcept.o
-	$(CXX) -std=c++20 -fno-exceptions -fno-rtti -I$(TPNE)/src -I$(TPNE)/external -c \
+	$(CXX) -std=c++20 -fno-exceptions -fno-rtti $(TPNE_CFLAGS) -c \
 	    $(TPNE)/src/PetriNet/Firing.cpp -o $(BUILD)/Firing-noexcept.o
-	$(CXX) -std=c++20 -fno-exceptions -fno-rtti -I$(TPNE)/src -I$(TPNE)/external -c \
+	$(CXX) -std=c++20 -fno-exceptions -fno-rtti $(TPNE_CFLAGS) -c \
 	    $(TPNE)/src/PetriNet/ColoredMarking.cpp -o $(BUILD)/ColoredMarking-noexcept.o
 
 # Run the programs that end by themselves, from the root of the project (they

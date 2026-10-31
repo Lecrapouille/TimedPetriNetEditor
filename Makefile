@@ -5,121 +5,18 @@
 # for users who cannot use the GPL, under a commercial license.
 # See LICENSING.md for details.
 
-###################################################
-# Location of the project directory and Makefiles
+PROJECT_NAME := TimedPetriNetEditor
+PROJECT_VERSION := 0.8.0
+COMPILATION_MODE ?= debug
+CXX_STANDARD := c++20
+
+###############################################################################
+# The libraries (TimedPetriNet.mk, also read by the projects embedding
+# them), their third parties, the editor, the library for Julia, the tools
+# and the tests, each declared in the directory of its sources.
 #
-P := .
-M := $(P)/.makefile
+SUBMAKEFILES := TimedPetriNet.mk external/external.mk external/gui.mk \
+    src/Editor/Editor.mk src/julia/julia.mk tools/tpne-check/tpne-check.mk tests/tests.mk
 
-###################################################
-# Project definition
-#
-include $(P)/Makefile.common
-TARGET_NAME := $(PROJECT_NAME)
-TARGET_DESCRIPTION := Timed Petri Net Editor
-include $(M)/project/Makefile
-
-###################################################
-# Standalone application
-#
-SRC_FILES := src/main.cpp
-VPATH := $(P)/src
-
-###################################################
-# Compile internal libraries in the correct order
-#
-LIB_TPNE_NET := $(call internal-lib,TimedPetriNet)
-LIB_TPNE_IO := $(call internal-lib,TimedPetriIO)
-LIB_TPNE_MAXPLUS := $(call internal-lib,TimedPetriMaxPlus)
-LIB_TPNE_RUNTIME := $(call internal-lib,TimedPetriRuntime)
-LIB_TPNE_ANALYSIS := $(call internal-lib,TimedPetriAnalysis)
-LIB_TPNE_EDITOR := $(call internal-lib,TimedPetriGUI)
-LIB_TPNE_JULIA := $(call internal-lib,TimedPetriJulia)
-INTERNAL_LIBS := $(LIB_TPNE_EDITOR) $(LIB_TPNE_ANALYSIS) $(LIB_TPNE_RUNTIME) $(LIB_TPNE_MAXPLUS) $(LIB_TPNE_IO) $(LIB_TPNE_NET) $(LIB_TPNE_JULIA)
-# The projects share the build folder: clean removes it once, without
-# going down in the projects this one depends on.
-ifeq ($(filter clean,$(MAKECMDGOALS)),)
-DIRS_WITH_MAKEFILE := $(P)/src/PetriNet $(P)/src/IO $(P)/src/MaxPlus $(P)/src/Runtime $(P)/src/Analysis $(P)/src/Editor $(P)/src/julia $(P)/tools/tpne-check
-endif
-
-$(P)/src/julia: $(P)/src/Editor
-
-$(P)/src/Editor: $(P)/src/MaxPlus $(P)/src/Analysis $(P)/src/IO $(P)/src/Runtime
-
-$(P)/src/IO: $(P)/src/PetriNet
-
-$(P)/src/MaxPlus: $(P)/src/IO
-
-$(P)/src/Runtime: $(P)/src/PetriNet
-
-$(P)/src/Analysis: $(P)/src/PetriNet
-
-$(P)/tools/tpne-check: $(P)/src/Analysis $(P)/src/IO
-
-###################################################
-# GUI
-#
-include $(abspath $(P)/src/Editor/Backends/Makefile)
-
-###################################################
-# Embed assets for web version. Assets shall be
-# present inside $(BUILD) folder.
-#
-ifeq ($(OS),Emscripten)
-    ifndef EXAEQUOS
-        # Install the folder data in the Emscripten filesystem
-        LINKER_FLAGS += --preload-file $(PROJECT_DATA_DIR)
-        # The nets of the examples in /examples: File > Open starts there
-        LINKER_FLAGS += --preload-file $(abspath $(P)/examples)@/examples
-        LINKER_FLAGS += --exclude-file '*.png' --exclude-file '*.cpp' --exclude-file '*.md'
-        LINKER_FLAGS += --exclude-file '*.args' --exclude-file '*Makefile'
-        LINKER_FLAGS += -s FORCE_FILESYSTEM=1
-        # Add this flag ONLY in case we are using ASYNCIFY code
-        LINKER_FLAGS += -s ASYNCIFY
-        # For linking glfwGetProcAddress().
-        LINKER_FLAGS += -s GL_ENABLE_GET_PROC_ADDRESS
-    endif
-endif
-
-###################################################
-# OpenGL frameworks (GLFW/GLEW: pkg-config via Backends/Makefile)
-#
-ifeq ($(OS),Darwin)
-LINKER_FLAGS += -framework OpenGL -framework Cocoa
-LINKER_FLAGS += -framework IOKit -framework CoreVideo
-endif
-
-###################################################
-# Project linker
-#
-LINKER_FLAGS += -ldl -lpthread
-
-###################################################
-# MacOS X
-#
-ifeq ($(OS),Darwin)
-BUILD_MACOS_APP_BUNDLE = 1
-APPLE_IDENTIFIER = lecrapouille
-MACOS_BUNDLE_ICON = data/TimedPetriNetEditor.icns
-LINKER_FLAGS += -framework CoreFoundation
-endif
-
-###################################################
-# Generic Makefile rules
-#
-include $(M)/rules/Makefile
-
-###################################################
-#? Copy data inside BUILD to allow emscripten to embedded them
-#
-.PHONY: copy-assets
-copy-emscripten-assets: | $(BUILD)
-ifeq ($(ARCHI),Emscripten)
-	@$(call print-to,"Copying assets","$(TARGET)","$(BUILD)","")
-	@mkdir -p $(BUILD)/data
-	@mkdir -p $(BUILD)/examples
-	@cp $(shell find $(P)/examples -name '*.json') $(BUILD)/examples
-	@cp $(P)/data/font.ttf $(P)/data/math.ttf $(BUILD)/data
-	@cp $(P)/data/imgui.ini $(BUILD)/data
-endif
-
+M ?= .makefile
+include $(M)/MyMakefile.mk

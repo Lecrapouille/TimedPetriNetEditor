@@ -16,7 +16,7 @@ Colored tokens: the result of an inspection chooses the branch.
 ## Try it in the editor
 
 ```sh
-./build/TimedPetriNetEditor examples/Extended-Petri-Nets/Colors/Colors.json
+./build/linux-gcc-debug/bin/TimedPetriNetEditor examples/Extended-Petri-Nets/Colors/Colors.json
 ```
 
 1. Open it: the colors `Good` and `Bad` are written on the arcs.

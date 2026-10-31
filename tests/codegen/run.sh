@@ -5,11 +5,11 @@
 # engine of the editor, cycle after cycle. Run from the root of the project
 # after make.
 set -u
-BUILD=${BUILD:-build}
+BUILD=${BUILD:-$(make -s print-BUILD)}
 OUT=$BUILD/codegen
 mkdir -p $OUT
-g++ -std=c++20 -Isrc -Iexternal -Iexternal/json/include tests/codegen/GrafcetCodegen.cpp \
-    -L$BUILD -lTimedPetriIO -lTimedPetriNet -Wl,-rpath,$PWD/$BUILD -o $OUT/GrafcetCodegen || exit 1
+g++ -std=c++20 $(PKG_CONFIG_PATH=$BUILD/lib/pkgconfig pkg-config --cflags TimedPetriIO) tests/codegen/GrafcetCodegen.cpp \
+    -L$BUILD/lib -lTimedPetriIO -lTimedPetriNet -Wl,-rpath,$PWD/$BUILD/lib -o $OUT/GrafcetCodegen || exit 1
 status=0
 for json in $(grep -rl --include='*.json' '"type": "GRAFCET"' examples); do
     name=$(basename $json .json)

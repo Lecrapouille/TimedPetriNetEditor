@@ -10,8 +10,8 @@
 #include "Editor/Theme.hpp"
 #include "Runtime/Journal.hpp"
 
-#include "imgui/imgui.h"
-#include "imgui/misc/cpp/imgui_stdlib.h"
+#include "imgui.h"
+#include "imgui_stdlib.h"
 
 #include <algorithm>
 #include <cmath>

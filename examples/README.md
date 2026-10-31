@@ -10,7 +10,7 @@ do and what to look at.
 Open any of them from the root of the project:
 
 ```sh
-./build/TimedPetriNetEditor examples/Petri-Nets/Philosophers/Philosophers.json
+./build/linux-gcc-debug/bin/TimedPetriNetEditor examples/Petri-Nets/Philosophers/Philosophers.json
 ```
 
 and build and run the programs with `make -C examples` then, for example,

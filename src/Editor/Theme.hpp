@@ -8,7 +8,7 @@
 #ifndef DEAR_IMGUI_THEME_HPP
 #define DEAR_IMGUI_THEME_HPP
 
-#include "imgui/imgui.h"
+#include "imgui.h"
 #include <cstdint>
 
 // *****************************************************************************

@@ -1,60 +1,78 @@
-##=====================================================================
-## TimedPetriNetEditor: A timed Petri net editor.
-## Copyright 2021 -- 2026 Quentin Quadrat <lecrapouille@gmail.com>
-##
-## This file is part of TimedPetriNetEditor.
-##
-## TimedPetriNetEditor is free software: you can redistribute it and/or modify it
-## under the terms of the GNU General Public License as published by
-## the Free Software Foundation, either version 3 of the License, or
-## (at your option) any later version.
-##=====================================================================
-
-###################################################
-# Use TimedPetriNet from another Makefile project, without building this
-# project: define TPNE_DIR (this folder) then include this file.
+# SPDX-License-Identifier: GPL-3.0-or-later OR LicenseRef-TimedPetriNetEditor-Commercial
+# Copyright (c) 2020-2026 Quentin Quadrat
 #
-#   TPNE_SOURCES  the library: nets, simulation, GRAFCET engine, (max,+)
-#                 algorithms, imports and exports (the file formats). No GUI.
-#   TPNE_CORE_SOURCES  only the nets, the firing rule, the engines: what a
-#                 board running a net needs (with TPNE_RUNTIME_SOURCES).
-#   TPNE_RUNTIME_SOURCES  the runtime calling functions when transitions
-#                 fire (needs TPNE_SOURCES).
-#   TPNE_ANALYSIS_SOURCES  properties of the nets: reachability, deadlocks,
-#                 bounds, liveness, invariants (needs TPNE_SOURCES).
-#   TPNE_VIEWER_SOURCES  NetViewer, a read-only view of a net drawn inside
-#                 the Dear ImGui windows of the host. The host compiles
-#                 Dear ImGui and gives its include folder so that
-#                 "imgui/imgui.h" is found.
+# This file is part of TimedPetriNetEditor. See LICENSING.md for details.
 #
-ifndef TPNE_DIR
-$(error TimedPetriNet.mk: define TPNE_DIR before including this file)
-endif
+# The libraries of TimedPetriNetEditor, without its editor, for MyMakefile 3.
+# Their headers are included from src/ ("PetriNet/Net.hpp") and each one
+# installs the headers of its folder. A project embedding them reads this
+# file with their third parties:
+#   TARGETS += TimedPetriNetEditor
+#   TimedPetriNetEditor.GIT := https://github.com/Lecrapouille/TimedPetriNetEditor.git
+#   TimedPetriNetEditor.MAKEFILES := TimedPetriNet.mk external/external.mk
+#   myapp.DEPENDS := TimedPetriRuntime TimedPetriIO
+# TimedPetriViewer also needs the target imgui: declared by the project, or
+# by reading external/gui.mk too.
 
-TPNE_INCLUDES := $(TPNE_DIR)/src
-TPNE_VPATH := $(TPNE_DIR)/src
-TPNE_CORE_SOURCES := $(shell find $(TPNE_DIR)/src/PetriNet -name '*.cpp' 2> /dev/null)
-TPNE_SOURCES := $(shell find $(TPNE_DIR)/src/PetriNet $(TPNE_DIR)/src/IO $(TPNE_DIR)/src/MaxPlus -name '*.cpp' -o -name '*.c' 2> /dev/null)
-TPNE_SOURCES += $(TPNE_DIR)/external/tinyxml2/tinyxml2.cpp
-# Third parties headers are system headers: no warnings from them.
-TPNE_CXXFLAGS := -isystem $(abspath $(TPNE_DIR)/external/json/include)
-TPNE_CXXFLAGS += -isystem $(abspath $(TPNE_DIR)/external)
-# -Wnoexcept and -Wuseless-cast are known by GCC only: clang warns about them.
-TPNE_IS_CLANG := $(shell $(CXX) --version 2> /dev/null | grep -c clang)
-ifeq ($(TPNE_IS_CLANG),0)
-TPNE_CXXFLAGS += -Wno-noexcept
-endif
-# Howard.c
-TPNE_CFLAGS := -Wno-sign-conversion -Wno-float-equal
+TARGETS += tpne-src TimedPetriNet TimedPetriIO TimedPetriMaxPlus \
+    TimedPetriRuntime TimedPetriAnalysis TimedPetriViewer
 
-TPNE_RUNTIME_SOURCES := $(shell find $(TPNE_DIR)/src/Runtime -name '*.cpp' 2> /dev/null)
-TPNE_ANALYSIS_SOURCES := $(shell find $(TPNE_DIR)/src/Analysis -name '*.cpp' 2> /dev/null)
-TPNE_VIEWER_SOURCES := $(TPNE_DIR)/src/Editor/NetViewer.cpp
-TPNE_VIEWER_SOURCES += $(TPNE_DIR)/src/Editor/Drawable.cpp
-TPNE_VIEWER_SOURCES += $(TPNE_DIR)/src/Editor/Theme.cpp
-# The viewer only needs the headers of TimedPetriNet and the host Dear ImGui.
-TPNE_VIEWER_CXXFLAGS := -Wno-old-style-cast -Wno-sign-conversion -Wno-float-equal
-TPNE_VIEWER_CXXFLAGS += -Wno-double-promotion -Wno-conversion
-ifeq ($(TPNE_IS_CLANG),0)
-TPNE_VIEWER_CXXFLAGS += -Wno-useless-cast
-endif
+# The include folder of all the libraries.
+tpne-src.PUBLIC_INCLUDES := src
+tpne-src.INSTALL := no
+
+TimedPetriNet.TYPE := library
+TimedPetriNet.DESCRIPTION := Library manipulating Petri nets
+TimedPetriNet.SOURCES := src/PetriNet/**/*.cpp
+TimedPetriNet.PUBLIC_HEADERS := src/PetriNet/**/*.hpp
+TimedPetriNet.INCLUDES := src
+TimedPetriNet.DEPENDS := tpne-src json
+TimedPetriNet.CXXFLAGS := -Wno-old-style-cast -Wno-sign-conversion -Wno-nan-infinity-disabled \
+    -Wno-format-nonliteral -Wno-double-promotion -Wno-cast-qual -Wno-float-equal -fno-fast-math
+
+TimedPetriIO.TYPE := library
+TimedPetriIO.DESCRIPTION := Load and save Petri nets in many file formats
+TimedPetriIO.SOURCES := src/IO/**/*.cpp
+TimedPetriIO.PUBLIC_HEADERS := src/IO/**/*.hpp
+TimedPetriIO.INCLUDES := src
+TimedPetriIO.DEPENDS := TimedPetriNet tinyxml2
+TimedPetriIO.MERGE := tinyxml2
+TimedPetriIO.CXXFLAGS := -Wno-old-style-cast -Wno-sign-conversion -Wno-float-equal \
+    -Wno-nan-infinity-disabled -Wno-format-nonliteral -Wno-double-promotion -fno-fast-math
+
+TimedPetriMaxPlus.TYPE := library
+TimedPetriMaxPlus.DESCRIPTION := (max,+) algebra and analyses of timed event graphs
+TimedPetriMaxPlus.SOURCES := src/MaxPlus/**/*.cpp src/MaxPlus/**/*.c
+TimedPetriMaxPlus.PUBLIC_HEADERS := src/MaxPlus/**/*.hpp src/MaxPlus/**/*.h
+TimedPetriMaxPlus.INCLUDES := src
+TimedPetriMaxPlus.DEPENDS := TimedPetriIO
+TimedPetriMaxPlus.CXXFLAGS := -Wno-old-style-cast -Wno-sign-conversion -Wno-cast-qual \
+    -Wno-float-equal -Wno-nan-infinity-disabled -fno-fast-math
+TimedPetriMaxPlus.CFLAGS := -Wno-sign-conversion -Wno-float-equal -Wno-nan-infinity-disabled -fno-fast-math
+
+TimedPetriRuntime.TYPE := library
+TimedPetriRuntime.DESCRIPTION := Runtime calling functions when the transitions of a net fire
+TimedPetriRuntime.SOURCES := src/Runtime/**/*.cpp
+TimedPetriRuntime.PUBLIC_HEADERS := src/Runtime/**/*.hpp
+TimedPetriRuntime.INCLUDES := src
+TimedPetriRuntime.DEPENDS := TimedPetriNet
+TimedPetriRuntime.CXXFLAGS := -Wno-old-style-cast -Wno-float-equal -Wno-noexcept -fno-fast-math
+
+TimedPetriAnalysis.TYPE := library
+TimedPetriAnalysis.DESCRIPTION := Properties of Petri nets: reachability, deadlocks, bounds, liveness, invariants
+TimedPetriAnalysis.SOURCES := src/Analysis/**/*.cpp
+TimedPetriAnalysis.PUBLIC_HEADERS := src/Analysis/**/*.hpp
+TimedPetriAnalysis.INCLUDES := src
+TimedPetriAnalysis.DEPENDS := TimedPetriNet
+TimedPetriAnalysis.CXXFLAGS := -Wno-old-style-cast
+
+# Draws a net, read only, in the Dear ImGui window of a program. The project
+# declares imgui (external/gui.mk here).
+TimedPetriViewer.TYPE := static
+TimedPetriViewer.DESCRIPTION := Draw a Petri net in a Dear ImGui window
+TimedPetriViewer.SOURCES := src/Editor/NetViewer.cpp src/Editor/Drawable.cpp src/Editor/Theme.cpp
+TimedPetriViewer.PUBLIC_HEADERS := src/Editor/NetViewer.hpp src/Editor/Drawable.hpp src/Editor/Theme.hpp
+TimedPetriViewer.INCLUDES := src
+TimedPetriViewer.DEPENDS := TimedPetriNet imgui
+TimedPetriViewer.CXXFLAGS := -Wno-old-style-cast -Wno-sign-conversion -Wno-float-equal \
+    -Wno-double-promotion -Wno-conversion -Wno-useless-cast

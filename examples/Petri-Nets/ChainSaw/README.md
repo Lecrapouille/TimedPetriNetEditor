@@ -16,7 +16,7 @@ The chain brake, the dead man switch and the throttle are each in one of two sta
 ## Try it in the editor
 
 ```sh
-./build/TimedPetriNetEditor examples/Petri-Nets/ChainSaw/ChainSaw.json
+./build/linux-gcc-debug/bin/TimedPetriNetEditor examples/Petri-Nets/ChainSaw/ChainSaw.json
 ```
 
 1. Press **Space**. `Start chain` is grey: the brake is on and the switch released.

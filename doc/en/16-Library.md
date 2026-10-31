@@ -24,16 +24,25 @@ A program running a net on a board needs only `libTimedPetriNet` and `libTimedPe
 
 ## 1. Build against the library
 
-After `make`, the libraries are in `build/`. A program `main.cpp`:
+After `make`, the libraries are in `build/linux-gcc-debug/lib/`, with their pkg-config files, which give the include folders of the sources and of the third parties. A program `main.cpp`:
 
 ```sh
-g++ -std=c++20 -Isrc -Iexternal/json/include -Iexternal main.cpp \
-    -Lbuild -lTimedPetriMaxPlus -lTimedPetriIO -lTimedPetriNet -Wl,-rpath,$PWD/build -o main
+export PKG_CONFIG_PATH=$PWD/build/linux-gcc-debug/lib/pkgconfig
+g++ -std=c++20 main.cpp $(pkg-config --cflags --libs TimedPetriMaxPlus TimedPetriIO TimedPetriNet) \
+    -Wl,-rpath,$PWD/build/linux-gcc-debug/lib -o main
 ```
 
 `-lTimedPetriMaxPlus` only for §3 (cycle time, dates of the (max,+) equations). Call `registerMaxPlusFormats()` once to load and save `.flowshop` files and save `.jl` files with `loadFromFile()` and `saveToFile()`.
 
-A project built with Make can compile the sources instead: define `TPNE_DIR` and include `TimedPetriNet.mk`, which gives `TPNE_SOURCES` (nets, formats, (max,+)), `TPNE_CORE_SOURCES` (the nets only), `TPNE_RUNTIME_SOURCES`, `TPNE_ANALYSIS_SOURCES`, `TPNE_INCLUDES` and `TPNE_CXXFLAGS` (and `TPNE_VIEWER_SOURCES` for §5).
+A project built with [MyMakefile](https://github.com/Lecrapouille/MyMakefile) 3 can compile the libraries with its own targets instead. `TimedPetriNet.mk` declares them: `TimedPetriNet` (the nets), `TimedPetriIO` (the formats), `TimedPetriMaxPlus`, `TimedPetriRuntime`, `TimedPetriAnalysis` and `TimedPetriViewer` (§5, which also needs a target `imgui`):
+
+```makefile
+TARGETS += TimedPetriNetEditor myapp
+TimedPetriNetEditor.GIT := https://github.com/Lecrapouille/TimedPetriNetEditor.git
+TimedPetriNetEditor.VERSION := v0.8.0
+TimedPetriNetEditor.MAKEFILES := TimedPetriNet.mk external/external.mk
+myapp.DEPENDS := TimedPetriRuntime TimedPetriIO
+```
 
 ## 2. Run a GRAFCET
 
@@ -156,7 +165,7 @@ t = 2.00  M1 starts P2 (k = 1), until 5.00
 
 ## 5. Draw a net in your window
 
-`NetViewer` (`src/Editor/NetViewer.hpp`, sources in `TPNE_VIEWER_SOURCES`) draws a net, read only, inside the current Dear ImGui window of your program: the user can pan, zoom and fit it. Your program owns the net and its marking, so the viewer can show a GRAFCET run somewhere else.
+`NetViewer` (`src/Editor/NetViewer.hpp`, library `TimedPetriViewer`) draws a net, read only, inside the current Dear ImGui window of your program: the user can pan, zoom and fit it. Your program owns the net and its marking, so the viewer can show a GRAFCET run somewhere else.
 
 ```c++
 tpne::NetViewer viewer;                 // keep it from frame to frame

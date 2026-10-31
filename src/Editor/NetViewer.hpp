@@ -9,7 +9,7 @@
 #  define TPNE_NET_VIEWER_HPP
 
 #  include "PetriNet/PetriNet.hpp"
-#  include "imgui/imgui.h"
+#  include "imgui.h"
 
 #  include <vector>
 

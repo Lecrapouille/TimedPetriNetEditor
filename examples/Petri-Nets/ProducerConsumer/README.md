@@ -17,7 +17,7 @@ The producer alternates `Produce` and `Send` (two tokens cycle between `Idle` an
 ## Try it in the editor
 
 ```sh
-./build/TimedPetriNetEditor examples/Petri-Nets/ProducerConsumer/ProducerConsumer.json
+./build/linux-gcc-debug/bin/TimedPetriNetEditor examples/Petri-Nets/ProducerConsumer/ProducerConsumer.json
 ```
 
 1. Press **Space**: `Produce`, `Send` and `Accept` are green.

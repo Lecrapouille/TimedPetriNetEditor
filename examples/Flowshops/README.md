@@ -24,7 +24,7 @@ The editor builds the timed event graph: `M1_C2` is the operation of machine `M1
 ## Try it in the editor
 
 ```sh
-./build/TimedPetriNetEditor examples/Flowshops/simple.flowshop
+./build/linux-gcc-debug/bin/TimedPetriNetEditor examples/Flowshops/simple.flowshop
 ```
 
 1. *Analysis > Critical circuit*: λ = 6. The red circuit is the row of `M1` (2 + 3 + 1). `M1` is the limit; the column of `C2` is only 3 + 2 = 5.

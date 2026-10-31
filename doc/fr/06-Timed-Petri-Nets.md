@@ -108,7 +108,7 @@ t = 12.00  Toast              k = 3
 `k` compte les tirs de chaque transition : `Toast` tire pour la k-ième fois à `6 (k - 1)`.
 
 ```sh
-./build/TimedPetriNetEditor examples/Timed-Petri-Nets/Durations/Durations.json
+./build/linux-gcc-debug/bin/TimedPetriNetEditor examples/Timed-Petri-Nets/Durations/Durations.json
 ```
 
 Appuyez sur **Space** : le réseau tourne tout seul ; le jeton se déplace le long de l'arc avec son nombre dans un disque vert. Le coin supérieur gauche affiche le temps simulé.

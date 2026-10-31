@@ -213,7 +213,7 @@ The format is a table: the conveyors on the first row, the machines on the first
 Open it: the editor builds the timed event graph.
 
 ```sh
-./build/TimedPetriNetEditor examples/Flowshops/simple.flowshop
+./build/linux-gcc-debug/bin/TimedPetriNetEditor examples/Flowshops/simple.flowshop
 ```
 
 ![The flowshop](pics/07-Flowshop.png)

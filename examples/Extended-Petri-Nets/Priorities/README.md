@@ -16,7 +16,7 @@ A car and an ambulance wait for the same crossing (a conflict on `Crossing free`
 ## Try it in the editor
 
 ```sh
-./build/TimedPetriNetEditor examples/Extended-Petri-Nets/Priorities/Priorities.json
+./build/linux-gcc-debug/bin/TimedPetriNetEditor examples/Extended-Petri-Nets/Priorities/Priorities.json
 ```
 
 1. Choose *Simulation > Conflicts > Highest priority*, press **Space**: the ambulance crosses first, every time.

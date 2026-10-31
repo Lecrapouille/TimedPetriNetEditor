@@ -28,7 +28,7 @@ TimedEventGraph 3 5
 ## Try it in the editor
 
 ```sh
-./build/TimedPetriNetEditor examples/Timed-Event-Graphs/SemiHoward/SemiHoward.teg
+./build/linux-gcc-debug/bin/TimedPetriNetEditor examples/Timed-Event-Graphs/SemiHoward/SemiHoward.teg
 ```
 
 1. *Analysis > (max,+) algebra > Critical circuit*: two components, with the circuits `T0 → T1 → T0` and `T2 → T2`.

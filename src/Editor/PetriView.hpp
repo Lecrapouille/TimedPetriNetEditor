@@ -11,7 +11,7 @@
 #  include "Document.hpp"
 #  include "PetriNet/PetriNet.hpp"
 #  include "PetriNet/Simulation.hpp"
-#  include "imgui/imgui.h"
+#  include "imgui.h"
 
 #  include <memory>
 #  include <string>

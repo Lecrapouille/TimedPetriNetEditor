@@ -92,7 +92,7 @@ Un **interblocage** (deadlock) est un marquage atteignable où aucune transition
 *Le marquage en rouge, `0 1 0 0 0 0 1 0`, est l’interblocage : A tient l’outil 1, B tient l’outil 2.*
 
 ```text
-$ build/tpne-check --allow-deadlock examples/Petri-Nets/Deadlock/Deadlock.json
+$ build/linux-gcc-debug/bin/tpne-check --allow-deadlock examples/Petri-Nets/Deadlock/Deadlock.json
 examples/Petri-Nets/Deadlock/Deadlock.json:
 Net: Deadlock (Petri net, 8 places, 6 transitions)
 Reachable markings: 6
@@ -162,7 +162,7 @@ digraph "Unbounded" {
 Une place est non bornée exactement quand un `ω` y apparaît. Pour le producteur et le consommateur, le graphe de couverture a 46 marquages et `ω` dans `Buffer` seulement. L’éditeur le construit tout seul quand le graphe d’atteignabilité est trop gros, pour dire si le réseau est borné :
 
 ```text
-$ build/tpne-check examples/Petri-Nets/ProducerConsumer/ProducerConsumer.json
+$ build/linux-gcc-debug/bin/tpne-check examples/Petri-Nets/ProducerConsumer/ProducerConsumer.json
 examples/Petri-Nets/ProducerConsumer/ProducerConsumer.json:
 Net: Producer Consumer (Petri net, 5 places, 4 transitions)
 Reachable markings: 100000 (stopped)
@@ -241,7 +241,7 @@ Dans la matrice `C` de MutualExclusion, cherchez des poids qui annulent chaque c
 Le dernier *est* l’exclusion mutuelle : comme les jetons ne sont jamais négatifs, `Critical A + Critical B ≤ 1`. L’éditeur trouve les mêmes trois :
 
 ```text
-$ build/tpne-check examples/Petri-Nets/MutualExclusion/MutualExclusion.json
+$ build/linux-gcc-debug/bin/tpne-check examples/Petri-Nets/MutualExclusion/MutualExclusion.json
 examples/Petri-Nets/MutualExclusion/MutualExclusion.json:
 Net: Mutual exclusion (Petri net, 5 places, 4 transitions)
 Reachable markings: 3
@@ -324,8 +324,8 @@ tpne-check [--max-states N] [--allow-deadlock] [--dot graph.dot] net.json ...
 Il affiche le rapport de chaque réseau et renvoie **0** quand aucun réseau ne peut s’interbloquer, **1** quand un le peut (sauf `--allow-deadlock`), **2** pour une mauvaise utilisation ou un fichier illisible. Il lit les formats de l’éditeur (`.json`, `.pnml`, `.grml`, `.teg`). L’intégration continue de ce projet l’exécute sur les exemples, donc un changement qui introduit un interblocage fait échouer la build :
 
 ```sh
-build/tpne-check examples/Petri-Nets/Philosophers/Philosophers.json examples/Petri-Nets/ProducerConsumer/ProducerConsumer.json
-build/tpne-check --allow-deadlock examples/Runtime/PickAndPlace/PickAndPlace.json
+build/linux-gcc-debug/bin/tpne-check examples/Petri-Nets/Philosophers/Philosophers.json examples/Petri-Nets/ProducerConsumer/ProducerConsumer.json
+build/linux-gcc-debug/bin/tpne-check --allow-deadlock examples/Runtime/PickAndPlace/PickAndPlace.json
 ```
 
 Faites pareil dans votre projet : dessinez le réseau de votre contrôleur, commitez-le, vérifiez-le à chaque commit. Les mêmes fonctions sont dans la bibliothèque C++ (`properties()`, `pInvariants()`, `tInvariants()`, `reachabilityGraph()`, `coverabilityGraph()`, `report()` de `Analysis/Analysis.hpp`, [chapitre 16](16-Library.md)).

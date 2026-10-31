@@ -17,7 +17,7 @@ timing diagram ([§9](../../../doc/en/09-GRAFCET.md#9-inputs-outputs-and-the-con
 **Try it**
 
 ```sh
-./build/TimedPetriNetEditor examples/GRAFCET/GermanTrafficLights/GermanTrafficLights.json
+./build/linux-gcc-debug/bin/TimedPetriNetEditor examples/GRAFCET/GermanTrafficLights/GermanTrafficLights.json
 ```
 
 1. Press **Space**: the green light is on, and the timer `x / 3 s` counts

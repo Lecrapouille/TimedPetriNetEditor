@@ -16,7 +16,7 @@ A request waits for its reply, but not for ever: a transition with a **delay** i
 ## Try it in the editor
 
 ```sh
-./build/TimedPetriNetEditor examples/Timed-Petri-Nets/Timeout/Timeout.json
+./build/linux-gcc-debug/bin/TimedPetriNetEditor examples/Timed-Petri-Nets/Timeout/Timeout.json
 ```
 
 1. Press **Space**: at `t = 3` `Timeout` fires, the request goes to `Error`; the reply arrives at 5 and stays alone in `Reply`.

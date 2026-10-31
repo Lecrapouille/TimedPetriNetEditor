@@ -24,7 +24,7 @@ The cycle time is the largest mean: λ = 6.5.
 ## Try it in the editor
 
 ```sh
-./build/TimedPetriNetEditor examples/Timed-Event-Graphs/Howard2/Howard2.json
+./build/linux-gcc-debug/bin/TimedPetriNetEditor examples/Timed-Event-Graphs/Howard2/Howard2.json
 ```
 
 1. *Analysis > (max,+) algebra > Critical circuit*: λ = 6.5, the circuit `T0 → T2 → T1` is red on the net, the bias is `(0, 5, 8, 1)`.

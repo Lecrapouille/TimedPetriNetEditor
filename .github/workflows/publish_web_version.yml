@@ -28,9 +28,7 @@ jobs:
           submodules: true
       - name: Compile TimedPetriNetEditor
         run: |
-          make download-external-libs
-          emmake make compile-external-libs
-          emmake make -j`nproc --all`
+          emmake make
       - name: Deploy
         run: |
           git config --global user.name 'GitHub CI'
@@ -38,7 +36,7 @@ jobs:
           git remote set-url origin https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}
           git fetch --all
           git checkout gh-pages
-          cp build/TimedPetriNetEditor.* .
+          cp build/emscripten-debug/bin/TimedPetriNetEditor.* .
           git add TimedPetriNetEditor.*
           if git diff --cached --quiet; then
             echo "Nothing new to publish"
@@ -67,7 +65,7 @@ jobs:
             -v "$HOME/.cache/exaequos:/opt/emscripten-exa/cache" \
             -w "$PWD" \
             lecrapouille/exaequos:light \
-            bash -c 'make download-external-libs && make compile-external-libs && make -j"$(nproc)" && make install'
+            bash -c 'make && make install'
       - name: Keep the ExaequOS build
         uses: actions/upload-artifact@v4
         with:

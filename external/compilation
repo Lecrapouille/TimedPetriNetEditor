@@ -1,4 +1,0 @@
-#!/bin/bash -e
-
-### No third-party library to compile apart: Dear ImGui, implot,
-### ImGuiFileDialog and tinyxml2 are compiled with the sources of the project.

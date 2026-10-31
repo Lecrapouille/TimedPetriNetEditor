@@ -8,12 +8,12 @@
 #ifndef APPLICATION_HPP
 #  define APPLICATION_HPP
 
-#include "imgui/imgui.h"
+#include "imgui.h"
 #include "imgui_impl_glfw.h"
 #include "imgui_impl_opengl3.h"
-#include "imgui/misc/cpp/imgui_stdlib.h"
-#include "implot/implot.h"
-#include "ImGuiFileDialog/ImGuiFileDialog.h"
+#include "imgui_stdlib.h"
+#include "implot.h"
+#include "ImGuiFileDialog.h"
 #include <GLFW/glfw3.h>
 #include <string>
 

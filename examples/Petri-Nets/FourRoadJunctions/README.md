@@ -16,7 +16,7 @@ The source transitions `u0` to `u3` (no input place) let cars in; the sink trans
 ## Try it in the editor
 
 ```sh
-./build/TimedPetriNetEditor examples/Petri-Nets/FourRoadJunctions/FourRoadJunctions.json
+./build/linux-gcc-debug/bin/TimedPetriNetEditor examples/Petri-Nets/FourRoadJunctions/FourRoadJunctions.json
 ```
 
 1. Press **Space** and fire the `u` transitions: the cars spread in the network.

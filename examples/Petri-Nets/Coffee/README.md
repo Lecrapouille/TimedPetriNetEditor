@@ -17,7 +17,7 @@ The water is `Cold` or `Hot` (`Brew` heats it). The client inserts a coin; the m
 ## Try it in the editor
 
 ```sh
-./build/TimedPetriNetEditor examples/Petri-Nets/Coffee/Coffee.json
+./build/linux-gcc-debug/bin/TimedPetriNetEditor examples/Petri-Nets/Coffee/Coffee.json
 ```
 
 1. Press **Space**. Fire `Insert Coin`, then `Reject Coin`: the coin is given back.

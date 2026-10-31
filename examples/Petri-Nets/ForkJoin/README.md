@@ -17,7 +17,7 @@ Two tasks run in parallel, then wait for each other.
 ## Try it in the editor
 
 ```sh
-./build/TimedPetriNetEditor examples/Petri-Nets/ForkJoin/ForkJoin.json
+./build/linux-gcc-debug/bin/TimedPetriNetEditor examples/Petri-Nets/ForkJoin/ForkJoin.json
 ```
 
 1. Press **Space**, fire `Fork`: both tasks are enabled.

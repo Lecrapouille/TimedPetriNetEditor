@@ -21,8 +21,8 @@
 #include "MaxPlus/Algorithms.hpp"
 #include "MaxPlus/Flowshop.hpp"
 #include "MaxPlus/SparseMatrix.hpp"
-#include "imgui/imgui.h"
-#include "implot/implot.h"
+#include "imgui.h"
+#include "implot.h"
 
 #include <algorithm>
 #include <cmath>

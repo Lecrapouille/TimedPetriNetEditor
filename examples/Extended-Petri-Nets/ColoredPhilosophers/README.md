@@ -37,7 +37,7 @@ and `Phi0 thinks` gives it back to `Thinking` with the two forks.
 ## Try it in the editor
 
 ```sh
-./build/TimedPetriNetEditor examples/Extended-Petri-Nets/ColoredPhilosophers/ColoredPhilosophers.json
+./build/linux-gcc-debug/bin/TimedPetriNetEditor examples/Extended-Petri-Nets/ColoredPhilosophers/ColoredPhilosophers.json
 ```
 
 1. Press **Space** to start the simulation: the three `eats` transitions are

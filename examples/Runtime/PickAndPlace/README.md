@@ -54,7 +54,7 @@ order_42: Success
 
 ```sh
 ./build/examples/Debugger &            # publishes for 30 s (or: Debugger 120)
-./build/TimedPetriNetEditor -c tcp://localhost:5556 examples/Runtime/PickAndPlace/PickAndPlace.json
+./build/linux-gcc-debug/bin/TimedPetriNetEditor -c tcp://localhost:5556 examples/Runtime/PickAndPlace/PickAndPlace.json
 ```
 
 The editor moves the tokens as the program runs: `place` is marked `running` while its function runs, `retry` `no function`, and the *Journal* lists the events of each order ([chapter 13](../../../doc/en/13-Debugging.md)).

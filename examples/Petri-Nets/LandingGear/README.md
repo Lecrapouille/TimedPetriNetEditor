@@ -16,7 +16,7 @@ The plane flies at `Low speed` or `High speed`; its gear is up or down. `Extend`
 ## Try it in the editor
 
 ```sh
-./build/TimedPetriNetEditor examples/Petri-Nets/LandingGear/LandingGear.json
+./build/linux-gcc-debug/bin/TimedPetriNetEditor examples/Petri-Nets/LandingGear/LandingGear.json
 ```
 
 1. Press **Space**, fire `Faster`: `Start warning` turns green.

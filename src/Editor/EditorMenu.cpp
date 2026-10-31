@@ -14,8 +14,8 @@
 #include "Editor/KeyBindings.hpp"
 #include "Editor/FileDialogHelper.hpp"
 #include "Runtime/Journal.hpp"
-#include "imgui/imgui.h"
-#include "imgui/imgui_internal.h"
+#include "imgui.h"
+#include "imgui_internal.h"
 
 #include <fstream>
 #include <sstream>

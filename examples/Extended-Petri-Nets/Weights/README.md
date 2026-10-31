@@ -16,7 +16,7 @@ Arc weights: a chemical reaction, 2 H2 + O2 → 2 H2O.
 ## Try it in the editor
 
 ```sh
-./build/TimedPetriNetEditor examples/Extended-Petri-Nets/Weights/Weights.json
+./build/linux-gcc-debug/bin/TimedPetriNetEditor examples/Extended-Petri-Nets/Weights/Weights.json
 ```
 
 1. Press **Space**, fire `Burn` twice: `H2` and `O2` are empty.

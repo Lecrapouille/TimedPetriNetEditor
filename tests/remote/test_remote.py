@@ -5,7 +5,7 @@
 #   - the journal published by a program (PUB/SUB, Runtime/JournalPublisher.hpp):
 #     the manifest and the lines of the journal of examples/Runtime/PickAndPlace/Debugger.
 # Run from the root of the project, after make and make -C examples:
-#   python3 tests/remote/test_remote.py [build/TimedPetriNetEditor] [build/examples/Debugger]
+#   python3 tests/remote/test_remote.py [build/linux-gcc-debug/bin/TimedPetriNetEditor] [build/examples/Debugger]
 # On a machine without display, run it under xvfb-run.
 
 import json
@@ -16,7 +16,7 @@ import time
 
 import zmq
 
-EDITOR = sys.argv[1] if len(sys.argv) > 1 else "build/TimedPetriNetEditor"
+EDITOR = sys.argv[1] if len(sys.argv) > 1 else "build/linux-gcc-debug/bin/TimedPetriNetEditor"
 DEBUGGER = sys.argv[2] if len(sys.argv) > 2 else "build/examples/Debugger"
 FAILURES = []
 

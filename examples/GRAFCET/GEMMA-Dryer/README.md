@@ -29,7 +29,7 @@ The whole tutorial is [chapter 10](../../../doc/en/10-GEMMA.md#4-tutorial-the-ge
 **Try it**
 
 ```sh
-./build/TimedPetriNetEditor examples/GRAFCET/GEMMA-Dryer/GEMMA-Dryer.json
+./build/linux-gcc-debug/bin/TimedPetriNetEditor examples/GRAFCET/GEMMA-Dryer/GEMMA-Dryer.json
 ```
 
 Press **Space**, then on the control panel: **Rearm**, **Ack**, wait 3 s,

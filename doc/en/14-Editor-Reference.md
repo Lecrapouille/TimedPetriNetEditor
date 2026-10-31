@@ -251,7 +251,7 @@ TimedPetriNetEditor [-r] [-s|-w screenshot.png] [-d seconds] [-f window] [-c end
 The pictures of this documentation are made with these options by `tools/screenshots.sh`, for example:
 
 ```sh
-./build/TimedPetriNetEditor -g 1400x900 -w doc/pics/14-Window-Journal.png \
+./build/linux-gcc-debug/bin/TimedPetriNetEditor -g 1400x900 -w doc/pics/14-Window-Journal.png \
     -r -d 4 -f Journal examples/Timed-Petri-Nets/Durations/Durations.json
 ```
 

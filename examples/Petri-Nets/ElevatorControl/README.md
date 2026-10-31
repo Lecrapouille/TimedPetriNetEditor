@@ -16,7 +16,7 @@ The elevator is at a floor or moving; its door is open or shut. `Start` reads `D
 ## Try it in the editor
 
 ```sh
-./build/TimedPetriNetEditor examples/Petri-Nets/ElevatorControl/ElevatorControl.json
+./build/linux-gcc-debug/bin/TimedPetriNetEditor examples/Petri-Nets/ElevatorControl/ElevatorControl.json
 ```
 
 1. Press **Space**: `Start` is grey, the door is open.

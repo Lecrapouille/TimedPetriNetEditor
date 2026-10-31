@@ -15,9 +15,9 @@
 #include "Editor/Theme.hpp"
 #include "Editor/TopDownLayout.hpp"
 #include "PetriNet/Gemma.hpp"
-#include "imgui/imgui.h"
-#include "imgui/imgui_internal.h"
-#include "imgui/misc/cpp/imgui_stdlib.h"
+#include "imgui.h"
+#include "imgui_internal.h"
+#include "imgui_stdlib.h"
 
 #include <algorithm>
 #include <cmath>

@@ -9,7 +9,7 @@
 #  define TPNE_EDITOR_NODE_MARKS_HPP
 
 #  include "PetriNet/PetriNet.hpp"
-#  include "imgui/imgui.h"
+#  include "imgui.h"
 
 #  include <map>
 #  include <string>

@@ -16,7 +16,7 @@ The smallest net that grows for ever.
 ## Try it in the editor
 
 ```sh
-./build/TimedPetriNetEditor examples/Timed-Petri-Nets/Unbounded/Unbounded.json
+./build/linux-gcc-debug/bin/TimedPetriNetEditor examples/Timed-Petri-Nets/Unbounded/Unbounded.json
 ```
 
 1. Press **Space** and watch `P1`: one token more every time unit.

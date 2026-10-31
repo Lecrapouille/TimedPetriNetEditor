@@ -32,7 +32,7 @@ the drawings of the outputs panel: motor, valves, timer, lamps, buzzer.
 **Try it**
 
 ```sh
-./build/TimedPetriNetEditor examples/GRAFCET/GEMMA-Bottling/GEMMA-Bottling.json
+./build/linux-gcc-debug/bin/TimedPetriNetEditor examples/GRAFCET/GEMMA-Bottling/GEMMA-Bottling.json
 ```
 
 Press **Space**, then on the control panel: **Start**, wait 4 s for the

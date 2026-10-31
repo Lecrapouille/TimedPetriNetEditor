@@ -14,9 +14,11 @@ is timed, once (as the example of Symmetri does), then the mean of many runs.
 
 ```sh
 # This project, optimized as Symmetri is (-O3)
-for d in src/PetriNet src/IO src/Runtime; do make -C $d COMPILATION_MODE=release BUILD=build-release; done
-g++ -std=c++20 -O3 -DNDEBUG -Isrc -Iexternal -Iexternal/json/include examples/Runtime/Benchmark/Benchmark.cpp \
-    -Lbuild-release -lTimedPetriRuntime -lTimedPetriIO -lTimedPetriNet -Wl,-rpath,$PWD/build-release -o Benchmark
+make COMPILATION_MODE=release TimedPetriRuntime TimedPetriIO
+export PKG_CONFIG_PATH=$PWD/build/linux-gcc-release/lib/pkgconfig
+g++ -std=c++20 -O3 -DNDEBUG $(pkg-config --cflags TimedPetriRuntime TimedPetriIO) examples/Runtime/Benchmark/Benchmark.cpp \
+    -Lbuild/linux-gcc-release/lib -lTimedPetriRuntime -lTimedPetriIO -lTimedPetriNet \
+    -Wl,-rpath,$PWD/build/linux-gcc-release/lib -o Benchmark
 
 # Symmetri (https://github.com/thorstink/Symmetri, with its submodules)
 cmake -S Symmetri -B Symmetri/build -DCMAKE_BUILD_TYPE=Release -DBUILD_EXAMPLES=ON && cmake --build Symmetri/build

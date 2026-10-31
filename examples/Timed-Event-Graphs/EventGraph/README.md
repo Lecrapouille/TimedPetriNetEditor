@@ -24,7 +24,7 @@ with `T0 = u`, `T1 = x1`, `T2 = x2`, `T3 = y`.
 ## Try it in the editor
 
 ```sh
-./build/TimedPetriNetEditor examples/Timed-Event-Graphs/EventGraph/EventGraph.json
+./build/linux-gcc-debug/bin/TimedPetriNetEditor examples/Timed-Event-Graphs/EventGraph/EventGraph.json
 ```
 
 1. *Analysis > (max,+) algebra > Equations*: the equations above; *Linear system*: `D` and `A` (3 × 3), `B` (3 × 1), `C` (1 × 3).

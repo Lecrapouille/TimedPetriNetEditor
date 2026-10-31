@@ -95,10 +95,10 @@ Symmetri) are given where they help.
 Made by the editor itself, never by hand, so that they can be made again:
 
 ```sh
-./build/TimedPetriNetEditor -s out.png net.json            # the net only
-./build/TimedPetriNetEditor -w out.png net.json            # the whole window
-./build/TimedPetriNetEditor -r -d 3 -s out.png net.json    # after 3 s of simulation
-./build/TimedPetriNetEditor -f "Critical circuit" -w out.png net.json   # a tab in front
+./build/linux-gcc-debug/bin/TimedPetriNetEditor -s out.png net.json            # the net only
+./build/linux-gcc-debug/bin/TimedPetriNetEditor -w out.png net.json            # the whole window
+./build/linux-gcc-debug/bin/TimedPetriNetEditor -r -d 3 -s out.png net.json    # after 3 s of simulation
+./build/linux-gcc-debug/bin/TimedPetriNetEditor -f "Critical circuit" -w out.png net.json   # a tab in front
 ```
 
 `tools/screenshots.sh` makes all the pictures again (1400x900 window, `-g`):
@@ -118,5 +118,4 @@ cut net, an empty window or a notification is a failed picture.
 - Build and run what the chapter shows; links checked
   (`grep -o '([^)]*\.md[^)]*)'` and the files exist).
 - `doc/README.md` (the index) and `Glossary.md` updated.
-- The tests that load examples still pass (`make -C tests`, then
-  `../build/TimedPetriNetEditor-UnitTest` from `tests/`).
+- The tests that load examples still pass (`make check`).

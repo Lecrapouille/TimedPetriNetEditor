@@ -15,7 +15,7 @@
 #endif
 #include "Editor/Editor.hpp"
 #include "Editor/GrafcetHelp.hpp"
-#include "imgui/imgui.h"
+#include "imgui.h"
 
 #include <algorithm>
 #include <cmath>

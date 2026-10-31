@@ -52,13 +52,10 @@ brew install glfw zeromq pkg-config
 git clone https://github.com/Lecrapouille/TimedPetriNetEditor --depth=1 --recursive
 cd TimedPetriNetEditor/
 
-make download-external-libs
-make compile-external-libs
-
-make -j"$(nproc --all)"
+make
 ```
 
-This gives, in `build/`:
+The third parties (Dear ImGui, ImPlot, ImGuiFileDialog, JSON, TinyXML2) are fetched on the first `make`, at the commits of `external/versions.lock`, in a cache shared by all your projects (`~/.cache/mymakefile`). The build uses all the cores. This gives, in `build/linux-gcc-debug/` (`bin/` and `lib/`; `make COMPILATION_MODE=release` builds in `build/linux-gcc-release/`):
 
 | File | What |
 |------|------|
@@ -66,7 +63,7 @@ This gives, in `build/`:
 | `tpne-check` | checks the properties of nets in a terminal or a CI ([chapter 4](04-Analysis.md)) |
 | `libTimedPetri*.so`, `.a` | the libraries, for your programs ([chapter 16](16-Library.md)) |
 
-Optionally: `sudo make install` installs them on the system. The examples run by the runtime are built with `make -C examples` ([chapter 11](11-Runtime.md)), the unit tests with `make -C tests`.
+Optionally: `sudo make install` installs them on the system. The examples run by the runtime are built with `make -C examples` ([chapter 11](11-Runtime.md)), the unit tests are built and run with `make check`.
 
 ### 1.3 Build for Emscripten
 
@@ -81,13 +78,11 @@ source ~/emsdk/emsdk_env.sh
 To build TimedPetriNetEditor:
 
 ```sh
-make BUILD=build-web download-external-libs
-emmake make BUILD=build-web compile-external-libs
-emmake make BUILD=build-web -j"$(nproc)"
-cd build-web && python3 -m http.server 8000
+emmake make
+cd build/emscripten-debug/bin && python3 -m http.server 8000
 ```
 
-Note: Use `BUILD=build-web` to prevent using the `build` used for the local compilation.
+The web build goes to `build/emscripten-debug/`, beside the native one.
 
 To run TimedPetriNetEditor in your browser (i.e. Firefox): `http://localhost:8000/TimedPetriNetEditor.html`.
 
@@ -108,16 +103,14 @@ docker run -it --rm \
     lecrapouille/exaequos:light
 ```
 
-The image sets `EXAEQUOS`, so the same targets as on Linux compile for it. `BUILD=build-exa` leaves a native `build/` untouched:
+The image sets `EXAEQUOS`, so the same targets as on Linux compile for it, in `build/exaequos-debug/`, beside the native build:
 
 ```sh
-make BUILD=build-exa download-external-libs
-make BUILD=build-exa compile-external-libs
-make BUILD=build-exa -j"$(nproc)"
-make BUILD=build-exa install
+make
+make install
 ```
 
-`download-external-libs` installs `exa-wayland`, `glfw` and `raylib` into `exapkgs/`. `make install` writes the editor in `media/localhost/TimedPetriNetEditor/exa/`:
+`make` installs the packages `exa-wayland` and `glfw` of ExaequOS into `build/exaequos/`. `make install` writes the editor in `media/localhost/TimedPetriNetEditor/exa/`:
 
 | File | What |
 |------|------|
@@ -144,7 +137,7 @@ The CI makes this build too ([`.github/workflows/publish_web_version.yml`](../.g
 ## 2. ▶️ Open an example
 
 ```sh
-./build/TimedPetriNetEditor examples/Petri-Nets/FirstNet/FirstNet.json
+./build/linux-gcc-debug/bin/TimedPetriNetEditor examples/Petri-Nets/FirstNet/FirstNet.json
 ```
 
 ![The first net](pics/02-FirstNet.png)
@@ -158,7 +151,7 @@ Press **Space**: the simulation starts, the frame of the net turns green and the
 Now a richer one:
 
 ```sh
-./build/TimedPetriNetEditor examples/Petri-Nets/Philosophers/Philosophers.json
+./build/linux-gcc-debug/bin/TimedPetriNetEditor examples/Petri-Nets/Philosophers/Philosophers.json
 ```
 
 Three philosophers share one fork and two knives. Press **Space** and click on the green transitions: when a philosopher eats, the ones who need the same cutlery wait.

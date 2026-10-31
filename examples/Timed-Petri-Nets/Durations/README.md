@@ -16,7 +16,7 @@ The smallest timed Petri net: a toast takes 3 time units, eating it 2, buying br
 ## Try it in the editor
 
 ```sh
-./build/TimedPetriNetEditor examples/Timed-Petri-Nets/Durations/Durations.json
+./build/linux-gcc-debug/bin/TimedPetriNetEditor examples/Timed-Petri-Nets/Durations/Durations.json
 ```
 
 1. Press **Space**: the token is a green disk travelling along the arcs; the top left corner writes the simulated time.

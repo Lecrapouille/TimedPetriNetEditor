@@ -25,10 +25,8 @@ jobs:
           submodules: true
       - name: Compile TimedPetriNetEditor
         run: |
-          make download-external-libs
-          make compile-external-libs
-          V=1 make -j`nproc --all`
-          V=1 sudo make install
+          V=1 make
+          V=1 sudo make install MYMAKEFILE_CACHE="$HOME/.cache/mymakefile"
       - name: Download, configure and install Google test
         run: |
           wget https://github.com/google/googletest/archive/v1.17.0.tar.gz
@@ -38,9 +36,7 @@ jobs:
           sudo make install
       - name: Do non regression tests
         run: |
-          cd tests
-          V=1 make -j`nproc --all`
-          ../build/TimedPetriNetEditor-UnitTest
+          V=1 make check
       - name: Compile and run the examples of the runtime
         run: |
           make -C examples run
@@ -49,18 +45,20 @@ jobs:
           tests/codegen/run.sh
       - name: Test the remote control and the journal published on ZeroMQ
         run: |
-          xvfb-run -a python3 tests/remote/test_remote.py build/TimedPetriNetEditor build/examples/Debugger
+          BUILD=$(make -s print-BUILD)
+          xvfb-run -a python3 tests/remote/test_remote.py $BUILD/bin/TimedPetriNetEditor build/examples/Debugger
       - name: Check the properties of the examples
         run: |
-          build/tpne-check examples/Petri-Nets/Philosophers/Philosophers.json examples/Petri-Nets/ProducerConsumer/ProducerConsumer.json
-          build/tpne-check --allow-deadlock examples/Runtime/PickAndPlace/PickAndPlace.json
+          BUILD=$(make -s print-BUILD)
+          $BUILD/bin/tpne-check examples/Petri-Nets/Philosophers/Philosophers.json examples/Petri-Nets/ProducerConsumer/ProducerConsumer.json
+          $BUILD/bin/tpne-check --allow-deadlock examples/Runtime/PickAndPlace/PickAndPlace.json
       - name: Check if the library can be linked against a project
         run: |
           export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/lib/
           git clone https://github.com/Lecrapouille/LinkAgainstMyLibs.git --recurse-submodules --depth=1
           cd LinkAgainstMyLibs/TimedPetriNetEditor
-          V=1 make -j`nproc --all`
-          ../build/TimedPetriNetEditor
+          V=1 make
+          $(make -s print-BUILD)/bin/TimedPetriNetEditor
 
   sanitizers_linux:
     name: Unit tests with AddressSanitizer and UndefinedBehaviorSanitizer
@@ -83,11 +81,7 @@ jobs:
           sudo make install
       - name: Compile and run the unit tests with sanitizers
         run: |
-          make download-external-libs
-          cd tests
-          V=1 make -j`nproc --all` BUILD=build-sanitize USE_ASAN=1 USE_UBSAN=1
-          ASAN_OPTIONS=detect_leaks=1 UBSAN_OPTIONS=print_stacktrace=1:halt_on_error=1 \
-            ../build-sanitize/TimedPetriNetEditor-UnitTest
+          V=1 make check SANITIZER=address,undefined
 
   thread_sanitizer_linux:
     name: Runtime tests with ThreadSanitizer
@@ -110,11 +104,8 @@ jobs:
           sudo make install
       - name: Compile and run the runtime tests with ThreadSanitizer
         run: |
-          make download-external-libs
-          cd tests
-          V=1 make -j`nproc --all` BUILD=build-tsan USE_TSAN=1
-          TSAN_OPTIONS=halt_on_error=1 ../build-tsan/TimedPetriNetEditor-UnitTest \
-            --gtest_filter='TestRuntime*:TestExecutor*:TestCallback*' --gtest_repeat=20
+          GTEST_FILTER='TestRuntime*:TestExecutor*:TestCallback*' GTEST_REPEAT=20 \
+            V=1 make check SANITIZER=thread
 
   non_regression_macos:
     name: Non regression tests on MacOS X
@@ -122,7 +113,7 @@ jobs:
     steps:
       - name: Install system packages
         run: |
-          brew install pkg-config mosquitto zeromq glfw glew
+          brew install make pkg-config mosquitto zeromq glfw glew
           echo "PKG_CONFIG_PATH=$(brew --prefix)/lib/pkgconfig:$(brew --prefix zeromq)/lib/pkgconfig:${PKG_CONFIG_PATH:-}" >> "$GITHUB_ENV"
           echo "CPPFLAGS=-I$(brew --prefix zeromq)/include ${CPPFLAGS:-}" >> "$GITHUB_ENV"
           echo "LDFLAGS=-L$(brew --prefix zeromq)/lib ${LDFLAGS:-}" >> "$GITHUB_ENV"
@@ -132,9 +123,7 @@ jobs:
           submodules: true
       - name: Compile TimedPetriNetEditor
         run: |
-          make download-external-libs
-          make compile-external-libs
-          V=1 make -j`sysctl -n hw.logicalcpu`
+          V=1 gmake
       - name: Download, configure and install Google test
         run: |
           wget https://github.com/google/googletest/archive/v1.17.0.tar.gz
@@ -144,13 +133,12 @@ jobs:
           sudo make install
       - name: Do non regression tests
         run: |
-          cd tests
-          V=1 make -j`sysctl -n hw.logicalcpu`
-          ../build/TimedPetriNetEditor-UnitTest
+          V=1 gmake check
       - name: Create the DMG file
         run: |
-          test -d build/TimedPetriNetEditor.app
-          hdiutil create -format UDZO -srcfolder build/TimedPetriNetEditor.app build/TimedPetriNetEditor.dmg
+          BUILD=$(gmake -s print-BUILD)
+          test -d $BUILD/bin/TimedPetriNetEditor.app
+          hdiutil create -format UDZO -srcfolder $BUILD/bin/TimedPetriNetEditor.app build/TimedPetriNetEditor.dmg
       - name: Deploy
         uses: actions/upload-artifact@v4
         with:

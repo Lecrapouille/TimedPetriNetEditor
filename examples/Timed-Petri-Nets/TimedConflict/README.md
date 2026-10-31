@@ -16,7 +16,7 @@ Two tokens, two ways of different durations: the choice made at `t = 0` changes 
 ## Try it in the editor
 
 ```sh
-./build/TimedPetriNetEditor examples/Timed-Petri-Nets/TimedConflict/TimedConflict.json
+./build/linux-gcc-debug/bin/TimedPetriNetEditor examples/Timed-Petri-Nets/TimedConflict/TimedConflict.json
 ```
 
 1. *Simulation > Conflicts > First declared*, press **Space**: `T1` fires twice at `t = 0` (its identifier is the lowest), `T3` fires first at `t = 5`.

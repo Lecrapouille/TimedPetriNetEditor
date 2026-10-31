@@ -21,7 +21,7 @@
 ##=====================================================================
 
 set -u
-EDITOR=${TPNE_EDITOR:-build/TimedPetriNetEditor}
+EDITOR=${TPNE_EDITOR:-build/linux-gcc-debug/bin/TimedPetriNetEditor}
 GEOMETRY=${TPNE_GEOMETRY:-1400x900}
 FILTER=${1:-}
 status=0

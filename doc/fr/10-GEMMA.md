@@ -82,7 +82,7 @@ Comme le forçage a priorité sur l'évolution (le graphe forcé n'évolue pas),
 L'exemple [`examples/GRAFCET/GEMMA-Dryer`](../../examples/GRAFCET/GEMMA-Dryer/README.md) est un séchoir : un tapis amène des caisses dans un four, elles sèchent, le tapis les sort. Il vient des leçons GEMMA de NetProf ([vidéo](https://www.youtube.com/watch?v=y8lWIG71040), en français).
 
 ```sh
-./build/TimedPetriNetEditor examples/GRAFCET/GEMMA-Dryer/GEMMA-Dryer.json
+./build/linux-gcc-debug/bin/TimedPetriNetEditor examples/GRAFCET/GEMMA-Dryer/GEMMA-Dryer.json
 ```
 
 ![GEMMA d'un séchoir](pics/10-GEMMA-Dryer.png)
@@ -184,7 +184,7 @@ Le séchoir du §4 a été dessiné à la main. L'éditeur peut aussi faire les 
 Les deux fenêtres sont ancrées dans la fenêtre principale, pour voir en même temps la GEMMA et ses GRAFCET : quand l'une s'ouvre, elle est découpée dans le panneau des réseaux : l'éditeur de GEMMA à gauche, sur toute la hauteur ; le graphe de la GEMMA entre lui et les réseaux ; Safety, Control et Production restent des onglets du même panneau, à droite. Les autres fenêtres gardent leur place. Chaque panneau se déplace ailleurs en glissant son onglet, comme toute fenêtre de l'éditeur, et y revient quand il est rouvert ; *View > Reset the layout of the windows* remet tout en place. Quand l'éditeur est étroit, ses procédures sont au-dessus de ses liaisons au lieu d'être à côté. Sur le graphe, la molette zoome autour de la souris, le bouton droit ou du milieu fait glisser le formulaire, *Fit* le montre à nouveau en entier.
 
 ```sh
-./build/TimedPetriNetEditor examples/GRAFCET/GEMMA-Bottling/GEMMA-Bottling.json   # les fenêtres GEMMA s'ouvrent avec
+./build/linux-gcc-debug/bin/TimedPetriNetEditor examples/GRAFCET/GEMMA-Bottling/GEMMA-Bottling.json   # les fenêtres GEMMA s'ouvrent avec
 ```
 
 ![L'éditeur de GEMMA](pics/10-GEMMA-Window.png)

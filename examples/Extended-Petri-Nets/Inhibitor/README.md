@@ -16,7 +16,7 @@ People go `Outside` ↔ `Inside`; they can enter only when the light is on (`Ent
 ## Try it in the editor
 
 ```sh
-./build/TimedPetriNetEditor examples/Extended-Petri-Nets/Inhibitor/Inhibitor.json
+./build/linux-gcc-debug/bin/TimedPetriNetEditor examples/Extended-Petri-Nets/Inhibitor/Inhibitor.json
 ```
 
 1. Press **Space**, fire `Enter`: `Switch off` turns grey.

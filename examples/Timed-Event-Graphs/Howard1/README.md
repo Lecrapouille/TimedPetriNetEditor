@@ -22,7 +22,7 @@ Each transition has a loop on itself (`T0`: duration 1, `T1`: duration 4) and th
 ## Try it in the editor
 
 ```sh
-./build/TimedPetriNetEditor examples/Timed-Event-Graphs/Howard1/Howard1.json
+./build/linux-gcc-debug/bin/TimedPetriNetEditor examples/Timed-Event-Graphs/Howard1/Howard1.json
 ```
 
 1. *Analysis > (max,+) algebra > Critical circuit*: λ = 2, the loop of `T1` (4 for 2 tokens).

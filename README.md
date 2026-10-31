@@ -56,18 +56,16 @@ sudo apt-get install build-essential pkg-config libdw-dev libzmq3-dev libglfw3-d
 git clone https://github.com/Lecrapouille/TimedPetriNetEditor --depth=1 --recursive
 cd TimedPetriNetEditor/
 
-make download-external-libs
-make compile-external-libs
-make -j"$(nproc --all)"
+make
 
 # Optional: only for developers
-make test -j"$(nproc --all)"
+make check
 ```
 
 You can run your first Petri net:
 
 ```sh
-./build/TimedPetriNetEditor examples/Petri-Nets/FirstNet/FirstNet.json
+./build/linux-gcc-debug/bin/TimedPetriNetEditor examples/Petri-Nets/FirstNet/FirstNet.json
 ```
 
 - In the editor, press **Space** to simulate, click on the green transition to fire it. To draw: the **left** mouse button draws (a click adds a place, a drag from a node draws an arc), the **right** one moves (a click adds a transition); the status bar always says what a click would do; **F1** is the help.
@@ -103,7 +101,7 @@ This repo is currently used inside [Robotik](https://github.com/Lecrapouille/Rob
 
 The libraries: `libTimedPetriNet` (nets, simulation, GRAFCET), `libTimedPetriIO` (file formats), `libTimedPetriMaxPlus`, `libTimedPetriAnalysis`, `libTimedPetriRuntime` ([chapter 16](doc/en/16-Library.md)).
 
-The unit tests: `make -C tests`, then `../build/TimedPetriNetEditor-UnitTest` from `tests/`; the examples of the runtime: `make -C examples run`. In Visual Studio Code, **F5** starts the editor in the debugger.
+The build goes to `build/linux-gcc-debug/` ([MyMakefile](https://github.com/Lecrapouille/MyMakefile): `make help`). The unit tests: `make check`; the examples of the runtime: `make -C examples run`. In Visual Studio Code, **F5** starts the editor in the debugger.
 
 ## 📄 License
 

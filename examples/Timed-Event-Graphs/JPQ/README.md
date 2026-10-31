@@ -25,7 +25,7 @@ Three circuits: `x1 → x1` (3, 1 token), `x2 → x2` (4, 1 token), `x1 → x2 �
 ## Try it in the editor
 
 ```sh
-./build/TimedPetriNetEditor examples/Timed-Event-Graphs/JPQ/JPQ.json
+./build/linux-gcc-debug/bin/TimedPetriNetEditor examples/Timed-Event-Graphs/JPQ/JPQ.json
 ```
 
 1. *Analysis > (max,+) algebra > Linear system*: `D` and `A` (2 × 2), `B` (2 × 1), `C` (1 × 2); each one has *Copy as Julia*.

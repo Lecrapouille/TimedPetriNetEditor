@@ -16,7 +16,7 @@ Phi0 eats with the fork and the first knife, Phi1 with the fork and the second k
 ## Try it in the editor
 
 ```sh
-./build/TimedPetriNetEditor examples/Petri-Nets/Philosophers/Philosophers.json
+./build/linux-gcc-debug/bin/TimedPetriNetEditor examples/Petri-Nets/Philosophers/Philosophers.json
 ```
 
 1. Press **Space**, let `Phi0 eats`: `Phi1 eats` and `Phi2 eats` turn grey.

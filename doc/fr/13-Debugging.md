@@ -36,7 +36,7 @@ L'exemple `Debugger` exécute en boucle le pick and place du chapitre 11, avec d
 ```sh
 make -C examples                       # après make à la racine
 ./build/examples/Debugger &            # publie pendant 30 s (ou : Debugger 120)
-./build/TimedPetriNetEditor -c tcp://localhost:5556 examples/Runtime/PickAndPlace/PickAndPlace.json
+./build/linux-gcc-debug/bin/TimedPetriNetEditor -c tcp://localhost:5556 examples/Runtime/PickAndPlace/PickAndPlace.json
 ```
 
 Dans l'éditeur, *Debug > Connect* avec le point de terminaison `tcp://localhost:5556` fait la même chose que `-c`.
@@ -170,7 +170,7 @@ int main()
 ```sh
 g++ -std=c++11 -DGRAFCET_DEBUG lights_debug.cpp -lzmq -o lights_debug
 ./lights_debug &
-./build/TimedPetriNetEditor -c tcp://localhost:5556 examples/GRAFCET/GermanTrafficLights/GermanTrafficLights.json
+./build/linux-gcc-debug/bin/TimedPetriNetEditor -c tcp://localhost:5556 examples/GRAFCET/GermanTrafficLights/GermanTrafficLights.json
 ```
 
 Il publie :
@@ -199,7 +199,7 @@ Une carte n'a pas de réseau. Le code généré, compilé pour Arduino avec `GRA
 ```sh
 pip install pyserial pyzmq
 python3 tools/serial-bridge.py /dev/ttyACM0 [115200] [tcp://*:5556]
-./build/TimedPetriNetEditor -c tcp://localhost:5556 my_grafcet.json
+./build/linux-gcc-debug/bin/TimedPetriNetEditor -c tcp://localhost:5556 my_grafcet.json
 ```
 
 Le sketch démarre la liaison série à la même vitesse (`Serial.begin(115200);` dans `setup()`). Les lignes qui ne sont pas du JSON (vos propres `Serial.print`) sont affichées par le pont, pas envoyées à l'éditeur. Ailleurs (bus CAN, radio), définissez `GRAFCET_DEBUG_SEND(text)` pour envoyer chaque ligne vous-même, et publiez-les sur ZeroMQ de l'autre côté.

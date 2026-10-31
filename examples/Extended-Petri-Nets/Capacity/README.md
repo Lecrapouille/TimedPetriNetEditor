@@ -16,7 +16,7 @@ Place capacity: a car park of 3 spaces.
 ## Try it in the editor
 
 ```sh
-./build/TimedPetriNetEditor examples/Extended-Petri-Nets/Capacity/Capacity.json
+./build/linux-gcc-debug/bin/TimedPetriNetEditor examples/Extended-Petri-Nets/Capacity/Capacity.json
 ```
 
 1. Press **Space**, fire `Arrive` three times: it turns grey.

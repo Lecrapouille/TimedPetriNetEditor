@@ -213,7 +213,7 @@ Le format est un tableau : les convoyeurs sur la première ligne, les machines s
 Ouvrez-le : l'éditeur construit le graphe d'événements temporisé.
 
 ```sh
-./build/TimedPetriNetEditor examples/Flowshops/simple.flowshop
+./build/linux-gcc-debug/bin/TimedPetriNetEditor examples/Flowshops/simple.flowshop
 ```
 
 ![The flowshop](pics/07-Flowshop.png)

@@ -93,7 +93,7 @@ A **deadlock** is a reachable marking where no transition is enabled. The editor
 *The marking in red, `0 1 0 0 0 0 1 0`, is the deadlock: A holds tool 1, B holds tool 2.*
 
 ```text
-$ build/tpne-check --allow-deadlock examples/Petri-Nets/Deadlock/Deadlock.json
+$ build/linux-gcc-debug/bin/tpne-check --allow-deadlock examples/Petri-Nets/Deadlock/Deadlock.json
 examples/Petri-Nets/Deadlock/Deadlock.json:
 Net: Deadlock (Petri net, 8 places, 6 transitions)
 Reachable markings: 6
@@ -163,7 +163,7 @@ digraph "Unbounded" {
 A place is unbounded exactly when an `ω` appears in it. For the producer and the consumer, the coverability graph has 46 markings and `ω` in `Buffer` only. The editor builds it by itself when the reachability graph is too big, to tell whether the net is bounded:
 
 ```text
-$ build/tpne-check examples/Petri-Nets/ProducerConsumer/ProducerConsumer.json
+$ build/linux-gcc-debug/bin/tpne-check examples/Petri-Nets/ProducerConsumer/ProducerConsumer.json
 examples/Petri-Nets/ProducerConsumer/ProducerConsumer.json:
 Net: Producer Consumer (Petri net, 5 places, 4 transitions)
 Reachable markings: 100000 (stopped)
@@ -242,7 +242,7 @@ In the matrix `C` of MutualExclusion, look for weights that cancel every column.
 The last one *is* the mutual exclusion: since tokens are never negative, `Critical A + Critical B ≤ 1`. The editor finds the same three:
 
 ```text
-$ build/tpne-check examples/Petri-Nets/MutualExclusion/MutualExclusion.json
+$ build/linux-gcc-debug/bin/tpne-check examples/Petri-Nets/MutualExclusion/MutualExclusion.json
 examples/Petri-Nets/MutualExclusion/MutualExclusion.json:
 Net: Mutual exclusion (Petri net, 5 places, 4 transitions)
 Reachable markings: 3
@@ -325,8 +325,8 @@ tpne-check [--max-states N] [--allow-deadlock] [--dot graph.dot] net.json ...
 It prints the report of each net and returns **0** when no net can deadlock, **1** when one can (unless `--allow-deadlock`), **2** for a bad usage or a file that cannot be read. It reads the formats of the editor (`.json`, `.pnml`, `.grml`, `.teg`). The continuous integration of this project runs it on examples, so a change that introduces a deadlock fails the build:
 
 ```sh
-build/tpne-check examples/Petri-Nets/Philosophers/Philosophers.json examples/Petri-Nets/ProducerConsumer/ProducerConsumer.json
-build/tpne-check --allow-deadlock examples/Runtime/PickAndPlace/PickAndPlace.json
+build/linux-gcc-debug/bin/tpne-check examples/Petri-Nets/Philosophers/Philosophers.json examples/Petri-Nets/ProducerConsumer/ProducerConsumer.json
+build/linux-gcc-debug/bin/tpne-check --allow-deadlock examples/Runtime/PickAndPlace/PickAndPlace.json
 ```
 
 Do the same in your project: draw the net of your controller, commit it, check it at each commit. The same functions are in the C++ library (`properties()`, `pInvariants()`, `tInvariants()`, `reachabilityGraph()`, `coverabilityGraph()`, `report()` of `Analysis/Analysis.hpp`, [chapter 16](16-Library.md)).

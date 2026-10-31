@@ -18,7 +18,7 @@ Seven victims call. Four level 1 operators answer and screen the calls: **advice
 ## Try it in the editor
 
 ```sh
-./build/TimedPetriNetEditor examples/Petri-Nets/EmergencyCalls/EmergencyCalls.json
+./build/linux-gcc-debug/bin/TimedPetriNetEditor examples/Petri-Nets/EmergencyCalls/EmergencyCalls.json
 ```
 
 1. Press **Space**, fire `Level 1 answers` four times: all the level 1 operators are busy.

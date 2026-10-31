@@ -108,7 +108,7 @@ t = 12.00  Toast              k = 3
 `k` counts the firings of each transition: `Toast` fires for the k-th time at `6 (k - 1)`.
 
 ```sh
-./build/TimedPetriNetEditor examples/Timed-Petri-Nets/Durations/Durations.json
+./build/linux-gcc-debug/bin/TimedPetriNetEditor examples/Timed-Petri-Nets/Durations/Durations.json
 ```
 
 Press **Space**: the net runs by itself; the token moves along the arc with its count in a green disk. The top left corner writes the simulated time.

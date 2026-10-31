@@ -5,7 +5,7 @@
             "name": "gdb",
             "type": "cppdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/build/TimedPetriNetEditor",
+            "program": "${workspaceFolder}/build/linux-gcc-debug/bin/TimedPetriNetEditor",
             "args": [ "${workspaceFolder}/examples/GRAFCET/ExclusiveChoice/ExclusiveChoice.json" ],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}",

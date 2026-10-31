@@ -14,7 +14,7 @@ rule 2: a true receptivity does not fire a transition that is not enabled
 **Try it**
 
 ```sh
-./build/TimedPetriNetEditor examples/GRAFCET/ExclusiveChoice/ExclusiveChoice.json
+./build/linux-gcc-debug/bin/TimedPetriNetEditor examples/GRAFCET/ExclusiveChoice/ExclusiveChoice.json
 ```
 
 1. Press **Space**. The two `/A` receptivities are drawn in orange (true)

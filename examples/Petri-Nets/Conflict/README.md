@@ -16,7 +16,7 @@ A coin can buy a tea or a coffee, not both. `Tea` and `Coffee` share their input
 ## Try it in the editor
 
 ```sh
-./build/TimedPetriNetEditor examples/Petri-Nets/Conflict/Conflict.json
+./build/linux-gcc-debug/bin/TimedPetriNetEditor examples/Petri-Nets/Conflict/Conflict.json
 ```
 
 1. Press **Space**: `Tea` and `Coffee` are both green.

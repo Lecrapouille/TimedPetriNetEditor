@@ -12,9 +12,9 @@
 
 #include "MaxPlus/Algorithms.hpp"
 #include "MaxPlus/SparseMatrix.hpp"
-#include "imgui/imgui.h"
-#include "imgui/misc/cpp/imgui_stdlib.h"
-#include "implot/implot.h"
+#include "imgui.h"
+#include "imgui_stdlib.h"
+#include "implot.h"
 #include <algorithm>
 #include <iomanip>
 #include <set>
@@ -67,16 +67,16 @@ void Editor::about() const
         ImGui::Text("wrapped API for Julia langage.");
         ImGui::Separator();
         std::string version("Version: " +
-                            std::to_string(project::info::version::major) + '.' +
-                            std::to_string(project::info::version::minor) + '.' +
-                            std::to_string(project::info::version::patch));
+                            std::to_string(generated::timedpetrigui::version::major) + '.' +
+                            std::to_string(generated::timedpetrigui::version::minor) + '.' +
+                            std::to_string(generated::timedpetrigui::version::patch));
         ImGui::Text("%s", version.c_str());
         ImGui::Separator();
         ImGui::Text("https://github.com/Lecrapouille/TimedPetriNetEditor");
-        ImGui::Text("Git branch: %s", project::info::git::branch.c_str());
-        ImGui::Text("Git SHA1: %s", project::info::git::sha1.c_str());
+        ImGui::Text("Git branch: %s", generated::timedpetrigui::git::branch);
+        ImGui::Text("Git SHA1: %s", generated::timedpetrigui::git::sha1);
         ImGui::Text("Compiled as %s",
-                    (project::info::compilation::mode == project::info::compilation::Mode::debug)
+                    (generated::timedpetrigui::compilation::mode == generated::timedpetrigui::compilation::Mode::debug)
                     ? "Debug" : "Release");
         ImGui::Separator();
         ImGui::Text("Developed by Quentin Quadrat");
@@ -197,8 +197,8 @@ void Editor::help() const
             if (ImGui::BeginTabItem("Paths", nullptr, flags(4)))
             {
                 ImGui::Text("Data path: %s", m_path.toString().c_str());
-                ImGui::Text("Temporary path: %s", project::info::paths::tmp.c_str());
-                ImGui::Text("Log path: %s", project::info::paths::log.c_str());
+                ImGui::Text("Temporary path: %s", generated::timedpetrigui::paths::tmp);
+                ImGui::Text("Log path: %s", generated::timedpetrigui::paths::log);
                 ImGui::Text("Settings: %s", settingsFolder().string().c_str());
                 ImGui::EndTabItem();
             }

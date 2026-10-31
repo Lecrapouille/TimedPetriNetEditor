@@ -16,7 +16,7 @@ A reset arc: empty the bin, however full it is.
 ## Try it in the editor
 
 ```sh
-./build/TimedPetriNetEditor examples/Extended-Petri-Nets/Reset/Reset.json
+./build/linux-gcc-debug/bin/TimedPetriNetEditor examples/Extended-Petri-Nets/Reset/Reset.json
 ```
 
 1. Press **Space**, fire `Throw` three times, then `Empty`: `Bin` is empty at once.

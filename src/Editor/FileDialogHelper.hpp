@@ -10,7 +10,7 @@
 
 #  include <string>
 #  include <functional>
-#  include "ImGuiFileDialog/ImGuiFileDialog.h"
+#  include "ImGuiFileDialog.h"
 #  if defined(__EMSCRIPTEN__) && !defined(EXAEQUOS)
 #    include <emscripten.h>
 #  endif

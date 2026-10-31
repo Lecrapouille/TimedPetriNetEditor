@@ -17,7 +17,7 @@ Each process is `Idle` or `Critical`; entering the critical section takes the to
 ## Try it in the editor
 
 ```sh
-./build/TimedPetriNetEditor examples/Petri-Nets/MutualExclusion/MutualExclusion.json
+./build/linux-gcc-debug/bin/TimedPetriNetEditor examples/Petri-Nets/MutualExclusion/MutualExclusion.json
 ```
 
 1. Press **Space**, fire `Enter A`: `Enter B` turns grey.

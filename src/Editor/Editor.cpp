@@ -18,7 +18,7 @@
 #  else
 #    include "Editor/Remote/NullRemoteControl.hpp"
 #  endif
-#include "imgui/imgui_internal.h"
+#include "imgui_internal.h"
 
 #include <algorithm>
 #include <cmath>

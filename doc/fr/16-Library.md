@@ -24,16 +24,25 @@ Un programme qui exécute un réseau sur une carte n'a besoin que de `libTimedPe
 
 ## 1. Compiler contre la bibliothèque
 
-Après `make`, les bibliothèques sont dans `build/`. Un programme `main.cpp` :
+Après `make`, les bibliothèques sont dans `build/linux-gcc-debug/lib/`, avec leurs fichiers pkg-config, qui donnent les dossiers d'inclusion des sources et des dépendances. Un programme `main.cpp` :
 
 ```sh
-g++ -std=c++20 -Isrc -Iexternal/json/include -Iexternal main.cpp \
-    -Lbuild -lTimedPetriMaxPlus -lTimedPetriIO -lTimedPetriNet -Wl,-rpath,$PWD/build -o main
+export PKG_CONFIG_PATH=$PWD/build/linux-gcc-debug/lib/pkgconfig
+g++ -std=c++20 main.cpp $(pkg-config --cflags --libs TimedPetriMaxPlus TimedPetriIO TimedPetriNet) \
+    -Wl,-rpath,$PWD/build/linux-gcc-debug/lib -o main
 ```
 
 `-lTimedPetriMaxPlus` seulement pour §3 (temps de cycle, dates des équations (max,+)). Appelez `registerMaxPlusFormats()` une fois pour charger et enregistrer des fichiers `.flowshop` et enregistrer des fichiers `.jl` avec `loadFromFile()` et `saveToFile()`.
 
-Un projet construit avec Make peut compiler les sources à la place : définissez `TPNE_DIR` et incluez `TimedPetriNet.mk`, qui fournit `TPNE_SOURCES` (réseaux, formats, (max,+)), `TPNE_CORE_SOURCES` (les réseaux seulement), `TPNE_RUNTIME_SOURCES`, `TPNE_ANALYSIS_SOURCES`, `TPNE_INCLUDES` et `TPNE_CXXFLAGS` (et `TPNE_VIEWER_SOURCES` pour §5).
+Un projet construit avec [MyMakefile](https://github.com/Lecrapouille/MyMakefile) 3 peut compiler les bibliothèques avec ses propres cibles à la place. `TimedPetriNet.mk` les déclare : `TimedPetriNet` (les réseaux), `TimedPetriIO` (les formats), `TimedPetriMaxPlus`, `TimedPetriRuntime`, `TimedPetriAnalysis` et `TimedPetriViewer` (§5, qui demande aussi une cible `imgui`) :
+
+```makefile
+TARGETS += TimedPetriNetEditor monappli
+TimedPetriNetEditor.GIT := https://github.com/Lecrapouille/TimedPetriNetEditor.git
+TimedPetriNetEditor.VERSION := v0.8.0
+TimedPetriNetEditor.MAKEFILES := TimedPetriNet.mk external/external.mk
+monappli.DEPENDS := TimedPetriRuntime TimedPetriIO
+```
 
 ## 2. Exécuter un GRAFCET
 
@@ -156,7 +165,7 @@ t = 2.00  M1 starts P2 (k = 1), until 5.00
 
 ## 5. Dessiner un réseau dans votre fenêtre
 
-`NetViewer` (`src/Editor/NetViewer.hpp`, sources dans `TPNE_VIEWER_SOURCES`) dessine un réseau, en lecture seule, dans la fenêtre Dear ImGui courante de votre programme : l'utilisateur peut panoramiquer, zoomer et ajuster. Votre programme possède le réseau et son marquage, le viewer peut donc afficher un GRAFCET qui tourne ailleurs.
+`NetViewer` (`src/Editor/NetViewer.hpp`, bibliothèque `TimedPetriViewer`) dessine un réseau, en lecture seule, dans la fenêtre Dear ImGui courante de votre programme : l'utilisateur peut panoramiquer, zoomer et ajuster. Votre programme possède le réseau et son marquage, le viewer peut donc afficher un GRAFCET qui tourne ailleurs.
 
 ```c++
 tpne::NetViewer viewer;                 // keep it from frame to frame

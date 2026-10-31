@@ -16,7 +16,7 @@ Robot A takes tool 1 then tool 2; robot B takes tool 2 then tool 1. Each release
 ## Try it in the editor
 
 ```sh
-./build/TimedPetriNetEditor examples/Petri-Nets/Deadlock/Deadlock.json
+./build/linux-gcc-debug/bin/TimedPetriNetEditor examples/Petri-Nets/Deadlock/Deadlock.json
 ```
 
 1. Press **Space**, fire `A takes 1` then `B takes 2`: nothing is green any more.
@@ -26,7 +26,7 @@ Robot A takes tool 1 then tool 2; robot B takes tool 2 then tool 1. Each release
 ## Properties
 
 ```text
-$ build/tpne-check --allow-deadlock examples/Petri-Nets/Deadlock/Deadlock.json
+$ build/linux-gcc-debug/bin/tpne-check --allow-deadlock examples/Petri-Nets/Deadlock/Deadlock.json
 examples/Petri-Nets/Deadlock/Deadlock.json:
 Net: Deadlock (Petri net, 8 places, 6 transitions)
 Reachable markings: 6

@@ -17,7 +17,7 @@ Nothing but the firing rule: a token in `Ready`, a transition `Fire`, an empty p
 ## Try it in the editor
 
 ```sh
-./build/TimedPetriNetEditor examples/Petri-Nets/FirstNet/FirstNet.json
+./build/linux-gcc-debug/bin/TimedPetriNetEditor examples/Petri-Nets/FirstNet/FirstNet.json
 ```
 
 1. Press **Space**: the frame turns green, the simulation runs.

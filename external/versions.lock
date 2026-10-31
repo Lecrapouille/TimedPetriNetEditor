@@ -1,0 +1,18 @@
+# Commits of the third parties of TimedPetriNetEditor, written by MyMakefile:
+# commit this file. 'make update-externals' moves them to the last commit of
+# their VERSION.
+
+ImGuiFileDialog.LOCKED_REF := HEAD
+ImGuiFileDialog.LOCKED := d0e97b2adc3d3452d72c750c7305dc0291acd052
+backward-cpp.LOCKED_REF := HEAD
+backward-cpp.LOCKED := 78b2541c9d3c44bc81e2c5f4f34aa3503ac985de
+dbg-macro.LOCKED_REF := HEAD
+dbg-macro.LOCKED := a94fa67eca61e245cf33bdd340110329ea9f1b05
+imgui.LOCKED_REF := docking
+imgui.LOCKED := d88f238d1d363ef387382b2e29ad12cf96f826ac
+implot.LOCKED_REF := HEAD
+implot.LOCKED := 882283b54dbf534c0f83c362c233bddf32cb469a
+json.LOCKED_REF := HEAD
+json.LOCKED := cc917d71232639b17f50b6537d98bf52a20c6e76
+tinyxml2.LOCKED_REF := HEAD
+tinyxml2.LOCKED := 8224e427b655b83dae5e2298f1e6919523a78737

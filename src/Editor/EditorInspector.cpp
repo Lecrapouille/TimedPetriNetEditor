@@ -9,8 +9,8 @@
 #include "Editor/Drawable.hpp"
 #include "Editor/GrafcetHelp.hpp"
 #include "PetriNet/Grafcet.hpp"
-#include "imgui/imgui.h"
-#include "imgui/imgui_internal.h"
+#include "imgui.h"
+#include "imgui_internal.h"
 
 #include <algorithm>
 #include <cmath>

@@ -20,7 +20,7 @@ the drawing this example comes from.
 **Try it**
 
 ```sh
-./build/TimedPetriNetEditor examples/GRAFCET/ParallelSequences/ParallelSequences.json
+./build/linux-gcc-debug/bin/TimedPetriNetEditor examples/GRAFCET/ParallelSequences/ParallelSequences.json
 ```
 
 1. Press **Space**, then turn `m` on: steps 1 and 4 are active together.

@@ -16,7 +16,7 @@ Each shutter is up or down; `Remaining` holds the number of shutters that can st
 ## Try it in the editor
 
 ```sh
-./build/TimedPetriNetEditor examples/Petri-Nets/SmarthomeSafety/SmarthomeSafety.json
+./build/linux-gcc-debug/bin/TimedPetriNetEditor examples/Petri-Nets/SmarthomeSafety/SmarthomeSafety.json
 ```
 
 1. Press **Space**, put three shutters down: the fourth `Down` is grey.

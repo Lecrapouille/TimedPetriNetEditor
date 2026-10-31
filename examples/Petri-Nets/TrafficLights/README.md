@@ -16,7 +16,7 @@ Each light goes green, orange, red. `Green 1` takes `Light 1 Red` and reads `Lig
 ## Try it in the editor
 
 ```sh
-./build/TimedPetriNetEditor examples/Petri-Nets/TrafficLights/TrafficLights.json
+./build/linux-gcc-debug/bin/TimedPetriNetEditor examples/Petri-Nets/TrafficLights/TrafficLights.json
 ```
 
 1. Press **Space** and go around the cycle of light 2 until both are red.

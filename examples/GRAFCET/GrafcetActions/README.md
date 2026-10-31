@@ -21,7 +21,7 @@ retracts until `s0`. An `Error` while extending goes to an alarm, left with
 **Try it**
 
 ```sh
-./build/TimedPetriNetEditor examples/GRAFCET/GrafcetActions/GrafcetActions.json
+./build/linux-gcc-debug/bin/TimedPetriNetEditor examples/GRAFCET/GrafcetActions/GrafcetActions.json
 ```
 
 1. Press **Space**, turn `Start` on: step 1, `V1+` is on.

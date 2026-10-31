@@ -82,7 +82,7 @@ Because forcing has priority over the evolution (the forced graph does not evolv
 The example [`examples/GRAFCET/GEMMA-Dryer`](../../examples/GRAFCET/GEMMA-Dryer/README.md) is a dryer: a belt brings boxes into an oven, they dry, the belt takes them out. It comes from the GEMMA lessons of NetProf ([video](https://www.youtube.com/watch?v=y8lWIG71040), in French).
 
 ```sh
-./build/TimedPetriNetEditor examples/GRAFCET/GEMMA-Dryer/GEMMA-Dryer.json
+./build/linux-gcc-debug/bin/TimedPetriNetEditor examples/GRAFCET/GEMMA-Dryer/GEMMA-Dryer.json
 ```
 
 ![GEMMA of a dryer](pics/10-GEMMA-Dryer.png)
@@ -184,7 +184,7 @@ The dryer of §4 was drawn by hand. The editor can also make the three GRAFCETs 
 The two windows are docked in the main window, so that the GEMMA and its GRAFCETs are seen at once: when one opens, it is cut from the pane of the nets: the GEMMA editor on the left, all the height; the GEMMA graph between it and the nets; Safety, Control and Production stay tabs of the same pane, on the right. The other windows keep their place. Each pane can be dragged by its tab to another place, like any window of the editor, and comes back there when opened again; *View > Reset the layout of the windows* puts all back. When the editor is narrow, its procedures are above its links instead of beside them. On the graph, the wheel zooms around the mouse, the right or middle button drags the form, *Fit* shows it whole again.
 
 ```sh
-./build/TimedPetriNetEditor examples/GRAFCET/GEMMA-Bottling/GEMMA-Bottling.json   # the GEMMA windows open with it
+./build/linux-gcc-debug/bin/TimedPetriNetEditor examples/GRAFCET/GEMMA-Bottling/GEMMA-Bottling.json   # the GEMMA windows open with it
 ```
 
 ![The GEMMA editor](pics/10-GEMMA-Window.png)

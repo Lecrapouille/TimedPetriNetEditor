@@ -10,7 +10,7 @@
 
 #  include "Editor/Theme.hpp"
 #  include "PetriNet/PetriNet.hpp"
-#  include "imgui/imgui.h"
+#  include "imgui.h"
 
 #  include <vector>
 

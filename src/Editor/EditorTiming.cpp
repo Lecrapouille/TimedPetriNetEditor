@@ -13,8 +13,8 @@
 #  define IMGUI_DEFINE_MATH_OPERATORS
 #endif
 #include "Editor/Editor.hpp"
-#include "imgui/imgui.h"
-#include "imgui/imgui_internal.h"
+#include "imgui.h"
+#include "imgui_internal.h"
 
 #include <algorithm>
 #include <cmath>

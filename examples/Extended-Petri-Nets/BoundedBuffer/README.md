@@ -16,7 +16,7 @@ Four extensions in one production line: capacity, weight, inhibitor arc, reset a
 ## Try it in the editor
 
 ```sh
-./build/TimedPetriNetEditor examples/Extended-Petri-Nets/BoundedBuffer/BoundedBuffer.json
+./build/linux-gcc-debug/bin/TimedPetriNetEditor examples/Extended-Petri-Nets/BoundedBuffer/BoundedBuffer.json
 ```
 
 1. Press **Space**, fire `Produce` until `Buffer` is full (4): `Produce` turns grey.

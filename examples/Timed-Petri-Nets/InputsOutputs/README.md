@@ -17,7 +17,7 @@ Sources and sinks: the inputs `u` and the outputs `y` of a system, and a queue t
 ## Try it in the editor
 
 ```sh
-./build/TimedPetriNetEditor examples/Timed-Petri-Nets/InputsOutputs/InputsOutputs.json
+./build/linux-gcc-debug/bin/TimedPetriNetEditor examples/Timed-Petri-Nets/InputsOutputs/InputsOutputs.json
 ```
 
 1. Press **Space** and wait: the sources are drawn in orange while their tokens are on their way.
