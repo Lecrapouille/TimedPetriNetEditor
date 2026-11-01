@@ -487,6 +487,68 @@ TEST(TestGrafcetJSON, ExamplesCompileAndRun)
 }
 
 //------------------------------------------------------------------------------
+TEST(TestFlowshop, TokensOfAConveyorHaveItsColor)
+{
+    Flowshop shop;
+    shop.nconveyors = 2; shop.nmachines = 2;
+    shop.conveyorNames = { "C1", "C2" };
+    shop.machineNames = { "M1", "M2" };
+    shop.np = { 2, 1 }; shop.nm = { 1, 1 };
+    shop.PT = { { 2.0f, 3.0f }, { 1.0f, 4.0f } };
+    Net net;
+    buildFlowshop(net, shop);
+    ASSERT_TRUE(net.colors.find("C1"));
+    Color const c1 = *net.colors.find("C1");
+    Color const c2 = *net.colors.find("C2");
+
+    // The feeds of the conveyors carry their colored tokens, the feeds of
+    // the machines Success ones.
+    size_t colored = 0u, machines = 0u;
+    for (Place const& place : net.places())
+    {
+        if (place.tokens == 0u)
+            continue;
+        std::string const& from = net.transitions()[net.arcsIn(place).begin()->from.id].caption;
+        if ((from == "C1") || (from == "C2"))
+        {
+            ASSERT_EQ(place.colors.size(), 1u) << from;
+            EXPECT_EQ(place.colors[0].first, (from == "C1") ? c1 : c2);
+            EXPECT_EQ(place.colors[0].second, place.tokens);
+            ++colored;
+        }
+        else
+        {
+            EXPECT_TRUE(place.colors.empty()) << from;
+            ++machines;
+        }
+    }
+    EXPECT_EQ(colored, 2u);
+    EXPECT_EQ(machines, 2u);
+
+    // A new marking: the colors follow the tokens.
+    std::vector<size_t> marking(net.places().size(), 0u);
+    for (Place const& place : net.places())
+    {
+        std::string const& from = net.transitions()[net.arcsIn(place).begin()->from.id].caption;
+        std::string const& to = net.transitions()[net.arcsOut(place).begin()->to.id].caption;
+        if ((from == "M1_C1") && (to == "M2_C1"))
+            marking[place.id] = 1u; // a C1 part between M1 and M2
+    }
+    ASSERT_TRUE(net.tokens(marking));
+    colorFlowshopTokens(net, shop);
+    size_t painted = 0u;
+    for (Place const& place : net.places())
+    {
+        if (!place.colors.empty())
+        {
+            EXPECT_EQ(place.colors[0].first, c1);
+            ++painted;
+        }
+    }
+    EXPECT_EQ(painted, 1u);
+}
+
+//------------------------------------------------------------------------------
 TEST(TestFlowshop, BuildScheduleAndCycleTime)
 {
     // Two machines, two conveyors, one of each: M1 then M2 for both conveyors.

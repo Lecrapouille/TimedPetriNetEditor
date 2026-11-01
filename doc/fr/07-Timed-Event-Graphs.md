@@ -208,6 +208,8 @@ Le format est un tableau : les convoyeurs sur la première ligne, les machines s
 
 *File > New > Flowshop...* remplit le même tableau dans une fenêtre et construit le réseau.
 
+Les jetons de chaque convoyeur ont la couleur du convoyeur (une couleur nommée comme le convoyeur, [chapitre 5](05-Extended-Petri-Nets.md)) : dans la simulation, les pièces de `C1` et de `C2` se distinguent. `colorFlowshopTokens(net, shop)` les colore de nouveau après un nouveau marquage, et `net.colors.rgb()` choisit comment une couleur est dessinée.
+
 ### 6.2 Le graphe d'événements temporisé d'un flowshop
 
 Ouvrez-le : l'éditeur construit le graphe d'événements temporisé.

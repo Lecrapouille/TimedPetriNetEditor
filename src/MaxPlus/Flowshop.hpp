@@ -59,6 +59,15 @@ std::string checkFlowshop(Flowshop const& flowshop);
 void buildFlowshop(Net& net, Flowshop const& flowshop);
 
 //------------------------------------------------------------------------------
+//! \brief Give the tokens of each conveyor circuit of a net made by
+//! buildFlowshop() the color of the conveyor: a color named as the conveyor,
+//! added to Net::colors when unknown (rgb() sets how it is drawn). The tokens
+//! of the machine circuits stay Success. Call it again after the marking
+//! changed (Net::tokens()): the colors follow the tokens.
+//------------------------------------------------------------------------------
+void colorFlowshopTokens(Net& net, Flowshop const& flowshop);
+
+//------------------------------------------------------------------------------
 //! \brief Machine and conveyor of an operation: a transition named
 //! "<machine>_<conveyor>" by buildFlowshop() (the Gantt chart draws it on the
 //! row of the machine, colored by conveyor). Other names ("T3", "out_C1") are

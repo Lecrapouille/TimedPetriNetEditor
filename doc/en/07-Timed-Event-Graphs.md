@@ -208,6 +208,8 @@ The format is a table: the conveyors on the first row, the machines on the first
 
 *File > New > Flowshop...* fills the same table in a window and builds the net.
 
+The tokens of each conveyor have the color of the conveyor (a color named as the conveyor, [chapter 5](05-Extended-Petri-Nets.md)): in the simulation, the parts of `C1` and of `C2` are told apart. `colorFlowshopTokens(net, shop)` colors them again after a new marking, and `net.colors.rgb()` chooses how a color is drawn.
+
 ### 6.2 The timed event graph of a flowshop
 
 Open it: the editor builds the timed event graph.

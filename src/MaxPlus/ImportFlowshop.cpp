@@ -13,6 +13,7 @@
 #include <cstring>
 #include <cmath>
 #include <limits>
+#include <optional>
 
 namespace tpne {
 
@@ -324,6 +325,44 @@ void buildFlowshop(Net& net, Flowshop const& data)
         net.addArc(*trans[e.from], *trans[e.to], e.tokens, e.duration);
     }
     net.layout().compact = true;
+    colorFlowshopTokens(net, data);
+}
+
+//------------------------------------------------------------------------------
+void colorFlowshopTokens(Net& net, Flowshop const& flowshop)
+{
+    // Conveyor of a transition: "<conveyor>", "out_<conveyor>" or
+    // "<machine>_<conveyor>"; none for the transitions of a machine.
+    auto conveyorOf = [&flowshop](std::string const& caption) -> std::optional<size_t>
+    {
+        for (size_t c = 0u; c < flowshop.conveyorNames.size(); ++c)
+        {
+            std::string const& name = flowshop.conveyorNames[c];
+            if ((caption == name) || (caption == "out_" + name))
+                return c;
+            for (std::string const& machine : flowshop.machineNames)
+            {
+                if (caption == machine + "_" + name)
+                    return c;
+            }
+        }
+        return std::nullopt;
+    };
+    std::vector<Color> colors;
+    for (std::string const& name : flowshop.conveyorNames)
+        colors.push_back(net.colors.add(name));
+    for (Place& place : net.places())
+    {
+        place.colors.clear();
+        auto const in = net.arcsIn(place);
+        auto const out = net.arcsOut(place);
+        if ((in.size() != 1u) || (out.size() != 1u) || (place.tokens == 0u))
+            continue;
+        std::optional<size_t> const from = conveyorOf(net.transitions()[in.begin()->from.id].caption);
+        std::optional<size_t> const to = conveyorOf(net.transitions()[out.begin()->to.id].caption);
+        if (from && to && (*from == *to) && (colors[*from] != AnyColor))
+            place.colors.push_back({ colors[*from], place.tokens });
+    }
 }
 
 //------------------------------------------------------------------------------
