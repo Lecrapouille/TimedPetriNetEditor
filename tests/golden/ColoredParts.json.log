@@ -1,0 +1,11 @@
+net Colored parts
+initial: 4 1 0 1 0
+t=0 T0 k=1
+t=1 T0 k=2
+t=1 T2 k=1
+t=2 T1 k=1
+t=2 T2 k=2
+t=3 T1 k=2
+t=3 T3 k=1
+t=4 T3 k=2
+final t=5: 0 1 0 1 4 (deadlock)

@@ -52,6 +52,7 @@ Chapter [5](../doc/en/05-Extended-Petri-Nets.md).
 | <img src="Extended-Petri-Nets/Priorities/Priorities.png" width="220"> | 📝 ⚙️ [Priorities](Extended-Petri-Nets/Priorities/README.md) | a conflict solved by priorities, or at random with a seed |
 | <img src="Extended-Petri-Nets/Colors/Colors.png" width="220"> | 📝 ⚙️ [Colors](Extended-Petri-Nets/Colors/README.md) | the color of a token chooses its way |
 | <img src="Extended-Petri-Nets/ColoredPhilosophers/ColoredPhilosophers.png" width="220"> | 📝 ⚙️ [ColoredPhilosophers](Extended-Petri-Nets/ColoredPhilosophers/README.md) | colored initial tokens fold places; simulation and runtime agree |
+| <img src="Extended-Petri-Nets/ColoredParts/ColoredParts.png" width="220"> | 📝 ⚙️ [ColoredParts](Extended-Petri-Nets/ColoredParts/README.md) | two products keep their color (RGB) through shared machines |
 | <img src="Extended-Petri-Nets/BoundedBuffer/BoundedBuffer.png" width="220"> | ⚙️ [BoundedBuffer](Extended-Petri-Nets/BoundedBuffer/README.md) | all the extensions together |
 
 ## ⏱️ Timed Petri nets

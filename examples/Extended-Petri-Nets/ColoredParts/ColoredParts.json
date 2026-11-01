@@ -1,0 +1,61 @@
+{
+  "revision": 2,
+  "type": "Petri net",
+  "nets": [
+    {
+       "name": "Colored parts",
+       "description": "Two products share two machines: the parts of P1 are red, those of P2 blue (their own RGB colors, not a hue picked from their number). Each transition takes and gives the parts of one product (the color of its arcs), so a part keeps its color from the stock to the end. M1 cuts, M2 drills; each machine works on one part at a time (its token Free). The runtime runs it in ColoredParts.cpp.",
+       "colors": [{ "name": "P1", "rgb": "#e61a1a" }, { "name": "P2", "rgb": "#1a4de6" }],
+       "places": [
+            { "id": 0, "caption": "Stock", "tokens": 4, "colors": { "P1": 2, "P2": 2 } },
+            { "id": 1, "caption": "M1 free", "tokens": 1 },
+            { "id": 2, "caption": "Cut", "tokens": 0 },
+            { "id": 3, "caption": "M2 free", "tokens": 1 },
+            { "id": 4, "caption": "Done", "tokens": 0 }
+       ],
+       "transitions": [
+            { "id": 0, "caption": "M1 cuts P1" },
+            { "id": 1, "caption": "M1 cuts P2" },
+            { "id": 2, "caption": "M2 drills P1" },
+            { "id": 3, "caption": "M2 drills P2" }
+       ],
+       "arcs": [
+            { "from": "P0", "to": "T0", "color": "P1" },
+            { "from": "P1", "to": "T0" },
+            { "from": "T0", "to": "P2", "color": "P1", "duration": 0 },
+            { "from": "T0", "to": "P1", "duration": 0 },
+            { "from": "P0", "to": "T1", "color": "P2" },
+            { "from": "P1", "to": "T1" },
+            { "from": "T1", "to": "P2", "color": "P2", "duration": 0 },
+            { "from": "T1", "to": "P1", "duration": 0 },
+            { "from": "P2", "to": "T2", "color": "P1" },
+            { "from": "P3", "to": "T2" },
+            { "from": "T2", "to": "P4", "color": "P1", "duration": 0 },
+            { "from": "T2", "to": "P3", "duration": 0 },
+            { "from": "P2", "to": "T3", "color": "P2" },
+            { "from": "P3", "to": "T3" },
+            { "from": "T3", "to": "P4", "color": "P2", "duration": 0 },
+            { "from": "T3", "to": "P3", "duration": 0 }
+       ],
+       "actions": [
+       ],
+       "layout": {
+          "places": [
+             [100, 250],
+             [325, 250],
+             [550, 250],
+             [775, 250],
+             [1000, 250]
+          ],
+          "transitions": [
+             [325, 170],
+             [325, 330],
+             [775, 170],
+             [775, 330]
+          ]
+       }
+    }
+  ],
+  "inputs": [
+  ]
+}
