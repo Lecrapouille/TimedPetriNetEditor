@@ -8,6 +8,7 @@
 #ifndef DEAR_IMGUI_THEME_HPP
 #define DEAR_IMGUI_THEME_HPP
 
+#include "PetriNet/Color.hpp"
 #include "imgui.h"
 #include <cstdint>
 
@@ -100,6 +101,14 @@ inline ImU32 colorOfTokens(std::uint8_t const color)
         return palette().critical;
     float const hue = float(color) * 0.618034f;
     return ImColor::HSV(hue - float(int(hue)), 0.65f, 0.95f);
+}
+
+//! \brief The same, with the RGB value the net gives the color, if any.
+inline ImU32 colorOfTokens(tpne::ColorTable const& table, std::uint8_t const color)
+{
+    if (std::optional<std::uint32_t> const rgb = table.rgb(color))
+        return IM_COL32((*rgb >> 16u) & 0xFFu, (*rgb >> 8u) & 0xFFu, *rgb & 0xFFu, 255);
+    return colorOfTokens(color);
 }
 
 #endif

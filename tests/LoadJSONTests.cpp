@@ -205,6 +205,34 @@ TEST(TestJSONLoader, SaveAndLoadFile)
 }
 
 //------------------------------------------------------------------------------
+TEST(TestJSONLoader, ColorsKeepTheirRgbValue)
+{
+    EXPECT_EQ(toHex(0xE61A1Au), "#e61a1a");
+    EXPECT_EQ(fromHex("#E61A1A"), 0xE61A1Au);
+    EXPECT_FALSE(fromHex("e61a1a"));
+    EXPECT_FALSE(fromHex("#e61a1g"));
+
+    Net net(TypeOfNet::PetriNet);
+    net.name = "parts";
+    Color const red = net.colors.add("P1");
+    net.colors.add("Bad");
+    net.colors.rgb(red, 0xE61A1Au);
+    Place& place = net.addPlace(2u, "stock");
+    place.colors = { { red, 2u } };
+    ASSERT_STREQ(saveToFile(net, "/tmp/tpne_colors.json").c_str(), "");
+
+    Net loaded(TypeOfNet::PetriNet);
+    bool stringify;
+    ASSERT_STREQ(loadFromFile(loaded, "/tmp/tpne_colors.json", stringify).c_str(), "");
+    std::optional<Color> const p1 = loaded.colors.find("P1");
+    ASSERT_TRUE(p1);
+    EXPECT_EQ(loaded.colors.rgb(*p1), 0xE61A1Au);
+    EXPECT_FALSE(loaded.colors.rgb(*loaded.colors.find("Bad")));
+    ASSERT_EQ(loaded.findPlace(0u)->colors.size(), 1u);
+    EXPECT_EQ(loaded.findPlace(0u)->colors[0].first, *p1);
+}
+
+//------------------------------------------------------------------------------
 TEST(TestJSONLoader, SaveAndLoadDummyNet)
 {
     Net net(TypeOfNet::TimedPetriNet);

@@ -529,7 +529,7 @@ void drawArc(ImDrawList* draw_list, Net const& net, Arc const& arc,
         ImVec2 dir;
         float const where = (arc.from.type == Node::Type::Place) ? 0.75f : 0.25f;
         ImVec2 const p = screen(origin, zoom, alongPath(path.points, where, dir));
-        ImU32 const c = (arc.color == Success) ? pal.active : colorOfTokens(arc.color);
+        ImU32 const c = (arc.color == Success) ? pal.active : colorOfTokens(net.colors, arc.color);
         pill(draw_list, p - normal(dir) * (11.0f * zoom), c, net.colors.name(arc.color).c_str(), size);
     }
 }
@@ -602,7 +602,8 @@ void drawWaitingTokens(ImDrawList* draw_list, size_t tokens, float const x, floa
 
 //! \brief Tokens of a Petri place: dots up to 5, drawn with their color
 //! (Place::colors, the others Success), else a number.
-static void drawPlaceTokens(ImDrawList* draw_list, Place const& place, ImVec2 const& p, float zoom)
+static void drawPlaceTokens(ImDrawList* draw_list, Net const& net, Place const& place, ImVec2 const& p,
+                            float zoom)
 {
     size_t const tokens = place.tokens;
     ImU32 color[5];
@@ -610,7 +611,7 @@ static void drawPlaceTokens(ImDrawList* draw_list, Place const& place, ImVec2 co
     for (auto const& [c, count] : place.colors)
     {
         for (size_t i = 0u; (i < count) && (n < 5u); ++i)
-            color[n++] = colorOfTokens(c);
+            color[n++] = colorOfTokens(net.colors, c);
     }
     while (n < 5u)
         color[n++] = colorOfTokens(Success);
@@ -668,7 +669,7 @@ static void drawPetriPlace(ImDrawList* draw_list, Net const& net, Place const& p
     draw_list->AddCircleFilled(p + ImVec2(SHADOW_OFFSET, SHADOW_OFFSET) * zoom, r, pal.shadow, 48);
     draw_list->AddCircleFilled(p, r, pal.fill, 48);
     draw_list->AddCircle(p, r, pal.outline, 48, stroke(2.0f, zoom));
-    drawPlaceTokens(draw_list, place, p, zoom);
+    drawPlaceTokens(draw_list, net, place, p, zoom);
 
     char const* label = show_caption ? place.caption.c_str() : place.key.c_str();
     caption(draw_list, p.x, p.y + r + 3.0f * zoom, show_caption ? pal.caption : pal.secondary,
@@ -768,8 +769,15 @@ static void drawGrafcetStep(ImDrawList* draw_list, Net const& net, Place const& 
         textCentered(draw_list, p + ImVec2(0.0f, number ? 9.0f * zoom : 0.0f),
                      number ? pal.secondary : pal.caption, label.c_str(), small);
     }
+    // The dot has the color of the token, when the step was given one.
     if (active)
-        drawToken(draw_list, p.x + h * 0.62f, p.y - h * 0.62f, zoom);
+    {
+        if (place.colors.empty())
+            drawToken(draw_list, p.x + h * 0.62f, p.y - h * 0.62f, zoom);
+        else
+            drawToken(draw_list, p.x + h * 0.62f, p.y - h * 0.62f, zoom,
+                      colorOfTokens(net.colors, place.colors.front().first));
+    }
 
     // OR divergence (below) and OR convergence (above): single lines.
     if (net.arcsOut(place).size() >= 2u)

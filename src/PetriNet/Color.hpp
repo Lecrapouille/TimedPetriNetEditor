@@ -35,7 +35,9 @@ constexpr Color Deadlocked = 4u;
 
 // *****************************************************************************
 //! \brief Names of the colors of a net: the built-in ones ("any", "Success",
-//! "Failed", "Canceled", "Deadlocked") then the ones of the user.
+//! "Failed", "Canceled", "Deadlocked") then the ones of the user. A color may
+//! also say how it is drawn (rgb()): a product drawn with the color of its
+//! parts, for example. Without it the editor picks a hue from its number.
 // *****************************************************************************
 class ColorTable
 {
@@ -56,7 +58,29 @@ public:
         if (m_names.size() > 255u)
             return AnyColor;
         m_names.push_back(name);
+        m_rgb.resize(m_names.size());
         return Color(m_names.size() - 1u);
+    }
+
+    //--------------------------------------------------------------------------
+    //! \brief Draws the color with this RGB value (0xRRGGBB). Ignored for an
+    //! unknown color.
+    //--------------------------------------------------------------------------
+    void rgb(Color const color, std::uint32_t const value)
+    {
+        if (color < m_names.size())
+        {
+            m_rgb.resize(m_names.size());
+            m_rgb[color] = value & 0xFFFFFFu;
+        }
+    }
+
+    //--------------------------------------------------------------------------
+    //! \brief The RGB value of the color (0xRRGGBB), if it has one.
+    //--------------------------------------------------------------------------
+    std::optional<std::uint32_t> rgb(Color const color) const
+    {
+        return (color < m_rgb.size()) ? m_rgb[color] : std::nullopt;
     }
 
     //--------------------------------------------------------------------------
@@ -95,7 +119,19 @@ public:
 private:
 
     std::vector<std::string> m_names;
+    //! \brief RGB value of each color, if it has one.
+    std::vector<std::optional<std::uint32_t>> m_rgb;
 };
+
+//------------------------------------------------------------------------------
+//! \brief "#e61a1a" for 0xE61A1A.
+//------------------------------------------------------------------------------
+std::string toHex(std::uint32_t const rgb);
+
+//------------------------------------------------------------------------------
+//! \brief 0xE61A1A for "#e61a1a" or "#E61A1A"; nothing for another text.
+//------------------------------------------------------------------------------
+std::optional<std::uint32_t> fromHex(std::string const& text);
 
 } // namespace tpne
 

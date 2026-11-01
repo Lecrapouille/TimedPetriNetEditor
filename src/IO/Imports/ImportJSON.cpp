@@ -175,8 +175,21 @@ static std::string parseNetFromJSON(Net& net, nlohmann::json const& jnet)
     net.description = jnet.value("description", "");
     if (jnet.contains("colors"))
     {
+        // A name, or { "name": "P1", "rgb": "#e61a1a" } for a color drawn
+        // with its own RGB value.
         for (nlohmann::json const& c : jnet["colors"])
-            net.colors.add(c.get<std::string>());
+        {
+            if (c.is_object())
+            {
+                Color const color = net.colors.add(c.value("name", ""));
+                if (std::optional<std::uint32_t> const rgb = fromHex(c.value("rgb", "")))
+                    net.colors.rgb(color, *rgb);
+            }
+            else
+            {
+                net.colors.add(c.get<std::string>());
+            }
+        }
     }
 
     // Identifiers of nodes are their indices in the net: they shall be

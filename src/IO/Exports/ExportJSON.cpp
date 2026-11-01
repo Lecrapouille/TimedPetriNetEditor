@@ -142,7 +142,19 @@ static void writeNetToJSON(std::ofstream& file, Net const& net)
     if (!net.description.empty())
         file << "       \"description\": " << quote(net.description) << ",\n";
     if (!net.colors.user().empty())
-        file << "       \"colors\": " << format(nlohmann::ordered_json(net.colors.user())) << ",\n";
+    {
+        // A name, or an object when the color has its own RGB value.
+        nlohmann::ordered_json colors = nlohmann::ordered_json::array();
+        std::vector<std::string> const& names = net.colors.names();
+        for (size_t i = size_t(ColorTable::BUILT_IN); i < names.size(); ++i)
+        {
+            if (std::optional<std::uint32_t> const rgb = net.colors.rgb(Color(i)))
+                colors.push_back({ { "name", names[i] }, { "rgb", toHex(*rgb) } });
+            else
+                colors.push_back(names[i]);
+        }
+        file << "       \"colors\": " << format(colors) << ",\n";
+    }
 
     // Places
     std::vector<nlohmann::ordered_json> items;
