@@ -8,16 +8,11 @@ build/
 build-*/
 media/
 doc/coverage/
-external/*/
 src/*/VERSION.txt
 exapkgs
 pkg_list.json
 .cache
 compile_commands.json
-build-sanitize/
-build-release/
-build-tsan/
-.vscode/settings.json
 TimedPetriNetEditor*.tar.gz
 
 # LaTeX
