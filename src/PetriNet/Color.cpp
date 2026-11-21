@@ -7,6 +7,7 @@
 
 #include "PetriNet/Color.hpp"
 
+#include <cinttypes>
 #include <cstdio>
 
 namespace tpne {
@@ -15,7 +16,7 @@ namespace tpne {
 std::string toHex(std::uint32_t const rgb)
 {
     char text[8];
-    std::snprintf(text, sizeof(text), "#%06x", unsigned(rgb & 0xFFFFFFu));
+    std::snprintf(text, sizeof(text), "#%06" PRIx32, rgb & 0xFFFFFFu);
     return text;
 }
 

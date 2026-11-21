@@ -12,6 +12,7 @@
 #  include "PetriNet/SafeFloat.hpp"
 
 #  include <cmath>
+#  include <functional>
 #  include <ostream>
 #  include <iostream>
 #  include <limits>
@@ -25,13 +26,13 @@ class MaxPlus
 {
 public:
 
-    MaxPlus() : val() {};
+    MaxPlus() : val() {}
     MaxPlus(const MaxPlus & d) noexcept : val(d.val){}
     MaxPlus(const double t) : val(t){}
-    inline bool operator==(const MaxPlus &rhs) const noexcept { return val == rhs.val; }
-    inline bool operator==(const double &rhs) const noexcept { return val == rhs; }
-    inline bool operator!=(const MaxPlus &rhs) const noexcept { return val != rhs.val; }
-    inline bool operator!=(const double &rhs) const noexcept { return val != rhs; }
+    inline bool operator==(const MaxPlus &rhs) const noexcept { return std::equal_to<double>()(val, rhs.val); }
+    inline bool operator==(const double &rhs) const noexcept { return std::equal_to<double>()(val, rhs); }
+    inline bool operator!=(const MaxPlus &rhs) const noexcept { return !std::equal_to<double>()(val, rhs.val); }
+    inline bool operator!=(const double &rhs) const noexcept { return !std::equal_to<double>()(val, rhs); }
     inline MaxPlus & operator=(const MaxPlus & rhs) noexcept { val = rhs.val; return *this;}
     inline MaxPlus & operator=(const double rhs) noexcept { val = rhs; return *this;}
     inline double operator*=(const MaxPlus & rhs) noexcept { val += rhs.val; return val; }
@@ -59,13 +60,13 @@ class MinPlus
 {
 public:
 
-    MinPlus() : val() {};
+    MinPlus() : val() {}
     MinPlus(const MinPlus & d) noexcept : val(d.val){}
     MinPlus(const double t) : val(t){}
-    inline bool operator==(const MinPlus &rhs) const noexcept { return val == rhs.val; }
-    inline bool operator==(const double &rhs) const noexcept { return val == rhs; }
-    inline bool operator!=(const MinPlus &rhs) const noexcept { return val != rhs.val; }
-    inline bool operator!=(const double &rhs) const noexcept { return val != rhs; }
+    inline bool operator==(const MinPlus &rhs) const noexcept { return std::equal_to<double>()(val, rhs.val); }
+    inline bool operator==(const double &rhs) const noexcept { return std::equal_to<double>()(val, rhs); }
+    inline bool operator!=(const MinPlus &rhs) const noexcept { return !std::equal_to<double>()(val, rhs.val); }
+    inline bool operator!=(const double &rhs) const noexcept { return !std::equal_to<double>()(val, rhs); }
     inline MinPlus & operator=(const MinPlus & rhs) noexcept { val = rhs.val; return *this;}
     inline MinPlus & operator=(const double rhs) noexcept { val = rhs; return *this;}
     inline double operator*=(const MinPlus & rhs) noexcept { val += rhs.val; return val; }

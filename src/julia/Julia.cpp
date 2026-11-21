@@ -184,7 +184,7 @@ bool petri_get_place(int64_t const pn, int64_t const i, CPlace_t* place)
 
     place->x = g_petri_nets[size_t(pn)]->position(p[size_t(i)]).x;
     place->y = g_petri_nets[size_t(pn)]->position(p[size_t(i)]).y;
-    place->tokens = int64_t(p[i].tokens);
+    place->tokens = int64_t(p[size_t(i)].tokens);
 
     return true;
 }
@@ -246,7 +246,7 @@ bool petri_get_marks(int64_t const pn, int64_t* tokens)
     size_t i = places.size();
     while (i--)
     {
-        tokens[i] = size_t(places[i].tokens);
+        tokens[i] = int64_t(places[i].tokens);
     }
     return true;
 }

@@ -41,9 +41,9 @@ namespace tpne {
 class Editor: public Application
 {
     friend class PetriView;
-#  if TPNE_USE_ZEROMQ
+    // Harmless without ZeroMQ: this header is also included by targets which
+    // do not have TPNE_USE_ZEROMQ (main.cpp).
     friend class ZeroMQRemote;
-#  endif
 
 public:
 
