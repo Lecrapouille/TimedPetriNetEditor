@@ -23,18 +23,18 @@ jobs:
     name: Build the web version
     runs-on: ubuntu-22.04
     steps:
-      - name: Install system packages
-        run: |
-          sudo apt-get update
-          sudo apt-get install pkg-config libmosquitto-dev libx11-dev libxinerama-dev
-          sudo apt-get install libasound2-dev libx11-dev libxrandr-dev libxi-dev libgl1-mesa-dev libglu1-mesa-dev libxcursor-dev libxinerama-dev
-          sudo apt-get install libwayland-dev libxkbcommon-x11-dev libglfw3-dev
-      - name: Install Emscripten
-        uses: mymindstorm/setup-emsdk@v14
       - name: Checkout TimedPetriNetEditor
         uses: actions/checkout@v6
         with:
           submodules: true
+      - name: Install MyMakefile, the packages and Emscripten
+        uses: ./.makefile/.github/actions/setup
+        with:
+          apt: >-
+            libmosquitto-dev libx11-dev libxinerama-dev libasound2-dev libxrandr-dev
+            libxi-dev libgl1-mesa-dev libglu1-mesa-dev libxcursor-dev
+            libwayland-dev libxkbcommon-x11-dev libglfw3-dev
+          emscripten: true
       - name: Compile TimedPetriNetEditor
         run: |
           emmake make
